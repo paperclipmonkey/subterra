@@ -68,9 +68,9 @@ export default defineConfig({
       '/api': 'http://localhost',
     },
   },
-  build: {
-    outDir: '../public/assets',
-    sourcemap: true,
-    emptyOutDir: false,
-  },
+  // build: {
+  //   outDir: '../public/assets',
+  //   sourcemap: true,
+  //   emptyOutDir: false,
+  // },
 })
