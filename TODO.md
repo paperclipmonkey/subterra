@@ -1,13 +1,10 @@
 # TODO
 
-* Make database save locally
-* Add endpoints for:
-    * Caves
-        * CRUD Cave entrances
-        * CRUD Systems
-        * Automatically link a system into an entrace using a Resource
-    * Trips
-        * CRUD trips
+* Load list of caves from an api endpoint
+* Add concept of systems
+* Add systems info to caves page in frontend
+* Add basic data about 10 caves in 3 regions
+* 
 
 Bring ui into public folder and make build
 Add dockerfile for production builds
