@@ -5,6 +5,11 @@
       label="Trip Name"
       required
     ></v-text-field>
+    <v-textarea
+      v-model="tripDescription"
+      label="Trip Description"
+      required
+    ></v-textarea>
     <v-autocomplete
       label="Location"
       :items="caves"
