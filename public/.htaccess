@@ -17,5 +17,7 @@
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
+    # Only if they are /api/... requests
+    # RewriteCond %{REQUEST_URI} ^/api/ [NC]
     RewriteRule ^ index.php [L]
 </IfModule>
