@@ -1,5 +1,6 @@
 <template>
-  <v-footer  app>
+  <div class="footer">
+  <v-footer app>
       <v-bottom-navigation>
       <v-btn
         v-for="item in items"
@@ -17,6 +18,7 @@
       </v-btn>
     </v-bottom-navigation>
   </v-footer>
+</div>
 </template>
 
 <script setup>
@@ -39,6 +41,15 @@
   ]
 </script>
 
-<style scoped lang="sass">
-
+<style scoped lang="scss">
+  .footer {
+    height: auto;
+    bottom: 0px;
+    position: fixed;
+    width: 100%;
+    padding: 0px;
+  }
+  .v-footer {
+    padding: 0px;
+  }
 </style>

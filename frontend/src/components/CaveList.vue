@@ -18,11 +18,17 @@
       :headers="headers"
       :items="caves"
       :search="search"
+      :items-per-page="10000"
       hide-default-footer
     >
-    <template v-slot:item.name="{ value }">
-      <v-chip :to="{name: '/cave/[id]', params: {id: value}}">
+    <template v-slot:item.name="{ item, value }">
+      <v-chip :to="{name: '/cave/[id]', params: {id: item.id}}">
         {{ value }}
+      </v-chip>
+    </template>
+    <template v-slot:item.location="{ item }">
+      <v-chip>
+        {{ item.location_name }}, {{ item.location_country }}
       </v-chip>
     </template>
   </v-data-table>
@@ -38,7 +44,6 @@
     { title: 'Location', key: 'location' }
   ])
 
-  // Load the list of caves dynamically from the url http://localhost/api/caves
   const caves = ref([])
   onMounted(async () => {
     const response = await fetch('/api/caves')

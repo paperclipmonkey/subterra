@@ -22,7 +22,7 @@ class CaveController extends Controller
      */
     public function store(StoreCaveRequest $request)
     {
-        Cave::create($request->all());
+        Cave::create($request->all())->save();
     }
 
     /**

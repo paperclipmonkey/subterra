@@ -1,5 +1,5 @@
 <template>
-  <v-form>
+  <v-form class="pa-xl-4">
     <v-text-field
       v-model="tripName"
       label="Trip Name"
