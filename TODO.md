@@ -8,3 +8,8 @@
         * Automatically link a system into an entrace using a Resource
     * Trips
         * CRUD trips
+
+Bring ui into public folder and make build
+Add dockerfile for production builds
+
+Add 

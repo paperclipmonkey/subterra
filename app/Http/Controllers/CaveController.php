@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCaveRequest;
 use App\Http\Requests\UpdateCaveRequest;
 use App\Models\Cave;
+use Request;
 
 class CaveController extends Controller
 {
@@ -13,15 +14,7 @@ class CaveController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return Cave::all();
     }
 
     /**
@@ -29,7 +22,7 @@ class CaveController extends Controller
      */
     public function store(StoreCaveRequest $request)
     {
-        //
+        Cave::create($request->all());
     }
 
     /**
@@ -37,15 +30,7 @@ class CaveController extends Controller
      */
     public function show(Cave $cave)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Cave $cave)
-    {
-        //
+        return $cave;
     }
 
     /**
@@ -53,7 +38,7 @@ class CaveController extends Controller
      */
     public function update(UpdateCaveRequest $request, Cave $cave)
     {
-        //
+        $cave->update($request->all());
     }
 
     /**
@@ -61,6 +46,6 @@ class CaveController extends Controller
      */
     public function destroy(Cave $cave)
     {
-        //
+        Cave::destroy($cave);
     }
 }

@@ -24,11 +24,11 @@ return new class extends Migration
             $table->text('description');
             $table->foreignId('cave_system_id')->nullable()->constrained('cave_systems', 'id');
             $table->integer('length');
-            $table->integer('depth'); 
+            $table->integer('depth');
             $table->string('location_name');
             $table->string('location_country');
             $table->string('location_lat');
-            $table->string('location_lng'); 
+            $table->string('location_lng');
         });
 
     }
