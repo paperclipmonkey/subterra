@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Cave extends Model
+class CaveSystem extends Model
 {
     use HasFactory;
     public $timestamps = false;
 
-    public function user(): BelongsTo
+    public function caves(): HasMany
     {
-        return $this->belongsTo(Cave::class);
+        return $this->hasMany(Cave::class);
     }
 }

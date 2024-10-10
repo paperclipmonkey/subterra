@@ -11,8 +11,13 @@ class Cave extends Model
     use HasFactory;
     public $timestamps = false;
 
-    public function user(): BelongsTo
+    public function entrance(): BelongsTo
     {
-        return $this->belongsTo(Cave::class);
+        return $this->belongsTo(Cave::class, 'entrance_id', 'id');
+    }
+
+    public function exit(): BelongsTo
+    {
+        return $this->belongsTo(Cave::class, 'entrance_id', 'id');
     }
 }
