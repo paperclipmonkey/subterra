@@ -12,3 +12,6 @@ Route::get('/caves', function (Request $request) {
     return Response::json(Cave::all());
 });
 
+Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store']);
+
+Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
