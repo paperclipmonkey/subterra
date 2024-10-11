@@ -21,6 +21,9 @@
       :items-per-page="10000"
       hide-default-footer
     >
+    <template v-slot:item.length="{ value }">
+      <span :title="`${value} m`">{{ Math.round((value / 1000)*10)/10 }} km</span>
+    </template>
     <template v-slot:item.name="{ item, value }">
       <v-chip :to="{name: '/cave/[id]', params: {id: item.id}}">
         {{ value }}
