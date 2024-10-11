@@ -1,0 +1,43 @@
+{
+	"name": "Swildon's hole",
+    "description": "Swildon's Hole is an extensive cave in Priddy, Somerset. At 9,144 metres (30,000 ft) in length, it is the longest cave on the Mendip Hills.[2] It has been found to be connected to Priddy Green Sink and forms part of the Priddy Caves Site of Special Scientific Interest (SSSI).",
+    "length": 9144,
+    "depth": 167,
+    "location_name": "Priddy",
+    "location_country": "England",
+    "location_lat":51.258897,
+    "location_lng":-2.673094
+}
+
+{
+	"name": "Eastwater Cavern",
+    "description": "Eastwater Cavern is a cave near Priddy in the limestone of the Mendip Hills, in Somerset, England. It is also known as Eastwater Swallet.[3] It was first excavated in April 1902 by a team led by Herbert E. Balch composed of paid labourers and volunteers from the Wells Natural History Society. Progress was initially slow, but by February 1903 Balch and Willcox had discovered substantial passage, following the streamway down to the bottom of the cave. Dolphin Pot was dug in 1940 by the Wessex Cave Club, with Primrose Pot following in 1950. West End series was the most recent significant discovery, in 1983.[4]",
+    "length": 3510,
+    "depth": 152,
+    "location_name": "Priddy",
+    "location_country": "England",
+    "location_lat":-2.66237,
+    "location_lng":51.25287 
+}
+
+{
+	"name": "Eastwater Cavern",
+    "description": "Eastwater Cavern is a cave near Priddy in the limestone of the Mendip Hills, in Somerset, England. It is also known as Eastwater Swallet.[3] It was first excavated in April 1902 by a team led by Herbert E. Balch composed of paid labourers and volunteers from the Wells Natural History Society. Progress was initially slow, but by February 1903 Balch and Willcox had discovered substantial passage, following the streamway down to the bottom of the cave. Dolphin Pot was dug in 1940 by the Wessex Cave Club, with Primrose Pot following in 1950. West End series was the most recent significant discovery, in 1983.[4]",
+    "length": 3510,
+    "depth": 152,
+    "location_name": "Priddy",
+    "location_country": "England",
+    "location_lat":-2.66237,
+    "location_lng":51.25287 
+}
+
+{
+	"name": "Ogof Ffynnon Ddu 1",
+    "description": "Ogof Ffynnon Ddu (Welsh for cave of the black spring), also known informally as OFD, is a cave under a hillside in the area surrounding Penwyllt in the Upper Swansea Valley in South Wales. It is the second longest cave in Wales and the deepest in the United Kingdom.",
+    "length": 59000,
+    "depth": 274,
+    "location_name": "Penwyllt",
+    "location_country": "Wales",
+    "location_lat":-3.672723,
+    "location_lng":51.823577
+}
