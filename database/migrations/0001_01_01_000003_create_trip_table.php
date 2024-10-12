@@ -22,7 +22,7 @@ return new class extends Migration
             $table->dateTime('end_time')->nullable();
         });
 
-        Schema::create('trip_users', function (Blueprint $table) {
+        Schema::create('trip_user', function (Blueprint $table) {
             $table->bigInteger('trip_id');
             $table->bigInteger('user_id');
             $table->index(columns: ['trip_id','user_id'], name: 'trip_user_trip_id_user_id_index');
@@ -39,6 +39,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('trips');
-        Schema::dropIfExists('trip_users');
+        Schema::dropIfExists('trip_user');
     }
 };

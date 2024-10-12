@@ -1,10 +1,7 @@
 # TODO
 * Fix start and endtime for trip
-* Add support for adding people to a trip
-    * Support saving these relations in the model
 * Only show trip duration once in and out times are set
 * Support manually specifying as a through trip and setting the exit id
-* Add ability to tag any other cavers as being on the trip ( just by name )
 * Support uploading photos for a trip? Tigris
 * Add support for 'collections'. Lists of caves / cave_systems that you can browse
     * Title
