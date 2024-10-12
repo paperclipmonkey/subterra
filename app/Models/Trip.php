@@ -38,8 +38,8 @@ class Trip extends Model
         return $this->belongsTo(Cave::class, 'exit_cave_id', 'id');
     }
     
-    public function participants(): HasManyThrough
+    public function participants()
     {
-        return $this->hasManyThrough(User::class, TripUser::class, 'trip_id', 'id', 'id', 'user_id');
+        return $this->belongsToMany(User::class);
     }
 }

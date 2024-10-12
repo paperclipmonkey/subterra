@@ -29,6 +29,10 @@ class TripController extends Controller
     {
         $trip = Trip::create($request->all());
         $trip->save();
+        // Add the participant to the trip
+        $participants = $request->all()['participants'];
+        $trip->participants()->attach($participants);
+        
         return new TripResource($trip);
     }
 
