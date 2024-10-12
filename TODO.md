@@ -1,9 +1,18 @@
 # TODO
-
+* Add api endpoint for getting a Trip
 * Only show trip duration once in and out times are set
-* Change data model so trips are to a system
+* Support manually specifying as a through trip and setting the exit id
 * Add ability to tag any other cavers as being on the trip ( just by name )
-* Support uploading photos for a trip? Tigris. 
+* Support uploading photos for a trip? Tigris
+* Add support for 'collections'. Lists of caves / cave_systems that you can browse
+    * Title
+    * Description
+    * Caves
+    e.g. Top 10 Mendip caves every fresher has to do
+         Hardest trips in Yorkshire
+         Ladders ladders everywhere
+    How would a data model for this work? You can favourite a list (A user then has favourites?)
+    And then track your progress through that list?
 
 * Add basic data for 3 caves in 3 regions
 * Add additional info about access to entrances
