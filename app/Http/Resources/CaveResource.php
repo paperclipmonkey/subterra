@@ -17,8 +17,23 @@ class CaveResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'system' => $this->system,
-            'recent_trip_count' => $this->trips()->count(),
+            'description' => $this->description,
+            'length' => $this->length,
+            'depth' => $this->depth,
+            'location' => [
+                'name' => $this->location_name,
+                'country' => $this->location_country,
+                'lat' => $this->location_lat,
+                'lng' => $this->location_lng,
+            ],
+            'system' => [
+                'id' => $this->system->id,
+                'name' => $this->system->name,
+                'description' => $this->system->description,
+                'caves' => $this->system->caves,
+            ],
+            'trips' => $this->trips,
+            'trips_total' => $this->trips()->count(),
         ];
     }
 }

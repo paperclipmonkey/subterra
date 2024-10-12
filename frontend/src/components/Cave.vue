@@ -6,19 +6,36 @@
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
         <v-toolbar-title>{{ cave.name }}</v-toolbar-title>
-        <v-subheader>{{ cave.system }}</v-subheader>
+        <v-subheader>{{ cave.system.name }}</v-subheader>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12">
         <v-card>
           <v-card-title>{{ cave.name }}</v-card-title>
-          <v-card-subtitle>{{ cave.system }}</v-card-subtitle>
+          <v-card-subtitle>{{ cave.system.name }}</v-card-subtitle>
           <v-card-text>
-            <p>{{ cave.description }}</p>
+            <vue-markdown :source="cave.description" />
             <p><strong>Length:</strong> {{ cave.length }}m</p>
             <p><strong>Depth:</strong> {{ cave.depth }}m</p>
-            <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
+            <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location.name }}, {{ cave.location.country }}</a></p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-card>
+          <v-card-title>System</v-card-title>
+          <v-card-text>
+            <v-list>
+              <v-list-item v-for="system_cave in cave.system.caves" :key="id">
+                <v-list-item-content>
+                  <v-list-item-title>{{ system_cave.name }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ system_cave.description }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
           </v-card-text>
         </v-card>
       </v-col>
@@ -56,11 +73,13 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed } from 'vue'
+import VueMarkdown from 'vue-markdown-render'
+
 const route = useRoute()
 
   const googleMapsUrl = computed(() => {
-    return `https://www.google.com/maps/search/?api=1&query=${cave.value.location_lng}%2C${ cave.value.location_lat }`
+    return `https://www.google.com/maps/search/?api=1&query=${cave.value.location.lng}%2C${ cave.value.location.lat }`
   })
   // const cave = ref(
   //   {
@@ -100,17 +119,22 @@ const route = useRoute()
   const cave = ref({
     name: '',
     description: '',
-    system: '',
+    system: {
+      name: '',
+      description: '',
+    },
     length: '',
     depth: '',
-    location_name: '',
-    location_country: '',
-    location_lat: 0,
-    location_lng: 0,
+    location: {
+      name: '',
+      country: '',
+      lat: 0,
+      lng: 0,
+    },
     trips: []
   })
   onMounted(async () => {
     const response = await fetch(`/api/caves/${route.params.id}`)
-    cave.value = await response.json()
+    cave.value = (await response.json()).data
   })
 </script>

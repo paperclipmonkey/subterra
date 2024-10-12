@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCaveRequest;
 use App\Http\Requests\UpdateCaveRequest;
+use App\Http\Resources\CaveResource;
 use App\Models\Cave;
 use Request;
 
@@ -30,7 +31,7 @@ class CaveController extends Controller
      */
     public function show(Cave $cave)
     {
-        return $cave;
+        return new CaveResource($cave);
     }
 
     /**

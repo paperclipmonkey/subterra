@@ -13,6 +13,7 @@
     "moment": "^2.30.1",
     "roboto-fontface": "*",
     "vue": "^3.4.31",
+    "vue-markdown-render": "^2.2.1",
     "vuetify": "^3.6.11"
   },
   "devDependencies": {
