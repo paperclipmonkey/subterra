@@ -16,10 +16,16 @@
 
     <v-data-table
       :headers="headers"
-      :items="caves"
+      :items="trips"
       :search="search"
       hide-default-footer
-    ></v-data-table>
+    >
+    <template v-slot:item.name="{ item, value }">
+      <v-chip :to="{name: '/trip/[id]', params: {id: item.id}}">
+        {{ value }}
+      </v-chip>
+    </template>
+  </v-data-table>
   </v-card>
 </template>
 
@@ -27,39 +33,14 @@
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
-    { title: 'Length', key: 'length' },
+    { title: 'end time', key: 'end_time' },
+    { title: 'system', key: 'system.name' },
+    { title: 'entrance', key: 'entrance.name' }
   ])
 
-  const caves = ref([
-    {
-      name: 'Carlsbad Caverns',
-      length: '33.5 miles',
-      depth: '1,597 feet',
-      location: 'New Mexico'
-    },
-    {
-      name: 'Mammoth Cave',
-      length: '400 miles',
-      depth: '456 feet',
-      location: 'Kentucky'
-    },
-    {
-      name: 'Lechuguilla Cave',
-      length: '138.3 miles',
-      depth: '1,604 feet',
-      location: 'New Mexico'
-    },
-    {
-      name: 'Jewel Cave',
-      length: '202.6 miles',
-      depth: '669 feet',
-      location: 'South Dakota'
-    },
-    {
-      name: 'Wind Cave',
-      length: '149.5 miles',
-      depth: '723 feet',
-      location: 'South Dakota'
-    }
-  ])
+  const trips = ref([])
+  onMounted(async () => {
+    const response = await fetch(`/api/trips`)
+    trips.value = (await response.json()).data
+  })
 </script>

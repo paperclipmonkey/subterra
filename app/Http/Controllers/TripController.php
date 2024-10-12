@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateCaveRequest;
+use App\Http\Requests\StoreTripRequest;
 use App\Http\Resources\TripResource;
 use App\Models\Trip;
 
@@ -13,7 +14,12 @@ class TripController extends Controller
      */
     public function index()
     {
-        return Trip::all();
+        return TripResource::collection(Trip::all());
+    }
+
+    public function indexMe()
+    {
+        return Trip::all()->where('user_id', auth()->id());
     }
 
     /**
@@ -21,7 +27,9 @@ class TripController extends Controller
      */
     public function store(StoreTripRequest $request)
     {
-        Trip::create($request->all())->save();
+        $trip = Trip::create($request->all());
+        $trip->save();
+        return new TripResource($trip);
     }
 
     /**

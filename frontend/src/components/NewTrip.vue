@@ -16,19 +16,27 @@
         :items="caves"
         item-title="name"
         item-value="id"
-        v-model="trip.entryLocation"
+        v-model="trip.entrance_cave_id"
+      ></v-autocomplete>
+      <v-autocomplete
+        label="Participants"
+        :items="users"
+        item-title="name"
+        item-value="id"
+        multiple
+        v-model="trip.participants"
       ></v-autocomplete>
       <template v-if="tripEntryLocation && caves[tripEntryLocation].system">
       Was this trip a through trip? 
     </template>
       <v-text-field
-        v-model="tripDate"
+        v-model="trip.tripDate"
         label="Date"
         type="date"
         required
       ></v-text-field>
       <v-text-field
-        v-model="entryTime"
+        v-model="trip.entryTime"
         label="Entry time"
         type="time"
         required></v-text-field>
@@ -45,36 +53,57 @@
 
 <script setup>
   import moment from 'moment'
-  import { reactive, ref } from 'vue';
+  import { reactive, ref } from 'vue'
+  const router = useRouter()
   const trip = reactive({
     name: '',
     description: '',
-    entryLocation: '',
-    exitLocation: '',
+    entrance_cave_id: '',
+    exit_cave_id: '',
     date: '',
     entryTime: '',
     exitTime: '',
+    cave_system_id: 1
   })
-  const tripName = reactive('')
-  const tripEntryLocation = reactive('')
-  const tripExitLocation = reactive('')
-  const tripDate = reactive('')
-  const entryTime = ref('')
-  const exitTime = ref('')
+
   const caves = ref([])
   onMounted(async () => {
     const response = await fetch('/api/caves')
     caves.value = await response.json()
   })
 
+  const users = ref([])
+  onMounted(async () => {
+    const response = await fetch('/api/users')
+    users.value = (await response.json()).data
+  })
+
   const tripDuration = computed(() => {
-    console.log(entryTime, exitTime)
-    const entry = moment(entryTime.value, 'HH:mm')
-    const exit = moment(exitTime.value, 'HH:mm')
+    console.log(trip.entryTime, trip.exitTime)
+    const entry = moment(trip.entryTime.value, 'HH:mm')
+    const exit = moment(trip.exitTime.value, 'HH:mm')
     return exit.diff(entry, 'minutes')
   })
   
-  const submitForm = () => {
+  const submitForm = async () => {
     console.log('submitting form')
+    console.log(trip)
+    trip.exit_cave_id = trip.entrance_cave_id
+    // trip.value.system_id = caves.value[this.trip.entryLocation].system.id
+    const response = await fetch('/api/trips', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(trip)
+    })
+    if (response.ok) {
+      console.log('trip saved')
+      const savedTrip = (await response.json()).data;
+      console.log(savedTrip)
+      router.push({ name: '/trip/[id]', params: { id: savedTrip.id } });
+    } else {
+      console.error('failed to save trip')
+    }
   }
 </script>
