@@ -1,26 +1,52 @@
 <template>
-  <div class="profile">
-    <img :src="profile.photo" alt="Profile Photo" />
-    <h1>{{ profile.name }}</h1>
-    <p>ID: {{ profile.id }}</p>
-    <div class="stats">
-      <p>Trips this month: {{ profile.stats.tripsMonth }}</p>
-      <p>Total trips: {{ profile.stats.tripsTotal }}</p>
-      <p>Participants: {{ profile.stats.participants }}</p>
-    </div>
-    <div class="tags">
-      <h3>Tags:</h3>
-      <ul>
-        <v-chip v-for="tag in profile.tags" :key="tag">{{ tag }}</v-chip>
-      </ul>
-    </div>
-    <div class="clubs">
-      <h3>Clubs:</h3>
-      <ul>
-        <v-chip v-for="club in profile.clubs" :key="club.id">{{ club.name }}</v-chip>
-      </ul>
-    </div>
-  </div>
+  <v-container class="pa-4">
+    <v-card class="profile">
+      <v-card-title>
+        <v-avatar size="64">
+          <img :src="profile.photo" alt="Profile Photo" />
+        </v-avatar>
+        <div class="profile-info">
+          <h2>{{ profile.name }}</h2>
+          <p>ID: {{ profile.id }}</p>
+        </div>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-list two-line>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title>Trips this month</v-list-item-title>
+            <v-list-item-subtitle>{{ profile.stats.tripsMonth }}</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title>Total trips</v-list-item-title>
+            <v-list-item-subtitle>{{ profile.stats.tripsTotal }}</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title>Participants</v-list-item-title>
+            <v-list-item-subtitle>{{ profile.stats.participants }}</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+      <v-divider></v-divider>
+      <div class="tags">
+        <h3>Tags:</h3>
+        <v-chip-group>
+          <v-chip v-for="tag in profile.tags" :key="tag" outlined>{{ tag }}</v-chip>
+        </v-chip-group>
+      </div>
+      <v-divider></v-divider>
+      <div class="clubs">
+        <h3>Clubs:</h3>
+        <v-chip-group>
+          <v-chip v-for="club in profile.clubs" :key="club.id" outlined>{{ club.name }}</v-chip>
+        </v-chip-group>
+      </div>
+    </v-card>
+  </v-container>
 </template>
 
 <script setup>
