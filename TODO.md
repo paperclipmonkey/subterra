@@ -1,8 +1,13 @@
 # TODO
 * Fix start and endtime for trip
 * Only show trip duration once in and out times are set
+* Add real trip with Oli and Alaisdair
 * Support manually specifying as a through trip and setting the exit id
+* Add loading animation for basic pages
 * Support uploading photos for a trip? Tigris
+* Add global scope for public and private trips
+* Add hidden pages for adding new caves / cave systems
+* Add signup with Google support
 * Add support for 'collections'. Lists of caves / cave_systems that you can browse
     * Title
     * Description
@@ -12,8 +17,10 @@
          Ladders ladders everywhere
     How would a data model for this work? You can favourite a list (A user then has favourites?)
     And then track your progress through that list?
-* Add global scope for public and private trips
 
+* Add access info for cave entrances (use icons)
+* Add tags for caves to show additional information
+* Support resizing photos with image intervention
 * Add basic data for 3 caves in 3 regions
 * Add additional info about access to entrances
 * Add concept of systems

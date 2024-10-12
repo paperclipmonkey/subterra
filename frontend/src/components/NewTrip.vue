@@ -18,6 +18,18 @@
         item-value="id"
         v-model="trip.entrance_cave_id"
       ></v-autocomplete>
+      <template v-if="system_entrances_count > 1">
+        <v-checkbox v-model="throughTrip" label="Through trip"></v-checkbox>
+        <template v-if="throughTrip">
+          <v-autocomplete
+            label="Exit"
+            :items="caves.filter(cave => cave.cave_system_id === cave_system_id)"
+            item-title="name"
+            item-value="id"
+            v-model="trip.exit_cave_id"
+          ></v-autocomplete>
+          </template>
+      </template>
       <v-autocomplete
         label="Participants"
         :items="users"
@@ -53,7 +65,7 @@
 
 <script setup>
   import moment from 'moment'
-  import { reactive, ref } from 'vue'
+  import { computed, reactive, ref } from 'vue'
   const router = useRouter()
   const trip = reactive({
     name: '',
@@ -63,13 +75,25 @@
     date: '',
     entryTime: '',
     exitTime: '',
-    cave_system_id: 1
+    // cave_system_id: 1
   })
+
+  const throughTrip = ref(false)
 
   const caves = ref([])
   onMounted(async () => {
     const response = await fetch('/api/caves')
     caves.value = await response.json()
+  })
+
+  const cave_system_id = computed(() => {
+    const found = caves.value.find(cave => cave.id === trip.entrance_cave_id)
+    return found ? found.cave_system_id : null
+  })
+
+  const system_entrances_count = computed(() => {
+    if(!cave_system_id.value) return 0
+    return caves.value.filter((cave => cave.cave_system_id === cave_system_id.value)).length
   })
 
   const users = ref([])
