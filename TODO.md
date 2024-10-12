@@ -1,5 +1,10 @@
 # TODO
 
+* Only show trip duration once in and out times are set
+* Change data model so trips are to a system
+* Add ability to tag any other cavers as being on the trip ( just by name )
+* Support uploading photos for a trip? Tigris. 
+
 * Add basic data for 3 caves in 3 regions
 * Add additional info about access to entrances
 * Add concept of systems

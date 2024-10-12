@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Trip;
 
 class Cave extends Model
 {
@@ -23,8 +25,13 @@ class Cave extends Model
         // $table->foreignId('cave_system_id')->nullable()->constrained('cave_systems', 'id');
     ];
 
-    public function user(): BelongsTo
+    public function system(): BelongsTo
     {
-        return $this->belongsTo(Cave::class);
+        return $this->belongsTo(CaveSystem::class,'cave_system_id', 'id');
+    }
+
+    public function trips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'entrance_cave_id');
     }
 }
