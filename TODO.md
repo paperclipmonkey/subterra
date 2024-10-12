@@ -1,5 +1,7 @@
 # TODO
-* Add api endpoint for getting a Trip
+* Fix start and endtime for trip
+* Add support for adding people to a trip
+    * Support saving these relations in the model
 * Only show trip duration once in and out times are set
 * Support manually specifying as a through trip and setting the exit id
 * Add ability to tag any other cavers as being on the trip ( just by name )
@@ -13,6 +15,7 @@
          Ladders ladders everywhere
     How would a data model for this work? You can favourite a list (A user then has favourites?)
     And then track your progress through that list?
+* Add global scope for public and private trips
 
 * Add basic data for 3 caves in 3 regions
 * Add additional info about access to entrances

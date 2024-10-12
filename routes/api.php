@@ -19,4 +19,12 @@ Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']
 
 Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
 
+Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe']);
+
+Route::get('/trips/', [App\Http\Controllers\TripController::class, 'index']);
+
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);
+
+
+# Users
+Route::get('/users/', [App\Http\Controllers\UserController::class, 'index']);
