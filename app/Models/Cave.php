@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Trip;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Cave extends Model
 {
@@ -32,6 +33,6 @@ class Cave extends Model
 
     public function trips(): HasMany
     {
-        return $this->hasMany(Trip::class, 'entrance_cave_id');
+        return $this->hasMany(Trip::class, 'cave_system_id', 'cave_system_id');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\TripResource;
 
 class CaveResource extends JsonResource
 {
@@ -32,8 +33,7 @@ class CaveResource extends JsonResource
                 'description' => $this->system->description,
                 'caves' => $this->system->caves,
             ],
-            'trips' => $this->trips,
-            'trips_total' => $this->trips()->count(),
+            'trips' => TripResource::collection($this->trips),
         ];
     }
 }

@@ -64,7 +64,7 @@
             <v-list>
               <v-list-item v-for="trip in cave.trips" :key="trip.datetime">
                 <v-list-item-content>
-                  <v-list-item-title><RouterLink :to="{name: '/trip/[id]', params: {id: trip.id}}">{{ trip.name }}</RouterLink></v-list-item-title>
+                  <v-list-item-title>{{ trip.name }}</v-list-item-title>
                   <v-list-item-subtitle>{{ moment(trip.end_time).fromNow() }}</v-list-item-subtitle>
                   <v-list-item-subtitle>{{ trip.description }}</v-list-item-subtitle>
                   <v-list-item-subtitle>Duration: {{ moment(trip.end_time).diff(trip.start_time, 'hours') }} hours</v-list-item-subtitle>
@@ -147,7 +147,7 @@ const route = useRoute()
     trips: []
   })
   onMounted(async () => {
-    const response = await fetch(`/api/caves/${route.params.id}`)
-    cave.value = (await response.json()).data
+    const response = await fetch(`/api/trips/${route.params.id}`)
+    trip.value = (await response.json()).data
   })
 </script>

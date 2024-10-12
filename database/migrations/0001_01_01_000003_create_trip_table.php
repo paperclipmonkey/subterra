@@ -14,13 +14,15 @@ return new class extends Migration
         Schema::create('trips', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->text('description')->nullable();
+            $table->foreignId('cave_system_id')->constrained('cave_systems', 'id');
             $table->foreignId('entrance_cave_id')->constrained('caves', 'id');
             $table->foreignId('exit_cave_id')->constrained('caves', 'id');
             $table->dateTime('start_time')->nullable();
             $table->dateTime('end_time')->nullable();
         });
 
-        Schema::create('trip_user', function (Blueprint $table) {
+        Schema::create('trip_users', function (Blueprint $table) {
             $table->bigInteger('trip_id');
             $table->bigInteger('user_id');
             $table->index(columns: ['trip_id','user_id'], name: 'trip_user_trip_id_user_id_index');
@@ -36,7 +38,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('trip');
-        Schema::dropIfExists('trip_user');
+        Schema::dropIfExists('trips');
+        Schema::dropIfExists('trip_users');
     }
 };

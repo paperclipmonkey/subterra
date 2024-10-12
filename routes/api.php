@@ -15,3 +15,8 @@ Route::get('/caves', function (Request $request) {
 Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store']);
 
 Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
+
+
+Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
+
+Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);
