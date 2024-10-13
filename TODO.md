@@ -1,5 +1,8 @@
 # TODO
 * Show list of cave and system tags on cave list (Return as part of Resource)
+* Add profile endpoints
+    * /me
+    * /id
 * Link from Participants to their profiles
 * Run migration to add cascade
 * Editing a trip
