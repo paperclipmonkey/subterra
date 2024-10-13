@@ -39,7 +39,7 @@
                 <v-list-item-content>
                   <!-- <v-list-item-subtitle> -->
                     <v-chip v-for="participant in trip.participants" :key="participant.id" class="ma-1">
-                      {{ participant.name }}
+                      <router-link :to="{name: '/profile/[id]', params: {id: participant.id}}">{{ participant.name }}</router-link>
                     </v-chip>
                   <!-- </v-list-item-subtitle> -->
                 </v-list-item-content>
@@ -65,7 +65,6 @@
 
 <script setup>
 import moment from 'moment'
-import { computed } from 'vue'
 import VueMarkdown from 'vue-markdown-render'
 import { useRouter, useRoute } from 'vue-router'
 

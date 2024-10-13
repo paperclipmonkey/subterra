@@ -7,27 +7,26 @@
         </v-avatar>
         <div class="profile-info">
           <h2>{{ profile.name }}</h2>
-          <p>ID: {{ profile.id }}</p>
         </div>
       </v-card-title>
       <v-divider></v-divider>
       <v-list two-line>
         <v-list-item>
           <v-list-item-content>
-            <v-list-item-title>Trips this month</v-list-item-title>
-            <v-list-item-subtitle>{{ profile.stats.tripsMonth }}</v-list-item-subtitle>
+            <v-list-item-title>Total caves visited</v-list-item-title>
+            <v-list-item-subtitle>{{ profile.stats.caves }}</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
         <v-list-item>
           <v-list-item-content>
             <v-list-item-title>Total trips</v-list-item-title>
-            <v-list-item-subtitle>{{ profile.stats.tripsTotal }}</v-list-item-subtitle>
+            <v-list-item-subtitle>{{ profile.stats.trips }}</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
         <v-list-item>
           <v-list-item-content>
-            <v-list-item-title>Participants</v-list-item-title>
-            <v-list-item-subtitle>{{ profile.stats.participants }}</v-list-item-subtitle>
+            <v-list-item-title>Time spent underground</v-list-item-title>
+            <v-list-item-subtitle>{{ profile.stats.duration }} minutes</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -50,26 +49,22 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 const profile = ref({
-  "name": "John Doe",
-  "id": 3211,
-  "photo": "/profile/3211.png",
-  "stats": {
-    "tripsMonth": 11,
-    "tripsTotal": 34,
-    "participants": 5,
-  },
-  "tags": ['digging', 'tourist', 'conservation'],
-  "clubs": [
-    {
-      name: "BEC",
-      id: 1
-    },
-    {
-      name: "WCC",
-      id: 2
-    }
-  ],
+  "name": "",
+  "id": 0,
+  "photo": "",
+  "stats": {},
+  "tags": [],
+  "clubs": [],
+})
+
+onMounted(async () => {
+  const response = await fetch(`/api/users/${route.params.id}`)
+  profile.value = (await response.json()).data
 })
 </script>

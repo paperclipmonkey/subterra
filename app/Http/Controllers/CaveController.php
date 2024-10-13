@@ -6,7 +6,6 @@ use App\Http\Requests\StoreCaveRequest;
 use App\Http\Requests\UpdateCaveRequest;
 use App\Http\Resources\CaveResource;
 use App\Models\Cave;
-use Request;
 
 class CaveController extends Controller
 {
@@ -15,7 +14,7 @@ class CaveController extends Controller
      */
     public function index()
     {
-        return Cave::all();
+        return CaveResource::collection(Cave::all());
     }
 
     /**
@@ -45,8 +44,8 @@ class CaveController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Cave $cave)
-    {
-        Cave::destroy($cave);
-    }
+    // public function destroy(Cave $cave)
+    // {
+    //     Cave::destroy($cave);
+    // }
 }

@@ -32,7 +32,12 @@
     </template>
     <template v-slot:item.location="{ item }">
       <v-chip>
-        {{ item.location_name }}, {{ item.location_country }}
+        {{ item.location.name }}, {{ item.location.country }}
+      </v-chip>
+    </template>
+    <template v-slot:item.tags="{ value }">
+      <v-chip v-for="tag in value" :key="tag.tag" class="ma-1">
+        <span :title="tag.description">{{ tag.tag }}</span>
       </v-chip>
     </template>
   </v-data-table>
@@ -52,6 +57,6 @@
   const caves = ref([])
   onMounted(async () => {
     const response = await fetch('/api/caves')
-    caves.value = await response.json()
+    caves.value = (await response.json()).data
   })
 </script>
