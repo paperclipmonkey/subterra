@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTripRequest;
 use App\Http\Resources\TripResource;
 use App\Models\Trip;
+use Illuminate\Support\Facades\Storage;
 
 class TripController extends Controller
 {
@@ -31,6 +32,16 @@ class TripController extends Controller
         // Add the participant to the trip
         $participants = $request->all()['participants'];
         $trip->participants()->attach($participants);
+
+        // Save the media from the trip to the media filesystem
+        $media = $request->all()['media'];
+        foreach ($media as $file) {
+            $fileData = explode(',', $file['data']);
+            $decodedData = base64_decode($fileData[1]);
+            $filePath = 'media/' . $file['filename'];
+            Storage::disk('media')->put($filePath, $decodedData);
+            // $trip->media()->create(['path' => $filePath]);
+        }
 
         return new TripResource($trip);
     }
