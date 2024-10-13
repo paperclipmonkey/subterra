@@ -3,10 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
 Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
 Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store']);
 Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
@@ -20,4 +16,13 @@ Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe'])
 
 # Users
 Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index']);
+
+Route::get('/users/me', function (Request $request) {
+    if($request->user()) {
+        return $request->user();
+    } else {
+        return abort(400, 'No user logged in');
+    }
+});
+
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show']);

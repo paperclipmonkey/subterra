@@ -27,6 +27,6 @@ class GoogleLoginController extends Controller
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        return redirect('http://localhost:3000');
     }
 }
