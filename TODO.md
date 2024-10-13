@@ -8,7 +8,8 @@ What is MVP
     * See your own profile
         * Support logging out
 * Edit a trip
-    * Support editing a trip that you were on
+    * Fix JS data structure
+    * Add PUT support to Controller
 
 
 * Add filters section to caves list page
