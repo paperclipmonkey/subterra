@@ -24,6 +24,7 @@ Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe'])
 Route::get('/trips/', [App\Http\Controllers\TripController::class, 'index']);
 
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);
+Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
 
 
 # Users

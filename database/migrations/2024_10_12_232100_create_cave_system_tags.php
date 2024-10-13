@@ -24,8 +24,8 @@ return new class extends Migration
             $table->index(columns: ['cave_system_id','tag_id'], name: 'cave_system_tag_cave_system_id_tag_id_index');
             $table->index(columns: ['tag_id','cave_system_id'], name: 'cave_system_tag_tag_id_cave_system_id_index');
 
-            $table->foreign('cave_system_id')->references('id')->on('cave_systems');
-            $table->foreign('tag_id')->references('id')->on('tags');
+            $table->foreign('cave_system_id')->references('id')->on('cave_systems')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
         });
 
         Schema::create('cave_tag', function (Blueprint $table) {
@@ -34,8 +34,8 @@ return new class extends Migration
             $table->index(columns: ['cave_id','tag_id'], name: 'cave_tag_cave_id_tag_id_index');
             $table->index(columns: ['tag_id','cave_id'], name: 'cave_tag_tag_id_cave_id_index');
 
-            $table->foreign('cave_id')->references('id')->on('caves');
-            $table->foreign('tag_id')->references('id')->on('tags');
+            $table->foreign('cave_id')->references('id')->on('caves')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
         });
     }
 
