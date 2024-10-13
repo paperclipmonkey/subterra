@@ -1,5 +1,7 @@
 <template>
   <v-container class="pa-4">
+    <a href="/api/google/redirect" class="btn btn-primary"> Login with Google </a>
+
     <v-card class="profile">
       <v-card-title>
         <v-avatar size="64">
