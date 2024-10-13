@@ -35,4 +35,9 @@ class Cave extends Model
     {
         return $this->hasMany(Trip::class, 'cave_system_id', 'cave_system_id');
     }
+
+    public function tags () 
+    {
+        return $this->belongsToMany(Tag::class);
+    }
 }

@@ -39,25 +39,49 @@
         v-model="trip.participants"
       ></v-autocomplete>
       <template v-if="tripEntryLocation && caves[tripEntryLocation].system">
-      Was this trip a through trip? 
-    </template>
-      <v-text-field
-        v-model="trip.tripDate"
-        label="Date"
-        type="date"
-        required
-      ></v-text-field>
-      <v-text-field
-        v-model="trip.entryTime"
-        label="Entry time"
-        type="time"
-        required></v-text-field>
-      <v-text-field
-        v-model="exitTime"
-        label="Exit time"
-        type="time"
-        required></v-text-field>
-      {{ tripDuration }} minutes
+        Was this trip a through trip? 
+      </template>
+      <v-row>
+        <v-col cols="6">
+          <v-text-field
+            v-model="tripStartDate"
+            label="Date"
+            type="date"
+            required
+          ></v-text-field>
+        </v-col>
+        <v-col cols="6">
+          <v-text-field
+            v-model="tripStartTime"
+            label="Entry time"
+            type="time"
+            required>
+          </v-text-field>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="6">
+          <v-text-field
+            v-model="tripDurationHours"
+            label="Duration (hours)"
+            type="number"
+            min="0"
+            required
+          ></v-text-field>
+        </v-col>
+        <v-col cols="6">
+          <v-text-field
+            v-model="tripDurationMinutes"
+            label="Duration (minutes)"
+            type="number"
+            min="0"
+            max="59"
+            required
+          ></v-text-field>
+        </v-col>
+      </v-row>
+      {{ start_time }}
+      {{ end_time }}
       <v-btn @click="submitForm">Save</v-btn>
     </v-form>
   </v-container>
@@ -73,10 +97,15 @@
     entrance_cave_id: '',
     exit_cave_id: '',
     date: '',
-    entryTime: '',
-    exitTime: '',
+    start_time: '',
+    end_time: '',
     // cave_system_id: 1
   })
+
+  const tripStartDate = ref(moment().format('YYYY-MM-DD'))
+  const tripStartTime = ref(moment().format('HH:mm'))
+  const tripDurationHours = ref(4)
+  const tripDurationMinutes = ref(0)
 
   const throughTrip = ref(false)
 
@@ -102,18 +131,23 @@
     users.value = (await response.json()).data
   })
 
-  const tripDuration = computed(() => {
-    console.log(trip.entryTime, trip.exitTime)
-    const entry = moment(trip.entryTime.value, 'HH:mm')
-    const exit = moment(trip.exitTime.value, 'HH:mm')
-    return exit.diff(entry, 'minutes')
+  const start_time = computed(() => {
+    const entry = moment(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm')
+    return entry
+  })
+
+  const end_time = computed(() => {
+    const exit = start_time.value.clone()
+    exit.add(tripDurationHours.value, 'hours')
+    exit.add(tripDurationMinutes.value, 'minutes')
+    return exit
   })
   
   const submitForm = async () => {
-    console.log('submitting form')
-    console.log(trip)
     trip.exit_cave_id = trip.entrance_cave_id
-    // trip.value.system_id = caves.value[this.trip.entryLocation].system.id
+    trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
+    trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm')
+    trip.cave_system_id = cave_system_id.value
     const response = await fetch('/api/trips', {
       method: 'POST',
       headers: {
