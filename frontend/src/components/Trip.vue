@@ -54,7 +54,7 @@
         <v-card>
           <v-card-title>Actions</v-card-title>
           <v-card-text>
-            <v-btn color="primary" @click="$router.push({name: '/trip/[id]/edit', params: {id: trip.id}})">Edit</v-btn>
+            <v-btn color="primary" @click="$router.push({name: '/trip/[id].edit', params: {id: trip.id}})">Edit</v-btn>
             <v-btn color="error" @click="deleteTrip">Delete</v-btn>
           </v-card-text>
         </v-card>

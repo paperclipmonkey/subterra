@@ -88,7 +88,10 @@
   import moment from 'moment'
   import { computed, reactive, ref } from 'vue'
   const router = useRouter()
-  const trip = reactive({
+  const route = useRoute()
+
+  let trip = reactive({
+    id: -1,
     name: '',
     description: '',
     entrance_cave_id: '',
@@ -97,6 +100,13 @@
     start_time: '',
     end_time: '',
     // cave_system_id: 1
+  })
+
+  onMounted(async () => {
+    if(route.params.id) {
+      const response = await fetch(`/api/trips/${route.params.id}`)
+      trip = (await response.json()).data
+    }
   })
 
   const tripStartDate = ref(moment().format('YYYY-MM-DD'))
@@ -145,6 +155,30 @@
     trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
     trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm')
     trip.cave_system_id = cave_system_id.value
+    if(route.params.id) {
+      await updateTrip(trip)
+    } else {
+      await saveTrip(trip)
+    }
+  }
+
+  const updateTrip = async (trip) => {
+    const response = await fetch(`/api/trips/${trip.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(trip)
+    })
+    if (response.ok) {
+      console.log('trip updated')
+      router.push({ name: '/trip/[id]', params: { id: trip.id } });
+    } else {
+      console.error('failed to update trip')
+    }
+  }
+
+  const saveTrip = async (trip) => {
     const response = await fetch('/api/trips', {
       method: 'POST',
       headers: {

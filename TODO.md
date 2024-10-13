@@ -9,7 +9,6 @@ What is MVP
         * Support logging out
 * Edit a trip
     * Support editing a trip that you were on
-* Fix Vue warnings in Console
 
 
 * Add filters section to caves list page
