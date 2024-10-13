@@ -9,6 +9,7 @@ class Tag extends Model
     protected $fillable = [
         'tag',
         'type',
+        'category',
         'description',
     ];
 
