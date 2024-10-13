@@ -1,6 +1,10 @@
 # TODO
-* Add real trip with Oli and Alaisdair
+* Show list of cave and system tags on cave list (Return as part of Resource)
+* Link from Participants to their profiles
+* Run migration to add cascade
+* Editing a trip
 * Support uploading photos for a trip? Tigris
+* Add real trip with Oli and Alaisdair
 * Add global scope for public and private trips
 * Add hidden pages for adding new cave systems / caves
 * Add signup with Google support

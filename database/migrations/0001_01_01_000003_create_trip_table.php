@@ -28,8 +28,8 @@ return new class extends Migration
             $table->index(columns: ['trip_id','user_id'], name: 'trip_user_trip_id_user_id_index');
             $table->index(columns: ['user_id','trip_id'], name: 'trip_user_user_id_trip_id_index');
 
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('trip_id')->references('id')->on('trips');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');
         });
     }
 

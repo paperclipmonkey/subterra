@@ -32,7 +32,7 @@ class TripController extends Controller
         // Add the participant to the trip
         $participants = $request->all()['participants'];
         $trip->participants()->attach($participants);
-        
+
         return new TripResource($trip);
     }
 
@@ -55,8 +55,11 @@ class TripController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Trip $cave)
+    public function destroy(Trip $trip)
     {
-        Trip::destroy($cave);
+        $trip->delete();
+        return response()->json([
+            'message'=> 'Trip deleted successfully'
+        ]);
     }
 }
