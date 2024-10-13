@@ -1,12 +1,8 @@
 # TODO
-* Fix start and endtime for trip
-* Only show trip duration once in and out times are set
 * Add real trip with Oli and Alaisdair
-* Support manually specifying as a through trip and setting the exit id
-* Add loading animation for basic pages
 * Support uploading photos for a trip? Tigris
 * Add global scope for public and private trips
-* Add hidden pages for adding new caves / cave systems
+* Add hidden pages for adding new cave systems / caves
 * Add signup with Google support
 * Add support for 'collections'. Lists of caves / cave_systems that you can browse
     * Title
@@ -18,26 +14,48 @@
     How would a data model for this work? You can favourite a list (A user then has favourites?)
     And then track your progress through that list?
 
-* Add access info for cave entrances (use icons)
-* Add tags for caves to show additional information
-* Support resizing photos with image intervention
-* Add basic data for 3 caves in 3 regions
-* Add additional info about access to entrances
-* Add concept of systems
-* Add systems info to caves page in frontend
-* Support search / filtering of caves list (system, region, access)
+View the profile of other club members
 
-* Add trips api endpoint
-* New trip page submit to endpoint
+* Add ability to click between system entrances from cave system view
+* Add functionality of distance from me to caves search?
+* Remove tag look from things that aren't tags
+* Add tags view to list of caves in response
+* Add view customisation to list of caves?
+* Add tag search to caves list
+* Add ability to switch between list and map view (under search bar?)
+* Add loading animation for pages
+* Add access info for cave entrances (use icons) New table? Or better to do them as tags?
+* Support resizing photos with image intervention
+* Add additional info about access to entrances
+* Support search / filtering of caves list (system, region, access)
 
 * Improve design of cave page
 
 * Add top navigation bar
-
-* Show recent trips and link through to them from Cave info
 
 * Add caves around the Stump as examples
 
 * Add concept of caving regions
 
 * Add Google Login for signups https://medium.com/@mimranisrar6/how-to-add-a-google-login-using-socialite-in-laravel-21f6eebafcec
+
+* Add concept of routes
+    Routes have:
+        * system
+        * tags
+        * difficulty
+        * description
+        * media
+
+Add concept of reference list for 'caves'
+    * isbn / title / page number
+    * url
+
+* Add slug to caves / cave_system
+* Make searches bookmarkable
+* Add cave system name to trip url
+
+Generate stats for individuals so you can see their recent trips and stats
+    * Graph of number of trips they've been on?
+    * Cumulative number of hours underground in the previous year
+        * Give them a moniker based on this. (troglodyte, etc)

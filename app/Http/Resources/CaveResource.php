@@ -21,6 +21,7 @@ class CaveResource extends JsonResource
             'description' => $this->description,
             'length' => $this->length,
             'depth' => $this->depth,
+            'tags' => TagResource::collection($this->tags),
             'location' => [
                 'name' => $this->location_name,
                 'country' => $this->location_country,
@@ -32,6 +33,7 @@ class CaveResource extends JsonResource
                 'name' => $this->system->name,
                 'description' => $this->system->description,
                 'caves' => $this->system->caves,
+                'tags' => TagResource::collection($this->system->tags),
             ],
             'trips' => TripResource::collection($this->trips),
         ];

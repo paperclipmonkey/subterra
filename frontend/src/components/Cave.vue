@@ -16,6 +16,11 @@
           <v-card-subtitle>Entrance</v-card-subtitle>
           <v-card-text>
             <vue-markdown :source="cave.description" />
+            <p> Tags:
+              <v-chip v-for="tag in cave.tags" :key="tag" class="ma-1">
+                {{ tag.tag }}
+              </v-chip>
+            </p>            
             <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location.name }}, {{ cave.location.country }}</a></p>
           </v-card-text>
         </v-card>
@@ -31,6 +36,11 @@
             <vue-markdown :source="cave.description" />
             <p>System:</p>
             <p>{{ cave.system.description }}</p>
+            <p> Tags:
+              <v-chip v-for="tag in cave.system.tags" :key="tag" class="ma-1">
+                {{ tag.tag }}
+              </v-chip>
+            </p>
             <p><strong>Length:</strong> {{ Math.round(cave.length/1000) }} km</p>
             <p><strong>Depth:</strong> {{ cave.depth }} m</p>
             <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location.name }}, {{ cave.location.country }}</a></p>

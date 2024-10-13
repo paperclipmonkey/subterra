@@ -15,4 +15,9 @@ class CaveSystem extends Model
     {
         return $this->hasMany(Cave::class);
     }
+
+    public function tags () 
+    {
+        return $this->belongsToMany(Tag::class);
+    }
 }
