@@ -1,7 +1,7 @@
 # TODO
 What is MVP
 * Create an account
-    * Login / Register
+    * Register
     * See a list of 'my trips'
     * Add trips
         * Default to being on trips you add
