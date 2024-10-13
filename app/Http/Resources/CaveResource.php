@@ -28,13 +28,13 @@ class CaveResource extends JsonResource
                 'lat' => $this->location_lat,
                 'lng' => $this->location_lng,
             ],
-            'system' => [
+            'system' => $this->system ? [
                 'id' => $this->system->id,
                 'name' => $this->system->name,
                 'description' => $this->system->description,
                 'caves' => $this->system->caves,
                 'tags' => TagResource::collection($this->system->tags),
-            ],
+            ] : [],
             'trips' => TripResource::collection($this->trips),
         ];
     }

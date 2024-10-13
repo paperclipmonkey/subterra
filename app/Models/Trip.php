@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Trip extends Model
 {
@@ -18,6 +19,11 @@ class Trip extends Model
         'entrance_cave_id',
         'exit_cave_id',
         // $table->foreignId('cave_system_id')->nullable()->constrained('cave_systems', 'id');
+    ];
+
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
     ];
 
     use HasFactory;
@@ -36,6 +42,13 @@ class Trip extends Model
     public function exit(): BelongsTo
     {
         return $this->belongsTo(Cave::class, 'exit_cave_id', 'id');
+    }
+
+    protected function duration(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value, array $attributes): int => $this->start_time->diffInMinutes($this->end_time),
+        );
     }
     
     public function participants()

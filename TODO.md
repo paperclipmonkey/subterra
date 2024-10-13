@@ -1,16 +1,19 @@
 # TODO
-* Show list of cave and system tags on cave list (Return as part of Resource)
 * Add profile endpoints
     * /me
-    * /id
-* Link from Participants to their profiles
 * Run migration to add cascade
+* Add way of getting trips for a user (filtering on trip endpoint?)
+    * Add list of recent trips they've been on to their profile
 * Editing a trip
 * Support uploading photos for a trip? Tigris
 * Add real trip with Oli and Alaisdair
 * Add global scope for public and private trips
 * Add hidden pages for adding new cave systems / caves
 * Add signup with Google support
+    * Add google developer account
+    * Add support inside Laravel with socialite
+    * Add signup button inside webapp
+* Add Register / login page when the user isn't currently signed up
 * Add support for 'collections'. Lists of caves / cave_systems that you can browse
     * Title
     * Description
