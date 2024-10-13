@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UpdateCaveRequest;
 use App\Http\Requests\StoreTripRequest;
 use App\Http\Resources\TripResource;
 use App\Models\Trip;

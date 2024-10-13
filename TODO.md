@@ -1,4 +1,13 @@
 # TODO
+* Add filters section to caves list page
+    * Add any of the filters
+        * Add tag groups
+            * Location
+            * Challenges
+            * Access
+            * Length (>1km)
+            * Depth
+            * Tackle required
 * Add profile endpoints
     * /me
 * Run migration to add cascade
