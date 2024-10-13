@@ -38,9 +38,6 @@
         multiple
         v-model="trip.participants"
       ></v-autocomplete>
-      <template v-if="tripEntryLocation && caves[tripEntryLocation].system">
-        Was this trip a through trip? 
-      </template>
       <v-row>
         <v-col cols="6">
           <v-text-field
@@ -112,7 +109,7 @@
   const caves = ref([])
   onMounted(async () => {
     const response = await fetch('/api/caves')
-    caves.value = await response.json()
+    caves.value = (await response.json()).data
   })
 
   const cave_system_id = computed(() => {

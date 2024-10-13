@@ -12,22 +12,22 @@
       <v-divider></v-divider>
       <v-list two-line>
         <v-list-item>
-          <v-list-item-content>
+          <div>
             <v-list-item-title>Total caves visited</v-list-item-title>
             <v-list-item-subtitle>{{ profile.stats.caves }}</v-list-item-subtitle>
-          </v-list-item-content>
+          </div>
         </v-list-item>
         <v-list-item>
-          <v-list-item-content>
+          <div>
             <v-list-item-title>Total trips</v-list-item-title>
             <v-list-item-subtitle>{{ profile.stats.trips }}</v-list-item-subtitle>
-          </v-list-item-content>
+          </div>
         </v-list-item>
         <v-list-item>
-          <v-list-item-content>
+          <div>
             <v-list-item-title>Time spent underground</v-list-item-title>
             <v-list-item-subtitle>{{ profile.stats.duration }} minutes</v-list-item-subtitle>
-          </v-list-item-content>
+          </div>
         </v-list-item>
       </v-list>
       <v-divider></v-divider>

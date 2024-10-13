@@ -6,7 +6,7 @@
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
         <v-toolbar-title>{{ trip.name }}</v-toolbar-title>
-        <v-subheader>{{ trip.system.name }}</v-subheader>
+        <span>{{ trip.system.name }}</span>
       </v-col>
     </v-row>
     <v-row>
@@ -36,13 +36,13 @@
           <v-card-text>
             <v-list>
               <v-list-item>
-                <v-list-item-content>
+                <div>
                   <!-- <v-list-item-subtitle> -->
                     <v-chip v-for="participant in trip.participants" :key="participant.id" class="ma-1">
                       <router-link :to="{name: '/profile/[id]', params: {id: participant.id}}">{{ participant.name }}</router-link>
                     </v-chip>
                   <!-- </v-list-item-subtitle> -->
-                </v-list-item-content>
+                </div>
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -54,7 +54,7 @@
         <v-card>
           <v-card-title>Actions</v-card-title>
           <v-card-text>
-            <!-- <v-btn color="primary" @click="$router.push({name: 'edit-trip', params: {id: trip.id}})">Edit</v-btn> -->
+            <v-btn color="primary" @click="$router.push({name: '/trip/[id]/edit', params: {id: trip.id}})">Edit</v-btn>
             <v-btn color="error" @click="deleteTrip">Delete</v-btn>
           </v-card-text>
         </v-card>

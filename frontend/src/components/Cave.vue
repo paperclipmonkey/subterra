@@ -6,7 +6,7 @@
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
         <v-toolbar-title>{{ cave.name }}</v-toolbar-title>
-        <v-subheader>{{ cave.system.name }}</v-subheader>
+        <v-divider>{{ cave.system.name }}</v-divider>
       </v-col>
     </v-row>
     <v-row>
@@ -55,11 +55,11 @@
           <v-card-title>System Entrances</v-card-title>
           <v-card-text>
             <v-list>
-              <v-list-item v-for="system_cave in cave.system.caves" :key="id">
-                <v-list-item-content>
+              <v-list-item v-for="system_cave in cave.system.caves" :key="system_cave.id">
+                <div>
                   <v-list-item-title>{{ system_cave.name }}</v-list-item-title>
                   <v-list-item-subtitle>{{ system_cave.description }}</v-list-item-subtitle>
-                </v-list-item-content>
+                </div>
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -73,7 +73,7 @@
           <v-card-text>
             <v-list>
               <v-list-item v-for="trip in cave.trips" :key="trip.datetime">
-                <v-list-item-content>
+                <div>
                   <v-list-item-title><RouterLink :to="{name: '/trip/[id]', params: {id: trip.id}}">{{ trip.name }}</RouterLink></v-list-item-title>
                   <v-list-item-subtitle>{{ moment(trip.end_time).fromNow() }}</v-list-item-subtitle>
                   <v-list-item-subtitle>{{ trip.description }}</v-list-item-subtitle>
@@ -84,7 +84,7 @@
                       {{ participant.name }}
                     </v-chip>
                   </v-list-item-subtitle>
-                </v-list-item-content>
+                </div>
               </v-list-item>
             </v-list>
           </v-card-text>

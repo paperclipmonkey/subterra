@@ -12,7 +12,7 @@
         <v-icon :icon="item.icon" />
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
-            <span v-bind="attrs" v-on="on">{{ item.title }}</span>
+            <span v-bind="attrs" :v-on="attrs">{{ item.title }}</span>
           </template>
         </v-tooltip>
       </v-btn>
