@@ -1,4 +1,17 @@
 # TODO
+What is MVP
+* Create an account
+    * Login / Register
+    * See a list of 'my trips'
+    * Add trips
+        * Default to being on trips you add
+    * See your own profile
+        * Support logging out
+* Edit a trip
+    * Support editing a trip that you were on
+* Fix Vue warnings in Console
+
+
 * Add filters section to caves list page
     * Add any of the filters
         * Add tag groups
