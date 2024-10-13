@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Trip;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Cave extends Model
 {
@@ -23,7 +22,6 @@ class Cave extends Model
         'location_country',
         'location_lat',
         'location_lng',
-        // $table->foreignId('cave_system_id')->nullable()->constrained('cave_systems', 'id');
     ];
 
     public function system(): BelongsTo

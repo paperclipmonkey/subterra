@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Trip extends Model
@@ -18,7 +17,6 @@ class Trip extends Model
         'cave_system_id',
         'entrance_cave_id',
         'exit_cave_id',
-        // $table->foreignId('cave_system_id')->nullable()->constrained('cave_systems', 'id');
     ];
 
     protected $casts = [
