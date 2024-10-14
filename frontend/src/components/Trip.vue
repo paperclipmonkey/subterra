@@ -58,7 +58,7 @@
               <v-list-item>
                 <div>
                   <!-- <v-list-item-subtitle> -->
-                  <img v-for="media in trip.media" :key="media.filename" :src="'/storage/' + media.filename" alt="filename" />
+                  <img class="media" v-for="media in trip.media" :key="media.filename" :src="'/storage/' + media.filename" alt="filename" />
                   <!-- </v-list-item-subtitle> -->
                 </div>
               </v-list-item>
@@ -124,3 +124,10 @@ const deleteTrip = async () => {
     trip.value = (await response.json()).data
   })
 </script>
+
+<style scoped>
+ .media {
+   max-width: 100%;
+   max-height: 100%;
+ }
+</style>
