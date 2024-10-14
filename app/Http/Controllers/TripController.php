@@ -52,7 +52,7 @@ class TripController extends Controller
             $image = Image::read($fileData[1], [
                 \Intervention\Image\Decoders\DataUriImageDecoder::class,
                 \Intervention\Image\Decoders\Base64ImageDecoder::class,
-            ])->resizeDown(2048, null)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
+            ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
             $filePath = 'media/' . pathinfo($file['filename'], PATHINFO_FILENAME) . '.webp';
             Storage::disk('media')->put($filePath, (string) $image);
             $trip->media()->create(['filename' => $filePath]);
