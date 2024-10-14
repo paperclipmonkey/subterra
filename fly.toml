@@ -33,3 +33,4 @@ console_command = 'php /var/www/html/artisan tinker'
 
 [[vm]]
   size = 'shared-cpu-1x'
+  memory = "512mb"
