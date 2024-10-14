@@ -19,7 +19,7 @@ Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
-        return $request->user();
+        return Response::json(["data"=> $request->user()]);
     } else {
         return abort(400, 'No user logged in');
     }
