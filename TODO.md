@@ -11,7 +11,6 @@ What is MVP
     * Fix JS data structure
     * Add PUT support to Controller
 
-
 * Add filters section to caves list page
     * Add any of the filters
         * Add tag groups
@@ -23,18 +22,19 @@ What is MVP
             * Tackle required
 * Add profile endpoints
     * /me
-* Run migration to add cascade
 * Add way of getting trips for a user (filtering on trip endpoint?)
     * Add list of recent trips they've been on to their profile
-* Editing a trip
 * Add real trip with Oli and Alaisdair
 * Add global scope for public and private trips
+* Add endpoint for CRUD cave_system
+* Add contraint for cave always having cave_system
 * Add hidden pages for adding new cave systems / caves
 * Add signup with Google support
     * Add google developer account
     * Add support inside Laravel with socialite
     * Add signup button inside webapp
 * Add Register / login page when the user isn't currently signed up
+
 * Add support for 'collections'. Lists of caves / cave_systems that you can browse
     * Title
     * Description
