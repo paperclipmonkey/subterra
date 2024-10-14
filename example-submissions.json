@@ -41,3 +41,15 @@
     "location_lat":-3.672723,
     "location_lng":51.823577
 }
+
+{
+	"name": "Ogof Ffynnon Ddu 2",
+    "description": "OFD2 was the second entrance to be found in the OFD system",
+    "length": 59000,
+    "depth": 274,
+    "location_name": "Penwyllt",
+    "location_country": "Wales",
+    "location_lat":-3.652242,
+    "location_lng":51.828402
+}
+
