@@ -89,6 +89,9 @@ export default defineConfig({
     proxy: {
       // string shorthand: http://localhost:5173/foo -> http://localhost:4567/foo
       '/api': 'http://localhost',
+      '/storage': 'http://localhost',
+      '/media': 'http://localhost',
+      'public': 'http://localhost',
     },
   },
   // build: {

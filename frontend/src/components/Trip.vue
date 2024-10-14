@@ -52,6 +52,24 @@
     <v-row>
       <v-col cols="12">
         <v-card>
+          <v-card-title>Media</v-card-title>
+          <v-card-text>
+            <v-list>
+              <v-list-item>
+                <div>
+                  <!-- <v-list-item-subtitle> -->
+                  <img class="media" v-for="media in trip.media" :key="media.filename" :src="media.url" alt="filename" />
+                  <!-- </v-list-item-subtitle> -->
+                </div>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-card>
           <v-card-title>Actions</v-card-title>
           <v-card-text>
             <v-btn color="primary" @click="$router.push({name: '/trip/[id].edit', params: {id: trip.id}})">Edit</v-btn>
@@ -106,3 +124,10 @@ const deleteTrip = async () => {
     trip.value = (await response.json()).data
   })
 </script>
+
+<style scoped>
+ .media {
+   max-width: 100%;
+   max-height: 100%;
+ }
+</style>

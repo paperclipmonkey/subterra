@@ -53,4 +53,9 @@ class Trip extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function media()
+    {
+        return $this->hasMany(TripMedia::class);
+    }
 }

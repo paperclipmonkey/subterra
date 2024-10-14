@@ -21,9 +21,9 @@
       hide-default-footer
     >
     <template v-slot:item.name="{ item, value }">
-      <v-chip :to="{name: '/trip/[id]', params: {id: item.id}}">
+      <router-link :to="{name: '/trip/[id]', params: {id: item.id}}">
         {{ value }}
-      </v-chip>
+      </router-link>
     </template>
   </v-data-table>
   </v-card>

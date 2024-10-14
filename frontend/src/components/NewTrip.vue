@@ -11,6 +11,14 @@
         label="Trip Description"
         required
       ></v-textarea>
+      <v-file-input
+        prepend-icon="mdi-camera"
+        accept="image/*"
+        label="Trip Photos"
+        v-model="trip.media"
+        chips
+        multiple
+      ></v-file-input>
       <v-autocomplete
         label="Location"
         :items="caves"
@@ -23,7 +31,7 @@
         <template v-if="throughTrip">
           <v-autocomplete
             label="Exit"
-            :items="caves.filter(cave => cave.cave_system_id === cave_system_id)"
+            :items="caves.filter(cave => cave.system.id === cave_system_id)"
             item-title="name"
             item-value="id"
             v-model="trip.exit_cave_id"
@@ -94,6 +102,7 @@
     id: -1,
     name: '',
     description: '',
+    media: [],
     entrance_cave_id: '',
     exit_cave_id: '',
     date: '',
@@ -124,12 +133,12 @@
 
   const cave_system_id = computed(() => {
     const found = caves.value.find(cave => cave.id === trip.entrance_cave_id)
-    return found ? found.cave_system_id : null
+    return found ? found.system.id : null
   })
 
   const system_entrances_count = computed(() => {
     if(!cave_system_id.value) return 0
-    return caves.value.filter((cave => cave.cave_system_id === cave_system_id.value)).length
+    return caves.value.filter((cave => cave.system.id === cave_system_id.value)).length
   })
 
   const users = ref([])
@@ -155,6 +164,18 @@
     trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
     trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm')
     trip.cave_system_id = cave_system_id.value
+
+    const convertFileToBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve({ data: reader.result, filename: file.name });
+      reader.onerror = (error) => reject(error);
+      });
+    };
+
+    trip.media = await Promise.all(trip.media.map(file => convertFileToBase64(file)));
+    
     if(route.params.id) {
       await updateTrip(trip)
     } else {
