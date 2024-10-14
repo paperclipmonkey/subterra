@@ -47,7 +47,6 @@ What is MVP
 
 View the profile of other club members
 
-* Add ability to click between system entrances from cave system view
 * Add functionality of distance from me to caves search?
 * Remove tag look from things that aren't tags
 * Add tags view to list of caves in response

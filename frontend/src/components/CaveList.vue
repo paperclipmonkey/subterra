@@ -26,14 +26,12 @@
     </template>
     <template v-slot:item.depth="{ value }"> {{ value }} m</template>
     <template v-slot:item.name="{ item, value }">
-      <v-chip :to="{name: '/cave/[id]', params: {id: item.id}}">
+      <router-link :to="{name: '/cave/[id]', params: {id: item.id}}">
         {{ value }}
-      </v-chip>
+      </router-link>
     </template>
     <template v-slot:item.location="{ item }">
-      <v-chip>
         {{ item.location.name }}, {{ item.location.country }}
-      </v-chip>
     </template>
     <template v-slot:item.tags="{ value }">
       <v-chip v-for="tag in value" :key="tag.tag" class="ma-1">
