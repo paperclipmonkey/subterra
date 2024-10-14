@@ -28,6 +28,8 @@ What is MVP
     * Add list of recent trips they've been on to their profile
 * Editing a trip
 * Support uploading photos for a trip? Tigris
+    * Show media in any trip report (php artisan storage:link)
+    * Check functionality in production with Tigris
 * Add real trip with Oli and Alaisdair
 * Add global scope for public and private trips
 * Add hidden pages for adding new cave systems / caves

@@ -52,6 +52,24 @@
     <v-row>
       <v-col cols="12">
         <v-card>
+          <v-card-title>Media</v-card-title>
+          <v-card-text>
+            <v-list>
+              <v-list-item>
+                <div>
+                  <!-- <v-list-item-subtitle> -->
+                  <img v-for="media in trip.media" :key="media.filename" :src="'/storage/' + media.filename" alt="filename" />
+                  <!-- </v-list-item-subtitle> -->
+                </div>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-card>
           <v-card-title>Actions</v-card-title>
           <v-card-text>
             <v-btn color="primary" @click="$router.push({name: '/trip/[id].edit', params: {id: trip.id}})">Edit</v-btn>
