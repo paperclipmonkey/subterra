@@ -53,7 +53,7 @@ class TripController extends Controller
                 \Intervention\Image\Decoders\DataUriImageDecoder::class,
                 \Intervention\Image\Decoders\Base64ImageDecoder::class,
             ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
-            $filePath = 'media/' . pathinfo($file['filename'], PATHINFO_FILENAME) . '.webp';
+            $filePath = 'media/' . \Illuminate\Support\Str::uuid() . '.webp';
             Storage::disk('media')->put($filePath, (string) $image);
             $trip->media()->create(['filename' => $filePath]);
         }
