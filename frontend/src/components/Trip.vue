@@ -58,7 +58,7 @@
               <v-list-item>
                 <div>
                   <!-- <v-list-item-subtitle> -->
-                  <img class="media" v-for="media in trip.media" :key="media.filename" :src="'/storage/' + media.filename" alt="filename" />
+                  <img class="media" v-for="media in trip.media" :key="media.filename" :src="media.url" alt="filename" />
                   <!-- </v-list-item-subtitle> -->
                 </div>
               </v-list-item>
