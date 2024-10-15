@@ -22,7 +22,12 @@ class TripController extends Controller
 
     public function indexMe()
     {
-        return Trip::all()->where('user_id', auth()->id());
+        $userId = auth()->id();
+        $trips = Trip::whereHas('participants', function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })->get();
+
+        return TripResource::collection($trips);
     }
 
     /**
@@ -36,14 +41,8 @@ class TripController extends Controller
         $participants = $request->all()['participants'];
         $trip->participants()->attach($participants);
 
-        // Save the media from the trip to the media filesystem
-        // foreach ($media as $file) {
-        //     $fileData = explode(',', $file['data']);
-        //     $decodedData = base64_decode($fileData[1]);
-        //     $filePath = 'media/' . $file['filename'];
-        //     Storage::disk('media')->put($filePath, $decodedData);
-        //     // $trip->media()->create(['path' => $filePath]);
-        // }
+        // Ensure the current user is added to the trip
+        // $trip->participants()->attach($request->user());
 
         $media = $request->all()['media'];
         foreach ($media as $file) {

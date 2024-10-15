@@ -6,7 +6,6 @@ What is MVP
     * Add Login with google button to the 'homepage'
 * Create an account
     * Register
-    * See a list of 'my trips'
     * Add trips
         * Default to being on trips you add
     * See your own profile
