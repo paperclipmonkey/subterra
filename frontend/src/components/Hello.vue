@@ -100,17 +100,32 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted } from 'vue'
+import { useAppStore } from '@/stores/app'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const store = useAppStore()
 
   onMounted(() => {
-    google.accounts.id.initialize({
-      client_id: "1062453848042-08ktfa8rv4pe786okrd2dc0k3ls4hksp.apps.googleusercontent.com"
-      // callback: handleCredentialResponse
-    });
-    google.accounts.id.renderButton(
-      document.getElementById("loginWithGoogle"),
-      { theme: "outline", size: "large" }  // customization attributes
-    );
-    // google.accounts.id.prompt(); // also display the One Tap dialog
-  });
+    if(store.user.email) {
+      console.log('User is logged in')
+      router.push({ name: '/trips' })
+    } else {
+      console.log('User is not logged in')
+    }
+    try {
+      google.accounts.id.initialize({
+        client_id: "1062453848042-08ktfa8rv4pe786okrd2dc0k3ls4hksp.apps.googleusercontent.com"
+        // callback: handleCredentialResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("loginWithGoogle"),
+        { theme: "outline", size: "large" }  // customization attributes
+      );
+      // google.accounts.id.prompt(); // also display the One Tap dialog
+    } catch (error) {
+      console.error(error)
+    }
+  })
 </script>

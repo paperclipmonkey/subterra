@@ -36,7 +36,7 @@
     {
       title: 'Profile',
       icon: `mdi-account`,
-      href: '/me',
+      href: '/profile/me',
     },
   ]
 </script>
