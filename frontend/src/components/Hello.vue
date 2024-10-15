@@ -79,20 +79,7 @@
       </v-row>
       <v-row>
         <v-col>
-          <div id="loginWithGoogle"></div>
-          <div id="g_id_onload"
-            data-client_id="1062453848042-08ktfa8rv4pe786okrd2dc0k3ls4hksp.apps.googleusercontent.com"
-            data-login_uri="http://localhost:3000/api/google/redirect"
-            data-auto_prompt="true">
-          </div>
-          <div class="g_id_signin"
-            data-type="standard"
-            data-size="large"
-            data-theme="outline"
-            data-text="sign_in_with"
-            data-shape="rectangular"
-            data-logo_alignment="left">
-          </div>
+          <a href="/api/google/redirect" class="btn btn-primary"> Login with Google </a>
         </v-col>
       </v-row>
     </v-responsive>
@@ -113,19 +100,6 @@ const store = useAppStore()
       router.push({ name: '/trips' })
     } else {
       console.log('User is not logged in')
-    }
-    try {
-      google.accounts.id.initialize({
-        client_id: "1062453848042-08ktfa8rv4pe786okrd2dc0k3ls4hksp.apps.googleusercontent.com"
-        // callback: handleCredentialResponse
-      });
-      google.accounts.id.renderButton(
-        document.getElementById("loginWithGoogle"),
-        { theme: "outline", size: "large" }  // customization attributes
-      );
-      // google.accounts.id.prompt(); // also display the One Tap dialog
-    } catch (error) {
-      console.error(error)
     }
   })
 </script>

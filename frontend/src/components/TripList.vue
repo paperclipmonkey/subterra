@@ -18,6 +18,7 @@
       :headers="headers"
       :items="trips"
       :search="search"
+      :items-per-page="10000"
       hide-default-footer
     >
     <template v-slot:item.name="{ item, value }">

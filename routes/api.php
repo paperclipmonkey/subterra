@@ -27,4 +27,9 @@ Route::get('/users/me', function (Request $request) {
     }
 });
 
+Route::get('logout', function (Request $request) {
+    Auth::logout();
+    return redirect('/');
+});
+
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show']);
