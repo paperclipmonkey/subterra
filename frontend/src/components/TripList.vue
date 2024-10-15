@@ -30,6 +30,8 @@
 </template>
 
 <script setup>
+  import { fetchWithAuth } from '@/stores/getData';
+  
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
@@ -40,7 +42,7 @@
 
   const trips = ref([])
   onMounted(async () => {
-    const response = await fetch(`/api/me/trips`)
+    const response = await fetchWithAuth(`/api/me/trips`)
     trips.value = (await response.json()).data
   })
 </script>

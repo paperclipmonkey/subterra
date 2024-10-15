@@ -41,7 +41,7 @@ class TripController extends Controller
         $participants = $request->all()['participants'];
         $trip->participants()->attach($participants);
 
-        // Ensure the current user is added to the trip
+        // TODO Ensure the current user is added to the trip
         // $trip->participants()->attach($request->user());
 
         $media = $request->all()['media'];
