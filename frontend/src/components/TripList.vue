@@ -40,7 +40,7 @@
 
   const trips = ref([])
   onMounted(async () => {
-    const response = await fetch(`/api/trips`)
+    const response = await fetch(`/api/me/trips`)
     trips.value = (await response.json()).data
   })
 </script>
