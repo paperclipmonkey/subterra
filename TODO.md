@@ -1,5 +1,9 @@
 # TODO
 What is MVP
+* Create an initial page which just shows the logo and a login button
+    * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
+    * List functionality on 'homepage'
+    * Add Login with google button to the 'homepage'
 * Create an account
     * Register
     * See a list of 'my trips'
