@@ -17,18 +17,18 @@
       v-model="tab"
       align-tabs="center"
     >
-      <v-tab :value="list">List</v-tab>
-      <v-tab :value="map">Map</v-tab>
+      <v-tab :value="'list'">List</v-tab>
+      <v-tab :value="'map'">Map</v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab">
       <v-tabs-window-item
-        :key="list"
-        :value="list">
+        :key="'list'"
+        :value="'list'">
 
       <v-data-table
         :headers="headers"
-        :items="caves"
+        :items="caveStore.caves"
         :search="search"
         :items-per-page="10000"
         hide-default-footer
@@ -53,8 +53,8 @@
     </v-data-table>
     </v-tabs-window-item>
     <v-tabs-window-item
-      :key="map"
-      :value="map">
+      :key="'map'"
+      :value="'map'">
       <v-card>
         <v-card-title>Map</v-card-title>
         <v-card-text>
@@ -67,6 +67,12 @@
 </template>
 
 <script setup>
+  import { useAppStore } from '@/stores/app'
+  import { useCaveStore } from '@/stores/caves';
+
+  const store = useAppStore()  
+  const caveStore = useCaveStore()
+
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
@@ -78,8 +84,7 @@
 
   const caves = ref([])
   onMounted(async () => {
-    const response = await fetch('/api/caves')
-    caves.value = (await response.json()).data
+    await caveStore.getList()
   })
 
   const tab = ref('list')

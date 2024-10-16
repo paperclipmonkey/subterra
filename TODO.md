@@ -1,17 +1,30 @@
 # TODO
 What is MVP
-* Create an initial page which just shows the logo and a login button
-    * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
+* Show trip time nicely formatted in list
+* Add validation so cave_system_id is required in the database
+* Redirect to login page when the user isn't authenticated
+* Hide menu bar when user isn't authenticated
 * Create an account
-    * Register
     * Add trips
-        * Default to being on trips you add
+    * Default to being on trips you add
     * See your own profile
-        * Support logging out
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
+* Hide map functionality
 
+* Automatically add current user to any trip they add
+    * Stop from removing themselves in the ui?
+* Add ability to tag people as on a trip which aren't members yet
+* Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
+
+* Add 'news' functionality
+    * Read table of news articles written in Markdown
+    * Render them to a page
+
+* Write some data seeders to create some sample caves
+* Add frontend for creating caves in a UI with rich text editor for Markdown
+* Remove new trip page from history when we move forward
 * Add filters section to caves list page
     * Add any of the filters
         * Add tag groups
@@ -21,9 +34,8 @@ What is MVP
             * Length (>1km)
             * Depth
             * Tackle required
-* Add profile endpoints
-    * /me
-* Add way of getting trips for a user (filtering on trip endpoint?)
+
+* Add way of getting trips for any user (filtering on trip endpoint?)
     * Add list of recent trips they've been on to their profile
 * Add real trip with Oli and Alaisdair
 * Add global scope for public and private trips

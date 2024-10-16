@@ -16,7 +16,7 @@
 
     <v-data-table
       :headers="headers"
-      :items="trips"
+      :items="tripStore.trips"
       :search="search"
       :items-per-page="10000"
       hide-default-footer
@@ -26,13 +26,20 @@
         {{ value }}
       </router-link>
     </template>
+    <template v-slot:item.end_time="{ value }">
+      {{ formatDate(value) }}
+    </template>
   </v-data-table>
   </v-card>
 </template>
 
 <script setup>
-  import { fetchWithAuth } from '@/stores/getData';
-  
+  import moment from 'moment'
+  import { useAppStore } from '@/stores/app'
+  import { useTripStore } from '@/stores/trips';
+
+  const store = useAppStore()  
+  const tripStore = useTripStore()
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
@@ -41,9 +48,12 @@
     { title: 'entrance', key: 'entrance.name' }
   ])
 
-  const trips = ref([])
+  const formatDate = (date) => {
+    return moment(date).format('YYYY-MM-DD HH:mm')
+  }
+
   onMounted(async () => {
-    const response = await fetchWithAuth(`/api/me/trips`)
-    trips.value = (await response.json()).data
+    await store.getUser() // Check if user is logged in
+    await tripStore.getTrips()
   })
 </script>

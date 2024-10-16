@@ -39,7 +39,8 @@
     "location_name": "Penwyllt",
     "location_country": "Wales",
     "location_lat":-3.672723,
-    "location_lng":51.823577
+    "location_lng":51.823577,
+    "cave_system_id": 1
 }
 
 {
@@ -50,6 +51,7 @@
     "location_name": "Penwyllt",
     "location_country": "Wales",
     "location_lat":-3.652242,
-    "location_lng":51.828402
+    "location_lng":51.828402,
+    "cave_system_id": 1
 }
 

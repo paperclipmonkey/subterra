@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('cave_systems', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('description');
+            $table->text('description');
         });
 
         Schema::create('caves', function (Blueprint $table) {
