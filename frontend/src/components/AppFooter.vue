@@ -33,6 +33,11 @@
       icon: 'mdi-earth',
       href: '/caves',
     },
+    // {
+    //   title: 'Collections',
+    //   icon: `mdi-bookmark-box-multiple-outline`,
+    //   href: '/collections',
+    // },
     {
       title: 'Profile',
       icon: `mdi-account`,
