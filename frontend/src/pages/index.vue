@@ -1,5 +1,5 @@
 <template>
-  <Hello />
+  <Login />
 </template>
 
 <script setup>

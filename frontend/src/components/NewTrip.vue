@@ -25,7 +25,16 @@
         item-title="name"
         item-value="id"
         v-model="trip.entrance_cave_id"
-      ></v-autocomplete>
+      >
+        <template v-slot:item="{ props, item }">
+          <v-list-item
+            v-bind="props"
+            prepend-avatar="https://picsum.photos/200"
+            :subtitle="item.raw.system.name"
+            :title="item.raw.name"
+          ></v-list-item>
+        </template>
+      </v-autocomplete>
       <template v-if="system_entrances_count > 1">
         <v-checkbox v-model="throughTrip" label="Through trip"></v-checkbox>
         <template v-if="throughTrip">
@@ -44,8 +53,31 @@
         item-title="name"
         item-value="id"
         multiple
+        chips="true"
+        closable-chips
         v-model="trip.participants"
-      ></v-autocomplete>
+      >
+        <template v-slot:chip="{ props, item }">
+          <v-chip
+            v-bind="props"
+            prepend-avatar="https://picsum.photos/200"
+            :text="item.raw.name"
+          ></v-chip>
+        </template>
+        <template v-slot:item="{ props, item }">
+          <v-list-item
+            v-bind="props"
+            prepend-avatar="https://picsum.photos/200"
+            subtitle="BEC"
+            :title="item.raw.name"
+          ></v-list-item>
+        </template>
+        <template v-slot:no-data>
+          <v-chip>
+            Can't find their name? <strong> Invite them!</strong>
+          </v-chip>
+        </template>
+    </v-autocomplete>
       <v-row>
         <v-col cols="6">
           <v-text-field

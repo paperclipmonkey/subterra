@@ -33,9 +33,7 @@
           <v-card-title>{{ cave.system.name }}</v-card-title>
           <v-card-subtitle>System</v-card-subtitle>
           <v-card-text>
-            <vue-markdown :source="cave.description" />
-            <p>System:</p>
-            <p>{{ cave.system.description }}</p>
+            <vue-markdown :source="cave.system.description" />
             <p> Tags:
               <v-chip v-for="tag in cave.system.tags" :key="tag" class="ma-1">
                 {{ tag.tag }}

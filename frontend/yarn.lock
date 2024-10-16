@@ -2940,6 +2940,11 @@ magic-string@^0.30.10, magic-string@^0.30.11:
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.5.0"
 
+mande@^2.0.9:
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/mande/-/mande-2.0.9.tgz#523de1b9e244aff186e435c8708fd841686ba240"
+  integrity sha512-F5kH/uSnhQBP7D5C+Y1rGt2S4lZuPfgIs5Ui49jrkjxE3sSAHwCE6r3hNo5gqihR5pZ1rGnjO7Oqnu2Lr1uG7g==
+
 markdown-it@^13.0.2:
   version "13.0.2"
   resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-13.0.2.tgz#1bc22e23379a6952e5d56217fbed881e0c94d536"

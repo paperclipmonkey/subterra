@@ -22,6 +22,7 @@ class Cave extends Model
         'location_country',
         'location_lat',
         'location_lng',
+        'cave_system_id',
     ];
 
     public function system(): BelongsTo

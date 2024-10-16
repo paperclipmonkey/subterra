@@ -3,22 +3,19 @@ import { defineStore } from 'pinia'
 import { mande } from 'mande'
 import { useRouter } from 'vue-router';
 const router = useRouter();
-const api = mande('/api/users/me')
+const api = mande('/api/trips')
 
-export const useAppStore = defineStore('app', {
+export const useTripStore = defineStore('trips', {
   state: () => ({
-    user: {
-      name: '',
-      email: '',
-    }
+    trips: [],
+    loading: false,
     //
   }),
 
   actions: {
-    async getUser(login, password) {
+    async getTrips(login, password) {
       try {
-        this.user = await api.get()
-        // showTooltip(`Welcome back ${this.userData.name}!`)
+        this.trips = (await api.get()).data
       } catch (error) {
         router.push({ name: '/' });
         // showTooltip(error)
