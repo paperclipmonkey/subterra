@@ -13,14 +13,11 @@ What is MVP
 * Hide map functionality
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
 
+Add a listener for participants so that if they remove themselves they get added back in.
+Remove yourself from the users list.
+
 * Automatically add current user to any trip they add
     * Stop from removing themselves in the ui?
-* Add ability to tag people as on a trip which aren't members yet
-    * Add a new user by email address
-    * Add in a modal
-    * Asks for their email address
-    * Creates the user behind the scenes
-    * Adds them to the trip
 
 * Give info about what to do if there's no items in "My Trips" list.
 
@@ -28,7 +25,17 @@ What is MVP
 
 * Add 'media' to caves
     * Type
-        ()
+        (photo)
+        (video)
+* Add ability to add/edit a cave in a new page?
+
+Order users api response by frequency of use.
+
+Add concept of verified and unverified user. Star out usernames for users which haven't signed up themselves.
+
+Only show verified users in the users list
+
+Add unverified users with the username "unverified user"
 
 * Add 'news' functionality
     * Read table of news articles written in Markdown
