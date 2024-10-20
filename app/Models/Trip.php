@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\IsActiveScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,7 +52,7 @@ class Trip extends Model
     
     public function participants()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)->withoutGlobalScope(IsActiveScope::class);
     }
 
     public function media()

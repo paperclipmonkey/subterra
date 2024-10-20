@@ -8,13 +8,15 @@ What is MVP
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
-* Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
 
-Add a listener for participants so that if they remove themselves they get added back in.
-Remove yourself from the users list.
+* Add permissions so you can only edit trips you were a participant on
+
+* Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
 
 * Automatically add current user to any trip they add
     * Stop from removing themselves in the ui?
+        * Add a listener for participants so that if they remove themselves they get added back in.
+    * Remove yourself from the users list.
 
 * Give info about what to do if there's no items in "My Trips" list.
 
