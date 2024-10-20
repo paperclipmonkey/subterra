@@ -8,6 +8,9 @@
         <div class="profile-info">
           <h2>{{ profile.name }}</h2>
         </div>
+        <div v-if="route.params.id === 'me'">
+          <v-btn color="primary" @click="$router.push({name: '/profile/[id].edit', params: {id: profile.id}})">Edit</v-btn>
+        </div>
       </v-card-title>
       <v-divider></v-divider>
       <v-list two-line>
@@ -38,10 +41,11 @@
         </v-chip-group>
       </div>
       <v-divider></v-divider>
-      <div class="clubs">
-        <h3>Clubs:</h3>
+      <div class="club">
+        <h3>Club:</h3>
         <v-chip-group>
-          <v-chip v-for="club in profile.clubs" :key="club.id" outlined>{{ club.name }}</v-chip>
+          <v-chip outlined>{{ profile.club }}</v-chip>
+          <!-- <v-chip v-for="club in profile.clubb" :key="club.id" outlined>{{ club.name }}</v-chip> -->
         </v-chip-group>
       </div>
       <div>

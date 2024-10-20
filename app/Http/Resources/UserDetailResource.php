@@ -19,7 +19,8 @@ class UserDetailResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email'=> $this->email,
-            'photo' => 'https://picsum.photos/200', //$this->photo,
+            'photo' => $this->photo,
+            'club' => $this->club,
             'stats'=> [
                 'trips' => $this->trips->count(),
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),

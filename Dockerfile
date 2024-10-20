@@ -23,7 +23,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PHP_MAX_EXECUTION_TIME=90 \
     PHP_POST_MAX_SIZE=100M \
     PHP_UPLOAD_MAX_FILE_SIZE=100M \
-    PHP_ALLOW_URL_FOPEN=Off
+    PHP_ALLOW_URL_FOPEN=On
 
 # Prepare base container: 
 # 1. Install PHP, Composer

@@ -33,3 +33,5 @@ Route::get('logout', function (Request $request) {
 });
 
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show']);
+Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store']);
+
