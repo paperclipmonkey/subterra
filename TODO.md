@@ -5,12 +5,9 @@ What is MVP
 * Continue switching over to using session store
 * Add router.beforeEach so we check if we're logged in before performing navigation. Load user each time? Simplest.
 * Redirect to login page when the user isn't authenticated
-* Create an account
-    * Add trips
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
-* Hide map functionality
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
 
 Add a listener for participants so that if they remove themselves they get added back in.
