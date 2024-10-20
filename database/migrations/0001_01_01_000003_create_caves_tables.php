@@ -22,7 +22,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description');
-            $table->foreignId('cave_system_id')->nullable()->constrained('cave_systems', 'id');
+            $table->foreignId('cave_system_id')->constrained('cave_systems', 'id');
             $table->integer('length');
             $table->integer('depth');
             $table->string('location_name');

@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->string('email')->unique();
+            $table->string('photo')->nullable(); // URL
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
+            $table->string('club')->nullable();
             $table->rememberToken();
             $table->timestamps();
             $table->boolean('has_signed_up')->default(false);

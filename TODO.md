@@ -1,29 +1,47 @@
 # TODO
 What is MVP
-* Show trip time nicely formatted in list
-* Add validation so cave_system_id is required in the database
+* Switch to using API tokens instead of cookies?
+    * Look into whether we can access the cookies from JS? HttpOnly is set but can be changed. SESSION_HTTP_ONLY changed
+* Continue switching over to using session store
+* Add router.beforeEach so we check if we're logged in before performing navigation. Load user each time? Simplest.
 * Redirect to login page when the user isn't authenticated
-* Hide menu bar when user isn't authenticated
 * Create an account
     * Add trips
-    * Default to being on trips you add
-    * See your own profile
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
 * Hide map functionality
+* Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
 
 * Automatically add current user to any trip they add
     * Stop from removing themselves in the ui?
 * Add ability to tag people as on a trip which aren't members yet
-* Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
+    * Add a new user by email address
+    * Add in a modal
+    * Asks for their email address
+    * Creates the user behind the scenes
+    * Adds them to the trip
+
+* Give info about what to do if there's no items in "My Trips" list.
+
+* Add 'info' page which describes what the system is and how to give feedback
+
+* Add 'media' to caves
+    * Type
+        ()
 
 * Add 'news' functionality
     * Read table of news articles written in Markdown
     * Render them to a page
+Add grid/list/map view icons for caves list
+    * Grid can show photo and more info like access
+
+Write outline of data we'll need as a Google Doc for Iz to fill in.
+    * Ask for caves > 100m in length from Mendip underground
 
 * Write some data seeders to create some sample caves
 * Add frontend for creating caves in a UI with rich text editor for Markdown
+    * Choose cave system from dropdown, or create if it doesn't already exist.
 * Remove new trip page from history when we move forward
 * Add filters section to caves list page
     * Add any of the filters
@@ -91,3 +109,5 @@ Add concept of reference list for 'caves'
 * Add slug to caves / cave_system
 * Make searches bookmarkable
 * Add cave system name to trip url
+
+Talk to student cavers about their needs
