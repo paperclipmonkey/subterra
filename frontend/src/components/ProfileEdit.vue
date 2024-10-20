@@ -40,7 +40,7 @@
         </template>
         <template v-slot:no-data>
           <v-chip>
-            Can't find their name? <strong> Invite them!</strong>
+            Can't find your club? <strong> Add them!</strong>
           </v-chip>
         </template>
     </v-autocomplete>

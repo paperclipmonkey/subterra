@@ -6,6 +6,7 @@ use App\Models\User;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Log;
 
 class GoogleLoginController extends Controller
 {
@@ -19,8 +20,7 @@ class GoogleLoginController extends Controller
     {
         $googleUser = Socialite::driver('google')->stateless()->user();
         $user = User::where('email', $googleUser->email)->first();
-        if(!$user)
-        {
+        if(!$user || !$user->is_active) {
             try {
             // Make a copy of their profile photo and upload it to the Storage driver for profile photos
             $photoContents = file_get_contents($googleUser->avatar);
@@ -33,12 +33,23 @@ class GoogleLoginController extends Controller
             // Get the URL for the photo
             $photoUrl = \Storage::disk('media')->url($photoPath);
 
-            $user = User::create([
-                'name' => $googleUser->name, 
-                'email' => $googleUser->email, 
-                'password' => \Hash::make(rand(100000,999999)),
-                'photo' => $photoUrl,
-            ]);
+            if(!$user) {
+                Log::info(message: 'New user');
+                $user = User::create([
+                    'name' => $googleUser->name, 
+                    'email' => $googleUser->email, 
+                    'password' => \Hash::make(rand(100000,999999)),
+                    'photo' => $photoUrl,
+                    'is_active' => true,
+                ]);
+            }
+            if(!$user->is_active) {
+                Log::info(message: 'User is not active');
+                $user->name = $googleUser->name;
+                $user->photo = $googleUser->photo;
+                $user->is_active = true;
+                $user->save();
+            }
         }
 
         Auth::login($user);

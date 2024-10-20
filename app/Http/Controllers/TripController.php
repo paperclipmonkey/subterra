@@ -38,11 +38,18 @@ class TripController extends Controller
         $trip = Trip::create($request->all());
         $trip->save();
         // Add the participant to the trip
-        $participants = $request->all()['participants'];
-        $trip->participants()->attach($participants);
-
-        // TODO Ensure the current user is added to the trip
-        // $trip->participants()->attach($request->user());
+        $participantEmails = $request->all()['participants'];
+        // Loop through the participants and find them by email. If they don't exist, create them
+        foreach ($participantEmails as $email) {
+            $user = \App\Models\User::firstOrCreate(['email' => $email], ['name' => 'Unverified User', 'is_active' => false]);
+            $participantIds[] = $user->id;
+        }
+    
+        // Sync participants with the trip
+        $trip->participants()->sync($participantIds);
+    
+        // Ensure the current user is added to the trip
+        // $trip->participants()->attach($request->user()->id);
 
         $media = $request->all()['media'];
         foreach ($media as $file) {

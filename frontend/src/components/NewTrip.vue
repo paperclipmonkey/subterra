@@ -51,31 +51,32 @@
         label="Participants"
         :items="users"
         item-title="name"
-        item-value="id"
+        item-value="email"
         multiple
-        chips="true"
+        chips
         closable-chips
         v-model="trip.participants"
       >
         <template v-slot:chip="{ props, item }">
           <v-chip
             v-bind="props"
-            prepend-avatar="https://picsum.photos/200"
+            :prepend-avatar="item.raw.photo"
             :text="item.raw.name"
           ></v-chip>
         </template>
         <template v-slot:item="{ props, item }">
           <v-list-item
             v-bind="props"
-            prepend-avatar="https://picsum.photos/200"
-            subtitle="BEC"
+            :prepend-avatar="item.raw.photo"
+            :subtitle="item.raw.club"
             :title="item.raw.name"
           ></v-list-item>
         </template>
         <template v-slot:no-data>
-          <v-chip>
-            Can't find their name? <strong> Invite them!</strong>
-          </v-chip>
+          <v-btn @click="showAddParticipant=true">
+            They don't seem to have an account yet.  
+            <strong>Add them manually</strong>
+          </v-btn>
         </template>
     </v-autocomplete>
       <v-row>
@@ -117,18 +118,30 @@
           ></v-text-field>
         </v-col>
       </v-row>
-      {{ start_time }}
-      {{ end_time }}
       <v-btn @click="submitForm">Save</v-btn>
     </v-form>
+    <AddParticipantManual @add="addParticipant" :isActive="showAddParticipant"/>
   </v-container>
 </template>
 
 <script setup>
   import moment from 'moment'
   import { computed, reactive, ref } from 'vue'
+  import AddParticipantManual from './AddParticipantManual.vue';
   const router = useRouter()
   const route = useRoute()
+
+  const addPersonManual = () => {
+    console.log('invite person')
+  }
+
+  const addParticipant = (participant) => {
+    console.log('add participant', participant)
+    trip.participants.push(participant)
+    showAddParticipant.value = false
+  }
+
+  const showAddParticipant = ref(false)
 
   let trip = reactive({
     id: -1,
@@ -140,6 +153,7 @@
     date: '',
     start_time: '',
     end_time: '',
+    participants: [],
     // cave_system_id: 1
   })
 
