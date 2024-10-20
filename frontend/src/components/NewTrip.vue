@@ -126,7 +126,7 @@
 
 <script setup>
   import moment from 'moment'
-  import { computed, reactive, ref } from 'vue'
+  import { computed, reactive, ref, watch } from 'vue'
   import AddParticipantManual from './AddParticipantManual.vue';
   const router = useRouter()
   const route = useRoute()
@@ -187,11 +187,22 @@
     return caves.value.filter((cave => cave.system.id === cave_system_id.value)).length
   })
 
+  const userEmail = ref({})
+
   const users = ref([])
   onMounted(async () => {
+    const userResonse = await fetch('/api/users/me')
+    userEmail.value = (await userResonse.json()).data.email
+
     const response = await fetch('/api/users')
     users.value = (await response.json()).data
+    trip.participants.push(users.value.find(user => user.email === userEmail.value))
   })
+
+  // watch(() => trip.participants, (participants) => {
+  //   if(participants.find(participant => participant.email === userEmail.value)) return
+  //   console.log('Not found')
+  // })
 
   const start_time = computed(() => {
     const entry = moment(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm')

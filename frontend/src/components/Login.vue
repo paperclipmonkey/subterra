@@ -94,8 +94,11 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const store = useAppStore()
 
-  onMounted(() => {
-    if(store.user.email) {
+  onMounted(async () => {
+    // Load the user endpoint to check if the user is logged in
+    const userResonse = await fetch('/api/users/me')
+    const userEmail = (await userResonse.json()).data.email
+    if(userEmail) {
       console.log('User is logged in')
       router.push({ name: '/trips' })
     } else {

@@ -37,8 +37,6 @@
                   Add the trip participant by email addresses
                 </div>
 
-                <div class="mb-2">Message (optional)</div>
-
                 <v-text-field
                   label="Email address"
                   placeholder="johndoe@gmail.com"

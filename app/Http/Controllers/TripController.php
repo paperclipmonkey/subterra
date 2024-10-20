@@ -41,7 +41,11 @@ class TripController extends Controller
         $participantEmails = $request->all()['participants'];
         // Loop through the participants and find them by email. If they don't exist, create them
         foreach ($participantEmails as $email) {
-            $user = \App\Models\User::firstOrCreate(['email' => $email], ['name' => 'Unverified User', 'is_active' => false]);
+            $user = \App\Models\User::firstOrCreate(['email' => $email], [
+                'name' => 'Unverified User', 
+                'is_active' => false,
+                'photo' => Storage::disk('media')->url('profile/default.webp'),
+            ]);
             $participantIds[] = $user->id;
         }
     

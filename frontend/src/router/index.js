@@ -29,6 +29,21 @@ router.onError((err, to) => {
   }
 })
 
+// Basic cookie functionality for login check
+router.beforeEach((to, from, next) => {
+  // console.log('router.beforeEach')
+  // if(to.name === '/') {
+  //   console.log('user is on login page')
+    return next()
+  // }
+  // console.log(document.cookie)
+  // if(document.cookie.includes('laravel_session')) {
+  //   console.log('user has cookie')
+  //   return next()
+  // }
+  // return next({ name: '/' })
+})
+
 router.isReady().then(() => {
   localStorage.removeItem('vuetify:dynamic-reload')
 })

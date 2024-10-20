@@ -33,19 +33,15 @@
       <v-col cols="12">
         <v-card>
           <v-card-title>Participants</v-card-title>
-          <v-card-text>
-            <v-list>
-              <v-list-item>
-                <div>
-                  <!-- <v-list-item-subtitle> -->
-                    <v-chip v-for="participant in trip.participants" :key="participant.id" class="ma-1">
-                      <router-link :to="{name: '/profile/[id]', params: {id: participant.id}}">{{ participant.name }}</router-link>
-                    </v-chip>
-                  <!-- </v-list-item-subtitle> -->
-                </div>
-              </v-list-item>
-            </v-list>
-          </v-card-text>
+          <v-col cols="12" md="6" v-for="participant in trip.participants" :key="participant.id">
+            <v-card
+              :prepend-avatar="participant.photo"
+              class="mx-auto"
+              :subtitle="participant.club"
+              :title="participant.name"
+            >
+            </v-card>
+          </v-col>
         </v-card>
       </v-col>
     </v-row>
