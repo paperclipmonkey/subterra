@@ -88,7 +88,7 @@
     { title: 'Length', key: 'length' },
     { title: 'Depth', key: 'depth' },
     { title: 'Location', key: 'location' },
-    { title: 'Tags', key: 'tags' }
+    // { title: 'Tags', key: 'tags' }
   ])
 
   const applyFilter = (tags) => {

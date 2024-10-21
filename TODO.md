@@ -26,9 +26,10 @@ What is MVP
 List of tags comes from api endpoint
 Click Apply to return to the previous page with the search enabled
 Filtering is done client side against caves and systems
-Remove 'tags' from cave list
 Keep search and tags between page navigations
 Add button to clear all filters
+Add image and description for each tag option so we can nicely list caves with that tag. Ala collections.
+    This would enable us to have a page for each region, for example
 
 * Add 'media' to caves
     * Type
