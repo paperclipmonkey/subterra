@@ -31,10 +31,6 @@ Order users api response by frequency of use.
 Add grid/list/map view icons for caves list
     * Grid can show photo and more info like access
 
-Write outline of data we'll need as a Google Doc for Iz to fill in.
-    * Ask for caves > 100m in length from Mendip underground
-
-* Write some data seeders to create some sample caves
 * Add frontend for creating caves in a UI with rich text editor for Markdown
     * Choose cave system from dropdown, or create if it doesn't already exist.
 * Remove new trip page from history when we move forward
