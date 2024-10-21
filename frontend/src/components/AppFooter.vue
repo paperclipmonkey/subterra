@@ -39,6 +39,11 @@
     //   href: '/collections',
     // },
     {
+      title: 'News',
+      icon: `mdi-newspaper`,
+      href: '/news',
+    },
+    {
       title: 'Profile',
       icon: `mdi-account`,
       href: '/profile/me',

@@ -1,10 +1,5 @@
 # TODO
 What is MVP
-* Switch to using API tokens instead of cookies?
-    * Look into whether we can access the cookies from JS? HttpOnly is set but can be changed. SESSION_HTTP_ONLY changed
-* Continue switching over to using session store
-* Add router.beforeEach so we check if we're logged in before performing navigation. Load user each time? Simplest.
-* Redirect to login page when the user isn't authenticated
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
@@ -12,6 +7,9 @@ What is MVP
 * Add permissions so you can only edit trips you were a participant on
 
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
+
+* Go to profile page / introduce system once a user has signed in for the first time. 
+    * Get them to add their club
 
 * Automatically add current user to any trip they add
     * Stop from removing themselves in the ui?
@@ -30,15 +28,6 @@ What is MVP
 
 Order users api response by frequency of use.
 
-Add concept of verified and unverified user. Star out usernames for users which haven't signed up themselves.
-
-Only show verified users in the users list
-
-Add unverified users with the username "unverified user"
-
-* Add 'news' functionality
-    * Read table of news articles written in Markdown
-    * Render them to a page
 Add grid/list/map view icons for caves list
     * Grid can show photo and more info like access
 
