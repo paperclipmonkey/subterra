@@ -33,21 +33,14 @@ router.onError((err, to) => {
 // Basic cookie functionality for login check
 router.beforeEach(async (to, from, next) => {
   let user = await useAppStore().getUser()
-  console.log(user)
-  console.log('router.beforeEach')
-  console.log(to.name)
   if(to.name === '/') {
-    console.log('user is on login page')
-    console.log(user.email)
     if(user.email) {
-      console.log('user is logged in')
       return next({ name: '/trips' })
     }
     return next()
   }
 
   if(user.email) {
-    console.log('user is available')
     return next()
   }
   return next({ name: '/' })
