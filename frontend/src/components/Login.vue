@@ -93,7 +93,6 @@
 import { onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'
-import GoogleButton from './GoogleButton.vue';
 
 const router = useRouter()
 const store = useAppStore()
