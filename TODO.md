@@ -1,5 +1,6 @@
 # TODO
 What is MVP
+* Create a nice logo for the site
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
@@ -19,6 +20,15 @@ What is MVP
 * Give info about what to do if there's no items in "My Trips" list.
 
 * Add 'info' page which describes what the system is and how to give feedback
+
+
+# Filtering of caves functionality
+List of tags comes from api endpoint
+Click Apply to return to the previous page with the search enabled
+Filtering is done client side against caves and systems
+Remove 'tags' from cave list
+Keep search and tags between page navigations
+Add button to clear all filters
 
 * Add 'media' to caves
     * Type

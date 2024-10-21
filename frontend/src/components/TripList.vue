@@ -11,7 +11,8 @@
         variant="outlined"
         hide-details
         single-line
-      ></v-text-field>
+      >
+      </v-text-field>
     </template>
 
     <v-data-table

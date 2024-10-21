@@ -1,8 +1,8 @@
 // Utilities
 import { defineStore } from 'pinia'
 import { mande } from 'mande'
-import { useRouter } from 'vue-router';
-const router = useRouter();
+// import { useRouter } from 'vue-router';
+// const router = useRouter();
 const api = mande('/api/users/me')
 
 export const useAppStore = defineStore('app', {

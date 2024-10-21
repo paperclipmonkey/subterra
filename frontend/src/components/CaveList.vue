@@ -10,7 +10,14 @@
         variant="outlined"
         hide-details
         single-line
-      ></v-text-field>
+      >
+        <template v-slot:append-inner>
+          <v-icon
+          @click="showFilterByTagModal = true"
+            icon="mdi-filter"
+          />
+        </template>
+      </v-text-field>
     </template>
 
     <!-- <v-tabs
@@ -62,16 +69,19 @@
       </v-card>
     </v-tabs-window-item> -->
   <!-- </v-tabs-window> -->
+  <FilterByTagModal @close="showFilterByTagModal = false" @filter="applyFilter" :isActive="showFilterByTagModal"/>
   </v-card>
 </template>
 
 <script setup>
   import { useAppStore } from '@/stores/app'
   import { useCaveStore } from '@/stores/caves';
+  import FilterByTagModal from './FilterByTagModal.vue';
 
   const store = useAppStore()  
   const caveStore = useCaveStore()
 
+  const showFilterByTagModal = ref(false)
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
@@ -80,6 +90,11 @@
     { title: 'Location', key: 'location' },
     { title: 'Tags', key: 'tags' }
   ])
+
+  const applyFilter = (tags) => {
+    // caveStore.filterByTags(tags)
+    showFilterByTagModal.value = false
+  }
 
   const caves = ref([])
   onMounted(async () => {

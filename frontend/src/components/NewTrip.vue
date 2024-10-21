@@ -120,7 +120,7 @@
       </v-row>
       <v-btn @click="submitForm">Save</v-btn>
     </v-form>
-    <AddParticipantManual @add="addParticipant" :isActive="showAddParticipant"/>
+    <AddParticipantManual @close="closeAddParticipant" @add="addParticipant" :isActive="showAddParticipant"/>
   </v-container>
 </template>
 
@@ -131,13 +131,13 @@
   const router = useRouter()
   const route = useRoute()
 
-  const addPersonManual = () => {
-    console.log('invite person')
-  }
-
   const addParticipant = (participant) => {
     console.log('add participant', participant)
     trip.participants.push(participant)
+    showAddParticipant.value = false
+  }
+
+  const closeAddParticipant = () => {
     showAddParticipant.value = false
   }
 
