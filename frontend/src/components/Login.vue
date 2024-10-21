@@ -79,7 +79,10 @@
       </v-row>
       <v-row>
         <v-col>
-          <a href="/api/google/redirect" class="btn btn-primary"> Login with Google </a>
+          
+          <a href="/api/google/redirect" class="btn btn-primary"> 
+            <img src="/google-signin.svg"/>
+          </a>
         </v-col>
       </v-row>
     </v-responsive>
@@ -90,6 +93,7 @@
 import { onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'
+import GoogleButton from './GoogleButton.vue';
 
 const router = useRouter()
 const store = useAppStore()
