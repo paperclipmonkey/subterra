@@ -1,12 +1,14 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12">
+      <v-col cols="12" class="d-flex align-items-center">
         <v-btn icon @click="$router.go(-1)">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
-        <v-toolbar-title>{{ trip.name }}</v-toolbar-title>
-        <span>{{ trip.system.name }}</span>
+        <div>
+          <v-toolbar-title>{{ trip.name }}</v-toolbar-title>
+          <span>{{ trip.system.name }}</span>
+        </div>
       </v-col>
     </v-row>
     <v-row>

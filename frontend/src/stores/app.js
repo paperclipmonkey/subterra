@@ -17,10 +17,10 @@ export const useAppStore = defineStore('app', {
   actions: {
     async getUser(login, password) {
       try {
-        this.user = await api.get()
+        this.user = (await api.get()).data
+        return this.user
         // showTooltip(`Welcome back ${this.userData.name}!`)
       } catch (error) {
-        router.push({ name: '/' });
         // showTooltip(error)
         // let the form component display the error
         return error

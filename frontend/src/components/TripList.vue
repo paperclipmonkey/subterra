@@ -1,6 +1,6 @@
 <template>
   <v-card
-    title="Trips"
+    title="My Trips"
     flat
   >
     <template v-slot:text>
@@ -29,6 +29,11 @@
     <template v-slot:item.end_time="{ value }">
       {{ formatDate(value) }}
     </template>
+    <template v-slot:item.participants="{ value }">
+      <v-chip density="compact" size="small" v-for="participant in value" :key="participant.id" class="ma-1">
+        {{ participant.name }}
+      </v-chip>
+    </template>
   </v-data-table>
   </v-card>
 </template>
@@ -44,8 +49,9 @@
   const headers = ref([
     { title: 'Name', key: 'name' },
     { title: 'end time', key: 'end_time' },
-    { title: 'system', key: 'system.name' },
-    { title: 'entrance', key: 'entrance.name' }
+    // { title: 'system', key: 'system.name' },
+    { title: 'entrance', key: 'entrance.name' },
+    { title: 'participants', key: 'participants' }
   ])
 
   const formatDate = (date) => {

@@ -8,6 +8,7 @@
 import { createRouter, createWebHistory } from 'vue-router/auto'
 import { setupLayouts } from 'virtual:generated-layouts'
 import { routes } from 'vue-router/auto-routes'
+import { useAppStore } from '@/stores/app'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,18 +31,26 @@ router.onError((err, to) => {
 })
 
 // Basic cookie functionality for login check
-router.beforeEach((to, from, next) => {
-  // console.log('router.beforeEach')
-  // if(to.name === '/') {
-  //   console.log('user is on login page')
+router.beforeEach(async (to, from, next) => {
+  let user = await useAppStore().getUser()
+  console.log(user)
+  console.log('router.beforeEach')
+  console.log(to.name)
+  if(to.name === '/') {
+    console.log('user is on login page')
+    console.log(user.email)
+    if(user.email) {
+      console.log('user is logged in')
+      return next({ name: '/trips' })
+    }
     return next()
-  // }
-  // console.log(document.cookie)
-  // if(document.cookie.includes('laravel_session')) {
-  //   console.log('user has cookie')
-  //   return next()
-  // }
-  // return next({ name: '/' })
+  }
+
+  if(user.email) {
+    console.log('user is available')
+    return next()
+  }
+  return next({ name: '/' })
 })
 
 router.isReady().then(() => {
