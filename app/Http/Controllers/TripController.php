@@ -7,8 +7,7 @@ use App\Http\Resources\TripResource;
 use App\Models\Trip;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
-use Intervention\Image\ImageManagerStatic as DataUriImageDecoder;
-use Intervention\Image\Interfaces\Webp\Encoder as WebpEncoder;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class TripController extends Controller
 {
@@ -41,6 +40,7 @@ class TripController extends Controller
         $participantEmails = $request->all()['participants'];
         // Loop through the participants and find them by email. If they don't exist, create them
         foreach ($participantEmails as $email) {
+            
             $user = \App\Models\User::firstOrCreate(['email' => $email], [
                 'name' => 'Unverified User', 
                 'is_active' => false,
@@ -67,6 +67,8 @@ class TripController extends Controller
             Storage::disk('media')->put($filePath, (string) $image);
             $trip->media()->create(['filename' => $filePath]);
         }
+
+        SlackAlert::to('trips')->message("A new trip has been created: {$trip->name} with id: {$trip->id}");
 
         return new TripResource($trip);
     }

@@ -74,7 +74,7 @@
         </template>
         <template v-slot:no-data>
           <v-btn @click="showAddParticipant=true">
-            They don't seem to have an account yet.  
+            Can't find that user.  
             <strong>Add them manually</strong>
           </v-btn>
         </template>
