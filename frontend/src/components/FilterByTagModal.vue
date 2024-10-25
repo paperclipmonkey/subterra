@@ -6,7 +6,6 @@
           <div class="text-h5 text-medium-emphasis ps-2">
             Filter
           </div>
-
           <v-btn
             icon="mdi-close"
             variant="text"
@@ -17,152 +16,24 @@
         <v-divider class="mb-4"></v-divider>
 
         <v-card-text>
-          <h2 class="text-h6 mb-2">Region</h2>
+          <template v-for="(groupItems, groupName) in tagsAvailable">
 
+          <h2 class="text-h6 mb-2 tagGroupTitle">{{groupName}}</h2>
+
+          <!-- multiple -->
           <v-chip-group
-            v-model="region"
+            v-model="selectedTags[groupName]"
             column
-            multiple
           >
             <v-chip
-              text="South Wales"
+              v-for="tag in groupItems"
+              :text="tag.tag"
               variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="North Wales"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Forest of Dean"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Devon"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Mendip"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Portland"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Peaks"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Yorkshire"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Assynt"
-              variant="outlined"
+              :value="tag.tag"
               filter
             ></v-chip>
           </v-chip-group>
-
-
-          <h2 class="text-h6 mb-2">Type</h2>
-
-          <v-chip-group
-            v-model="type"
-            column
-            multiple
-          >
-            <v-chip
-              text="Cave"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Mine"
-              variant="outlined"
-              filter
-            ></v-chip>
-          </v-chip-group>
-
-          <h2 class="text-h6 mb-2">Access</h2>
-
-          <v-chip-group
-            v-model="access"
-            column
-            multiple
-          >
-            <v-chip
-              text="Gated"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Leader"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Keycode"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Open"
-              variant="outlined"
-              filter
-            ></v-chip>
-          </v-chip-group>
-
-          <h2 class="text-h6 mb-2">Tackle</h2>
-
-          <v-chip-group
-            v-model="tackle"
-            column
-            multiple
-          >
-            <v-chip
-              text="No tackle"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Ladder"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="SRT"
-              variant="outlined"
-              filter
-            ></v-chip>
-
-            <v-chip
-              text="Confidence rope"
-              variant="outlined"
-              filter
-            ></v-chip>
-          </v-chip-group>
+          </template>
         </v-card-text>
         <v-divider class="mt-2"></v-divider>
 
@@ -189,23 +60,27 @@
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue';
+import { ref, defineProps, onMounted } from 'vue';
 const emit = defineEmits(['filter', 'close'])
 
+const tagsAvailable = ref({});
+const selectedTags = ref({});
+
+onMounted(async () => {
+  const response = await fetch('/api/tags');
+  tagsAvailable.value = await response.json();
+});
 
 const emitFilters = () => {
-  const filters = {
-    type: type.value,
-    access: access.value,
-    tackle: tackle.value,
-  };
-
+  const filters = Object.values(selectedTags.value).flat();
   emit('filter', filters);
 };
 
 const props = defineProps(['isActive'])
-const type = ref([])
-const access = ref([])
-const tackle = ref([])
-const region = ref([])
 </script>
+
+<style scoped>
+  .tagGroupTitle {
+    text-transform: capitalize !important;
+  }
+</style>

@@ -32,6 +32,9 @@ Route::get('logout', function (Request $request) {
     return redirect('/');
 });
 
+Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index']);
+
+
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index']);
 
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show']);

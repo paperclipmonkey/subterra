@@ -6,14 +6,14 @@
     >
       <v-img
         class="mb-4"
-        height="150"
-        src="@/assets/logo.png"
+        height="250"
+        src="@/assets/subterra.svg"
       />
 
       <div class="text-center">
-        <div class="text-body-2 font-weight-light mb-n1">Welcome to</div>
+        <h1>.world</h1>
 
-        <h1 class="text-h2 font-weight-bold">Subterra</h1>
+        <h2> Your place for all things caving </h2>
       </div>
 
       <div class="py-4" />
@@ -28,12 +28,12 @@
             variant="outlined"
           >
             <template #title>
-              <h2 class="text-h5 font-weight-bold">Caves</h2>
+              <h2 class="text-h5 font-weight-bold">Browse Caves</h2>
             </template>
 
             <template #subtitle>
               <div class="text-subtitle-1">
-                Browse caves and cave systems
+                to find your next adventure
               </div>
             </template>
 
@@ -58,12 +58,12 @@
             variant="outlined"
           >
             <template #title>
-              <h2 class="text-h5 font-weight-bold">Trips</h2>
+              <h2 class="text-h5 font-weight-bold">Log Trips</h2>
             </template>
 
             <template #subtitle>
               <div class="text-subtitle-1">
-                Log your trips and view public trips
+                To keep a history
               </div>
             </template>
 
@@ -81,7 +81,7 @@
         <v-col>
           
           <a href="/api/google/redirect" class="btn btn-primary"> 
-            <img src="/google-signin.svg"/>
+            <img class="signin" src="/google-signin.svg"/>
           </a>
         </v-col>
       </v-row>
@@ -109,3 +109,10 @@ const store = useAppStore()
     }
   })
 </script>
+
+<style scoped>
+  .signin {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
