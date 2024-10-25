@@ -196,7 +196,7 @@
 
     const response = await fetch('/api/users')
     users.value = (await response.json()).data
-    trip.participants.push(users.value.find(user => user.email === userEmail.value))
+    trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
   })
 
   // watch(() => trip.participants, (participants) => {
