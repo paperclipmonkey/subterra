@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('tags', function (Blueprint $table) {
             $table->id();
             $table->string('tag');
-            $table->string('type');
+            $table->string('type'); // Cave, cave-system
+            $table->string('category'); // Region, Access, Tackle
             $table->text('description')->nullable();
         });
 

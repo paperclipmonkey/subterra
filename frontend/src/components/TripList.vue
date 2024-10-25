@@ -14,28 +14,47 @@
       >
       </v-text-field>
     </template>
-
-    <v-data-table
-      :headers="headers"
-      :items="tripStore.trips"
-      :search="search"
-      :items-per-page="10000"
-      hide-default-footer
-    >
-    <template v-slot:item.name="{ item, value }">
-      <router-link :to="{name: '/trip/[id]', params: {id: item.id}}">
-        {{ value }}
-      </router-link>
+    <template v-if="tripStore.loading">
+      <v-card-text>
+        <v-progress-circular
+            indeterminate
+            size="64"
+            class="mx-auto my-4 d-flex justify-center"
+          color="primary"
+        ></v-progress-circular>
+      </v-card-text>
     </template>
-    <template v-slot:item.end_time="{ value }">
-      {{ formatDate(value) }}
+    <template v-else>
+      <template v-if="tripStore.trips.length === 0">
+        <v-card-text>
+          <p>You don't seem to have been on any trips yet.</p>
+          <router-link to="/caves">Find a cave to explore</router-link>, or <router-link to="/create-trip">Create a new trip report</router-link>
+        </v-card-text>
+      </template>
+      <template v-else>
+        <v-data-table
+          :headers="headers"
+          :items="tripStore.trips"
+          :search="search"
+          :items-per-page="10000"
+          hide-default-footer
+        >
+          <template v-slot:item.name="{ item, value }">
+            <router-link :to="{name: '/trip/[id]', params: {id: item.id}}">
+              {{ value }}
+            </router-link>
+          </template>
+          <template v-slot:item.end_time="{ value }">
+            {{ formatDate(value) }}
+          </template>
+          <template v-slot:item.participants="{ value }">
+            <v-chip density="compact" size="small" v-for="participant in value" :key="participant.id" class="ma-1">
+              {{ participant.name }}
+            </v-chip>
+          </template>
+        </v-data-table>
+      </template>
     </template>
-    <template v-slot:item.participants="{ value }">
-      <v-chip density="compact" size="small" v-for="participant in value" :key="participant.id" class="ma-1">
-        {{ participant.name }}
-      </v-chip>
-    </template>
-  </v-data-table>
   </v-card>
 </template>
 

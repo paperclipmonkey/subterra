@@ -74,11 +74,9 @@
 </template>
 
 <script setup>
-  import { useAppStore } from '@/stores/app'
   import { useCaveStore } from '@/stores/caves';
   import FilterByTagModal from './FilterByTagModal.vue';
 
-  const store = useAppStore()  
   const caveStore = useCaveStore()
 
   const showFilterByTagModal = ref(false)
@@ -92,11 +90,11 @@
   ])
 
   const applyFilter = (tags) => {
-    // caveStore.filterByTags(tags)
+    console.log(tags)
+    caveStore.applyFilter(tags)
     showFilterByTagModal.value = false
   }
 
-  const caves = ref([])
   onMounted(async () => {
     await caveStore.getList()
   })

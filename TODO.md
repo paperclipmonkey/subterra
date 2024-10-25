@@ -4,8 +4,24 @@ What is MVP
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
-
 * Add permissions so you can only edit trips you were a participant on
+    Limit ui to only show button if you were a participant
+* Add 20 Mendip caves and 10 Welsh caves
+    * AI generate the intro text
+
+
+* Find CC photos to use for entrances
+* Add images to entrances
+* Add images to systems
+* Add surveys to systems
+
+What would the relationship look like?
+    * media table
+    * media_cave_system
+    * media_cave
+        media_id
+        cave_id
+        type (survey, entrance, photo)
 
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
 
