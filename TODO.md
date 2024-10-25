@@ -1,6 +1,5 @@
 # TODO
 What is MVP
-* Create a nice logo for the site
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
@@ -8,7 +7,8 @@ What is MVP
     Limit ui to only show button if you were a participant
 * Add 20 Mendip caves and 10 Welsh caves
     * AI generate the intro text
-
+* Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
+    * Notify me every time there's a signup?
 
 * Find CC photos to use for entrances
 * Add images to entrances
@@ -23,7 +23,6 @@ What would the relationship look like?
         cave_id
         type (survey, entrance, photo)
 
-* Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
 
 * Go to profile page / introduce system once a user has signed in for the first time. 
     * Get them to add their club

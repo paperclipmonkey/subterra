@@ -7,6 +7,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Log;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class GoogleLoginController extends Controller
 {
@@ -42,6 +43,7 @@ class GoogleLoginController extends Controller
                     'photo' => $photoUrl,
                     'is_active' => true,
                 ]);
+                SlackAlert::to('signups')->message("A new user has signed up {$user->name} with email: {$user->email}");
             }
             if(!$user->is_active) {
                 Log::info(message: 'User is not active');
