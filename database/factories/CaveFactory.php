@@ -21,9 +21,6 @@ class CaveFactory extends Factory
         return [
             'name' => fake()->name(),
             'description' => fake()->sentence(30),
-            //'system_id' => now(),
-            'length' => fake()->randomNumber(3),
-            'depth' => fake()->randomNumber(2),
             'location_name' => fake()->city(),
             'location_country' => fake()->country(),
             'location_lat' => fake()->randomFloat(3,-180,180),

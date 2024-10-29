@@ -39,8 +39,8 @@
                 {{ tag.tag }}
               </v-chip>
             </p>
-            <p><strong>Length:</strong> {{ Math.round(cave.length/1000) }} km</p>
-            <p><strong>Depth:</strong> {{ cave.depth }} m</p>
+            <p><strong>Length:</strong> {{ Math.round(cave.system.length/1000) }} km</p>
+            <p><strong>Depth:</strong> {{ cave.system.depth }} m</p>
             <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location.name }}, {{ cave.location.country }}</a></p>
           </v-card-text>
         </v-card>

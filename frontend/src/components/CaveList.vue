@@ -39,10 +39,10 @@
         :items-per-page="10000"
         hide-default-footer
       >
-      <template v-slot:item.length="{ value }">
+      <template v-slot:item.system.length="{ value }">
         <span :title="`${value} m`">{{ Math.round((value / 1000)*10)/10 }} km</span>
       </template>
-      <template v-slot:item.depth="{ value }"> {{ value }} m</template>
+      <template v-slot:item.system.depth="{ value }"> {{ value }} m</template>
       <template v-slot:item.name="{ item, value }">
         <router-link :to="{name: '/cave/[id]', params: {id: item.id}}">
           {{ value }}
