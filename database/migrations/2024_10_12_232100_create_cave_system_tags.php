@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('tag');
             $table->string('type'); // Cave, cave-system
             $table->string('category'); // Region, Access, Tackle
+            $table->string('image')->nullable();
             $table->text('description')->nullable();
         });
 
