@@ -1,14 +1,36 @@
 # TODO
 What is MVP
+* Migrate length and depth to cave system
+    * Code
+* References
+    * From cave_system
+        * What do we care about with references?
+            Type: (web, book etc)
+            Reference:
+
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
 * Add permissions so you can only edit trips you were a participant on
     Limit ui to only show button if you were a participant
 * Add 20 Mendip caves and 10 Welsh caves
-    * AI generate the intro text
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
-    * Notify me every time there's a signup?
+    * If user.approved is not true then show a holding page similar to the login page. It'll let them know I've been notified and that they'll be admitted in the future.
+    * Go to profile page / introduce system once a user has signed in for the first time. 
+    * Get them to add their club
+* Fix any bugs in subterra.world
+    * Temporarily remove webworker support?
+    * Full smoke test
+* Add slugs to database? caves/region/short_name
+Add tag collection page
+    Colltions page show:
+        1. tags
+        2. Curated
+        3. My collections
+
+Add page so people can add new caves and make corrections.
+
+How does this look on desktop?
 
 * Find CC photos to use for entrances
 * Add images to entrances
@@ -22,10 +44,6 @@ What would the relationship look like?
         media_id
         cave_id
         type (survey, entrance, photo)
-
-
-* Go to profile page / introduce system once a user has signed in for the first time. 
-    * Get them to add their club
 
 * Automatically add current user to any trip they add
     * Stop from removing themselves in the ui?

@@ -4,13 +4,17 @@
       <v-text-field
         v-model="trip.name"
         label="Trip Name"
+        :rules="rules.name"
         required
       ></v-text-field>
-      <v-textarea
+      <!-- <v-textarea
         v-model="trip.description"
         label="Trip Description"
+        :rules="rules.description"
         required
-      ></v-textarea>
+      ></v-textarea> -->
+      <VuetifyTiptap @change="updatedDescription" v-model="trip.description" output="text" markdown-theme="github" >
+      </VuetifyTiptap>
       <v-file-input
         prepend-icon="mdi-camera"
         accept="image/*"
@@ -23,6 +27,7 @@
         label="Location"
         :items="caves"
         item-title="name"
+        :rules="rules.location"
         item-value="id"
         v-model="trip.entrance_cave_id"
       >
@@ -131,6 +136,12 @@
   const router = useRouter()
   const route = useRoute()
 
+  const markdownOutput = ref('')
+
+  const updatedDescription = (editor) => {
+    markdownOutput.value =  editor.editor.storage.markdown.getMarkdown()
+  }
+
   const addParticipant = (participant) => {
     console.log('add participant', participant)
     trip.participants.push(participant)
@@ -221,6 +232,7 @@
     trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
     trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm')
     trip.cave_system_id = cave_system_id.value
+    trip.description = markdownOutput.value // Copy the markdown output to the description field
 
     const convertFileToBase64 = (file) => {
       return new Promise((resolve, reject) => {
@@ -273,4 +285,42 @@
       console.error('failed to save trip')
     }
   }
+
+  const rules = {
+    name: [
+      value => {
+        if (value) return true
+
+        return 'Name is required.'
+      },
+      value => {
+        if (value?.length <= 255) return true
+
+        return 'Name must be less than 255 characters.'
+      },
+    ],
+    description: [
+      value => {
+        if (value) return true
+        return 'Description is required.'
+      }
+    ],
+    location: [
+      value => {
+        if (value) return true
+        return 'Location is required.'
+      }
+    ],
+  }
 </script>
+
+<style>
+  .vuetify-pro-tiptap-editor__content + .v-toolbar {
+    display: none;
+  }
+
+  /* TODO fix this hack */
+  .vuetify-pro-tiptap-editor {
+    margin-bottom: 20px;
+  }
+</style>
