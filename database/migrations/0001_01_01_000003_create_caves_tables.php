@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->index('cave_systems_slug');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->integer('length');
             $table->integer('depth');
         });
@@ -25,12 +25,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->index('caves_slug');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->foreignId('cave_system_id')->constrained('cave_systems', 'id');
-            $table->string('location_name');
             $table->string('location_country');
-            $table->string('location_lat');
-            $table->string('location_lng');
+            $table->float('location_lat');
+            $table->float('location_lng');
+            $table->float('location_alt')->comment('Altitude in meters');
         });
     }
 
