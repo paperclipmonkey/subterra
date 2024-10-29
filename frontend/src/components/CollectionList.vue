@@ -64,7 +64,7 @@
   const headers = ref([
     { title: 'Name', key: 'name' },
     { title: 'Length', key: 'system.length' },
-    { title: 'Depth', key: 'system.depth' },
+    { title: 'Depth', key: 'system.vertical_range' },
     { title: 'Location', key: 'location' },
     { title: 'Tags', key: 'tags' }
   ])

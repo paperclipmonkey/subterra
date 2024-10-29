@@ -40,7 +40,7 @@
               </v-chip>
             </p>
             <p><strong>Length:</strong> {{ Math.round(cave.system.length/1000) }} km</p>
-            <p><strong>Depth:</strong> {{ cave.system.depth }} m</p>
+            <p><strong>Vertical Range:</strong> {{ cave.system.vertical_range }} m</p>
             <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location.name }}, {{ cave.location.country }}</a></p>
           </v-card-text>
         </v-card>
@@ -111,9 +111,9 @@ const route = useRoute()
     system: {
       name: '',
       description: '',
+      length: '',
+      vertical_range: '',
     },
-    length: '',
-    depth: '',
     location: {
       name: '',
       country: '',

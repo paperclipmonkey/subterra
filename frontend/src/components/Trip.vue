@@ -101,12 +101,10 @@ const deleteTrip = async () => {
 }
 
   const trip = ref({
-    depth: "",
     description: "",
     id: "",
-    length: "",
-    location: "",
     name: "",
+    media: [],
     system: {},
     entrance: {
       location: {},
@@ -114,7 +112,6 @@ const deleteTrip = async () => {
     exit: {
       location: {},
     },
-    trips: [],
   })
 
   onMounted(async () => {
