@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('slug')->index('cave_systems_slug');
             $table->text('description')->nullable();
             $table->integer('length');
-            $table->integer('depth');
+            $table->integer('vertical_range');
         });
 
         Schema::create('caves', function (Blueprint $table) {
@@ -31,6 +31,7 @@ return new class extends Migration
             $table->float('location_lat');
             $table->float('location_lng');
             $table->float('location_alt')->comment('Altitude in meters');
+            $table->text('access_info')->nullable();
         });
     }
 

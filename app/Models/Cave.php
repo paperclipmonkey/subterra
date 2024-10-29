@@ -15,13 +15,13 @@ class Cave extends Model
 
     protected $fillable = [
         'name',
-        'length',
-        'depth',
         'description',
         'location_name',
         'location_country',
         'location_lat',
         'location_lng',
+        'length',
+        'vertical_range',
         'cave_system_id',
     ];
 

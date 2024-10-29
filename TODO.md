@@ -1,7 +1,5 @@
 # TODO
 What is MVP
-* Migrate length and depth to cave system
-    * Code
 * References
     * From cave_system
         * What do we care about with references?

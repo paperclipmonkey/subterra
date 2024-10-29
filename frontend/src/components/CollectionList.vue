@@ -63,8 +63,8 @@
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
-    { title: 'Length', key: 'length' },
-    { title: 'Depth', key: 'depth' },
+    { title: 'Length', key: 'system.length' },
+    { title: 'Depth', key: 'system.depth' },
     { title: 'Location', key: 'location' },
     { title: 'Tags', key: 'tags' }
   ])
