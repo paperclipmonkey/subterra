@@ -56,6 +56,6 @@ class GoogleLoginController extends Controller
 
         Auth::login($user);
 
-        return redirect('http://localhost:3000');
+        return redirect(env('APP_URL'));
     }
 }
