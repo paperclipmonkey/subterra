@@ -39,6 +39,14 @@ class CaveController extends Controller
     public function update(UpdateCaveRequest $request, Cave $cave)
     {
         $cave->update($request->all());
+        // Update tags
+        $tags = collect($request->all()['tags'])->map(function ($tag) {
+            return \App\Models\Tag::where([
+                'category' => $tag['category'],
+                'tag' => $tag['tag']
+            ])->first()->id;
+        });
+        $cave->tags()->sync($tags);
     }
 
     /**

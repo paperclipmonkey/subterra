@@ -20,10 +20,10 @@
 
           <h2 class="text-h6 mb-2 tagGroupTitle">{{groupName}}</h2>
 
-          <!-- multiple -->
           <v-chip-group
             v-model="selectedTags[groupName]"
             column
+            :multiple="true"
           >
             <v-chip
               v-for="tag in groupItems"
@@ -36,6 +36,64 @@
           </template>
         </v-card-text>
         <v-divider class="mt-2"></v-divider>
+<!-- 
+        <v-card-text>
+          <h2 class="text-h6 mb-2 tagGroupTitle">Previous trips</h2>
+
+          <v-chip-group
+            v-model="selectedTags[previousTrips]"
+            column
+          >
+            <v-chip
+              text="Previously Done"
+              variant="outlined"
+              value="done"
+              filter
+            ></v-chip>
+            <v-chip
+              text="Haven't Done"
+              variant="outlined"
+              value="notdone"
+              filter
+            ></v-chip>
+          </v-chip-group>
+        </v-card-text>
+        <v-divider class="mt-2"></v-divider>
+
+        <v-card-text>
+          <h2 class="text-h6 mb-2 tagGroupTitle">System length</h2>
+
+          <v-chip-group
+            v-model="selectedTags[previousTrips]"
+            column
+          >
+            <v-chip
+              text=">250m"
+              variant="outlined"
+              value="250"
+              filter
+            ></v-chip>
+            <v-chip
+              text=">500m"
+              variant="outlined"
+              value="500"
+              filter
+            ></v-chip>
+            <v-chip
+              text=">1km"
+              variant="outlined"
+              value="1000"
+              filter
+            ></v-chip>
+            <v-chip
+              text=">5km"
+              variant="outlined"
+              value="5000"
+              filter
+            ></v-chip>
+          </v-chip-group>
+        </v-card-text>
+        <v-divider class="mt-2"></v-divider> -->
 
         <v-card-actions class="my-2 d-flex justify-end">
           <v-btn
