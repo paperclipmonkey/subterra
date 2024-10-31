@@ -42,14 +42,14 @@
       <template v-slot:item.system.length="{ value }">
         <span :title="`${value} m`">{{ Math.round((value / 1000)*10)/10 }} km</span>
       </template>
-      <template v-slot:item.system.depth="{ value }"> {{ value }} m</template>
+      <template v-slot:item.system.vertical_range="{ value }"> {{ value }} m</template>
       <template v-slot:item.name="{ item, value }">
         <router-link :to="{name: '/cave/[id]', params: {id: item.id}}">
           {{ value }}
         </router-link>
       </template>
       <template v-slot:item.location="{ item }">
-          {{ item.location.name }}, {{ item.location.country }}
+          {{ item.location_name }}, {{ item.location_country }}
       </template>
       <template v-slot:item.tags="{ value }">
         <v-chip v-for="tag in value" :key="tag.tag" class="ma-1">

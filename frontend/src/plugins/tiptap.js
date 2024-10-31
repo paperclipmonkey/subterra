@@ -5,7 +5,7 @@ import { Markdown } from 'tiptap-markdown';
 import 'vuetify-pro-tiptap/style.css'
 
 export const vuetifyProTipTap = createVuetifyProTipTap({
-  lang: 'english',
+  lang: 'en',
   components: {
     VuetifyTiptap
   },

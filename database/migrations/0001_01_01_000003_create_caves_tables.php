@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('slug')->index('caves_slug');
             $table->text('description')->nullable();
             $table->foreignId('cave_system_id')->constrained('cave_systems', 'id');
+            $table->string('location_name');
             $table->string('location_country');
             $table->float('location_lat');
             $table->float('location_lng');

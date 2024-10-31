@@ -5,6 +5,9 @@
         <v-btn icon @click="$router.go(-1)">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
+        <v-btn icon @click="$router.push({name: '/cave/[id].edit', params: {id: route.params.id}})">
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
         <v-toolbar-title>{{ cave.name }}</v-toolbar-title>
         <v-divider>{{ cave.system.name }}</v-divider>
       </v-col>
@@ -21,7 +24,9 @@
                 {{ tag.tag }}
               </v-chip>
             </p>            
-            <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location.name }}, {{ cave.location.country }}</a></p>
+            <p><strong>Location:</strong> 
+              <p>[{{ cave.location_lat }}, {{ cave.location_lng }}]</p>
+              <a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
           </v-card-text>
         </v-card>
       </v-col>
@@ -39,19 +44,19 @@
                 {{ tag.tag }}
               </v-chip>
             </p>
-            <p><strong>Length:</strong> {{ Math.round(cave.system.length/1000) }} km</p>
+            <p><strong>Length:</strong> {{ Math.round(cave.system.length) }} m</p>
             <p><strong>Vertical Range:</strong> {{ cave.system.vertical_range }} m</p>
-            <p><strong>Location:</strong> <a :href='googleMapsUrl'>{{ cave.location.name }}, {{ cave.location.country }}</a></p>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <v-row>
+    <v-row v-if="cave.system.caves.length > 1">
       <v-col cols="12">
         <v-card>
           <v-card-title>System Entrances</v-card-title>
           <v-card-text>
+            This system has multiple entrances:
             <v-list>
               <v-list-item v-for="system_cave in cave.system.caves" :key="system_cave.id">
                 <div>
@@ -102,7 +107,7 @@ import { useRoute } from "vue-router"
 const route = useRoute()
 
   const googleMapsUrl = computed(() => {
-    return `https://www.google.com/maps/search/?api=1&query=${cave.value.location.lng}%2C${ cave.value.location.lat }`
+    return `https://www.google.com/maps/search/?api=1&query=${cave.value.location_lat}%2C${ cave.value.location_lng }`
   })
 
   const cave = ref({
@@ -113,6 +118,7 @@ const route = useRoute()
       description: '',
       length: '',
       vertical_range: '',
+      caves: []
     },
     location: {
       name: '',

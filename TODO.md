@@ -1,11 +1,23 @@
 # TODO
 What is MVP
+* Continue adding tags for Mendip caves
+    * Add quick ui to edit a system
+* Rename conditions to hazards? Add CO2
+* When showing multiple entrances show the distance and direction to those entrances
+* Switch over to using slugs for references in pages
 * References
     * From cave_system
         * What do we care about with references?
             Type: (web, book etc)
             Reference:
-
+* Add done / not done functionality.
+    * In cave list return whether the current user has done a trip there
+    * Add filter functionality
+* Add ability for tags to be individual or multi (from database)
+    * Add DB migration for ability
+    * Draw ui based on value
+    * Filter with any or explicit based on groups
+* Add concept of 'admin' to the database where they can edit caves
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
