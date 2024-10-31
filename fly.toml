@@ -25,6 +25,8 @@ console_command = 'php /var/www/html/artisan tinker'
   SESSION_SECURE_COOKIE = 'true'
   GOOGLE_CLIENT_ID="1062453848042-08ktfa8rv4pe786okrd2dc0k3ls4hksp.apps.googleusercontent.com"
   GOOGLE_REDIRECT_URL="https://subterra.world/api/google/callback"
+  SLACK_SIGNUPS_WEBHOOK="https://hooks.slack.com/services/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"
+  SLACK_TRIPS_CHANNEL="https://hooks.slack.com/services/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"
 
 [http_service]
   internal_port = 8080
