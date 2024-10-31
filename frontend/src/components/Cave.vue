@@ -2,7 +2,7 @@
   <v-container>
     <v-row>
       <v-col cols="12">
-        <v-btn icon @click="$router.go(-1)">
+        <v-btn icon @click="$router.push({name: '/caves'})">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
         <v-btn icon @click="$router.push({name: '/cave/[id].edit', params: {id: route.params.id}})">

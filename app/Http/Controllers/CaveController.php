@@ -14,7 +14,7 @@ class CaveController extends Controller
      */
     public function index()
     {
-        return CaveResource::collection(Cave::all());
+        return CaveResource::collection(Cave::orderBy('name')->get());
     }
 
     /**
