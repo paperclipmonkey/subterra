@@ -15,28 +15,31 @@ import { fileURLToPath, URL } from 'node:url'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
-      manifest: {
-        name: 'Subterra.world',
-        short_name: 'Subterra',
-        description: 'Plan your next adventure with Subterra.world',
-        theme_color: '#ffffff',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      }
-    }),
+    // VitePWA({
+    //   registerType: 'autoUpdate',
+    //   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+    //   devOptions: {
+    //     enabled: true
+    //   },
+    //   manifest: {
+    //     name: 'Subterra.world',
+    //     short_name: 'Subterra',
+    //     description: 'Plan your next adventure with Subterra.world',
+    //     theme_color: '#ffffff',
+    //     icons: [
+    //       {
+    //         src: 'pwa-192x192.png',
+    //         sizes: '192x192',
+    //         type: 'image/png'
+    //       },
+    //       {
+    //         src: 'pwa-512x512.png',
+    //         sizes: '512x512',
+    //         type: 'image/png'
+    //       }
+    //     ]
+    //   }
+    // }),
     VueRouter(),
     Layouts(),
     Vue({
