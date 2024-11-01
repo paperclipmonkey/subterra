@@ -1,43 +1,45 @@
 # TODO
+* Migrate data from local to fly.io database
+    * Use postgres dump?
 What is MVP
-* When showing multiple entrances show the distance and direction to those entrances
-* Switch over to using slugs for references in pages
-* References
-    * From cave_system
-        * What do we care about with references?
-            Type: (web, book etc)
-            Reference:
-* Render tags differently on cave/[id] page
-    * Show region as part of slug in ui
-    * Show access as an icon
-* Rename conditions to hazards? Add CO2
-* Add done / not done functionality.
-    * In cave list return whether the current user has done a trip there
-    * Add filter functionality
-* Add ability for tags to be individual or multi (from database)
-    * Add DB migration for ability
-    * Draw ui based on value
-    * Filter with any or explicit based on groups
-* Add concept of 'admin' to the database where they can edit caves
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
 * Add permissions so you can only edit trips you were a participant on
     Limit ui to only show button if you were a participant
+* Add concept of 'admin' to the database where they can edit caves
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
-    * If user.approved is not true then show a holding page similar to the login page. It'll let them know I've been notified and that they'll be admitted in the future.
-    * Go to profile page / introduce system once a user has signed in for the first time. 
-    * Get them to add their club
-* Fix any bugs in subterra.world
-    * Temporarily remove webworker support?
-    * Full smoke test
+* Switch over to using slugs for urls in pages
+* References
+    * From cave_system
+        * What do we care about with references?
+            Type: (web, book etc)
+            Reference:
+* Add access / entrance info for 10 mendip caves
+* Add cave_system info for 10 mendip caves
+* Add page so admins can add new caves / cave_systems
+* Rename conditions to hazards? Add CO2
+* Add done / not done functionality.
+    * In cave list return whether the current user has done a trip there
+    * Add filter functionality
+
+* Add concept of trip which doesn't have a datetime associated with it. These can be added automatically when you set a cave as 'done' from the cave page.
+
+* Render tags differently on cave/[id] page
+    * Show region as part of slug in ui
+    * Show access as an icon
+* Add ability for tags to be individual or multi (from database)
+    * Add DB migration for ability
+    * Draw ui based on value
+    * Filter with any or explicit based on groups
+
+* When showing multiple entrances in a cave_system, show the distance and direction to those entrances from the currently selected one.
+
 Add tag collection page
     Collections page show:
         1. tags
         2. Curated
         3. My collections
-
-Add page so people can add new caves and make corrections.
 
 * Find CC photos to use for entrances
 * Add images to entrances
@@ -77,23 +79,10 @@ Add grid/list/map view icons for caves list
 
 * Remove new trip page from history when we move forward
 
-* Add way of getting trips for any user (filtering on trip endpoint?)
-    * Add list of recent trips they've been on to their profile
-* Add global scope for public and private trips
-* Add endpoint for CRUD cave_system
 * Add hidden pages for adding new cave systems / caves
 
-View the profile of other club members
-
 * Add functionality of distance from me to caves search?
-* Add tag search to caves list
 * Add ability to switch between list and map view (under search bar?)
-* Add loading animation for pages
-* Add additional info about access to entrances
-
-* Add top navigation bar
-
-* Add Google Login for signups https://medium.com/@mimranisrar6/how-to-add-a-google-login-using-socialite-in-laravel-21f6eebafcec
 
 * Add concept of routes
     Routes have:
