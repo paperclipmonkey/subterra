@@ -24,9 +24,9 @@
                 {{ tag.tag }}
               </v-chip>
             </p>            
-            <p><strong>Location:</strong> 
-              <p>[{{ cave.location_lat }}, {{ cave.location_lng }}]</p>
-              <a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
+            <strong>Location:</strong> 
+            <p>[{{ cave.location_lat }}, {{ cave.location_lng }}]</p>
+            <p><a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
           </v-card-text>
         </v-card>
       </v-col>

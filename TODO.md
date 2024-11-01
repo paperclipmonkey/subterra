@@ -8,7 +8,7 @@
     * Limit ui to only show button if you were a participant
     * Add API middleware
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
-    * Add holding page after initial login
+    * Add landing page after initial login
 * Switch over to using slugs for urls in pages
 * References
     * From cave_system
