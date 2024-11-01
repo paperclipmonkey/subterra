@@ -43,16 +43,6 @@ https://admin.gandi.net/domain/8e5d26dc-8680-11ef-8ba7-00163e94b645/subterra.wor
 ```mermaid
 classDiagram
 direction BT
-class cache {
-   text value
-   integer expiration
-   varchar(255) key
-}
-class cache_locks {
-   varchar(255) owner
-   integer expiration
-   varchar(255) key
-}
 class cave_system_tag {
    bigint cave_system_id
    bigint tag_id
@@ -82,66 +72,7 @@ class caves {
    text access_info
    bigint id
 }
-class failed_jobs {
-   varchar(255) uuid
-   text connection
-   text queue
-   text payload
-   text exception
-   timestamp(0) failed_at
-   bigint id
-}
-class job_batches {
-   varchar(255) name
-   integer total_jobs
-   integer pending_jobs
-   integer failed_jobs
-   text failed_job_ids
-   text options
-   integer cancelled_at
-   integer created_at
-   integer finished_at
-   varchar(255) id
-}
-class jobs {
-   varchar(255) queue
-   text payload
-   smallint attempts
-   integer reserved_at
-   integer available_at
-   integer created_at
-   bigint id
-}
-class migrations {
-   varchar(255) migration
-   integer batch
-   integer id
-}
-class password_reset_tokens {
-   varchar(255) token
-   timestamp(0) created_at
-   varchar(255) email
-}
-class personal_access_tokens {
-   varchar(255) tokenable_type
-   bigint tokenable_id
-   varchar(255) name
-   varchar(64) token
-   text abilities
-   timestamp(0) last_used_at
-   timestamp(0) expires_at
-   timestamp(0) created_at
-   timestamp(0) updated_at
-   bigint id
-}
-class sessions {
-   bigint user_id
-   varchar(45) ip_address
-   text user_agent
-   text payload
-   integer last_activity
-   varchar(255) id
-}
+
 class tags {
    varchar(255) tag
    varchar(255) type
@@ -196,5 +127,4 @@ trip_user  -->  users : user_id.id
 trips  -->  cave_systems : cave_system_id.id
 trips  -->  caves : entrance_cave_id.id
 trips  -->  caves : exit_cave_id.id
-
 ```
