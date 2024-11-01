@@ -9,6 +9,8 @@
     * Add API middleware
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
     * Add landing page after initial login
+* Add TraceStrack maps using MapLibre Gl JS.
+
 * Switch over to using slugs for urls in pages
 * References
     * From cave_system
@@ -31,6 +33,7 @@
 
 ## Further work
 
+* Show parking / walking route options to a cave using GeoJSON shapes. Add editor for this to the cave edit page. https://maplibre.org/maplibre-gl-js/docs/examples/maplibre-gl-terradraw/
 * Render tags differently on cave/[id] page
     * Show region as part of slug in ui
     * Show access as an icon
