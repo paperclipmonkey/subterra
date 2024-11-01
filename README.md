@@ -1,6 +1,6 @@
 # Subterra
 
-[Subterra.earth](https://subterra.earth) is a tool to help cavers plan upcoming trips and to track trips they've been on.
+[Subterra.world](https://subterra.world) is a tool to help cavers plan upcoming trips and to track trips they've been on.
 
 ## Functionality
 ### Find new trips
