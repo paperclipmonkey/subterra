@@ -1,7 +1,6 @@
 # TODO
 
 ## MVP features
-* Migrate data from local to fly.io database. Use postgres dump
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
