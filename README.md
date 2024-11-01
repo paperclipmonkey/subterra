@@ -116,15 +116,15 @@ class users {
 }
 
 cave_system_tag  -->  cave_systems : cave_system_id.id
-cave_system_tag  -->  tags : tag_id.id
-cave_tag  -->  caves : cave_id.id
 cave_tag  -->  tags : tag_id.id
 caves  -->  cave_systems : cave_system_id.id
-sessions  -->  users : user_id.id
+cave_tag  -->  caves : cave_id.id
+cave_system_tag  -->  tags : tag_id.id
 trip_media  -->  trips : trip_id.id
 trip_user  -->  trips : trip_id.id
 trip_user  -->  users : user_id.id
-trips  -->  cave_systems : cave_system_id.id
 trips  -->  caves : entrance_cave_id.id
 trips  -->  caves : exit_cave_id.id
+trips  -->  cave_systems : cave_system_id.id
+
 ```
