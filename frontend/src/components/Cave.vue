@@ -5,7 +5,7 @@
         <v-btn icon @click="$router.push({name: '/caves'})">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
-        <v-btn class="float-right" icon @click="$router.push({name: '/cave/[id].edit', params: {id: route.params.id}})">
+        <v-btn v-if="appStore.user.is_admin" class="float-right" icon @click="$router.push({name: '/cave/[id].edit', params: {id: route.params.id}})">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
         <v-toolbar-title>{{ cave.name }}</v-toolbar-title>
@@ -103,6 +103,9 @@ import { computed } from 'vue'
 import VueMarkdown from 'vue-markdown-render'
 import { watch } from "vue"
 import { useRoute } from "vue-router"
+import { useAppStore } from '@/stores/app'
+
+const appStore = useAppStore()
 
 const route = useRoute()
 

@@ -8,7 +8,7 @@
     * Limit ui to only show button if you were a participant
     * Add API middleware
 * Add concept of 'admin' to the database where they can edit caves
-    * Show ui components based on admin status
+    * Limit POST/PUT/DELETE to is_admin
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
     * Add holding page after initial login
 * Switch over to using slugs for urls in pages
