@@ -31,6 +31,9 @@
 
 * Add concept of trip which doesn't have a datetime associated with it. These can be added automatically when you set a cave as 'done' from the cave page
 
+* Replace all icons with new logo
+
+
 ## Further work
 
 * Render tags differently on cave/[id] page
@@ -40,6 +43,13 @@
     * Add DB migration for ability
     * Draw ui based on value
     * Filter with any or explicit based on groups
+
+* Add graphs to the trips page. Ideas for graphs:
+    * Trip difficulty
+    * Trip duration
+    * Average trip participants
+    * Location heatmap
+    * Github-like commit history calendar for trips (Monday-Sunday)
 
 Add tag collection page
     Collections page show:
