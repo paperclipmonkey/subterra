@@ -11,9 +11,6 @@ use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class TripController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         return TripResource::collection(Trip::all());
@@ -29,9 +26,6 @@ class TripController extends Controller
         return TripResource::collection($trips);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreTripRequest $request)
     {
         $trip = Trip::create($request->all());
@@ -40,7 +34,7 @@ class TripController extends Controller
         $participantEmails = $request->all()['participants'];
         // Loop through the participants and find them by email. If they don't exist, create them
         foreach ($participantEmails as $email) {
-            
+
             $user = \App\Models\User::firstOrCreate(['email' => $email], [
                 'name' => 'Unverified User', 
                 'is_active' => false,
@@ -73,25 +67,16 @@ class TripController extends Controller
         return new TripResource($trip);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Trip $trip)
     {
         return new TripResource($trip);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateTripRequest $request, Trip $trip)
     {
         $trip->update($request->all());
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Trip $trip)
     {
         $trip->delete();
