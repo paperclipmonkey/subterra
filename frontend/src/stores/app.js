@@ -11,6 +11,7 @@ export const useAppStore = defineStore('app', {
       name: '',
       email: '',
       is_admin: false,
+      is_approved: false,
     },
     loading: false,
     //

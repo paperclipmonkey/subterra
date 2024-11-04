@@ -5,9 +5,6 @@
         <v-btn icon @click="$router.go(-1)">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
-        <v-btn icon @click="$router.push({name: '/cave/[id].edit', params: {id: route.params.id}})">
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
         <v-toolbar-title>{{ cave.name }}</v-toolbar-title>
         <v-divider>{{ cave.system.name }}</v-divider>
       </v-col>

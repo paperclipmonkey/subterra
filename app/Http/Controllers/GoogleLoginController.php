@@ -20,7 +20,7 @@ class GoogleLoginController extends Controller
     {
         $googleUser = Socialite::driver('google')->stateless()->user();
         $user = User::where('email', $googleUser->email)->first();
-        if(!$user || !$user->is_active) {
+        if(!$user || !$user->has_signed_up) {
             try {
             // Make a copy of their profile photo and upload it to the Storage driver for profile photos
             $photoContents = file_get_contents($googleUser->avatar);
@@ -34,22 +34,19 @@ class GoogleLoginController extends Controller
             $photoUrl = \Storage::disk('media')->url($photoPath);
 
             if(!$user) {
-                Log::info(message: 'New user');
                 $user = User::create([
                     'name' => $googleUser->name, 
                     'email' => $googleUser->email, 
-                    'password' => \Hash::make(rand(100000,999999)),
                     'photo' => $photoUrl,
                     'is_active' => true,
                 ]);
                 SlackAlert::to('signups')->message("A new user has signed up {$user->name} with email: {$user->email}");
-            }
-            if(!$user->is_active) {
-                Log::info(message: 'User is not active');
-                $user->name = $googleUser->name;
-                $user->photo = $googleUser->photo;
-                $user->is_active = true;
-                $user->save();
+            } else {
+                $user->update([
+                    'name' => $googleUser->name,
+                    'photo' => $photoUrl,
+                    'is_active' => true,
+                ]);
             }
         }
 
