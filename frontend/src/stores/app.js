@@ -18,7 +18,7 @@ export const useAppStore = defineStore('app', {
   }),
 
   actions: {
-    async getUser(login, password) {
+    async getUser() {
       try {
         this.loading = true
         this.user = (await api.get()).data
