@@ -90,6 +90,9 @@
                 </div>
               </v-list-item>
             </v-list>
+            <template v-if="cave.trips.length === 0">
+              <v-alert>No trips have been recorded for this cave yet.</v-alert>
+            </template>
           </v-card-text>
         </v-card>
       </v-col>

@@ -1,16 +1,20 @@
 # TODO
 
 ## MVP features
+* Fix page refreshing bug
 * Edit a trip
     * Fix JS data structure
     * Add PUT support to Controller
+* Add cave data for OFD system and write up both trips from the weekend. Add people and send a link around
 * Add permissions so you can only edit trips you were a participant on
     * Limit ui to only show button if you were a participant
     * Add API middleware
+*Fix data for Bath Swallet
 * Require manual approval of signups after logging in for the first time (New field in Users?, email_verified_at / has_signed_up)
     * Add landing page after initial login
-* Add TraceStrack maps using MapLibre Gl JS.
+* Add markdown for references
 
+* Add TraceStrack maps using MapLibre Gl JS.
 * Switch over to using slugs for urls in pages
 * References
     * From cave_system

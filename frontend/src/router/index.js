@@ -40,6 +40,10 @@ router.beforeEach(async (to, from, next) => {
     return next()
   }
 
+  if(!user.is_approved && !['/waitlist', '/news'].includes(to.name)) {
+    return next({ name: '/waitlist' })
+  }
+
   if(user.email) {
     return next()
   }
