@@ -2,16 +2,11 @@
 
 ## MVP features
 * Edit a trip
+    * cave_system_id isn't copied over
     * Photos aren't removable
     * Location isn't settable
-    * Participant comes up twice
-    * Fix JS data structure
-    * Add PUT support to Controller
 * Add cave data for OFD system and write up both trips from the weekend. Add people and send a link around
-* Add permissions so you can only edit trips you were a participant on
-    * Limit ui to only show button if you were a participant
-    * Add API middleware
-*Fix data for Bath Swallet
+* Fix data for Bath Swallet
 * Add markdown for references
 
 * Fix page refreshing bug

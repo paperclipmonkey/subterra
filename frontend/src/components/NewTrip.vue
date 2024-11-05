@@ -181,6 +181,7 @@
       loadedTrip.media = []
       
       loadedTrip.entrance_cave_id = loadedTrip.entrance.id
+      
       loadedTrip.exit_cave_id = loadedTrip.exit.id
       //sloadedTrip.cave_system_id = loadedTrip.system.id
       delete loadedTrip.entrance
@@ -252,7 +253,9 @@
     trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
     trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm')
     trip.cave_system_id = cave_system_id.value
-    trip.description = markdownOutput.value // Copy the markdown output to the description field
+    if(markdownOutput.value) {
+      trip.description = markdownOutput.value // Copy the markdown output to the description field
+    }
 
     const convertFileToBase64 = (file) => {
       return new Promise((resolve, reject) => {
