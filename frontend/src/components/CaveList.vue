@@ -32,13 +32,17 @@
         :key="'list'"
         :value="'list'"> -->
 
-      <v-data-table
-        :headers="headers"
-        :items="caveStore.caves"
-        :search="search"
-        :items-per-page="10000"
-        hide-default-footer
-      >
+    <v-data-table
+      :headers="headers"
+      :items="caveStore.caves"
+      :search="search"
+      :items-per-page="10000"
+      :loading="caveStore.loading"
+      hide-default-footer
+    >
+      <template v-slot:loading>
+        <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
+      </template>
       <template v-slot:item.system.length="{ value }">
         <span :title="`${value} m`">{{ Math.round((value / 1000)*10)/10 }} km</span>
       </template>
