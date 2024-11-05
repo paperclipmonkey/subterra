@@ -1,14 +1,16 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12" class="d-flex align-items-center">
+      <v-col cols="12" class="align-items-center">
         <v-btn icon @click="$router.go(-1)">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
-        <div>
-          <v-toolbar-title>{{ trip.name }}</v-toolbar-title>
-          <span>{{ trip.system.name }}</span>
-        </div>
+        <v-btn class="float-right" icon @click="deleteTrip">
+          <v-icon>mdi-delete</v-icon>
+        </v-btn>
+        <v-btn class="float-right" icon @click="$router.push({name: '/trip/[id].edit', params: {id: trip.id}})">
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
       </v-col>
     </v-row>
     <v-row>
@@ -61,17 +63,6 @@
                 </div>
               </v-list-item>
             </v-list>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>Actions</v-card-title>
-          <v-card-text>
-            <v-btn color="primary" @click="$router.push({name: '/trip/[id].edit', params: {id: trip.id}})">Edit</v-btn>
-            <v-btn color="error" @click="deleteTrip">Delete</v-btn>
           </v-card-text>
         </v-card>
       </v-col>
