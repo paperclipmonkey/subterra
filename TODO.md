@@ -1,16 +1,16 @@
 # TODO
 
 ## MVP features
+* Trip text came through as HTML instead of .MD
 * Edit a trip
     * cave_system_id isn't copied over
     * Photos aren't removable
     * Location isn't settable
-* Add cave data for OFD system and write up both trips from the weekend. Add people and send a link around
+* Write up all three trips from the weekend. Add people and send a link around
 * Fix data for Bath Swallet
 * Add markdown for references
-
 * Fix page refreshing bug
-* Add TraceStrack maps using MapLibre Gl JS.
+* Add TraceStrack maps using MapLibre GL JS.
 * Switch over to using slugs for urls in pages
 * References
     * From cave_system
