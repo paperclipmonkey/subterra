@@ -2,6 +2,9 @@
 
 ## MVP features
 * Edit a trip
+    * Photos aren't removable
+    * Location isn't settable
+    * Participant comes up twice
     * Fix JS data structure
     * Add PUT support to Controller
 * Add cave data for OFD system and write up both trips from the weekend. Add people and send a link around

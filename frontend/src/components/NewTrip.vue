@@ -23,6 +23,10 @@
         chips
         multiple
       ></v-file-input>
+      <div>
+        Existing media:
+          <img class="existing_media" v-for="media in trip.existing_media" :key="media.id" :src="media.url" alt="filename" />
+      </div> 
       <v-autocomplete
         label="Location"
         :items="caves"
@@ -165,13 +169,25 @@
     start_time: '',
     end_time: '',
     participants: [],
-    // cave_system_id: 1
+    cave_system_id: null,
   })
 
   onMounted(async () => {
     if(route.params.id) {
       const response = await fetch(`/api/trips/${route.params.id}`)
-      trip = (await response.json()).data
+      let loadedTrip = (await response.json()).data
+
+      loadedTrip.existing_media = loadedTrip.media
+      loadedTrip.media = []
+      
+      loadedTrip.entrance_cave_id = loadedTrip.entrance.id
+      loadedTrip.exit_cave_id = loadedTrip.exit.id
+      //sloadedTrip.cave_system_id = loadedTrip.system.id
+      delete loadedTrip.entrance
+      delete loadedTrip.exit
+      delete loadedTrip.system
+      trip = loadedTrip
+
     }
   })
 
@@ -207,7 +223,9 @@
 
     const response = await fetch('/api/users')
     users.value = (await response.json()).data
-    trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
+    if(!trip.participants.length) {
+      trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
+    }
   })
 
   // watch(() => trip.participants, (participants) => {
@@ -228,7 +246,9 @@
   })
   
   const submitForm = async () => {
-    trip.exit_cave_id = trip.entrance_cave_id
+    if(!trip.exit_cave_id) {
+      trip.exit_cave_id = trip.entrance_cave_id
+    }
     trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
     trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm')
     trip.cave_system_id = cave_system_id.value
@@ -322,5 +342,9 @@
   /* TODO fix this hack */
   .vuetify-pro-tiptap-editor {
     margin-bottom: 20px;
+  }
+
+  .existing_media {
+    max-width: 200px;
   }
 </style>
