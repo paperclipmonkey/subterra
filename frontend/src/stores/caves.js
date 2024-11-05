@@ -14,9 +14,12 @@ export const useCaveStore = defineStore('caves', {
   actions: {
     async getList() {
       try {
+        this.loading = true
         this.caves = (await api.get()).data
         this.allCaves = this.caves
+        this.loading = false
       } catch (error) {
+        this.loading = false
         return error
       }
     },
