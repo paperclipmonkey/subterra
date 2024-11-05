@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTripRequest;
+use App\Http\Requests\DeleteTripRequest;
 use App\Http\Resources\TripResource;
 use App\Http\Requests\UpdateTripRequest;
 use App\Models\Trip;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Spatie\SlackAlerts\Facades\SlackAlert;
+
 
 class TripController extends Controller
 {
@@ -78,7 +80,7 @@ class TripController extends Controller
         $trip->update($request->all());
     }
 
-    public function destroy(Trip $trip)
+    public function destroy(DeleteTripRequest $request, Trip $trip)
     {
         $trip->delete();
         return response()->json([

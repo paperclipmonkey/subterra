@@ -28,7 +28,7 @@ ALTER USER subterra_admin WITH SUPERUSER;
 Local development can be accomplished with the dockerfile and node running locally:
 ```sh
 # To start the API server
-docker compose up 
+./vendor/bin/sail up
 # To start the ui
 cd frontend
 yarn run dev

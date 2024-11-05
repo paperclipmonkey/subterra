@@ -5,12 +5,14 @@
         <v-btn icon @click="$router.go(-1)">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
-        <v-btn class="float-right" icon @click="deleteTrip">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-        <v-btn class="float-right" icon @click="$router.push({name: '/trip/[id].edit', params: {id: trip.id}})">
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
+        <template v-if="currentUserWasOnTrip">
+          <v-btn class="float-right" icon @click="deleteTrip">
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+          <v-btn class="float-right" icon @click="$router.push({name: '/trip/[id].edit', params: {id: trip.id}})">
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+        </template>
       </v-col>
     </v-row>
     <v-row>
@@ -74,6 +76,10 @@
 import moment from 'moment'
 import VueMarkdown from 'vue-markdown-render'
 import { useRouter, useRoute } from 'vue-router'
+import { useAppStore } from '@/stores/app'; 
+import { computed } from 'vue';
+
+const appStore = useAppStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -81,6 +87,10 @@ const route = useRoute()
 const formatDate = (date) => {
   return moment(date).format('YYYY-MM-DD HH:mm')
 }
+
+const currentUserWasOnTrip = computed(()=> {
+  return trip.value.participants.some((participant) => participant.id === appStore.user.id)
+})
 
 const deleteTrip = async () => {
   const response = await fetch(`/api/trips/${route.params.id}`, {
@@ -103,6 +113,7 @@ const deleteTrip = async () => {
     exit: {
       location: {},
     },
+    participants: [],
   })
 
   onMounted(async () => {
