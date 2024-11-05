@@ -56,15 +56,18 @@
         <v-card>
           <v-card-title>Media</v-card-title>
           <v-card-text>
-            <v-list>
-              <v-list-item>
-                <div>
-                  <!-- <v-list-item-subtitle> -->
-                  <img class="media" v-for="media in trip.media" :key="media.filename" :src="media.url" alt="filename" />
-                  <!-- </v-list-item-subtitle> -->
-                </div>
-              </v-list-item>
-            </v-list>
+            <v-row>
+              <v-col
+                v-for="media in trip.media"
+                :key="media.filename"
+                class="d-flex child-flex"
+                cols="4"
+              >
+                  <a :href="media.url" target="_blank">
+                    <img class="media" :src="media.url" alt="filename" />
+                  </a>
+                </v-col>
+            </v-row>
           </v-card-text>
         </v-card>
       </v-col>
