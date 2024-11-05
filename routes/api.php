@@ -14,6 +14,7 @@ Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update
 Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
 Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);
+Route::put('/trips/{trip}', [App\Http\Controllers\TripController::class, 'update']);
 Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
 
 Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe'])->middleware(ApiIsAuthenticated::class);
