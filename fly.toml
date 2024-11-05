@@ -27,7 +27,7 @@ console_command = 'php /var/www/html/artisan tinker'
   GOOGLE_REDIRECT_URL="https://subterra.world/api/google/callback"
   SLACK_SIGNUPS_WEBHOOK="https://hooks.slack.com/services/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"
   SLACK_TRIPS_CHANNEL="https://hooks.slack.com/services/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"
-  QUEUE_CONNECTION=sync
+  QUEUE_CONNECTION="sync"
 
 [http_service]
   internal_port = 8080
