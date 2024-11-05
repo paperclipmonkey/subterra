@@ -65,7 +65,7 @@ class TripController extends Controller
             $trip->media()->create(['filename' => $filePath]);
         }
 
-        SlackAlert::to('trips')->message("A new trip has been created: {$trip->name} with id: {$trip->id}");
+        SlackAlert::to('trips')->message("A new trip has been created: <https://subterra.world/trip/{$trip->id}|{$trip->name}> to {$trip->entrance->name} by {$request->user()->name}");
 
         return new TripResource($trip);
     }
