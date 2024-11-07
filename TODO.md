@@ -9,15 +9,13 @@
 * Write up all three trips from the weekend. Add people and send a link around
 * Fix data for Bath Swallet
 * Add markdown for references
+* Make trip participants list better.
+    * Show club?
+    * If they haven't signed up show as + users.
+
 * Fix page refreshing bug
 * Add TraceStrack maps using MapLibre GL JS.
 * Switch over to using slugs for urls in pages
-* References
-    * From cave_system
-        * What do we care about with references?
-            Type: (web, book etc)
-            Reference
-            Might do this as markdown instead?
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
 * Add edit button for cave_system when viewing cave
@@ -34,6 +32,7 @@
 ## Further work
 
 * Show parking / walking route options to a cave using GeoJSON shapes. Add editor for this to the cave edit page. https://maplibre.org/maplibre-gl-js/docs/examples/maplibre-gl-terradraw/
+    * save as access_geojson
 * Render tags differently on cave/[id] page
     * Show region as part of slug in ui
     * Show access as an icon

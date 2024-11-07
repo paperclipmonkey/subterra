@@ -69,6 +69,18 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-row v-if="cave.system.references">
+      <v-col cols="12">
+        <v-card>
+          <v-card-title>System References</v-card-title>
+          <v-card-text>
+            <vue-markdown :source="cave.system.references" />
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
     <v-row>
       <v-col cols="12">
         <v-card>
