@@ -1,17 +1,10 @@
 # TODO
 
 ## MVP features
-* Trip text came through as HTML instead of .MD
-* Edit a trip
-    * cave_system_id isn't copied over
-    * Photos aren't removable
-    * Location isn't settable
 * Write up all three trips from the weekend. Add people and send a link around
-* Fix data for Bath Swallet
-* Add markdown for references
-* Make trip participants list better.
-    * Show club?
-    * If they haven't signed up show as + users.
+* Write up Mendips using references
+    * Add Somerset Underground references?
+* Add editor for cave system
 
 * Fix page refreshing bug
 * Add TraceStrack maps using MapLibre GL JS.

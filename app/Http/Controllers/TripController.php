@@ -53,9 +53,17 @@ class TripController extends Controller
         // $trip->participants()->attach($request->user()->id);
 
         $media = $request->all()['media'];
+        $this->storeMedia($media, $trip);
+
+        SlackAlert::to('trips')->message("A new trip has been created: <https://subterra.world/trip/{$trip->id}|{$trip->name}> to {$trip->entrance->name} by {$request->user()->name}");
+
+        return new TripResource($trip);
+    }
+
+    private function storeMedia($media = [], $trip)
+    {
         foreach ($media as $file) {
             $fileData = explode(',', $file['data']);
-            $decodedData = base64_decode($fileData[1]);
             $image = Image::read($fileData[1], [
                 \Intervention\Image\Decoders\DataUriImageDecoder::class,
                 \Intervention\Image\Decoders\Base64ImageDecoder::class,
@@ -64,10 +72,6 @@ class TripController extends Controller
             Storage::disk('media')->put($filePath, (string) $image);
             $trip->media()->create(['filename' => $filePath]);
         }
-
-        SlackAlert::to('trips')->message("A new trip has been created: <https://subterra.world/trip/{$trip->id}|{$trip->name}> to {$trip->entrance->name} by {$request->user()->name}");
-
-        return new TripResource($trip);
     }
 
     public function show(Trip $trip)
@@ -77,7 +81,27 @@ class TripController extends Controller
 
     public function update(UpdateTripRequest $request, Trip $trip)
     {
-        $trip->update($request->all());
+        $existingMedia = $request->input('existing_media');
+
+        if(collect($existingMedia)->count() == 0) {
+            $trip->media()->delete();
+        }
+
+        foreach ($existingMedia as $file) {
+            $existingMediaIds = array_column($existingMedia, 'id');
+            $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
+
+        // foreach ($existingMedia as $file) {
+        //     $trip->media()->updateOrCreate(
+        //         ['id' => $file['id']],
+        //         ['filename' => $file['filename'], 'url' => $file['url']]
+        //     );
+        }
+        // }
+        $trip->update(attributes: $request->all());
+        
+        $media = $request->all()['media'];
+        $this->storeMedia($media, $trip);
     }
 
     public function destroy(DeleteTripRequest $request, Trip $trip)
