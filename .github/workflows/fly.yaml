@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Make HTTP request
         run: |
-          curl https://subterra.world/
+          curl -s https://subterra.world/ > /dev/null
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy --remote-only
