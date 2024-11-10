@@ -10,6 +10,7 @@
 
 ## Further work
 
+* Add healthcheck endpoint (Call it during deployment)
 * Switch over to using slugs for urls in pages
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
