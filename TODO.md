@@ -1,13 +1,14 @@
 # TODO
 
 ## MVP features
+* Add editor for cave system
 * Write up all three trips from the weekend. Add people and send a link around
 * Write up Mendips using references
     * Add Somerset Underground references?
-* Add editor for cave system
 
+* Update styling of core pages
 * Fix page refreshing bug
-* Add TraceStrack maps using MapLibre GL JS.
+* Add Tracestrack maps using MapLibre GL JS.
 * Switch over to using slugs for urls in pages
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
@@ -74,7 +75,7 @@ What would the relationship look like?
     * Type
         (photo)
         (video)
-* Add ability to add/edit a cave in a new page?
+* Add ability to add a cave in a new page
 
 Add grid/list/map view icons for caves list
     * Grid can show photo and more info like access
