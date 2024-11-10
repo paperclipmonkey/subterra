@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Spatie\SlackAlerts\Facades\SlackAlert;
 
-
 class TripController extends Controller
 {
     public function index()
@@ -90,14 +89,7 @@ class TripController extends Controller
         foreach ($existingMedia as $file) {
             $existingMediaIds = array_column($existingMedia, 'id');
             $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
-
-        // foreach ($existingMedia as $file) {
-        //     $trip->media()->updateOrCreate(
-        //         ['id' => $file['id']],
-        //         ['filename' => $file['filename'], 'url' => $file['url']]
-        //     );
         }
-        // }
         $trip->update(attributes: $request->all());
         
         $media = $request->all()['media'];
