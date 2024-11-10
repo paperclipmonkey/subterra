@@ -29,7 +29,7 @@ export const useCaveStore = defineStore('caves', {
         this.caves = this.allCaves
       } else {
         this.caves = this.allCaves.filter(cave => {
-            return filter.every(tag => cave.tags.some(caveTag => caveTag.tag === tag))
+            return filter.every(tag => cave.tags.some(caveTag => caveTag.tag === tag) || cave.system.tags.some(caveTag => caveTag.tag === tag))
         })
       }
     },

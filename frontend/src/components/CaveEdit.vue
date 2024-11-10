@@ -23,6 +23,13 @@
               <v-text-field v-model="cave.location_country" label="Country" required></v-text-field>
               <v-text-field v-model="cave.location_lat" label="Latitude" required></v-text-field>
               <v-text-field v-model="cave.location_lng" label="Longitude" required></v-text-field>
+              <v-file-input
+                prepend-icon="mdi-camera"
+                accept="image/*"
+                label="Hero Image"
+                v-model="cave.hero_image"
+                chips
+              ></v-file-input>
             </v-card-text>
           </v-card>
       </v-col>
@@ -93,6 +100,7 @@
 import VueMarkdown from 'vue-markdown-render'
 import { watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { convertFileToBase64 } from '@/utilities.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -102,6 +110,8 @@ const selectedTags = ref({})
   const cave = ref({
     name: '',
     description: '',
+    hero_image: '',
+    entrance_image: '',
     system: {
       name: '',
       description: '',
@@ -147,6 +157,11 @@ const selectedTags = ref({})
     cave.value.tags = Object.entries(selectedTags.value).reduce((acc, [category, tags]) => {
       return acc.concat(tags.map(tag => ({ category, tag })))
     }, [])
+
+    if(cave.value.hero_image instanceof File) {
+      cave.value.hero_image = await convertFileToBase64(cave.value.hero_image);
+    }
+
     const response = await fetch(`/api/caves/${route.params.id}`, {
       method: 'PUT',
       headers: {

@@ -150,6 +150,7 @@
   import moment from 'moment'
   import { computed, reactive, ref, watch } from 'vue'
   import AddParticipantManual from './AddParticipantManual.vue';
+  import { convertFileToBase64 } from '@/utilities.js'
   const router = useRouter()
   const route = useRoute()
 
@@ -308,15 +309,6 @@
     if(markdownOutput.value) {
       trip.description = markdownOutput.value // Copy the markdown output to the description field
     }
-
-    const convertFileToBase64 = (file) => {
-      return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve({ data: reader.result, filename: file.name });
-      reader.onerror = (error) => reject(error);
-      });
-    };
 
     trip.media = await Promise.all(trip.media.map(file => convertFileToBase64(file)));
     
