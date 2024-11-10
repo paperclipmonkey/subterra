@@ -1,29 +1,29 @@
 # TODO
 
 ## MVP features
-* Add editor for cave system
+* Fix exit when going from a through trip to not
 * Write up all three trips from the weekend. Add people and send a link around
 * Write up Mendips using references
     * Add Somerset Underground references?
+* Add concept of trip which doesn't have a datetime associated with it. These can be added automatically when you set a cave as 'done' from the cave page
+* Replace all icons with new logo
 
-* Update styling of core pages
-* Fix page refreshing bug
-* Add Tracestrack maps using MapLibre GL JS.
+## Further work
+
 * Switch over to using slugs for urls in pages
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
-* Add edit button for cave_system when viewing cave
 * Rename conditions to hazards? Add CO2
-* Add done / not done functionality.
-    * In cave list return whether the current user has done a trip there
-    * Add filter functionality
 
-* Add concept of trip which doesn't have a datetime associated with it. These can be added automatically when you set a cave as 'done' from the cave page
+* Add updating entrance photo
+* Show either hero_image or entrance_image on cave page
 
-* Replace all icons with new logo
-
-
-## Further work
+* Email people when they're tagged in a trip
+    * Use Sendgrid
+    * Perform actions sync
+    * Send emails to the rest of the trip participants
+* Update styling of core pages
+* Add Tracestrack maps using MapLibre GL JS.
 
 * Show parking / walking route options to a cave using GeoJSON shapes. Add editor for this to the cave edit page. https://maplibre.org/maplibre-gl-js/docs/examples/maplibre-gl-terradraw/
     * save as access_geojson
@@ -35,7 +35,7 @@
     * Draw ui based on value
     * Filter with any or explicit based on groups
 
-* Add graphs to the trips page. Ideas for graphs:
+* Add graphs to the profile page. Ideas for graphs:
     * Trip difficulty
     * Trip duration
     * Average trip participants
@@ -87,7 +87,6 @@ Order users api response by frequency of use.
 * Remove new trip page from history when we move forward
 
 * Add functionality of distance from me to caves search?
-* Add ability to switch between list and map view of entrances (under search bar?)
 
 * Add concept of routes
     Routes have:

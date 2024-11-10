@@ -30,70 +30,15 @@
               :text="tag.tag"
               variant="outlined"
               :value="tag.tag"
+              :title="tag.description"
               filter
             ></v-chip>
           </v-chip-group>
           </template>
+          <!-- -->
+
         </v-card-text>
         <v-divider class="mt-2"></v-divider>
-<!-- 
-        <v-card-text>
-          <h2 class="text-h6 mb-2 tagGroupTitle">Previous trips</h2>
-
-          <v-chip-group
-            v-model="selectedTags[previousTrips]"
-            column
-          >
-            <v-chip
-              text="Previously Done"
-              variant="outlined"
-              value="done"
-              filter
-            ></v-chip>
-            <v-chip
-              text="Haven't Done"
-              variant="outlined"
-              value="notdone"
-              filter
-            ></v-chip>
-          </v-chip-group>
-        </v-card-text>
-        <v-divider class="mt-2"></v-divider>
-
-        <v-card-text>
-          <h2 class="text-h6 mb-2 tagGroupTitle">System length</h2>
-
-          <v-chip-group
-            v-model="selectedTags[previousTrips]"
-            column
-          >
-            <v-chip
-              text=">250m"
-              variant="outlined"
-              value="250"
-              filter
-            ></v-chip>
-            <v-chip
-              text=">500m"
-              variant="outlined"
-              value="500"
-              filter
-            ></v-chip>
-            <v-chip
-              text=">1km"
-              variant="outlined"
-              value="1000"
-              filter
-            ></v-chip>
-            <v-chip
-              text=">5km"
-              variant="outlined"
-              value="5000"
-              filter
-            ></v-chip>
-          </v-chip-group>
-        </v-card-text>
-        <v-divider class="mt-2"></v-divider> -->
 
         <v-card-actions class="my-2 d-flex justify-end">
           <v-btn
@@ -118,21 +63,21 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted } from 'vue';
+import { ref, defineProps, onMounted } from 'vue'
 const emit = defineEmits(['filter', 'close'])
 
-const tagsAvailable = ref({});
-const selectedTags = ref({});
+const tagsAvailable = ref({})
+const selectedTags = ref({})
 
 onMounted(async () => {
   const response = await fetch('/api/tags');
   tagsAvailable.value = await response.json();
-});
+})
 
 const emitFilters = () => {
   const filters = Object.values(selectedTags.value).flat();
   emit('filter', filters);
-};
+}
 
 const props = defineProps(['isActive'])
 </script>

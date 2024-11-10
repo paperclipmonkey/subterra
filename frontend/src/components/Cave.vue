@@ -23,7 +23,6 @@
           >
             <v-card-title>{{ cave.name }}</v-card-title>
             <v-card-subtitle>{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
-
           </v-img>
           <v-card-text>
             <vue-markdown :source="cave.description" />
