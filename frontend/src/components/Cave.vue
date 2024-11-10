@@ -15,8 +15,16 @@
     <v-row>
       <v-col cols="12">
         <v-card>
-          <v-card-title>{{ cave.name }}</v-card-title>
-          <v-card-subtitle>Entrance</v-card-subtitle>
+          <v-img
+            class="align-end text-white"
+            height="200"
+            :src="cave.hero_image"
+            cover
+          >
+            <v-card-title>{{ cave.name }}</v-card-title>
+            <v-card-subtitle>{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
+
+          </v-img>
           <v-card-text>
             <vue-markdown :source="cave.description" />
             <p> Tags:

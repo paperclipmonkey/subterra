@@ -23,10 +23,23 @@
         chips
         multiple
       ></v-file-input>
-      <div>
+      <template v-if="trip.existing_media && trip.existing_media.length">
         Existing media:
-          <img class="existing_media" v-for="media in trip.existing_media" :key="media.id" :src="media.url" alt="filename" />
-      </div> 
+        <v-container class="pa-1">
+          <v-row>
+            <v-col
+              v-for="(media, i) in trip.existing_media"
+              :key="i"
+              cols="3"
+              md="6"
+            >
+              <v-img class="existing_media text-right pa-2" :key="media.id" :src="media.url" alt="filename">
+                <v-btn icon="mdi-delete"  @click="removeExistingMedia(media)"></v-btn>
+              </v-img>
+            </v-col>
+          </v-row>
+        </v-container>
+      </template>
       <v-autocomplete
         label="Location"
         :items="caves"
@@ -36,10 +49,10 @@
         v-model="trip.entrance_cave_id"
       >
         <template v-slot:item="{ props, item }">
+          <!-- :prepend-avatar="item.raw.hero_image || '/map-icon-512-transparent.webp'" -->
           <v-list-item
             v-bind="props"
-            prepend-avatar="https://picsum.photos/200"
-            :subtitle="item.raw.system.name"
+            :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
             :title="item.raw.name"
           ></v-list-item>
         </template>
@@ -142,20 +155,6 @@
 
   const markdownOutput = ref('')
 
-  const updatedDescription = (editor) => {
-    markdownOutput.value =  editor.editor.storage.markdown.getMarkdown()
-  }
-
-  const addParticipant = (participant) => {
-    console.log('add participant', participant)
-    trip.participants.push(participant)
-    showAddParticipant.value = false
-  }
-
-  const closeAddParticipant = () => {
-    showAddParticipant.value = false
-  }
-
   const showAddParticipant = ref(false)
 
   let trip = reactive({
@@ -172,7 +171,58 @@
     cave_system_id: null,
   })
 
+  const tripStartDate = ref(moment().format('YYYY-MM-DD'))
+  const tripStartTime = ref(moment().format('HH:mm'))
+  const tripDurationHours = ref(4)
+  const tripDurationMinutes = ref(0)
+
+  const throughTrip = ref(false)
+  const userEmail = ref({})
+  const users = ref([])
+  const caves = ref([])
+
+  const rules = {
+    name: [
+      value => {
+        if (value) return true
+
+        return 'Name is required.'
+      },
+      value => {
+        if (value?.length <= 255) return true
+
+        return 'Name must be less than 255 characters.'
+      },
+    ],
+    description: [
+      value => {
+        if (value) return true
+        return 'Description is required.'
+      }
+    ],
+    location: [
+      value => {
+        if (value) return true
+        return 'Location is required.'
+      }
+    ],
+  }
+
   onMounted(async () => {
+    // Load caves
+    let response = await fetch('/api/caves')
+    caves.value = (await response.json()).data
+
+    // Load users
+    const userResonse = await fetch('/api/users/me')
+    userEmail.value = (await userResonse.json()).data.email
+    response = await fetch('/api/users')
+    users.value = (await response.json()).data
+    if(!trip.participants.length) {
+      trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
+    }
+
+    // Load existing trip
     if(route.params.id) {
       const response = await fetch(`/api/trips/${route.params.id}`)
       let loadedTrip = (await response.json()).data
@@ -187,23 +237,30 @@
       delete loadedTrip.entrance
       delete loadedTrip.exit
       delete loadedTrip.system
-      trip = loadedTrip
+      Object.assign(trip,loadedTrip)
 
+      if(loadedTrip.entrance_cave_id !== loadedTrip.exit_cave_id) {
+        throughTrip.value = true
+      }
     }
   })
 
-  const tripStartDate = ref(moment().format('YYYY-MM-DD'))
-  const tripStartTime = ref(moment().format('HH:mm'))
-  const tripDurationHours = ref(4)
-  const tripDurationMinutes = ref(0)
+  const closeAddParticipant = () => {
+    showAddParticipant.value = false
+  }
 
-  const throughTrip = ref(false)
+  const updatedDescription = (editor) => {
+    markdownOutput.value =  editor.editor.storage.markdown.getMarkdown()
+  }
 
-  const caves = ref([])
-  onMounted(async () => {
-    const response = await fetch('/api/caves')
-    caves.value = (await response.json()).data
-  })
+  const removeExistingMedia = (media) => {
+    trip.existing_media = trip.existing_media.filter(m => m !== media)
+  }
+
+  const addParticipant = (participant) => {
+    trip.participants.push(participant)
+    showAddParticipant.value = false
+  }
 
   const cave_system_id = computed(() => {
     const found = caves.value.find(cave => cave.id === trip.entrance_cave_id)
@@ -215,24 +272,19 @@
     return caves.value.filter((cave => cave.system.id === cave_system_id.value)).length
   })
 
-  const userEmail = ref({})
-
-  const users = ref([])
-  onMounted(async () => {
-    const userResonse = await fetch('/api/users/me')
-    userEmail.value = (await userResonse.json()).data.email
-
-    const response = await fetch('/api/users')
-    users.value = (await response.json()).data
-    if(!trip.participants.length) {
-      trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
-    }
-  })
-
   // watch(() => trip.participants, (participants) => {
   //   if(participants.find(participant => participant.email === userEmail.value)) return
   //   console.log('Not found')
   // })
+
+  watch(() => trip.entrance_cave_id, (cave_id) => {
+    if(!cave_id) return
+    if(throughTrip.value) { // Currently set as through trip
+      const currentSystem = caves.value.find(cave => cave.id === trip.entrance_cave_id)
+      const multipleEntrances = caves.value.filter((cave => cave.system.id == currentSystem.id))
+      throughTrip.value = !!multipleEntrances
+    }
+  })
 
   const start_time = computed(() => {
     const entry = moment(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm')
@@ -247,7 +299,7 @@
   })
   
   const submitForm = async () => {
-    if(!trip.exit_cave_id) {
+    if(!trip.exit_cave_id || !throughTrip.value) {
       trip.exit_cave_id = trip.entrance_cave_id
     }
     trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
@@ -302,39 +354,12 @@
     if (response.ok) {
       console.log('trip saved')
       const savedTrip = (await response.json()).data;
-      console.log(savedTrip)
       router.push({ name: '/trip/[id]', params: { id: savedTrip.id } });
     } else {
       console.error('failed to save trip')
     }
   }
 
-  const rules = {
-    name: [
-      value => {
-        if (value) return true
-
-        return 'Name is required.'
-      },
-      value => {
-        if (value?.length <= 255) return true
-
-        return 'Name must be less than 255 characters.'
-      },
-    ],
-    description: [
-      value => {
-        if (value) return true
-        return 'Description is required.'
-      }
-    ],
-    location: [
-      value => {
-        if (value) return true
-        return 'Location is required.'
-      }
-    ],
-  }
 </script>
 
 <style>
@@ -342,7 +367,7 @@
     display: none;
   }
 
-  /* TODO fix this hack */
+  /* TODO tidy this hack */
   .vuetify-pro-tiptap-editor {
     margin-bottom: 20px;
   }
