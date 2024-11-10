@@ -11,6 +11,14 @@ class CaveSystem extends Model
     use HasFactory;
     public $timestamps = false;
 
+    protected $fillable = [
+        'name',
+        'description',
+        'length',
+        'vertical_range',
+        'slug',
+    ];
+
     public function caves(): HasMany
     {
         return $this->hasMany(Cave::class);

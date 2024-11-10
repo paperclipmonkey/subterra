@@ -26,9 +26,9 @@ class CaveSystemController extends Controller
         return new CaveSystemResource($caveSystem);
     }
 
-    public function update(UpdateCaveSystemRequest $request, Cave $cave)
+    public function update(UpdateCaveSystemRequest $request, CaveSystem $caveSystem)
     {
-        $cave->update($request->all());
+        $caveSystem->update($request->all());
         // Update tags
         $tags = collect($request->all()['tags'])->map(function ($tag) {
             return \App\Models\Tag::where([
@@ -36,7 +36,7 @@ class CaveSystemController extends Controller
                 'tag' => $tag['tag']
             ])->first()->id;
         });
-        $cave->tags()->sync($tags);
+        $caveSystem->tags()->sync($tags);
     }
 
     // public function destroy(Cave $cave)
