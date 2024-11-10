@@ -25,35 +25,33 @@
       </v-col>
     </v-row>
 
-    <v-row>
+    <!-- <v-row>
       <v-col>
         <v-card>
             <v-card-title>Tags</v-card-title>
             <v-card-text>
-          <template v-for="(groupItems, groupName) in tagsAvailable">
+            <template v-for="(groupItems, groupName) in tagsAvailable">
+            <h2 class="text-h6 mb-2 tagGroupTitle">{{groupName}}</h2>
 
-          <h2 class="text-h6 mb-2 tagGroupTitle">{{groupName}}</h2>
-
-          <!-- multiple -->
-          <v-chip-group
-            v-model="selectedTags[groupName]"
-            column
-            :multiple="true"
-          >
-            <v-chip
-              v-for="tag in groupItems"
-              :text="tag.tag"
-              variant="outlined"
-              :value="tag.tag"
-              filter
-            ></v-chip>
-          </v-chip-group>
-          </template>
-        </v-card-text>
+            <v-chip-group
+              v-model="selectedTags[groupName]"
+              column
+              :multiple="true"
+            >
+              <v-chip
+                v-for="tag in groupItems"
+                :text="tag.tag"
+                variant="outlined"
+                :value="tag.tag"
+                filter
+              ></v-chip>
+            </v-chip-group>
+            </template>
+          </v-card-text>
         <v-divider class="mt-2"></v-divider>
-          </v-card>
+        </v-card>
       </v-col>
-    </v-row>
+    </v-row> -->
     <v-row>
       <v-col>
         <v-card-text>
@@ -67,7 +65,6 @@
 </template>
 
 <script setup>
-import VueMarkdown from 'vue-markdown-render'
 import { watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
@@ -86,8 +83,7 @@ const selectedTags = ref({})
     caves: []
   })
 
-  const tagsAvailable = ref({});
-
+  const tagsAvailable = ref({})
 
   const load = async () => {
     const response = await fetch(`/api/cave_systems/${route.params.id}`)
@@ -104,7 +100,7 @@ const selectedTags = ref({})
       return acc
     }, {})
 
-    const tagsresponse = await fetch('/api/tags');
+    const tagsresponse = await fetch('/api/tags')
     tagsAvailable.value = (await tagsresponse.json())
     
     // TODO: remove tags that aren't related to a cave
@@ -115,7 +111,7 @@ const selectedTags = ref({})
     cavesystem.value.tags = Object.entries(selectedTags.value).reduce((acc, [category, tags]) => {
       return acc.concat(tags.map(tag => ({ category, tag })))
     }, [])
-    const response = await fetch(`/api/caves/${route.params.id}`, {
+    const response = await fetch(`/api/cave_systems/${route.params.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -123,7 +119,7 @@ const selectedTags = ref({})
       body: JSON.stringify(cavesystem.value),
     })
     if (response.ok) {
-      router.push({ name: '/cave_system/[id]', params: { id: cavesystem.value.id } })
+      router.go(-1)
     }
   }
 
