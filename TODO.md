@@ -19,6 +19,10 @@
 * Add updating entrance photo
 * Show either hero_image or entrance_image on cave page
 
+* Add good data seeders for local development
+* Document generating Google auth details in setup
+* Add feature tests
+
 * Email people when they're tagged in a trip
     * Use Sendgrid
     * Perform actions sync
