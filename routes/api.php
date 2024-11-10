@@ -11,6 +11,10 @@ Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->mi
 Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
 Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class);
 
+Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
+Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
+
+
 Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
 Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);

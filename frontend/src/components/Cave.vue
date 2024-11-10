@@ -45,6 +45,9 @@
         <v-card>
           <v-card-title>{{ cave.system.name }}</v-card-title>
           <v-card-subtitle>System</v-card-subtitle>
+          <v-btn v-if="appStore.user.is_admin" class="float-right" icon @click="$router.push({name: '/cave_system/[id].edit', params: {id: cave.system.id}})">
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
           <v-card-text>
             <vue-markdown :source="cave.system.description" />
             <p> Tags:
