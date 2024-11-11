@@ -10,6 +10,10 @@
 
 ## Further work
 
+* Add cancel button to trip editor / creator
+* Allow deep links to trip without a login. Useful for sharing.
+    * Remove auth
+    * Ensure email address is obfuscated on trips and it's just user / club
 * Add healthcheck endpoint (Call it during deployment)
 * Switch over to using slugs for urls in pages
 * Improve styling of Markdown rendering
