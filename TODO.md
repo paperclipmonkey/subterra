@@ -5,7 +5,9 @@
 * Write up all three trips from the weekend. Add people and send a link around
 * Write up Mendips using references
     * Add Somerset Underground references?
-* Add concept of trip which doesn't have a datetime associated with it. These can be added automatically when you set a cave as 'done' from the cave page
+* Add quick done 'tick' option for any cave.
+    * Add concept of trip which doesn't have a datetime associated with it. 
+    * These can be added automatically when you set a cave as 'done' from the cave page.
 * Replace all icons with new logo
 
 ## Further work

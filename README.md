@@ -25,14 +25,25 @@ ALTER USER subterra_admin WITH SUPERUSER;
 ```
 
 ### Local development
+You'll need Docker, PHP, Composer and Node installed locally.
+
 Local development can be accomplished with the dockerfile and node running locally:
 ```sh
+# Initial local install of Sail to be able to run the docker scripts
+composer install
+
 # To start the API server
 ./vendor/bin/sail up
-# To start the ui
+
+# To start the SPA
 cd frontend
+# To install the correct Node version using NVM
+nvm use
+# And start the local frontend
 yarn run dev
 ```
+
+The frontend can then be accessed on `http://localhost:3000`, with the api being proxied through the frontend.
 
 ### DNS
 https://admin.gandi.net/domain/8e5d26dc-8680-11ef-8ba7-00163e94b645/subterra.world/records
