@@ -1,13 +1,17 @@
 # TODO
 
 ## MVP features
-* Fix exit when going from a through trip to not
-* Write up all three trips from the weekend. Add people and send a link around
 * Write up Mendips using references
-    * Add Somerset Underground references?
+    * Add Mendip Underground references
 * Add quick done 'tick' option for any cave.
     * Add concept of trip which doesn't have a datetime associated with it. 
     * These can be added automatically when you set a cave as 'done' from the cave page.
+* Complete trips I've done on Mendip
+* Add Scottish caves to app
+* Fix exit when going from a through trip to not
+* Write up all three trips from the weekend. Add people and send a link around
+
+
 * Replace all icons with new logo
 
 ## Further work
