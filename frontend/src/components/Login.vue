@@ -19,65 +19,6 @@
       <div class="py-4" />
 
       <v-row>
-        <v-col cols="12">
-          <v-card
-            class="py-4"
-            color="surface-variant"
-            prepend-icon="mdi-earth"
-            rounded="lg"
-            variant="outlined"
-          >
-            <template #title>
-              <h2 class="text-h5 font-weight-bold">Browse Caves</h2>
-            </template>
-
-            <template #subtitle>
-              <div class="text-subtitle-1">
-                to find your next adventure
-              </div>
-            </template>
-
-            <v-overlay
-              opacity=".12"
-              scrim="primary"
-              contained
-              model-value
-              persistent
-            />
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <v-row>
-        <v-col cols="12">
-          <v-card
-            class="py-4"
-            color="surface-variant"
-            prepend-icon="mdi-notebook-outline"
-            rounded="lg"
-            variant="outlined"
-          >
-            <template #title>
-              <h2 class="text-h5 font-weight-bold">Log Trips</h2>
-            </template>
-
-            <template #subtitle>
-              <div class="text-subtitle-1">
-                To keep a history
-              </div>
-            </template>
-
-            <v-overlay
-              opacity=".12"
-              scrim="primary"
-              contained
-              model-value
-              persistent
-            />
-          </v-card>
-        </v-col>
-      </v-row>
-      <v-row>
         <v-col>
           
           <a href="/api/google/redirect" class="btn btn-primary"> 
