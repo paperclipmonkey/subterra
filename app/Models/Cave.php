@@ -23,6 +23,7 @@ class Cave extends Model
         'length',
         'vertical_range',
         'cave_system_id',
+        'slug',
     ];
 
     public function system(): BelongsTo
@@ -38,5 +39,10 @@ class Cave extends Model
     public function tags () 
     {
         return $this->belongsToMany(Tag::class);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 }

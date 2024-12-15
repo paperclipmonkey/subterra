@@ -48,7 +48,7 @@
       </template>
       <template v-slot:item.system.vertical_range="{ value }"> {{ value }} m</template>
       <template v-slot:item.name="{ item, value }">
-        <router-link :to="{name: '/cave/[id]', params: {id: item.id}}">
+        <router-link :to="{name: '/cave/[id]', params: {id: item.slug}}">
           {{ value }}
         </router-link>
       </template>
