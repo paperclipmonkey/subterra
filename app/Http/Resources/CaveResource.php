@@ -41,6 +41,7 @@ class CaveResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'slug' => $this->slug,
             'name' => $this->name,
             'description' => $this->description ?? '',
             'hero_image' => $this->hero_image ? Storage::disk('media')->url($this->hero_image) : null,

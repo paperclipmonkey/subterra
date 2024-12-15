@@ -20,10 +20,10 @@
         <v-card>
           <v-card-title>{{ trip.name }}</v-card-title>
           <v-card-subtitle>
-            Entrance: <router-link :to="{name: '/cave/[id]', params: {id: trip.entrance.id}}"> {{ trip.entrance.name }} </router-link>
+            Entrance: <router-link :to="{name: '/cave/[id]', params: {id: trip.entrance.slug}}"> {{ trip.entrance.name }} </router-link>
           </v-card-subtitle>
           <v-card-subtitle v-if="trip.entrance.id !== trip.exit.id">
-            Exit: <router-link :to="{name: '/cave/[id]', params: {id: trip.exit.id}}">{{ trip.exit.name }}</router-link>
+            Exit: <router-link :to="{name: '/cave/[id]', params: {id: trip.exit.slug}}">{{ trip.exit.name }}</router-link>
           </v-card-subtitle>
           <v-card-subtitle>System: {{ trip.system.name }}</v-card-subtitle>
           <v-card-subtitle>Start time: {{ formatDate(trip.start_time) }}</v-card-subtitle>
