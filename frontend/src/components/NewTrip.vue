@@ -223,6 +223,16 @@
       trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
     }
 
+    if(route.query.cave_id) {
+      const foundCave = caves.value.find(cave => cave.id == route.query.cave_id)
+      if(!foundCave) {
+        console.error('Cave not found')
+        return
+      }
+      trip.entrance_cave_id = foundCave.id
+      trip.cave_system_id = foundCave.system.id
+    }
+
     // Load existing trip
     if(route.params.id) {
       const response = await fetch(`/api/trips/${route.params.id}`)

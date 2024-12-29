@@ -94,7 +94,24 @@
     <v-row>
       <v-col cols="12">
         <v-card>
-          <v-card-title>Recent Trips</v-card-title>
+          <v-card-title>
+            Recent Trips
+            <v-btn class="float-right" icon @click="$router.push({name: '/create-trip', query: {cave_id: cave.id}})">
+              <v-icon>mdi-plus</v-icon>
+            </v-btn>
+            <template v-if="hasDone">
+              <v-btn class="float-right" icon>
+                <v-icon color="success">mdi-check</v-icon>
+              </v-btn>
+            </template>
+            <template v-else>
+              <v-btn class="float-right" icon @click="markAsDone">
+                <v-icon>mdi-check</v-icon>
+              </v-btn>
+            </template>
+
+          </v-card-title>
+
           <v-card-text>
             <v-list>
               <v-list-item v-for="trip in cave.trips" :key="trip.datetime">
@@ -157,9 +174,42 @@ const route = useRoute()
     trips: []
   })
 
+  const hasDone = computed(() => {
+    return cave.value.trips.some(trip => trip.participants.some(participant => participant.email === appStore.user.email))
+  })
+
   const fetchCave = async () => {
     const response = await fetch(`/api/caves/${route.params.id}`)
     cave.value = (await response.json()).data
+  }
+
+  const markAsDone = async () => {
+    const trip = {
+      // id: -1,
+      name: 'Marked as Done',
+      // description: '',
+      // media: [],
+      entrance_cave_id: cave.value.id,
+      exit_cave_id: cave.value.id,
+      // date: '',
+      // start_time: '',
+      // end_time: '',
+      participants: [appStore.user.email],
+      cave_system_id: cave.value.system.id,
+    }
+
+    const response = await fetch('/api/trips', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(trip)
+    })
+    if (response.ok) {
+      console.log('trip saved')
+    } else {
+      console.error('failed to save trip')
+    }
   }
 
   onMounted(fetchCave)

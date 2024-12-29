@@ -8,7 +8,6 @@ primary_region = 'lhr'
 
 [env]
   PRIMARY_REGION = 'lhr'
-  FLY_SCALE_TO_ZERO = "1h"
 
 [[mounts]]
   source = 'pg_data'
