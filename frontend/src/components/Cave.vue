@@ -100,7 +100,7 @@
               <v-icon>mdi-plus</v-icon>
             </v-btn>
             <template v-if="hasDone">
-              <v-btn class="float-right" icon>
+              <v-btn class="float-right" flat icon>
                 <v-icon color="success">mdi-check</v-icon>
               </v-btn>
             </template>
