@@ -51,7 +51,7 @@ class TripController extends Controller
         // Ensure the current user is added to the trip
         // $trip->participants()->attach($request->user()->id);
 
-        $media = $request->all()['media'];
+        $media = $request->all()['media'] ?? [];
         $this->storeMedia($media, $trip);
 
         SlackAlert::to('trips')->message("A new trip has been created: <https://subterra.world/trip/{$trip->id}|{$trip->name}> to {$trip->entrance->name} by {$request->user()->name}");

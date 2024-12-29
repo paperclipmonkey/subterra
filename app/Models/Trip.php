@@ -46,7 +46,7 @@ class Trip extends Model
     protected function duration(): Attribute
     {
         return Attribute::make(
-            get: fn (mixed $value, array $attributes): int => $this->start_time->diffInMinutes($this->end_time),
+            get: fn (mixed $value, array $attributes): int => $this->start_time?->diffInMinutes($this->end_time) ?: 0,
         );
     }
     

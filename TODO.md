@@ -1,6 +1,7 @@
 # TODO
 
 ## MVP features
+* Keep app database alive without sleeping
 * Write up Mendips using references
     * Add Mendip Underground references
 * Add quick done 'tick' option for any cave.
@@ -9,8 +10,6 @@
 * Complete trips I've done on Mendip
 * Add Scottish caves to app
 * Fix exit when going from a through trip to not
-* Write up all three trips from the weekend. Add people and send a link around
-
 
 * Replace all icons with new logo
 
@@ -22,6 +21,7 @@
     * Ensure email address is obfuscated on trips and it's just user / club
 * Add healthcheck endpoint (Call it during deployment)
 * Switch over to using slugs for urls in pages
+    * Link correctly to page from frontend
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
 * Rename conditions to hazards? Add CO2
