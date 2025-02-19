@@ -21,7 +21,8 @@
     * Ensure email address is obfuscated on trips and it's just user / club
 * Add healthcheck endpoint (Call it during deployment)
 * Switch over to using slugs for urls in pages
-    * Link correctly to page from frontend
+    * Ensure DB is unique for slugs
+    
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
 * Rename conditions to hazards? Add CO2
