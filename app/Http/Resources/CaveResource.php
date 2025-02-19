@@ -62,6 +62,9 @@ class CaveResource extends JsonResource
                 'references' => $this->system->references,
             ] : [],
             'trips' => TripResource::collection($this->trips),
+            'previously_done' => $this->trips->filter(function ($trip) use ($request) {
+                return $trip->participants->contains('id', $request->user()->id);
+            })->count() > 0,
         ];
     }
 }
