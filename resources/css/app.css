@@ -1,0 +1,14 @@
+.metric-item {
+  margin-bottom: 16px;
+}
+
+.metric-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.metric-subtitle {
+  font-size: 14px;
+  color: #666;
+}
