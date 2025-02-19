@@ -14,22 +14,22 @@
       </v-card-title>
       <v-divider></v-divider>
       <v-list two-line>
-        <v-list-item>
+        <v-list-item class="metric-item">
           <div>
-            <v-list-item-title>Total caves visited</v-list-item-title>
-            <v-list-item-subtitle>{{ profile.stats.caves }}</v-list-item-subtitle>
+            <v-list-item-title class="metric-title">Total caves visited</v-list-item-title>
+            <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.caves }}</v-list-item-subtitle>
           </div>
         </v-list-item>
-        <v-list-item>
+        <v-list-item class="metric-item">
           <div>
-            <v-list-item-title>Total trips</v-list-item-title>
-            <v-list-item-subtitle>{{ profile.stats.trips }}</v-list-item-subtitle>
+            <v-list-item-title class="metric-title">Total trips</v-list-item-title>
+            <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.trips }}</v-list-item-subtitle>
           </div>
         </v-list-item>
-        <v-list-item>
+        <v-list-item class="metric-item">
           <div>
-            <v-list-item-title>Time spent underground</v-list-item-title>
-            <v-list-item-subtitle>{{ profile.stats.duration }} minutes</v-list-item-subtitle>
+            <v-list-item-title class="metric-title">Time spent underground</v-list-item-title>
+            <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.duration }} minutes</v-list-item-subtitle>
           </div>
         </v-list-item>
       </v-list>
