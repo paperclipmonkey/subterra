@@ -60,6 +60,9 @@
           <span :title="tag.description">{{ tag.tag }}</span>
         </v-chip>
       </template>
+      <template v-slot:item.previously_done="{ value }">
+        <v-icon :color="value ? 'green' : 'red'">{{ value ? 'mdi-check' : 'mdi-close' }}</v-icon>
+      </template>
     </v-data-table>
     <!-- </v-tabs-window-item> -->
     <!-- <v-tabs-window-item
@@ -90,6 +93,7 @@
     { title: 'Length', key: 'system.length' },
     { title: 'Vertical Range', key: 'system.vertical_range' },
     { title: 'Location', key: 'location' },
+    { title: 'Previously Done', key: 'previously_done' },
     // { title: 'Tags', key: 'tags' }
   ])
 
