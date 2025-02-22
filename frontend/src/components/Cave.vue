@@ -207,6 +207,7 @@ const route = useRoute()
     })
     if (response.ok) {
       console.log('trip saved')
+      fetchCave()
     } else {
       console.error('failed to save trip')
     }
