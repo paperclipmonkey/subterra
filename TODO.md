@@ -1,18 +1,18 @@
 # TODO
 
 ## MVP features
-* Keep app database alive without sleeping
+* Show all media for a cave system in its own box
 * Write up Mendips using references
     * Add Mendip Underground references
+    * Add additional references like Wikipedia where relevant
 * Complete trips I've done on Mendip
-* Add Scottish caves to app
 * Fix exit when going from a through trip to not
 * Fix editing a trip and adding new people
+* Keep app database alive without sleeping
 
 * Replace all icons with new logo
 
 ## Further work
-
 * Add cancel button to trip editor / creator
 * Allow deep links to trip without a login. Useful for sharing.
     * Remove auth
@@ -24,6 +24,7 @@
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
 * Rename conditions to hazards? Add CO2
+* Add Scottish caves to app
 
 * Add updating entrance photo
 * Show either hero_image or entrance_image on cave page
