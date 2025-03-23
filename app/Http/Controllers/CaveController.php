@@ -40,14 +40,20 @@ class CaveController extends Controller
 
         // Save the hero image
         if ($request->has('hero_image') && $request->get('hero_image') !== null) {
-            $fileData = explode(',', $request->get('hero_image')['data']);
-            $image = Image::read($fileData[1], [
-                \Intervention\Image\Decoders\DataUriImageDecoder::class,
-                \Intervention\Image\Decoders\Base64ImageDecoder::class,
-            ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
-            $filePath = 'caves/' . \Illuminate\Support\Str::uuid() . '_hero.webp';
-            Storage::disk('media')->put($filePath, (string) $image);
-            $cave->hero_image = $filePath;
+            // check if hero image is url
+            if (is_array($request->get('hero_image'))) {
+                $fileData = explode(',', $request->get('hero_image')['data']);
+                $image = Image::read($fileData[1], [
+                    \Intervention\Image\Decoders\DataUriImageDecoder::class,
+                    \Intervention\Image\Decoders\Base64ImageDecoder::class,
+                ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
+                $filePath = 'caves/' . \Illuminate\Support\Str::uuid() . '_hero.webp';
+                Storage::disk('media')->put($filePath, (string) $image);
+                $cave->hero_image = $filePath;
+                $cave->save();
+            }
+        } else {
+            $cave->hero_image = null;// Ensure any image which was on cave has been removed
             $cave->save();
         }
     }
