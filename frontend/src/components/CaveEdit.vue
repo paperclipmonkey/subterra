@@ -170,7 +170,7 @@ const selectedTags = ref({})
       body: JSON.stringify(cave.value),
     })
     if (response.ok) {
-      router.push({ name: '/cave/[id]', params: { id: cave.value.id } })
+      router.push({ name: '/cave/[id]', params: { id: cave.value.slug } })
     }
   }
 
