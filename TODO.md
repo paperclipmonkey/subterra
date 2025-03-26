@@ -1,6 +1,8 @@
 # TODO
 
 ## MVP features
+* Ask for name when adding a user by email address
+    * Show user in list with their name instead of email
 * Show all media for a cave system in its own box
 * Write up Mendips using references
     * Add Mendip Underground references

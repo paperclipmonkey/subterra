@@ -40,6 +40,7 @@ const store = useAppStore()
 
   onMounted(async () => {
     // Load the user endpoint to check if the user is logged in
+    await fetch('/api/livez') // Warm the database
     const userResonse = await fetch('/api/users/me')
     const userEmail = (await userResonse.json()).data.email
     if(userEmail) {
