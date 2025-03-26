@@ -47,3 +47,11 @@ Route::get('/news', [App\Http\Controllers\NewsController::class, 'index']);
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show']);
 Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store']);
 
+Route::get('/livez', function(Request $request) {
+    try {
+        $result = DB::table('users')->raw(DB::raw("SELECT 1 + 1 AS result"));
+        return response()->json(['status' => 'ok', 'result' => $result], 200);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+});
