@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Make HTTP request
         run: |
-          curl -s https://subterra.world/ > /dev/null; sleep 15
+          curl -s https://subterra.world/api/livez > /dev/null; sleep 15
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy --remote-only
