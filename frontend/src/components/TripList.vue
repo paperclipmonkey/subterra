@@ -44,7 +44,7 @@
               {{ value }}
             </router-link>
           </template>
-          <template v-slot:item.end_time="{ value }">
+          <template v-slot:item.start_time="{ value }">
             {{ formatDate(value) }}
           </template>
           <template v-slot:item.participants="{ value }">
@@ -62,20 +62,22 @@
   import moment from 'moment'
   import { useAppStore } from '@/stores/app'
   import { useTripStore } from '@/stores/trips';
+import { parse } from 'vue/compiler-sfc';
 
   const store = useAppStore()  
   const tripStore = useTripStore()
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
-    { title: 'end time', key: 'end_time' },
+    { title: 'start time', key: 'start_time' },
     // { title: 'system', key: 'system.name' },
     { title: 'entrance', key: 'entrance.name' },
     { title: 'participants', key: 'participants' }
   ])
 
   const formatDate = (date) => {
-    return moment(date).format('YYYY-MM-DD HH:mm')
+    let parsedDate = moment(date);
+    return parsedDate.isValid() ? parsedDate.format('YYYY-MM-DD HH:mm') : '~'
   }
 
   onMounted(async () => {
