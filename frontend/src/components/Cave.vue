@@ -24,6 +24,16 @@
             <v-card-title>{{ cave.name }}</v-card-title>
             <v-card-subtitle>{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
           </v-img>
+          {{ lnglat }}
+          <mgl-map
+            :map-style="style"
+            :center="lnglat"
+            :zoom="zoom"
+            height="500px"
+          >
+            <mgl-marker :coordinates="lnglat" color="#cc0000" />
+            <mgl-navigation-control />
+          </mgl-map>
           <v-card-text>
             <vue-markdown :source="cave.description" />
             <p> Tags:
@@ -149,6 +159,15 @@ import { watch } from "vue"
 import { useRoute } from "vue-router"
 import { useAppStore } from '@/stores/app'
 
+import {
+  MglMap,
+  MglNavigationControl,
+  MglMarker,
+} from '@indoorequal/vue-maplibre-gl';
+
+const style = 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=0gGMv4po9Mjrpd64A528';
+const zoom = 11;
+
 const appStore = useAppStore()
 
 const route = useRoute()
@@ -167,12 +186,10 @@ const route = useRoute()
       vertical_range: '',
       caves: []
     },
-    location: {
-      name: '',
-      country: '',
-      lat: 0,
-      lng: 0,
-    },
+    location_lat: 0,
+    location_lng: 0,
+    location_name: "",
+    location_country: "",
     trips: []
   })
 
@@ -184,6 +201,10 @@ const route = useRoute()
     const response = await fetch(`/api/caves/${route.params.id}`)
     cave.value = (await response.json()).data
   }
+
+  const lnglat = computed(() => {
+    return [cave.value.location_lng, cave.value.location_lat]
+  })
 
   const markAsDone = async () => {
     const trip = {
@@ -222,3 +243,7 @@ const route = useRoute()
     fetchCave
   )
 </script>
+
+<style lang="scss">
+@import "maplibre-gl/dist/maplibre-gl.css";
+</style>
