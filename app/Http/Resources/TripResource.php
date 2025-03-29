@@ -18,7 +18,7 @@ class TripResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'description' => $this->description,
+            'description' => $this->description ?? "",
             'system' => $this->system,
             'entrance' => $this->entrance,
             'exit' => $this->exit,
