@@ -33,9 +33,10 @@ class CaveController extends Controller
         $tags = collect($request->all()['tags'])->map(function ($tag) {
             return \App\Models\Tag::where([
                 'category' => $tag['category'],
-                'tag' => $tag['tag']
-            ])->first()->id;
-        });
+                'tag' => $tag['tag'],
+                'assignable' => true
+            ])->first()?->id;
+        })->filter();
         $cave->tags()->sync($tags);
 
         // Save the hero image
