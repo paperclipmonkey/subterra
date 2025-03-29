@@ -114,7 +114,8 @@
 
           <v-card-text>
             <v-list>
-              <v-list-item v-for="trip in cave.trips" :key="trip.datetime">
+              <template v-for="trip in cave.trips" :key="trip.datetime">
+              <v-list-item v-if="trip.end_time || trip.participants.contains('me')"> <!-- not marked as done -->
                 <div>
                   <v-list-item-title><RouterLink :to="{name: '/trip/[id]', params: {id: trip.id}}">{{ trip.name }}</RouterLink></v-list-item-title>
                   <v-list-item-subtitle>{{ moment(trip.end_time).fromNow() }}</v-list-item-subtitle>
@@ -128,6 +129,7 @@
                   </v-list-item-subtitle>
                 </div>
               </v-list-item>
+              </template>
             </v-list>
             <template v-if="cave.trips.length === 0">
               <v-alert>No trips have been recorded for this cave yet.</v-alert>
