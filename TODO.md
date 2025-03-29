@@ -1,6 +1,8 @@
 # TODO
 
 ## MVP features
+* Perform basic database load from login page before clicking button. This forces API to be ready.
+* Test login page with database paused. Does it re-start? How long does it take?
 * Ask for name when adding a user by email address
     * Show user in list with their name instead of email
 * Show all media for a cave system in its own box
