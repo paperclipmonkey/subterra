@@ -13,6 +13,11 @@ class Tag extends Model
         'type',
         'category',
         'description',
+        'assignable',
+    ];
+
+    protected $casts = [
+        'assignable' => 'boolean',
     ];
 
     public $timestamps = false;

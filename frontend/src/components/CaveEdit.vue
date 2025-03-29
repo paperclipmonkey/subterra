@@ -42,22 +42,25 @@
             <v-card-text>
           <template v-for="(groupItems, groupName) in tagsAvailable">
 
-          <h2 class="text-h6 mb-2 tagGroupTitle">{{groupName}}</h2>
+            <template v-if="groupItems.some(item => item.assignable)">
+              <h2 class="text-h6 mb-2 tagGroupTitle">{{groupName}}</h2>
 
-          <!-- multiple -->
-          <v-chip-group
-            v-model="selectedTags[groupName]"
-            column
-            :multiple="true"
-          >
-            <v-chip
-              v-for="tag in groupItems"
-              :text="tag.tag"
-              variant="outlined"
-              :value="tag.tag"
-              filter
-            ></v-chip>
-          </v-chip-group>
+              <v-chip-group
+                v-model="selectedTags[groupName]"
+                column
+                :multiple="true"
+              >
+                <template v-for="tag in groupItems">
+                  <v-chip
+                    v-if="tag.assignable"
+                    :text="tag.tag"
+                    variant="outlined"
+                    :value="tag.tag"
+                    filter
+                  ></v-chip>
+                </template>
+              </v-chip-group>
+            </template>
           </template>
         </v-card-text>
         <v-divider class="mt-2"></v-divider>
