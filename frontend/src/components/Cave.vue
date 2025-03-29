@@ -115,7 +115,7 @@
           <v-card-text>
             <v-list>
               <template v-for="trip in cave.trips" :key="trip.datetime">
-              <v-list-item v-if="trip.end_time || trip.participants.contains('me')"> <!-- not marked as done -->
+              <v-list-item v-if="trip.end_time || trip.participants.some(participant => participant.email === appStore.user.email)"> <!-- not marked as done -->
                 <div>
                   <v-list-item-title><RouterLink :to="{name: '/trip/[id]', params: {id: trip.id}}">{{ trip.name }}</RouterLink></v-list-item-title>
                   <v-list-item-subtitle>{{ moment(trip.end_time).fromNow() }}</v-list-item-subtitle>
