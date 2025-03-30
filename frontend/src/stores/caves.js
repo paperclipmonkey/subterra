@@ -33,5 +33,26 @@ export const useCaveStore = defineStore('caves', {
         })
       }
     },
+    applySearch(search) {
+      if (!search) {
+        this.caves = this.allCaves
+        return
+      }
+
+      const searchLower = search.toLowerCase()
+      this.caves = this.allCaves.filter(cave => {
+        return Object.values(cave).some(value => {
+          if (typeof value === 'string') {
+        return value.toLowerCase().includes(searchLower)
+          }
+          if (typeof value === 'object' && value !== null) {
+        return Object.values(value).some(nestedValue => 
+          typeof nestedValue === 'string' && nestedValue.toLowerCase().includes(searchLower)
+        )
+          }
+          return false
+        })
+      })
+    } 
   },
 })
