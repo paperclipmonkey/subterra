@@ -46,24 +46,41 @@
 <script setup>
   import { useCaveStore } from '@/stores/caves';
   import FilterByTagModal from './FilterByTagModal.vue';
+  import { ref, watch, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
 
   const caveStore = useCaveStore()
 
+  const route = useRoute();
+  const router = useRouter();
+
+  // Initialize search from query parameter
+  const search = ref(route.query.search || '');
+
   const showFilterByTagModal = ref(false)
-  const search = ref('')
+
+  let cachedTags = []
 
   const applyFilter = (tags) => {
-    console.log(tags)
-    caveStore.applyFilter(tags)
+    cachedTags = tags
+    caveStore.applyFilters(tags, search.value)
+    // Update URL with tags as a comma-separated string
+    router.replace({ query: { ...route.query, tags: tags.join(',') }});
     showFilterByTagModal.value = false
   }
 
   watch(search, (newSearch) => {
-    caveStore.applySearch(newSearch)
+    caveStore.applyFilters(cachedTags, newSearch)
+    // Update URL with current search
+    router.replace({ query: { ...route.query, search: newSearch }});
   })
 
   onMounted(async () => {
-    await caveStore.getList()
+    // Ensure search parameter is applied on reload
+    search.value = route.query.search || '';
+    const tags = route.query.tags ? route.query.tags.split(',') : [];
+    caveStore.applyFilters(tags, search.value);
+    await caveStore.getList();
   })
 
   const tab = ref('list')
