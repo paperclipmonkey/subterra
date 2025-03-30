@@ -33,6 +33,7 @@
           >
             <mgl-marker :coordinates="lnglat" color="#cc0000" />
             <mgl-navigation-control />
+            <MglGeolocateControl/>
           </mgl-map>
           <v-card-text>
             <vue-markdown :source="cave.description" />
@@ -163,6 +164,7 @@ import {
   MglMap,
   MglNavigationControl,
   MglMarker,
+  MglGeolocateControl,
 } from '@indoorequal/vue-maplibre-gl';
 
 const style = 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=0gGMv4po9Mjrpd64A528';
