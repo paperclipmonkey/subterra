@@ -20,62 +20,25 @@
       </v-text-field>
     </template>
 
-    <!-- <v-tabs
+    <v-tabs
       v-model="tab"
       align-tabs="center"
     >
       <v-tab :value="'list'">List</v-tab>
       <v-tab :value="'map'">Map</v-tab>
-    </v-tabs> -->
-    <!-- <v-tabs-window v-model="tab">
+    </v-tabs>
+    <v-tabs-window v-model="tab">
       <v-tabs-window-item
         :key="'list'"
-        :value="'list'"> -->
-
-    <v-data-table
-      :headers="headers"
-      :items="caveStore.caves"
-      :search="search"
-      :items-per-page="10000"
-      :loading="caveStore.loading"
-      hide-default-footer
-    >
-      <template v-slot:loading>
-        <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
-      </template>
-      <template v-slot:item.system.length="{ value }">
-        <span :title="`${value} m`">{{ Math.round((value / 1000)*10)/10 }} km</span>
-      </template>
-      <template v-slot:item.system.vertical_range="{ value }"> {{ value }} m</template>
-      <template v-slot:item.name="{ item, value }">
-        <router-link :to="{name: '/cave/[id]', params: {id: item.slug}}">
-          {{ value }}
-        </router-link>
-      </template>
-      <template v-slot:item.location="{ item }">
-          {{ item.location_name }}, {{ item.location_country }}
-      </template>
-      <template v-slot:item.tags="{ value }">
-        <v-chip v-for="tag in value" :key="tag.tag" class="ma-1">
-          <span :title="tag.description">{{ tag.tag }}</span>
-        </v-chip>
-      </template>
-      <template v-slot:item.previously_done="{ value }">
-        <v-icon :color="value ? 'green' : 'red'">{{ value ? 'mdi-check' : 'mdi-close' }}</v-icon>
-      </template>
-    </v-data-table>
-    <!-- </v-tabs-window-item> -->
-    <!-- <v-tabs-window-item
+        :value="'list'">
+        <CaveListList/>
+    </v-tabs-window-item>
+    <v-tabs-window-item
       :key="'map'"
       :value="'map'">
-      <v-card>
-        <v-card-title>Map</v-card-title>
-        <v-card-text>
-          Map here!
-        </v-card-text>
-      </v-card>
-    </v-tabs-window-item> -->
-  <!-- </v-tabs-window> -->
+        <CaveListMap/>
+    </v-tabs-window-item>
+  </v-tabs-window>
   <FilterByTagModal @close="showFilterByTagModal = false" @filter="applyFilter" :isActive="showFilterByTagModal"/>
   </v-card>
 </template>
@@ -83,29 +46,48 @@
 <script setup>
   import { useCaveStore } from '@/stores/caves';
   import FilterByTagModal from './FilterByTagModal.vue';
+  import { ref, watch, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
 
   const caveStore = useCaveStore()
 
+  const route = useRoute();
+  const router = useRouter();
+
+  // Initialize search from query parameter
+  const search = ref(route.query.search || '');
+
   const showFilterByTagModal = ref(false)
-  const search = ref('')
-  const headers = ref([
-    { title: 'Name', key: 'name' },
-    { title: 'Length', key: 'system.length' },
-    { title: 'Vertical Range', key: 'system.vertical_range' },
-    { title: 'Location', key: 'location' },
-    { title: 'Previously Done', key: 'previously_done' },
-    // { title: 'Tags', key: 'tags' }
-  ])
+
+  let cachedTags = []
 
   const applyFilter = (tags) => {
-    console.log(tags)
-    caveStore.applyFilter(tags)
+    cachedTags = tags
+    caveStore.applyFilters(tags, search.value)
+    // Update URL with tags as a comma-separated string
+    router.replace({ query: { ...route.query, tags: tags.join(',') }});
     showFilterByTagModal.value = false
   }
 
-  onMounted(async () => {
-    await caveStore.getList()
+  watch(search, (newSearch) => {
+    caveStore.applyFilters(cachedTags, newSearch)
+    // Update URL with current search
+    router.replace({ query: { ...route.query, search: newSearch }});
   })
 
-  const tab = ref('list')
+  const tab = ref(route.query.view || 'list')
+
+  // Update URL when tab changes
+  watch(tab, (newTab) => {
+    router.replace({ query: { ...route.query, view: newTab }});
+  })
+
+  onMounted(async () => {
+    // Ensure search and view parameters are applied on reload
+    search.value = route.query.search || '';
+    tab.value = route.query.view || 'list';
+    const tags = route.query.tags ? route.query.tags.split(',') : [];
+    caveStore.applyFilters(tags, search.value);
+    await caveStore.getList();
+  })
 </script>
