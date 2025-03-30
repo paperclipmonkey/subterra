@@ -75,13 +75,19 @@
     router.replace({ query: { ...route.query, search: newSearch }});
   })
 
+  const tab = ref(route.query.view || 'list')
+
+  // Update URL when tab changes
+  watch(tab, (newTab) => {
+    router.replace({ query: { ...route.query, view: newTab }});
+  })
+
   onMounted(async () => {
-    // Ensure search parameter is applied on reload
+    // Ensure search and view parameters are applied on reload
     search.value = route.query.search || '';
+    tab.value = route.query.view || 'list';
     const tags = route.query.tags ? route.query.tags.split(',') : [];
     caveStore.applyFilters(tags, search.value);
     await caveStore.getList();
   })
-
-  const tab = ref('list')
 </script>
