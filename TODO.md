@@ -1,15 +1,17 @@
 # TODO
 
+Add a geojson field to each cave_system which can store arbitrary geojson data.
+    Use it to show entrance, parking location and walking route. Plus any other info.
+        How to do icons for these things?
+            Don't go that complex, just have points and lines. Default items
+
 ## MVP features
-* Perform basic database load from login page before clicking button. This forces API to be ready.
-* Test login page with database paused. Does it re-start? How long does it take?
 * Ask for name when adding a user by email address
     * Show user in list with their name instead of email
 * Show all media for a cave system in its own box
 * Write up Mendips using references
     * Add Mendip Underground references
     * Add additional references like Wikipedia where relevant
-* Complete trips I've done on Mendip
 * Fix exit when going from a through trip to not
 * Fix editing a trip and adding new people
 * Keep app database alive without sleeping
