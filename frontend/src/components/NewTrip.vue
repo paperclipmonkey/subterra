@@ -283,11 +283,6 @@
     return caves.value.filter((cave => cave.system.id === cave_system_id.value)).length
   })
 
-  // watch(() => trip.participants, (participants) => {
-  //   if(participants.find(participant => participant.email === userEmail.value)) return
-  //   console.log('Not found')
-  // })
-
   watch(() => trip.entrance_cave_id, (cave_id) => {
     if(!cave_id) return
     if(throughTrip.value) { // Currently set as through trip
@@ -338,7 +333,6 @@
       body: JSON.stringify(trip)
     })
     if (response.ok) {
-      console.log('trip updated')
       router.push({ name: '/trip/[id]', params: { id: trip.id } });
     } else {
       console.error('failed to update trip')
@@ -354,7 +348,6 @@
       body: JSON.stringify(trip)
     })
     if (response.ok) {
-      console.log('trip saved')
       const savedTrip = (await response.json()).data;
       router.push({ name: '/trip/[id]', params: { id: savedTrip.id } });
     } else {
