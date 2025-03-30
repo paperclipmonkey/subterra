@@ -29,65 +29,22 @@
 <script setup>
   import { useCaveStore } from '@/stores/caves'
   const caveStore = useCaveStore()
-  import { computed, ref } from 'vue';
 
   import {
     MglMap,
     MglNavigationControl,
-    MglGeoJsonSource,
-    MglSymbolLayer,
     MglMarker,
     MglPopup,
+    useMap,
   } from '@indoorequal/vue-maplibre-gl';
 
   const style = 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=0gGMv4po9Mjrpd64A528';
   const zoom = 9;
   const lnglat = [-2.609, 51.501]
 
-  const popupRefs = ref([])
+  const mapOne = useMap();
 
-  function closePopup(index) {
-    const popup = popupRefs.value[index]
-    if (popup) popup.remove()
-  }
-
-  const mapRef = ref('map')
-  console.log(mapRef)
-  window.mapRef = mapRef
-
-  const geojsonSource = computed(()=>{
-    return {
-      data: {
-        "type": "FeatureCollection",
-        "features": caveStore.caves.map((cave)=> {
-          return {
-            "type": "Feature",
-            "properties": {
-              name: cave.name
-            },
-            "geometry": {
-              "coordinates": [
-                cave.location_lng,
-                cave.location_lat
-              ],
-              "type": "Point"
-            }
-          }
-        })
-      }
-    }
-  })
-
-  const iconLayout = {
-    "icon-image": "marker",
-    "icon-size": 1.5
-  }
-
-  const paint = {
-    // 'line-color': '#FF0000',
-    // 'line-width': 8
-  };
-
+  // mapOne.redraw()
 </script>
 
 <style lang="scss">
@@ -97,6 +54,8 @@
   margin-left: -20px;
   margin-right: -20px;
   padding-bottom: 0px;
+  width: calc(100% + 40px);
+  height: 100%;
 }
 
 .maplibregl-popup-content{
