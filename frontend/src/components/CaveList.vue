@@ -20,17 +20,17 @@
       </v-text-field>
     </template>
 
-    <!-- <v-tabs
+    <v-tabs
       v-model="tab"
       align-tabs="center"
     >
       <v-tab :value="'list'">List</v-tab>
       <v-tab :value="'map'">Map</v-tab>
-    </v-tabs> -->
-    <!-- <v-tabs-window v-model="tab">
+    </v-tabs>
+    <v-tabs-window v-model="tab">
       <v-tabs-window-item
         :key="'list'"
-        :value="'list'"> -->
+        :value="'list'">
 
     <v-data-table
       :headers="headers"
@@ -64,18 +64,13 @@
         <v-icon :color="value ? 'green' : 'red'">{{ value ? 'mdi-check' : 'mdi-close' }}</v-icon>
       </template>
     </v-data-table>
-    <!-- </v-tabs-window-item> -->
-    <!-- <v-tabs-window-item
+    </v-tabs-window-item>
+    <v-tabs-window-item
       :key="'map'"
       :value="'map'">
-      <v-card>
-        <v-card-title>Map</v-card-title>
-        <v-card-text>
-          Map here!
-        </v-card-text>
-      </v-card>
-    </v-tabs-window-item> -->
-  <!-- </v-tabs-window> -->
+        <CaveListMap/>
+    </v-tabs-window-item>
+  </v-tabs-window>
   <FilterByTagModal @close="showFilterByTagModal = false" @filter="applyFilter" :isActive="showFilterByTagModal"/>
   </v-card>
 </template>
