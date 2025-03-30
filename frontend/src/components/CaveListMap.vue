@@ -1,11 +1,11 @@
 <template>
-  <v-card>
+  <v-card class="map-container">
     <v-card-text class="map-holder">
       <mgl-map
         :map-style="style"
         :center="lnglat"
         :zoom="zoom"
-        height="500px"
+        style="height: 100%;"
         ref="map"
       >
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id" :coordinates="[cave.location_lng, cave.location_lat]">
@@ -49,6 +49,10 @@
 
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
+
+.map-container {
+  height: calc(100vh - 195px);
+}
 
 .map-holder {
   margin-left: -20px;
