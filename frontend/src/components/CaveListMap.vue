@@ -5,7 +5,6 @@
         :map-style="style"
         :center="lnglat"
         :zoom="zoom"
-        style="height: 100%;"
         ref="map"
       >
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id" :coordinates="[cave.location_lng, cave.location_lat]">
@@ -43,6 +42,10 @@
   const lnglat = [-2.609, 51.501]
 
   const mapOne = useMap();
+
+  watch(() => mapOne.isLoaded, (isLoaded) => { 
+    mapOne.map.resize()
+  })
 
   // mapOne.redraw()
 </script>
