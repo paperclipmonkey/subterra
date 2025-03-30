@@ -30,7 +30,6 @@ export const useCaveStore = defineStore('caves', {
       }
     },
     applyFilters(tags, search) {
-      console.log(tags, search)
       // Save filters for future use
       this.savedFilter = tags;
       this.savedSearch = search;
