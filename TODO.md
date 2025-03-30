@@ -1,6 +1,5 @@
 # TODO
 
-Natively filter 
 Save current search and locations when switching away from map
 
 Add a geojson field to each cave_system which can store arbitrary geojson data.
