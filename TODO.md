@@ -1,5 +1,12 @@
 # TODO
 
+Show all currently filtered caves in map view
+Support clicking on point icons to see cave details 
+Show map as full height
+Listen to change tab and resize map to be full height
+Add current location button to map https://indoorequal.github.io/vue-maplibre-gl/api/MglGeolocateControl.html
+Save current search and locations when switching away from map
+
 Add a geojson field to each cave_system which can store arbitrary geojson data.
     Use it to show entrance, parking location and walking route. Plus any other info.
         How to do icons for these things?
