@@ -20,6 +20,7 @@
           </mgl-popup>
         </mgl-marker>
         <mgl-navigation-control />
+        <MglGeolocateControl/>
       </mgl-map>
     </v-card-text>
   </v-card>
@@ -35,16 +36,35 @@
     MglMarker,
     MglPopup,
     useMap,
+    MglGeolocateControl,
   } from '@indoorequal/vue-maplibre-gl';
+
+  import maplibregl from 'maplibre-gl';
 
   const style = 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=0gGMv4po9Mjrpd64A528';
   const zoom = 9;
   const lnglat = [-2.609, 51.501]
 
+  import { onMounted, watch } from 'vue';
+
   const mapOne = useMap();
 
   watch(() => mapOne.isLoaded, (isLoaded) => { 
     mapOne.map.resize()
+
+    watch(
+      () => caveStore.caves,
+      (caves) => {
+        if (caves.length > 0 && mapOne.isLoaded) {
+          const bounds = new maplibregl.LngLatBounds();
+          caves.forEach((cave) => {
+            bounds.extend([cave.location_lng, cave.location_lat]);
+          });
+          mapOne.map.fitBounds(bounds, { padding: 50 });
+        }
+      },
+      { immediate: true }
+    );
   })
 
   // mapOne.redraw()
