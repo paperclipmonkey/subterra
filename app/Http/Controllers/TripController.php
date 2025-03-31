@@ -10,6 +10,8 @@ use App\Models\Trip;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Spatie\SlackAlerts\Facades\SlackAlert;
+use App\Models\User;
+
 
 class TripController extends Controller
 {
@@ -32,24 +34,15 @@ class TripController extends Controller
     {
         $trip = Trip::create($request->all());
         $trip->save();
-        // Add the participant to the trip
+
+        // Add the participants to the trip
         $participants = $request->all()['participants'];
-        $participantIds = [];
-        // Loop through the participants and find them by email. If they don't exist, create them
-        foreach ($participants as $participant) {
-            $user = \App\Models\User::firstOrCreate(['email' => $participant->email], [
-                'name' => $participant->name, 
-                'is_active' => false,
-                'photo' => Storage::disk('media')->url('profile/default.webp'),
-            ]);
-            $participantIds[] = $user->id;
-        }
+        $participantIds = array_map(function ($email) {
+            return User::withoutGlobalScopes()->where('email', $email)->first()->id;
+        }, $participants);
     
         // Sync participants with the trip
         $trip->participants()->sync($participantIds);
-    
-        // Ensure the current user is added to the trip
-        $trip->participants()->attach($request->user()->id);
 
         $media = $request->all()['media'] ?? [];
         $this->storeMedia($media, $trip);
@@ -92,18 +85,11 @@ class TripController extends Controller
         }
         $trip->update(attributes: $request->all());
 
-        // Add the participant to the trip
+        // Add the participants to the trip
         $participants = $request->all()['participants'];
-        $participantIds = [];
-        // Loop through the participants and find them by email. If they don't exist, create them
-        foreach ($participants as $participant) {
-            $user = \App\Models\User::firstOrCreate(['email' => $participant['email']], [
-                'name' => $participant['name'],
-                'is_active' => false,
-                'photo' => Storage::disk('media')->url('profile/default.webp'),
-            ]);
-            $participantIds[] = $user->id;
-        }
+        $participantIds = array_map(function ($email) {
+            return User::withoutGlobalScopes()->where('email', $email)->first()->id;
+        }, $participants);
     
         // Sync participants with the trip
         $trip->participants()->sync($participantIds);

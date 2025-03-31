@@ -240,6 +240,8 @@
 
       loadedTrip.existing_media = loadedTrip.media
       loadedTrip.media = []
+
+      loadedTrip.participants = loadedTrip.participants.map(participant => participant.email)
       
       loadedTrip.entrance_cave_id = loadedTrip.entrance.id
       
@@ -269,7 +271,28 @@
   }
 
   const addParticipant = (participant) => {
-    trip.participants.push(participant)
+    trip.participants.push(participant.email)
+    // Add the user using an api endpoint
+    fetch('/api/users', {
+      method: 'POST',
+      headers: {
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(participant),
+    })
+    .then(response => {
+      if (!response.ok) {
+      throw new Error('Failed to add participant');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Participant added successfully:', data);
+    })
+    .catch(error => {
+      console.error('Error adding participant:', error);
+    });
+    users.value.push(participant) // So it can be referenced
     showAddParticipant.value = false
   }
 
