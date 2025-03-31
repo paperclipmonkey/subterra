@@ -7,12 +7,6 @@
         :rules="rules.name"
         required
       ></v-text-field>
-      <!-- <v-textarea
-        v-model="trip.description"
-        label="Trip Description"
-        :rules="rules.description"
-        required
-      ></v-textarea> -->
       <VuetifyTiptap @change="updatedDescription" v-model="trip.description" output="text" markdown-theme="github" >
       </VuetifyTiptap>
       <v-file-input
@@ -246,11 +240,14 @@
       loadedTrip.entrance_cave_id = loadedTrip.entrance.id
       
       loadedTrip.exit_cave_id = loadedTrip.exit.id
-      //sloadedTrip.cave_system_id = loadedTrip.system.id
+      //loadedTrip.cave_system_id = loadedTrip.system.id
       delete loadedTrip.entrance
       delete loadedTrip.exit
       delete loadedTrip.system
       Object.assign(trip,loadedTrip)
+
+      tripStartDate.value = moment(loadedTrip.start_time).format('YYYY-MM-DD')
+      tripStartTime.value = moment(loadedTrip.start_time).format('HH:mm')
 
       if(loadedTrip.entrance_cave_id !== loadedTrip.exit_cave_id) {
         throughTrip.value = true
