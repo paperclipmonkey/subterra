@@ -3,7 +3,6 @@
 Add and improve data for Mendips
     Add photos
     Add references
-    Write ai description of cave system
 
 Add a geojson field to each cave_system which can store arbitrary geojson data.
     Use it to show entrance, parking location and walking route. Plus any other info.
@@ -25,21 +24,11 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
 * Allow deep links to trip without a login. Useful for sharing.
     * Remove auth
     * Ensure email address is obfuscated on trips and it's just user / club
-* Add healthcheck endpoint (Call it during deployment)
-* Switch over to using slugs for urls in pages
-    * Ensure DB is unique for slugs
     
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
 * Rename conditions to hazards? Add CO2
 * Add Scottish caves to app
-
-* Add updating entrance photo
-* Show either hero_image or entrance_image on cave page
-
-* Add good data seeders for local development
-* Document generating Google auth details in setup
-* Add feature tests
 
 * Email people when they're tagged in a trip
     * Use Sendgrid
@@ -50,7 +39,6 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
 * Show parking / walking route options to a cave using GeoJSON shapes. Add editor for this to the cave edit page. https://maplibre.org/maplibre-gl-js/docs/examples/maplibre-gl-terradraw/
     * save as access_geojson
 * Render tags differently on cave/[id] page
-    * Show region as part of slug in ui
     * Show access as an icon
 * Add ability for tags to be individual or multi (from database)
     * Add DB migration for ability
