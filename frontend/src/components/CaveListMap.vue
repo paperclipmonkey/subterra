@@ -85,7 +85,7 @@
   height: 100%;
 }
 
-.maplibregl-popup-content{
+.maplibregl-popup .maplibregl-popup-content{
   padding: 0;
   background: transparent;
 }
