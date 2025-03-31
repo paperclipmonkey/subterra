@@ -34,12 +34,12 @@
         </v-list-item>
       </v-list>
       <v-divider></v-divider>
-      <div class="tags">
+      <!-- <div class="tags">
         <h3>Tags:</h3>
         <v-chip-group>
           <v-chip v-for="tag in profile.tags" :key="tag" outlined>{{ tag }}</v-chip>
         </v-chip-group>
-      </div>
+      </div> -->
       <v-divider></v-divider>
       <div class="club">
         <h3>Club:</h3>
