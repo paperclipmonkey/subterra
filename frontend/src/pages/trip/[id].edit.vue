@@ -1,11 +1,3 @@
 <template>
-  <NewTrip />
+  <TripNew />
 </template>
-
-<script setup>
-  //
-</script>
-
-<style scoped>
-
-</style>
