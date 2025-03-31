@@ -18,6 +18,9 @@
             :color="cachedTags.length ? 'success' : ''"
           >
         </v-icon>
+        <template v-if="cachedTags.length">
+          {{ cachedTags.length }}
+        </template>
         </template>
       </v-text-field>
     </template>
