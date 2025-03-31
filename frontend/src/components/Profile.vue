@@ -16,7 +16,7 @@
       <v-list two-line>
         <v-list-item class="metric-item">
           <div>
-            <v-list-item-title class="metric-title">Total caves visited</v-list-item-title>
+            <v-list-item-title class="metric-title">Caves visited</v-list-item-title>
             <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.caves }}</v-list-item-subtitle>
           </div>
         </v-list-item>
@@ -28,7 +28,7 @@
         </v-list-item>
         <v-list-item class="metric-item">
           <div>
-            <v-list-item-title class="metric-title">Time spent underground</v-list-item-title>
+            <v-list-item-title class="metric-title">Time underground</v-list-item-title>
             <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.duration }} minutes</v-list-item-subtitle>
           </div>
         </v-list-item>
@@ -75,3 +75,9 @@ onMounted(async () => {
   profile.value = (await response.json()).data
 })
 </script>
+<style>
+  .metric-item {
+    width: 33%;
+    float: left;
+  }
+</style>
