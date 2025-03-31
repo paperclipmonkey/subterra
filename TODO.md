@@ -1,19 +1,16 @@
 # TODO
 
 Only 1 of the images uploaded for Bakers pit?
-Entry time doesn't load when editing a trip
-
 
 Add data for:
     Mines we explored in Mid Wales
     South Wales caves
 
-
 Add concept of collections to database / api
 
 Add and improve data for Mendips
-    Add photos
-    Add references
+    Add photos of entrances
+    Write references for Somerset Underground books
 
 Add a geojson field to each cave_system which can store arbitrary geojson data.
     Use it to show entrance, parking location and walking route. Plus any other info.
