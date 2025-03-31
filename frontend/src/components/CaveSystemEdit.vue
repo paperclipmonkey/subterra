@@ -20,6 +20,7 @@
               <v-text-field v-model="cavesystem.length" label="Length (m)" required></v-text-field>
               <v-text-field v-model="cavesystem.vertical_range" label="Vertical Range (m)"></v-text-field>
               <v-text-field v-model="cavesystem.slug" label="Slug" required></v-text-field>
+              <v-textarea v-model="cavesystem.references" label="References" required></v-textarea>
             </v-card-text>
           </v-card>
       </v-col>
@@ -80,7 +81,8 @@ const selectedTags = ref({})
     vertical_range: '',
     slug: '',
     tags: [],
-    caves: []
+    caves: [],
+    references: "",
   })
 
   const tagsAvailable = ref({})

@@ -17,6 +17,7 @@ class CaveSystem extends Model
         'length',
         'vertical_range',
         'slug',
+        'references',
     ];
 
     public function caves(): HasMany

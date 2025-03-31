@@ -19,6 +19,7 @@
             </v-card>
           </mgl-popup>
         </mgl-marker>
+        <mgl-fullscreen-control/>
         <mgl-navigation-control />
         <MglGeolocateControl/>
       </mgl-map>
@@ -32,6 +33,7 @@
 
   import {
     MglMap,
+    MglFullscreenControl,
     MglNavigationControl,
     MglMarker,
     MglPopup,
