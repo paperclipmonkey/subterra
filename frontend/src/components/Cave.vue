@@ -24,12 +24,11 @@
             <v-card-title>{{ cave.name }}</v-card-title>
             <v-card-subtitle>{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
           </v-img>
-          {{ lnglat }}
           <mgl-map
             :map-style="style"
             :center="lnglat"
             :zoom="zoom"
-            height="500px"
+            height="350px"
           >
             <mgl-marker :coordinates="lnglat" color="#cc0000" />
             <mgl-navigation-control />
@@ -110,15 +109,21 @@
             <v-btn class="float-right" icon @click="$router.push({name: '/create-trip', query: {cave_id: cave.id}})">
               <v-icon>mdi-plus</v-icon>
             </v-btn>
-            <template v-if="hasDone">
-              <v-btn class="float-right" flat icon>
-                <v-icon color="success">mdi-check</v-icon>
-              </v-btn>
-            </template>
-            <template v-else>
-              <v-btn class="float-right" icon @click="markAsDone">
+            <template v-if="!hasDone">
+                <v-btn class="float-right" icon @click="showConfirmModal = true">
                 <v-icon>mdi-check</v-icon>
-              </v-btn>
+                </v-btn>
+                <v-dialog v-model="showConfirmModal" max-width="500">
+                <v-card>
+                  <v-card-title>Confirm</v-card-title>
+                  <v-card-text>Are you sure you want to mark this cave as done?</v-card-text>
+                  <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn text @click="showConfirmModal = false">Cancel</v-btn>
+                  <v-btn text color="primary" @click="markAsDone">Confirm</v-btn>
+                  </v-card-actions>
+                </v-card>
+                </v-dialog>
             </template>
 
           </v-card-title>
@@ -208,7 +213,10 @@ const route = useRoute()
     return [cave.value.location_lng, cave.value.location_lat]
   })
 
+  const showConfirmModal = ref(false)
+
   const markAsDone = async () => {
+    showConfirmModal.value = true
     const trip = {
       // id: -1,
       name: 'Marked as Done',
