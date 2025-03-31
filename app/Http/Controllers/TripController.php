@@ -34,6 +34,7 @@ class TripController extends Controller
         $trip->save();
         // Add the participant to the trip
         $participants = $request->all()['participants'];
+        $participantIds = [];
         // Loop through the participants and find them by email. If they don't exist, create them
         foreach ($participants as $participant) {
             $user = \App\Models\User::firstOrCreate(['email' => $participant->email], [
@@ -48,7 +49,7 @@ class TripController extends Controller
         $trip->participants()->sync($participantIds);
     
         // Ensure the current user is added to the trip
-        // $trip->participants()->attach($request->user()->id);
+        $trip->participants()->attach($request->user()->id);
 
         $media = $request->all()['media'] ?? [];
         $this->storeMedia($media, $trip);
@@ -93,10 +94,11 @@ class TripController extends Controller
 
         // Add the participant to the trip
         $participants = $request->all()['participants'];
+        $participantIds = [];
         // Loop through the participants and find them by email. If they don't exist, create them
         foreach ($participants as $participant) {
             $user = \App\Models\User::firstOrCreate(['email' => $participant['email']], [
-                'name' => $participant['name'], 
+                'name' => $participant['name'],
                 'is_active' => false,
                 'photo' => Storage::disk('media')->url('profile/default.webp'),
             ]);

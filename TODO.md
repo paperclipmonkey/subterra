@@ -1,12 +1,10 @@
 # TODO
-Show modal before marking as done?
+
 
 Add and improve data for Mendips
     Add photos
     Add references
     Write ai description of cave system
-
-Talk to Liz about quick ui changes which can be made
 
 Add a geojson field to each cave_system which can store arbitrary geojson data.
     Use it to show entrance, parking location and walking route. Plus any other info.
@@ -14,8 +12,6 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
             Don't go that complex, just have points and lines. Default items
 
 ## MVP features
-* Ask for name when adding a user by email address
-    * Show user in list with their name instead of email
 * Show all media for a cave system in its own box
 * Write up Mendips using references
     * Add Mendip Underground references
