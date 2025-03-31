@@ -2,6 +2,8 @@
 
 Only 1 of the images uploaded for Bakers pit?
 
+Back nav button from cave page doesn't keep previous search
+
 Add data for:
     Mines we explored in Mid Wales
     South Wales caves
