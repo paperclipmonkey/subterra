@@ -18,12 +18,17 @@
 
         <v-card-text>
           <div class="text-medium-emphasis mb-4">
-            Add the trip participant by email addresses
+            Add the trip participant
           </div>
 
           <v-text-field
+            label="Name"
+            type="text"
+            v-model="name"
+          ></v-text-field>
+
+          <v-text-field
             label="Email address"
-            placeholder="johndoe@gmail.com"
             type="email"
             :rules="emailRules"
             v-model="email"
@@ -46,7 +51,7 @@
             rounded="xl"
             text="Add"
             variant="flat"
-            @click="$emit('add', email); email = '';"
+            @click="$emit('add', {name, email,}); email = ''; name = '';"
           ></v-btn>
         </v-card-actions>
       </v-card>
@@ -56,6 +61,7 @@
 
 <script setup>
 const props = defineProps(['isActive'])
+const name = ref('')
 const email = ref('')
 
 const emailRules = [

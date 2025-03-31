@@ -33,12 +33,11 @@ class TripController extends Controller
         $trip = Trip::create($request->all());
         $trip->save();
         // Add the participant to the trip
-        $participantEmails = $request->all()['participants'];
+        $participants = $request->all()['participants'];
         // Loop through the participants and find them by email. If they don't exist, create them
-        foreach ($participantEmails as $email) {
-
-            $user = \App\Models\User::firstOrCreate(['email' => $email], [
-                'name' => 'Unverified User', 
+        foreach ($participants as $participant) {
+            $user = \App\Models\User::firstOrCreate(['email' => $participant->email], [
+                'name' => $participant->name, 
                 'is_active' => false,
                 'photo' => Storage::disk('media')->url('profile/default.webp'),
             ]);
@@ -59,7 +58,7 @@ class TripController extends Controller
         return new TripResource($trip);
     }
 
-    private function storeMedia($media = [], $trip)
+    private function storeMedia(array $media, $trip)
     {
         foreach ($media as $file) {
             $fileData = explode(',', $file['data']);
@@ -91,6 +90,21 @@ class TripController extends Controller
             $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
         }
         $trip->update(attributes: $request->all());
+
+        // Add the participant to the trip
+        $participants = $request->all()['participants'];
+        // Loop through the participants and find them by email. If they don't exist, create them
+        foreach ($participants as $participant) {
+            $user = \App\Models\User::firstOrCreate(['email' => $participant['email']], [
+                'name' => $participant['name'], 
+                'is_active' => false,
+                'photo' => Storage::disk('media')->url('profile/default.webp'),
+            ]);
+            $participantIds[] = $user->id;
+        }
+    
+        // Sync participants with the trip
+        $trip->participants()->sync($participantIds);
         
         $media = $request->all()['media'];
         $this->storeMedia($media, $trip);
