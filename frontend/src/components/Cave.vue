@@ -141,6 +141,35 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-row>
+      <v-col cols="12">
+        <v-card>
+          <v-card-title>
+            Photos
+          </v-card-title>
+
+          <v-card-text>
+            <v-row>
+    <v-col
+      v-for="media in media"
+      :key="media.url"
+      class="d-flex child-flex"
+      cols="4"
+    >
+        <v-img
+          :src="media.url"
+          aspect-ratio="1"
+          class="bg-grey-lighten-2"
+          cover
+        >
+        </v-img>
+    </v-col>
+  </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -188,6 +217,15 @@ const route = useRoute()
 
   const hasDone = computed(() => {
     return cave.value.trips.some(trip => trip.participants.some(participant => participant.email === appStore.user.email))
+  })
+
+  const media = computed(()=> {
+    return cave.value.trips.reduce((acc, item) => {
+      if(item.media) {
+        acc.push(...item.media)
+        return acc
+      }
+    }, [])
   })
 
   const fetchCave = async () => {
