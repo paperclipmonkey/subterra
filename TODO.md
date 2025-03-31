@@ -1,5 +1,16 @@
 # TODO
 
+Only 1 of the images uploaded for Bakers pit?
+Entry time doesn't load when editing a trip
+
+
+Add data for:
+    Mines we explored in Mid Wales
+    South Wales caves
+
+
+Add concept of collections to database / api
+
 Add and improve data for Mendips
     Add photos
     Add references
