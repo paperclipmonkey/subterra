@@ -1,6 +1,12 @@
 # TODO
+Show modal before marking as done?
 
-Save current search and locations when switching away from map
+Add and improve data for Mendips
+    Add photos
+    Add references
+    Write ai description of cave system
+
+Talk to Liz about quick ui changes which can be made
 
 Add a geojson field to each cave_system which can store arbitrary geojson data.
     Use it to show entrance, parking location and walking route. Plus any other info.
@@ -16,7 +22,6 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
     * Add additional references like Wikipedia where relevant
 * Fix exit when going from a through trip to not
 * Fix editing a trip and adding new people
-* Keep app database alive without sleeping
 
 * Replace all icons with new logo
 
@@ -46,7 +51,6 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
     * Perform actions sync
     * Send emails to the rest of the trip participants
 * Update styling of core pages
-* Add Tracestrack maps using MapLibre GL JS.
 
 * Show parking / walking route options to a cave using GeoJSON shapes. Add editor for this to the cave edit page. https://maplibre.org/maplibre-gl-js/docs/examples/maplibre-gl-terradraw/
     * save as access_geojson
@@ -108,8 +112,6 @@ Add grid/list/map view icons for caves list
 Order users api response by frequency of use.
 
 * Remove new trip page from history when we move forward
-
-* Add functionality of distance from me to caves search?
 
 * Add concept of routes
     Routes have:
