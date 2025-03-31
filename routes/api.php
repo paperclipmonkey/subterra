@@ -44,6 +44,7 @@ Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index']);
 
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index']);
 
+Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create']);
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show']);
 Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store']);
 
