@@ -13,9 +13,11 @@
       >
         <template v-slot:append-inner>
           <v-icon
-          @click="showFilterByTagModal = true"
+            @click="showFilterByTagModal = true"
             icon="mdi-filter"
-          />
+            :color="cachedTags.length ? 'success' : ''"
+          >
+        </v-icon>
         </template>
       </v-text-field>
     </template>
