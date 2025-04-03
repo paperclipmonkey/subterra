@@ -1,6 +1,6 @@
 # TODO
 
-Only 1 of the images uploaded for Bakers pit?
+Only 1 of the images successfully uploaded for Bakers pit?
 
 Back nav button from cave page doesn't keep previous search
 

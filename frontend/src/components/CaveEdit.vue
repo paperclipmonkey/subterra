@@ -30,6 +30,13 @@
                 v-model="cave.hero_image"
                 chips
               ></v-file-input>
+              <v-file-input
+                prepend-icon="mdi-camera"
+                accept="image/*"
+                label="Entrance Image"
+                v-model="cave.entrance_image"
+                chips
+              ></v-file-input>
             </v-card-text>
           </v-card>
       </v-col>
@@ -163,6 +170,10 @@ const selectedTags = ref({})
 
     if(cave.value.hero_image instanceof File) {
       cave.value.hero_image = await convertFileToBase64(cave.value.hero_image);
+    }
+
+    if(cave.value.entrance_image instanceof File) {
+      cave.value.entrance_image = await convertFileToBase64(cave.value.entrance_image);
     }
 
     const response = await fetch(`/api/caves/${route.params.id}`, {

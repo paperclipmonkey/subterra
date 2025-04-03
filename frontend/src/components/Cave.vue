@@ -18,7 +18,7 @@
           <v-img
             class="align-end text-white"
             height="200"
-            :src="cave.hero_image"
+            :src="cave.hero_image ? cave.hero_image : cave.entrance_image"
             cover
           >
             <v-card-title>{{ cave.name }}</v-card-title>
@@ -146,26 +146,52 @@
       <v-col cols="12">
         <v-card>
           <v-card-title>
-            Photos
+            Media
           </v-card-title>
 
           <v-card-text>
             <v-row>
-    <v-col
-      v-for="media in media"
-      :key="media.url"
-      class="d-flex child-flex"
-      cols="4"
-    >
-        <v-img
-          :src="media.url"
-          aspect-ratio="1"
-          class="bg-grey-lighten-2"
-          cover
-        >
-        </v-img>
-    </v-col>
-  </v-row>
+                            <v-col
+                v-if="cave.hero_image"
+                class="d-flex child-flex"
+                cols="4"
+              >
+                <v-img
+                  :src="cave.hero_image"
+                  aspect-ratio="1"
+                  class="bg-grey-lighten-2"
+                  cover
+                >
+                </v-img>
+              </v-col>
+              <v-col
+                v-if="cave.entrance_image"
+                class="d-flex child-flex"
+                cols="4"
+              >
+                <v-img
+                  :src="cave.entrance_image"
+                  aspect-ratio="1"
+                  class="bg-grey-lighten-2"
+                  cover
+                >
+                </v-img>
+              </v-col>
+              <v-col
+                v-for="media in media"
+                :key="media.url"
+                class="d-flex child-flex"
+                cols="4"
+              >
+                <v-img
+                  :src="media.url"
+                  aspect-ratio="1"
+                  class="bg-grey-lighten-2"
+                  cover
+                >
+                </v-img>
+              </v-col>
+            </v-row>
           </v-card-text>
         </v-card>
       </v-col>

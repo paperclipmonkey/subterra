@@ -20,10 +20,10 @@ class Cave extends Model
         'location_country',
         'location_lat',
         'location_lng',
-        'length',
-        'vertical_range',
+        'entrance_alt',
         'cave_system_id',
         'slug',
+        'access_info',
     ];
 
     public function system(): BelongsTo
