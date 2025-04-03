@@ -82,6 +82,8 @@ class caves {
    double precision location_alt  /* Altitude in meters */
    text access_info
    bigint id
+   varchar(255) hero_image
+   varchar(255) entrance_image
 }
 
 class tags {

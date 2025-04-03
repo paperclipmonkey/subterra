@@ -57,6 +57,25 @@ class CaveController extends Controller
             $cave->hero_image = null;// Ensure any image which was on cave has been removed
             $cave->save();
         }
+
+        // Save the entrance image
+        if ($request->has('entrance_image') && $request->get('entrance_image') !== null) {
+            // check if hero image is url
+            if (is_array($request->get('entrance_image'))) {
+                $fileData = explode(',', $request->get('entrance_image')['data']);
+                $image = Image::read($fileData[1], [
+                    \Intervention\Image\Decoders\DataUriImageDecoder::class,
+                    \Intervention\Image\Decoders\Base64ImageDecoder::class,
+                ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
+                $filePath = 'caves/' . \Illuminate\Support\Str::uuid() . '_entrance.webp';
+                Storage::disk('media')->put($filePath, (string) $image);
+                $cave->entrance_image = $filePath;
+                $cave->save();
+            }
+        } else {
+            $cave->entrance_image = null;// Ensure any image which was on cave has been removed
+            $cave->save();
+        }
     }
 
     // public function destroy(Cave $cave)

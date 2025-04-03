@@ -45,7 +45,7 @@ class CaveResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description ?? '',
             'hero_image' => $this->hero_image ? Storage::disk('media')->url($this->hero_image) : null,
-            'entrance_image' => $this->entrance_image,
+            'entrance_image' => $this->entrance_image ? Storage::disk('media')->url($this->entrance_image) : null,
             'tags' => TagResource::collection($this->tags->merge(collect([$previoslyDoneTag]))),
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,
