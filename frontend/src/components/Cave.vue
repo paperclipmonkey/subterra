@@ -32,7 +32,7 @@
           >
             <mgl-marker :coordinates="lnglat" color="#cc0000" />
             <mgl-navigation-control />
-            <MglGeolocateControl/>
+            <MglGeolocateControl :track-user-location="true" :showAccuracyCircle="true"/>
           </mgl-map>
           <v-card-text>
             <vue-markdown :source="cave.description" />

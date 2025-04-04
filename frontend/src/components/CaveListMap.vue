@@ -21,7 +21,7 @@
         </mgl-marker>
         <mgl-fullscreen-control/>
         <mgl-navigation-control />
-        <MglGeolocateControl/>
+        <MglGeolocateControl :track-user-location="true" :showAccuracyCircle="true"/>
       </mgl-map>
     </v-card-text>
   </v-card>
