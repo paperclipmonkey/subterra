@@ -19,6 +19,7 @@
             <v-card-text>
               <sub>Entrance information. E.g. Where to find it, where to park. Information about access.</sub>
               <v-textarea v-model="cave.description" label="Description" required></v-textarea>
+              <v-textarea v-model="cave.access_info" label="Acess Info" required></v-textarea>
               <v-text-field v-model="cave.location_name" label="Location Name" required></v-text-field>
               <v-text-field v-model="cave.location_country" label="Country" required></v-text-field>
 

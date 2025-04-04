@@ -44,6 +44,7 @@
             <strong>Location:</strong> 
             <p>[{{ cave.location_lat }}, {{ cave.location_lng }}]</p>
             <p><a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
+            <vue-markdown v-if="cave.access_info" :source="'Access Info: ' + cave.access_info" />
           </v-card-text>
         </v-card>
       </v-col>
