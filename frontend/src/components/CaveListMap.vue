@@ -15,6 +15,12 @@
                 <v-btn @click="$router.push({name: '/cave/[id]', params: {id: cave.slug}})">
                   View
                 </v-btn>
+                <v-btn :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`" target="_blank" icon>
+                  <v-icon>mdi-google-maps</v-icon>
+                </v-btn>
+                <v-btn :href="`https://maps.apple.com/?q=${cave.location_lat},${cave.location_lng}`" target="_blank" icon>
+                  <v-icon>mdi-apple</v-icon>
+                </v-btn>
               </v-card-actions>
             </v-card>
           </mgl-popup>
