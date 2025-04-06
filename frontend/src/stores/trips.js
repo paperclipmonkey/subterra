@@ -1,7 +1,7 @@
 // Utilities
 import { defineStore } from 'pinia'
 import { mande } from 'mande'
-const api = mande('/api/trips')
+const api = mande('/api/me/trips')
 
 export const useTripStore = defineStore('trips', {
   state: () => ({
