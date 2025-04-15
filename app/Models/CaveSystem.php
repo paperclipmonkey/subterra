@@ -29,4 +29,12 @@ class CaveSystem extends Model
     {
         return $this->belongsToMany(Tag::class);
     }
+
+    /**
+     * Get the files associated with the cave system.
+     */
+    public function files(): HasMany
+    {
+        return $this->hasMany(CaveSystemFile::class);
+    }
 }
