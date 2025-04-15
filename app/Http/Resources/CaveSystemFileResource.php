@@ -23,7 +23,7 @@ class CaveSystemFileResource extends JsonResource
             'mime_type' => $this->mime_type,
             'size' => $this->size,
             // Construct the public URL for the file
-            'url' => Storage::disk('public')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}"),
+            'url' => Storage::disk('media')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}"),
             'created_at' => $this->created_at->diffForHumans(), // Example formatting
         ];
     }

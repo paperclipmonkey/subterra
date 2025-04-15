@@ -38,7 +38,7 @@ class CaveSystemController extends Controller
             $filesToDelete = $caveSystem->files()->whereIn('id', $request->input('deleted_files'))->get();
             foreach ($filesToDelete as $fileToDelete) {
                 // Delete file from storage (adjust disk and path if needed)
-                Storage::disk('public')->delete("cave_system_files/{$caveSystem->id}/{$fileToDelete->filename}");
+                Storage::disk('media')->delete("cave_system_files/{$caveSystem->id}/{$fileToDelete->filename}");
                 // Delete record from database
                 $fileToDelete->delete();
             }
@@ -58,7 +58,7 @@ class CaveSystemController extends Controller
                     $path = "cave_system_files/{$caveSystem->id}";
 
                     // Store the file
-                    $storedPath = $file->storeAs($path, $filename, 'public');
+                    $storedPath = $file->storeAs($path, $filename, 'media');
 
                     // Get details for this file, ensuring index exists
                     $fileDetails = $details[$index] ?? null;
