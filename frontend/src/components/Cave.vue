@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container v-if="cave">
     <v-row>
       <v-col cols="12">
         <v-btn icon @click="$router.push({name: '/caves'})">
@@ -50,7 +50,7 @@
       </v-col>
     </v-row>
 
-    <v-row>
+    <v-row v-if="cave.system">
       <v-col cols="12">
         <v-card>
           <v-card-title>{{ cave.system.name }}</v-card-title>
@@ -67,6 +67,44 @@
             </p>
             <p><strong>Length:</strong> {{ Math.round(cave.system.length) }} m</p>
             <p><strong>Vertical Range:</strong> {{ cave.system.vertical_range }} m</p>
+
+            <div v-if="cave.system.files && cave.system.files.length > 0" class="mt-4">
+              <h3 class="text-subtitle-1 font-weight-bold mb-2">Files</h3>
+              <v-list lines="two" class="file-list pa-0">
+                <v-list-item
+                  v-for="file in cave.system.files"
+                  :key="file.id"
+                  :href="file.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="file-item"
+                  density="compact"
+                >
+                  <template v-slot:prepend>
+                    <v-avatar rounded="0" class="mr-3">
+                      <v-img
+                        v-if="isImage(file.mime_type)"
+                        :src="file.url"
+                        :alt="file.original_filename"
+                        aspect-ratio="1"
+                        cover
+                        class="border"
+                      ></v-img>
+                      <v-icon v-else size="large">{{ getFileIcon(file.mime_type) }}</v-icon>
+                    </v-avatar>
+                  </template>
+
+                  <v-list-item-title class="font-weight-medium">{{ file.original_filename }}</v-list-item-title>
+                  <v-list-item-subtitle>
+                    <span v-if="file.details">{{ file.details }}</span>
+                    <span v-if="file.details && file.size"> - </span>
+                    <span v-if="file.size">{{ formatBytes(file.size) }}</span>
+                  </v-list-item-subtitle>
+
+                </v-list-item>
+              </v-list>
+            </div>
+             <p v-else class="mt-4 text-grey">No files associated with this system.</p>
           </v-card-text>
         </v-card>
       </v-col>
@@ -198,12 +236,30 @@
       </v-col>
     </v-row>
   </v-container>
+   <v-container v-else>
+     <p>Loading cave data...</p>
+   </v-container>
 </template>
 
+<style scoped>
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+.file-list {
+  background-color: transparent;
+}
+.file-item {
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.file-item:last-child {
+  border-bottom: none;
+}
+</style>
+
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import VueMarkdown from 'vue-markdown-render'
-import { watch } from "vue"
 import { useRoute } from "vue-router"
 import { useAppStore } from '@/stores/app'
 
@@ -221,89 +277,110 @@ const appStore = useAppStore()
 
 const route = useRoute()
 
-  const googleMapsUrl = computed(() => {
-    return `https://www.google.com/maps/search/?api=1&query=${cave.value.location_lat}%2C${ cave.value.location_lng }`
-  })
+const googleMapsUrl = computed(() => {
+  return `https://www.google.com/maps/search/?api=1&query=${cave.value.location_lat}%2C${ cave.value.location_lng }`
+})
 
-  const cave = ref({
-    name: '',
-    description: '',
-    system: {
-      name: '',
-      description: '',
-      length: '',
-      vertical_range: '',
-      caves: []
-    },
-    location_lat: 0,
-    location_lng: 0,
-    location_name: "",
-    location_country: "",
-    trips: []
-  })
+const cave = ref(null)
 
-  const hasDone = computed(() => {
-    return cave.value.trips.some(trip => trip.participants.some(participant => participant.email === appStore.user.email))
-  })
+const hasDone = computed(() => {
+  return cave.value.trips.some(trip => trip.participants.some(participant => participant.email === appStore.user.email))
+})
 
-  const media = computed(()=> {
-    return cave.value.trips.reduce((acc, item) => {
-      if(item.media) {
-        acc.push(...item.media)
-        return acc
-      }
-    }, [])
-  })
+const media = computed(()=> {
+  return cave.value.trips.reduce((acc, item) => {
+    if(item.media) {
+      acc.push(...item.media)
+      return acc
+    }
+  }, [])
+})
 
-  const fetchCave = async () => {
+const fetchCave = async () => {
+  try {
     const response = await fetch(`/api/caves/${route.params.id}`)
-    cave.value = (await response.json()).data
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const responseData = await response.json();
+    cave.value = responseData.data;
+
+    if (cave.value && cave.value.system) {
+        cave.value.system.files = cave.value.system.files || [];
+        cave.value.system.caves = cave.value.system.caves || [];
+    } else if (cave.value) {
+        cave.value.system = { files: [], caves: [] };
+    }
+     if (!cave.value.trips) {
+        cave.value.trips = [];
+    }
+
+  } catch (error) {
+      console.error("Failed to fetch cave data:", error);
+  }
+}
+
+const lnglat = computed(() => {
+  return [cave.value.location_lng, cave.value.location_lat]
+})
+
+const showConfirmModal = ref(false)
+
+const markAsDone = async () => {
+  showConfirmModal.value = true
+  const trip = {
+    name: 'Marked as Done',
+    entrance_cave_id: cave.value.id,
+    exit_cave_id: cave.value.id,
+    participants: [appStore.user.email],
+    cave_system_id: cave.value.system.id,
   }
 
-  const lnglat = computed(() => {
-    return [cave.value.location_lng, cave.value.location_lat]
+  const response = await fetch('/api/trips', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(trip)
   })
+  if (response.ok) {
+    fetchCave()
+  } else {
+    console.error('failed to save trip')
+  }
+}
 
-  const showConfirmModal = ref(false)
+const formatBytes = (bytes, decimals = 2) => {
+  if (!+bytes) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+};
 
-  const markAsDone = async () => {
-    showConfirmModal.value = true
-    const trip = {
-      // id: -1,
-      name: 'Marked as Done',
-      // description: '',
-      // media: [],
-      entrance_cave_id: cave.value.id,
-      exit_cave_id: cave.value.id,
-      // date: '',
-      // start_time: '',
-      // end_time: '',
-      participants: [appStore.user.email],
-      cave_system_id: cave.value.system.id,
-    }
+const isImage = (mimeType) => {
+  return mimeType && mimeType.startsWith('image/');
+};
 
-    const response = await fetch('/api/trips', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(trip)
-    })
-    if (response.ok) {
-      fetchCave()
-    } else {
-      console.error('failed to save trip')
+const getFileIcon = (mimeType) => {
+  if (!mimeType) return 'mdi-file-outline';
+  if (mimeType.includes('pdf')) return 'mdi-file-pdf-box';
+  if (mimeType.includes('word')) return 'mdi-file-word-box';
+  if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'mdi-file-excel-box';
+  if (mimeType.includes('zip') || mimeType.includes('archive')) return 'mdi-archive-arrow-down-outline';
+  if (mimeType.startsWith('text/')) return 'mdi-file-document-outline';
+  return 'mdi-file-outline';
+};
+
+onMounted(fetchCave)
+
+watch(
+  () => route.params.id,
+  (newId, oldId) => {
+    if (newId !== oldId) {
+        fetchCave();
     }
   }
-
-  onMounted(fetchCave)
-
-  watch(
-    () => route.fullPath,
-    fetchCave
-  )
+)
 </script>
-
-<style lang="scss">
-@import "maplibre-gl/dist/maplibre-gl.css";
-</style>

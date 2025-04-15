@@ -61,6 +61,16 @@ class CaveResource extends JsonResource
                 'caves' => $this->system->caves,
                 'tags' => TagResource::collection($this->system->tags->merge($systemLengthTags)),
                 'references' => $this->system->references,
+                'files' => $this->system->files->map(function ($file) {
+                    return [
+                        'id' => $file->id,
+                        'url' => Storage::disk('public')->url("cave_system_files/{$this->cave_system_id}/{$file->filename}"),
+                        'original_filename' => $file->original_filename,
+                        'mime_type' => $file->mime_type,
+                        'size' => $file->size,
+                        'details' => $file->details,
+                    ];
+                }),
             ] : [],
             'trips' => TripResource::collection($this->trips),
             'previously_done' => $this->trips->filter(function ($trip) use ($request) {
