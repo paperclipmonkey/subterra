@@ -10,7 +10,7 @@
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id" :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card :title="cave.name" :subtitle="cave.location_name">
-              <v-card-text>Length: {{ cave.system.length }} Depth: {{ cave.system.vertical_range }}</v-card-text>
+              <v-card-text>Length:{{ (Math.round(cave.system.length / 10) * 10 )/ 1000}}km Depth:{{ cave.system.vertical_range }}m</v-card-text>
               <v-card-actions>
                 <v-btn @click="$router.push({name: '/cave/[id]', params: {id: cave.slug}})">
                   View
