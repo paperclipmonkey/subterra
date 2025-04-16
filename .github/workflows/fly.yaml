@@ -7,9 +7,9 @@ jobs:
   deploy:
     name: Deploy app
     runs-on: ubuntu-latest
-    concurrency: deploy-group    # optional: ensure only one action runs at a time
+    concurrency: deploy-group
     steps:
-      - name: Make HTTP request
+      - name: Make HTTP request # Ensure the api is up. Helps with postgres going to sleep
         run: |
           curl -s https://subterra.world/api/livez > /dev/null; sleep 15
       - uses: actions/checkout@v4
