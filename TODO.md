@@ -1,5 +1,17 @@
 # TODO
 
+Context maps
+    Show additional info like:
+        1. Parking locations
+        2. Routes
+        3. Houses to 'call' in on
+        4. Location to drop off money
+        5. Walking routes
+
+What would the ui for this look like?
+    Have draggable markers with different icons
+
+
 Only 1 of the images successfully uploaded for Bakers pit?
 
 Back nav button from cave page doesn't keep previous search
