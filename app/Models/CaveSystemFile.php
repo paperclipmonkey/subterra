@@ -44,9 +44,7 @@ class CaveSystemFile extends Model
     public function getUrlAttribute(): ?string
     {
         if ($this->filename) {
-            // Assuming files are stored in 'public/cave_system_files/{cave_system_id}'
-            // Adjust the path and disk ('public') if your storage configuration is different.
-            return Storage::disk('public')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}");
+            return Storage::disk('media')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}");
         }
         return null;
     }
