@@ -241,7 +241,7 @@
    </v-container>
 </template>
 
-<style scoped>
+<style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 .file-list {
