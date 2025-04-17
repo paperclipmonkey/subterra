@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Resources\UserDetailResource;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\TripController;
 
 Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
 Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
@@ -22,6 +24,7 @@ Route::put('/trips/{trip}', [App\Http\Controllers\TripController::class, 'update
 Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
 
 Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe'])->middleware(ApiIsAuthenticated::class);
+Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv'])->middleware(ApiIsAuthenticated::class);;
 
 # Users
 Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index']);

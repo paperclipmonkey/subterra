@@ -8,8 +8,10 @@
         <div class="profile-info">
           <h2>{{ profile.name }}</h2>
         </div>
-        <div v-if="route.params.id === 'me'">
+        <v-spacer></v-spacer>
+        <div v-if="route.params.id === 'me'" class="d-flex ga-2">
           <v-btn color="primary" @click="$router.push({name: '/profile/[id].edit', params: {id: profile.id}})">Edit</v-btn>
+          <v-btn color="secondary" href="/api/me/trips/download" download="my_trips.csv">Download Trips (CSV)</v-btn>
         </div>
       </v-card-title>
       <v-divider></v-divider>
@@ -48,7 +50,7 @@
           <!-- <v-chip v-for="club in profile.clubb" :key="club.id" outlined>{{ club.name }}</v-chip> -->
         </v-chip-group>
       </div>
-      <div>
+      <div class="mt-4">
         <a href="/api/logout">Logout</a>
       </div>
     </v-card>

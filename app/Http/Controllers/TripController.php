@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Spatie\SlackAlerts\Facades\SlackAlert;
 use App\Models\User;
+use Symfony\Component\HttpFoundation\StreamedResponse; // Add this use statement
 
 
 class TripController extends Controller
@@ -25,9 +26,66 @@ class TripController extends Controller
         $userId = auth()->id();
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->get();
+        })->with('entrance')->orderBy('start_time', 'desc')->get(); // Eager load entrance and order by date
 
         return TripResource::collection($trips);
+    }
+
+    public function downloadMyTripsCsv()
+    {
+        $userId = auth()->id();
+        $filename = "my_trips.csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($userId) {
+            $handle = fopen('php://output', 'w');
+
+            // Add CSV Header
+            fputcsv($handle, [
+                'Trip ID',
+                'Trip Name',
+                'Start Time',
+                'End Time',
+                'Cave Name',
+                'Entrance Name',
+                'Description',
+                'Participants'
+                // Add more columns if needed
+            ]);
+
+            // Using chunking for potentially large datasets
+            Trip::whereHas('participants', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->with('entrance') // Eager load relationships
+            // ->orderBy('date', 'desc') // Revert orderBy back to 'date'
+            ->chunk(200, function ($trips) use ($handle) {
+                foreach ($trips as $trip) {
+                    fputcsv($handle, [
+                        $trip->id,
+                        $trip->name,
+                        $trip->start_time?->format('Y-m-d') ?? 'N/A', // Format date as needed
+                        $trip->end_time?->format('Y-m-d') ?? 'N/A', // Format date as needed
+                        $trip->entrance?->cave?->name ?? 'N/A', // Safely access nested relationship
+                        $trip->entrance?->name ?? 'N/A', // Safely access relationship
+                        $trip->description,
+                        implode(', ', $trip->participants->pluck('name')->toArray())
+                        // Add corresponding data for more columns
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
     }
 
     public function store(StoreTripRequest $request)

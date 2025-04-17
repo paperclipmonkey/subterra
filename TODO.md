@@ -11,6 +11,33 @@ Context maps
 What would the ui for this look like?
     Have draggable markers with different icons
 
+Priddy:
+    Dallimore's
+    Welsh's Green
+    Cuckoo Cleeves
+    Rose Cottage
+    Nine Barrows swallet
+    Attborough
+    Lamb Leer Cavern
+Nordrach / Charterhouse:
+    Pinetree Pot
+    Ubley Warren Pot
+    Tynings Barrows Swallet
+Other:
+    Loxton Cavern
+    Upper Canada Cave
+Cheddar:
+    Reservoir Hole
+    Long Hole
+    Gough's Cave
+
+Add data for: 
+    Home Close Hole
+    Spider Hole
+
+Remove/Hide
+    Banwell Stalactite Cave
+
 
 Only 1 of the images successfully uploaded for Bakers pit?
 
