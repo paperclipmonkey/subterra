@@ -69,10 +69,14 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
 * Replace all icons with new logo
 
 ## Further work
+* cave difficultly?
 * Add cancel button to trip editor / creator
 * Allow deep links to trip without a login. Useful for sharing.
     * Remove auth
     * Ensure email address is obfuscated on trips and it's just user / club
+    * add share button so its easy to post elsewhere
+    * ensure people not logged in know what they are missing. 
+    * 
     
 * Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
