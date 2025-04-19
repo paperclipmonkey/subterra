@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Storage;
 class CaveTest extends TestCase
 {
     use RefreshDatabase;
-    /** @test */
+    
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_the_list_of_caves()
     {
         Cave::factory()->count(3)->create();
@@ -22,7 +23,7 @@ class CaveTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_a_single_cave_by_slug()
     {
         $cave = Cave::factory()->create([
@@ -34,7 +35,7 @@ class CaveTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_updates_a_cave_and_syncs_tags() {
         $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
         $cave = Cave::factory()->create();
@@ -57,7 +58,7 @@ class CaveTest extends TestCase
         $this->assertTrue($cave->fresh()->tags->contains($tag));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_updates_hero_and_entrance_images()
     {
         $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
@@ -83,7 +84,7 @@ class CaveTest extends TestCase
         Storage::disk('media')->assertExists($cave->entrance_image);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_removes_images_when_null_is_passed()
     {
         $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
