@@ -50,6 +50,11 @@
           <!-- <v-chip v-for="club in profile.clubb" :key="club.id" outlined>{{ club.name }}</v-chip> -->
         </v-chip-group>
       </div>
+      <v-divider></v-divider>
+      <div class="bio">
+        <h3>Bio:</h3>
+        <p>{{ profile.bio }}</p>
+      </div>
       <div class="mt-4">
         <a href="/api/logout">Logout</a>
       </div>

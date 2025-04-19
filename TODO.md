@@ -111,23 +111,10 @@ Add tag collection page
         2. Curated
         3. My collections
 
-* Find CC photos to use for entrances
-* Add images to entrances
-* Add images to systems
+* Add images to systems?
 * Add surveys to systems
 
 * When showing multiple entrances in a cave_system, show the distance and direction to those entrances from the currently selected one.
-
-* Add explicit media section to cave/[id] page
-    * Pulls files from the media table as well as from all trips
-
-What would the relationship look like?
-    * media table
-    * media_cave_system
-    * media_cave
-        media_id
-        cave_id
-        type (survey, entrance, photo)
 
 * Automatically add current user to any trip they add
     * Stop from removing themselves in the ui?

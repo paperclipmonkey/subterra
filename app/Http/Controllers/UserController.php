@@ -32,7 +32,8 @@ class UserController extends Controller
 
     public function store(User $user, Request $request) {
         $user->update([
-            'club' => $request->all()['club'],
+            'club' => $request->input('club'),
+            'bio' => $request->input('bio'),
         ]);
         return new UserDetailResource($user);
     }

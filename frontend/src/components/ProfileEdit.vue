@@ -44,11 +44,19 @@
           </v-chip>
         </template>
     </v-autocomplete>
-    <v-btn @click="updateClub">Update Club</v-btn>
       </div>
-      <div>
-        <a href="/api/logout">Logout</a>
+      <v-divider></v-divider>
+      <div class="bio">
+        <h3>Bio:</h3>
+        <v-textarea
+          label="Bio"
+          v-model="profile.bio"
+          outlined
+          rows="4"
+        ></v-textarea>
       </div>
+          <v-btn @click="save">Save</v-btn>
+      
     </v-card>
   </v-container>
 </template>
@@ -100,7 +108,7 @@ const profile = ref({
   "clubs": [],
 })
 
-const updateClub = async () => {
+const save = async () => {
   const response = await fetch(`/api/users/${route.params.id}`, {
     method: 'PUT',
     headers: {
@@ -108,6 +116,7 @@ const updateClub = async () => {
     },
     body: JSON.stringify({
       club: profile.value.club,
+      bio: profile.value.bio,
     }),
   })
   profile.value = (await response.json()).data
