@@ -27,7 +27,7 @@ Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe'])
 Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv'])->middleware(ApiIsAuthenticated::class);;
 
 # Users
-Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index']);
+Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
@@ -47,9 +47,9 @@ Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index']);
 
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index']);
 
-Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create']);
-Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show']);
-Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store']);
+Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
+Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
+Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
 
 Route::get('/livez', function(Request $request) {
     try {
