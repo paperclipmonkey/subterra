@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +23,10 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::except([
             '*'
         ]);
+
+        Event::listen(
+            \App\Events\TripCreated::class,
+            [\App\Listeners\SendTripCreatedSlackAlert::class, 'handle']
+        );
     }
 }
