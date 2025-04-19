@@ -4,16 +4,37 @@ on:
     branches:
       - main
 jobs:
-  deploy:
-    name: Deploy app
+  test-and-deploy:
     runs-on: ubuntu-latest
     concurrency: deploy-group
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, sqlite3
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Copy .env if needed
+        run: |
+          if [ ! -f .env ]; then cp .env.example .env; fi
+      - name: Generate app key
+        run: php artisan key:generate
+      - name: Set up SQLite database
+        run: |
+          touch database/database.sqlite
+      - name: Run migrations
+        run: php artisan migrate --force
+      - name: Run tests
+        run: vendor/bin/phpunit
       - name: Make HTTP request # Ensure the api is up. Helps with postgres going to sleep
         run: |
           curl -s https://subterra.world/api/livez > /dev/null; sleep 15
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy to Fly
+        run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
