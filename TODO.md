@@ -1,5 +1,9 @@
 # TODO
 
+* [ ] Write unit tests for all endpoints
+* [ ] Test authentication against all endpoints
+* [ ] Add JSON schema assertions against endpoints
+
 Context maps
     Show additional info like:
         1. Parking locations
