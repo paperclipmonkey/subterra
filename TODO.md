@@ -1,8 +1,12 @@
 # TODO
 
-* [ ] Write unit tests for all endpoints
+* [ ] Write unit tests for Trip endpoints
 * [ ] Test authentication against all endpoints
 * [ ] Add JSON schema assertions against endpoints
+
+* [ ] Disable webhooks for new trips by adding it as a Laravel event. Check it's broadcast only.
+
+Start map view at UK zoom level
 
 Context maps
     Show additional info like:
