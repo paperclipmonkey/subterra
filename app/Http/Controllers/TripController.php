@@ -9,10 +9,8 @@ use App\Http\Requests\UpdateTripRequest;
 use App\Models\Trip;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
-use Spatie\SlackAlerts\Facades\SlackAlert;
 use App\Models\User;
-use Symfony\Component\HttpFoundation\StreamedResponse; // Add this use statement
-
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TripController extends Controller
 {

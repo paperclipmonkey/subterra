@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Log;
 use Spatie\SlackAlerts\Facades\SlackAlert;
+use App\Events\UserCreated;
 
 class GoogleLoginController extends Controller
 {
@@ -40,7 +41,7 @@ class GoogleLoginController extends Controller
                     'photo' => $photoUrl,
                     'is_active' => true,
                 ]);
-                SlackAlert::to('signups')->message("A new user has signed up {$user->name} with email: {$user->email}");
+                event(new UserCreated($user));
             } else {
                 $user->update([
                     'name' => $googleUser->name,
