@@ -20,6 +20,7 @@ class UserDetailResource extends JsonResource
             'name' => $this->name,
             'email'=> $this->email,
             'photo' => $this->photo,
+            'bio' => $this->bio,
             'club' => $this->club,
             'is_admin' => $this->is_admin,
             'is_approved' => $this->is_approved,
