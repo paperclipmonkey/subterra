@@ -30,7 +30,7 @@ class CaveController extends Controller
     {
         $cave->update($request->all());
         // Update tags
-        $tags = collect($request->all()['tags'])->map(function ($tag) {
+        $tags = collect($request->collect()->get('tags'))->map(function ($tag) {
             return \App\Models\Tag::where([
                 'category' => $tag['category'],
                 'tag' => $tag['tag'],

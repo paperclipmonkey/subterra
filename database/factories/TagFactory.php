@@ -21,17 +21,9 @@ class TagFactory extends Factory
             'tag' => fake()->word(),
             'type' => Str::random(2),
             'category' => Str::random(2),
-            'description' => fake()->paragraphs(3),
+            'image' => fake()->imageUrl(),
+            'description' => fake()->sentence(),
+            'assignable' => true,
         ];
     }
-
-    // /**
-    //  * Indicate that the model's email address should be unverified.
-    //  */
-    // public function unverified(): static
-    // {
-    //     return $this->state(fn (array $attributes) => [
-    //         'email_verified_at' => null,
-    //     ]);
-    // }
 }
