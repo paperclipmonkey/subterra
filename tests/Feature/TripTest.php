@@ -7,6 +7,7 @@ use App\Models\Cave;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 
@@ -60,6 +61,7 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $participant = User::factory()->create();
         $entrance = Cave::factory()->create();
+        Event::fake([\App\Events\TripCreated::class]);
         $tripData = [
             'name' => 'Test Trip',
             'start_time' => now()->toDateTimeString(),
@@ -83,6 +85,9 @@ class TripTest extends TestCase {
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
         $trip = Trip::where('name', 'Test Trip')->first();
         $this->assertCount(1, $trip->media);
+        Event::assertDispatched(\App\Events\TripCreated::class, function ($event) use ($trip) {
+            return $event->trip->id === $trip->id;
+        });
         Storage::disk('media')->assertExists($trip->media->first()->filename);
     }
 

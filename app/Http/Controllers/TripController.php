@@ -94,7 +94,7 @@ class TripController extends Controller
         $trip->save();
 
         // Add the participants to the trip
-        $participants = $request->all()['participants'];
+        $participants = $request->input('participants');
         $participantIds = array_map(function ($email) {
             return User::withoutGlobalScopes()->where('email', $email)->first()->id;
         }, $participants);
@@ -102,10 +102,11 @@ class TripController extends Controller
         // Sync participants with the trip
         $trip->participants()->sync($participantIds);
 
-        $media = $request->all()['media'] ?? [];
+        $media = $request->input('media', []);
         $this->storeMedia($media, $trip);
 
-        SlackAlert::to('trips')->message("A new trip has been created: <https://subterra.world/trip/{$trip->id}|{$trip->name}> to {$trip->entrance->name} by {$request->user()->name}");
+        // Dispatch event instead of calling SlackAlert directly
+        event(new \App\Events\TripCreated($trip, $request->user()));
 
         return new TripResource($trip);
     }
