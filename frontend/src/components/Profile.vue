@@ -15,23 +15,23 @@
         </div>
       </v-card-title>
       <v-divider></v-divider>
-      <v-list two-line>
-        <v-list-item class="metric-item">
+      <v-list class="metrics-grid">
+        <v-list-item>
           <div>
             <v-list-item-title class="metric-title">Caves visited</v-list-item-title>
-            <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.caves }}</v-list-item-subtitle>
+            <v-list-item-subtitle class="metric-subtitle">{{ formatNumber(profile.stats.caves) }}</v-list-item-subtitle>
           </div>
         </v-list-item>
-        <v-list-item class="metric-item">
+        <v-list-item>
           <div>
             <v-list-item-title class="metric-title">Total trips</v-list-item-title>
-            <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.trips }}</v-list-item-subtitle>
+            <v-list-item-subtitle class="metric-subtitle">{{ formatNumber(profile.stats.trips) }}</v-list-item-subtitle>
           </div>
         </v-list-item>
-        <v-list-item class="metric-item">
+        <v-list-item>
           <div>
             <v-list-item-title class="metric-title">Time underground</v-list-item-title>
-            <v-list-item-subtitle class="metric-subtitle">{{ profile.stats.duration }} minutes</v-list-item-subtitle>
+            <v-list-item-subtitle class="metric-subtitle">{{ formatDuration(profile.stats.duration) }}</v-list-item-subtitle>
           </div>
         </v-list-item>
       </v-list>
@@ -76,10 +76,31 @@ onMounted(async () => {
   const response = await fetch(`/api/users/${route.params.id}`)
   profile.value = (await response.json()).data
 })
+
+const formatNumber = (num) => {
+  return new Intl.NumberFormat().format(num || 0)
+}
+
+const formatDuration = (minutes) => {
+  if (!minutes) return '0 minutes'
+  if (minutes < 60) return `${minutes} minutes`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  return `${hours}h ${remainingMinutes}m`
+}
 </script>
 <style>
-  .metric-item {
-    width: 33%;
-    float: left;
-  }
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.metric-title {
+  font-weight: bold;
+}
+
+.metric-subtitle {
+  font-size: 1.2em;
+}
 </style>
