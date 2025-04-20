@@ -19,7 +19,7 @@
 
     <v-row>
       <!-- Main Content Column -->
-      <v-col cols="12" sm="7">
+      <v-col cols="12" sm="8">
         <v-card class="mb-4">
           <v-card-title>Trip Details</v-card-title>
           <v-list density="compact">
@@ -61,7 +61,7 @@
       </v-col>
 
       <!-- Participants Sidebar Column -->
-      <v-col cols="12" sm="5">
+      <v-col cols="12" sm="4">
         <v-card class="mb-4">
           <v-card-title>Participants ({{ trip.participants.length }})</v-card-title>
           <v-list lines="two">
