@@ -1,6 +1,5 @@
 # TODO
 
-* [ ] Write unit tests for Trip endpoints
 * [ ] Test authentication against all endpoints
 * [ ] Add JSON schema assertions against endpoints
 
