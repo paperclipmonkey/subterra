@@ -87,7 +87,13 @@
                      <v-text-field v-model="editedClub.name" label="Club Name*" required :rules="[rules.required]"></v-text-field>
                    </v-col>
                    <v-col cols="12">
-                     <v-text-field v-model="editedClub.slug" label="Club slug*" required :rules="[rules.required]"></v-text-field>
+                     <v-text-field
+                       v-model="editedClub.slug"
+                       label="Club slug*"
+                       required
+                       :rules="[rules.required, rules.slug]"
+                       :disabled="editMode"
+                     ></v-text-field>
                    </v-col>
                    <v-col cols="12">
                      <v-textarea v-model="editedClub.description" label="Description (Markdown supported)" rows="3"></v-textarea>
@@ -303,36 +309,35 @@ const fetchAvailableUsers = async () => {
 };
 
 // Fetch *approved* members for the specific club being edited
-const fetchClubMembers = async (clubId) => { // Renamed internally, still fetches approved
-  if (!clubId) {
+const fetchClubMembers = async (clubIdOrSlug) => { // Accept slug or id, but use slug
+  if (!clubIdOrSlug) {
     clubMembers.value = [];
     return;
   }
   try {
-    // Use the endpoint that gets approved members
-    const membersApi = mande(`/api/admin/clubs/${clubId}/members`);
+    // Use the endpoint that gets approved members (still by id, unless you want to change this too)
+    const membersApi = mande(`/api/admin/clubs/${clubIdOrSlug}/members`);
     const response = await membersApi.get();
     clubMembers.value = response.data || response;
     memberDataChanged.value = false; // Reset change flag after fetching
   } catch (error) {
-    console.error(`Error fetching approved members for club ${clubId}:`, error);
+    console.error(`Error fetching approved members for club ${clubIdOrSlug}:`, error);
     clubMembers.value = [];
   }
 };
 
 // Fetch *pending* members for the specific club being edited
-const fetchPendingMembers = async (clubId) => {
-  if (!clubId) {
+const fetchPendingMembers = async (clubIdOrSlug) => {
+  if (!clubIdOrSlug) {
     pendingMembers.value = [];
     return;
   }
   try {
-    const pendingApi = mande(`/api/admin/clubs/${clubId}/pending-members`);
+    const pendingApi = mande(`/api/admin/clubs/${clubIdOrSlug}/pending-members`);
     const response = await pendingApi.get();
-    // Add loading flag for UI feedback during approve/reject
     pendingMembers.value = (response.data || response).map(user => ({ ...user, loading: false }));
   } catch (error) {
-    console.error(`Error fetching pending members for club ${clubId}:`, error);
+    console.error(`Error fetching pending members for club ${clubIdOrSlug}:`, error);
     pendingMembers.value = [];
   }
 };
@@ -357,13 +362,12 @@ const updateClubInList = (updatedClub) => {
 const toggleEnabled = async (club) => {
   club.loadingEnabled = true;
   try {
-    // Use actual API endpoint
-    const toggleApi = mande(`/api/admin/clubs/${club.id}/toggle-enabled`);
+    // Use slug instead of id
+    const toggleApi = mande(`/api/admin/clubs/${club.slug}/toggle-enabled`);
     const updatedClub = await toggleApi.put();
     updateClubInList(updatedClub); // Update list with response data
   } catch (error) {
-    console.error(`Error toggling enabled status for club ${club.id}:`, error);
-    // Handle error display
+    console.error(`Error toggling enabled status for club ${club.slug}:`, error);
     club.loadingEnabled = false; // Reset loading on error
   }
   // No finally needed if updateClubInList handles the flag on success
@@ -373,14 +377,18 @@ const handleRowClick = (event, { item }) => {
   // Prevent navigation if clicking interactive elements
   let target = event.target;
   while (target && target !== event.currentTarget) {
-    // Include check for the edit button's parent elements if necessary
-    if (target.tagName === 'BUTTON' || target.closest('button') || target.classList.contains('v-icon') || target.tagName === 'A') {
+    if (
+      target.tagName === 'BUTTON' ||
+      target.closest('button') ||
+      target.classList.contains('v-icon') ||
+      target.tagName === 'A'
+    ) {
       return;
     }
     target = target.parentNode;
   }
-  // Instead of navigating, open the edit dialog
-  openEditDialog(item);
+  // Navigate to the club's public page using its slug
+  router.push({ name: '/club/[slug]', params: { slug: item.slug } });
 };
 
 // --- Dialog Actions ---
@@ -400,9 +408,9 @@ const openEditDialog = (club) => {
   editedClub.value = JSON.parse(JSON.stringify(club));
   tab.value = 'details'; // Reset to details tab
   dialogVisible.value = true;
-  fetchClubMembers(club.id); // Fetch approved members
-  fetchPendingMembers(club.id); // Fetch pending members
-  fetchAvailableUsers(); // Fetch users for adding members
+  fetchClubMembers(club.slug); // Use slug
+  fetchPendingMembers(club.slug); // Use slug
+  fetchAvailableUsers();
 };
 
 const closeDialog = () => {
@@ -446,16 +454,15 @@ const markMemberDataChanged = () => {
 
 // --- Pending Member Actions ---
 const approveMemberRequest = async (pendingUser) => {
-  if (!editedClub.value.id) return;
+  if (!editedClub.value.slug) return;
   pendingUser.loading = true;
   try {
-    const approveApi = mande(`/api/admin/clubs/${editedClub.value.id}/members/${pendingUser.id}/approve`);
+    // Use slug instead of id
+    const approveApi = mande(`/api/admin/clubs/${editedClub.value.slug}/members/${pendingUser.id}/approve`);
     await approveApi.put();
-    // Refresh both lists after approval
-    await fetchPendingMembers(editedClub.value.id);
-    await fetchClubMembers(editedClub.value.id);
-    // Optionally update club count
-    const refreshApi = mande(`/api/clubs/${editedClub.value.id}`);
+    await fetchPendingMembers(editedClub.value.slug);
+    await fetchClubMembers(editedClub.value.slug);
+    const refreshApi = mande(`/api/clubs/${editedClub.value.slug}`);
     const refreshedClubResponse = await refreshApi.get();
     updateClubInList(refreshedClubResponse.data || refreshedClubResponse);
   } catch (error) {
@@ -466,13 +473,13 @@ const approveMemberRequest = async (pendingUser) => {
 };
 
 const rejectMemberRequest = async (pendingUser) => {
-  if (!editedClub.value.id) return;
+  if (!editedClub.value.slug) return;
   pendingUser.loading = true;
   try {
-    const rejectApi = mande(`/api/admin/clubs/${editedClub.value.id}/members/${pendingUser.id}/reject`);
+    // Use slug instead of id
+    const rejectApi = mande(`/api/admin/clubs/${editedClub.value.slug}/members/${pendingUser.id}/reject`);
     await rejectApi.put();
-    // Refresh pending list after rejection
-    await fetchPendingMembers(editedClub.value.id);
+    await fetchPendingMembers(editedClub.value.slug);
   } catch (error) {
     console.error(`Error rejecting member ${pendingUser.id}:`, error);
   } finally {
@@ -510,47 +517,45 @@ const saveClubAndMembers = async () => {
     };
 
     if (editMode.value) {
-      const updateApi = mande(`/api/admin/clubs/${editedClub.value.id}`);
+      // Use slug instead of id
+      const updateApi = mande(`/api/admin/clubs/${editedClub.value.slug}`);
       const response = await updateApi.put(clubPayload);
       savedClubData = response.data || response;
     } else {
       const response = await clubsApi.post(clubPayload);
       savedClubData = response.data || response;
       editedClub.value.id = savedClubData.id;
+      editedClub.value.slug = savedClubData.slug;
       editMode.value = true;
     }
 
     // 2. Save *Approved* Members (Sync Endpoint)
-    if (memberDataChanged.value && editedClub.value.id) {
+    if (memberDataChanged.value && editedClub.value.slug) {
        const membersPayload = {
          members: clubMembers.value.map(m => ({
            id: m.id,
            is_admin: m.is_club_admin,
-           status: 'approved' // Ensure status is set for backend sync
+           status: 'approved'
          }))
        };
-       // Use the endpoint that syncs approved members
-       const membersApi = mande(`/api/admin/clubs/${editedClub.value.id}/members`);
+       // Use slug instead of id
+       const membersApi = mande(`/api/admin/clubs/${editedClub.value.slug}/members`);
        await membersApi.put(membersPayload);
        memberDataChanged.value = false;
 
        // Refetch club data for updated member_count
-       const refreshApi = mande(`/api/clubs/${editedClub.value.id}`);
+       const refreshApi = mande(`/api/clubs/${editedClub.value.slug}`);
        const refreshedClubResponse = await refreshApi.get();
        updateClubInList(refreshedClubResponse.data || refreshedClubResponse);
 
     } else {
-       // If members didn't change, still update list with the saved club details
        updateClubInList(savedClubData);
     }
 
-    closeDialog(); // This closes the dialog after all saves are successful
+    closeDialog();
 
   } catch (error) {
     console.error(`Error saving club or members:`, error);
-    // Handle error display (e.g., using a snackbar component)
-    // Consider showing specific validation errors if status is 422
-    // The dialog will remain open if an error occurs here.
   } finally {
     saving.value = false;
   }

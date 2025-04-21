@@ -78,4 +78,9 @@ class Club extends Model
     {
         return $this->users()->wherePivot('status', 'pending');
     }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 }
