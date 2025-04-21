@@ -49,7 +49,7 @@
 
   import maplibregl from 'maplibre-gl';
 
-  const style = 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=0gGMv4po9Mjrpd64A528';
+  const style = 'https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528';
   const zoom = 5;
   const lnglat = [-2, 53]
 
