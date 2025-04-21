@@ -40,12 +40,12 @@
                </v-list-item-subtitle>
              </v-list-item>
              <v-list-item>
-               <v-list-item-title>Start Time</v-list-item-title>
+               <v-list-item-title>Date</v-list-item-title>
                <v-list-item-subtitle>{{ formatDate(trip.start_time) }}</v-list-item-subtitle>
              </v-list-item>
              <v-list-item>
-               <v-list-item-title>End Time</v-list-item-title>
-               <v-list-item-subtitle>{{ formatDate(trip.end_time) }}</v-list-item-subtitle>
+               <v-list-item-title>Time</v-list-item-title>
+               <v-list-item-subtitle>{{ formatTime(trip.start_time) }}</v-list-item-subtitle>
              </v-list-item>
              <v-list-item>
                <v-list-item-title>Duration</v-list-item-title>
@@ -150,7 +150,11 @@ const router = useRouter()
 const route = useRoute()
 
 const formatDate = (date) => {
-  return moment(date).format('YYYY-MM-DD HH:mm')
+  return moment(date).format('DD-MM-YYYY')
+}
+
+const formatTime = (date) => {
+  return moment(date).format('HH:mm')
 }
 
 const currentUserWasOnTrip = computed(()=> {
