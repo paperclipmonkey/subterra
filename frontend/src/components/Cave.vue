@@ -26,8 +26,10 @@
                 :src="cave.hero_image ? cave.hero_image : cave.entrance_image"
                 cover
               >
-                <v-card-title>{{ cave.name }}</v-card-title>
-                <v-card-subtitle>{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
+                <v-card-title style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                  {{ cave.name }}
+                </v-card-title>
+                <v-card-subtitle style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
               </v-img>
               <v-card-text>
                 <vue-markdown :source="cave.description" />
