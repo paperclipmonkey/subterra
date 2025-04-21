@@ -171,9 +171,7 @@
                              @click="approveMemberRequest(pending)"
                              :loading="pending.loading"
                              :disabled="pending.loading"
-                           >
-                             <v-tooltip activator="parent" location="top">Approve</v-tooltip>
-                           </v-btn>
+                           ></v-btn>
                            <v-btn
                              color="red"
                              variant="text"
@@ -181,9 +179,7 @@
                              @click="rejectMemberRequest(pending)"
                              :loading="pending.loading"
                              :disabled="pending.loading"
-                           >
-                             <v-tooltip activator="parent" location="top">Reject</v-tooltip>
-                           </v-btn>
+                           ></v-btn>
                          </template>
                        </v-list-item>
                      </v-list>
