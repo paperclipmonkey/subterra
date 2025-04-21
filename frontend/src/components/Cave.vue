@@ -39,8 +39,15 @@
                   </v-chip>
                 </p>
                 <strong>Location:</strong>
-                <p>[{{ cave.location_lat }}, {{ cave.location_lng }}]</p>
-                <p><a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
+                <v-btn :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`" target="_blank" icon>
+                  <v-icon>mdi-google-maps</v-icon>
+                </v-btn>
+                <v-btn :href="`https://maps.apple.com/?q=${cave.location_lat},${cave.location_lng}`" target="_blank" icon>
+                  <v-icon>mdi-apple</v-icon>
+                </v-btn>
+                <v-btn @click="copyLatLng" icon>
+                  <v-icon>mdi-clipboard-multiple-outline</v-icon>
+                </v-btn>
                 <vue-markdown v-if="cave.access_info" :source="'Access Info: ' + cave.access_info" />
               </v-card-text>
             </v-card>
@@ -302,11 +309,6 @@ const zoom = 11;
 const appStore = useAppStore()
 
 const route = useRoute()
-
-const googleMapsUrl = computed(() => {
-  return `https://www.google.com/maps/search/?api=1&query=${cave.value.location_lat}%2C${ cave.value.location_lng }`
-})
-
 const cave = ref(null)
 
 const hasDone = computed(() => {
@@ -349,6 +351,20 @@ const fetchCave = async () => {
 const lnglat = computed(() => {
   return [cave.value.location_lng, cave.value.location_lat]
 })
+
+const copyLatLng = async () => {
+  if (cave.value && navigator.clipboard) {
+    const textToCopy = `${cave.value.location_lat}, ${cave.value.location_lng}`;
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      // Optional: Add user feedback like a snackbar message
+      console.log('Coordinates copied to clipboard:', textToCopy);
+    } catch (err) {
+      console.error('Failed to copy coordinates: ', err);
+      // Optional: Add error feedback
+    }
+  }
+};
 
 const showConfirmModal = ref(false)
 
