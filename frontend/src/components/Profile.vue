@@ -63,6 +63,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { mande } from 'mande'; // Import mande
 
 const route = useRoute()
 
@@ -73,11 +74,20 @@ const profile = ref({
   "stats": {},
   "tags": [],
   "clubs": [],
+  "bio": "", // Added bio for completeness
+  "club": "", // Added club for completeness
 })
 
 onMounted(async () => {
-  const response = await fetch(`/api/users/${route.params.id}`)
-  profile.value = (await response.json()).data
+  try {
+    const userApi = mande(`/api/users/${route.params.id}`); // Create mande instance for the specific user
+    const response = await userApi.get();
+    // Assuming mande returns the data directly or within a data property
+    profile.value = response.data || response; 
+  } catch (error) {
+    console.error(`Error fetching profile for user ${route.params.id}:`, error);
+    // Optionally, add user feedback about the error
+  }
 })
 
 const formatNumber = (num) => {

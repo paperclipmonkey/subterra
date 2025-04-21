@@ -1,5 +1,4 @@
 # TODO
-
 * [ ] Test authentication against all endpoints
 * [ ] Add JSON schema assertions against endpoints
 

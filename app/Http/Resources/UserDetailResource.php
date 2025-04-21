@@ -29,6 +29,8 @@ class UserDetailResource extends JsonResource
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),
                 'duration' => $this->trips->sum('duration'),
             ],
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

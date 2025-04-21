@@ -44,6 +44,14 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: '/waitlist' })
   }
 
+  // Admin route check
+  if (to.path.startsWith('/admin')) {
+    if (!user.is_admin) {
+      // Redirect non-admins away from admin pages
+      return next({ name: '/trips' }); // Or wherever you want to redirect them
+    }
+  }
+
   if(user.email) {
     return next()
   }
