@@ -24,7 +24,7 @@ class ClubController extends Controller
     {
         // Eager load count for efficiency
         $clubs = Club::withCount('users')
-                     ->where('is_enabled', true)
+                     ->where('is_active', true)
                      ->orderBy('name')
                      ->get();
         return ClubResource::collection($clubs);
@@ -55,7 +55,7 @@ class ClubController extends Controller
     public function show(Club $club)
     {
         // Access check (consider using Policies for more complex rules)
-        if (!$club->is_enabled && !(auth()->check() && auth()->user()->is_admin)) {
+        if (!$club->is_active && !(auth()->check() && auth()->user()->is_admin)) {
              return response()->json(['message' => 'Club not found or access denied.'], 404);
         }
         // Load count for detail view
@@ -77,7 +77,7 @@ class ClubController extends Controller
             'description' => 'nullable|string',
             'website' => 'nullable|url|max:255',
             'location' => 'nullable|string|max:255',
-            'is_enabled' => 'sometimes|boolean', // Default to true if not provided
+            'is_active' => 'sometimes|boolean', // Default to true if not provided
         ]);
 
         if ($validator->fails()) {
@@ -86,7 +86,7 @@ class ClubController extends Controller
 
         $validatedData = $validator->validated();
         // Set default enabled status if not provided
-        $validatedData['is_enabled'] = $request->input('is_enabled', true);
+        $validatedData['is_active'] = $request->input('is_active', true);
 
         $club = Club::create($validatedData);
         $club->loadCount('users'); // Load count for the response
@@ -114,7 +114,7 @@ class ClubController extends Controller
             'description' => 'nullable|string',
             'website' => 'nullable|url|max:255',
             'location' => 'nullable|string|max:255',
-            'is_enabled' => 'sometimes|boolean',
+            'is_active' => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -153,9 +153,9 @@ class ClubController extends Controller
      * @param  \App\Models\Club  $club
      * @return \Illuminate\Http\JsonResponse
      */
-    public function toggleEnabled(Club $club)
+    public function toggleActive(Club $club)
     {
-        $club->is_enabled = !$club->is_enabled;
+        $club->is_active = !$club->is_active;
         $club->save();
         $club->loadCount('users'); // Load count for the response
 

@@ -21,7 +21,7 @@ class Club extends Model
         'description',
         'website',
         'location',
-        'is_enabled',
+        'is_active',
     ];
 
     /**
@@ -30,7 +30,7 @@ class Club extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'is_enabled' => 'boolean',
+        'is_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

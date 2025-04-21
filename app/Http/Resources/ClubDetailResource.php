@@ -23,7 +23,7 @@ class ClubDetailResource extends JsonResource
             'description' => $this->description,
             'website' => $this->website,
             'location' => $this->location,
-            'is_enabled' => $this->is_enabled,
+            'is_active' => $this->is_active,
             // Use the accessor for member count
             // Ensure 'users_count' is loaded via withCount('users') in the controller for efficiency
             'member_count' => $this->whenCounted('users', $this->member_count), // Use whenCounted if using withCount

@@ -32,19 +32,19 @@
           item-value="id"
           @click:row="handleRowClick"
         >
-          <template v-slot:item.is_enabled="{ item }">
+          <template v-slot:item.is_active="{ item }">
             <v-btn
               icon
               variant="text"
               size="small"
               @click.stop="toggleEnabled(item)"
               :loading="item.loadingEnabled"
-              :color="item.is_enabled ? 'green' : 'red'"
+              :color="item.is_active ? 'green' : 'red'"
             >
               <v-icon>
-                {{ item.is_enabled ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                {{ item.is_active ? 'mdi-check-circle' : 'mdi-close-circle' }}
               </v-icon>
-              <v-tooltip activator="parent" location="top">{{ item.is_enabled ? 'Disable Club' : 'Enable Club' }}</v-tooltip>
+              <v-tooltip activator="parent" location="top">{{ item.is_active ? 'Disable Club' : 'Enable Club' }}</v-tooltip>
             </v-btn>
           </template>
            <template v-slot:item.website="{ item }">
@@ -105,7 +105,7 @@
                      <v-text-field v-model="editedClub.location" label="Location"></v-text-field>
                    </v-col>
                     <v-col cols="12">
-                      <v-switch v-model="editedClub.is_enabled" :label="editedClub.is_enabled ? 'Enabled' : 'Disabled'" color="primary"></v-switch>
+                      <v-switch v-model="editedClub.is_active" :label="editedClub.is_active ? 'Enabled' : 'Disabled'" color="primary"></v-switch>
                     </v-col>
                  </v-row>
                </v-container>
@@ -233,7 +233,7 @@ const defaultClub = {
   website: '',
   location: '',
   member_count: 0,
-  is_enabled: true,
+  is_active: true,
   loadingEnabled: false,
 };
 const editedClub = ref({ ...defaultClub });
@@ -274,7 +274,7 @@ const headers = [
   { title: 'Website', key: 'website', sortable: false },
   { title: 'Location', key: 'location', sortable: true },
   { title: 'Members', key: 'member_count', sortable: true, align: 'center' },
-  { title: 'Enabled', key: 'is_enabled', sortable: true, align: 'center' },
+  { title: 'Enabled', key: 'is_active', sortable: true, align: 'center' },
   { title: 'Actions', key: 'actions', sortable: false, align: 'center' }, // Added Actions column header
 ];
 
@@ -363,7 +363,7 @@ const toggleEnabled = async (club) => {
   club.loadingEnabled = true;
   try {
     // Use slug instead of id
-    const toggleApi = mande(`/api/admin/clubs/${club.slug}/toggle-enabled`);
+    const toggleApi = mande(`/api/admin/clubs/${club.slug}/toggle-active`);
     const updatedClub = await toggleApi.put();
     updateClubInList(updatedClub); // Update list with response data
   } catch (error) {
@@ -513,7 +513,7 @@ const saveClubAndMembers = async () => {
       description: editedClub.value.description,
       website: editedClub.value.website,
       location: editedClub.value.location,
-      is_enabled: editedClub.value.is_enabled,
+      is_active: editedClub.value.is_active,
     };
 
     if (editMode.value) {

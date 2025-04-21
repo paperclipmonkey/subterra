@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('website')->nullable();
             $table->string('location')->nullable();
-            $table->boolean('is_enabled')->default(true);
+            $table->boolean('is_active')->default(true);
             $table->timestamps(); // Adds created_at and updated_at columns
         });
     }

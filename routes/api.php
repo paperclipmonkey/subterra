@@ -54,7 +54,7 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');
     Route::put('/clubs/{club}', [ClubController::class, 'update'])->name('admin.clubs.update');
     Route::delete('/clubs/{club}', [ClubController::class, 'destroy'])->name('admin.clubs.destroy');
-    Route::put('/clubs/{club}/toggle-enabled', [ClubController::class, 'toggleEnabled'])->name('admin.clubs.toggle-enabled');
+    Route::put('/clubs/{club}/toggle-active', [ClubController::class, 'toggleActive'])->name('admin.clubs.toggle-active');
 
     // --- Admin Club Member Management Endpoints ---
     // This now gets *approved* members for the main admin list
