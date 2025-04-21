@@ -12,229 +12,246 @@
         <v-divider>{{ cave.system.name }}</v-divider>
       </v-col>
     </v-row>
+
+    <!-- Main Content Row -->
     <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-img
-            class="align-end text-white"
-            height="200"
-            :src="cave.hero_image ? cave.hero_image : cave.entrance_image"
-            cover
-          >
-            <v-card-title>{{ cave.name }}</v-card-title>
-            <v-card-subtitle>{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
-          </v-img>
-          <mgl-map
-            :map-style="style"
-            :center="lnglat"
-            :zoom="zoom"
-            height="350px"
-          >
-            <mgl-marker :coordinates="lnglat" color="#cc0000" />
-            <mgl-navigation-control />
-            <MglGeolocateControl :track-user-location="true" :showAccuracyCircle="true"/>
-          </mgl-map>
-          <v-card-text>
-            <vue-markdown :source="cave.description" />
-            <p> Tags:
-              <v-chip v-for="tag in cave.tags" :key="tag" class="ma-1">
-                {{ tag.tag }}
-              </v-chip>
-            </p>            
-            <strong>Location:</strong> 
-            <p>[{{ cave.location_lat }}, {{ cave.location_lng }}]</p>
-            <p><a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
-            <vue-markdown v-if="cave.access_info" :source="'Access Info: ' + cave.access_info" />
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+      <!-- Left Column -->
+      <v-col cols="12" md="8">
+        <v-row>
+          <v-col cols="12">
+            <v-card>
+              <v-img
+                class="align-end text-white"
+                height="200"
+                :src="cave.hero_image ? cave.hero_image : cave.entrance_image"
+                cover
+              >
+                <v-card-title>{{ cave.name }}</v-card-title>
+                <v-card-subtitle>{{ cave.location_name }},  {{ cave.location_country }}</v-card-subtitle>
+              </v-img>
+              <v-card-text>
+                <vue-markdown :source="cave.description" />
+                <p> Tags:
+                  <v-chip v-for="tag in cave.tags" :key="tag" class="ma-1">
+                    {{ tag.tag }}
+                  </v-chip>
+                </p>
+                <strong>Location:</strong>
+                <p>[{{ cave.location_lat }}, {{ cave.location_lng }}]</p>
+                <p><a :href='googleMapsUrl'>{{ cave.location_name }}, {{ cave.location_country }}</a></p>
+                <vue-markdown v-if="cave.access_info" :source="'Access Info: ' + cave.access_info" />
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
 
-    <v-row v-if="cave.system">
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>{{ cave.system.name }}</v-card-title>
-          <v-card-subtitle>System</v-card-subtitle>
-          <v-btn v-if="appStore.user.is_admin" class="float-right" icon @click="$router.push({name: '/cave_system/[id].edit', params: {id: cave.system.id}})">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-          <v-card-text>
-            <vue-markdown :source="cave.system.description" />
-            <p> Tags:
-              <v-chip v-for="tag in cave.system.tags" :key="tag" class="ma-1">
-                {{ tag.tag }}
-              </v-chip>
-            </p>
-            <p><strong>Length:</strong> {{ Math.round(cave.system.length) }} m</p>
-            <p><strong>Vertical Range:</strong> {{ cave.system.vertical_range }} m</p>
-
-            <div v-if="cave.system.files && cave.system.files.length > 0" class="mt-4">
-              <h3 class="text-subtitle-1 font-weight-bold mb-2">Files</h3>
-              <v-list lines="two" class="file-list pa-0">
-                <v-list-item
-                  v-for="file in cave.system.files"
-                  :key="file.id"
-                  :href="file.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="file-item"
-                  density="compact"
-                >
-                  <template v-slot:prepend>
-                    <v-avatar rounded="0" class="mr-3">
-                      <v-img
-                        v-if="isImage(file.mime_type)"
-                        :src="file.url"
-                        :alt="file.original_filename"
-                        aspect-ratio="1"
-                        cover
-                        class="border"
-                      ></v-img>
-                      <v-icon v-else size="large">{{ getFileIcon(file.mime_type) }}</v-icon>
-                    </v-avatar>
-                  </template>
-
-                  <v-list-item-title class="font-weight-medium">{{ file.original_filename }}</v-list-item-title>
-                  <v-list-item-subtitle>
-                    <span v-if="file.details">{{ file.details }}</span>
-                    <span v-if="file.details && file.size"> - </span>
-                    <span v-if="file.size">{{ formatBytes(file.size) }}</span>
-                  </v-list-item-subtitle>
-
-                </v-list-item>
-              </v-list>
-            </div>
-             <p v-else class="mt-4 text-grey">No files associated with this system.</p>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row v-if="cave.system.caves.length > 1">
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>System Entrances</v-card-title>
-          <v-card-text>
-            This system has multiple entrances:
-            <v-list>
-              <v-list-item v-for="system_cave in cave.system.caves" :key="system_cave.id">
-                <div>
-                  <v-list-item-title><RouterLink :to="{name: '/cave/[id]', params: {id: system_cave.id}}">{{ system_cave.name }}</RouterLink></v-list-item-title>
-                  <v-list-item-subtitle>{{ system_cave.description }}</v-list-item-subtitle>
-                </div>
-              </v-list-item>
-            </v-list>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row v-if="cave.system.references">
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>System References</v-card-title>
-          <v-card-text>
-            <vue-markdown :source="cave.system.references" />
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>
-            Recent Trips
-            <v-btn class="float-right" icon @click="$router.push({name: '/create-trip', query: {cave_id: cave.id}})">
-              <v-icon>mdi-plus</v-icon>
-            </v-btn>
-            <template v-if="!hasDone">
-                <v-btn class="float-right" icon @click="showConfirmModal = true">
-                <v-icon>mdi-check</v-icon>
+        <v-row>
+          <v-col cols="12">
+            <v-card>
+              <v-card-title>
+                Recent Trips
+                <v-btn class="float-right" icon @click="$router.push({name: '/create-trip', query: {cave_id: cave.id}})">
+                  <v-icon>mdi-plus</v-icon>
                 </v-btn>
-                <v-dialog v-model="showConfirmModal" max-width="500">
-                <v-card>
-                  <v-card-title>Confirm</v-card-title>
-                  <v-card-text>Are you sure you want to mark this cave as done?</v-card-text>
-                  <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn text @click="showConfirmModal = false">Cancel</v-btn>
-                  <v-btn text color="primary" @click="markAsDone">Confirm</v-btn>
-                  </v-card-actions>
-                </v-card>
-                </v-dialog>
-            </template>
+                <template v-if="!hasDone">
+                    <v-btn class="float-right" icon @click="showConfirmModal = true">
+                    <v-icon>mdi-check</v-icon>
+                    </v-btn>
+                    <v-dialog v-model="showConfirmModal" max-width="500">
+                    <v-card>
+                      <v-card-title>Confirm</v-card-title>
+                      <v-card-text>Are you sure you want to mark this cave as done?</v-card-text>
+                      <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn text @click="showConfirmModal = false">Cancel</v-btn>
+                      <v-btn text color="primary" @click="markAsDone">Confirm</v-btn>
+                      </v-card-actions>
+                    </v-card>
+                    </v-dialog>
+                </template>
 
-          </v-card-title>
+              </v-card-title>
 
-          <v-card-text>
-            <v-list>
-              <template v-for="trip in cave.trips" :key="trip.datetime">
-                <CaveTripListItem :trip="trip" v-if="trip.end_time || trip.participants.some(participant => participant.email === appStore.user.email)" />
-              </template>
-            </v-list>
-            <template v-if="cave.trips.length === 0">
-              <v-alert>No trips have been recorded for this cave yet.</v-alert>
-            </template>
-          </v-card-text>
-        </v-card>
+              <v-card-text>
+                <v-list>
+                  <template v-for="trip in cave.trips" :key="trip.datetime">
+                    <CaveTripListItem :trip="trip" v-if="trip.end_time || trip.participants.some(participant => participant.email === appStore.user.email)" />
+                  </template>
+                </v-list>
+                <template v-if="cave.trips.length === 0">
+                  <v-alert>No trips have been recorded for this cave yet.</v-alert>
+                </template>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <v-col cols="12">
+            <v-card>
+              <v-card-title>
+                Media
+              </v-card-title>
+              <v-card-text>
+                <v-row>
+                  <v-col
+                    v-if="cave.hero_image"
+                    class="d-flex child-flex"
+                    cols="6" sm="4" md="3" lg="4"
+                  >
+                    <v-img
+                      :src="cave.hero_image"
+                      aspect-ratio="1"
+                      class="bg-grey-lighten-2"
+                      cover
+                    >
+                    </v-img>
+                  </v-col>
+                  <v-col
+                    v-if="cave.entrance_image"
+                    class="d-flex child-flex"
+                    cols="6" sm="4" md="3" lg="4"
+                  >
+                    <v-img
+                      :src="cave.entrance_image"
+                      aspect-ratio="1"
+                      class="bg-grey-lighten-2"
+                      cover
+                    >
+                    </v-img>
+                  </v-col>
+                  <v-col
+                    v-for="media in media"
+                    :key="media.url"
+                    class="d-flex child-flex"
+                    cols="6" sm="4" md="3" lg="4"
+                  >
+                    <v-img
+                      :src="media.url"
+                      aspect-ratio="1"
+                      class="bg-grey-lighten-2"
+                      cover
+                    >
+                    </v-img>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+
+      <!-- Right Column -->
+      <v-col cols="12" md="4">
+        <v-row>
+          <v-col cols="12">
+            <v-card class="mb-4">
+              <mgl-map
+                :map-style="style"
+                :center="lnglat"
+                :zoom="zoom"
+                height="350px"
+              >
+                <mgl-marker :coordinates="lnglat" color="#cc0000" />
+                <mgl-navigation-control />
+                <MglGeolocateControl :track-user-location="true" :showAccuracyCircle="true"/>
+                <mgl-fullscreen-control />
+              </mgl-map>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="cave.system">
+          <v-col cols="12">
+            <v-card>
+              <v-card-title>{{ cave.system.name }}</v-card-title>
+              <v-card-subtitle>System</v-card-subtitle>
+              <v-btn v-if="appStore.user.is_admin" class="float-right" icon @click="$router.push({name: '/cave_system/[id].edit', params: {id: cave.system.id}})">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-card-text>
+                <vue-markdown :source="cave.system.description" />
+                <p> Tags:
+                  <v-chip v-for="tag in cave.system.tags" :key="tag" class="ma-1">
+                    {{ tag.tag }}
+                  </v-chip>
+                </p>
+                <p><strong>Length:</strong> {{ Math.round(cave.system.length) }} m</p>
+                <p><strong>Vertical Range:</strong> {{ cave.system.vertical_range }} m</p>
+
+                <div v-if="cave.system.files && cave.system.files.length > 0" class="mt-4">
+                  <h3 class="text-subtitle-1 font-weight-bold mb-2">Files</h3>
+                  <v-list lines="two" class="file-list pa-0">
+                    <v-list-item
+                      v-for="file in cave.system.files"
+                      :key="file.id"
+                      :href="file.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="file-item"
+                      density="compact"
+                    >
+                      <template v-slot:prepend>
+                        <v-avatar rounded="0" class="mr-3">
+                          <v-img
+                            v-if="isImage(file.mime_type)"
+                            :src="file.url"
+                            :alt="file.original_filename"
+                            aspect-ratio="1"
+                            cover
+                            class="border"
+                          ></v-img>
+                          <v-icon v-else size="large">{{ getFileIcon(file.mime_type) }}</v-icon>
+                        </v-avatar>
+                      </template>
+
+                      <v-list-item-title class="font-weight-medium">{{ file.original_filename }}</v-list-item-title>
+                      <v-list-item-subtitle>
+                        <span v-if="file.details">{{ file.details }}</span>
+                        <span v-if="file.details && file.size"> - </span>
+                        <span v-if="file.size">{{ formatBytes(file.size) }}</span>
+                      </v-list-item-subtitle>
+
+                    </v-list-item>
+                  </v-list>
+                </div>
+                 <p v-else class="mt-4 text-grey">No files associated with this system.</p>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="cave.system.caves.length > 1">
+          <v-col cols="12">
+            <v-card>
+              <v-card-title>System Entrances</v-card-title>
+              <v-card-text>
+                This system has multiple entrances:
+                <v-list>
+                  <v-list-item v-for="system_cave in cave.system.caves" :key="system_cave.id">
+                    <div>
+                      <v-list-item-title><RouterLink :to="{name: '/cave/[id]', params: {id: system_cave.id}}">{{ system_cave.name }}</RouterLink></v-list-item-title>
+                      <v-list-item-subtitle>{{ system_cave.description }}</v-list-item-subtitle>
+                    </div>
+                  </v-list-item>
+                </v-list>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="cave.system.references">
+          <v-col cols="12">
+            <v-card>
+              <v-card-title>System References</v-card-title>
+              <v-card-text>
+                <vue-markdown :source="cave.system.references" />
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-col>
     </v-row>
 
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>
-            Media
-          </v-card-title>
-
-          <v-card-text>
-            <v-row>
-                            <v-col
-                v-if="cave.hero_image"
-                class="d-flex child-flex"
-                cols="4"
-              >
-                <v-img
-                  :src="cave.hero_image"
-                  aspect-ratio="1"
-                  class="bg-grey-lighten-2"
-                  cover
-                >
-                </v-img>
-              </v-col>
-              <v-col
-                v-if="cave.entrance_image"
-                class="d-flex child-flex"
-                cols="4"
-              >
-                <v-img
-                  :src="cave.entrance_image"
-                  aspect-ratio="1"
-                  class="bg-grey-lighten-2"
-                  cover
-                >
-                </v-img>
-              </v-col>
-              <v-col
-                v-for="media in media"
-                :key="media.url"
-                class="d-flex child-flex"
-                cols="4"
-              >
-                <v-img
-                  :src="media.url"
-                  aspect-ratio="1"
-                  class="bg-grey-lighten-2"
-                  cover
-                >
-                </v-img>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
   </v-container>
    <v-container v-else>
      <p>Loading cave data...</p>
@@ -268,9 +285,10 @@ import {
   MglNavigationControl,
   MglMarker,
   MglGeolocateControl,
+  MglFullscreenControl,
 } from '@indoorequal/vue-maplibre-gl';
 
-const style = 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=0gGMv4po9Mjrpd64A528';
+const style = 'https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528';
 const zoom = 11;
 
 const appStore = useAppStore()
