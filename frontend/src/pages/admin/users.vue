@@ -54,7 +54,7 @@
             </v-btn>
           </template>
            <template v-slot:item.created_at="{ item }">
-            {{ new Date(item.created_at).toLocaleDateString() }}
+            {{ moment(item.created_at).format('DD/MM/YYYY') }}
           </template>
         </v-data-table>
       </v-col>
@@ -63,6 +63,7 @@
 </template>
 
 <script setup>
+import moment from 'moment';
 import { ref, onMounted } from 'vue';
 import { mande } from 'mande';
 import { useRouter } from 'vue-router';
