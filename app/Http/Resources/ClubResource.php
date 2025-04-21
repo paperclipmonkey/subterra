@@ -17,6 +17,7 @@ class ClubResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'slug' => $this->slug,
             'description' => $this->description, // Consider truncating for list view if needed
             'website' => $this->website,
             'location' => $this->location,

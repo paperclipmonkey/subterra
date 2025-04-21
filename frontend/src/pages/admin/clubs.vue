@@ -87,6 +87,9 @@
                      <v-text-field v-model="editedClub.name" label="Club Name*" required :rules="[rules.required]"></v-text-field>
                    </v-col>
                    <v-col cols="12">
+                     <v-text-field v-model="editedClub.slug" label="Club slug*" required :rules="[rules.required]"></v-text-field>
+                   </v-col>
+                   <v-col cols="12">
                      <v-textarea v-model="editedClub.description" label="Description (Markdown supported)" rows="3"></v-textarea>
                    </v-col>
                    <v-col cols="12" sm="6">
@@ -219,12 +222,13 @@ const tab = ref('details'); // For tabs in dialog
 const defaultClub = {
   id: null,
   name: '',
+  slug: '', // Add slug
   description: '',
   website: '',
   location: '',
-  member_count: 0, // Not editable here, managed by user association
+  member_count: 0,
   is_enabled: true,
-  loadingEnabled: false, // Keep internal state consistent
+  loadingEnabled: false,
 };
 const editedClub = ref({ ...defaultClub });
 const clubMembers = ref([]); // Now represents *approved* members
@@ -238,8 +242,9 @@ const dialogTitle = computed(() => (editMode.value ? 'Edit Club' : 'Create Club'
 // --- Validation Rules ---
 const rules = {
   required: value => !!value || 'Required.',
+  slug: value => /^[a-z0-9-]+$/.test(value || '') || 'Only lowercase letters, numbers, and dashes allowed.',
   url: value => {
-    if (!value) return true; // Allow empty
+    if (!value) return true;
     try {
       new URL(value);
       return true;
@@ -258,6 +263,7 @@ const router = useRouter();
 
 const headers = [
   { title: 'Name', key: 'name', sortable: true },
+  { title: 'Slug', key: 'slug', sortable: true },
   { title: 'Description', key: 'description', sortable: false, width: '250px' }, // Give description more space
   { title: 'Website', key: 'website', sortable: false },
   { title: 'Location', key: 'location', sortable: true },
@@ -496,6 +502,7 @@ const saveClubAndMembers = async () => {
     let savedClubData;
     const clubPayload = {
       name: editedClub.value.name,
+      slug: editedClub.value.slug,
       description: editedClub.value.description,
       website: editedClub.value.website,
       location: editedClub.value.location,

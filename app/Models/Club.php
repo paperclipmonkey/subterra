@@ -17,6 +17,7 @@ class Club extends Model
      */
     protected $fillable = [
         'name',
+        'slug',
         'description',
         'website',
         'location',

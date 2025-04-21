@@ -73,6 +73,7 @@ class ClubController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:clubs,name',
+            'slug' => 'required|string|max:255|unique:clubs,slug',
             'description' => 'nullable|string',
             'website' => 'nullable|url|max:255',
             'location' => 'nullable|string|max:255',
