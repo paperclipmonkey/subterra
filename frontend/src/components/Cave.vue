@@ -237,7 +237,7 @@
                 <v-list>
                   <v-list-item v-for="system_cave in cave.system.caves" :key="system_cave.id">
                     <div>
-                      <v-list-item-title><RouterLink :to="{name: '/cave/[id]', params: {id: system_cave.id}}">{{ system_cave.name }}</RouterLink></v-list-item-title>
+                      <v-list-item-title><RouterLink :to="{name: '/cave/[id]', params: {id: system_cave.slug}}">{{ system_cave.name }}</RouterLink></v-list-item-title>
                       <v-list-item-subtitle>{{ system_cave.description }}</v-list-item-subtitle>
                     </div>
                   </v-list-item>
