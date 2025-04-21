@@ -31,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
             [\App\Listeners\SendTripCreatedSlackAlert::class, 'handle']
         );
 
+        Event::listen(
+            \App\Events\UserCreated::class,
+            [\App\Listeners\SendNewUserSignupEmailToAdmins::class, 'handle']
+        );
+
         // Add your custom route binding here
         Route::bind('user_without_scopes', function($id) {
             // Use the correct namespace for your User model
