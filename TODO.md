@@ -2,10 +2,6 @@
 * [ ] Test authentication against all endpoints
 * [ ] Add JSON schema assertions against endpoints
 
-* [ ] Disable webhooks for new trips by adding it as a Laravel event. Check it's broadcast only.
-
-Start map view at UK zoom level
-
 Context maps
     Show additional info like:
         1. Parking locations
@@ -17,47 +13,13 @@ Context maps
 What would the ui for this look like?
     Have draggable markers with different icons
 
-Priddy:
-    Dallimore's
-    Welsh's Green
-    Cuckoo Cleeves
-    Rose Cottage
-    Nine Barrows swallet
-    Attborough
-    Lamb Leer Cavern
-Nordrach / Charterhouse:
-    Pinetree Pot
-    Ubley Warren Pot
-    Tynings Barrows Swallet
-Other:
-    Loxton Cavern
-    Upper Canada Cave
-Cheddar:
-    Reservoir Hole
-    Long Hole
-    Gough's Cave
-
-Add data for: 
-    Home Close Hole
-    Spider Hole
 
 Remove/Hide
     Banwell Stalactite Cave
 
-
-Only 1 of the images successfully uploaded for Bakers pit?
-
-Back nav button from cave page doesn't keep previous search
-
-Add data for:
-    Mines we explored in Mid Wales
-    South Wales caves
+Back nav button from cave page doesn't keep previous search. Do back nav instead?
 
 Add concept of collections to database / api
-
-Add and improve data for Mendips
-    Add photos of entrances
-    Write references for Somerset Underground books
 
 Add a geojson field to each cave_system which can store arbitrary geojson data.
     Use it to show entrance, parking location and walking route. Plus any other info.
@@ -65,26 +27,19 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
             Don't go that complex, just have points and lines. Default items
 
 ## MVP features
-* Show all media for a cave system in its own box
-* Write up Mendips using references
-    * Add Mendip Underground references
-    * Add additional references like Wikipedia where relevant
 * Fix exit when going from a through trip to not
 * Fix editing a trip and adding new people
 
 * Replace all icons with new logo
 
 ## Further work
-* cave difficultly?
 * Add cancel button to trip editor / creator
 * Allow deep links to trip without a login. Useful for sharing.
     * Remove auth
     * Ensure email address is obfuscated on trips and it's just user / club
     * add share button so its easy to post elsewhere
-    * ensure people not logged in know what they are missing. 
-    * 
+    * ensure people not logged in know what they are missing
     
-* Improve styling of Markdown rendering
 * Add page so admins can add new caves / cave_systems
 * Rename conditions to hazards? Add CO2
 * Add Scottish caves to app
