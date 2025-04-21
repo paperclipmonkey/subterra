@@ -52,6 +52,7 @@ class User extends Authenticatable
         // Include the 'is_admin' pivot data
         return $this->belongsToMany(Club::class, 'club_user')
                     ->withPivot('is_admin') // Specify pivot columns to retrieve
+                    ->withPivot('status')
                     ->withTimestamps(); // Include pivot timestamps if using them
     }
 }

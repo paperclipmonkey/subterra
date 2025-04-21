@@ -21,7 +21,15 @@ class UserDetailResource extends JsonResource
             'email'=> $this->email,
             'photo' => $this->photo,
             'bio' => $this->bio,
-            'club' => $this->club,
+            // Eager load approvedClubs if not already done in controller
+            'clubs' => $this->clubs->map(function ($club) {
+                return [
+                    'name' => $club->name,
+                    'slug' => $club->slug,
+                    'is_admin' => $club->pivot->is_admin,
+                    'status' => $club->pivot->status,
+                ];
+            }),
             'is_admin' => $this->is_admin,
             'is_approved' => $this->is_approved,
             'stats'=> [
