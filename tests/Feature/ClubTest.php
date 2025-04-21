@@ -505,7 +505,7 @@ class ClubTest extends TestCase
         $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
         $response->assertStatus(401);
 
-        $response = $->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
+        $response = $this->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
         $response->assertStatus(401);
 
         $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $pendingUser->id, 'status' => 'pending']);
