@@ -17,10 +17,9 @@
           <v-list-item
             prepend-icon="mdi-shield-account"
             title="Club Administration"
-            subtitle="Manage club details and memberships (Placeholder)"
-            to="/admin/clubs" 
+            subtitle="Manage club details and memberships"
+            to="/admin/clubs"
             link
-            disabled 
           ></v-list-item>
           
           <!-- Add more admin links here as needed -->

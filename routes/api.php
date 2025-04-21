@@ -7,6 +7,7 @@ use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Resources\UserDetailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
+use App\Http\Controllers\ClubController; // Import ClubController
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -31,18 +32,50 @@ Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv'])-
 # Users
 Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
 
-// Admin User Endpoints
-Route::get('/admin/users', [UserController::class, 'adminIndex'])
-    ->middleware(ApiIsAdmin::class)
-    ->name('admin.users.index');
-Route::put('/admin/users/{user_without_scopes}/toggle-approval', [UserController::class, 'toggleApproval'])
-    ->middleware(ApiIsAdmin::class)
-    ->withoutScopedBindings() // Disable global scopes for this route model binding
-    ->name('admin.users.toggle-approval');
-Route::put('/admin/users/{user_without_scopes}/toggle-admin', [UserController::class, 'toggleAdmin'])
-    ->middleware(ApiIsAdmin::class)
-    ->withoutScopedBindings() // Disable global scopes for this route model binding
-    ->name('admin.users.toggle-admin');
+// --- User Club Actions (Authenticated) ---
+Route::middleware(ApiIsAuthenticated::class)->group(function () {
+    Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
+    // Maybe add leave endpoint later: DELETE /clubs/{club}/leave
+});
+
+
+// --- Admin Routes ---
+Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
+    Route::get('/users', [UserController::class, 'adminIndex'])->name('admin.users.index');
+    Route::put('/users/{user_without_scopes}/toggle-approval', [UserController::class, 'toggleApproval'])
+        ->withoutScopedBindings()
+        ->name('admin.users.toggle-approval');
+    Route::put('/users/{user_without_scopes}/toggle-admin', [UserController::class, 'toggleAdmin'])
+        ->withoutScopedBindings()
+        ->name('admin.users.toggle-admin');
+
+    // --- Admin Club Endpoints ---
+    Route::get('/clubs', [ClubController::class, 'adminIndex'])->name('admin.clubs.index');
+    Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');
+    Route::put('/clubs/{club}', [ClubController::class, 'update'])->name('admin.clubs.update');
+    Route::delete('/clubs/{club}', [ClubController::class, 'destroy'])->name('admin.clubs.destroy');
+    Route::put('/clubs/{club}/toggle-enabled', [ClubController::class, 'toggleEnabled'])->name('admin.clubs.toggle-enabled');
+
+    // --- Admin Club Member Management Endpoints ---
+    // This now gets *approved* members for the main admin list
+    Route::get('/clubs/{club}/members', [ClubController::class, 'getApprovedMembers'])->name('admin.clubs.members.index');
+    // This syncs *approved* members and their admin status
+    Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
+
+    // --- Admin Pending Member Management ---
+    Route::get('/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->name('admin.clubs.pending.index');
+    Route::put('/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->name('admin.clubs.members.approve');
+    Route::put('/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->name('admin.clubs.members.reject'); // Or DELETE if preferred
+
+});
+
+
+// --- Public Club Endpoints ---
+Route::middleware(ApiIsAuthenticated::class)->group(function () {
+    Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
+    Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
+});
+
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
