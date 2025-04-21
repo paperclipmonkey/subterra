@@ -41,15 +41,18 @@
       <div v-if="profile.clubs" class="pa-4">
         <h3>Clubs:</h3>
         <v-chip-group>
-          <v-chip
-            v-for="club in profile.clubs"
-            :key="club.id"
-            :to="{ name: '/club/[slug]', params: { slug: club.slug } }"
-            color="primary"
-            variant="outlined"
-          >
-            {{ club.name }}
-          </v-chip>
+          <template           
+             v-for="club in profile.clubs"
+            :key="club.id">
+            <v-chip
+              v-if="club.status === 'approved'"
+              :to="{ name: '/club/[slug]', params: { slug: club.slug } }"
+              color="primary"
+              variant="outlined"
+            >
+              {{ club.name }}
+            </v-chip>
+          </template>
         </v-chip-group>
       </div>
       <v-divider v-if="profile.clubs && profile.clubs.length > 0"></v-divider>
