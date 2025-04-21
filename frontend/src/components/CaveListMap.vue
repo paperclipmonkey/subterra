@@ -50,8 +50,8 @@
   import maplibregl from 'maplibre-gl';
 
   const style = 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=0gGMv4po9Mjrpd64A528';
-  const zoom = 9;
-  const lnglat = [-2.609, 51.501]
+  const zoom = 5;
+  const lnglat = [-2, 53]
 
   import { onMounted, watch } from 'vue';
 
