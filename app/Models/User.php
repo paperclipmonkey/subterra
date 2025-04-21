@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[ScopedBy([IsActiveScope::class])]
 class User extends Authenticatable
@@ -40,5 +41,18 @@ class User extends Authenticatable
     public function trips()
     {
         return $this->belongsToMany(Trip::class); 
+    }
+
+    /**
+     * The clubs that the user belongs to.
+     */
+    public function clubs(): BelongsToMany
+    {
+        // Define the relationship via the pivot table 'club_user'
+        // Include the 'is_admin' pivot data
+        return $this->belongsToMany(Club::class, 'club_user')
+                    ->withPivot('is_admin') // Specify pivot columns to retrieve
+                    ->withPivot('status')
+                    ->withTimestamps(); // Include pivot timestamps if using them
     }
 }

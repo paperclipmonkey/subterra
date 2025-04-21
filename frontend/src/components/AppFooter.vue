@@ -18,8 +18,8 @@
       </v-btn>
       <v-btn
         v-if="userStore.user.is_admin"
-        key="admin-users"
-        to="/admin/users"
+        key="admin"
+        to="/admin"
         title="Admin"
         icon
       >
