@@ -7,6 +7,8 @@ use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Resources\UserDetailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
 Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
@@ -28,6 +30,19 @@ Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv'])-
 
 # Users
 Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
+
+// Admin User Endpoints
+Route::get('/admin/users', [UserController::class, 'adminIndex'])
+    ->middleware(ApiIsAdmin::class)
+    ->name('admin.users.index');
+Route::put('/admin/users/{user_without_scopes}/toggle-approval', [UserController::class, 'toggleApproval'])
+    ->middleware(ApiIsAdmin::class)
+    ->withoutScopedBindings() // Disable global scopes for this route model binding
+    ->name('admin.users.toggle-approval');
+Route::put('/admin/users/{user_without_scopes}/toggle-admin', [UserController::class, 'toggleAdmin'])
+    ->middleware(ApiIsAdmin::class)
+    ->withoutScopedBindings() // Disable global scopes for this route model binding
+    ->name('admin.users.toggle-admin');
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {

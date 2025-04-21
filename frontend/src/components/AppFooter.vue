@@ -16,39 +16,57 @@
           </template>
         </v-tooltip>
       </v-btn>
+      <v-btn
+        v-if="userStore.user.is_admin"
+        key="admin-users"
+        to="/admin/users"
+        title="Admin"
+        icon
+      >
+        <v-icon icon="mdi-account-cog" />
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on, attrs }">
+            <span v-bind="attrs" :v-on="attrs">Admin</span>
+          </template>
+        </v-tooltip>
+      </v-btn>
     </v-bottom-navigation>
   </v-footer>
 </div>
 </template>
 
 <script setup>
-  const items = [
-    {
-      title: 'My Trips',
-      icon: `mdi-notebook-outline`,
-      href: '/trips',
-    },
-    {
-      title: 'Caves',
-      icon: 'mdi-earth',
-      href: '/caves',
-    },
-    // {
-    //   title: 'Collections',
-    //   icon: `mdi-bookmark-box-multiple-outline`,
-    //   href: '/collections',
-    // },
-    {
-      title: 'News',
-      icon: `mdi-newspaper`,
-      href: '/news',
-    },
-    {
-      title: 'Profile',
-      icon: `mdi-account`,
-      href: '/profile/me',
-    },
-  ]
+import { useAppStore } from '@/stores/app';
+
+const userStore = useAppStore();
+
+const items = [
+  {
+    title: 'My Trips',
+    icon: `mdi-notebook-outline`,
+    href: '/trips',
+  },
+  {
+    title: 'Caves',
+    icon: 'mdi-earth',
+    href: '/caves',
+  },
+  // {
+  //   title: 'Collections',
+  //   icon: `mdi-bookmark-box-multiple-outline`,
+  //   href: '/collections',
+  // },
+  {
+    title: 'News',
+    icon: `mdi-newspaper`,
+    href: '/news',
+  },
+  {
+    title: 'Profile',
+    icon: `mdi-account`,
+    href: '/profile/me',
+  },
+]
 </script>
 
 <style scoped lang="scss">

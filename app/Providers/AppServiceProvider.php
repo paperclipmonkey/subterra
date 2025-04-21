@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,5 +30,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\TripCreated::class,
             [\App\Listeners\SendTripCreatedSlackAlert::class, 'handle']
         );
+
+        // Add your custom route binding here
+        Route::bind('user_without_scopes', function($id) {
+            // Use the correct namespace for your User model
+            return User::withoutGlobalScopes()->findOrFail($id);
+        });
     }
 }
