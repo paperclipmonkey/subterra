@@ -106,6 +106,8 @@
                       aspect-ratio="1"
                       class="bg-grey-lighten-2"
                       cover
+                      @click="openImage(cave.hero_image)"
+                      style="cursor: pointer;"
                     >
                     </v-img>
                   </v-col>
@@ -119,6 +121,8 @@
                       aspect-ratio="1"
                       class="bg-grey-lighten-2"
                       cover
+                      @click="openImage(cave.entrance_image)"
+                      style="cursor: pointer;"
                     >
                     </v-img>
                   </v-col>
@@ -133,6 +137,8 @@
                       aspect-ratio="1"
                       class="bg-grey-lighten-2"
                       cover
+                      @click="openImage(media.url)"
+                      style="cursor: pointer;"
                     >
                     </v-img>
                   </v-col>
@@ -391,6 +397,12 @@ const getFileIcon = (mimeType) => {
   if (mimeType.includes('zip') || mimeType.includes('archive')) return 'mdi-archive-arrow-down-outline';
   if (mimeType.startsWith('text/')) return 'mdi-file-document-outline';
   return 'mdi-file-outline';
+};
+
+const openImage = (url) => {
+  if (url) {
+    window.open(url, '_blank');
+  }
 };
 
 onMounted(fetchCave)
