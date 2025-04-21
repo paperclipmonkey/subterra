@@ -6,6 +6,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Club;
+use Illuminate\Support\Facades\Event;
+use App\Events\ClubAccessRequested;
+use App\Events\ClubAccessResponded;
 
 class ClubTest extends TestCase
 {
@@ -289,6 +292,7 @@ class ClubTest extends TestCase
     /** @test */
     public function authenticated_user_can_request_to_join_a_club()
     {
+        Event::fake();
         $club = Club::factory()->enabled()->create();
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->postJson("/api/clubs/{$club->slug}/join");
@@ -300,6 +304,9 @@ class ClubTest extends TestCase
             'user_id' => $this->regularUser->id,
             'status' => 'pending'
         ]);
+        Event::assertDispatched(ClubAccessRequested::class, function ($event) use ($club) {
+            return $event->club->id === $club->id;
+        });
     }
 
     /** @test */
@@ -469,6 +476,7 @@ class ClubTest extends TestCase
     /** @test */
     public function admin_can_approve_a_pending_member()
     {
+        Event::fake();
         $club = Club::factory()->create();
         $pendingUser = User::factory()->create();
         $club->users()->attach($pendingUser->id, ['status' => 'pending']);
@@ -482,6 +490,9 @@ class ClubTest extends TestCase
             'user_id' => $pendingUser->id,
             'status' => 'approved'
         ]);
+        Event::assertDispatched(ClubAccessResponded::class, function ($event) use ($club, $pendingUser) {
+            return $event->club->id === $club->id && $event->user->id === $pendingUser->id && $event->status === 'approved';
+        });
     }
 
     /** @test */
@@ -505,6 +516,7 @@ class ClubTest extends TestCase
     /** @test */
     public function admin_can_reject_a_pending_member()
     {
+        Event::fake();
         $club = Club::factory()->create();
         $pendingUser = User::factory()->create();
         $club->users()->attach($pendingUser->id, ['status' => 'pending']);
@@ -517,6 +529,9 @@ class ClubTest extends TestCase
             'club_id' => $club->id,
             'user_id' => $pendingUser->id,
         ]);
+        Event::assertDispatched(ClubAccessResponded::class, function ($event) use ($club, $pendingUser) {
+            return $event->club->id === $club->id && $event->user->id === $pendingUser->id && $event->status === 'rejected';
+        });
     }
 
     /** @test */

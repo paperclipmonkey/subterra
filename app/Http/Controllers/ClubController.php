@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Validator; // Ensure Validator is imported
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB; // Import DB facade
 use Illuminate\Support\Facades\Auth; // Import Auth facade
+use App\Events\ClubAccessRequested;
+use App\Events\ClubAccessResponded;
 
 class ClubController extends Controller
 {
@@ -183,6 +185,9 @@ class ClubController extends Controller
         // Attach user with pending status
         $club->users()->attach($user->id, ['status' => 'pending']);
 
+        // Dispatch event for notification
+        event(new ClubAccessRequested($club, $user));
+
         return response()->json(['message' => 'Join request sent successfully.'], 201);
     }
 
@@ -275,6 +280,8 @@ class ClubController extends Controller
     {
         // Only approve if currently pending
         $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
+        // Dispatch event for notification
+        event(new ClubAccessResponded($club, $user, 'approved'));
         return response()->json(['message' => 'Member approved.']);
     }
 
@@ -282,6 +289,8 @@ class ClubController extends Controller
     {
         // Remove the pending membership
         $club->users()->detach($user->id);
+        // Dispatch event for notification
+        event(new ClubAccessResponded($club, $user, 'rejected'));
         return response()->json(['message' => 'Member rejected.']);
     }
 
