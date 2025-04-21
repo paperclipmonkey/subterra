@@ -69,7 +69,7 @@ import { parse } from 'vue/compiler-sfc';
   const search = ref('')
   const headers = ref([
     { title: 'Name', key: 'name' },
-    { title: 'start time', key: 'start_time' },
+    { title: 'Date', key: 'start_time' },
     // { title: 'system', key: 'system.name' },
     { title: 'entrance', key: 'entrance.name' },
     { title: 'participants', key: 'participants' }
@@ -77,7 +77,7 @@ import { parse } from 'vue/compiler-sfc';
 
   const formatDate = (date) => {
     let parsedDate = moment(date);
-    return parsedDate.isValid() ? parsedDate.format('YYYY-MM-DD HH:mm') : '~'
+    return parsedDate.isValid() ? parsedDate.format('DD-MM-YYYY') : '~'
   }
 
   onMounted(async () => {
