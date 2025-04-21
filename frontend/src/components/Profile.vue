@@ -37,6 +37,25 @@
         </v-list-item>
       </v-list>
       <v-divider></v-divider>
+      <!-- Club Membership Section -->
+      <div v-if="profile.clubs" class="pa-4">
+        <h3>Clubs:</h3>
+        <v-chip-group>
+          <template           
+             v-for="club in profile.clubs"
+            :key="club.id">
+            <v-chip
+              v-if="club.status === 'approved'"
+              :to="{ name: '/club/[slug]', params: { slug: club.slug } }"
+              color="primary"
+              variant="outlined"
+            >
+              {{ club.name }}
+            </v-chip>
+          </template>
+        </v-chip-group>
+      </div>
+      <v-divider v-if="profile.clubs && profile.clubs.length > 0"></v-divider>
       <!-- <div class="tags">
         <h3>Tags:</h3>
         <v-chip-group>
@@ -44,17 +63,12 @@
         </v-chip-group>
       </div> -->
       <v-divider></v-divider>
-      <div class="club">
-        <h3>Club:</h3>
-        <v-chip-group>
-          <v-chip outlined>{{ profile.club }}</v-chip>
-          <!-- <v-chip v-for="club in profile.clubb" :key="club.id" outlined>{{ club.name }}</v-chip> -->
-        </v-chip-group>
-      </div>
+
       <v-divider></v-divider>
-      <div class="bio">
+      <div class="bio pa-4">
         <h3>Bio:</h3>
-        <p>{{ profile.bio }}</p>
+        <p v-if="profile.bio">{{ profile.bio }}</p>
+        <p v-else class="text-grey">No bio provided.</p>
       </div>
     </v-card>
   </v-container>
@@ -73,9 +87,8 @@ const profile = ref({
   "photo": "",
   "stats": {},
   "tags": [],
-  "clubs": [],
-  "bio": "", // Added bio for completeness
-  "club": "", // Added club for completeness
+  "bio": "",
+  "clubs": [], // Add clubs array
 })
 
 onMounted(async () => {
@@ -115,5 +128,9 @@ const formatDuration = (minutes) => {
 
 .metric-subtitle {
   font-size: 1.2em;
+}
+
+.bio p {
+  white-space: pre-wrap; /* Preserve line breaks in bio */
 }
 </style>

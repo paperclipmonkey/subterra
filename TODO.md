@@ -1,6 +1,20 @@
 # TODO
+* [ ] Make trip description pages public
+* [ ] Switch to adding users to a trip by ID
+* [ ] Fix adding new users to a trip
+
 * [ ] Test authentication against all endpoints
 * [ ] Add JSON schema assertions against endpoints
+
+Add users without email, no need to describe people in the description
+
+Continue to show filters in ui after page reload
+
+Add feature to add new caves and cave systems. Explain the differences in admin ui.
+
+Hide emails from API wherever they're found
+
+Allow users to add a username / Nickname?
 
 Context maps
     Show additional info like:
@@ -59,48 +73,19 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
     * Draw ui based on value
     * Filter with any or explicit based on groups
 
-* Add graphs to the profile page. Ideas for graphs:
-    * Trip difficulty
-    * Trip duration
-    * Average trip participants
-    * Location heatmap
-    * Github-like commit history calendar for trips (Monday-Sunday)
-
 Add tag collection page
     Collections page show:
         1. tags
         2. Curated
         3. My collections
 
-* Add images to systems?
-* Add surveys to systems
-
-* When showing multiple entrances in a cave_system, show the distance and direction to those entrances from the currently selected one.
-
 * Automatically add current user to any trip they add
     * Stop from removing themselves in the ui?
         * Add a listener for participants so that if they remove themselves they get added back in.
     * Remove yourself from the users list.
-
-* Add 'media' to caves
-    * Type
-        (photo)
-        (video)
-* Add ability to add a cave in a new page
-
-Add grid/list/map view icons for caves list
-    * Grid can show photo and more info like access
 
 * Add ability to choose cave_system from dropdown when editing a cave.
 
 Order users api response by frequency of use.
 
 * Remove new trip page from history when we move forward
-
-* Add concept of routes
-    Routes have:
-        * system
-        * tags
-        * difficulty
-        * description
-        * media

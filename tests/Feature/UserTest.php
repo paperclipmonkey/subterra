@@ -53,15 +53,13 @@ class UserTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_updates_user_club_and_bio()
+    public function it_updates_user_bio()
     {
         $user = User::factory()->create([
-            'club' => null,
             'bio' => null,
         ]);
 
         $payload = [
-            'club' => 'Chess Club',
             'bio' => 'I love chess.',
         ];
 
@@ -70,7 +68,6 @@ class UserTest extends TestCase
         $response->assertOk();
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
-            'club' => 'Chess Club',
             'bio' => 'I love chess.',
         ]);
     }
