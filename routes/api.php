@@ -2,12 +2,13 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ClubDataController;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Resources\UserDetailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
-use App\Http\Controllers\ClubController; // Import ClubController
+use App\Http\Controllers\ClubController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -76,6 +77,11 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
 });
 
+Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
+    Route::get('recent-trips', [ClubDataController::class, 'recentTrips'])->middleware('can:view,club');
+    Route::get('members', [ClubDataController::class, 'members'])->middleware('can:view,club');
+    Route::get('activity-heatmap', [ClubDataController::class, 'activityHeatmap'])->middleware('can:view,club');
+});
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
