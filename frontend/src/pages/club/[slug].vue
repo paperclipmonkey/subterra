@@ -95,7 +95,7 @@
                 <template v-slot:prepend>
                   <v-avatar size="small" class="mr-2">
                     <!-- TODO: Add a default avatar image to public folder -->
-                    <v-img :src="member.profile_photo_url || '/default-avatar.png'" :alt="member.name"></v-img>
+                    <v-img :src="member.photo || '/default-avatar.png'" :alt="member.name"></v-img>
                   </v-avatar>
                 </template>
               </v-list-item>
