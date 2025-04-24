@@ -15,6 +15,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\TripParticipantTagged::class => [
             \App\Listeners\SendTripTaggedEmail::class,
+            \App\Listeners\CheckAndAwardMedals::class,
         ],
     ];
 
