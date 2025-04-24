@@ -63,8 +63,29 @@
         </v-chip-group>
       </div> -->
       <v-divider></v-divider>
-
-      <v-divider></v-divider>
+      <!-- Medals Section -->
+      <div v-if="medals.length > 0" class="pa-4">
+        <h3>Medals Awarded:</h3>
+        <v-chip-group>
+          <v-chip
+            v-for="medal in medals"
+            :key="medal.id"
+            color="amber"
+            variant="elevated"
+            class="ma-1"
+            :title="medal.description"
+          >
+            <template v-if="medal.image_url">
+              <v-avatar left size="28">
+                <img :src="medal.image_url" :alt="medal.name" style="background: #fff;" />
+              </v-avatar>
+            </template>
+            <v-icon v-else start color="yellow darken-2">mdi-medal</v-icon>
+            {{ medal.name }}
+          </v-chip>
+        </v-chip-group>
+      </div>
+      <v-divider v-if="medals.length > 0"></v-divider>
       <div class="bio pa-4">
         <h3>Bio:</h3>
         <p v-if="profile.bio">{{ profile.bio }}</p>
@@ -126,6 +147,7 @@ const profile = ref({
 const recentTrips = ref([]);
 const heatmapData = ref([]);
 const endDate = ref(new Date());
+const medals = ref([]);
 
 onMounted(async () => {
   try {
@@ -133,13 +155,15 @@ onMounted(async () => {
     const response = await userApi.get();
     profile.value = response.data || response;
 
-    // Fetch recent trips and heatmap data
-    const [recentTripsResp, heatmapResp] = await Promise.all([
+    // Fetch recent trips, heatmap data, and medals
+    const [recentTripsResp, heatmapResp, medalsResp] = await Promise.all([
       mande(`/api/users/${route.params.id}/recent-trips`).get(),
-      mande(`/api/users/${route.params.id}/activity-heatmap`).get()
+      mande(`/api/users/${route.params.id}/activity-heatmap`).get(),
+      mande(`/api/users/${route.params.id}/medals`).get()
     ]);
     recentTrips.value = recentTripsResp.data || recentTripsResp;
     heatmapData.value = heatmapResp || [];
+    medals.value = (medalsResp.medals || medalsResp.data || []);
   } catch (error) {
     console.error(`Error fetching profile or activity for user ${route.params.id}:`, error);
   }

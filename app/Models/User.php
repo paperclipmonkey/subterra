@@ -55,4 +55,9 @@ class User extends Authenticatable
                     ->withPivot('status')
                     ->withTimestamps(); // Include pivot timestamps if using them
     }
+
+    public function medals()
+    {
+        return $this->belongsToMany(Medal::class)->withTimestamps()->withPivot('awarded_at');
+    }
 }

@@ -30,6 +30,15 @@ class UserDetailResource extends JsonResource
                     'status' => $club->pivot->status,
                 ];
             }),
+            'medals' => $this->medals->map(function ($medal) {
+                return [
+                    'id' => $medal->id,
+                    'name' => $medal->name,
+                    'description' => $medal->description,
+                    'image_url' => $medal->image_url,
+                    'awarded_at' => $medal->pivot->awarded_at ?? null,
+                ];
+            }),
             'is_admin' => $this->is_admin,
             'is_approved' => $this->is_approved,
             'stats'=> [

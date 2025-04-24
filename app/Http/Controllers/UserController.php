@@ -140,4 +140,16 @@ class UserController extends Controller
 
         return response()->json($activity);
     }
+
+    /**
+     * List all medals accomplished by the user.
+     */
+    public function medals(User $user)
+    {
+        $medals = $user->medals()->get();
+        return response()->json([
+            'user_id' => $user->id,
+            'medals' => $medals
+        ]);
+    }
 }
