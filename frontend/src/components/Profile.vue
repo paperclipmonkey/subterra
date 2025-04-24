@@ -71,6 +71,36 @@
         <p v-else class="text-grey">No bio provided.</p>
       </div>
     </v-card>
+    <v-card-text>
+      <h3>Activity Heatmap</h3>
+      <calendar-heatmap
+        dark-mode
+        :values="heatmapData"
+        :end-date="endDate"
+        :range-color='["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]'
+        tooltip-unit="trips"
+        :max="10"
+      />
+    </v-card-text>
+    <v-divider></v-divider>
+    <!-- Recent Trips -->
+    <v-card-text>
+      <h3>Recent Trips</h3>
+      <v-list v-if="recentTrips.length > 0">
+        <v-list-item
+          v-for="trip in recentTrips"
+          :key="trip.id"
+          :to="`/trip/${trip.id}`"
+          :title="trip.name || 'Untitled Trip'"
+          :subtitle="`On ${moment(trip.start_time).format('YYYY-MM-DD')}`"
+        >
+          <template v-slot:prepend>
+            <v-icon>mdi-hiking</v-icon>
+          </template>
+        </v-list-item>
+      </v-list>
+      <div v-else class="text-grey">No recent trips found.</div>
+    </v-card-text>
   </v-container>
 </template>
 
@@ -78,6 +108,8 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { mande } from 'mande'; // Import mande
+import { CalendarHeatmap } from "vue3-calendar-heatmap";
+import moment from 'moment';
 
 const route = useRoute()
 
@@ -91,15 +123,25 @@ const profile = ref({
   "clubs": [], // Add clubs array
 })
 
+const recentTrips = ref([]);
+const heatmapData = ref([]);
+const endDate = ref(new Date());
+
 onMounted(async () => {
   try {
     const userApi = mande(`/api/users/${route.params.id}`); // Create mande instance for the specific user
     const response = await userApi.get();
-    // Assuming mande returns the data directly or within a data property
-    profile.value = response.data || response; 
+    profile.value = response.data || response;
+
+    // Fetch recent trips and heatmap data
+    const [recentTripsResp, heatmapResp] = await Promise.all([
+      mande(`/api/users/${route.params.id}/recent-trips`).get(),
+      mande(`/api/users/${route.params.id}/activity-heatmap`).get()
+    ]);
+    recentTrips.value = recentTripsResp.data || recentTripsResp;
+    heatmapData.value = heatmapResp || [];
   } catch (error) {
-    console.error(`Error fetching profile for user ${route.params.id}:`, error);
-    // Optionally, add user feedback about the error
+    console.error(`Error fetching profile or activity for user ${route.params.id}:`, error);
   }
 })
 
@@ -115,7 +157,25 @@ const formatDuration = (minutes) => {
   return `${hours}h ${remainingMinutes}m`
 }
 </script>
+
+<style scoped>
+.v-card {
+  margin-bottom: 1rem;
+}
+.v-card-text > div[style*="width"] {
+  max-width: 100%;
+  overflow-x: auto;
+}
+</style>
 <style>
+.vch__tooltip {
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  z-index: 1000;
+}
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

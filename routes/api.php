@@ -105,6 +105,9 @@ Route::post('/users', action: [App\Http\Controllers\UserController::class, 'crea
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
 Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
 
+Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
+Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');
+
 Route::get('/livez', function(Request $request) {
     try {
         $result = DB::table('users')->raw(DB::raw("SELECT 1 + 1 AS result"));
