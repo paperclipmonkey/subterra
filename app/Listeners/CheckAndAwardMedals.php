@@ -19,11 +19,9 @@ class CheckAndAwardMedals implements ShouldQueue
         $user = $event->user;
         $awardedMedals = [];
 
-        // Example: Medal logic (replace with your own rules)
         $medals = Medal::all();
         foreach ($medals as $medal) {
             if (!$user->medals->contains($medal)) {
-                // TODO: Replace with real logic for each medal
                 if ($this->passesMedalCriteria($user, $medal)) {
                     $user->medals()->attach($medal->id, ['awarded_at' => Carbon::now()]);
                     $awardedMedals[] = $medal;
@@ -31,7 +29,7 @@ class CheckAndAwardMedals implements ShouldQueue
             }
         }
 
-        // Email user for each new medal
+        // TODO, fire an event about a new medal being awarded
         foreach ($awardedMedals as $medal) {
             Mail::to($user->email)->send(new MedalAwardedMail($user, $medal));
         }
