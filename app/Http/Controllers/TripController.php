@@ -100,14 +100,12 @@ class TripController extends Controller
         // Sync participants with the trip
         $trip->participants()->sync($participantIds);
 
-        // Fire TripParticipantTagged event for each participant except the creator
+        // Fire TripParticipantTagged event for each participant including the creator
         $creator = User::withoutGlobalScopes()->find(auth()->id());
         foreach ($participantIds as $participantId) {
-            if ($creator && $participantId !== $creator->id) {
-                $participant = User::withoutGlobalScopes()->find($participantId);
-                if ($participant) {
-                    event(new \App\Events\TripParticipantTagged($trip, $participant, $creator));
-                }
+            $participant = User::withoutGlobalScopes()->find($participantId);
+            if ($participant) {
+                event(new \App\Events\TripParticipantTagged($trip, $participant, $creator));
             }
         }
 

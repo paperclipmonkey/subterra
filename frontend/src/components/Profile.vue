@@ -66,24 +66,12 @@
       <!-- Medals Section -->
       <div v-if="medals.length > 0" class="pa-4">
         <h3>Medals Awarded:</h3>
-        <v-chip-group>
-          <v-chip
-            v-for="medal in medals"
-            :key="medal.id"
-            color="amber"
-            variant="elevated"
-            class="ma-1"
-            :title="medal.description"
-          >
-            <template v-if="medal.image_url">
-              <v-avatar left size="28">
-                <img :src="medal.image_url" :alt="medal.name" style="background: #fff;" />
-              </v-avatar>
-            </template>
-            <v-icon v-else start color="yellow darken-2">mdi-medal</v-icon>
-            {{ medal.name }}
-          </v-chip>
-        </v-chip-group>
+        <div class="medals-grid">
+          <div v-for="medal in medals" :key="medal.id" class="medal-item">
+            <img v-if="medal.image_url" :src="medal.image_url" :title="medal.description" class="medal-img" />
+            <div class="medal-label">{{ medal.name }}</div>
+          </div>
+        </div>
       </div>
       <v-divider v-if="medals.length > 0"></v-divider>
       <div class="bio pa-4">
@@ -154,16 +142,15 @@ onMounted(async () => {
     const userApi = mande(`/api/users/${route.params.id}`); // Create mande instance for the specific user
     const response = await userApi.get();
     profile.value = response.data || response;
+    medals.value = (profile.value.medals || []);
 
-    // Fetch recent trips, heatmap data, and medals
-    const [recentTripsResp, heatmapResp, medalsResp] = await Promise.all([
+    // Fetch recent trips and heatmap data
+    const [recentTripsResp, heatmapResp] = await Promise.all([
       mande(`/api/users/${route.params.id}/recent-trips`).get(),
-      mande(`/api/users/${route.params.id}/activity-heatmap`).get(),
-      mande(`/api/users/${route.params.id}/medals`).get()
+      mande(`/api/users/${route.params.id}/activity-heatmap`).get()
     ]);
     recentTrips.value = recentTripsResp.data || recentTripsResp;
     heatmapData.value = heatmapResp || [];
-    medals.value = (medalsResp.medals || medalsResp.data || []);
   } catch (error) {
     console.error(`Error fetching profile or activity for user ${route.params.id}:`, error);
   }
@@ -216,5 +203,52 @@ const formatDuration = (minutes) => {
 
 .bio p {
   white-space: pre-wrap; /* Preserve line breaks in bio */
+}
+
+.medals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  justify-items: center;
+  align-items: start;
+}
+.medal-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.medal-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px #eee;
+  margin-bottom: 8px;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.medal-item:hover .medal-img {
+  transform: scale(1.1);
+  z-index: 2;
+}
+.medal-label {
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #333;
+  word-break: break-word;
+}
+@media (max-width: 600px) {
+  .medals-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .medal-img {
+    width: 48px;
+    height: 48px;
+  }
+  .medal-label {
+    font-size: 0.8em;
+  }
 }
 </style>
