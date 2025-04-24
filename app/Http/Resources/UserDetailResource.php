@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class UserDetailResource extends JsonResource
 {
@@ -28,6 +29,15 @@ class UserDetailResource extends JsonResource
                     'slug' => $club->slug,
                     'is_admin' => $club->pivot->is_admin,
                     'status' => $club->pivot->status,
+                ];
+            }),
+            'medals' => $this->medals->map(function ($medal) {
+                return [
+                    'id' => $medal->id,
+                    'name' => $medal->name,
+                    'description' => $medal->description,
+                    'image_url' => $medal->image_path ? Storage::disk('medals')->url($medal->image_path) : null,
+                    'awarded_at' => $medal->pivot->awarded_at ?? null,
                 ];
             }),
             'is_admin' => $this->is_admin,

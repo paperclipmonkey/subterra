@@ -64,7 +64,7 @@ const items = [
   {
     title: 'Profile',
     icon: `mdi-account`,
-    href: '/profile/me',
+    href: '/profile/' + userStore.user.id,
   },
 ]
 </script>
