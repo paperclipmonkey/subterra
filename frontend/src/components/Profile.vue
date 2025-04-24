@@ -63,8 +63,17 @@
         </v-chip-group>
       </div> -->
       <v-divider></v-divider>
-
-      <v-divider></v-divider>
+      <!-- Medals Section -->
+      <div v-if="medals.length > 0" class="pa-4">
+        <h3>Medals Awarded:</h3>
+        <div class="medals-grid">
+          <div v-for="medal in medals" :key="medal.id" class="medal-item">
+            <img v-if="medal.image_url" :src="medal.image_url" :title="medal.description" class="medal-img" />
+            <div class="medal-label">{{ medal.name }}</div>
+          </div>
+        </div>
+      </div>
+      <v-divider v-if="medals.length > 0"></v-divider>
       <div class="bio pa-4">
         <h3>Bio:</h3>
         <p v-if="profile.bio">{{ profile.bio }}</p>
@@ -126,12 +135,14 @@ const profile = ref({
 const recentTrips = ref([]);
 const heatmapData = ref([]);
 const endDate = ref(new Date());
+const medals = ref([]);
 
 onMounted(async () => {
   try {
     const userApi = mande(`/api/users/${route.params.id}`); // Create mande instance for the specific user
     const response = await userApi.get();
     profile.value = response.data || response;
+    medals.value = (profile.value.medals || []);
 
     // Fetch recent trips and heatmap data
     const [recentTripsResp, heatmapResp] = await Promise.all([
@@ -192,5 +203,52 @@ const formatDuration = (minutes) => {
 
 .bio p {
   white-space: pre-wrap; /* Preserve line breaks in bio */
+}
+
+.medals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  justify-items: center;
+  align-items: start;
+}
+.medal-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.medal-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px #eee;
+  margin-bottom: 8px;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.medal-item:hover .medal-img {
+  transform: scale(1.1);
+  z-index: 2;
+}
+.medal-label {
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #333;
+  word-break: break-word;
+}
+@media (max-width: 600px) {
+  .medals-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .medal-img {
+    width: 48px;
+    height: 48px;
+  }
+  .medal-label {
+    font-size: 0.8em;
+  }
 }
 </style>
