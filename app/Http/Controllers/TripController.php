@@ -100,11 +100,22 @@ class TripController extends Controller
         // Sync participants with the trip
         $trip->participants()->sync($participantIds);
 
+        // Fire TripParticipantTagged event for each participant except the creator
+        $creator = User::withoutGlobalScopes()->find(auth()->id());
+        foreach ($participantIds as $participantId) {
+            if ($creator && $participantId !== $creator->id) {
+                $participant = User::withoutGlobalScopes()->find($participantId);
+                if ($participant) {
+                    event(new \App\Events\TripParticipantTagged($trip, $participant, $creator));
+                }
+            }
+        }
+
         $media = $request->input('media', []);
         $this->storeMedia($media, $trip);
 
         // Dispatch event instead of calling SlackAlert directly
-        event(new \App\Events\TripCreated($trip, $request->user()));
+        event(new \App\Events\TripCreated($trip, $creator));
 
         return new TripResource($trip);
     }
