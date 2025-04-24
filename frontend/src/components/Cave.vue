@@ -165,6 +165,7 @@
                 :map-style="style"
                 :center="lnglat"
                 :zoom="zoom"
+                :max-zoom="15"
                 height="350px"
               >
                 <mgl-marker :coordinates="lnglat" color="#cc0000" />
@@ -303,7 +304,7 @@ import {
   MglFullscreenControl,
 } from '@indoorequal/vue-maplibre-gl';
 
-const style = 'https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528';
+const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
 const zoom = 11;
 
 const appStore = useAppStore()
