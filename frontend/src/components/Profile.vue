@@ -219,8 +219,8 @@ const formatDuration = (minutes) => {
   text-align: center;
 }
 .medal-img {
-  width: 64px;
-  height: 64px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
   margin-bottom: 8px;
   transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
