@@ -154,7 +154,7 @@ const save = async () => {
     // Optionally re-fetch profile to get latest club status if save affects it indirectly
     // await fetchProfile(); 
     // Consider showing a success message
-    router.push({ name: '/profile/[id]', params: { id: 'me'} }) // Redirect only if necessary
+    router.push({ name: '/profile/[id]', params: { id: route.params.id} }) // Redirect only if necessary
   } catch (error) {
     console.error("Error saving profile:", error);
     // Show error message to user
