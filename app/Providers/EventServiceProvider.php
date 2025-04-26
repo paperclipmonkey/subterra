@@ -11,6 +11,7 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\SendClubAccessRequestEmail::class,
         ],
         \App\Events\ClubAccessResponded::class => [
+            \App\Listeners\ApproveClubUserAutomatically::class,
             \App\Listeners\SendClubAccessRespondedEmail::class,
         ],
         \App\Events\TripParticipantTagged::class => [

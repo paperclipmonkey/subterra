@@ -9,7 +9,7 @@
           <h2>{{ profile.name }}</h2>
         </div>
         <v-spacer></v-spacer>
-        <div v-if="route.params.id === 'me'" class="d-flex ga-2">
+        <div v-if="profile.id === user.id" class="d-flex ga-2">
           <v-btn color="primary" @click="$router.push({name: '/profile/[id].edit', params: {id: profile.id}})">Edit</v-btn>
           <v-btn color="secondary" href="/api/me/trips/download" download="my_trips.csv">Download Trips (CSV)</v-btn>
           <v-btn color="error" href="/api/logout">Logout</v-btn>
@@ -119,6 +119,7 @@ import { useRoute } from 'vue-router'
 import { mande } from 'mande'; // Import mande
 import { CalendarHeatmap } from "vue3-calendar-heatmap";
 import moment from 'moment';
+import { useAppStore } from '@/stores/app'
 
 const route = useRoute()
 
@@ -136,11 +137,13 @@ const recentTrips = ref([]);
 const heatmapData = ref([]);
 const endDate = ref(new Date());
 const medals = ref([]);
+let user = ref({});
 
 onMounted(async () => {
   try {
     const userApi = mande(`/api/users/${route.params.id}`); // Create mande instance for the specific user
     const response = await userApi.get();
+    user = await useAppStore().getUser()
     profile.value = response.data || response;
     medals.value = (profile.value.medals || []);
 
