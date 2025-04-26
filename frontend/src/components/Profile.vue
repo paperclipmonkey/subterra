@@ -222,11 +222,9 @@ const formatDuration = (minutes) => {
   width: 64px;
   height: 64px;
   object-fit: contain;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 2px 8px #eee;
   margin-bottom: 8px;
   transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0px 0px 6px #eee);
 }
 .medal-item:hover .medal-img {
   transform: scale(1.1);
