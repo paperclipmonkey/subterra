@@ -24,7 +24,7 @@ jobs:
         run: php artisan key:generate
       - name: Set up SQLite database
         run: |
-          touch database/database.sqlite
+          touch database.sqlite
       - name: Run migrations
         run: php artisan migrate --force
       - name: Run tests
