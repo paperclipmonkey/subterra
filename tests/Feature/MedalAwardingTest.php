@@ -98,4 +98,131 @@ class MedalAwardingTest extends TestCase
         $listener->handle($event);
         $this->assertTrue($user->fresh()->medals->contains('name', 'Through Trip'));
     }
+
+    /** @test */
+    public function user_gets_ham_pasta_aficionado_medal_for_hunters_hole_and_lodge_inn_sink()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'Ham pasta aficionado',
+            'description' => 'Awarded for doing Hunters Hole and Hunters Lodge Inn Sink',
+        ]);
+        $huntersHole = \App\Models\Cave::factory()->create(['name' => 'Hunters Hole']);
+        $huntersLodge = \App\Models\Cave::factory()->create(['name' => 'Hunters Lodge Inn Sink']);
+        $trip1 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $huntersHole->id]);
+        $trip2 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $huntersLodge->id]);
+        $trip1->participants()->attach($user);
+        $trip2->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip2, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Ham pasta aficionado'));
+    }
+
+    /** @test */
+    public function user_gets_hard_caver_medal_for_trips_in_yorkshire_mendip_and_wales()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'Hard Caver',
+            'description' => 'Awarded for trips in Yorkshire, Mendip and Wales',
+        ]);
+        $yorkshireTag = \App\Models\Tag::factory()->create(['tag' => 'Yorkshire', 'category' => 'region', 'type' => 'cave']);
+        $mendipTag = \App\Models\Tag::factory()->create(['tag' => 'Mendip', 'category' => 'region', 'type' => 'cave']);
+        $walesTag = \App\Models\Tag::factory()->create(['tag' => 'Wales', 'category' => 'region', 'type' => 'cave']);
+        $cave1 = \App\Models\Cave::factory()->create();
+        $cave1->tags()->attach($yorkshireTag);
+        $cave2 = \App\Models\Cave::factory()->create();
+        $cave2->tags()->attach($mendipTag);
+        $cave3 = \App\Models\Cave::factory()->create();
+        $cave3->tags()->attach($walesTag);
+        $trip1 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave1->id]);
+        $trip2 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave2->id]);
+        $trip3 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave3->id]);
+        $trip1->participants()->attach($user);
+        $trip2->participants()->attach($user);
+        $trip3->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip3, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Hard Caver'));
+    }
+
+    /** @test */
+    public function user_gets_history_buff_medal_for_five_mines()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'History Buff',
+            'description' => 'Awarded for doing 5 mines',
+        ]);
+        $mineTag = \App\Models\Tag::factory()->create(['tag' => 'Mine', 'category' => 'type', 'type' => 'cave']);
+        for ($i = 0; $i < 5; $i++) {
+            $cave = \App\Models\Cave::factory()->create();
+            $cave->tags()->attach($mineTag);
+            $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user);
+        }
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'History Buff'));
+    }
+
+    /** @test */
+    public function user_gets_sport_climber_medal_for_caving_in_portland()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'Sport Climber',
+            'description' => 'Awarded for caving in Portland',
+        ]);
+        $portlandTag = \App\Models\Tag::factory()->create(['tag' => 'Portland', 'category' => 'region', 'type' => 'cave']);
+        $cave = \App\Models\Cave::factory()->create();
+        $cave->tags()->attach($portlandTag);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Sport Climber'));
+    }
+
+    /** @test */
+    public function user_gets_cream_tea_medal_for_caving_in_devon()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'Cream Tea',
+            'description' => 'Awarded for caving in Devon',
+        ]);
+        $devonTag = \App\Models\Tag::factory()->create(['tag' => 'Devon', 'category' => 'region', 'type' => 'cave']);
+        $cave = \App\Models\Cave::factory()->create();
+        $cave->tags()->attach($devonTag);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Cream Tea'));
+    }
+
+    /** @test */
+    public function user_gets_highland_cow_medal_for_caving_in_scotland()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'Highland Cow',
+            'description' => 'Awarded for caving in Scotland',
+        ]);
+        $scotlandTag = \App\Models\Tag::factory()->create(['tag' => 'Scotland', 'category' => 'region', 'type' => 'cave']);
+        $cave = \App\Models\Cave::factory()->create();
+        $cave->tags()->attach($scotlandTag);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Highland Cow'));
+    }
 }
