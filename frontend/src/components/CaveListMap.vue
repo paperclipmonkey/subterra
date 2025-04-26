@@ -5,6 +5,7 @@
         :map-style="style"
         :center="lnglat"
         :zoom="zoom"
+        max-zoom="15"
         ref="map"
       >
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id" :coordinates="[cave.location_lng, cave.location_lat]">
@@ -49,7 +50,7 @@
 
   import maplibregl from 'maplibre-gl';
 
-  const style = 'https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528';
+  const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
   const zoom = 5;
   const lnglat = [-2, 53]
 
