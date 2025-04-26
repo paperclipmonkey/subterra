@@ -99,7 +99,7 @@
   background: transparent;
 }
 
-.maplibregl-popup-close-button {
+.maplibregl-popup-content .maplibregl-popup-close-button {
   right: 6px;
   top: 0px;
 }
