@@ -10,7 +10,29 @@
       >
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id" :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
-            <v-card :title="cave.name" :subtitle="cave.location_name">
+            <v-card>
+              <v-img
+                :src="cave.hero_image || cave.entrance_image"
+                v-if="cave.hero_image || cave.entrance_image"
+                height="80"
+                cover
+                class="rounded-t"
+              >
+                <v-card-title class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                  {{ cave.name }}
+                </v-card-title>
+                <v-card-subtitle class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                  {{ cave.location_name }}
+                </v-card-subtitle>
+              </v-img>
+              <template v-else> 
+                <v-card-title class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                  {{ cave.name }}
+                </v-card-title>
+                <v-card-subtitle class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                  {{ cave.location_name }}
+                </v-card-subtitle>
+              </template>
               <v-card-text>Length:{{ (Math.round(cave.system.length / 10) * 10 )/ 1000}}km Depth:{{ cave.system.vertical_range }}m</v-card-text>
               <v-card-actions>
                 <v-btn @click="$router.push({name: '/cave/[id]', params: {id: cave.slug}})">
