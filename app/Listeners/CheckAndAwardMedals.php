@@ -66,7 +66,110 @@ class CheckAndAwardMedals implements ShouldQueue
                 return $user->trips()
                     ->whereColumn('entrance_cave_id', '!=', 'exit_cave_id')
                     ->exists();
+                    case 'Ham pasta aficionado':
+                        // Awarded for doing Hunters Hole and Hunters Lodge Inn Sink
+                        $caveNames = $user->trips()
+                            ->with('entrance')
+                            ->get()
+                            ->pluck('entrance.name')
+                            ->unique();
+                        return $caveNames->contains('Hunters Hole') && $caveNames->contains('Hunters Lodge Inn Sink');
 
+                    case 'Hard Caver':
+                        // Awarded for trips in Yorkshire, Mendip and Wales (by region tag)
+                        $regions = $user->trips()
+                            ->with('entrance.tags')
+                            ->get()
+                            ->flatMap(function ($trip) {
+                                return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                            })
+                            ->unique();
+                        return $regions->contains('Yorkshire') && $regions->contains('Mendip') && $regions->contains('Wales');
+
+                    case 'History Buff':
+                        // Awarded for doing 5 mines
+                        $mineTrips = $user->trips()
+                            ->with('entrance')
+                            ->get()
+                            ->filter(function ($trip) {
+                                return optional($trip->entrance)?->tags
+                                    ->where('category', 'type')
+                                    ->pluck('tag')
+                                    ->contains('Mine');
+                            });
+                        return $mineTrips->count() >= 5;
+
+                    case 'Sport Climber':
+                        // Awarded for caving in Portland (by region tag)
+                        return $user->trips()
+                            ->with('entrance.tags')
+                            ->get()
+                            ->flatMap(function ($trip) {
+                                return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                            })
+                            ->contains('Portland');
+
+                    case 'Cream Tea':
+                        // Awarded for caving in Devon (by region tag)
+                        return $user->trips()
+                            ->with('entrance.tags')
+                            ->get()
+                            ->flatMap(function ($trip) {
+                                return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                            })
+                            ->contains('Devon');
+
+                    case 'Highland Cow':
+                        // Awarded for caving in Scotland (by region tag)
+                        return $user->trips()
+                            ->with('entrance.tags')
+                            ->get()
+                            ->flatMap(function ($trip) {
+                                return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                            })
+                            ->contains('Scotland');
+
+                    case 'Sheep dog':
+                        // Awarded for going on 5 trips to leader systems
+                        $leaderTrips = $user->trips()
+                            ->with('entrance')
+                            ->get()
+                            ->filter(function ($trip) {
+                                return optional($trip->entrance)->is_leader_system ?? false;
+                            });
+                        return $leaderTrips->count() >= 5;
+
+                    case 'Mucky Pup':
+                        // Awarded for going to 3 muddy caves
+                        $muddyTrips = $user->trips()
+                            ->with('entrance')
+                            ->get()
+                            ->filter(function ($trip) {
+                                return optional($trip->entrance)->is_muddy ?? false;
+                            })
+                            ->pluck('entrance_cave_id')
+                            ->unique();
+                        return $muddyTrips->count() >= 3;
+
+                    case 'Faff Now Cave Later':
+                        // For 5 trips to SWCC caves
+                        $swccTrips = $user->trips()
+                            ->with('entrance')
+                            ->get()
+                            ->filter(function ($trip) {
+                                return optional($trip->entrance)->is_swcc ?? false;
+                            });
+                        return $swccTrips->count() >= 5;
+
+                    case 'String Dangler':
+                        // For 10 trips to SRT caves
+                        $srtTrips = $user->trips()
+                            ->with('entrance')
+                            ->get()
+                            ->filter(function ($trip) {
+                                return optional($trip->entrance)->is_srt ?? false;
+                            });
+                        return $srtTrips->count() >= 10;
             default:
                 return false;
         }
