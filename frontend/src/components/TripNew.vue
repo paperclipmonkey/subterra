@@ -5,8 +5,11 @@
         v-model="trip.name"
         label="Trip Name"
         :rules="rules.name"
+        :error-messages="validationErrors.name"
+        @update:modelValue="validationErrors.name = []"
         required
       ></v-text-field>
+      <!-- Consider adding error display for description if needed -->
       <VuetifyTiptap @change="updatedDescription" v-model="trip.description" output="text" markdown-theme="github" >
       </VuetifyTiptap>
       <v-file-input
@@ -14,6 +17,8 @@
         accept="image/*"
         label="Trip Photos"
         v-model="trip.media"
+        :error-messages="validationErrors.media"
+        @update:modelValue="validationErrors.media = []"
         chips
         multiple
       ></v-file-input>
@@ -41,6 +46,8 @@
         :rules="rules.location"
         item-value="id"
         v-model="trip.entrance_cave_id"
+        :error-messages="validationErrors.entrance_cave_id || validationErrors.system_id"
+        @update:modelValue="() => { validationErrors.entrance_cave_id = []; validationErrors.system_id = [] }"
       >
         <template v-slot:item="{ props, item }">
           <!-- :prepend-avatar="item.raw.hero_image || '/map-icon-512-transparent.webp'" -->
@@ -60,6 +67,8 @@
             item-title="name"
             item-value="id"
             v-model="trip.exit_cave_id"
+            :error-messages="validationErrors.exit_cave_id"
+            @update:modelValue="validationErrors.exit_cave_id = []"
           ></v-autocomplete>
           </template>
       </template>
@@ -67,7 +76,7 @@
         label="Participants"
         :items="users"
         item-title="name"
-        item-value="email"
+        item-value="id"
         multiple
         chips
         closable-chips
@@ -101,6 +110,8 @@
             v-model="tripStartDate"
             label="Date"
             type="date"
+            :error-messages="validationErrors.start_time || validationErrors.end_time"
+            @update:modelValue="() => { validationErrors.start_time = []; validationErrors.end_time = [] }"
             required
           ></v-text-field>
         </v-col>
@@ -109,6 +120,8 @@
             v-model="tripStartTime"
             label="Entry time"
             type="time"
+            :error-messages="validationErrors.start_time || validationErrors.end_time"
+            @update:modelValue="() => { validationErrors.start_time = []; validationErrors.end_time = [] }"
             required>
           </v-text-field>
         </v-col>
@@ -120,6 +133,8 @@
             label="Duration (hours)"
             type="number"
             min="0"
+            :error-messages="validationErrors.end_time"
+            @update:modelValue="validationErrors.end_time = []"
             required
           ></v-text-field>
         </v-col>
@@ -130,6 +145,8 @@
             type="number"
             min="0"
             max="59"
+            :error-messages="validationErrors.end_time"
+            @update:modelValue="validationErrors.end_time = []"
             required
           ></v-text-field>
         </v-col>
@@ -142,9 +159,11 @@
 
 <script setup>
   import moment from 'moment'
-  import { computed, reactive, ref, watch } from 'vue'
+  import { computed, reactive, ref, watch, onMounted } from 'vue'
   import AddParticipantManual from './AddParticipantManual.vue';
   import { convertFileToBase64 } from '@/utilities.js'
+  import { useRouter, useRoute } from 'vue-router';
+
   const router = useRouter()
   const route = useRoute()
 
@@ -175,6 +194,8 @@
   const userEmail = ref({})
   const users = ref([])
   const caves = ref([])
+
+  const validationErrors = ref({})
 
   const rules = {
     name: [
@@ -325,53 +346,81 @@
   })
   
   const submitForm = async () => {
+    validationErrors.value = {} // Clear previous errors
     if(!trip.exit_cave_id || !throughTrip.value) {
       trip.exit_cave_id = trip.entrance_cave_id
     }
-    trip.start_time = `${tripStartDate.value} ${tripStartTime.value}`
-    trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm')
-    trip.cave_system_id = cave_system_id.value
+    trip.start_time = `${tripStartDate.value} ${tripStartTime.value}:00` // Add seconds for format Y-m-d H:i:s
+    trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm:ss') // Add seconds for format Y-m-d H:i:s
+    trip.cave_system_id = cave_system_id.value // Ensure system_id is set
     if(markdownOutput.value) {
       trip.description = markdownOutput.value // Copy the markdown output to the description field
     }
 
-    trip.media = await Promise.all(trip.media.map(file => convertFileToBase64(file)));
-    
+    // Convert only new files to base64
+    const newMediaFiles = trip.media.filter(file => file instanceof File);
+    const base64Media = await Promise.all(newMediaFiles.map(file => convertFileToBase64(file)));
+
+    // Prepare payload, separating existing media IDs if needed by the backend
+    const payload = {
+      ...trip,
+      media: base64Media,
+      // If your backend needs existing media IDs separately, adjust here
+      // existing_media_ids: trip.existing_media?.map(m => m.id) || []
+    };
+    // Remove properties not expected by the backend if necessary
+    // delete payload.existing_media;
+
     if(route.params.id) {
-      await updateTrip(trip)
+      await updateTrip(payload)
     } else {
-      await saveTrip(trip)
+      await saveTrip(payload)
     }
   }
 
-  const updateTrip = async (trip) => {
-    const response = await fetch(`/api/trips/${trip.id}`, {
+  const handleApiError = async (response) => {
+    if (response.status === 422) {
+      const errorData = await response.json();
+      validationErrors.value = errorData.errors;
+      console.error('Validation failed:', errorData.errors);
+    } else {
+      console.error('Failed operation:', response.statusText);
+      // Handle other types of errors (e.g., display a generic error message)
+    }
+  }
+
+  const updateTrip = async (tripPayload) => {
+    const response = await fetch(`/api/trips/${tripPayload.id}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json' // Ensure backend knows we want JSON
       },
-      body: JSON.stringify(trip)
+      body: JSON.stringify(tripPayload)
     })
     if (response.ok) {
-      router.push({ name: '/trip/[id]', params: { id: trip.id } });
+      validationErrors.value = {} // Clear errors on success
+      router.push({ name: '/trip/[id]', params: { id: tripPayload.id } });
     } else {
-      console.error('failed to update trip')
+      await handleApiError(response);
     }
   }
 
-  const saveTrip = async (trip) => {
+  const saveTrip = async (tripPayload) => {
     const response = await fetch('/api/trips', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json' // Ensure backend knows we want JSON
       },
-      body: JSON.stringify(trip)
+      body: JSON.stringify(tripPayload)
     })
     if (response.ok) {
+      validationErrors.value = {} // Clear errors on success
       const savedTrip = (await response.json()).data;
       router.push({ name: '/trip/[id]', params: { id: savedTrip.id } });
     } else {
-      console.error('failed to save trip')
+      await handleApiError(response);
     }
   }
 
