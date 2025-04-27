@@ -70,7 +70,7 @@ class TripTest extends TestCase {
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
             'description' => 'Test description',
-            'participants' => [$participant->email],
+            'participants' => [$participant->id],
             'media' => [
                 [
                     'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png'))
