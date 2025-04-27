@@ -23,6 +23,19 @@
           item-value="id"
           @click:row="handleRowClick"
         >
+          <template v-slot:item.clubs="{ item }">
+            <v-chip-group>
+              <v-chip
+                v-for="club in item.clubs"
+                :key="club.id"
+                :color="club.status === 'approved' ? 'green' : 'orange'"
+                variant="outlined"
+                size="small"
+              >
+                {{ club.name }}
+              </v-chip>
+            </v-chip-group>
+          </template>
           <template v-slot:item.is_approved="{ item }">
             <v-btn 
               icon 
@@ -79,7 +92,7 @@ const headers = [
   { title: 'Email', key: 'email', sortable: true },
   { title: 'Approved', key: 'is_approved', sortable: true, align: 'center' }, // Centered icons
   { title: 'Admin', key: 'is_admin', sortable: true, align: 'center' }, // Centered icons
-  { title: 'Club', key: 'club', sortable: true },
+  { title: 'Clubs', key: 'clubs', sortable: true },
   { title: 'Joined', key: 'created_at', sortable: true }, // Added created_at header
 ];
 

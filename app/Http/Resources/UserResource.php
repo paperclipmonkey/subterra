@@ -20,7 +20,13 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email'=> $this->email,
             'photo' => $this->photo,
-            'club' => $this->club,
-        ];
+            'clubs' => $this->clubs->map(function ($club) {
+                return [
+                    'name' => $club->name,
+                    'slug' => $club->slug,
+                    'is_admin' => $club->pivot->is_admin,
+                    'status' => $club->pivot->status,
+                ];
+            }),        ];
     }
 }
