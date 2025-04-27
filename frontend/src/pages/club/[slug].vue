@@ -45,7 +45,7 @@
         <!-- Activity Heatmap -->
         <v-col cols="12">
           <v-card>
-            <v-card-title>Activity Heatmap</v-card-title>
+            <v-card-title>Logged Trips Heatmap</v-card-title>
             <v-card-text>
               <calendar-heatmap
                 dark-mode
@@ -54,7 +54,6 @@
                 :range-color='["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]'
                 tooltip-unit="trips"
                 :max="10"
-
               />
             </v-card-text>
           </v-card>
@@ -72,9 +71,6 @@
                 :title="trip.name || 'Untitled Trip'"
                 :subtitle="`On ${moment(trip.start_time).format('YYYY-MM-DD')}`"
               >
-                <template v-slot:prepend>
-                  <v-icon>mdi-hiking</v-icon>
-                </template>
               </v-list-item>
             </v-list>
             <v-card-text v-else>No recent trips found.</v-card-text>
