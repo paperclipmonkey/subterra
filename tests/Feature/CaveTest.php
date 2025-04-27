@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Storage;
 class CaveTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(\Database\Seeders\TagSeeder::class);
+    }
     
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_the_list_of_caves()

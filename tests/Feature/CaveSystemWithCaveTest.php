@@ -15,6 +15,7 @@ class CaveSystemWithCaveTest extends TestCase
         parent::setUp();
         $this->user = User::factory()->create(['is_admin' => true]);
         $this->actingAs($this->user);
+        $this->seed(\Database\Seeders\TagSeeder::class);
     }
 
     /** @test */
