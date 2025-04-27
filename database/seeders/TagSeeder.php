@@ -148,5 +148,19 @@ class TagSeeder extends Seeder
             "category"=> "tackle",
             "description"=> "A cave that requires a handline to descend.",
         ]);
+
+        Tag::factory()->create([
+            "tag"=> "Not Done Yet",
+            "type"=> "cave",
+            "category"=> "previously done",
+            "description"=> "A cave you are yet to visit",
+        ]);
+
+        Tag::factory()->create([
+            "tag"=> "Previously Done",
+            "type"=> "cave",
+            "category"=> "previously done",
+            "description"=> "A cave you've previously visited",
+        ]);
     }
 }
