@@ -25,16 +25,16 @@ class CaveResource extends JsonResource
         if ($this->system) {
             $length = $this->system->length;
 
-            if ($length > 5000) {
+            if ($length >= 5000) {
                 $systemLengthTags->push(Tag::where('tag', '> 5km')->first());
             }
-            if ($length > 1000) {
+            if ($length >= 1000) {
                 $systemLengthTags->push(Tag::where('tag', '> 1km')->first());
             }
-            if ($length > 500) {
+            if ($length >= 500) {
                 $systemLengthTags->push(Tag::where('tag', '> 500m')->first());
             }
-            if ($length > 250) {
+            if ($length >= 250) {
                 $systemLengthTags->push(Tag::where('tag', '> 250m')->first());
             }
         }
