@@ -25,7 +25,7 @@ class GoogleLoginController extends Controller
             try {
             // Make a copy of their profile photo and upload it to the Storage driver for profile photos
             $photoContents = file_get_contents($googleUser->avatar);
-            $photoPath = 'profile/' . $googleUser->email . '.jpg';
+            $photoPath = 'profile/' . uniqid('user_') . '.jpg';
             Storage::disk('media')->put($photoPath, $photoContents);
             } catch (\Exception $e) {
                 // If the photo upload fails, just use the default photo
