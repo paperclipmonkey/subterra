@@ -83,6 +83,43 @@ class CaveSystemController extends Controller
         return response()->json(new CaveSystemResource($caveSystem));
     }
 
+    /**
+     * Create a new cave system and its first cave in one request.
+     */
+    public function storeWithCave(Request $request)
+    {
+        $request->validate([
+            'system.name' => 'required|string|max:255',
+            'system.length' => 'required|integer',
+            'system.vertical_range' => 'required|integer',
+            'system.description' => 'nullable|string',
+            'system.slug' => 'nullable|string|max:255',
+            'system.references' => 'nullable|string',
+            'cave.name' => 'required|string|max:255',
+            'cave.description' => 'nullable|string',
+            'cave.location_name' => 'required|string|max:255',
+            'cave.location_country' => 'required|string|max:255',
+            'cave.location_lat' => 'required|numeric',
+            'cave.location_lng' => 'required|numeric',
+            'cave.location_alt' => 'nullable|numeric',
+            'cave.access_info' => 'nullable|string',
+            'cave.slug' => 'nullable|string|max:255',
+        ]);
+
+        $systemData = $request->input('system');
+        $caveSystem = \App\Models\CaveSystem::create($systemData);
+
+        $caveData = $request->input('cave');
+        $caveData['cave_system_id'] = $caveSystem->id;
+        $cave = \App\Models\Cave::create($caveData);
+
+        $caveSystem->load('caves');
+        return response()->json([
+            'system' => new \App\Http\Resources\CaveSystemResource($caveSystem),
+            'cave' => new \App\Http\Resources\CaveResource($cave),
+        ], 201);
+    }
+
     // public function destroy(Cave $cave)
     // {
     //     Cave::destroy($cave);
