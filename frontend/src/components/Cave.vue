@@ -84,7 +84,7 @@
               <v-card-text>
                 <v-list>
                   <template v-for="trip in cave.trips" :key="trip.datetime">
-                    <CaveTripListItem :trip="trip" v-if="trip.end_time || trip.participants.some(participant => participant.email === appStore.user.email)" />
+                    <CaveTripListItem :trip="trip" v-if="trip.end_time || trip.participants.some(participant => participant.id === appStore.user.id)" />
                   </template>
                 </v-list>
                 <template v-if="cave.trips.length === 0">
