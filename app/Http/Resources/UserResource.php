@@ -18,15 +18,15 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email'=> $this->email,
             'photo' => $this->photo,
-            'clubs' => $this->clubs->map(function ($club) {
+            'clubs' => $this->clubs->filter(function ($club) {
+                return $club->pivot->status === 'approved';
+            })->map(function ($club) {
                 return [
                     'name' => $club->name,
                     'slug' => $club->slug,
-                    'is_admin' => $club->pivot->is_admin,
-                    'status' => $club->pivot->status,
                 ];
-            }),        ];
+            })->values(),
+        ];
     }
 }
