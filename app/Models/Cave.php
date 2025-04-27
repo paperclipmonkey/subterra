@@ -20,7 +20,7 @@ class Cave extends Model
         'location_country',
         'location_lat',
         'location_lng',
-        'entrance_alt',
+        'location_alt',
         'cave_system_id',
         'slug',
         'access_info',

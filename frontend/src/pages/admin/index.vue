@@ -22,6 +22,14 @@
             link
           ></v-list-item>
           
+          <v-list-item
+            prepend-icon="mdi-map-marker-plus"
+            title="Add Cave System & Cave"
+            subtitle="Create a new cave system and its first cave together"
+            to="/admin/cave-system-with-cave"
+            link
+          ></v-list-item>
+          
           <!-- Add more admin links here as needed -->
           
         </v-list>

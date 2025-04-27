@@ -19,6 +19,7 @@ Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update
 
 Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
 Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
+Route::post('/cave_systems_with_cave', [App\Http\Controllers\CaveSystemController::class, 'storeWithCave'])->middleware(ApiIsAdmin::class);
 
 
 Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
