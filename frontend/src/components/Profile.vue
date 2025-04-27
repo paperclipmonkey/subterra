@@ -11,7 +11,7 @@
         <v-spacer></v-spacer>
         <div v-if="profile.id === user.id" class="d-flex ga-2">
           <v-btn color="primary" @click="$router.push({name: '/profile/[id].edit', params: {id: profile.id}})">Edit</v-btn>
-          <v-btn color="secondary" href="/api/me/trips/download" download="my_trips.csv">Download Trips (CSV)</v-btn>
+          <v-btn color="secondary" href="/api/me/trips/download" download="my_trips.csv">Export Trips</v-btn>
           <v-btn color="error" href="/api/logout">Logout</v-btn>
         </div>
       </v-card-title>
@@ -81,7 +81,7 @@
       </div>
     </v-card>
     <v-card-text>
-      <h3>Activity Heatmap</h3>
+      <h3>Logged Trips Heatmap</h3>
       <calendar-heatmap
         dark-mode
         :values="heatmapData"
@@ -103,9 +103,6 @@
           :title="trip.name || 'Untitled Trip'"
           :subtitle="`On ${moment(trip.start_time).format('YYYY-MM-DD')}`"
         >
-          <template v-slot:prepend>
-            <v-icon>mdi-hiking</v-icon>
-          </template>
         </v-list-item>
       </v-list>
       <div v-else class="text-grey">No recent trips found.</div>
