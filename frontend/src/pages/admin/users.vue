@@ -6,7 +6,7 @@
         <v-text-field
           v-model="search"
           append-inner-icon="mdi-magnify"
-          label="Search Users (Name, Email, Club)"
+          label="Search Users (Name, Email)"
           single-line
           hide-details
           class="mb-4"
@@ -91,7 +91,7 @@ const headers = [
   { title: 'Email', key: 'email', sortable: true },
   { title: 'Approved', key: 'is_approved', sortable: true, align: 'center' }, // Centered icons
   { title: 'Admin', key: 'is_admin', sortable: true, align: 'center' }, // Centered icons
-  { title: 'Clubs', key: 'clubs', sortable: false },
+  { title: 'Clubs', key: 'clubs', sortable: true },
   { title: 'Joined', key: 'created_at', sortable: true }, // Added created_at header
 ];
 
