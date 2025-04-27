@@ -313,7 +313,7 @@ const route = useRoute()
 const cave = ref(null)
 
 const hasDone = computed(() => {
-  return cave.value.trips.some(trip => trip.participants.some(participant => participant.email === appStore.user.email))
+  return cave.value.trips.some(trip => trip.participants.some(participant => participant.id === appStore.user.id))
 })
 
 const media = computed(()=> {
@@ -375,7 +375,7 @@ const markAsDone = async () => {
     name: 'Marked as Done',
     entrance_cave_id: cave.value.id,
     exit_cave_id: cave.value.id,
-    participants: [appStore.user.email],
+    participants: [appStore.user.id],
     cave_system_id: cave.value.system.id,
   }
 
@@ -388,6 +388,7 @@ const markAsDone = async () => {
   })
   if (response.ok) {
     fetchCave()
+    showConfirmModal.value = false
   } else {
     console.error('failed to save trip')
   }
