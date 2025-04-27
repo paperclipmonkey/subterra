@@ -93,7 +93,6 @@ class UserController extends Controller
      */
     public function store(User $user, Request $request) {
         $validatedData = $request->validate([
-            'club' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             // Add validation for other editable fields if needed
         ]);

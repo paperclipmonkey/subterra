@@ -68,18 +68,31 @@
              <v-list-item
                v-for="participant in trip.participants"
                :key="participant.id"
-               :prepend-avatar="participant.photo"
-               :title="participant.name"
-               :subtitle="participant.club || 'No club specified'"
              >
-               <!-- Potential future actions per participant -->
-               <!-- <template v-slot:append>
-                 <v-btn
-                   color="grey-lighten-1"
-                   icon="mdi-information"
-                   variant="text"
-                 ></v-btn>
-               </template> -->
+               <template v-slot:prepend>
+                 <router-link :to="{ name: '/profile/[id]', params: { id: participant.id } }">
+                   <v-avatar size="36">
+                     <v-img :src="participant.photo || '/default-avatar.png'" :alt="participant.name" />
+                   </v-avatar>
+                 </router-link>
+               </template>
+               <router-link :to="{ name: '/profile/[id]', params: { id: participant.id } }" class="text-decoration-none">
+                 <span class="font-weight-medium">{{ participant.name }}</span>
+               </router-link>
+               <div v-if="participant.clubs && participant.clubs.length" class="mt-1">
+                 <v-chip-group>
+                   <v-chip
+                     v-for="club in participant.clubs"
+                     :key="club.id"
+                     color="primary"
+                     variant="outlined"
+                     size="small"
+                   >
+                     {{ club.name }}
+                   </v-chip>
+                 </v-chip-group>
+               </div>
+               <span v-else class="text-grey">No club specified</span>
              </v-list-item>
            </v-list>
         </v-card>
