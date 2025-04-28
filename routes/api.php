@@ -105,6 +105,7 @@ Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name
 Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
 Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
 Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
+Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware('auth:sanctum');
 
 Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
 Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');

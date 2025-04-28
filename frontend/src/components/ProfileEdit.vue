@@ -50,6 +50,7 @@
         ></v-textarea>
       </div>
       <v-card-actions class="pa-4">
+          <v-btn @click="openDeleteModal" color="error" variant="outlined" class="mr-auto">Delete Account</v-btn>
           <v-spacer></v-spacer>
           <v-btn @click="save" color="success">Save Profile</v-btn>
       </v-card-actions>
@@ -101,6 +102,21 @@
       </v-card>
     </v-dialog>
 
+    <!-- Delete Account Confirmation Modal -->
+    <v-dialog v-model="showDeleteModal" persistent max-width="500px">
+      <v-card>
+        <v-card-title class="text-h5">Confirm Account Deletion</v-card-title>
+        <v-card-text>
+          <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="closeDeleteModal">Cancel</v-btn>
+          <v-btn color="error" variant="text" @click="deleteAccount" :loading="deletingAccount">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
 
@@ -125,6 +141,8 @@ const allClubs = ref([]) // To store all clubs fetched from API
 const loadingClubs = ref(false)
 const showJoinClubModal = ref(false)
 const selectedClubToJoinId = ref(null)
+const showDeleteModal = ref(false)
+const deletingAccount = ref(false)
 
 // Filter clubs the user can request to join (not already a member or pending)
 const availableClubs = computed(() => {
@@ -240,6 +258,36 @@ const getClubStatusColor = (status) => {
     case 'pending': return 'warning';
     case 'rejected': return 'error';
     default: return 'grey';
+  }
+}
+
+const openDeleteModal = () => {
+  showDeleteModal.value = true;
+}
+const closeDeleteModal = () => {
+  showDeleteModal.value = false;
+}
+const deleteAccount = async () => {
+  deletingAccount.value = true;
+  try {
+    const response = await fetch(`/api/users/${route.params.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    alert("Your account has been deleted successfully.");
+    // Optionally show a goodbye message or redirect to login/home
+    router.push({ name: '/' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    // Optionally show error to user
+  } finally {
+    deletingAccount.value = false;
+    closeDeleteModal();
   }
 }
 
