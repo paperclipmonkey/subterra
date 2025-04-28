@@ -151,4 +151,37 @@ class UserController extends Controller
             'medals' => $medals
         ]);
     }
+
+    /**
+     * Delete a user account. Deletes any trips where the user was the only participant.
+     * Keeps all other trips (removes user from them).
+     */
+    public function destroy(Request $request, User $user)
+    {
+        // Only allow the user themselves or an admin to delete
+        if ($request->user()->id !== $user->id && !$request->user()->is_admin) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Find all trips where this user is a participant
+        $trips = $user->trips()->get();
+        foreach ($trips as $trip) {
+            $participantCount = $trip->participants()->count();
+            if ($participantCount === 1) {
+                // User is the only participant, delete the trip
+                $trip->delete();
+            } else {
+                // Remove user from trip participants
+                $trip->participants()->detach($user->id);
+            }
+        }
+
+        // Remove user from any clubs (detach from pivot)
+        $user->clubs()->detach();
+
+        // Delete the user
+        $user->delete();
+
+        return response()->json(['message' => 'Account deleted.'], 200);
+    }
 }
