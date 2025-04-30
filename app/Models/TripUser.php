@@ -10,6 +10,24 @@ use OwenIt\Auditing\Auditable;
 class TripUser extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
     use HasFactory, Auditable;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'trip_user';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'trip_id',
+        'user_id',
+    ];
+
     public $timestamps = false;
 
     public function user(): BelongsTo
