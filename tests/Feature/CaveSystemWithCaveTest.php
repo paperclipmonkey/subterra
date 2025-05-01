@@ -18,7 +18,7 @@ class CaveSystemWithCaveTest extends TestCase
         $this->seed(\Database\Seeders\TagSeeder::class);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_creates_a_cave_system_and_cave_together()
     {
         $payload = [
@@ -57,7 +57,7 @@ class CaveSystemWithCaveTest extends TestCase
         $this->assertDatabaseHas('caves', ['name' => 'Test Cave']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_validates_required_fields()
     {
         $response = $this->postJson('/api/cave_systems_with_cave', []);

@@ -28,7 +28,7 @@ class ClubTest extends TestCase
 
     // --- Index Tests (Public) ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function guest_can_view_enabled_clubs()
     {
         Club::factory()->count(3)->enabled()->create();
@@ -41,7 +41,7 @@ class ClubTest extends TestCase
     }
     // --- Admin Index Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_view_all_clubs()
     {
         Club::factory()->count(3)->enabled()->create();
@@ -53,7 +53,7 @@ class ClubTest extends TestCase
                  ->assertJsonCount(5, 'data'); // All clubs
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_view_admin_club_index()
     {
         $response = $this->actingAs($this->regularUser, 'sanctum')->getJson('/api/admin/clubs');
@@ -62,7 +62,7 @@ class ClubTest extends TestCase
 
     // --- Show Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function anyone_can_view_an_enabled_club()
     {
         $club = Club::factory()->enabled()->create();
@@ -73,7 +73,7 @@ class ClubTest extends TestCase
                  ->assertJson(['id' => $club->id, 'name' => $club->name]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_view_a_disabled_club()
     {
         $club = Club::factory()->disabled()->create();
@@ -84,7 +84,7 @@ class ClubTest extends TestCase
                  ->assertJson(['id' => $club->id, 'name' => $club->name]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_view_a_disabled_club()
     {
         $club = Club::factory()->disabled()->create();
@@ -98,7 +98,7 @@ class ClubTest extends TestCase
         $response->assertStatus(404);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function show_returns_404_for_non_existent_club()
     {
         $response = $this->getJson('/api/clubs/non-existent-slug');
@@ -107,7 +107,7 @@ class ClubTest extends TestCase
 
     // --- Store Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_create_a_club()
     {
         $clubData = [
@@ -126,7 +126,7 @@ class ClubTest extends TestCase
         $this->assertDatabaseHas('clubs', ['slug' => 'test-club', 'is_active' => true]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_create_a_club_defaulting_to_enabled()
     {
         $clubData = [
@@ -141,7 +141,7 @@ class ClubTest extends TestCase
         $this->assertDatabaseHas('clubs', ['slug' => 'test-club-default-enabled', 'is_active' => true]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_create_a_club()
     {
         $clubData = Club::factory()->make()->toArray();
@@ -153,7 +153,7 @@ class ClubTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function store_validates_required_fields()
     {
         $response = $this->actingAs($this->adminUser, 'sanctum')->postJson('/api/admin/clubs', []);
@@ -161,7 +161,7 @@ class ClubTest extends TestCase
                  ->assertJson(['name' => ["The name field is required."], 'slug' => ["The slug field is required."]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function store_validates_unique_name_and_slug()
     {
         $existingClub = Club::factory()->create();
@@ -177,7 +177,7 @@ class ClubTest extends TestCase
 
     // --- Update Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_update_a_club()
     {
         $club = Club::factory()->create();
@@ -194,7 +194,7 @@ class ClubTest extends TestCase
         $this->assertDatabaseHas('clubs', ['id' => $club->id, 'name' => 'Updated Club Name', 'is_active' => false]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_update_a_club()
     {
         $club = Club::factory()->create();
@@ -207,7 +207,7 @@ class ClubTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function update_validates_unique_name_ignoring_self()
     {
         $club1 = Club::factory()->create();
@@ -227,7 +227,7 @@ class ClubTest extends TestCase
 
     // --- Destroy Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_delete_a_club()
     {
         $club = Club::factory()->create();
@@ -238,7 +238,7 @@ class ClubTest extends TestCase
         $this->assertDatabaseMissing('clubs', ['id' => $club->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_delete_a_club()
     {
         $club = Club::factory()->create();
@@ -254,7 +254,7 @@ class ClubTest extends TestCase
 
     // --- Toggle Enabled Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_toggle_club_enabled_status()
     {
         $club = Club::factory()->enabled()->create();
@@ -273,7 +273,7 @@ class ClubTest extends TestCase
         $this->assertTrue($club->fresh()->is_active);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_toggle_club_enabled_status()
     {
         $club = Club::factory()->enabled()->create();
@@ -289,7 +289,7 @@ class ClubTest extends TestCase
 
     // --- Request Join Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function authenticated_user_can_request_to_join_a_club()
     {
         Event::fake();
@@ -309,7 +309,7 @@ class ClubTest extends TestCase
         });
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function guest_cannot_request_to_join_a_club()
     {
         $club = Club::factory()->enabled()->create();
@@ -318,7 +318,7 @@ class ClubTest extends TestCase
         $response->assertStatus(401); // Unauthorized
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_request_to_join_if_already_member_or_pending()
     {
         $club = Club::factory()->enabled()->create();
@@ -340,7 +340,7 @@ class ClubTest extends TestCase
 
     // --- Get Approved Members Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_get_approved_members()
     {
         $club = Club::factory()->create();
@@ -357,7 +357,7 @@ class ClubTest extends TestCase
                  ->assertJsonMissing(['id' => $pendingUser->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_get_approved_members()
     {
         $club = Club::factory()->create();
@@ -371,7 +371,7 @@ class ClubTest extends TestCase
 
     // --- Sync Approved Members Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_sync_approved_members()
     {
         $club = Club::factory()->create();
@@ -410,7 +410,7 @@ class ClubTest extends TestCase
         $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'status' => 'pending']); // Pending user should remain untouched by sync
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_sync_members()
     {
         $club = Club::factory()->create();
@@ -424,7 +424,7 @@ class ClubTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function sync_members_validates_input()
     {
         $club = Club::factory()->create();
@@ -442,7 +442,7 @@ class ClubTest extends TestCase
 
     // --- Get Pending Members Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_get_pending_members()
     {
         $club = Club::factory()->create();
@@ -459,7 +459,7 @@ class ClubTest extends TestCase
                  ->assertJsonMissing(['id' => $approvedUser->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_get_pending_members()
     {
         $club = Club::factory()->create();
@@ -473,7 +473,7 @@ class ClubTest extends TestCase
 
     // --- Approve Member Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_approve_a_pending_member()
     {
         Event::fake();
@@ -495,7 +495,7 @@ class ClubTest extends TestCase
         });
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_approve_a_member()
     {
         $club = Club::factory()->create();
@@ -513,7 +513,7 @@ class ClubTest extends TestCase
 
     // --- Reject Member Tests ---
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_reject_a_pending_member()
     {
         Event::fake();
@@ -534,7 +534,7 @@ class ClubTest extends TestCase
         });
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_reject_a_member()
     {
         $club = Club::factory()->create();
