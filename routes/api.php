@@ -9,6 +9,7 @@ use App\Http\Resources\UserDetailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\ClubController;
+use App\Http\Controllers\Api\TripTagController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -118,4 +119,10 @@ Route::get('/livez', function(Request $request) {
     } catch (\Exception $e) {
         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Trip Tags
+    Route::get('/tags/trip', [TripTagController::class, 'index'])->name('api.tags.trip.index');
+    Route::put('/trips/{trip}/tags', [TripTagController::class, 'update'])->name('api.trips.tags.update');
 });

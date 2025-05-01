@@ -162,5 +162,88 @@ class TagSeeder extends Seeder
             "category"=> "previously done",
             "description"=> "A cave you've previously visited",
         ]);
+
+        // - - - - - - - - - Trip Type
+        Tag::factory()->create([
+            'tag' => 'Tourist',
+            'type' => 'trip',
+            'category' => 'type',
+            'description' => 'A standard caving trip.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'Digging',
+            'type' => 'trip',
+            'category' => 'type',
+            'description' => 'A trip focused on digging or exploration.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'Other',
+            'type' => 'trip',
+            'category' => 'type',
+            'description' => 'Other types of trips (e.g., training, survey).',
+            'assignable' => true,
+        ]);
+
+        // - - - - - - - - - Tackle Used (Trip)
+        Tag::factory()->create([
+            'tag' => 'Hand line',
+            'type' => 'trip',
+            'category' => 'tackle',
+            'description' => 'Hand line used during the trip.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'Ladder',
+            'type' => 'trip',
+            'category' => 'tackle',
+            'description' => 'Ladder(s) used during the trip.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'SRT',
+            'type' => 'trip',
+            'category' => 'tackle',
+            'description' => 'Single Rope Technique used during the trip.',
+            'assignable' => true,
+        ]);
+
+        // - - - - - - - - - Difficulty
+        Tag::factory()->create([
+            'tag' => 'Leisurely',
+            'type' => 'trip',
+            'category' => 'difficulty',
+            'description' => 'A very easy trip, suitable for beginners.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'Easy',
+            'type' => 'trip',
+            'category' => 'difficulty',
+            'description' => 'Relatively straightforward, minimal challenges.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'Moderate',
+            'type' => 'trip',
+            'category' => 'difficulty',
+            'description' => 'Some challenges, requires moderate fitness/experience.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'Hard',
+            'type' => 'trip',
+            'category' => 'difficulty',
+            'description' => 'Strenuous, requires good fitness and experience.',
+            'assignable' => true,
+        ]);
+        Tag::factory()->create([
+            'tag' => 'Severe',
+            'type' => 'trip',
+            'category' => 'difficulty',
+            'description' => 'Very challenging, requires high fitness and expertise.',
+            'assignable' => true,
+        ]);
     }
 }

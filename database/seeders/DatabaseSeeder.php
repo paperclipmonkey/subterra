@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Cave;
 use Illuminate\Database\Seeder;
+use Database\Seeders\TagSeeder; // Add this use statement
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             MedalSeeder::class,
+            TagSeeder::class, // Add this line
             // ...other seeders...
         ]);
     }

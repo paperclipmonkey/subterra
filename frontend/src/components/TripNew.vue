@@ -104,6 +104,55 @@
           </v-btn>
         </template>
     </v-autocomplete>
+      <!-- --- Trip Tags Section --- -->
+      <v-divider class="my-4"></v-divider>
+      <h3 class="mb-2">Trip Details</h3>
+
+      <!-- Trip Type (Single Select) -->
+      <template v-if="tripTags.type && tripTags.type.length">
+        <label class="v-label mb-1">Trip Type</label>
+        <v-radio-group v-model="selectedTripTypeId" inline>
+          <v-radio
+            v-for="tag in tripTags.type"
+            :key="tag.id"
+            :label="tag.tag"
+            :value="tag.id"
+          ></v-radio>
+        </v-radio-group>
+      </template>
+
+      <!-- Difficulty (Single Select) -->
+      <template v-if="tripTags.difficulty && tripTags.difficulty.length">
+        <label class="v-label mb-1">Difficulty</label>
+        <v-radio-group v-model="selectedDifficultyId" inline>
+          <v-radio
+            v-for="tag in tripTags.difficulty"
+            :key="tag.id"
+            :label="tag.tag"
+            :value="tag.id"
+          ></v-radio>
+        </v-radio-group>
+      </template>
+
+      <!-- Tackle Used (Multi Select) -->
+      <template v-if="tripTags.tackle && tripTags.tackle.length">
+        <label class="v-label mb-1">Tackle Used</label>
+        <div> <!-- Wrap checkboxes for better layout if needed -->
+          <v-checkbox
+            v-for="tag in tripTags.tackle"
+            :key="tag.id"
+            v-model="selectedTackleIds"
+            :label="tag.tag"
+            :value="tag.id"
+            hide-details
+            density="compact"
+            class="d-inline-block mr-4"
+          ></v-checkbox>
+        </div>
+      </template>
+      <v-divider class="my-4"></v-divider>
+      <!-- --- End Trip Tags Section --- -->
+
       <v-row>
         <v-col cols="6">
           <v-text-field
@@ -194,6 +243,10 @@
   const userEmail = ref({})
   const users = ref([])
   const caves = ref([])
+  const tripTags = ref({}) // To store fetched tags grouped by category
+  const selectedTripTypeId = ref(null)
+  const selectedDifficultyId = ref(null)
+  const selectedTackleIds = ref([])
 
   const validationErrors = ref({})
 
@@ -225,6 +278,21 @@
   }
 
   onMounted(async () => {
+    // --- Fetch Tags ---
+    try {
+      const tagsResponse = await fetch('/api/tags/trip');
+      if (tagsResponse.ok) {
+        tripTags.value = await tagsResponse.json();
+      } else {
+        console.error('Failed to fetch trip tags:', tagsResponse.statusText);
+        tripTags.value = {}; // Set to empty object on failure
+      }
+    } catch (error) {
+      console.error('Error fetching trip tags:', error);
+      tripTags.value = {}; // Set to empty object on error
+    }
+    // --- End Fetch Tags ---
+
     // Load caves
     let response = await fetch('/api/caves')
     caves.value = (await response.json()).data
@@ -253,6 +321,22 @@
       const response = await fetch(`/api/trips/${route.params.id}`)
       let loadedTrip = (await response.json()).data
 
+      // --- Populate Selected Tags --- 
+      if (loadedTrip.tags && loadedTrip.tags.length > 0) {
+        loadedTrip.tags.forEach(tag => {
+          if (tag.category === 'type') {
+            selectedTripTypeId.value = tag.id;
+          }
+          if (tag.category === 'difficulty') {
+            selectedDifficultyId.value = tag.id;
+          }
+          if (tag.category === 'tackle') {
+            selectedTackleIds.value.push(tag.id);
+          }
+        });
+      }
+      // --- End Populate Selected Tags ---
+
       loadedTrip.existing_media = loadedTrip.media
       loadedTrip.media = []
 
@@ -265,6 +349,7 @@
       delete loadedTrip.entrance
       delete loadedTrip.exit
       delete loadedTrip.system
+      delete loadedTrip.tags; // Remove tags from main trip object to avoid sending them incorrectly
       Object.assign(trip,loadedTrip)
 
       tripStartDate.value = moment(loadedTrip.start_time).format('YYYY-MM-DD')
@@ -345,6 +430,17 @@
     return exit
   })
   
+  const combinedSelectedTagIds = computed(() => {
+    const ids = [...selectedTackleIds.value];
+    if (selectedTripTypeId.value) {
+      ids.push(selectedTripTypeId.value);
+    }
+    if (selectedDifficultyId.value) {
+      ids.push(selectedDifficultyId.value);
+    }
+    return ids;
+  });
+
   const submitForm = async () => {
     validationErrors.value = {} // Clear previous errors
     if(!trip.exit_cave_id || !throughTrip.value) {
@@ -361,21 +457,29 @@
     const newMediaFiles = trip.media.filter(file => file instanceof File);
     const base64Media = await Promise.all(newMediaFiles.map(file => convertFileToBase64(file)));
 
-    // Prepare payload, separating existing media IDs if needed by the backend
+    // Prepare payload (without tags initially)
     const payload = {
       ...trip,
       media: base64Media,
-      // If your backend needs existing media IDs separately, adjust here
-      // existing_media_ids: trip.existing_media?.map(m => m.id) || []
     };
-    // Remove properties not expected by the backend if necessary
-    // delete payload.existing_media;
 
+    let savedTripId = null;
     if(route.params.id) {
-      await updateTrip(payload)
+      savedTripId = await updateTrip(payload)
     } else {
-      await saveTrip(payload)
+      savedTripId = await saveTrip(payload)
     }
+
+    // --- Update Tags After Save/Update ---
+    if (savedTripId) {
+      await updateTripTags(savedTripId, combinedSelectedTagIds.value);
+      router.push({ name: '/trip/[id]', params: { id: savedTripId } });
+    } else {
+      // Handle case where trip save/update failed before tag update
+      console.error("Trip save/update failed, cannot update tags.");
+      // Optionally show an error message to the user
+    }
+    // --- End Update Tags ---
   }
 
   const handleApiError = async (response) => {
@@ -400,9 +504,11 @@
     })
     if (response.ok) {
       validationErrors.value = {} // Clear errors on success
-      router.push({ name: '/trip/[id]', params: { id: tripPayload.id } });
+      // Don't redirect here yet, return the ID for tag update
+      return tripPayload.id; 
     } else {
       await handleApiError(response);
+      return null; // Indicate failure
     }
   }
 
@@ -418,11 +524,39 @@
     if (response.ok) {
       validationErrors.value = {} // Clear errors on success
       const savedTrip = (await response.json()).data;
-      router.push({ name: '/trip/[id]', params: { id: savedTrip.id } });
+      // Don't redirect here yet, return the ID for tag update
+      return savedTrip.id; 
     } else {
       await handleApiError(response);
+      return null; // Indicate failure
     }
   }
+
+  // --- New Function to Update Tags ---
+  const updateTripTags = async (tripId, tagIds) => {
+    try {
+      const response = await fetch(`/api/trips/${tripId}/tags`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ tags: tagIds })
+      });
+      if (!response.ok) {
+        // Handle tag update error specifically (optional)
+        console.error('Failed to update trip tags:', response.statusText);
+        const errorData = await response.json();
+        console.error('Tag update error details:', errorData);
+        // Optionally show a specific error message to the user about tags failing
+      }
+      // No need to return anything specific unless needed for further logic
+    } catch (error) {
+      console.error('Error updating trip tags:', error);
+      // Optionally show a specific error message to the user
+    }
+  }
+  // --- End New Function ---
 
 </script>
 
