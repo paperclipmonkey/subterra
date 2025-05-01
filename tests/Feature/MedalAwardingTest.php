@@ -23,7 +23,7 @@ class MedalAwardingTest extends TestCase
         Mail::fake();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_first_trip_medal_on_first_trip()
     {
         $user = User::factory()->create();
@@ -38,7 +38,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'First Trip'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_explorer_medal_for_five_unique_caves()
     {
         $user = User::factory()->create();
@@ -56,7 +56,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Explorer'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_veteran_medal_for_twenty_trips()
     {
         $user = User::factory()->create();
@@ -71,7 +71,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Veteran'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_night_owl_medal_for_night_trip()
     {
         $user = User::factory()->create();
@@ -84,7 +84,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Night Owl'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_through_trip_medal_for_different_entrance_and_exit()
     {
         $user = User::factory()->create();
@@ -99,7 +99,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Through Trip'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_ham_pasta_aficionado_medal_for_hunters_hole_and_lodge_inn_sink()
     {
         $user = \App\Models\User::factory()->create();
@@ -119,7 +119,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Ham pasta aficionado'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_hard_caver_medal_for_trips_in_yorkshire_mendip_and_wales()
     {
         $user = \App\Models\User::factory()->create();
@@ -148,7 +148,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Hard Caver'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_history_buff_medal_for_five_mines()
     {
         $user = \App\Models\User::factory()->create();
@@ -169,7 +169,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'History Buff'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_sport_climber_medal_for_caving_in_portland()
     {
         $user = \App\Models\User::factory()->create();
@@ -188,7 +188,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Sport Climber'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_cream_tea_medal_for_caving_in_devon()
     {
         $user = \App\Models\User::factory()->create();
@@ -207,7 +207,7 @@ class MedalAwardingTest extends TestCase
         $this->assertTrue($user->fresh()->medals->contains('name', 'Cream Tea'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_highland_cow_medal_for_caving_in_scotland()
     {
         $user = \App\Models\User::factory()->create();
