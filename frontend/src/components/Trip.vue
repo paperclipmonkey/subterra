@@ -51,6 +51,7 @@
                <v-list-item-title>Duration</v-list-item-title>
                <v-list-item-subtitle>{{ moment(trip.end_time).diff(trip.start_time, 'hours')}} hours</v-list-item-subtitle>
              </v-list-item>
+
           </v-list>
           <v-card-text v-if="trip.description">
             <h3 class="text-h6 mb-2">Description</h3>
@@ -84,6 +85,8 @@
                    <v-chip
                      v-for="club in participant.clubs"
                      :key="club.id"
+                     @click.stop="$router.push({ name: '/club/[slug]', params: { slug: club.slug } })"
+                     class="cursor-pointer"
                      color="primary"
                      variant="outlined"
                      size="small"
@@ -92,10 +95,43 @@
                    </v-chip>
                  </v-chip-group>
                </div>
-               <span v-else class="text-grey">No club specified</span>
+               <template v-else>
+                 <v-chip-group>
+                   <v-chip
+                     color="primary"
+                     variant="outlined"
+                     size="small"
+                   >
+                      No Clubs
+                   </v-chip>
+                 </v-chip-group>
+               </template>
              </v-list-item>
            </v-list>
         </v-card>
+
+        <!-- Tags Card (Modified) -->
+        <v-card class="mb-4" v-if="groupedTags && Object.keys(groupedTags).length">
+          <v-card-title>Tags</v-card-title>
+          <v-card-text>
+             <!-- Iterate through categories -->
+             <div v-for="(tags, category) in groupedTags" :key="category" class="d-flex align-center mb-1"> <!-- Use flexbox for inline layout -->
+               <div class="text-capitalize font-weight-medium mr-2">{{ category }}:</div> <!-- Category title with colon and margin -->
+               <v-chip-group> <!-- Chip group remains inline -->
+                 <v-chip
+                   v-for="tag in tags"
+                   :key="tag.id"
+                   size="small"
+                   variant="tonal"
+                   class="mr-1"
+                 >
+                   {{ tag.tag }}
+                 </v-chip>
+               </v-chip-group>
+             </div>
+          </v-card-text>
+        </v-card>
+        <!-- End Tags Card -->
 
         <v-card v-if="trip.media && trip.media.length > 0">
           <v-card-title>Media</v-card-title>
@@ -171,7 +207,9 @@ const formatTime = (date) => {
 }
 
 const currentUserWasOnTrip = computed(()=> {
-  return trip.value.participants.some((participant) => participant.id === appStore.user.id)
+  // Ensure trip.value and trip.value.participants exist before accessing
+  // Also check if appStore.user exists
+  return trip.value?.participants?.some((participant) => participant.id === appStore.user?.id) ?? false;
 })
 
 const showDeleteConfirmDialog = ref(false);
@@ -183,13 +221,21 @@ const deleteTrip = async () => {
 
 const confirmDelete = async () => {
   showDeleteConfirmDialog.value = false; // Close dialog first
+  // TODO: Add authorization header if needed
   const response = await fetch(`/api/trips/${route.params.id}`, {
     method: 'DELETE',
+    headers: { // Assuming you need authentication
+        'Authorization': `Bearer ${localStorage.getItem('token') || appStore.token}`, // Adjust token retrieval as needed
+        'Accept': 'application/json',
+    }
   })
   if (response.ok) {
     router.push({ name: '/trips' })
+  } else {
+    console.error("Failed to delete trip:", response.status, await response.text());
+    // TODO: Handle potential errors if the delete fails (e.g., show a snackbar message)
+    appStore.showSnackbar('Failed to delete trip.', 'error');
   }
-  // TODO: Handle potential errors if the delete fails (e.g., show a snackbar message)
 }
 
   const trip = ref({
@@ -205,11 +251,48 @@ const confirmDelete = async () => {
       location: {},
     },
     participants: [],
+    tags: [], // Initialize tags array
   })
 
+  // Computed property to group tags by category
+  const groupedTags = computed(() => {
+    if (!trip.value || !trip.value.tags) {
+      return {};
+    }
+    // Filter only tags with type 'trip' before grouping
+    return trip.value.tags
+      .filter(tag => tag.type === 'trip')
+      .reduce((acc, tag) => {
+        const category = tag.category || 'uncategorized';
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(tag);
+        return acc;
+    }, {});
+  });
+
   onMounted(async () => {
-    const response = await fetch(`/api/trips/${route.params.id}`)
-    trip.value = (await response.json()).data
+    try {
+      // TODO: Add authorization header if needed
+      const response = await fetch(`/api/trips/${route.params.id}`, {
+        headers: { // Assuming you need authentication
+            'Authorization': `Bearer ${localStorage.getItem('token') || appStore.token}`, // Adjust token retrieval as needed
+            'Accept': 'application/json',
+        }
+      });
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const responseData = await response.json();
+      trip.value = responseData.data; // Assuming data is nested under 'data' key
+    } catch (error) {
+        console.error("Failed to fetch trip details:", error);
+        // Optionally show an error message to the user
+        appStore.showSnackbar('Failed to load trip details.', 'error');
+        // Redirect or handle error appropriately
+        // router.push({ name: '/trips' }); // Example: redirect back
+    }
   })
 
   const openMedia = (url) => {
@@ -226,5 +309,8 @@ const confirmDelete = async () => {
  }
  .media-thumbnail:hover {
     transform: scale(1.05);
+ }
+ .v-list-item-title {
+    font-weight: 500; /* Make category titles slightly bolder */
  }
 </style>

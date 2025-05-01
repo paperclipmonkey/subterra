@@ -240,7 +240,6 @@
   const tripDurationMinutes = ref(0)
 
   const throughTrip = ref(false)
-  const userEmail = ref({})
   const users = ref([])
   const caves = ref([])
   const tripTags = ref({}) // To store fetched tags grouped by category
@@ -299,11 +298,17 @@
 
     // Load users
     const userResonse = await fetch('/api/users/me')
-    userEmail.value = (await userResonse.json()).data.email
     response = await fetch('/api/users')
     users.value = (await response.json()).data
     if(!trip.participants.length) {
-      trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
+      // Automatically add the current user to the trip
+      const currentUser = (await userResonse.json()).data;
+      if (currentUser && currentUser.id) {
+        const foundUser = users.value.find(user => user.id === currentUser.id);
+        if (foundUser) {
+          trip.participants.push(foundUser);
+        }
+      }
     }
 
     if(route.query.cave_id) {
@@ -473,7 +478,7 @@
     // --- Update Tags After Save/Update ---
     if (savedTripId) {
       await updateTripTags(savedTripId, combinedSelectedTagIds.value);
-      router.push({ name: '/trip/[id]', params: { id: savedTripId } });
+      router.replace({ name: '/trip/[id]', params: { id: savedTripId } });
     } else {
       // Handle case where trip save/update failed before tag update
       console.error("Trip save/update failed, cannot update tags.");
