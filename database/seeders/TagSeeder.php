@@ -165,7 +165,7 @@ class TagSeeder extends Seeder
 
         // - - - - - - - - - Trip Type
         Tag::factory()->create([
-            'tag' => 'Tourist',
+            'tag' => 'Sport',
             'type' => 'trip',
             'category' => 'type',
             'description' => 'A standard caving trip.',

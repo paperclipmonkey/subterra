@@ -27,7 +27,7 @@ class TripTagTest extends TestCase
         $this->trip = Trip::factory()->create();
 
         // Create some assignable trip tags
-        $this->tripTypeTag = Tag::factory()->create(['type' => 'trip', 'category' => 'type', 'tag' => 'Tourist', 'assignable' => true]);
+        $this->tripTypeTag = Tag::factory()->create(['type' => 'trip', 'category' => 'type', 'tag' => 'Sport', 'assignable' => true]);
         $this->tackleTag = Tag::factory()->create(['type' => 'trip', 'category' => 'tackle', 'tag' => 'SRT', 'assignable' => true]);
         $this->difficultyTag = Tag::factory()->create(['type' => 'trip', 'category' => 'difficulty', 'tag' => 'Hard', 'assignable' => true]);
 
@@ -60,7 +60,7 @@ class TripTagTest extends TestCase
                  ->assertJsonCount(1, 'type')
                  ->assertJsonCount(1, 'tackle')
                  ->assertJsonCount(1, 'difficulty')
-                 ->assertJsonFragment(['id' => $this->tripTypeTag->id, 'tag' => 'Tourist'])
+                 ->assertJsonFragment(['id' => $this->tripTypeTag->id, 'tag' => 'Sport'])
                  ->assertJsonFragment(['id' => $this->tackleTag->id, 'tag' => 'SRT'])
                  ->assertJsonFragment(['id' => $this->difficultyTag->id, 'tag' => 'Hard'])
                  ->assertJsonMissing(['tag' => 'Not Assignable']) // Ensure non-assignable are excluded
