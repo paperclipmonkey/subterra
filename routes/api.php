@@ -110,6 +110,7 @@ Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'des
 Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
 Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');
 Route::get('/users/{user}/medals', [UserController::class, 'medals'])->name('users.medals');
+Route::get('/users/{user}/average-trip-duration', [UserController::class, 'averageTripDuration'])->name('users.average-trip-duration');
 
 Route::get('/livez', function(Request $request) {
     try {

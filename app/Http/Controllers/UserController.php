@@ -153,6 +153,39 @@ class UserController extends Controller
     }
 
     /**
+     * Calculate the average trip duration for a user in minutes using PHP.
+     */
+    public function averageTripDuration(User $user)
+    {
+        // Fetch trips with valid start and end times where end > start
+        $trips = $user->trips()
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->whereColumn('end_time', '>', 'start_time')
+            ->select('start_time', 'end_time') // Select only necessary columns
+            ->get();
+
+        // Handle case where user has no valid trips
+        if ($trips->isEmpty()) {
+            return response()->json(['average_duration_minutes' => 0]);
+        }
+
+        // Calculate durations in PHP using Carbon
+        $totalDurationMinutes = 0;
+        foreach ($trips as $trip) {
+            // Ensure times are Carbon instances if not already cast
+            $startTime = $trip->start_time instanceof \Carbon\Carbon ? $trip->start_time : \Carbon\Carbon::parse($trip->start_time);
+            $endTime = $trip->end_time instanceof \Carbon\Carbon ? $trip->end_time : \Carbon\Carbon::parse($trip->end_time);
+            $totalDurationMinutes += $startTime->diffInMinutes($endTime);
+        }
+
+        // Calculate the average
+        $averageDurationMinutes = $totalDurationMinutes / $trips->count();
+
+        return response()->json(['average_duration_minutes' => round($averageDurationMinutes)]);
+    }
+
+    /**
      * Delete a user account. Deletes any trips where the user was the only participant.
      * Keeps all other trips (removes user from them).
      */

@@ -35,6 +35,12 @@
             <v-list-item-subtitle class="metric-subtitle">{{ formatDuration(profile.stats.duration) }}</v-list-item-subtitle>
           </div>
         </v-list-item>
+        <v-list-item>
+          <div>
+            <v-list-item-title class="metric-title">Avg. Trip Duration</v-list-item-title>
+            <v-list-item-subtitle class="metric-subtitle">{{ formatDuration(averageTripDurationMinutes) }}</v-list-item-subtitle>
+          </div>
+        </v-list-item>
       </v-list>
       <v-divider></v-divider>
       <!-- Club Membership Section -->
@@ -134,25 +140,31 @@ const recentTrips = ref([]);
 const heatmapData = ref([]);
 const endDate = ref(new Date());
 const medals = ref([]);
+const averageTripDurationMinutes = ref(0); // Add state for average duration
 let user = ref({});
 
 onMounted(async () => {
   try {
-    const userApi = mande(`/api/users/${route.params.id}`); // Create mande instance for the specific user
+    const userId = route.params.id;
+    const userApi = mande(`/api/users/${userId}`); // Create mande instance for the specific user
     const response = await userApi.get();
     user = await useAppStore().getUser()
     profile.value = response.data || response;
     medals.value = (profile.value.medals || []);
 
-    // Fetch recent trips and heatmap data
-    const [recentTripsResp, heatmapResp] = await Promise.all([
-      mande(`/api/users/${route.params.id}/recent-trips`).get(),
-      mande(`/api/users/${route.params.id}/activity-heatmap`).get()
+    // Fetch recent trips, heatmap data, and average duration
+    const [recentTripsResp, heatmapResp, avgDurationResp] = await Promise.all([
+      mande(`/api/users/${userId}/recent-trips`).get(),
+      mande(`/api/users/${userId}/activity-heatmap`).get(),
+      mande(`/api/users/${userId}/average-trip-duration`).get() // Fetch average duration
     ]);
     recentTrips.value = recentTripsResp.data || recentTripsResp;
     heatmapData.value = heatmapResp || [];
+    averageTripDurationMinutes.value = avgDurationResp?.average_duration_minutes || 0; // Store average duration
+
   } catch (error) {
     console.error(`Error fetching profile or activity for user ${route.params.id}:`, error);
+    // Consider setting default/error states for fetched data
   }
 })
 
@@ -162,91 +174,79 @@ const formatNumber = (num) => {
 
 const formatDuration = (minutes) => {
   if (!minutes) return '0 minutes'
-  if (minutes < 60) return `${minutes} minutes`
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''}`
   const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-  return `${hours}h ${remainingMinutes}m`
+  const mins = minutes % 60
+  return `${hours} hour${hours !== 1 ? 's' : ''} ${mins} minute${mins !== 1 ? 's' : ''}`
 }
 </script>
 
 <style scoped>
-.v-card {
-  margin-bottom: 1rem;
-}
-.v-card-text > div[style*="width"] {
-  max-width: 100%;
-  overflow-x: auto;
-}
-</style>
-<style>
-.vch__tooltip {
-  background-color: #333;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  z-index: 1000;
-}
+
+
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Adjust grid columns to fit 4 items */
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
 
 .metric-title {
-  font-weight: bold;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
 .metric-subtitle {
-  font-size: 1.2em;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
-.bio p {
-  white-space: pre-wrap; /* Preserve line breaks in bio */
+.clubs-section,
+.medals-section,
+.bio {
+  margin-top: 24px;
+}
+
+.chip {
+  margin: 4px;
 }
 
 .medals-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  justify-items: center;
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
 }
+
 .medal-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.medal-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.medal-label {
+  margin-top: 4px;
+  font-size: 0.875rem;
   text-align: center;
 }
-.medal-img {
-  width: 96px;
-  height: 96px;
-  object-fit: contain;
-  margin-bottom: 8px;
-  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
-  filter: drop-shadow(0px 0px 6px #eee);
+
+.bio {
+  line-height: 1.6;
 }
-.medal-item:hover .medal-img {
-  transform: scale(1.1);
-  z-index: 2;
+
+.pa-4 {
+  padding: 16px !important;
 }
-.medal-label {
-  font-size: 0.95em;
-  font-weight: 500;
-  color: #333;
-  word-break: break-word;
-}
+
 @media (max-width: 600px) {
-  .medals-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-  .medal-img {
-    width: 48px;
-    height: 48px;
-  }
-  .medal-label {
-    font-size: 0.8em;
+  .metrics-grid {
+    /* Adjust for smaller screens if needed, e.g., 2 columns */
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
