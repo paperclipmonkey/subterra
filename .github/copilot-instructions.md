@@ -11,7 +11,4 @@ Tests should be written for all API endpoints.
 
 The frontend is using Vuetify as the UI library and Vue Router for routing.`
 
-When annotating tests please use the following format:
-```php
-#[\PHPUnit\Framework\Attributes\Test]
-```
+When annotating tests please use latest phpunit annotations
