@@ -77,7 +77,7 @@ class CaveResource extends JsonResource
                 'files' => $this->system->files ? $this->system->files->map(function ($file) {
                     return [
                         'id' => $file->id,
-                        'url' => \Illuminate\Support\Facades\URL::to('/storage/cave_system_files/' . $file->cave_system_id . '/' . $file->filename),
+                        'url' => Storage::disk('media')->url('cave_system_files/' . $file->cave_system_id . '/' . $file->filename),
                         'original_filename' => $file->original_filename,
                         'mime_type' => $file->mime_type,
                         'size' => $file->size,
