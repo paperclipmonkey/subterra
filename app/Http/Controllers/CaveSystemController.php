@@ -57,8 +57,8 @@ class CaveSystemController extends Controller
                     // Define storage path (adjust disk and path if needed)
                     $path = "cave_system_files/{$caveSystem->id}";
 
-                    // Store the file
-                    $storedPath = $file->storeAs($path, $filename, 'media');
+                    // Save the file to the 'media' disk
+                    $file->storeAs($path, $filename, ['disk' => 'media']);
 
                     // Get details for this file, ensuring index exists
                     $fileDetails = $details[$index] ?? null;
