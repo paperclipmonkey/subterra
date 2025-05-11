@@ -37,7 +37,7 @@ class MedalSeeder extends Seeder
             ],
             [
                 'name' => 'Ham pasta aficionado',
-                'description' => 'Awarded for doing Hunters Hole and Hunters Lodge Inn Sink',
+                'description' => 'Awarded for doing Hunters\' Hole and Hunters\' Lodge Inn Sink',
                 'image_path' => 'ham-pasta.svg',
             ],
             [
