@@ -107,8 +107,8 @@ class MedalAwardingTest extends TestCase
             'name' => 'Ham pasta aficionado',
             'description' => 'Awarded for doing Hunters Hole and Hunters Lodge Inn Sink',
         ]);
-        $huntersHole = \App\Models\Cave::factory()->create(['name' => 'Hunters Hole']);
-        $huntersLodge = \App\Models\Cave::factory()->create(['name' => 'Hunters Lodge Inn Sink']);
+        $huntersHole = \App\Models\Cave::factory()->create(['name' => 'Hunters\' Hole']);
+        $huntersLodge = \App\Models\Cave::factory()->create(['name' => 'Hunters\' Lodge Inn Sink']);
         $trip1 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $huntersHole->id]);
         $trip2 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $huntersLodge->id]);
         $trip1->participants()->attach($user);
