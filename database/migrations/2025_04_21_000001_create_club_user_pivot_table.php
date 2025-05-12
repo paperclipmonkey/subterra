@@ -15,10 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('club_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->boolean('is_admin')->default(false); // Add is_admin flag
-            $table->timestamps(); // Optional: if you want to track when a user joined/left a club
+            $table->boolean('is_admin')->default(false);
+            $table->timestamps();
 
-            // Add unique constraint to prevent duplicate entries
             $table->unique(['club_id', 'user_id']);
         });
     }

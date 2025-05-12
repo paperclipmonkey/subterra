@@ -29,14 +29,4 @@ class CaveFactory extends Factory
             'cave_system_id' => CaveSystem::factory()->create()->id,
         ];
     }
-
-    // /**
-    //  * Indicate that the model's email address should be unverified.
-    //  */
-    // public function unverified(): static
-    // {
-    //     return $this->state(fn (array $attributes) => [
-    //         'email_verified_at' => null,
-    //     ]);
-    // }
 }
