@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\CaveSystem;
-use App\Models\CaveSystemFile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

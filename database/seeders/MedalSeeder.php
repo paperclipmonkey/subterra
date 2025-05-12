@@ -85,31 +85,6 @@ class MedalSeeder extends Seeder
                 'description' => 'For 10 trips to SRT caves',
                 'image_path' => 'string-dangler.svg',
             ],
-            // [
-            //     'name' => 'Long Trip',
-            //     'description' => 'Awarded for a trip that lasted more than 8 hours.',
-            //     'image_path' => 'long-trip.svg',
-            // ],
-            // [
-            //     'name' => 'Wet Trip',
-            //     'description' => 'Awarded for a trip where you got wet.',
-            //     'image_path' => 'wet-trip.svg',
-            // ],
-            // [
-            //     'name' => 'Mud Monster',
-            //     'description' => 'Awarded for a trip where you got muddy.',
-            //     'image_path' => 'mud-monster.svg',
-            // ],
-            // [
-            //     'name' => 'SRT Master',
-            //     'description' => 'Awarded for a trip that involved SRT.',
-            //     'image_path' => 'srt-master.svg',
-            // ],
-            // [
-            //     'name' => 'Caving Legend',
-            //     'description' => 'Awarded for completing 100 trips.',
-            //     'image_path' => 'caving-legend.svg',
-            // ],
         ];
 
         foreach ($medals as $medal) {
