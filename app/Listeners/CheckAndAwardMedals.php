@@ -68,7 +68,7 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->exists();
 
             case 'Ham pasta aficionado':
-                // Awarded for doing Hunters Hole and Hunters Lodge Inn Sink
+                // Awarded for doing Hunters' Hole and Hunters' Lodge Inn Sink
                 $caveNames = $user->trips()
                     ->with('entrance')
                     ->get()

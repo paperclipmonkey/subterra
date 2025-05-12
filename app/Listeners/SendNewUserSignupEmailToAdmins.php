@@ -21,8 +21,7 @@ class SendNewUserSignupEmailToAdmins implements ShouldQueue
      */
     public function handle(UserCreated $event): void
     {
-        // Assuming you have a way to identify admins, e.g., an 'is_admin' flag or a role
-        $admins = User::where('is_admin', true)->get(); // Adjust this query as needed
+        $admins = User::where('is_admin', true)->get();
 
         foreach ($admins as $admin) {
             Mail::to($admin->email)->send(new NewUserSignupNotification($event->user));
