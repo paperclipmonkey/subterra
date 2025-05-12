@@ -46,7 +46,6 @@ class NewUserSignupNotification extends Mailable implements ShouldQueue
      */
     public function content(): Content
     {
-        // Ensure you have a corresponding Blade view at resources/views/emails/new_user_signup.blade.php
         return new Content(
             view: 'emails.new_user_signup',
             with: [

@@ -75,3 +75,9 @@ Add tag collection page
     * Remove yourself from the users list.
 
 Order new trip users api response by frequency of use.
+
+Fix logic for 4 types of medals
+            case 'Sheep dog':
+            case 'Mucky Pup':
+            case 'Faff Now Cave Later':
+            case 'String Dangler':
