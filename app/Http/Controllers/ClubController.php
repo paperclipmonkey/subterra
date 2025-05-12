@@ -3,28 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Club;
-use App\Models\User; // Import User model
-use Illuminate\Http\Request; // Ensure Request is imported
+use App\Models\User;
+use Illuminate\Http\Request;
 use App\Http\Resources\ClubResource;
 use App\Http\Resources\ClubDetailResource;
-use App\Http\Resources\UserResource; // Assuming a basic UserResource exists
-use Illuminate\Support\Facades\Validator; // Ensure Validator is imported
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB; // Import DB facade
-use Illuminate\Support\Facades\Auth; // Import Auth facade
+use Illuminate\Support\Facades\Auth;
 use App\Events\ClubAccessRequested;
 use App\Events\ClubAccessResponded;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Js;
 
 class ClubController extends Controller
 {
     /**
      * Display a listing of enabled clubs (Public).
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index()
+    public function index(): ResourceCollection
     {
-        // Eager load count for efficiency
         $clubs = Club::withCount('users')
                      ->where('is_active', true)
                      ->orderBy('name')
@@ -35,12 +33,9 @@ class ClubController extends Controller
     /**
      * Display a listing of all clubs (Admin).
      * Includes both enabled and disabled clubs.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function adminIndex()
+    public function adminIndex(): ResourceCollection
     {
-        // Eager load count for efficiency
         $clubs = Club::withCount('users')
                      ->orderBy('name')
                      ->get();
@@ -49,14 +44,9 @@ class ClubController extends Controller
 
     /**
      * Display the specified club.
-     * Loads member count.
-     *
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function show(Club $club)
+    public function show(Club $club): JsonResponse
     {
-        // Access check (consider using Policies for more complex rules)
         if (!$club->is_active && !(auth()->check() && auth()->user()->is_admin)) {
              return response()->json(['message' => 'Club not found or access denied.'], 404);
         }
@@ -66,12 +56,9 @@ class ClubController extends Controller
     }
 
     /**
-     * Store a newly created club in storage (Admin).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * Store a newly created club (Admin).
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:clubs,name',
@@ -97,13 +84,9 @@ class ClubController extends Controller
     }
 
      /**
-     * Update the specified club in storage (Admin).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
+     * Update the specified club (Admin).
      */
-    public function update(Request $request, Club $club)
+    public function update(Request $request, Club $club): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => [
@@ -124,22 +107,19 @@ class ClubController extends Controller
         }
 
         $club->update($validator->validated());
-        $club->loadCount('users'); // Load count for the response
-
-        return response()->json(new ClubDetailResource($club->fresh()->loadCount('users'))); // Use fresh() and load count
+        $club->loadCount('users');
+        return response()->json(new ClubDetailResource($club->fresh()->loadCount('users')));
     }
 
     /**
      * Remove the specified club from storage (Admin).
-     *
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Club $club)
+    public function destroy(Club $club): JsonResponse
     {
-        // Consider implications: what happens to users associated with this club?
-        // Maybe soft delete or prevent deletion if members exist?
-        // For now, simple delete:
+        // Check if the club is associated with any users
+        // If so, consider implications of deleting this club
+        // For now, we will just delete it.
+
         try {
             $club->delete();
             return response()->json(null, 204); // No Content
@@ -151,27 +131,19 @@ class ClubController extends Controller
 
     /**
      * Toggle the enabled status of the specified club (Admin).
-     *
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function toggleActive(Club $club)
+    public function toggleActive(Club $club): JsonResponse
     {
         $club->is_active = !$club->is_active;
         $club->save();
-        $club->loadCount('users'); // Load count for the response
-
-        return response()->json(new ClubDetailResource($club->fresh()->loadCount('users'))); // Use fresh() and load count
+        return response()->json(new ClubDetailResource($club->fresh()->loadCount('users')));
     }
 
     /**
      * Allow authenticated user to request joining a club.
      * Creates a pending membership record.
-     *
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function requestJoin(Club $club)
+    public function requestJoin(Club $club): JsonResponse
     {
         $user = Auth::user();
 
@@ -194,13 +166,9 @@ class ClubController extends Controller
 
     /**
      * Get the *approved* members of a specific club (Admin).
-     *
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function getApprovedMembers(Club $club) // Renamed from getMembers
+    public function getApprovedMembers(Club $club): JsonResponse
     {
-        // Use the specific relationship for approved users
         $members = $club->approvedUsers()->orderBy('name')->get();
 
         return response()->json($members->map(function ($user) {
@@ -215,12 +183,8 @@ class ClubController extends Controller
 
     /**
      * Sync *approved* members and their admin status for a specific club (Admin).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function syncApprovedMembers(Request $request, Club $club) // Renamed from syncMembers
+    public function syncApprovedMembers(Request $request, Club $club): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'members' => 'present|array',
@@ -260,11 +224,8 @@ class ClubController extends Controller
 
     /**
      * Get pending membership requests for a club (Admin).
-     *
-     * @param  \App\Models\Club  $club
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function getPendingMembers(Club $club)
+    public function getPendingMembers(Club $club): JsonResponse
     {
         $pending = $club->users()->wherePivot('status', 'pending')->get();
         return response()->json($pending->map(function ($user) {
@@ -276,7 +237,7 @@ class ClubController extends Controller
         }));
     }
 
-    public function approveMember(Club $club, User $user)
+    public function approveMember(Club $club, User $user): JsonResponse
     {
         // Only approve if currently pending
         $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
@@ -285,7 +246,7 @@ class ClubController extends Controller
         return response()->json(['message' => 'Member approved.']);
     }
 
-    public function rejectMember(Club $club, User $user)
+    public function rejectMember(Club $club, User $user): JsonResponse
     {
         // Remove the pending membership
         $club->users()->detach($user->id);
@@ -293,9 +254,4 @@ class ClubController extends Controller
         event(new ClubAccessResponded($club, $user, 'rejected'));
         return response()->json(['message' => 'Member rejected.']);
     }
-
-    // --- Adjust Member Count in Resources ---
-    // The member_count in ClubResource/ClubDetailResource should ideally count only 'approved' members.
-    // Update the Club model's getMemberCountAttribute or adjust the resources.
-
 }
