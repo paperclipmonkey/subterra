@@ -91,7 +91,6 @@ class TagSeeder extends Seeder
         ]);
 
         // - - - - - - -- - - - - - Access
-
         Tag::factory()->create([
             "tag"=> "Open",
             "type"=> "cave",

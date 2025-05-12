@@ -1,12 +1,9 @@
 # TODO
 * [ ] Make trip description pages public
-* [ ] Switch to adding users to a trip by ID
 * [ ] Fix adding new users to a trip
 
 * [ ] Test authentication against all endpoints
 * [ ] Add JSON schema assertions against endpoints
-
-Add users without email, no need to describe people in the description
 
 Continue to show filters in ui after page reload
 
@@ -29,7 +26,7 @@ What would the ui for this look like?
 
 
 Remove/Hide
-    Banwell Stalactite Cave
+    Banwell Stalactite Cave, Viaduct Sink
 
 Back nav button from cave page doesn't keep previous search. Do back nav instead?
 
@@ -54,15 +51,8 @@ Add a geojson field to each cave_system which can store arbitrary geojson data.
     * add share button so its easy to post elsewhere
     * ensure people not logged in know what they are missing
     
-* Add page so admins can add new caves / cave_systems
 * Rename conditions to hazards? Add CO2
 * Add Scottish caves to app
-
-* Email people when they're tagged in a trip
-    * Use Sendgrid
-    * Perform actions sync
-    * Send emails to the rest of the trip participants
-* Update styling of core pages
 
 * Show parking / walking route options to a cave using GeoJSON shapes. Add editor for this to the cave edit page. https://maplibre.org/maplibre-gl-js/docs/examples/maplibre-gl-terradraw/
     * save as access_geojson
@@ -84,8 +74,10 @@ Add tag collection page
         * Add a listener for participants so that if they remove themselves they get added back in.
     * Remove yourself from the users list.
 
-* Add ability to choose cave_system from dropdown when editing a cave.
+Order new trip users api response by frequency of use.
 
-Order users api response by frequency of use.
-
-* Remove new trip page from history when we move forward
+Fix logic for 4 types of medals
+            case 'Sheep dog':
+            case 'Mucky Pup':
+            case 'Faff Now Cave Later':
+            case 'String Dangler':
