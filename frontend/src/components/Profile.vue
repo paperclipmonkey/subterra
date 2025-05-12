@@ -233,7 +233,6 @@ const formatDuration = (minutes) => {
 .medal-label {
   font-size: 0.95em;
   font-weight: 500;
-  color: #333;
   word-break: break-word;
 }
 @media (max-width: 600px) {
@@ -244,9 +243,6 @@ const formatDuration = (minutes) => {
   .medal-img {
     width: 48px;
     height: 48px;
-  }
-  .medal-label {
-    font-size: 0.8em;
   }
 }
 </style>

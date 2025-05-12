@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\CaveSystem;
-use App\Models\CaveSystemFile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -58,5 +57,21 @@ class CaveSystemTest extends TestCase
         $caveSystem->refresh();
         $this->assertCount(1, $caveSystem->files);
         Storage::disk('media')->assertExists("cave_system_files/{$caveSystem->id}/" . $caveSystem->files->first()->filename);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_prevents_non_admins_from_updating_a_cave_system()
+    {
+        $nonAdminUser = User::factory()->create(['is_admin' => false]);
+        $this->actingAs($nonAdminUser);
+
+        $caveSystem = CaveSystem::factory()->create();
+
+        $data = [
+            'name' => 'Updated Name',
+        ];
+
+        $response = $this->json('PUT', "/api/cave_systems/{$caveSystem->id}", $data);
+        $response->assertForbidden();
     }
 }
