@@ -8,15 +8,14 @@ use App\Http\Resources\UserResource;
 use App\Http\Resources\UserDetailResource;
 use App\Http\Resources\TripResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(): ResourceCollection
     {
         return UserResource::collection(User::all());
     }
@@ -24,7 +23,7 @@ class UserController extends Controller
     /**
      * Admin endpoint to get all users with detailed info.
      */
-    public function adminIndex()
+    public function adminIndex(): ResourceCollection
     {
         // Need withoutGlobalScopes here as withoutScopedBindings() doesn't affect this query
         return UserDetailResource::collection(User::withoutGlobalScopes()->get());
@@ -33,7 +32,7 @@ class UserController extends Controller
     /**
      * Toggle the approval status of a user.
      */
-    public function toggleApproval(User $user)
+    public function toggleApproval(User $user): UserDetailResource
     {
         // Route model binding handles fetching the user without scopes via withoutScopedBindings()
         $user->is_approved = !$user->is_approved;
@@ -44,13 +43,8 @@ class UserController extends Controller
     /**
      * Toggle the admin status of a user.
      */
-    public function toggleAdmin(User $user)
+    public function toggleAdmin(User $user): UserDetailResource
     {
-        // Route model binding handles fetching the user without scopes via withoutScopedBindings()
-        // Optional: Prevent removing the last admin
-        // if ($user->is_admin && User::where('is_admin', true)->count() === 1) {
-        //     return response()->json(['message' => 'Cannot remove the last admin.'], 400);
-        // }
         $user->is_admin = !$user->is_admin;
         $user->save();
         return new UserDetailResource($user);
@@ -59,7 +53,8 @@ class UserController extends Controller
     /**
      * Create a new user (potentially needs more robust implementation).
      */
-    public function create(Request $request) {
+    public function create(Request $request): UserDetailResource
+    {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
@@ -72,18 +67,16 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
-            'is_active' => false, // Or true depending on desired default
-            'is_approved' => false, // Default to not approved
-            'is_admin' => false, // Default to not admin
+            'is_active' => false,
+            'is_approved' => false,
+            'is_admin' => false,
             'photo' => $defaultPhotoPath, 
-            // Add password handling if creating users this way
-            // 'password' => bcrypt('default_password'), // Example
         ]);
 
         return new UserDetailResource($user);
     }
 
-    public function show(User $user)
+    public function show(User $user): UserDetailResource
     {
         return new UserDetailResource($user);
     }
@@ -91,7 +84,8 @@ class UserController extends Controller
     /**
      * Update user profile information (bio, club).
      */
-    public function store(User $user, Request $request) {
+    public function store(User $user, Request $request): UserDetailResource
+    {
         $validatedData = $request->validate([
             'bio' => 'nullable|string',
             // Add validation for other editable fields if needed
@@ -104,7 +98,7 @@ class UserController extends Controller
     /**
      * Get the 10 most recent trips for a user.
      */
-    public function recentTrips(User $user)
+    public function recentTrips(User $user): ResourceCollection
     {
         $trips = Trip::whereHas('participants', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
@@ -120,7 +114,7 @@ class UserController extends Controller
     /**
      * Get activity heatmap data for a user (trips per day in the last year).
      */
-    public function activityHeatmap(User $user)
+    public function activityHeatmap(User $user): JsonResponse
     {
         $oneYearAgo = Carbon::now()->subYear();
 
@@ -143,7 +137,7 @@ class UserController extends Controller
     /**
      * List all medals accomplished by the user.
      */
-    public function medals(User $user)
+    public function medals(User $user): JsonResponse
     {
         $medals = $user->medals()->get();
         return response()->json([
@@ -156,7 +150,7 @@ class UserController extends Controller
      * Delete a user account. Deletes any trips where the user was the only participant.
      * Keeps all other trips (removes user from them).
      */
-    public function destroy(Request $request, User $user)
+    public function destroy(Request $request, User $user): JsonResponse
     {
         // Only allow the user themselves or an admin to delete
         if ($request->user()->id !== $user->id && !$request->user()->is_admin) {
