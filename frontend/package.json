@@ -42,7 +42,7 @@
     "vite": "^5.3.3",
     "vite-plugin-pwa": "^0.20.5",
     "vite-plugin-vue-layouts": "^0.11.0",
-    "vite-plugin-vuetify": "^2.0.3",
+    "vite-plugin-vuetify": "^2.1.1",
     "vue-router": "^4.4.0"
   }
 }
