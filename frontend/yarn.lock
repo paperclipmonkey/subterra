@@ -10,11 +10,6 @@
     "@jridgewell/gen-mapping" "^0.3.5"
     "@jridgewell/trace-mapping" "^0.3.24"
 
-"@antfu/utils@^0.7.10":
-  version "0.7.10"
-  resolved "https://registry.yarnpkg.com/@antfu/utils/-/utils-0.7.10.tgz#ae829f170158e297a9b6a28f161a8e487d00814d"
-  integrity sha512-+562v9k4aI80m1+VuMHehNJWLOFjBnXn3tdOitzD0il5b7smkSBal4+a3oKiQTbrwMmN/TBUMDvbdoWDehgOww==
-
 "@apideck/better-ajv-errors@^0.3.1":
   version "0.3.6"
   resolved "https://registry.yarnpkg.com/@apideck/better-ajv-errors/-/better-ajv-errors-0.3.6.tgz#957d4c28e886a64a8141f7522783be65733ff097"
@@ -1183,7 +1178,7 @@
     estree-walker "^1.0.1"
     picomatch "^2.2.2"
 
-"@rollup/pluginutils@^5.0.1", "@rollup/pluginutils@^5.1.0", "@rollup/pluginutils@^5.1.3", "@rollup/pluginutils@^5.1.4":
+"@rollup/pluginutils@^5.0.1", "@rollup/pluginutils@^5.1.3":
   version "5.1.4"
   resolved "https://registry.yarnpkg.com/@rollup/pluginutils/-/pluginutils-5.1.4.tgz#bb94f1f9eaaac944da237767cdfee6c5b2262d4a"
   integrity sha512-USm05zrsFxYLPdWWq+K3STlWiT/3ELn3RcV5hJMghpeAIhxfsUIg6mt12CBJBInWMV4VneoV7SfGv8xIwo2qNQ==
@@ -2772,7 +2767,7 @@ fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz#3a7d56b559d6cbc3eb512325244e619a65c6c525"
   integrity sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==
 
-fast-glob@^3.3.2, fast-glob@^3.3.3:
+fast-glob@^3.3.2:
   version "3.3.3"
   resolved "https://registry.yarnpkg.com/fast-glob/-/fast-glob-3.3.3.tgz#d06d585ce8dba90a16b0505c543c3ccfb3aeb818"
   integrity sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==
@@ -3523,7 +3518,7 @@ linkifyjs@^4.2.0:
   resolved "https://registry.yarnpkg.com/linkifyjs/-/linkifyjs-4.2.0.tgz#9dd30222b9cbabec9c950e725ec00031c7fa3f08"
   integrity sha512-pCj3PrQyATaoTYKHrgWRF3SJwsm61udVh+vuls/Rl6SptiDhgE7ziUIudAedRY9QEfynmM7/RmLEfPUyw1HPCw==
 
-local-pkg@^0.5.0, local-pkg@^0.5.1:
+local-pkg@^0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/local-pkg/-/local-pkg-0.5.1.tgz#69658638d2a95287534d4c2fff757980100dbb6d"
   integrity sha512-9rrA30MRRP3gBD3HTGnC6cDFpaE1kVDWxWgqWJUN0RvDNAo+Nz/9GxB+nHOH0ifbVFy0hSA1V6vFDvnx54lTEQ==
@@ -3588,7 +3583,7 @@ magic-string@^0.25.0, magic-string@^0.25.7:
   dependencies:
     sourcemap-codec "^1.4.8"
 
-magic-string@^0.30.10, magic-string@^0.30.11, magic-string@^0.30.14, magic-string@^0.30.17:
+magic-string@^0.30.11, magic-string@^0.30.14, magic-string@^0.30.17:
   version "0.30.17"
   resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.30.17.tgz#450a449673d2460e5bbcfba9a61916a1714c7453"
   integrity sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==
@@ -3699,13 +3694,6 @@ minimatch@^5.0.1:
   version "5.1.6"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-5.1.6.tgz#1cfcb8cf5522ea69952cd2af95ae09477f122a96"
   integrity sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==
-  dependencies:
-    brace-expansion "^2.0.1"
-
-minimatch@^9.0.4:
-  version "9.0.5"
-  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-9.0.5.tgz#d74f9dd6b57d83d8e98cfb82133b03978bc929e5"
-  integrity sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==
   dependencies:
     brace-expansion "^2.0.1"
 
@@ -3950,7 +3938,7 @@ pkg-types@^1.2.1, pkg-types@^1.3.0:
     mlly "^1.7.4"
     pathe "^2.0.1"
 
-pkg-types@^2.0.1:
+pkg-types@^2.0.1, pkg-types@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/pkg-types/-/pkg-types-2.1.0.tgz#70c9e1b9c74b63fdde749876ee0aa007ea9edead"
   integrity sha512-wmJwA+8ihJixSoHKxZJRBQG1oY8Yr9pGLzRmSsNms0iNWyHHAlZCa7mmKiFR10YPZuz/2k169JiS/inOjBCZ2A==
@@ -4653,10 +4641,10 @@ strip-json-comments@^3.1.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
 
-strip-literal@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/strip-literal/-/strip-literal-2.1.1.tgz#26906e65f606d49f748454a08084e94190c2e5ad"
-  integrity sha512-631UJ6O00eNGfMiWG78ck80dfBab8X6IVFB51jZK5Icd7XAs60Z5y7QdSd/wGIklnWvRbUNloVzhOKKmutxQ6Q==
+strip-literal@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/strip-literal/-/strip-literal-3.0.0.tgz#ce9c452a91a0af2876ed1ae4e583539a353df3fc"
+  integrity sha512-TcccoMhJOM3OebGhSBEmp3UZ2SfDMZUEBdRA/9ynfLi8yYajyWX3JiXArcJt4Umh4vISpspkQIY8ZZoCqjbviA==
   dependencies:
     js-tokens "^9.0.1"
 
@@ -4880,25 +4868,25 @@ unicode-property-aliases-ecmascript@^2.0.0:
   resolved "https://registry.yarnpkg.com/unicode-property-aliases-ecmascript/-/unicode-property-aliases-ecmascript-2.1.0.tgz#43d41e3be698bd493ef911077c9b131f827e8ccd"
   integrity sha512-6t3foTQI9qne+OZoVQB/8x8rk2k1eVy1gRXhV3oFQ5T6R1dqQ1xtin3XqSlx3+ATBkliTaR/hHyJBm+LVPNM8w==
 
-unimport@^3.7.2:
-  version "3.14.6"
-  resolved "https://registry.yarnpkg.com/unimport/-/unimport-3.14.6.tgz#f01170aa2fb94c4f97b22c0ac2822ef7e8e0726d"
-  integrity sha512-CYvbDaTT04Rh8bmD8jz3WPmHYZRG/NnvYVzwD6V1YAlvvKROlAeNDUBhkBGzNav2RKaeuXvlWYaa1V4Lfi/O0g==
+unimport@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/unimport/-/unimport-4.2.0.tgz#c25211d206d3430e9160cc7d458e9fa9ba828ac0"
+  integrity sha512-mYVtA0nmzrysnYnyb3ALMbByJ+Maosee2+WyE0puXl+Xm2bUwPorPaaeZt0ETfuroPOtG8jj1g/qeFZ6buFnag==
   dependencies:
-    "@rollup/pluginutils" "^5.1.4"
-    acorn "^8.14.0"
+    acorn "^8.14.1"
     escape-string-regexp "^5.0.0"
     estree-walker "^3.0.3"
-    fast-glob "^3.3.3"
-    local-pkg "^1.0.0"
+    local-pkg "^1.1.1"
     magic-string "^0.30.17"
     mlly "^1.7.4"
-    pathe "^2.0.1"
+    pathe "^2.0.3"
     picomatch "^4.0.2"
-    pkg-types "^1.3.0"
+    pkg-types "^2.1.0"
     scule "^1.3.0"
-    strip-literal "^2.1.1"
-    unplugin "^1.16.1"
+    strip-literal "^3.0.0"
+    tinyglobby "^0.2.12"
+    unplugin "^2.2.2"
+    unplugin-utils "^0.2.4"
 
 unique-string@^2.0.0:
   version "2.0.0"
@@ -4912,19 +4900,17 @@ universalify@^2.0.0:
   resolved "https://registry.yarnpkg.com/universalify/-/universalify-2.0.1.tgz#168efc2180964e6386d061e094df61afe239b18d"
   integrity sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==
 
-unplugin-auto-import@^0.17.6:
-  version "0.17.8"
-  resolved "https://registry.yarnpkg.com/unplugin-auto-import/-/unplugin-auto-import-0.17.8.tgz#8dd5d1f21700171242553f1a476bd43ffad74af6"
-  integrity sha512-CHryj6HzJ+n4ASjzwHruD8arhbdl+UXvhuAIlHDs15Y/IMecG3wrf7FVg4pVH/DIysbq/n0phIjNHAjl7TG7Iw==
+unplugin-auto-import@^19.2.0:
+  version "19.2.0"
+  resolved "https://registry.yarnpkg.com/unplugin-auto-import/-/unplugin-auto-import-19.2.0.tgz#f90c46a639f39cea184feadc17cc350f84cc6a5c"
+  integrity sha512-DGRHg86nUDKEYpny1p2kFZjeLg7kHQmknsPQ8krAshvpeypps7dFxNBsAqhBaxYINjetbgQilF8wbjuZxpdomg==
   dependencies:
-    "@antfu/utils" "^0.7.10"
-    "@rollup/pluginutils" "^5.1.0"
-    fast-glob "^3.3.2"
-    local-pkg "^0.5.0"
-    magic-string "^0.30.10"
-    minimatch "^9.0.4"
-    unimport "^3.7.2"
-    unplugin "^1.11.0"
+    local-pkg "^1.1.1"
+    magic-string "^0.30.17"
+    picomatch "^4.0.2"
+    unimport "^4.2.0"
+    unplugin "^2.3.2"
+    unplugin-utils "^0.2.4"
 
 unplugin-fonts@^1.1.1:
   version "1.3.1"
@@ -4984,15 +4970,7 @@ unplugin@2.0.0-beta.1:
     acorn "^8.14.0"
     webpack-virtual-modules "^0.6.2"
 
-unplugin@^1.11.0, unplugin@^1.16.1:
-  version "1.16.1"
-  resolved "https://registry.yarnpkg.com/unplugin/-/unplugin-1.16.1.tgz#a844d2e3c3b14a4ac2945c42be80409321b61199"
-  integrity sha512-4/u/j4FrCKdi17jaxuJA0jClGxB1AvU2hw/IuayPc4ay1XGaJs/rbb4v5WKwAjNifjmXK9PIFyuPiaK8azyR9w==
-  dependencies:
-    acorn "^8.14.0"
-    webpack-virtual-modules "^0.6.2"
-
-unplugin@^2.3.2:
+unplugin@^2.2.2, unplugin@^2.3.2:
   version "2.3.4"
   resolved "https://registry.yarnpkg.com/unplugin/-/unplugin-2.3.4.tgz#f3cf35f36656404cb9078be59f993941d649d87c"
   integrity sha512-m4PjxTurwpWfpMomp8AptjD5yj8qEZN5uQjjGM3TAs9MWWD2tXSSNNj6jGR2FoVGod4293ytyV6SwBbertfyJg==
