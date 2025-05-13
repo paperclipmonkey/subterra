@@ -12,7 +12,6 @@
     <template v-slot:item.system.length="{ value }">
       <span :title="`${value} m`">{{ Math.round((value / 1000)*10)/10 }} km</span>
     </template>
-    <template v-slot:item.system.vertical_range="{ value }"> {{ value }} m</template>
     <template v-slot:item.name="{ item, value }">
       <router-link :to="{name: '/cave/[id]', params: {id: item.slug}}">
         {{ value }}
@@ -38,7 +37,6 @@
   const headers = ref([
     { title: 'Name', key: 'name' },
     { title: 'Length', key: 'system.length' },
-    { title: 'Vertical Range', key: 'system.vertical_range' },
     { title: 'Location', key: 'location' },
     { title: 'Previously Done', key: 'previously_done' },
     // { title: 'Tags', key: 'tags' }
