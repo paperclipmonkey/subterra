@@ -24,6 +24,19 @@ const fetchPendingClubs = async () => {
     const user = (await response.json()).data;
     // Filter clubs with status 'pending'
     pendingClubs.value = (user.clubs || []).filter(c => c.status === 'pending');
+    let approvedClubs = (user.clubs || []).filter(c => c.status === 'approved');
+
+    if(approvedClubs.length > 0) {
+      // If we've been approved, redirect to /caves
+      window.location.href = '/trips';
+    }
+
+    // If there are pending clubs, refresh the list every 5 seconds until a club is approved, then redirect
+    if (pendingClubs.value.length) {
+      setTimeout(() => {
+        fetchPendingClubs();
+      }, 5000);
+    }
   } catch (e) {
     pendingClubs.value = [];
   }

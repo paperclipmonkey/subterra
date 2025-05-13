@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClubDataController;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ApiIsAdmin;
-use App\Http\Resources\UserDetailResource;
+use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\ClubController;
@@ -83,7 +83,7 @@ Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
-        return new UserDetailResource($request->user());
+        return new UserDetailEmailResource($request->user());
     } else {
         return abort(400, 'No user logged in');
     }

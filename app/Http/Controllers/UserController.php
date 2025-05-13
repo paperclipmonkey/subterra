@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Trip;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\UserDetailResource;
+use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Resources\TripResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,34 +27,34 @@ class UserController extends Controller
     public function adminIndex(): ResourceCollection
     {
         // Need withoutGlobalScopes here as withoutScopedBindings() doesn't affect this query
-        return UserDetailResource::collection(User::withoutGlobalScopes()->get());
+        return UserDetailEmailResource::collection(User::withoutGlobalScopes()->get());
     }
 
     /**
      * Toggle the approval status of a user.
      */
-    public function toggleApproval(User $user): UserDetailResource
+    public function toggleApproval(User $user): UserDetailEmailResource
     {
         // Route model binding handles fetching the user without scopes via withoutScopedBindings()
         $user->is_approved = !$user->is_approved;
         $user->save();
-        return new UserDetailResource($user);
+        return new UserDetailEmailResource($user);
     }
 
     /**
      * Toggle the admin status of a user.
      */
-    public function toggleAdmin(User $user): UserDetailResource
+    public function toggleAdmin(User $user): UserDetailEmailResource
     {
         $user->is_admin = !$user->is_admin;
         $user->save();
-        return new UserDetailResource($user);
+        return new UserDetailEmailResource($user);
     }
 
     /**
      * Create a new user (potentially needs more robust implementation).
      */
-    public function create(Request $request): UserDetailResource
+    public function create(Request $request): UserDetailEmailResource
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
@@ -73,7 +74,7 @@ class UserController extends Controller
             'photo' => $defaultPhotoPath, 
         ]);
 
-        return new UserDetailResource($user);
+        return new UserDetailEmailResource($user);
     }
 
     public function show(User $user): UserDetailResource
@@ -84,7 +85,7 @@ class UserController extends Controller
     /**
      * Update user profile information (bio, club).
      */
-    public function store(User $user, Request $request): UserDetailResource
+    public function store(User $user, Request $request): UserDetailEmailResource
     {
         $validatedData = $request->validate([
             'bio' => 'nullable|string',
@@ -92,7 +93,7 @@ class UserController extends Controller
         ]);
 
         $user->update($validatedData);
-        return new UserDetailResource($user);
+        return new UserDetailEmailResource($user);
     }
 
     /**

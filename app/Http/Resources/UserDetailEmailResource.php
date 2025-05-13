@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
-class UserDetailResource extends JsonResource
+class UserDetailEmailResource extends JsonResource
 {
 
     /**
@@ -19,6 +19,7 @@ class UserDetailResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'email'=> $this->email,
             'photo' => $this->photo,
             'bio' => $this->bio,
             // Eager load approvedClubs if not already done in controller
