@@ -14,7 +14,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import ClubMembershipConfirmation from './ClubMembershipConfirmation.vue';
-import { useRouter } from "vue-router";
 
 const pendingClubs = ref([]);
 
@@ -27,9 +26,7 @@ const fetchPendingClubs = async () => {
     pendingClubs.value = (user.clubs || []).filter(c => c.status === 'pending');
     let approvedClubs = (user.clubs || []).filter(c => c.status === 'approved');
 
-    console.log(approvedClubs);
     if(approvedClubs.length > 0) {
-      console.log("Approved clubs found");
       // If we've been approved, redirect to /caves
       window.location.href = '/trips';
     }
