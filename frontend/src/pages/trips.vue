@@ -10,7 +10,7 @@
 <style scoped>
 .fab {
   position: fixed;
-  right: 66px;
-  bottom: 100px;
+  right: 36px;
+  bottom: 90px;
 }
 </style>
