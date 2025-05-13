@@ -54,6 +54,16 @@ services:
             - '/dev/shm:/dev/shm'
         networks:
             - sail
+    node:
+        image: 'node:22'
+        volumes:
+            - './frontend:/var/www/html'
+        working_dir: '/var/www/html'
+        entrypoint: 'yarn run dev --host=0.0.0.0'
+        networks:
+            - sail
+        ports:
+            - '3000:3000'
 networks:
     sail:
         driver: bridge
