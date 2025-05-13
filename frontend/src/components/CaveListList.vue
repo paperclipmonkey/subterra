@@ -39,6 +39,5 @@
     { title: 'Length', key: 'system.length' },
     { title: 'Location', key: 'location' },
     { title: 'Previously Done', key: 'previously_done' },
-    // { title: 'Tags', key: 'tags' }
   ])
 </script>
