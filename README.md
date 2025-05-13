@@ -254,24 +254,24 @@ class users {
    bigint id
 }
 
-audits  -->  users : user_id:id
-cave_system_files  -->  cave_systems : cave_system_id:id
-cave_system_tag  -->  cave_systems : cave_system_id:id
-cave_system_tag  -->  tags : tag_id:id
-cave_tag  -->  caves : cave_id:id
-cave_tag  -->  tags : tag_id:id
-caves  -->  cave_systems : cave_system_id:id
-club_user  -->  clubs : club_id:id
-club_user  -->  users : user_id:id
-medal_user  -->  medals : medal_id:id
-medal_user  -->  users : user_id:id
-tag_trip  -->  tags : tag_id:id
-tag_trip  -->  trips : trip_id:id
-trip_media  -->  trips : trip_id:id
-trip_user  -->  trips : trip_id:id
-trip_user  -->  users : user_id:id
-trips  -->  cave_systems : cave_system_id:id
-trips  -->  caves : entrance_cave_id:id
-trips  -->  caves : exit_cave_id:id
+audits  -->  users : user_id.id
+cave_system_files  -->  cave_systems : cave_system_id.id
+cave_system_tag  -->  cave_systems : cave_system_id.id
+cave_system_tag  -->  tags : tag_id.id
+cave_tag  -->  caves : cave_id.id
+cave_tag  -->  tags : tag_id.id
+caves  -->  cave_systems : cave_system_id.id
+club_user  -->  clubs : club_id.id
+club_user  -->  users : user_id.id
+medal_user  -->  medals : medal_id.id
+medal_user  -->  users : user_id.id
+tag_trip  -->  tags : tag_id.id
+tag_trip  -->  trips : trip_id.id
+trip_media  -->  trips : trip_id.id
+trip_user  -->  trips : trip_id.id
+trip_user  -->  users : user_id.id
+trips  -->  cave_systems : cave_system_id.id
+trips  -->  caves : entrance_cave_id.id
+trips  -->  caves : exit_cave_id.id
 
 ```
