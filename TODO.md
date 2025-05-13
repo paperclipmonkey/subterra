@@ -1,4 +1,5 @@
 # TODO
+
 * [ ] Make trip description pages public
 * [ ] Fix adding new users to a trip
 
