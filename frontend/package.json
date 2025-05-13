@@ -33,7 +33,7 @@
     "eslint-plugin-promise": "^6.4.0",
     "eslint-plugin-vue": "^9.27.0",
     "maplibre-gl": "^5.3.0",
-    "pinia": "^2.2.4",
+    "pinia": "^3.0.2",
     "sass": "1.77.6",
     "unplugin-auto-import": "^0.17.6",
     "unplugin-fonts": "^1.1.1",
