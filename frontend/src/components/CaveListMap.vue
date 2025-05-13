@@ -5,7 +5,7 @@
         :map-style="style"
         :center="lnglat"
         :zoom="zoom"
-        max-zoom="15"
+        :max-zoom="15"
         ref="map"
       >
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id" :coordinates="[cave.location_lng, cave.location_lat]">
@@ -97,15 +97,13 @@
       { immediate: true }
     );
   })
-
-  // mapOne.redraw()
 </script>
 
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 .map-container {
-  height: calc(100vh - 195px);
+  height: calc(100dvh - 195px);
 }
 
 .map-holder {
