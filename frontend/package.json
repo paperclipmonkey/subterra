@@ -15,7 +15,7 @@
     "moment": "^2.30.1",
     "roboto-fontface": "*",
     "tiptap-markdown": "^0.8.10",
-    "vue": "^3.4.31",
+    "vue": "^3.5.13",
     "vue-markdown-render": "^2.2.1",
     "vue3-calendar-heatmap": "^2.0.5",
     "vuetify": "^3.8",
