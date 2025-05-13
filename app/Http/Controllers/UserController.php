@@ -30,7 +30,7 @@ class UserController extends Controller
             ->flatten()
             ->pluck('id')
             ->unique()
-            ->forget($currentUser->id); // Remove self if present
+            ->filter(fn($id) => $id !== $currentUser->id); // Remove self if present
         }
 
         // Count how many trips each user has shared with the current user
