@@ -21,8 +21,8 @@ class CaveSystemFactory extends Factory
             'name' => fake()->name(),
             'slug' => fake()->slug(),
             'description' => fake()->sentence(30),
-            'length' => fake()->randomDigitNotNull(),
-            'vertical_range' => fake()->randomDigitNotNull(),
+            'length' => fake()->randomDigitNotNull() * 101,
+            'vertical_range' => fake()->randomDigitNotNull() * 11,
         ];
     }
 }
