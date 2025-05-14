@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Trip;
+use OwenIt\Auditing\Auditable;
 
-class Cave extends Model
+class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory;
+    use HasFactory, Auditable;
+
     public $timestamps = false;
 
     protected $fillable = [
