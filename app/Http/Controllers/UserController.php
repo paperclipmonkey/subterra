@@ -18,7 +18,52 @@ class UserController extends Controller
 {
     public function index(): ResourceCollection
     {
-        return UserResource::collection(User::all());
+        $currentUser = auth()->user();
+
+        // Get IDs of users in the same clubs
+        $clubUserIds = collect();
+        if ($currentUser) {
+            $clubUserIds = $currentUser->clubs()
+            ->with('users:id')
+            ->get()
+            ->pluck('users')
+            ->flatten()
+            ->pluck('id')
+            ->unique()
+            ->filter(fn($id) => $id !== $currentUser->id); // Remove self if present
+        }
+
+        // Count how many trips each user has shared with the current user
+        $trips = \App\Models\Trip::whereHas('participants', function ($q) use ($currentUser) {
+                $q->where('user_id', $currentUser->id);
+            })
+            ->with('participants:id')
+            ->get();
+
+        $tripUserCounts = collect();
+        foreach ($trips as $trip) {
+            foreach ($trip->participants as $participant) {
+                if ($participant->id !== $currentUser->id) {
+                    $tripUserCounts[$participant->id] = ($tripUserCounts[$participant->id] ?? 0) + 1;
+                }
+            }
+        }
+        
+
+        // Score users: +2 for each shared trip, +1 for same club
+        $users = User::all()->map(function ($user) use ($clubUserIds, $tripUserCounts, $currentUser) {
+            $score = 0;
+            if ($clubUserIds->contains($user->id)) {
+                $score += 1;
+            }
+            if (isset($tripUserCounts[$user->id])) {
+                $score += 2 * $tripUserCounts[$user->id];
+            }
+            $user->proximity_score = $score;
+            return $user;
+        })->sortByDesc('proximity_score')->values();
+
+        return UserResource::collection($users);
     }
 
     /**
