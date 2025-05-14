@@ -1,157 +1,199 @@
 <template>
   <v-container class="pa-4">
     <v-form class="pa-xl-4">
-      <v-text-field
-        v-model="trip.name"
-        label="Trip Name"
-        :rules="rules.name"
-        :error-messages="validationErrors.name"
-        @update:modelValue="validationErrors.name = []"
-        required
-      ></v-text-field>
-      <!-- Consider adding error display for description if needed -->
-      <VuetifyTiptap @change="updatedDescription" v-model="trip.description" output="text" markdown-theme="github" >
-      </VuetifyTiptap>
-      <v-file-input
-        prepend-icon="mdi-camera"
-        accept="image/*"
-        label="Trip Photos"
-        v-model="trip.media"
-        :error-messages="validationErrors.media"
-        @update:modelValue="validationErrors.media = []"
-        chips
-        multiple
-      ></v-file-input>
-      <template v-if="trip.existing_media && trip.existing_media.length">
-        Existing media:
-        <v-container class="pa-1">
-          <v-row>
-            <v-col
-              v-for="(media, i) in trip.existing_media"
-              :key="i"
-              cols="3"
-              md="6"
+      <v-stepper v-model="step" :items="['Where', 'When', 'Who', 'What']" editable>
+        <template v-slot:item.1>
+          <v-card title="Where" flat>
+            <v-autocomplete
+              label="Location"
+              :items="caves"
+              item-title="name"
+              :rules="rules.location"
+              item-value="id"
+              v-model="trip.entrance_cave_id"
+              :error-messages="validationErrors.entrance_cave_id"
+              hint="Select the cave entrance where the trip started."
+              persistent-hint
             >
-              <v-img class="existing_media text-right pa-2" :key="media.id" :src="media.url" alt="filename">
-                <v-btn icon="mdi-delete"  @click="removeExistingMedia(media)"></v-btn>
-              </v-img>
-            </v-col>
-          </v-row>
-        </v-container>
-      </template>
-      <v-autocomplete
-        label="Location"
-        :items="caves"
-        item-title="name"
-        :rules="rules.location"
-        item-value="id"
-        v-model="trip.entrance_cave_id"
-        :error-messages="validationErrors.entrance_cave_id || validationErrors.system_id"
-        @update:modelValue="() => { validationErrors.entrance_cave_id = []; validationErrors.system_id = [] }"
-      >
-        <template v-slot:item="{ props, item }">
-          <!-- :prepend-avatar="item.raw.hero_image || '/map-icon-512-transparent.webp'" -->
-          <v-list-item
-            v-bind="props"
-            :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
-            :title="item.raw.name"
-          ></v-list-item>
+              <template v-slot:item="{ props, item }">
+                <v-list-item
+                  v-bind="props"
+                  :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
+                  :title="item.raw.name"
+                ></v-list-item>
+              </template>
+            </v-autocomplete>
+            <template v-if="system_entrances_count > 1">
+              <v-checkbox v-model="throughTrip" label="Through trip" hint="Tick if you exited from a different entrance." persistent-hint></v-checkbox>
+              <template v-if="throughTrip">
+                <v-autocomplete
+                  label="Exit"
+                  :items="caves.filter(cave => cave.system.id === cave_system_id)"
+                  item-title="name"
+                  item-value="id"
+                  v-model="trip.exit_cave_id"
+                  :error-messages="validationErrors.exit_cave_id"
+                  hint="Select the cave entrance where the trip ended."
+                  persistent-hint
+                ></v-autocomplete>
+              </template>
+            </template>
+          </v-card>
         </template>
-      </v-autocomplete>
-      <template v-if="system_entrances_count > 1">
-        <v-checkbox v-model="throughTrip" label="Through trip"></v-checkbox>
-        <template v-if="throughTrip">
-          <v-autocomplete
-            label="Exit"
-            :items="caves.filter(cave => cave.system.id === cave_system_id)"
-            item-title="name"
-            item-value="id"
-            v-model="trip.exit_cave_id"
-            :error-messages="validationErrors.exit_cave_id"
-            @update:modelValue="validationErrors.exit_cave_id = []"
-          ></v-autocomplete>
-          </template>
-      </template>
-      <v-autocomplete
-        label="Participants"
-        :items="users"
-        item-title="name"
-        item-value="id"
-        multiple
-        chips
-        closable-chips
-        v-model="trip.participants"
-      >
-        <template v-slot:chip="{ props, item }">
-          <v-chip
-            v-bind="props"
-            :prepend-avatar="item.raw.photo"
-            :text="item.raw.name"
-          ></v-chip>
+        <template v-slot:item.2>
+          <v-card title="When" flat>
+            <v-row>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="tripStartDate"
+                  label="Date"
+                  type="date"
+                  :error-messages="validationErrors.start_time || validationErrors.end_time"
+                  @update:modelValue="() => { delete validationErrors.start_time; delete validationErrors.end_time }"
+                  required
+                  hint="The date the trip started."
+                  persistent-hint
+                ></v-text-field>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="tripStartTime"
+                  label="Entry time"
+                  type="time"
+                  :error-messages="validationErrors.start_time || validationErrors.end_time"
+                  @update:modelValue="() => { delete validationErrors.start_time; delete validationErrors.end_time }"
+                  required
+                  hint="The time you entered the cave."
+                  persistent-hint
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="tripDurationHours"
+                  label="Duration (hours)"
+                  type="number"
+                  min="0"
+                  :rules="rules.duration"
+                  :error-messages="validationErrors.end_time"
+                  @update:modelValue="delete validationErrors.end_time"
+                  required
+                  hint="How many hours the trip lasted."
+                  persistent-hint
+                ></v-text-field>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="tripDurationMinutes"
+                  label="Duration (minutes)"
+                  type="number"
+                  min="0"
+                  max="59"
+                  :rules="rules.duration"
+                  :error-messages="validationErrors.end_time"
+                  @update:modelValue="delete validationErrors.end_time"
+                  required
+                  hint="How many minutes the trip lasted."
+                  persistent-hint
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-card>
         </template>
-        <template v-slot:item="{ props, item }">
-          <v-list-item
-            v-bind="props"
-            :prepend-avatar="item.raw.photo"
-            :subtitle="item.raw.club"
-            :title="item.raw.name"
-          ></v-list-item>
+        <template v-slot:item.3>
+          <v-card title="Who" flat>
+            <v-autocomplete
+              label="Participants"
+              :items="users"
+              item-title="name"
+              item-value="id"
+              multiple
+              chips
+              closable-chips
+              v-model="trip.participants"
+              hint="Add everyone who was on the trip. All participants can edit this report."
+              persistent-hint
+            >
+              <template v-slot:chip="{ props, item }">
+                <v-chip
+                  v-bind="props"
+                  :prepend-avatar="item.raw.photo"
+                  :text="item.raw.name"
+                ></v-chip>
+              </template>
+              <template v-slot:item="{ props, item }">
+                <v-list-item
+                  v-bind="props"
+                  :prepend-avatar="item.raw.photo"
+                  :subtitle="item.raw.club"
+                  :title="item.raw.name"
+                ></v-list-item>
+              </template>
+              <template v-slot:no-data>
+                <v-btn @click="showAddParticipant=true">
+                  Can't find that user.  <strong>Add them manually</strong>
+                </v-btn>
+              </template>
+            </v-autocomplete>
+          </v-card>
         </template>
-        <template v-slot:no-data>
-          <v-btn @click="showAddParticipant=true">
-            Can't find that user.  
-            <strong>Add them manually</strong>
-          </v-btn>
+        <template v-slot:item.4>
+          <v-card title="What" flat>
+            <v-alert v-if="Object.keys(validationErrors).length" type="error" class="mb-4">
+              Please fix the errors below before saving.
+              {{ validationErrors }}
+            </v-alert>
+            <v-text-field
+              v-model="trip.name"
+              label="Trip Name"
+              :rules="rules.name"
+              :error-messages="validationErrors.name"
+              required
+              hint="A short, descriptive name for your trip (e.g. 'Main Chamber Survey')"
+              persistent-hint
+            ></v-text-field>
+            <VuetifyTiptap @change="updatedDescription" v-model="trip.description" output="text" markdown-theme="github"
+              hint="Describe what happened on the trip. This will be visible to all participants."
+              persistent-hint
+            >
+            </VuetifyTiptap>
+            <v-file-input
+              prepend-icon="mdi-camera"
+              accept="image/*"
+              label="Trip Photos"
+              v-model="trip.media"
+              :error-messages="validationErrors.media"
+              @update:modelValue="delete validationErrors.media"
+              chips
+              multiple
+              hint="Upload photos from the trip. You can add multiple images."
+              persistent-hint
+            ></v-file-input>
+            <template v-if="trip.existing_media && trip.existing_media.length">
+              Existing media:
+              <v-container class="pa-1">
+                <v-row>
+                  <v-col
+                    v-for="(media, i) in trip.existing_media"
+                    :key="i"
+                    cols="3"
+                    md="6"
+                  >
+                    <v-img class="existing_media text-right pa-2" :key="media.id" :src="media.url" alt="filename">
+                      <v-btn icon="mdi-delete"  @click="removeExistingMedia(media)"></v-btn>
+                    </v-img>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </template>
+            <v-btn @click="submitForm" color="primary" class="mt-6" size="large" elevation="2" block>
+              <v-icon left>mdi-content-save</v-icon>
+              Save Trip
+            </v-btn>
+          </v-card>
         </template>
-    </v-autocomplete>
-      <v-row>
-        <v-col cols="6">
-          <v-text-field
-            v-model="tripStartDate"
-            label="Date"
-            type="date"
-            :error-messages="validationErrors.start_time || validationErrors.end_time"
-            @update:modelValue="() => { validationErrors.start_time = []; validationErrors.end_time = [] }"
-            required
-          ></v-text-field>
-        </v-col>
-        <v-col cols="6">
-          <v-text-field
-            v-model="tripStartTime"
-            label="Entry time"
-            type="time"
-            :error-messages="validationErrors.start_time || validationErrors.end_time"
-            @update:modelValue="() => { validationErrors.start_time = []; validationErrors.end_time = [] }"
-            required>
-          </v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="6">
-          <v-text-field
-            v-model="tripDurationHours"
-            label="Duration (hours)"
-            type="number"
-            min="0"
-            :error-messages="validationErrors.end_time"
-            @update:modelValue="validationErrors.end_time = []"
-            required
-          ></v-text-field>
-        </v-col>
-        <v-col cols="6">
-          <v-text-field
-            v-model="tripDurationMinutes"
-            label="Duration (minutes)"
-            type="number"
-            min="0"
-            max="59"
-            :error-messages="validationErrors.end_time"
-            @update:modelValue="validationErrors.end_time = []"
-            required
-          ></v-text-field>
-        </v-col>
-      </v-row>
-      <v-btn @click="submitForm">Save</v-btn>
+      </v-stepper>
     </v-form>
     <AddParticipantManual @close="closeAddParticipant" @add="addParticipant" :isActive="showAddParticipant"/>
   </v-container>
@@ -191,7 +233,7 @@
   const tripDurationMinutes = ref(0)
 
   const throughTrip = ref(false)
-  const userEmail = ref({})
+  const userId = ref({})
   const users = ref([])
   const caves = ref([])
 
@@ -201,12 +243,10 @@
     name: [
       value => {
         if (value) return true
-
         return 'Name is required.'
       },
       value => {
         if (value?.length <= 255) return true
-
         return 'Name must be less than 255 characters.'
       },
     ],
@@ -222,7 +262,15 @@
         return 'Location is required.'
       }
     ],
+    duration: [
+      () => {
+        if (tripDurationHours.value > 0 || tripDurationMinutes.value > 0) return true
+        return 'Duration must be greater than zero.'
+      }
+    ]
   }
+
+  const step = ref(1)
 
   onMounted(async () => {
     // Load caves
@@ -231,11 +279,11 @@
 
     // Load users
     const userResonse = await fetch('/api/users/me')
-    userEmail.value = (await userResonse.json()).data.email
+    userId.value = (await userResonse.json()).data.id
     response = await fetch('/api/users')
     users.value = (await response.json()).data
     if(!trip.participants.length) {
-      trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
+      trip.participants.push(users.value.find(user => user.id === userId.value).id)
     }
 
     if(route.query.cave_id) {
