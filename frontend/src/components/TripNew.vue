@@ -1,13 +1,7 @@
 <template>
   <v-container class="pa-4">
-    <v-alert type="info" class="mb-4">
-      All participants you add will be able to view and edit this trip report. This helps ensure accuracy and shared ownership.
-    </v-alert>
     <v-form class="pa-xl-4">
-      <v-alert v-if="Object.keys(validationErrors).length" type="error" class="mb-4">
-        Please fix the errors below before saving.
-      </v-alert>
-      <v-stepper v-model="step" :items="['Where', 'When', 'Who', 'What']">
+      <v-stepper v-model="step" :items="['Where', 'When', 'Who', 'What']" editable>
         <template v-slot:item.1>
           <v-card title="Where" flat>
             <v-autocomplete
@@ -17,8 +11,7 @@
               :rules="rules.location"
               item-value="id"
               v-model="trip.entrance_cave_id"
-              :error-messages="validationErrors.entrance_cave_id || validationErrors.system_id"
-              @update:modelValue="() => { validationErrors.entrance_cave_id = []; validationErrors.system_id = [] }"
+              :error-messages="validationErrors.entrance_cave_id"
               hint="Select the cave entrance where the trip started."
               persistent-hint
             >
@@ -87,7 +80,7 @@
                   :error-messages="validationErrors.end_time"
                   @update:modelValue="validationErrors.end_time = []"
                   required
-                  hint="How many hours the trip lasted. Must be positive."
+                  hint="How many hours the trip lasted."
                   persistent-hint
                 ></v-text-field>
               </v-col>
@@ -148,12 +141,15 @@
         </template>
         <template v-slot:item.4>
           <v-card title="What" flat>
+            <v-alert v-if="Object.keys(validationErrors).length" type="error" class="mb-4">
+              Please fix the errors below before saving.
+              {{ validationErrors }}
+            </v-alert>
             <v-text-field
               v-model="trip.name"
               label="Trip Name"
               :rules="rules.name"
               :error-messages="validationErrors.name"
-              @update:modelValue="validationErrors.name = []"
               required
               hint="A short, descriptive name for your trip (e.g. 'Main Chamber Survey')"
               persistent-hint
@@ -238,7 +234,7 @@
   const tripDurationMinutes = ref(0)
 
   const throughTrip = ref(false)
-  const userEmail = ref({})
+  const userId = ref({})
   const users = ref([])
   const caves = ref([])
 
@@ -284,11 +280,11 @@
 
     // Load users
     const userResonse = await fetch('/api/users/me')
-    userEmail.value = (await userResonse.json()).data.email
+    userId.value = (await userResonse.json()).data.id
     response = await fetch('/api/users')
     users.value = (await response.json()).data
     if(!trip.participants.length) {
-      trip.participants.push(users.value.find(user => user.email === userEmail.value).email)
+      trip.participants.push(users.value.find(user => user.id === userId.value).id)
     }
 
     if(route.query.cave_id) {
