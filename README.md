@@ -11,7 +11,7 @@ The system has a list of cave entrances and systems, with a number of tags added
 Completed trips can be added by a user to help them track their caving career. When entering a trip it's possible to add other trip participants.
 
 ## Deployment
-The system is deployed to fly.io using GitHub pipelines.
+The system is deployed to fly.io using GitHub actions.
 
 ### Database
 for an interactive psql shell use `fly postgres connect -a subterra-db`.
