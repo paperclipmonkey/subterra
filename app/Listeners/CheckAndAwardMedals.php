@@ -136,20 +136,18 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->with('entrance')
                     ->get()
                     ->filter(function ($trip) {
-                        return optional($trip->entrance)->is_leader_system ?? false;
+                        return optional($trip->entrance)->tags->where('tag', 'Leader')->pluck('tag')->isNotEmpty();
                     });
                 return $leaderTrips->count() >= 5;
 
             case 'Mucky Pup':
                 // Awarded for going to 3 muddy caves
                 $muddyTrips = $user->trips()
-                    ->with('entrance')
+                    ->with('entrance.system.tags')
                     ->get()
                     ->filter(function ($trip) {
-                        return optional($trip->entrance)->is_muddy ?? false;
-                    })
-                    ->pluck('entrance_cave_id')
-                    ->unique();
+                        return optional($trip->entrance->system)->tags->where('tag', 'Muddy')->isNotEmpty();
+                    });
                 return $muddyTrips->count() >= 3;
 
             case 'Faff Now Cave Later':
@@ -158,7 +156,8 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->with('entrance')
                     ->get()
                     ->filter(function ($trip) {
-                        return optional($trip->entrance)->is_swcc ?? false;
+                        $swccCaveNames = ['Ogof Ffynnon Ddu 1', 'Ogof Ffynnon Ddu 2', 'Cwm Dwr',];
+                        return in_array(optional($trip->entrance)->name, $swccCaveNames);
                     });
                 return $swccTrips->count() >= 5;
 
@@ -168,7 +167,7 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->with('entrance')
                     ->get()
                     ->filter(function ($trip) {
-                        return optional($trip->entrance)->is_srt ?? false;
+                        return optional($trip->entrance)->tags->where('tag', 'SRT')->isNotEmpty();
                     });
                 return $srtTrips->count() >= 10;
             default:
