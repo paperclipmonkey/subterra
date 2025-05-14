@@ -442,6 +442,25 @@ class ClubTest extends TestCase
 
     // --- Get Pending Members Tests ---
 
+        #[\PHPUnit\Framework\Attributes\Test]
+    public function club_admin_can_get_pending_members()
+    {
+        $club = Club::factory()->create();
+        $approvedUser = User::factory()->create();
+        $pendingUser = User::factory()->create();
+        $club->users()->attach($approvedUser->id, ['status' => 'approved']);
+        $club->users()->attach($pendingUser->id, ['status' => 'pending']);
+
+        $club->users()->attach($this->regularUser->id, ['status' => 'approved', 'is_admin' => true]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')->getJson("/api/admin/clubs/{$club->slug}/pending-members");
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(1) // Only the pending user
+                 ->assertJsonFragment(['id' => $pendingUser->id])
+                 ->assertJsonMissing(['id' => $approvedUser->id]);
+    }
+
     #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_get_pending_members()
     {
@@ -532,6 +551,36 @@ class ClubTest extends TestCase
         Event::assertDispatched(ClubAccessResponded::class, function ($event) use ($club, $pendingUser) {
             return $event->club->id === $club->id && $event->user->id === $pendingUser->id && $event->status === 'rejected';
         });
+    }
+
+        #[\PHPUnit\Framework\Attributes\Test]
+    public function club_admin_can_approve_a_member()
+    {
+        Event::fake();
+        $club = Club::factory()->create();
+        $club->users()->attach($this->regularUser->id, ['status' => 'approved', 'is_admin' => true]);
+        $pendingUser = User::factory()->create();
+        $club->users()->attach($pendingUser->id, ['status' => 'pending']);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
+
+        $response->assertStatus(200)
+                 ->assertJson(['message' => 'Member approved.']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function club_admin_can_reject_a_member()
+    {
+        Event::fake();
+        $club = Club::factory()->create();
+        $club->users()->attach($this->regularUser->id, ['status' => 'approved', 'is_admin' => true]);
+        $pendingUser = User::factory()->create();
+        $club->users()->attach($pendingUser->id, ['status' => 'pending']);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/reject");
+
+        $response->assertStatus(200)
+                 ->assertJson(['message' => 'Member rejected.']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClubDataController;
 use App\Http\Middleware\ApiIsAuthenticated;
+use App\Http\Middleware\ClubAdminOrAdmin;
 use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Middleware\CurrentUserOrAdmin;
 use App\Http\Resources\UserDetailEmailResource;
@@ -63,6 +64,10 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
     Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
 
+    // --- Club Admin Pending Member Management ---
+    Route::get('/admin/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.pending.index');
+    Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
+    Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
 });
 
 
@@ -88,11 +93,6 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     Route::get('/clubs/{club}/members', [ClubController::class, 'getApprovedMembers'])->name('admin.clubs.members.index');
     // This syncs *approved* members and their admin status
     Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
-
-    // --- Club Admin Pending Member Management ---
-    Route::get('/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->name('admin.clubs.pending.index');
-    Route::put('/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->name('admin.clubs.members.approve');
-    Route::put('/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->name('admin.clubs.members.reject');
 });
 
 Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
