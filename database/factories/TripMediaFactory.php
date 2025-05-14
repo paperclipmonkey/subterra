@@ -12,7 +12,7 @@ class TripMediaFactory extends Factory
     public function definition(): array
     {
         return [
-            'trip_id' => 1, // Replace with a valid trip ID in your tests
+            'trip_id' => \App\Models\Trip::factory(), // Dynamically associate with a Trip instance
             'filename' => $this->faker->word . '.jpg',
         ];
     }
