@@ -34,7 +34,6 @@ class UserController extends Controller
         }
 
         // Count how many trips each user has shared with the current user
-        $tripUserCounts = collect();
         $trips = \App\Models\Trip::whereHas('participants', function ($q) use ($currentUser) {
                 $q->where('user_id', $currentUser->id);
             })
