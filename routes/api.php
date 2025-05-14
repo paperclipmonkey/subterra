@@ -50,6 +50,11 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
     Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
 
+    Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
+    Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');
+    Route::get('/users/{user}/medals', [UserController::class, 'medals'])->name('users.medals');
+
+    Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
 });
 
 // TODO - Fix auth middleware
@@ -99,13 +104,7 @@ Route::get('logout', function (Request $request) {
     return redirect('/');
 });
 
-Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
-
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
-
-Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
-Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');
-Route::get('/users/{user}/medals', [UserController::class, 'medals'])->name('users.medals');
 
 Route::get('/livez', function(Request $request) {
     try {
