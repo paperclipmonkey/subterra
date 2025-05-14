@@ -26,8 +26,9 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
 
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
-    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
     Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
+    
+    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
     Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class);
 
     Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);

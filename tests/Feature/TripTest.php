@@ -138,6 +138,52 @@ class TripTest extends TestCase {
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_doesnt_update_a_trip_not_participant()
+    {
+        $user = User::factory()->create();
+        $trip = Trip::factory()->create();
+        $this->actingAs($user);
+        $response = $this->putJson('/api/trips/' . $trip->id, ['name' => 'Updated Trip']);
+        $response->assertStatus(403)->assertJsonFragment(['message' => 'This action is unauthorized.']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_updates_a_trip_as_admin()
+    {
+        $user = User::factory()->create();
+        $participant = User::factory()->create();
+        $entrance = Cave::factory()->create();
+        $trip = Trip::factory()->create(['entrance_cave_id' => $entrance->id]);
+        $trip->participants()->attach($user);
+
+        $media = [
+            [
+                'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png'))
+            ]
+        ];
+
+        $updateData = [
+            'name' => 'Updated Trip',
+            'start_time' => now()->toDateTimeString(),
+            'end_time' => now()->addDay()->toDateTimeString(),
+            'entrance_id' => $entrance->id,
+            'description' => 'Updated description',
+            'participants' => [$participant->email],
+            'media' => $media,
+            'existing_media' => [],
+        ];
+
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $response = $this->putJson('/api/trips/' . $trip->id, $updateData);
+        $response->assertOk();
+        $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);
+        $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
+        $trip = $trip->fresh();
+        $this->assertCount(1, $trip->media);
+        Storage::disk('media')->assertExists($trip->media->first()->filename);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_deletes_a_trip()
     {
         $user = User::factory()->create();
@@ -149,7 +195,7 @@ class TripTest extends TestCase {
         $this->assertDatabaseMissing('trips', ['id' => $trip->id]);
     }
 
-        #[\PHPUnit\Framework\Attributes\Test]
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_doesnt_delete_a_trip_not_participant()
     {
         $user = User::factory()->create();

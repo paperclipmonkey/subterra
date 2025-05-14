@@ -8,7 +8,11 @@ class UpdateTripRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        // Check if the user was a trip participant or is an admin
+        if($this->user()->is_admin) {
+            return true;
+        }
+        return $this->user()->trips()->where('trip_id', $this->route('trip')->id)->exists();
     }
 
     /**

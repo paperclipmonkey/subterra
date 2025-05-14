@@ -141,7 +141,7 @@ class TripController extends Controller
 
     public function update(UpdateTripRequest $request, Trip $trip)
     {
-        $existingMedia = $request->input('existing_media');
+        $existingMedia = $request->input('existing_media') ?? [];
 
         if(collect($existingMedia)->count() == 0) {
             $trip->media()->delete();
