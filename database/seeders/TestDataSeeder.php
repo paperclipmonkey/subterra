@@ -24,12 +24,6 @@ class TestDataSeeder extends Seeder
             'description' => 'A test trip for seeding data.',
         ]);
 
-        // Create a test trip user
-        TripUser::factory()->create([
-            'trip_id' => $trip->id,
-            'user_id' => $user->id,
-        ]);
-
         // Create a test trip media
         TripMedia::factory()->create([
             'trip_id' => $trip->id,
