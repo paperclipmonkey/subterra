@@ -16,7 +16,7 @@
         <li><strong>Requested Club:</strong> {{ $club->name }}</li>
     </ul>
     <p>
-        <a href="{{ url('/admin/clubs/' . $club->slug) }}" style="background:#2563eb;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;">Review Membership Requests</a>
+        <a href="{{ url('/club/' . $club->slug) }}?editClub=1&tab=pending" style="background:#2563eb;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;">Review Membership Requests</a>
     </p>
     <p>Thank you,<br>The Subterra Team</p>
 </body>
