@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClubDataController;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ApiIsAdmin;
+use App\Http\Middleware\CurrentUserOrAdmin;
 use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
@@ -55,14 +56,15 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/users/{user}/medals', [UserController::class, 'medals'])->name('users.medals');
 
     Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
+
+    // User Management
+    Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
+    Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
+    Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
+    Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
+
 });
 
-// TODO - Fix auth middleware
-// User Management
-Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
-Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
-Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
-Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware('auth:sanctum');
 
 // --- Admin Routes ---
 Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
@@ -87,7 +89,7 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     // This syncs *approved* members and their admin status
     Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
 
-    // --- Admin Pending Member Management ---
+    // --- Club Admin Pending Member Management ---
     Route::get('/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->name('admin.clubs.pending.index');
     Route::put('/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->name('admin.clubs.members.approve');
     Route::put('/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->name('admin.clubs.members.reject');

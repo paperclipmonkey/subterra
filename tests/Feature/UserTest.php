@@ -44,6 +44,8 @@ class UserTest extends TestCase
             'name' => 'Test User',
         ];
 
+        $this->actingAs(User::factory()->create(), 'sanctum');
+
         $response = $this->postJson(route('users.create'), $payload);
 
         $this->assertDatabaseHas('users', [
@@ -58,10 +60,30 @@ class UserTest extends TestCase
     {
         $user = User::factory()->create();
 
+        $this->actingAs(User::factory()->create(), 'sanctum');
+
         $response = $this->getJson(route('users.show', $user));
 
         $response->assertOk();
         $response->assertJsonFragment(['id' => $user->id]);
+    }
+
+        #[\PHPUnit\Framework\Attributes\Test]
+    public function it_doesnt_update_user_bio_if_not_user()
+    {
+        $user = User::factory()->create([
+            'bio' => null,
+        ]);
+
+        $payload = [
+            'bio' => 'I love chess.',
+        ];
+
+        $this->actingAs(User::factory()->create(), 'sanctum');
+
+        $response = $this->putJson(route('users.store', $user), $payload);
+
+        $response->assertForbidden();
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -74,6 +96,8 @@ class UserTest extends TestCase
         $payload = [
             'bio' => 'I love chess.',
         ];
+
+        $this->actingAs($user, 'sanctum');
 
         $response = $this->putJson(route('users.store', $user), $payload);
 

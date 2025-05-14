@@ -5,7 +5,6 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Models\Cave;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
