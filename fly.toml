@@ -12,8 +12,8 @@ console_command = 'php /var/www/html/artisan tinker'
 
 [build]
   [build.args]
-    NODE_VERSION = '18'
-    PHP_VERSION = '8.2'
+    NODE_VERSION = '22'
+    PHP_VERSION = '8.4'
 
 [env]
   APP_ENV = 'production'

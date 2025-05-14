@@ -91,12 +91,13 @@ export default defineConfig({
     port: 3000,
     proxy: {
       // string shorthand: http://localhost:5173/foo -> http://localhost:4567/foo
-      '/api': 'http://localhost',
-      '/storage': 'http://localhost',
-      '/media': 'http://localhost',
-      'public': 'http://localhost',
-    },
-  },
+      '/api': 'http://host.docker.internal',
+      '/storage': 'http://host.docker.internal',
+      '/media': 'http://host.docker.internal',
+      'public': 'http://host.docker.internal',
+        },
+      },
+      host: '0.0.0.0',
   // build: {
   //   outDir: '../public/assets',
   //   sourcemap: true,
