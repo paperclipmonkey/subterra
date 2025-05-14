@@ -1,8 +1,7 @@
 <template>
   <v-container class="fill-height login-bg" fluid>
     <v-responsive
-      class="align-center fill-height mx-auto"
-      max-width="400"
+      class="align-center fill-height"
     >
       <v-img
         class="mb-4"
