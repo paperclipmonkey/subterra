@@ -22,21 +22,11 @@ class CaveFactory extends Factory
             'description' => fake()->sentence(30),
             'location_name' => fake()->city(),
             'location_country' => fake()->country(),
-            'location_lat' => fake()->randomFloat(3,-180,180),
-            'location_lng' => fake()->randomFloat(3,-180,180),
+            'location_lat' => fake()->randomFloat(3, 50,58),
+            'location_lng' => fake()->randomFloat(3,-6,1),
             'location_alt' => fake()->randomDigitNotNull(),
             'slug' => fake()->slug(),
             'cave_system_id' => CaveSystem::factory()->create()->id,
         ];
     }
-
-    // /**
-    //  * Indicate that the model's email address should be unverified.
-    //  */
-    // public function unverified(): static
-    // {
-    //     return $this->state(fn (array $attributes) => [
-    //         'email_verified_at' => null,
-    //     ]);
-    // }
 }

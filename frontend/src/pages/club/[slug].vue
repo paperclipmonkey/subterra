@@ -21,9 +21,38 @@
               <v-chip class="ml-2" color="info" variant="outlined">
                 <v-icon start>mdi-account-group</v-icon> {{ club.member_count }} members
               </v-chip>
+              <!-- Edit Club Button (Club Admins Only) -->
+              <v-btn
+                v-if="isClubAdmin"
+                class="ml-2"
+                color="primary"
+                variant="outlined"
+                @click="openEditClubModal('details')"
+                size="small"
+              >
+                <v-icon start>mdi-pencil</v-icon> Edit Club
+              </v-btn>
+              <v-btn
+                v-if="isClubAdmin"
+                class="ml-2"
+                color="info"
+                variant="outlined"
+                @click="openEditClubModal('pending')"
+                size="small"
+              >
+                <v-icon start>mdi-account-clock</v-icon> Pending Requests
+              </v-btn>
             </div>
           </v-card-text>
         </v-card>
+    <!-- Club Edit Modal -->
+    <ClubEditModal
+      v-if="club"
+      v-model="showEditClubModal"
+      :clubSlug="club.slug"
+      :initialTab="editClubTab"
+      @saved="onClubEditSaved"
+    />
         <!-- Loading/Error State for Club Info -->
         <v-alert v-else-if="loadingError" type="error" variant="outlined">Club not found or could not be loaded.</v-alert>
         <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
@@ -116,42 +145,64 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'; // Removed computed as it wasn't strictly needed
-import { useRoute } from 'vue-router';
+import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { mande } from 'mande';
 import VueMarkdown from 'vue-markdown-render';
 import { CalendarHeatmap } from "vue3-calendar-heatmap";
-// import { useAuthStore } from '@/stores/auth'; // Assuming you have an auth store
-
+import ClubEditModal from '@/components/ClubEditModal.vue';
+import { useAppStore } from '@/stores/app';
 import moment from 'moment';
+
 const route = useRoute();
-// const authStore = useAuthStore(); // Keep authStore if needed for user ID or other checks
+const router = useRouter();
 const club = ref(null);
 const recentTrips = ref([]);
 const members = ref([]);
-const heatmapData = ref([]); // Initialize as empty object for heatmap
-const loadingError = ref(false); // Error loading basic club info
-const memberDataLoading = ref(true); // Loading state for member-specific data
-const isApprovedMember = ref(false); // Is the current user an approved member?
-const endDate = ref(new Date()); // For heatmap
+const heatmapData = ref([]);
+const loadingError = ref(false);
+const memberDataLoading = ref(true);
+const isApprovedMember = ref(false);
+const endDate = ref(new Date());
 
-onMounted(async () => {
+// Modal state
+const showEditClubModal = ref(false);
+const editClubTab = ref('details');
+
+// Pinia user store
+const appStore = useAppStore();
+const user = computed(() => appStore.user);
+
+// Determine if user is a club admin for this club (use is_admin property)
+const isClubAdmin = computed(() => {
+  if (!user.value || !club.value || !user.value.clubs) return false;
+  const clubEntry = (user.value.clubs || []).find(c => c.slug === club.value.slug);
+  return clubEntry && clubEntry.is_admin;
+});
+
+function openEditClubModal(tab = 'details') {
+  editClubTab.value = tab;
+  showEditClubModal.value = true;
+}
+
+function onClubEditSaved() {
+  // Refetch club data after save
+  fetchClubData();
+}
+
+async function fetchClubData() {
   const clubSlug = route.params.slug;
   loadingError.value = false;
-  memberDataLoading.value = true; // Start loading member data
+  memberDataLoading.value = true;
   isApprovedMember.value = false;
   club.value = null;
-  // Reset data arrays
   recentTrips.value = [];
   members.value = [];
   heatmapData.value = [];
-
   try {
-    // Fetch basic club details first
     const clubApi = mande(`/api/clubs/${clubSlug}`);
     const clubResponse = await clubApi.get();
     club.value = clubResponse.data || clubResponse;
-
     // Attempt to load member-specific data ONLY if club loaded
     try {
       const dataApi = mande(`/api/clubs/${clubSlug}`);
@@ -160,25 +211,29 @@ onMounted(async () => {
         dataApi.get('members'),
         dataApi.get('activity-heatmap')
       ]);
-
       recentTrips.value = tripsResponse.data || tripsResponse;
       members.value = membersResponse.data || membersResponse;
-      heatmapData.value = heatmapResponse || []; // Ensure it's an object
-      isApprovedMember.value = true; // Successfully loaded member data
-
+      heatmapData.value = heatmapResponse || [];
+      isApprovedMember.value = true;
     } catch (memberDataError) {
-      console.warn("Could not load member-specific club data (likely not an approved member):", memberDataError);
-      isApprovedMember.value = false; // Failed to load member data
-      // No need to set loadingError = true unless the *initial* club fetch failed
+      isApprovedMember.value = false;
     } finally {
-        memberDataLoading.value = false; // Finished attempting to load member data
+      memberDataLoading.value = false;
     }
-
   } catch (e) {
-    console.error("Error loading club:", e);
     club.value = null;
-    loadingError.value = true; // Set error for the main club loading
-    memberDataLoading.value = false; // Stop member loading if club failed
+    loadingError.value = true;
+    memberDataLoading.value = false;
+  }
+}
+
+onMounted(async () => {
+  await appStore.getUser();
+  await fetchClubData();
+  // Check for ?editClub=1&tab=pending in query
+  const { editClub, tab } = route.query;
+  if (editClub && isClubAdmin.value) {
+    openEditClubModal(tab === 'pending' ? 'pending' : 'details');
   }
 });
 </script>

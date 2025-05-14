@@ -10,16 +10,18 @@ use App\Models\Trip;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use App\Models\User;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\JsonResponse;
 
 class TripController extends Controller
 {
-    public function index()
+    public function index(): ResourceCollection
     {
         return TripResource::collection(Trip::all());
     }
 
-    public function indexMe()
+    public function indexMe(): ResourceCollection
     {
         $userId = auth()->id();
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
@@ -29,7 +31,7 @@ class TripController extends Controller
         return TripResource::collection($trips);
     }
 
-    public function downloadMyTripsCsv()
+    public function downloadMyTripsCsv(): StreamedResponse
     {
         $userId = auth()->id();
         $filename = "my_trips.csv";
@@ -86,7 +88,7 @@ class TripController extends Controller
         return new StreamedResponse($callback, 200, $headers);
     }
 
-    public function store(StoreTripRequest $request)
+    public function store(StoreTripRequest $request): TripResource
     {
         $trip = Trip::create($request->all());
         $trip->save();
@@ -118,7 +120,7 @@ class TripController extends Controller
         return new TripResource($trip);
     }
 
-    private function storeMedia(array $media, $trip)
+    private function storeMedia(array $media, $trip): void
     {
         foreach ($media as $file) {
             $fileData = explode(',', $file['data']);
@@ -132,7 +134,7 @@ class TripController extends Controller
         }
     }
 
-    public function show(Trip $trip)
+    public function show(Trip $trip): TripResource
     {
         return new TripResource($trip);
     }
@@ -164,7 +166,7 @@ class TripController extends Controller
         $this->storeMedia($media, $trip);
     }
 
-    public function destroy(DeleteTripRequest $request, Trip $trip)
+    public function destroy(DeleteTripRequest $request, Trip $trip): JsonResponse
     {
         $trip->delete();
         return response()->json([
