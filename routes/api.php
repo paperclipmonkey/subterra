@@ -12,6 +12,14 @@ use App\Http\Controllers\ClubController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+Route::get('/users/me', function (Request $request) {
+    if($request->user()) {
+        return new UserDetailEmailResource($request->user());
+    } else {
+        return abort(400, 'No user logged in');
+    }
+});
+
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
     # Users
@@ -83,14 +91,6 @@ Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
     Route::get('recent-trips', [ClubDataController::class, 'recentTrips'])->middleware('can:view,club');
     Route::get('members', [ClubDataController::class, 'members'])->middleware('can:view,club');
     Route::get('activity-heatmap', [ClubDataController::class, 'activityHeatmap'])->middleware('can:view,club');
-});
-
-Route::get('/users/me', function (Request $request) {
-    if($request->user()) {
-        return new UserDetailEmailResource($request->user());
-    } else {
-        return abort(400, 'No user logged in');
-    }
 });
 
 Route::get('logout', function (Request $request) {
