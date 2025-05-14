@@ -14,12 +14,13 @@ class UserTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_a_collection_of_users()
     {
+        $this->actingAs(User::factory()->create(), 'sanctum');
         $users = User::factory()->count(3)->create();
 
         $response = $this->getJson(route('users.index'));
 
         $response->assertOk();
-        $response->assertJsonCount(3, 'data');
+        $response->assertJsonCount(4, 'data');
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
