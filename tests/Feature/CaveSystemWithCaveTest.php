@@ -73,4 +73,14 @@ class CaveSystemWithCaveTest extends TestCase
             'cave.location_lng',
         ]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_prevents_non_admin_users_from_creating_a_cave_system_and_cave()
+    {
+        $this->user = User::factory()->create(['is_admin' => false]);
+        $this->actingAs($this->user);
+
+        $response = $this->postJson('/api/cave_systems_with_cave', []);
+        $response->assertForbidden();
+    }
 }

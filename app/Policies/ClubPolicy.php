@@ -25,7 +25,7 @@ class ClubPolicy
         }
 
         // Allow approved members to view the club
-        return $club->users()->where('user_id', $user->id)->wherePivot('approved', true)->exists();
+        return $club->users()->where('user_id', $user->id)->wherePivot('status', 'approved')->exists();
     }
 
     /**

@@ -2,10 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ClubDataController;
+use App\Http\Controllers\ClubDataController;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ApiIsAdmin;
-use App\Http\Resources\UserDetailResource;
+use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\ClubController;
@@ -34,10 +34,8 @@ Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv'])-
 # Users
 Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
 
-// --- User Club Actions (Authenticated) ---
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
-    // Maybe add leave endpoint later: DELETE /clubs/{club}/leave
 });
 
 
@@ -67,8 +65,7 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     // --- Admin Pending Member Management ---
     Route::get('/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->name('admin.clubs.pending.index');
     Route::put('/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->name('admin.clubs.members.approve');
-    Route::put('/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->name('admin.clubs.members.reject'); // Or DELETE if preferred
-
+    Route::put('/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->name('admin.clubs.members.reject');
 });
 
 
@@ -86,7 +83,7 @@ Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
-        return new UserDetailResource($request->user());
+        return new UserDetailEmailResource($request->user());
     } else {
         return abort(400, 'No user logged in');
     }
@@ -98,7 +95,6 @@ Route::get('logout', function (Request $request) {
 });
 
 Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
-
 
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
 

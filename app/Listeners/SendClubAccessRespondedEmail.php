@@ -16,7 +16,6 @@ class SendClubAccessRespondedEmail implements ShouldQueue
         $club = $event->club;
         $user = $event->user;
         $status = $event->status;
-        // Send email to the user (Mailjet integration assumed via Mail::to)
         Mail::to($user->email)->send(new \App\Mail\ClubAccessRespondedMail($club, $user, $status));
     }
 }

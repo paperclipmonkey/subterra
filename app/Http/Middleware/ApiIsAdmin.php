@@ -10,9 +10,13 @@ class ApiIsAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if(! $request->user() || ! $request->user()->is_admin)
+        if(! $request->user())
         {
-            return response()->json(['error' => 'User is not authorised to perform that action'], 401);
+            return response()->json(['error' => 'User is not authenticated to perform that action'], 401);
+        }
+        if(! $request->user()->is_admin)
+        {
+            return response()->json(['error' => 'User is not authorised to perform that action'], 403);
         }
         return $next($request);
     }
