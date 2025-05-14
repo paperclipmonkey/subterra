@@ -33,7 +33,6 @@
                   item-value="id"
                   v-model="trip.exit_cave_id"
                   :error-messages="validationErrors.exit_cave_id"
-                  @update:modelValue="validationErrors.exit_cave_id = []"
                   hint="Select the cave entrance where the trip ended."
                   persistent-hint
                 ></v-autocomplete>
@@ -50,7 +49,7 @@
                   label="Date"
                   type="date"
                   :error-messages="validationErrors.start_time || validationErrors.end_time"
-                  @update:modelValue="() => { validationErrors.start_time = []; validationErrors.end_time = [] }"
+                  @update:modelValue="() => { delete validationErrors.start_time; delete validationErrors.end_time }"
                   required
                   hint="The date the trip started."
                   persistent-hint
@@ -62,7 +61,7 @@
                   label="Entry time"
                   type="time"
                   :error-messages="validationErrors.start_time || validationErrors.end_time"
-                  @update:modelValue="() => { validationErrors.start_time = []; validationErrors.end_time = [] }"
+                  @update:modelValue="() => { delete validationErrors.start_time; delete validationErrors.end_time }"
                   required
                   hint="The time you entered the cave."
                   persistent-hint
@@ -78,7 +77,7 @@
                   min="0"
                   :rules="rules.duration"
                   :error-messages="validationErrors.end_time"
-                  @update:modelValue="validationErrors.end_time = []"
+                  @update:modelValue="delete validationErrors.end_time"
                   required
                   hint="How many hours the trip lasted."
                   persistent-hint
@@ -93,7 +92,7 @@
                   max="59"
                   :rules="rules.duration"
                   :error-messages="validationErrors.end_time"
-                  @update:modelValue="validationErrors.end_time = []"
+                  @update:modelValue="delete validationErrors.end_time"
                   required
                   hint="How many minutes the trip lasted."
                   persistent-hint
@@ -165,7 +164,7 @@
               label="Trip Photos"
               v-model="trip.media"
               :error-messages="validationErrors.media"
-              @update:modelValue="validationErrors.media = []"
+              @update:modelValue="delete validationErrors.media"
               chips
               multiple
               hint="Upload photos from the trip. You can add multiple images."
