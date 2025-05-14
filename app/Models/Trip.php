@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use OwenIt\Auditing\Auditable;
 
-class Trip extends Model
+class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
+    use HasFactory, Auditable;
+
     protected $fillable = [
         'name',
         'description',
@@ -25,7 +28,6 @@ class Trip extends Model
         'end_time' => 'datetime',
     ];
 
-    use HasFactory;
     public $timestamps = false;
 
     public function system(): BelongsTo
