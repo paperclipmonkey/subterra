@@ -18,7 +18,7 @@ Route::get('/users/me', function (Request $request) {
     } else {
         return abort(400, 'No user logged in');
     }
-});
+})->name('users.me');
 
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');

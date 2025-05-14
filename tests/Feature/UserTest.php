@@ -12,6 +12,17 @@ class UserTest extends TestCase
     use RefreshDatabase;
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_current_user()
+    {
+        $this->actingAs(User::factory()->create(), 'sanctum');
+
+        $response = $this->getJson(route('users.me'));
+
+        $response->assertOk();
+        $response->assertJsonFragment(['email' => auth()->user()->email]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_a_collection_of_users()
     {
         $this->actingAs(User::factory()->create(), 'sanctum');
