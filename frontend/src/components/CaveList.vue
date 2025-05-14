@@ -44,7 +44,7 @@
         <CaveListMap/>
     </v-tabs-window-item>
   </v-tabs-window>
-  <FilterByTagModal @close="showFilterByTagModal = false" @filter="applyFilter" :isActive="showFilterByTagModal"/>
+  <FilterByTagModal @close="showFilterByTagModal=false" @filter="applyFilter" :isActive="showFilterByTagModal"/>
   </v-card>
 </template>
 
@@ -64,7 +64,7 @@
 
   const showFilterByTagModal = ref(false)
 
-  let cachedTags = []
+  let cachedTags = ref([]);
 
   const applyFilter = (tags) => {
     cachedTags = tags
@@ -93,6 +93,7 @@
     tab.value = route.query.view || 'list';
     const tags = route.query.tags ? route.query.tags.split(',') : [];
     caveStore.applyFilters(tags, search.value);
+    cachedTags.value = tags;
     await caveStore.getList();
   })
 </script>
