@@ -67,11 +67,40 @@
       <div v-if="medals.length > 0" class="pa-4">
         <h3>Medals Awarded:</h3>
         <div class="medals-grid">
-          <div v-for="medal in medals" :key="medal.id" class="medal-item">
-            <img v-if="medal.image_url" :src="medal.image_url" :title="medal.description" class="medal-img" />
+            <div 
+            v-for="medal in medals" 
+            :key="medal.id" 
+            class="medal-item" 
+            @click="openMedalModal(medal)"
+          >
+            <img 
+              v-if="medal.image_url" 
+              :src="medal.image_url" 
+              :title="medal.description" 
+              class="medal-img" 
+            />
             <div class="medal-label">{{ medal.name }}</div>
           </div>
         </div>
+
+        <v-dialog v-model="isMedalModalOpen" max-width="500px">
+          <v-card>
+            <v-card-text>
+              <img 
+          v-if="selectedMedal.image_url" 
+          :src="selectedMedal.image_url" 
+          alt="Medal Image" 
+          class="medal-img" 
+          style="width: 100%; height: auto; margin-bottom: 16px;"
+              />
+                <p style="text-align: center;">{{ selectedMedal.description }}</p>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="primary" text @click="isMedalModalOpen = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </div>
       <v-divider v-if="medals.length > 0"></v-divider>
       <div class="bio pa-4">
@@ -155,6 +184,13 @@ onMounted(async () => {
     console.error(`Error fetching profile or activity for user ${route.params.id}:`, error);
   }
 })
+
+const openMedalModal = (medal) => {
+  selectedMedal.value = medal;
+  isMedalModalOpen.value = true;
+}
+const selectedMedal = ref({});
+const isMedalModalOpen = ref(false);
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat().format(num || 0)
