@@ -57,7 +57,7 @@ class ClubTest extends TestCase
     public function non_admin_cannot_view_admin_club_index()
     {
         $response = $this->actingAs($this->regularUser, 'sanctum')->getJson('/api/admin/clubs');
-        $response->assertStatus(401); // Forbidden
+        $response->assertStatus(403);
     }
 
     // --- Show Tests ---
@@ -147,10 +147,10 @@ class ClubTest extends TestCase
         $clubData = Club::factory()->make()->toArray();
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->postJson('/api/admin/clubs', $clubData);
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->postJson('/api/admin/clubs', $clubData);
-        $response->assertStatus(401);
+        $response->assertStatus(403);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -201,10 +201,10 @@ class ClubTest extends TestCase
         $updateData = ['name' => 'Attempted Update'];
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}", $updateData);
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->putJson("/api/admin/clubs/{$club->slug}", $updateData);
-        $response->assertStatus(401);
+        $response->assertStatus(403);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -244,10 +244,10 @@ class ClubTest extends TestCase
         $club = Club::factory()->create();
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->deleteJson("/api/admin/clubs/{$club->slug}");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->deleteJson("/api/admin/clubs/{$club->slug}");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $this->assertDatabaseHas('clubs', ['id' => $club->id]);
     }
@@ -279,10 +279,10 @@ class ClubTest extends TestCase
         $club = Club::factory()->enabled()->create();
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/toggle-active");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->putJson("/api/admin/clubs/{$club->slug}/toggle-active");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $this->assertTrue($club->fresh()->is_active);
     }
@@ -315,7 +315,7 @@ class ClubTest extends TestCase
         $club = Club::factory()->enabled()->create();
 
         $response = $this->postJson("/api/clubs/{$club->slug}/join");
-        $response->assertStatus(401); // Unauthorized
+        $response->assertStatus(401);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -363,10 +363,10 @@ class ClubTest extends TestCase
         $club = Club::factory()->create();
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->getJson("/api/admin/clubs/{$club->slug}/members");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->getJson("/api/admin/clubs/{$club->slug}/members");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
     }
 
     // --- Sync Approved Members Tests ---
@@ -418,10 +418,10 @@ class ClubTest extends TestCase
         $syncData = ['members' => [['id' => $user->id, 'is_admin' => false]]];
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members", $syncData);
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->putJson("/api/admin/clubs/{$club->slug}/members", $syncData);
-        $response->assertStatus(401);
+        $response->assertStatus(403);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -465,10 +465,10 @@ class ClubTest extends TestCase
         $club = Club::factory()->create();
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->getJson("/api/admin/clubs/{$club->slug}/pending-members");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->getJson("/api/admin/clubs/{$club->slug}/pending-members");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
     }
 
     // --- Approve Member Tests ---
@@ -503,10 +503,10 @@ class ClubTest extends TestCase
         $club->users()->attach($pendingUser->id, ['status' => 'pending']);
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $pendingUser->id, 'status' => 'pending']);
     }
@@ -542,10 +542,10 @@ class ClubTest extends TestCase
         $club->users()->attach($pendingUser->id, ['status' => 'pending']);
 
         $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/reject");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $response = $this->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/reject");
-        $response->assertStatus(401);
+        $response->assertStatus(403);
 
         $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $pendingUser->id, 'status' => 'pending']);
     }

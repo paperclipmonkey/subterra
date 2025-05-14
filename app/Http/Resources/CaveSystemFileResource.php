@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage; // Import Storage facade
+use Illuminate\Support\Facades\Storage;
 
 class CaveSystemFileResource extends JsonResource
 {
@@ -22,9 +22,8 @@ class CaveSystemFileResource extends JsonResource
             'details' => $this->details,
             'mime_type' => $this->mime_type,
             'size' => $this->size,
-            // Construct the public URL for the file
             'url' => Storage::disk('media')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}"),
-            'created_at' => $this->created_at->diffForHumans(), // Example formatting
+            'created_at' => $this->created_at->diffForHumans(),
         ];
     }
 }
