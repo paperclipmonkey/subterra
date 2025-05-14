@@ -22,6 +22,7 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_the_list_of_caves()
     {
+        $this->actingAs(User::factory()->create());
         Cave::factory()->count(3)->create();
 
         $response = $this->get('/api/caves');
@@ -32,6 +33,8 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_a_single_cave_by_slug()
     {
+        $this->actingAs(User::factory()->create());
+
         $cave = Cave::factory()->create([
             'slug' => 'test-cave'
         ]);
