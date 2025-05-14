@@ -12,8 +12,8 @@ class TripUserFactory extends Factory
     public function definition(): array
     {
         return [
-            'trip_id' => 1, // Replace with a valid trip ID in your tests
-            'user_id' => 1, // Replace with a valid user ID in your tests
+            'trip_id' => \App\Models\Trip::factory(), // Dynamically create a Trip and use its ID
+            'user_id' => \App\Models\User::factory(), // Dynamically create a User and use its ID
         ];
     }
 }
