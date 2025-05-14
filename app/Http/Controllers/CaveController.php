@@ -77,9 +77,4 @@ class CaveController extends Controller
             $cave->save();
         }
     }
-
-    // public function destroy(Cave $cave)
-    // {
-    //     Cave::destroy($cave);
-    // }
 }

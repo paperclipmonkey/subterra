@@ -23,6 +23,7 @@ class TripTest extends TestCase {
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_all_trips()
     {
+        $this->actingAs(User::factory()->create());
         Trip::factory()->count(2)->create();
         $response = $this->getJson('/api/trips');
         $response->assertOk()->assertJsonStructure(['data']);
@@ -94,6 +95,7 @@ class TripTest extends TestCase {
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_shows_a_trip()
     {
+        $this->actingAs(User::factory()->create());
         $trip = Trip::factory()->create();
         $response = $this->getJson('/api/trips/' . $trip->id);
         $response->assertOk()->assertJsonFragment(['id' => $trip->id]);

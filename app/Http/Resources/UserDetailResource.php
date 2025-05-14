@@ -19,7 +19,6 @@ class UserDetailResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email'=> $this->email,
             'photo' => $this->photo,
             'bio' => $this->bio,
             // Eager load approvedClubs if not already done in controller

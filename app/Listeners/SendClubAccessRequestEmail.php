@@ -16,9 +16,7 @@ class SendClubAccessRequestEmail implements ShouldQueue
     {
         $club = $event->club;
         $user = $event->user;
-        // Get all club admins
         $admins = $club->approvedUsers()->wherePivot('is_admin', true)->get();
-        // Send email to each admin (Mailjet integration assumed via Mail::to)
         foreach ($admins as $admin) {
             Mail::to($admin->email)->send(new \App\Mail\ClubAccessRequestMail($club, $user, $admin));
         }

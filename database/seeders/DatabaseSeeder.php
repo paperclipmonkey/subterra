@@ -15,8 +15,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             MedalSeeder::class,
-            TagSeeder::class, // Add this line
-            // ...other seeders...
+            ClubSeeder::class,
+            TagSeeder::class,
+            CaveSeeder::class,
         ]);
     }
 }

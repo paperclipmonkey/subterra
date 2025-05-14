@@ -2,10 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ClubDataController;
+use App\Http\Controllers\ClubDataController;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ApiIsAdmin;
-use App\Http\Resources\UserDetailResource;
+use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\ClubController;
@@ -13,34 +13,43 @@ use App\Http\Controllers\Api\TripTagController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
-Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
-Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
-Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class);
-
-Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
-Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
-Route::post('/cave_systems_with_cave', [App\Http\Controllers\CaveSystemController::class, 'storeWithCave'])->middleware(ApiIsAdmin::class);
-
-
-Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
-Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
-Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);
-Route::put('/trips/{trip}', [App\Http\Controllers\TripController::class, 'update']);
-Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
-
-Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe'])->middleware(ApiIsAuthenticated::class);
-Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv'])->middleware(ApiIsAuthenticated::class);;
-
-# Users
-Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
-
-// --- User Club Actions (Authenticated) ---
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
-    // Maybe add leave endpoint later: DELETE /clubs/{club}/leave
+    # Users
+    Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
+
+    Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
+    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
+    Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
+    Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class);
+
+    Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
+    Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
+    Route::post('/cave_systems_with_cave', [App\Http\Controllers\CaveSystemController::class, 'storeWithCave'])->middleware(ApiIsAdmin::class);
+
+    # Trips
+    Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
+    Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
+    Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);
+    Route::put('/trips/{trip}', [App\Http\Controllers\TripController::class, 'update']);
+    Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
+
+    # My Trips
+    Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe']);
+    Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv']);
+
+    # Clubs
+    Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
+    Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
+
 });
 
+// TODO - Fix auth middleware
+// User Management
+Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
+Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
+Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
+Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware('auth:sanctum');
 
 // --- Admin Routes ---
 Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
@@ -68,15 +77,7 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     // --- Admin Pending Member Management ---
     Route::get('/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->name('admin.clubs.pending.index');
     Route::put('/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->name('admin.clubs.members.approve');
-    Route::put('/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->name('admin.clubs.members.reject'); // Or DELETE if preferred
-
-});
-
-
-// --- Public Club Endpoints ---
-Route::middleware(ApiIsAuthenticated::class)->group(function () {
-    Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
-    Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
+    Route::put('/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->name('admin.clubs.members.reject');
 });
 
 Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
@@ -87,7 +88,7 @@ Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
-        return new UserDetailResource($request->user());
+        return new UserDetailEmailResource($request->user());
     } else {
         return abort(400, 'No user logged in');
     }
@@ -100,13 +101,7 @@ Route::get('logout', function (Request $request) {
 
 Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
 
-
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
-
-Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
-Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
-Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
-Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware('auth:sanctum');
 
 Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
 Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');
