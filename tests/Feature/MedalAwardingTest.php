@@ -225,4 +225,93 @@ class MedalAwardingTest extends TestCase
         $listener->handle($event);
         $this->assertTrue($user->fresh()->medals->contains('name', 'Highland Cow'));
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_sheep_dog_medal_for_five_leader_systems()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'Sheep dog',
+            'description' => 'Awarded for going on 5 trips to leader systems',
+        ]);
+        $leaderTag = \App\Models\Tag::factory()->create(['tag' => 'Leader', 'category' => 'type', 'type' => 'cave']);
+        for ($i = 0; $i < 5; $i++) {
+            $cave = \App\Models\Cave::factory()->create();
+            $cave->tags()->attach($leaderTag);
+            $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user);
+        }
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Sheep dog'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_mucky_pup_medal_for_three_muddy_caves()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'Mucky Pup',
+            'description' => 'Awarded for going to 3 muddy caves',
+        ]);
+        $muddyTag = \App\Models\Tag::factory()->create(['tag' => 'Muddy', 'category' => 'conditions', 'type' => 'cave_system']);
+        for ($i = 0; $i < 3; $i++) {
+            $cave = \App\Models\Cave::factory()->create();
+            $cave->system->tags()->attach($muddyTag);
+            $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user);
+        }
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Mucky Pup'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_faff_now_cave_later_medal_for_five_swcc_trips()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Faff Now Cave Later',
+            'description' => 'Awarded for going on 5 trips',
+        ]);
+        $swccCaveNames = ['Ogof Ffynnon Ddu 1', 'Ogof Ffynnon Ddu 2', 'Cwm Dwr'];
+        foreach ($swccCaveNames as $caveName) {
+            $cave = \App\Models\Cave::factory()->create(['name' => $caveName]);
+            $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user);
+        }
+
+        foreach ($swccCaveNames as $caveName) {
+            $cave = \App\Models\Cave::factory()->create(['name' => $caveName]);
+            $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user);
+        }
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Faff Now Cave Later'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_string_dangler_medal_for_ten_srt_trips()
+    {
+        $user = \App\Models\User::factory()->create();
+        $medal = \App\Models\Medal::create([
+            'name' => 'String Dangler',
+            'description' => 'Awarded for going on 10 trips to entrances with the tag SRT',
+        ]);
+        $srtTag = \App\Models\Tag::factory()->create(['tag' => 'SRT', 'category' => 'type', 'type' => 'cave']);
+        for ($i = 0; $i < 10; $i++) {
+            $cave = \App\Models\Cave::factory()->create();
+            $cave->tags()->attach($srtTag);
+            $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user);
+        }
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'String Dangler'));
+    }
 }
