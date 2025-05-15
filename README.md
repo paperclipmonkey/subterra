@@ -10,22 +10,8 @@ The system has a list of cave entrances and systems, with a number of tags added
 ### Track completed trips
 Completed trips can be added by a user to help them track their caving career. When entering a trip it's possible to add other trip participants.
 
-## Deployment
-The system is deployed to fly.io using GitHub actions.
-
-### Database
-for an interactive psql shell use `fly postgres connect -a subterra-db`.
-
-or for local proxying, use `fly proxy 5433:5432 -a subterra-db`
-```
-create user subterra_admin with encrypted password '';
-ALTER USER subterra_admin WITH SUPERUSER;
-```
-
 ### Local development
-You'll need Docker installed locally.
-
-Local development can be accomplished with the dockerfile and node running locally:
+You'll only need Docker installed locally.
 ```sh
 docker run --rm \
 -u "$(id -u):$(id -g)" \
@@ -33,7 +19,6 @@ docker run --rm \
 -w /var/www/html \
 laravelsail/php84-composer:latest \
 composer install --ignore-platform-reqs
-
 
 # The following command doesn't require PHP to be installed
 vendor/bin/sail up
@@ -51,13 +36,18 @@ $user = User::first(); $user->is_admin = true; $user->is_approved = true; $user-
 $user = User::first(); $user->clubs->first()->pivot->status = 'approved'; $user->clubs->first()->pivot->save();
 ```
 
+## Deployment
+The system is deployed to fly.io using GitHub actions.
+
+### Database
+for an interactive psql shell use `fly postgres connect -a subterra-db`.
+or for local proxying, use `fly proxy 5433:5432 -a subterra-db`
 
 ### DNS
 https://admin.gandi.net/domain/8e5d26dc-8680-11ef-8ba7-00163e94b645/subterra.world/records
 
 
 ## Database schema
-
 ```mermaid
 classDiagram
 direction BT
