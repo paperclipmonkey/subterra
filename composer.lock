@@ -7413,16 +7413,16 @@
         },
         {
             "name": "fly-apps/dockerfile-laravel",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fly-apps/dockerfile-laravel.git",
-                "reference": "d2fabbac41e468a67825b08d140c404596922cf9"
+                "reference": "762b43f8641787fdcd82a0b7f984e204d9f367ac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fly-apps/dockerfile-laravel/zipball/d2fabbac41e468a67825b08d140c404596922cf9",
-                "reference": "d2fabbac41e468a67825b08d140c404596922cf9",
+                "url": "https://api.github.com/repos/fly-apps/dockerfile-laravel/zipball/762b43f8641787fdcd82a0b7f984e204d9f367ac",
+                "reference": "762b43f8641787fdcd82a0b7f984e204d9f367ac",
                 "shasum": ""
             },
             "require-dev": {
@@ -7475,9 +7475,9 @@
             ],
             "support": {
                 "issues": "https://github.com/fly-apps/dockerfile-laravel/issues",
-                "source": "https://github.com/fly-apps/dockerfile-laravel/tree/1.0.6"
+                "source": "https://github.com/fly-apps/dockerfile-laravel/tree/1.0.7"
             },
-            "time": "2024-07-26T20:08:41+00:00"
+            "time": "2024-12-09T15:59:57+00:00"
         },
         {
             "name": "hamcrest/hamcrest-php",
