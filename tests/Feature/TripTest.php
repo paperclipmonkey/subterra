@@ -121,7 +121,7 @@ class TripTest extends TestCase {
             'end_time' => now()->addDay()->toDateTimeString(),
             'entrance_id' => $entrance->id,
             'description' => 'Updated description',
-            'participants' => [$participant->email],
+            'participants' => [$participant->id],
             'media' => $media,
             'existing_media' => [],
         ];
@@ -167,7 +167,7 @@ class TripTest extends TestCase {
             'end_time' => now()->addDay()->toDateTimeString(),
             'entrance_id' => $entrance->id,
             'description' => 'Updated description',
-            'participants' => [$participant->email],
+            'participants' => [$participant->id],
             'media' => $media,
             'existing_media' => [],
         ];
