@@ -155,8 +155,8 @@ class TripController extends Controller
 
         // Add the participants to the trip
         $participants = $request->all()['participants'];
-        $participantIds = array_map(function ($email) {
-            return User::withoutGlobalScopes()->where('email', $email)->first()->id;
+        $participantIds = array_map(function ($id) {
+            return User::withoutGlobalScopes()->where('id', $id)->first()->id;
         }, $participants);
     
         // Sync participants with the trip

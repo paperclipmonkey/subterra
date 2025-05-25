@@ -304,7 +304,7 @@
       loadedTrip.existing_media = loadedTrip.media
       loadedTrip.media = []
 
-      loadedTrip.participants = loadedTrip.participants.map(participant => participant.email)
+      loadedTrip.participants = loadedTrip.participants.map(participant => participant.id)
       
       loadedTrip.entrance_cave_id = loadedTrip.entrance.id
       
@@ -337,7 +337,7 @@
   }
 
   const addParticipant = (participant) => {
-    trip.participants.push(participant.email)
+    trip.participants.push(participant.id)
     // Add the user using an api endpoint
     fetch('/api/users', {
       method: 'POST',
