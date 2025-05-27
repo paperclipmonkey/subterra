@@ -6,10 +6,25 @@
           <img :src="profile.photo" alt="Profile Photo" />
         </v-avatar>
         <div class="profile-info">
-          <h2>{{ profile.name }}</h2>
+          <h2>{{ profile.name || 'Please set your name' }}</h2>
         </div>
       </v-card-title>
       <v-divider></v-divider>
+      
+      <!-- Name editing section -->
+      <div class="name-edit pa-4">
+        <h3>Full Name:</h3>
+        <v-text-field
+          label="Your full name"
+          v-model="profile.name"
+          outlined
+          :rules="nameRules"
+          hint="This will be displayed to other cavers"
+          required
+        ></v-text-field>
+      </div>
+      <v-divider></v-divider>
+      
       <div class="tags">
         <h3>Tags:</h3>
         <v-chip-group v-if="profile.tags && profile.tags.length">
@@ -144,6 +159,13 @@ const selectedClubToJoinId = ref(null)
 const showDeleteModal = ref(false)
 const deletingAccount = ref(false)
 
+// Name validation rules
+const nameRules = [
+  v => !!v || 'Name is required',
+  v => (v && v.length >= 2) || 'Name must be at least 2 characters',
+  v => (v && v.length <= 100) || 'Name must be less than 100 characters'
+]
+
 // Filter clubs the user can request to join (not already a member or pending)
 const availableClubs = computed(() => {
   if (!profile.value.clubs || !allClubs.value) return []
@@ -160,6 +182,7 @@ const save = async () => {
         'Accept': 'application/json', // Good practice
       },
       body: JSON.stringify({
+        name: profile.value.name,
         bio: profile.value.bio,
       }),
     })
@@ -168,6 +191,7 @@ const save = async () => {
     }
     const updatedProfile = (await response.json()).data
     // Merge updated data carefully, especially if API doesn't return full profile
+    profile.value.name = updatedProfile.name
     profile.value.bio = updatedProfile.bio 
     // Optionally re-fetch profile to get latest club status if save affects it indirectly
     // await fetchProfile(); 
@@ -311,7 +335,8 @@ onMounted(async () => {
 
 .tags,
 .clubs,
-.bio {
+.bio,
+.name-edit {
   padding: 16px;
 }
 

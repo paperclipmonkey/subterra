@@ -13,6 +13,7 @@ use App\Http\Controllers\TripController;
 use App\Http\Controllers\ClubController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\MagicLinkController;
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
@@ -21,6 +22,10 @@ Route::get('/users/me', function (Request $request) {
         return abort(400, 'No user logged in');
     }
 })->name('users.me');
+
+// Magic link authentication routes (no auth required)
+Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink']);
+Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCallback']);
 
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
