@@ -19,7 +19,7 @@
     "vue-markdown-render": "^2.2.1",
     "vue3-calendar-heatmap": "^2.0.5",
     "vuetify": "^3.8",
-    "vuetify-pro-tiptap": "^2.5.4"
+    "vuetify-pro-tiptap": "^2.6.0"
   },
   "devDependencies": {
     "@indoorequal/vue-maplibre-gl": "^8.3.0",
