@@ -130,12 +130,13 @@ class UserController extends Controller
     }
 
     /**
-     * Update user profile information (bio, club).
+     * Update user profile information (bio, name, club).
      */
     public function store(User $user, Request $request): UserDetailEmailResource
     {
         $validatedData = $request->validate([
             'bio' => 'nullable|string',
+            'name' => 'nullable|string|max:255',
             // Add validation for other editable fields if needed
         ]);
 
