@@ -22,7 +22,7 @@
     "vuetify-pro-tiptap": "^2.6.0"
   },
   "devDependencies": {
-    "@indoorequal/vue-maplibre-gl": "^8.3.0",
+    "@indoorequal/vue-maplibre-gl": "^8.4.0",
     "@vitejs/plugin-vue": "^5.2.4",
     "eslint": "^8.57.0",
     "eslint-config-standard": "^17.1.0",

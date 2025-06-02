@@ -999,10 +999,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-2.0.3.tgz#4a2868d75d6d6963e423bcf90b7fd1be343409d3"
   integrity sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==
 
-"@indoorequal/vue-maplibre-gl@^8.3.0":
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/@indoorequal/vue-maplibre-gl/-/vue-maplibre-gl-8.3.0.tgz#c7091ec6e6ac449e4c688320590d9f3e8fa1f4a3"
-  integrity sha512-pdsfNZAfP0lHMCQQbnhiSPCdbv+gTUYpc3s5/4HpXIo9WZAW2UWFBkjx/UBSBaX8R1a8Rc0srnh87TPcDyXUVQ==
+"@indoorequal/vue-maplibre-gl@^8.4.0":
+  version "8.4.0"
+  resolved "https://registry.yarnpkg.com/@indoorequal/vue-maplibre-gl/-/vue-maplibre-gl-8.4.0.tgz#bf035cd9d02d14b1972db115f4298c306b442071"
+  integrity sha512-s0pLhOBDBYS0oUro0SR9gA8bp7D8HQ40SIhS5nS47D8ZUuU1LUuE7WGGpjKD+syKOY04feVx6iZiivOA21RuXA==
 
 "@jridgewell/gen-mapping@^0.3.5":
   version "0.3.8"
