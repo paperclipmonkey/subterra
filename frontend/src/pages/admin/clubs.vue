@@ -58,7 +58,7 @@
       </v-col>
     </v-row>
 
-    <!-- Modal removed -->
+    <CreateClubDialog v-model="createDialogVisible" @clubCreated="handleClubCreated" />
 
   </v-container>
 </template>
@@ -67,6 +67,7 @@
 import { ref, onMounted, computed, watch } from 'vue'; // Added watch
 import { mande } from 'mande'; // Ensure mande is imported
 import { useRouter } from 'vue-router';
+import CreateClubDialog from '@/components/admin/CreateClubDialog.vue'; // Import the dialog component
 
 // --- API Setup ---
 const clubsApi = mande('/api/admin/clubs');
@@ -76,6 +77,7 @@ const clubs = ref([]);
 const loading = ref(false);
 const search = ref('');
 const router = useRouter();
+const createDialogVisible = ref(false); // State for dialog visibility
 
 const headers = [
   { title: 'Name', key: 'name', sortable: true },
@@ -103,6 +105,18 @@ const fetchClubs = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const openCreateDialog = () => {
+  createDialogVisible.value = true;
+};
+
+const handleClubCreated = (newClub) => {
+  // Add the new club to the list or refetch
+  // For simplicity, refetching the list to include the new club
+  fetchClubs();
+  // Alternatively, push to the existing list if the newClub object is complete
+  // clubs.value.push({ ...newClub, loadingEnabled: false });
 };
 
 const updateClubInList = (updatedClub) => {
