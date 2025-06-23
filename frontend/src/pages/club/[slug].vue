@@ -177,7 +177,7 @@ const user = computed(() => appStore.user);
 const isClubAdmin = computed(() => {
   if (!user.value || !club.value || !user.value.clubs) return false;
   const clubEntry = (user.value.clubs || []).find(c => c.slug === club.value.slug);
-  return clubEntry && clubEntry.is_admin;
+  return (clubEntry && clubEntry.is_admin) || user.value.is_admin;
 });
 
 function openEditClubModal(tab = 'details') {
