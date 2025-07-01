@@ -5262,9 +5262,9 @@ vuetify-pro-tiptap@^2.6.0:
     "@tiptap/vue-3" "^2.11.9"
 
 vuetify@^3.5.9, vuetify@^3.8:
-  version "3.8.2"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.8.2.tgz#59799811a6e97154ee238981b2926b166ff14ae2"
-  integrity sha512-UJNFP4egmKJTQ3V3MKOq+7vIUKO7/Fko5G6yUsOW2Rm0VNBvAjgO6VY6EnK3DTqEKN6ugVXDEPw37NQSTGLZvw==
+  version "3.8.11"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.8.11.tgz#a2572572ebf32d33eecab560a6bdd2b1a92a3a50"
+  integrity sha512-sF5U364CFWq/K3zhC1z90DPHDp1EL6bepKpgzfIfHN6I2BoC1qjbH+hEqozqaGETrIBK7+ShccAzZ8CHL56YZQ==
 
 w3c-keyname@^2.2.0:
   version "2.2.8"
