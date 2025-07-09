@@ -95,9 +95,22 @@ export default defineConfig({
       '/storage': 'http://host.docker.internal',
       '/media': 'http://host.docker.internal',
       'public': 'http://host.docker.internal',
-        },
-      },
-      host: '0.0.0.0',
+    },
+    host: '0.0.0.0',
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.js'],
+    css: {
+      modules: {
+        classNameStrategy: 'stable'
+      }
+    },
+    deps: {
+      inline: ['vuetify']
+    }
+  }
   // build: {
   //   outDir: '../public/assets',
   //   sourcemap: true,
