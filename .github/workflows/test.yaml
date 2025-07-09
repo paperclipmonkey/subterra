@@ -12,8 +12,18 @@ jobs:
         with:
           php-version: '8.4'
           extensions: mbstring, bcmath, sqlite3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Install frontend dependencies
+        run: cd frontend && yarn install --frozen-lockfile
+      - name: Build frontend
+        run: cd frontend && yarn run build
       - name: Copy .env if needed
         run: |
           if [ ! -f .env ]; then cp .env.example .env; fi
