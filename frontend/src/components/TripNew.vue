@@ -1,6 +1,18 @@
 <template>
   <v-container class="pa-4">
-    <v-form class="pa-xl-4">
+    <template v-if="loading">
+      <v-card class="pa-8 text-center">
+        <v-progress-circular
+          indeterminate
+          size="64"
+          color="primary"
+          class="mb-4"
+        ></v-progress-circular>
+        <h3 class="text-h6 mb-2">Loading trip data...</h3>
+        <p class="text-body-2 text-medium-emphasis">Please wait while we load caves, users, and trip information.</p>
+      </v-card>
+    </template>
+    <v-form v-else class="pa-xl-4">
       <v-stepper v-model="step" :items="['Where', 'When', 'Who', 'What']" editable>
         <template v-slot:item.1>
           <v-card title="Where" flat>
@@ -236,6 +248,7 @@
   const userId = ref({})
   const users = ref([])
   const caves = ref([])
+  const loading = ref(true)
 
   const validationErrors = ref({})
 
@@ -273,54 +286,60 @@
   const step = ref(1)
 
   onMounted(async () => {
-    // Load caves
-    let response = await fetch('/api/caves')
-    caves.value = (await response.json()).data
+    try {
+      // Load caves
+      let response = await fetch('/api/caves')
+      caves.value = (await response.json()).data
 
-    // Load users
-    const userResonse = await fetch('/api/users/me')
-    userId.value = (await userResonse.json()).data.id
-    response = await fetch('/api/users')
-    users.value = (await response.json()).data
-    if(!trip.participants.length) {
-      trip.participants.push(users.value.find(user => user.id === userId.value).id)
-    }
-
-    if(route.query.cave_id) {
-      const foundCave = caves.value.find(cave => cave.id == route.query.cave_id)
-      if(!foundCave) {
-        console.error('Cave not found')
-        return
+      // Load users
+      const userResonse = await fetch('/api/users/me')
+      userId.value = (await userResonse.json()).data.id
+      response = await fetch('/api/users')
+      users.value = (await response.json()).data
+      if(!trip.participants.length) {
+        trip.participants.push(users.value.find(user => user.id === userId.value).id)
       }
-      trip.entrance_cave_id = foundCave.id
-      trip.cave_system_id = foundCave.system.id
-    }
 
-    // Load existing trip
-    if(route.params.id) {
-      const response = await fetch(`/api/trips/${route.params.id}`)
-      let loadedTrip = (await response.json()).data
-
-      loadedTrip.existing_media = loadedTrip.media
-      loadedTrip.media = []
-
-      loadedTrip.participants = loadedTrip.participants.map(participant => participant.id)
-      
-      loadedTrip.entrance_cave_id = loadedTrip.entrance.id
-      
-      loadedTrip.exit_cave_id = loadedTrip.exit.id
-      //loadedTrip.cave_system_id = loadedTrip.system.id
-      delete loadedTrip.entrance
-      delete loadedTrip.exit
-      delete loadedTrip.system
-      Object.assign(trip,loadedTrip)
-
-      tripStartDate.value = moment(loadedTrip.start_time).format('YYYY-MM-DD')
-      tripStartTime.value = moment(loadedTrip.start_time).format('HH:mm')
-
-      if(loadedTrip.entrance_cave_id !== loadedTrip.exit_cave_id) {
-        throughTrip.value = true
+      if(route.query.cave_id) {
+        const foundCave = caves.value.find(cave => cave.id == route.query.cave_id)
+        if(!foundCave) {
+          console.error('Cave not found')
+          return
+        }
+        trip.entrance_cave_id = foundCave.id
+        trip.cave_system_id = foundCave.system.id
       }
+
+      // Load existing trip
+      if(route.params.id) {
+        const response = await fetch(`/api/trips/${route.params.id}`)
+        let loadedTrip = (await response.json()).data
+
+        loadedTrip.existing_media = loadedTrip.media
+        loadedTrip.media = []
+
+        loadedTrip.participants = loadedTrip.participants.map(participant => participant.id)
+        
+        loadedTrip.entrance_cave_id = loadedTrip.entrance.id
+        
+        loadedTrip.exit_cave_id = loadedTrip.exit.id
+        //loadedTrip.cave_system_id = loadedTrip.system.id
+        delete loadedTrip.entrance
+        delete loadedTrip.exit
+        delete loadedTrip.system
+        Object.assign(trip,loadedTrip)
+
+        tripStartDate.value = moment(loadedTrip.start_time).format('YYYY-MM-DD')
+        tripStartTime.value = moment(loadedTrip.start_time).format('HH:mm')
+
+        if(loadedTrip.entrance_cave_id !== loadedTrip.exit_cave_id) {
+          throughTrip.value = true
+        }
+      }
+    } catch (error) {
+      console.error('Error loading trip data:', error)
+    } finally {
+      loading.value = false
     }
   })
 
