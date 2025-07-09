@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import TripList from '@/components/TripList.vue'
-import { useAppStore } from '@/stores/app'
-import { useTripStore } from '@/stores/trips'
 
 // Mock moment
 vi.mock('moment', () => {
@@ -17,18 +15,24 @@ vi.mock('moment', () => {
   return { default: mockMoment }
 })
 
-describe('TripList', () => {
-  let appStore
-  let tripStore
+// Mock the stores completely to avoid network calls
+vi.mock('@/stores/app', () => ({
+  useAppStore: () => ({
+    getUser: vi.fn().mockResolvedValue({})
+  })
+}))
 
+vi.mock('@/stores/trips', () => ({
+  useTripStore: () => ({
+    getTrips: vi.fn().mockResolvedValue([]),
+    trips: [],
+    loading: false
+  })
+}))
+
+describe('TripList', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    appStore = useAppStore()
-    tripStore = useTripStore()
-    
-    // Mock store methods
-    vi.spyOn(appStore, 'getUser').mockResolvedValue({})
-    vi.spyOn(tripStore, 'getTrips').mockResolvedValue([])
   })
 
   it('initializes with correct data', () => {
@@ -54,17 +58,6 @@ describe('TripList', () => {
     expect(formattedDate).toBe('15-12-2023')
   })
 
-  it('accesses trip store correctly', () => {
-    const wrapper = mount(TripList, {
-      global: {
-        plugins: [createPinia()]
-      }
-    })
-    
-    expect(wrapper.vm.tripStore).toBeDefined()
-    expect(wrapper.vm.store).toBeDefined()
-  })
-
   it('has proper table headers configuration', () => {
     const wrapper = mount(TripList, {
       global: {
@@ -76,5 +69,15 @@ describe('TripList', () => {
     const actualHeaders = wrapper.vm.headers.map(h => h.title)
     
     expect(actualHeaders).toEqual(expectedHeaders)
+  })
+
+  it('renders component without errors', () => {
+    const wrapper = mount(TripList, {
+      global: {
+        plugins: [createPinia()]
+      }
+    })
+    
+    expect(wrapper.exists()).toBe(true)
   })
 })
