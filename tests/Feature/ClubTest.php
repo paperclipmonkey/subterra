@@ -41,7 +41,6 @@ class ClubTest extends TestCase
              ->assertJsonCount(3, 'data'); // Only enabled clubs in 'data'
         $this->assertResponseMatchesSchema($response, 'endpoints/clubs-index');
     }
-    }
     // --- Admin Index Tests ---
 
     #[\PHPUnit\Framework\Attributes\Test]
