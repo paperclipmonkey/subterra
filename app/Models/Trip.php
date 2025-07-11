@@ -84,8 +84,10 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
                 // Club trips are visible to users who share clubs with any participant
                 $q->orWhere(function ($clubQuery) use ($user) {
                     $clubQuery->where('visibility', 'club')
-                             ->whereHas('participants.clubs', function ($clubsQuery) use ($user) {
-                                 $clubsQuery->whereIn('clubs.id', $user->clubs()->pluck('clubs.id'));
+                             ->whereHas('participants', function ($participantQuery) use ($user) {
+                                 $participantQuery->whereHas('clubs', function ($clubsQuery) use ($user) {
+                                     $clubsQuery->whereIn('clubs.id', $user->clubs()->pluck('clubs.id'));
+                                 });
                              });
                 });
             }

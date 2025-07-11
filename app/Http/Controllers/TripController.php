@@ -156,6 +156,9 @@ class TripController extends Controller
             abort(404, 'Trip not found');
         }
         
+        // Load relationships for the resource
+        $trip->load(['system', 'entrance', 'exit', 'participants', 'media']);
+        
         return new TripResource($trip);
     }
 
