@@ -69,6 +69,7 @@ class UserTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonFragment(['id' => $user->id]);
+        $this->assertResponseMatchesSchema($response, 'endpoints/users-show');
     }
 
         #[\PHPUnit\Framework\Attributes\Test]
