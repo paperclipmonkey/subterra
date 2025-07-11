@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 
 class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
@@ -81,12 +82,18 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
                                 });
                 });
                 
-                // Club trips are visible to users who share clubs with any participant
+                // Club trips are visible to users who share approved clubs with any participant
                 $q->orWhere(function ($clubQuery) use ($user) {
                     $clubQuery->where('visibility', 'club')
                              ->whereHas('participants', function ($participantQuery) use ($user) {
-                                 $participantQuery->whereHas('clubs', function ($clubsQuery) use ($user) {
-                                     $clubsQuery->whereIn('clubs.id', $user->clubs()->pluck('clubs.id'));
+                                 $participantQuery->whereExists(function ($existsQuery) use ($user) {
+                                     $existsQuery->select(\DB::raw(1))
+                                               ->from('club_user as cu1')
+                                               ->join('club_user as cu2', 'cu1.club_id', '=', 'cu2.club_id')
+                                               ->whereColumn('cu1.user_id', 'users.id') // participant
+                                               ->where('cu2.user_id', $user->id) // current user
+                                               ->where('cu1.status', 'approved')
+                                               ->where('cu2.status', 'approved');
                                  });
                              });
                 });
