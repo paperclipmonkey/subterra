@@ -21,6 +21,7 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'cave_system_id',
         'entrance_cave_id',
         'exit_cave_id',
+        'visibility',
     ];
 
     protected $casts = [
@@ -60,5 +61,34 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function media()
     {
         return $this->hasMany(TripMedia::class);
+    }
+
+    /**
+     * Scope trips based on visibility for the given user
+     */
+    public function scopeVisibleTo($query, $user)
+    {
+        return $query->where(function ($q) use ($user) {
+            // Public trips are visible to everyone
+            $q->where('visibility', 'public');
+            
+            if ($user) {
+                // Private trips are visible to participants
+                $q->orWhere(function ($privateQuery) use ($user) {
+                    $privateQuery->where('visibility', 'private')
+                                ->whereHas('participants', function ($participantQuery) use ($user) {
+                                    $participantQuery->where('user_id', $user->id);
+                                });
+                });
+                
+                // Club trips are visible to users who share clubs with any participant
+                $q->orWhere(function ($clubQuery) use ($user) {
+                    $clubQuery->where('visibility', 'club')
+                             ->whereHas('participants.clubs', function ($clubsQuery) use ($user) {
+                                 $clubsQuery->whereIn('clubs.id', $user->clubs()->pluck('clubs.id'));
+                             });
+                });
+            }
+        });
     }
 }

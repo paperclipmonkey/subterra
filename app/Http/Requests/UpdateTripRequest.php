@@ -23,16 +23,19 @@ class UpdateTripRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'start_time' => ['required', 'date'],
-            'end_time' => ['required', 'date', 'after_or_equal:start_time'],
-            'entrance_id' => ['required', 'integer', 'exists:caves,id'],
-            'participants' => ['array'],
+            'cave_system_id' => ['sometimes', 'required', 'exists:cave_systems,id'],
+            'entrance_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
+            'exit_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
+            'start_time' => ['sometimes', 'required', 'date_format:Y-m-d H:i:s'],
+            'end_time' => ['sometimes', 'required', 'date_format:Y-m-d H:i:s', 'after_or_equal:start_time'],
+            'visibility' => ['sometimes', 'in:public,private,club'],
+            'participants' => ['sometimes', 'array'],
             'participants.*' => ['integer', 'exists:users,id'],
-            'media' => ['array'],
+            'media' => ['nullable', 'array'],
             'media.*.data' => ['required', 'string'],
-            'existing_media' => ['array'],
+            'existing_media' => ['nullable', 'array'],
         ];
     }
 }
