@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "definitions": {
+    "user": {
+      "$ref": "../objects/user.json"
+    },
+    "club-summary": {
+      "$ref": "../objects/club-summary.json"
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "photo": {
+      "type": ["string", "null"]
+    },
+    "clubs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/club-summary"
+      }
+    }
+  },
+  "required": ["id", "name", "email", "clubs"],
+  "additionalProperties": false
+}

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use Tests\Support\JsonSchemaValidator;
 use App\Models\Cave;
 use App\Models\Tag;
 use App\Models\User;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CaveTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, JsonSchemaValidator;
 
     protected function setUp(): void
     {
@@ -28,6 +29,7 @@ class CaveTest extends TestCase
         $response = $this->get('/api/caves');
 
         $response->assertStatus(200);
+        $this->assertResponseMatchesSchema($response, 'endpoints/caves-index');
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -42,6 +44,7 @@ class CaveTest extends TestCase
         $response = $this->get('/api/caves/' . $cave->slug);
 
         $response->assertStatus(200);
+        $this->assertResponseMatchesSchema($response, 'endpoints/caves-show');
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

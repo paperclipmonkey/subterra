@@ -19,6 +19,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "fly-apps/dockerfile-laravel": "^1.0",
+        "justinrainbow/json-schema": "^6.0",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
         "mockery/mockery": "^1.6",
@@ -35,7 +36,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Tests\\Support\\": "tests/Support/"
         }
     },
     "scripts": {

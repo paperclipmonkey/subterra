@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "#/objects/trip",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "description": {
+      "type": ["string", "null"]
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/objects/user"
+      }
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "$ref": "#/objects/media"
+      }
+    }
+  },
+  "required": ["id", "name", "start_time", "participants", "media"],
+  "additionalProperties": false
+}

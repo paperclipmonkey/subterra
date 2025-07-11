@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Support\JsonSchemaValidator;
 use App\Models\User;
 use App\Models\Club;
 use Illuminate\Support\Facades\Event;
@@ -12,7 +13,7 @@ use App\Events\ClubAccessResponded;
 
 class ClubTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, JsonSchemaValidator;
 
     protected $adminUser;
     protected $regularUser;
@@ -38,6 +39,8 @@ class ClubTest extends TestCase
 
         $response->assertStatus(200)
              ->assertJsonCount(3, 'data'); // Only enabled clubs in 'data'
+        $this->assertResponseMatchesSchema($response, 'endpoints/clubs-index');
+    }
     }
     // --- Admin Index Tests ---
 
