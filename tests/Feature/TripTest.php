@@ -433,7 +433,10 @@ class TripTest extends TestCase {
             'participants' => [$participant->id],
             'media' => [
                 [
-                    'data' => $heicData
+                    'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png')),
+                    'taken_at' => '2024-01-01 12:00:00',
+                    'photographer' => 'John Doe',
+                    'copyright' => '© 2024 John Doe'
                 ]
             ]
         ];
@@ -449,5 +452,38 @@ class TripTest extends TestCase {
             return $event->trip->id === $trip->id;
         });
         Storage::disk('media')->assertExists($trip->media->first()->filename);
+        $response->assertCreated()->assertJsonFragment(['name' => 'Test Trip With Media Metadata']);
+        
+        $trip = Trip::where('name', 'Test Trip With Media Metadata')->first();
+        $this->assertCount(1, $trip->media);
+        
+        $mediaItem = $trip->media->first();
+        $this->assertEquals('2024-01-01 12:00:00', $mediaItem->taken_at->format('Y-m-d H:i:s'));
+        $this->assertEquals('John Doe', $mediaItem->photographer);
+        $this->assertEquals('© 2024 John Doe', $mediaItem->copyright);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function media_resource_includes_metadata()
+    {
+        $user = User::factory()->create();
+        $trip = Trip::factory()->create();
+        $trip->participants()->attach($user);
+        
+        // Create media with metadata
+        $trip->media()->create([
+            'filename' => 'test.webp',
+            'taken_at' => '2024-01-01 12:00:00',
+            'photographer' => 'Jane Smith',
+            'copyright' => '© 2024 Jane Smith'
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson('/api/trips/' . $trip->id);
+        
+        $response->assertOk()
+            ->assertJsonPath('data.media.0.taken_at', '2024-01-01T12:00:00.000000Z')
+            ->assertJsonPath('data.media.0.photographer', 'Jane Smith')
+            ->assertJsonPath('data.media.0.copyright', '© 2024 Jane Smith');
     }
 }
