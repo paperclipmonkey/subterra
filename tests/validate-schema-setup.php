@@ -15,23 +15,30 @@ function validateSchema($jsonData, $schemaPath) {
         return false;
     }
     
-    $schema = json_decode(file_get_contents($schemaPath));
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        echo "❌ Invalid JSON in schema: $schemaPath\n";
-        return false;
-    }
-    
-    $validator = new Validator();
-    $validator->validate($jsonData, $schema, Constraint::CHECK_MODE_COERCE_TYPES);
-    
-    if ($validator->isValid()) {
-        echo "✅ Schema validation passed: $schemaPath\n";
-        return true;
-    } else {
-        echo "❌ Schema validation failed: $schemaPath\n";
-        foreach ($validator->getErrors() as $error) {
-            echo "   - [{$error['property']}] {$error['message']}\n";
+    try {
+        // Use UriRetriever for proper reference resolution
+        $retriever = new \JsonSchema\Uri\UriRetriever();
+        $schemaUri = 'file://' . realpath($schemaPath);
+        $schema = $retriever->retrieve($schemaUri);
+        
+        // Convert PHP array to object for validation
+        $jsonObject = json_decode(json_encode($jsonData));
+        
+        $validator = new Validator();
+        $validator->validate($jsonObject, $schema, Constraint::CHECK_MODE_COERCE_TYPES);
+        
+        if ($validator->isValid()) {
+            echo "✅ Schema validation passed: $schemaPath\n";
+            return true;
+        } else {
+            echo "❌ Schema validation failed: $schemaPath\n";
+            foreach ($validator->getErrors() as $error) {
+                echo "   - [{$error['property']}] {$error['message']}\n";
+            }
+            return false;
         }
+    } catch (Exception $e) {
+        echo "❌ Schema validation error: $schemaPath - " . $e->getMessage() . "\n";
         return false;
     }
 }

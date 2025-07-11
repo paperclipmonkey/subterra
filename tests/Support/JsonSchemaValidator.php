@@ -14,21 +14,20 @@ trait JsonSchemaValidator
      */
     protected function assertJsonMatchesSchema(array $jsonData, string $schemaPath): void
     {
-        // Create a URI retriever and schema storage for proper reference resolution
+        // Create a URI retriever for proper reference resolution
         $retriever = new UriRetriever();
-        $schemaStorage = new SchemaStorage($retriever);
         
         // Convert file path to file:// URI for proper resolution
         $schemaUri = 'file://' . realpath($schemaPath);
         
-        // Load the schema with proper URI context
+        // Load the schema with proper URI context for reference resolution
         $schema = $retriever->retrieve($schemaUri);
         
-        $validator = new Validator();
-        $validator->setUriRetriever($retriever);
-        $validator->setSchemaStorage($schemaStorage);
+        // Convert PHP array to object for validation
+        $jsonObject = json_decode(json_encode($jsonData));
         
-        $validator->validate($jsonData, $schema, Constraint::CHECK_MODE_COERCE_TYPES);
+        $validator = new Validator();
+        $validator->validate($jsonObject, $schema, Constraint::CHECK_MODE_COERCE_TYPES);
         
         $this->assertTrue(
             $validator->isValid(),
