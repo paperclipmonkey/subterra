@@ -20,6 +20,9 @@ class MediaResource extends JsonResource
             "id"=> $this->id,
             "filename"=> $this->filename,
             "url"=> Storage::disk('media')->url($this->filename),
+            "taken_at"=> $this->taken_at,
+            "photographer"=> $this->photographer,
+            "copyright"=> $this->copyright,
         ];
     }
 }

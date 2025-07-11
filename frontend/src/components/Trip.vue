@@ -112,7 +112,7 @@
                   aspect-ratio="1"
                   cover
                   class="bg-grey-lighten-2 media-thumbnail"
-                  @click="() => openMedia(media.url)"
+                  @click="() => openMediaModal(media)"
                 >
                   <template v-slot:placeholder>
                     <v-row
@@ -147,6 +147,12 @@
       </v-card>
     </v-dialog>
 
+    <!-- Media View Modal -->
+    <MediaViewModal
+      v-model="showMediaModal"
+      :media="selectedMedia"
+    />
+
   </v-container>
 </template>
 
@@ -156,6 +162,7 @@ import VueMarkdown from 'vue-markdown-render'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'; 
 import { ref, computed, onMounted } from 'vue'; // Ensure ref is imported
+import MediaViewModal from './MediaViewModal.vue'
 
 const appStore = useAppStore()
 
@@ -175,6 +182,8 @@ const currentUserWasOnTrip = computed(()=> {
 })
 
 const showDeleteConfirmDialog = ref(false);
+const showMediaModal = ref(false);
+const selectedMedia = ref({});
 
 const deleteTrip = async () => {
   // Now this function just triggers the dialog
@@ -214,6 +223,11 @@ const confirmDelete = async () => {
 
   const openMedia = (url) => {
     window.open(url, '_blank');
+  }
+
+  const openMediaModal = (media) => {
+    selectedMedia.value = media;
+    showMediaModal.value = true;
   }
 </script>
 
