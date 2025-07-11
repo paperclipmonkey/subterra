@@ -30,7 +30,7 @@
     "tags": {
       "type": "array",
       "items": {
-        "$ref": "#/objects/tag"
+        "$ref": "tag.json"
       }
     },
     "location_name": {
@@ -46,12 +46,12 @@
       "type": ["number", "null"]
     },
     "system": {
-      "$ref": "#/objects/cave-system"
+      "$ref": "cave-system.json"
     },
     "trips": {
       "type": "array",
       "items": {
-        "$ref": "#/objects/trip"
+        "$ref": "trip.json"
       }
     },
     "previously_done": {

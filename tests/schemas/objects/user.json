@@ -17,7 +17,7 @@
     "clubs": {
       "type": "array",
       "items": {
-        "$ref": "#/objects/club-summary"
+        "$ref": "club-summary.json"
       }
     }
   },

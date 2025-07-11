@@ -30,7 +30,7 @@
     "tags": {
       "type": "array",
       "items": {
-        "$ref": "#/objects/tag"
+        "$ref": "tag.json"
       }
     },
     "references": {

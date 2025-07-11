@@ -25,13 +25,13 @@
     "participants": {
       "type": "array",
       "items": {
-        "$ref": "#/objects/user"
+        "$ref": "user.json"
       }
     },
     "media": {
       "type": "array",
       "items": {
-        "$ref": "#/objects/media"
+        "$ref": "media.json"
       }
     }
   },

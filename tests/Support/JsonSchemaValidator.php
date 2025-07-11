@@ -4,6 +4,8 @@ namespace Tests\Support;
 
 use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
+use JsonSchema\SchemaStorage;
+use JsonSchema\Uri\UriRetriever;
 
 trait JsonSchemaValidator
 {
@@ -12,9 +14,20 @@ trait JsonSchemaValidator
      */
     protected function assertJsonMatchesSchema(array $jsonData, string $schemaPath): void
     {
-        $schema = json_decode(file_get_contents($schemaPath));
+        // Create a URI retriever and schema storage for proper reference resolution
+        $retriever = new UriRetriever();
+        $schemaStorage = new SchemaStorage($retriever);
+        
+        // Convert file path to file:// URI for proper resolution
+        $schemaUri = 'file://' . realpath($schemaPath);
+        
+        // Load the schema with proper URI context
+        $schema = $retriever->retrieve($schemaUri);
         
         $validator = new Validator();
+        $validator->setUriRetriever($retriever);
+        $validator->setSchemaStorage($schemaStorage);
+        
         $validator->validate($jsonData, $schema, Constraint::CHECK_MODE_COERCE_TYPES);
         
         $this->assertTrue(
