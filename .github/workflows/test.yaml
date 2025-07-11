@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
