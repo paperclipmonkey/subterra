@@ -130,7 +130,15 @@ class TripController extends Controller
             ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
             $filePath = 'trip/' . \Illuminate\Support\Str::uuid() . '.webp';
             Storage::disk('media')->put($filePath, (string) $image);
-            $trip->media()->create(['filename' => $filePath]);
+            
+            $mediaData = [
+                'filename' => $filePath,
+                'taken_at' => $file['taken_at'] ?? null,
+                'photographer' => $file['photographer'] ?? null,
+                'copyright' => $file['copyright'] ?? null,
+            ];
+            
+            $trip->media()->create($mediaData);
         }
     }
 
