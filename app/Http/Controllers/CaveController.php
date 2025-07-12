@@ -10,7 +10,6 @@ use App\Http\Resources\CaveResource;
 use App\Models\Cave;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\Response;
 
 class CaveController extends Controller
 {
@@ -23,11 +22,11 @@ class CaveController extends Controller
         return CaveResource::collection(Cave::orderBy('name')->get());
     }
 
-    public function store(StoreCaveRequest $request): Response
+    public function store(StoreCaveRequest $request): CaveResource
     {
-        Cave::create($request->validated());
+        $cave = Cave::create($request->validated());
 
-        return response()->noContent();
+        return new CaveResource($cave);
     }
 
     public function show(Cave $cave): CaveResource
