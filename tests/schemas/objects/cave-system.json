@@ -24,7 +24,7 @@
     "caves": {
       "type": "array",
       "items": {
-        "type": "object"
+        "$ref": "cave-summary.json"
       }
     },
     "tags": {
