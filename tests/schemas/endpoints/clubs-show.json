@@ -6,9 +6,10 @@
       "$ref": "../objects/club.json"
     }
   },
-  "allOf": [
-    {
+  "properties": {
+    "data": {
       "$ref": "#/definitions/club"
     }
-  ]
+  },
+  "required": ["data"]
 }
