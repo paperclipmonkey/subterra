@@ -70,6 +70,7 @@
       exit_cave_id: cave.id,
       participants: [appStore.user.id],
       cave_system_id: cave.system.id,
+      visibility: 'private',
     }
 
     const response = await fetch('/api/trips', {

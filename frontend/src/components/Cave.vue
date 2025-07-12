@@ -377,6 +377,7 @@ const markAsDone = async () => {
     exit_cave_id: cave.value.id,
     participants: [appStore.user.id],
     cave_system_id: cave.value.system.id,
+    visibility: 'private',
   }
 
   const response = await fetch('/api/trips', {
