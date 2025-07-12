@@ -1,20 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Listeners;
 
+use App\Events\MedalAwarded;
 use App\Events\TripParticipantTagged;
 use App\Models\Medal;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\MedalAwardedMail;
-use Carbon\Carbon;
 
 class CheckAndAwardMedals implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    public function handle(TripParticipantTagged $event)
+    public function handle(TripParticipantTagged $event): void
     {
         $user = $event->user;
         $awardedMedals = [];
@@ -29,13 +30,13 @@ class CheckAndAwardMedals implements ShouldQueue
             }
         }
 
-        // TODO, fire an event about a new medal being awarded
+        // Fire an event for each awarded medal
         foreach ($awardedMedals as $medal) {
-            Mail::to($user->email)->send(new MedalAwardedMail($user, $medal));
+            event(new MedalAwarded($user, $medal));
         }
     }
 
-    protected function passesMedalCriteria($user, $medal)
+    protected function passesMedalCriteria($user, $medal): bool
     {
         switch ($medal->name) {
             case 'First Trip':

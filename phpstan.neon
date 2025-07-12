@@ -1,0 +1,19 @@
+parameters:
+    level: 5
+    paths:
+        - app
+    excludePaths:
+        - app/Providers/BroadcastServiceProvider.php
+        - tests
+    ignoreErrors:
+        # Laravel specific ignores
+        - '#Cannot call method [a-zA-Z0-9\\_]+\(\) on Illuminate\\Database\\Eloquent\\Model\|null\.#'
+        - '#Undefined variable: \$[a-zA-Z0-9_]+#'
+    
+    # Laravel specific features
+    checkMissingIterableValueType: false
+    reportUnmatchedIgnoredErrors: false
+    
+    # Bootstrap Laravel for analysis
+    bootstrapFiles:
+        - bootstrap/app.php

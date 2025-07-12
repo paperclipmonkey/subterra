@@ -1,18 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Trip;
-use App\Http\Resources\UserResource;
-use App\Http\Resources\UserDetailResource;
-use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Resources\TripResource;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Http\Resources\UserDetailEmailResource;
+use App\Http\Resources\UserDetailResource;
+use App\Http\Resources\UserResource;
+use App\Models\Trip;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
