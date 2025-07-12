@@ -33,6 +33,12 @@ router.onError((err, to) => {
 // Basic cookie functionality for login check
 router.beforeEach(async (to, from, next) => {
   let user = await useAppStore().getUser()
+
+  // Exception for magic link login page
+  if (to.path.startsWith('/magiclink/')) {
+    return next()
+  }
+
   if(to.name === '/') {
     if(user.email) {
       return next({ name: '/trips' })

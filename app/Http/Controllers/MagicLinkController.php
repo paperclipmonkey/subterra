@@ -124,6 +124,10 @@ class MagicLinkController extends Controller
                     'error' => 'Token is required'
                 ], 400);
             }
+            
+            if (strpos($token, ':') !== false) {
+                $token = explode(':', $token, 2)[1];
+            }
 
             // Query the magic_links table directly
             $magicLinkData = DB::table('magic_links')
@@ -153,7 +157,18 @@ class MagicLinkController extends Controller
             }
 
             // Deserialize the action to get the user
-            $action = unserialize($magicLinkData->action);
+            $action = null;
+            try {
+                $action = unserialize($magicLinkData->action);
+            } catch (\Exception $e) {
+                try {
+                    $action = unserialize(base64_decode($magicLinkData->action));
+                } catch (\Exception $e2) {
+                    return response()->json([
+                        'error' => 'Invalid magic link action (unserialize failed)'
+                    ], 400);
+                }
+            }
             
             if (!$action instanceof LoginAction) {
                 return response()->json([
