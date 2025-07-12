@@ -11,6 +11,10 @@
       "type": "string",
       "minLength": 1
     },
+    "slug": {
+      "type": "string",
+      "minLength": 1
+    },
     "description": {
       "type": "string"
     },
@@ -50,8 +54,16 @@
         },
         "required": ["id", "url", "original_filename", "mime_type", "size"]
       }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
-  "required": ["id", "name", "description", "caves", "tags", "files"],
+  "required": ["id", "name", "slug", "description", "caves", "tags", "files", "created_at", "updated_at"],
   "additionalProperties": false
 }

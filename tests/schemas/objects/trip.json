@@ -11,6 +11,24 @@
       "type": "string",
       "minLength": 1
     },
+    "description": {
+      "type": ["string", "null"]
+    },
+    "system": {
+      "$ref": "cave-system.json"
+    },
+    "entrance": {
+      "anyOf": [
+        {"$ref": "cave.json"},
+        {"type": "null"}
+      ]
+    },
+    "exit": {
+      "anyOf": [
+        {"$ref": "cave.json"},
+        {"type": "null"}
+      ]
+    },
     "start_time": {
       "type": "string",
       "format": "date-time"
@@ -18,9 +36,6 @@
     "end_time": {
       "type": ["string", "null"],
       "format": "date-time"
-    },
-    "description": {
-      "type": ["string", "null"]
     },
     "participants": {
       "type": "array",
@@ -35,6 +50,6 @@
       }
     }
   },
-  "required": ["id", "name", "start_time", "participants", "media"],
+  "required": ["id", "name", "description", "system", "entrance", "exit", "start_time", "participants", "media"],
   "additionalProperties": false
 }

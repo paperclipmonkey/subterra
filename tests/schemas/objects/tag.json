@@ -7,18 +7,27 @@
       "type": "integer",
       "minimum": 1
     },
+    "tag": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": ["string", "null"]
+    },
+    "type": {
+      "type": "string"
+    },
     "category": {
       "type": "string",
       "minLength": 1
     },
-    "tag": {
-      "type": "string",
-      "minLength": 1
+    "assignable": {
+      "type": "boolean"
     },
     "colour": {
       "type": ["string", "null"]
     }
   },
-  "required": ["id", "category", "tag"],
+  "required": ["id", "tag", "description", "type", "category", "assignable"],
   "additionalProperties": false
 }

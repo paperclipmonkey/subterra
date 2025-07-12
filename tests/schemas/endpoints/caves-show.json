@@ -1,29 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "definitions": {
-    "cave": {
+  "properties": {
+    "data": {
       "$ref": "../objects/cave.json"
-    },
-    "tag": {
-      "$ref": "../objects/tag.json"
-    },
-    "cave-system": {
-      "$ref": "../objects/cave-system.json"
-    },
-    "trip": {
-      "$ref": "../objects/trip.json"
-    },
-    "user": {
-      "$ref": "../objects/user.json"
-    },
-    "media": {
-      "$ref": "../objects/media.json"
     }
   },
-  "allOf": [
-    {
-      "$ref": "#/definitions/cave"
-    }
-  ]
+  "required": ["data"],
+  "additionalProperties": false
 }

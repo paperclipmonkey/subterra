@@ -10,27 +10,111 @@
     }
   },
   "properties": {
-    "id": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "name": {
-      "type": "string",
-      "minLength": 1
-    },
-    "photo": {
-      "type": ["string", "null"]
-    },
-    "bio": {
-      "type": ["string", "null"]
-    },
-    "clubs": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/club-summary"
-      }
+    "data": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "photo": {
+          "type": ["string", "null"]
+        },
+        "bio": {
+          "type": ["string", "null"]
+        },
+        "clubs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "slug": {
+                "type": "string",
+                "minLength": 1
+              },
+              "is_admin": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "slug", "is_admin", "status"],
+            "additionalProperties": false
+          }
+        },
+        "medals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "image_url": {
+                "type": ["string", "null"]
+              },
+              "awarded_at": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              }
+            },
+            "required": ["id", "name", "description", "image_url", "awarded_at"],
+            "additionalProperties": false
+          }
+        },
+        "is_admin": {
+          "type": ["boolean", "null"]
+        },
+        "is_approved": {
+          "type": "boolean"
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "trips": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "caves": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "duration": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": ["trips", "caves", "duration"],
+          "additionalProperties": false
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "name", "clubs", "medals", "is_approved", "stats", "created_at", "updated_at"],
+      "additionalProperties": false
     }
   },
-  "required": ["id", "name", "clubs"],
+  "required": ["data"],
   "additionalProperties": false
 }
