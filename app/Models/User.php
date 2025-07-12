@@ -28,6 +28,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'email',
         'photo',
         'is_active',
+        'is_approved',
         'bio',
         'is_admin',
     ];
