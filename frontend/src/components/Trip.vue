@@ -43,6 +43,47 @@
                <v-list-item-title>Date</v-list-item-title>
                <v-list-item-subtitle>{{ formatDate(trip.start_time) }}</v-list-item-subtitle>
              </v-list-item>
+            <v-list-item>
+              <v-list-item-title>Visibility</v-list-item-title>
+              <v-list-item-subtitle>
+                <v-tooltip location="top">
+                  <template #activator="{ props }">
+                    <v-chip
+                      v-bind="props"
+                      :color="
+                        trip.visibility === 'public' ? 'success' :
+                        trip.visibility === 'private' ? 'grey' :
+                        trip.visibility === 'club' ? 'primary' : 'grey'
+                      "
+                      size="small"
+                      class="align-items-center"
+                      style="width: auto; max-width: 160px;"
+                    >
+                      <v-icon size="18" class="mr-1">
+                        {{
+                          trip.visibility === 'public' ? 'mdi-earth' :
+                          trip.visibility === 'private' ? 'mdi-lock' :
+                          trip.visibility === 'club' ? 'mdi-account-group' : 'mdi-help-circle'
+                        }}
+                      </v-icon>
+                      {{
+                        trip.visibility === 'public' ? 'Public' :
+                        trip.visibility === 'private' ? 'Private' :
+                        trip.visibility === 'club' ? 'Club' : 'Unknown'
+                      }}
+                    </v-chip>
+                  </template>
+                  <span>
+                    {{
+                      trip.visibility === 'public' ? 'Visible to everyone.' :
+                      trip.visibility === 'private' ? 'Visible only to you and other participants.' :
+                      trip.visibility === 'club' ? 'Visible to your club members.' :
+                      'Visibility unknown.'
+                    }}
+                  </span>
+                </v-tooltip>
+              </v-list-item-subtitle>
+            </v-list-item>
              <v-list-item>
                <v-list-item-title>Time</v-list-item-title>
                <v-list-item-subtitle>{{ formatTime(trip.start_time) }}</v-list-item-subtitle>
