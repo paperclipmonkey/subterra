@@ -5,11 +5,12 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Support\JsonSchemaValidator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, JsonSchemaValidator;
 
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_current_user()
@@ -20,6 +21,7 @@ class UserTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonFragment(['email' => auth()->user()->email]);
+        $this->assertResponseMatchesSchema($response, 'endpoints/users-me');
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -32,6 +34,7 @@ class UserTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonCount(4, 'data');
+        $this->assertResponseMatchesSchema($response, 'endpoints/users-index');
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -66,6 +69,7 @@ class UserTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonFragment(['id' => $user->id]);
+        $this->assertResponseMatchesSchema($response, 'endpoints/users-show');
     }
 
         #[\PHPUnit\Framework\Attributes\Test]

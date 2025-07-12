@@ -8,10 +8,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
+use Tests\Support\JsonSchemaValidator;
 
 
 class TripTest extends TestCase {
-    use RefreshDatabase;
+    use RefreshDatabase, JsonSchemaValidator;
 
     protected function setUp(): void
     {
@@ -26,6 +27,7 @@ class TripTest extends TestCase {
         Trip::factory()->count(2)->create();
         $response = $this->getJson('/api/trips');
         $response->assertOk()->assertJsonStructure(['data']);
+        $this->assertResponseMatchesSchema($response, 'endpoints/trips-index');
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -98,6 +100,7 @@ class TripTest extends TestCase {
         $trip = Trip::factory()->create();
         $response = $this->getJson('/api/trips/' . $trip->id);
         $response->assertOk()->assertJsonFragment(['id' => $trip->id]);
+        $this->assertResponseMatchesSchema($response, 'endpoints/trips-show');
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

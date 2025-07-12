@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "definitions": {
+    "trip": {
+      "$ref": "../objects/trip.json"
+    },
+    "user": {
+      "$ref": "../objects/user.json"
+    },
+    "media": {
+      "$ref": "../objects/media.json"
+    }
+  },
+  "properties": {
+    "data": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/trip"
+      }
+    }
+  },
+  "required": ["data"],
+  "additionalProperties": false
+}

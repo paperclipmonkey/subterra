@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "#/objects/media",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "filename": {
+      "type": "string",
+      "minLength": 1
+    },
+    "original_filename": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mime_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    }
+  },
+  "required": ["id", "filename", "original_filename", "mime_type", "size", "url"],
+  "additionalProperties": false
+}

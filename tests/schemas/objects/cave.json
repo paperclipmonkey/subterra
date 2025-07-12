@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "#/objects/cave",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "slug": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "access_info": {
+      "type": "string"
+    },
+    "hero_image": {
+      "type": ["string", "null"]
+    },
+    "entrance_image": {
+      "type": ["string", "null"]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "$ref": "tag.json"
+      }
+    },
+    "location_name": {
+      "type": ["string", "null"]
+    },
+    "location_country": {
+      "type": ["string", "null"]
+    },
+    "location_lat": {
+      "type": ["number", "null"]
+    },
+    "location_lng": {
+      "type": ["number", "null"]
+    },
+    "system": {
+      "$ref": "cave-system.json"
+    },
+    "trips": {
+      "type": "array",
+      "items": {
+        "$ref": "trip.json"
+      }
+    },
+    "previously_done": {
+      "type": "boolean"
+    }
+  },
+  "required": ["id", "slug", "name", "description", "access_info", "tags", "system", "trips", "previously_done"],
+  "additionalProperties": false
+}
