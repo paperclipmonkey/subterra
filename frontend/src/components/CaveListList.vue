@@ -50,6 +50,7 @@
 
   import { useCaveStore } from '@/stores/caves';
   import { useAppStore } from '@/stores/app';
+  import { markCaveAsDone } from '@/stores/markAsDone';
   const caveStore = useCaveStore();
   const appStore = useAppStore();
   const showConfirmModal = ref(false);
@@ -64,28 +65,13 @@
 
   const markAsDone = async (cave) => {
     if (!cave) return;
-    const trip = {
-      name: 'Marked as Done',
-      entrance_cave_id: cave.id,
-      exit_cave_id: cave.id,
-      participants: [appStore.user.id],
-      cave_system_id: cave.system.id,
-      visibility: 'private',
-    }
-
-    const response = await fetch('/api/trips', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(trip)
-    })
-    if (response.ok) {
-      await caveStore.getList() // Refresh the cave list
-      showConfirmModal.value = false
-      caveToMark.value = null
+    const ok = await markCaveAsDone({ cave, userId: appStore.user.id });
+    if (ok) {
+      await caveStore.getList(); // Refresh the cave list
+      showConfirmModal.value = false;
+      caveToMark.value = null;
     } else {
-      console.error('failed to save trip')
+      console.error('failed to save trip');
     }
   }
 </script>

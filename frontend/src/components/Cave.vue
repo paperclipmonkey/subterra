@@ -63,20 +63,7 @@
                   <v-icon>mdi-plus</v-icon>
                 </v-btn>
                 <template v-if="!hasDone">
-                    <v-btn class="float-right" icon @click="showConfirmModal = true">
-                    <v-icon>mdi-check</v-icon>
-                    </v-btn>
-                    <v-dialog v-model="showConfirmModal" max-width="500">
-                    <v-card>
-                      <v-card-title>Confirm</v-card-title>
-                      <v-card-text>Are you sure you want to mark this cave as done?</v-card-text>
-                      <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn text @click="showConfirmModal = false">Cancel</v-btn>
-                      <v-btn text color="primary" @click="markAsDone">Confirm</v-btn>
-                      </v-card-actions>
-                    </v-card>
-                    </v-dialog>
+                  <MarkAsDone :cave="cave" :onDone="fetchCave" />
                 </template>
 
               </v-card-title>
@@ -291,10 +278,9 @@
 </style>
 
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue'
+import { useAppStore } from '@/stores/app';
+import MarkAsDone from './MarkAsDone.vue'
 import VueMarkdown from 'vue-markdown-render'
-import { useRoute } from "vue-router"
-import { useAppStore } from '@/stores/app'
 
 import {
   MglMap,
@@ -366,32 +352,14 @@ const copyLatLng = async () => {
     }
   }
 };
-
-const showConfirmModal = ref(false)
-
 const markAsDone = async () => {
-  showConfirmModal.value = true
-  const trip = {
-    name: 'Marked as Done',
-    entrance_cave_id: cave.value.id,
-    exit_cave_id: cave.value.id,
-    participants: [appStore.user.id],
-    cave_system_id: cave.value.system.id,
-    visibility: 'private',
-  }
-
-  const response = await fetch('/api/trips', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(trip)
-  })
-  if (response.ok) {
-    fetchCave()
-    showConfirmModal.value = false
+  showConfirmModal.value = true;
+  const ok = await markCaveAsDone({ cave: cave.value, userId: appStore.user.id });
+  if (ok) {
+    fetchCave();
+    showConfirmModal.value = false;
   } else {
-    console.error('failed to save trip')
+    console.error('failed to save trip');
   }
 }
 
