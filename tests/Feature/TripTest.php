@@ -46,7 +46,7 @@ class TripTest extends TestCase {
     public function it_returns_authenticated_users_trips()
     {
         $user = User::factory()->create();
-        $trip = Trip::factory()->create();
+        $trip = Trip::factory()->create(['visibility' => 'public']); // Ensure visibility is public
         $trip->participants()->attach($user);
 
         $this->actingAs($user);
@@ -78,8 +78,8 @@ class TripTest extends TestCase {
         Event::fake([\App\Events\TripCreated::class]);
         $tripData = [
             'name' => 'Test Trip',
-            'start_time' => now()->toDateTimeString(),
-            'end_time' => now()->addDay()->toDateTimeString(),
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -109,7 +109,7 @@ class TripTest extends TestCase {
     public function it_shows_a_trip()
     {
         $this->actingAs(User::factory()->create());
-        $trip = Trip::factory()->create();
+        $trip = Trip::factory()->create(['visibility' => 'public']); // Ensure visibility is public
         $response = $this->getJson('/api/trips/' . $trip->id);
         $response->assertOk()->assertJsonFragment(['id' => $trip->id]);
         $this->assertResponseMatchesSchema($response, 'endpoints/trips-show');
@@ -132,8 +132,8 @@ class TripTest extends TestCase {
 
         $updateData = [
             'name' => 'Updated Trip',
-            'start_time' => now()->toDateTimeString(),
-            'end_time' => now()->addDay()->toDateTimeString(),
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
             'entrance_id' => $entrance->id,
             'description' => 'Updated description',
             'participants' => [$participant->id],
@@ -178,8 +178,8 @@ class TripTest extends TestCase {
 
         $updateData = [
             'name' => 'Updated Trip',
-            'start_time' => now()->toDateTimeString(),
-            'end_time' => now()->addDay()->toDateTimeString(),
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
             'entrance_id' => $entrance->id,
             'description' => 'Updated description',
             'participants' => [$participant->id],
@@ -229,8 +229,8 @@ class TripTest extends TestCase {
         
         $tripData = [
             'name' => 'Test Trip',
-            'start_time' => now()->toDateTimeString(),
-            'end_time' => now()->addDay()->toDateTimeString(),
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -257,8 +257,8 @@ class TripTest extends TestCase {
         
         $tripData = [
             'name' => 'Private Trip',
-            'start_time' => now()->toDateTimeString(),
-            'end_time' => now()->addDay()->toDateTimeString(),
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -284,8 +284,8 @@ class TripTest extends TestCase {
         
         $tripData = [
             'name' => 'Test Trip',
-            'start_time' => now()->toDateTimeString(),
-            'end_time' => now()->addDay()->toDateTimeString(),
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
