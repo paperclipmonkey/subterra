@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Models\Scopes\IsActiveScope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Attributes\ScopedBy;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use OwenIt\Auditing\Auditable;
 
 #[ScopedBy([IsActiveScope::class])]
@@ -38,9 +40,24 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'remember_token',
     ];
 
-    public function trips()
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return $this->belongsToMany(Trip::class); 
+        return [
+            'email_verified_at' => 'datetime',
+            'approved' => 'boolean',
+            'admin' => 'boolean',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public function trips(): BelongsToMany
+    {
+        return $this->belongsToMany(Trip::class);
     }
 
     /**
@@ -56,7 +73,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
                     ->withTimestamps(); // Include pivot timestamps if using them
     }
 
-    public function medals()
+    public function medals(): BelongsToMany
     {
         return $this->belongsToMany(Medal::class)->withTimestamps()->withPivot('awarded_at');
     }

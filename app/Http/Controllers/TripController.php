@@ -1,21 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreTripRequest;
 use App\Http\Requests\DeleteTripRequest;
-use App\Http\Resources\TripResource;
+use App\Http\Requests\StoreTripRequest;
 use App\Http\Requests\UpdateTripRequest;
+use App\Http\Resources\TripResource;
 use App\Models\Trip;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
 use App\Models\User;
+use App\Services\ImageProcessingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Http\JsonResponse;
 
 class TripController extends Controller
 {
+    public function __construct(
+        private readonly ImageProcessingService $imageProcessingService
+    ) {}
+
     public function index(): ResourceCollection
     {
         return TripResource::collection(Trip::all());
@@ -26,7 +31,7 @@ class TripController extends Controller
         $userId = auth()->id();
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with('entrance')->orderBy('start_time', 'desc')->get(); // Eager load entrance and order by date
+        })->with('entrance')->orderBy('start_time', 'desc')->get();
 
         return TripResource::collection($trips);
     }
@@ -90,15 +95,14 @@ class TripController extends Controller
 
     public function store(StoreTripRequest $request): TripResource
     {
-        $trip = Trip::create($request->all());
-        $trip->save();
+        $trip = Trip::create($request->validated());
 
         // Add the participants to the trip
-        $participants = $request->input('participants');
+        $participants = $request->input('participants', []);
         $participantIds = array_map(function ($id) {
             return User::withoutGlobalScopes()->where('id', $id)->first()->id;
         }, $participants);
-    
+
         // Sync participants with the trip
         $trip->participants()->sync($participantIds);
 
@@ -120,16 +124,10 @@ class TripController extends Controller
         return new TripResource($trip);
     }
 
-    private function storeMedia(array $media, $trip): void
+    private function storeMedia(array $media, Trip $trip): void
     {
         foreach ($media as $file) {
-            $fileData = explode(',', $file['data']);
-            $image = Image::read($fileData[1], [
-                \Intervention\Image\Decoders\DataUriImageDecoder::class,
-                \Intervention\Image\Decoders\Base64ImageDecoder::class,
-            ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
-            $filePath = 'trip/' . \Illuminate\Support\Str::uuid() . '.webp';
-            Storage::disk('media')->put($filePath, (string) $image);
+            $filePath = $this->imageProcessingService->processAndStoreImage($file, 'trip');
             $trip->media()->create(['filename' => $filePath]);
         }
     }
@@ -139,31 +137,32 @@ class TripController extends Controller
         return new TripResource($trip);
     }
 
-    public function update(UpdateTripRequest $request, Trip $trip)
+    public function update(UpdateTripRequest $request, Trip $trip): TripResource
     {
-        $existingMedia = $request->input('existing_media') ?? [];
+        $existingMedia = $request->input('existing_media', []);
 
-        if(collect($existingMedia)->count() == 0) {
+        if (count($existingMedia) === 0) {
             $trip->media()->delete();
-        }
-
-        foreach ($existingMedia as $file) {
+        } else {
             $existingMediaIds = array_column($existingMedia, 'id');
             $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
         }
-        $trip->update(attributes: $request->all());
+
+        $trip->update($request->validated());
 
         // Add the participants to the trip
-        $participants = $request->all()['participants'];
+        $participants = $request->input('participants', []);
         $participantIds = array_map(function ($id) {
             return User::withoutGlobalScopes()->where('id', $id)->first()->id;
         }, $participants);
-    
+
         // Sync participants with the trip
         $trip->participants()->sync($participantIds);
-        
-        $media = $request->all()['media'];
+
+        $media = $request->input('media', []);
         $this->storeMedia($media, $trip);
+
+        return new TripResource($trip);
     }
 
     public function destroy(DeleteTripRequest $request, Trip $trip): JsonResponse

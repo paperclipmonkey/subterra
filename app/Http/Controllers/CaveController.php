@@ -1,36 +1,46 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCaveRequest;
 use App\Http\Requests\UpdateCaveRequest;
 use App\Http\Resources\CaveResource;
 use App\Models\Cave;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
+use App\Services\ImageProcessingService;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 class CaveController extends Controller
 {
-    public function index()
+    public function __construct(
+        private readonly ImageProcessingService $imageProcessingService
+    ) {}
+
+    public function index(): AnonymousResourceCollection
     {
         return CaveResource::collection(Cave::orderBy('name')->get());
     }
 
-    public function store(StoreCaveRequest $request)
+    public function store(StoreCaveRequest $request): Response
     {
-        Cave::create($request->all())->save();
+        Cave::create($request->validated());
+
+        return response()->noContent();
     }
 
-    public function show(Cave $cave)
+    public function show(Cave $cave): CaveResource
     {
         return new CaveResource($cave);
     }
 
-    public function update(UpdateCaveRequest $request, Cave $cave)
+    public function update(UpdateCaveRequest $request, Cave $cave): CaveResource
     {
-        $cave->update($request->all());
+        $cave->update($request->validated());
+
         // Update tags
-        $tags = collect($request->collect()->get('tags'))->map(function ($tag) {
+        $tags = collect($request->input('tags', []))->map(function ($tag) {
             return \App\Models\Tag::where([
                 'category' => $tag['category'],
                 'tag' => $tag['tag'],
@@ -39,42 +49,26 @@ class CaveController extends Controller
         })->filter();
         $cave->tags()->sync($tags);
 
-        // Save the hero image
-        if ($request->has('hero_image') && $request->get('hero_image') !== null) {
-            // check if hero image is url
-            if (is_array($request->get('hero_image'))) {
-                $fileData = explode(',', $request->get('hero_image')['data']);
-                $image = Image::read($fileData[1], [
-                    \Intervention\Image\Decoders\DataUriImageDecoder::class,
-                    \Intervention\Image\Decoders\Base64ImageDecoder::class,
-                ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
-                $filePath = 'caves/' . \Illuminate\Support\Str::uuid() . '_hero.webp';
-                Storage::disk('media')->put($filePath, (string) $image);
-                $cave->hero_image = $filePath;
-                $cave->save();
-            }
-        } else {
-            $cave->hero_image = null;// Ensure any image which was on cave has been removed
-            $cave->save();
-        }
+        // Process hero image
+        $this->processImageField($request, $cave, 'hero_image');
 
-        // Save the entrance image
-        if ($request->has('entrance_image') && $request->get('entrance_image') !== null) {
-            // check if hero image is url
-            if (is_array($request->get('entrance_image'))) {
-                $fileData = explode(',', $request->get('entrance_image')['data']);
-                $image = Image::read($fileData[1], [
-                    \Intervention\Image\Decoders\DataUriImageDecoder::class,
-                    \Intervention\Image\Decoders\Base64ImageDecoder::class,
-                ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
-                $filePath = 'caves/' . \Illuminate\Support\Str::uuid() . '_entrance.webp';
-                Storage::disk('media')->put($filePath, (string) $image);
-                $cave->entrance_image = $filePath;
-                $cave->save();
+        // Process entrance image
+        $this->processImageField($request, $cave, 'entrance_image');
+
+        return new CaveResource($cave);
+    }
+
+    private function processImageField(UpdateCaveRequest $request, Cave $cave, string $fieldName): void
+    {
+        if ($request->has($fieldName) && $request->input($fieldName) !== null) {
+            $imageData = $request->input($fieldName);
+            if (is_array($imageData)) {
+                $suffix = str_replace('_image', '', $fieldName);
+                $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $suffix);
+                $cave->update([$fieldName => $filePath]);
             }
         } else {
-            $cave->entrance_image = null;// Ensure any image which was on cave has been removed
-            $cave->save();
+            $cave->update([$fieldName => null]);
         }
     }
 }
