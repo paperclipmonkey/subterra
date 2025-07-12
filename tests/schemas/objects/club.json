@@ -18,10 +18,28 @@
     "description": {
       "type": ["string", "null"]
     },
+    "website": {
+      "type": ["string", "null"]
+    },
+    "location": {
+      "type": ["string", "null"]
+    },
     "is_active": {
       "type": "boolean"
+    },
+    "member_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
-  "required": ["id", "name", "slug", "is_active"],
+  "required": ["id", "name", "slug", "is_active", "member_count", "created_at", "updated_at"],
   "additionalProperties": false
 }

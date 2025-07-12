@@ -6,14 +6,10 @@
       "$ref": "../objects/tag.json"
     }
   },
-  "properties": {
-    "data": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/tag"
-      }
+  "additionalProperties": {
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/tag"
     }
-  },
-  "required": ["data"],
-  "additionalProperties": false
+  }
 }

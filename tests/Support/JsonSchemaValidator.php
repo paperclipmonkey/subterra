@@ -4,6 +4,7 @@ namespace Tests\Support;
 
 use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
+use JsonSchema\Uri\UriRetriever;
 
 trait JsonSchemaValidator
 {
@@ -15,8 +16,8 @@ trait JsonSchemaValidator
         // Convert PHP array to object for validation
         $jsonObject = json_decode(json_encode($jsonData));
         
-        // Load schema and resolve references manually to avoid complex dependency issues
-        $schema = $this->loadSchemaWithSimpleResolution($schemaPath);
+        // Load schema with proper URI resolution
+        $schema = $this->loadSchemaWithUriResolver($schemaPath);
         
         $validator = new Validator();
         $validator->validate($jsonObject, $schema, Constraint::CHECK_MODE_COERCE_TYPES);
@@ -31,19 +32,23 @@ trait JsonSchemaValidator
     }
     
     /**
-     * Load schema with a simple resolution approach that avoids circular references.
+     * Load schema with proper URI resolution for references.
      */
-    private function loadSchemaWithSimpleResolution(string $schemaPath): object
+    private function loadSchemaWithUriResolver(string $schemaPath): object
     {
-        $schemaContent = file_get_contents($schemaPath);
-        $schema = json_decode($schemaContent);
+        $retriever = new UriRetriever();
         
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \InvalidArgumentException('Invalid JSON schema: ' . json_last_error_msg());
+        // Convert to absolute file URI for proper reference resolution
+        $absolutePath = realpath($schemaPath);
+        if (!$absolutePath) {
+            throw new \InvalidArgumentException("Schema file not found: $schemaPath");
         }
         
-        // For now, just return the schema as-is and let JsonSchema library handle references
-        // This might not resolve all external references, but it should work for basic validation
+        $schemaUri = 'file://' . $absolutePath;
+        
+        // Load the schema using UriRetriever which handles references properly
+        $schema = $retriever->retrieve($schemaUri);
+        
         return $schema;
     }
 

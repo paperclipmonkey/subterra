@@ -15,17 +15,17 @@
       "type": ["string", "null"]
     },
     "system": {
-      "$ref": "cave-system.json"
+      "$ref": "cave-system-summary.json"
     },
     "entrance": {
       "anyOf": [
-        {"$ref": "cave.json"},
+        {"$ref": "cave-summary.json"},
         {"type": "null"}
       ]
     },
     "exit": {
       "anyOf": [
-        {"$ref": "cave.json"},
+        {"$ref": "cave-summary.json"},
         {"type": "null"}
       ]
     },
