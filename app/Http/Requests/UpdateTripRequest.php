@@ -23,7 +23,16 @@ class UpdateTripRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'start_time' => ['required', 'date'],
+            'end_time' => ['required', 'date', 'after_or_equal:start_time'],
+            'entrance_id' => ['required', 'integer', 'exists:caves,id'],
+            'participants' => ['array'],
+            'participants.*' => ['integer', 'exists:users,id'],
+            'media' => ['array'],
+            'media.*.data' => ['required', 'string'],
+            'existing_media' => ['array'],
         ];
     }
 }
