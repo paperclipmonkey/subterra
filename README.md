@@ -10,38 +10,180 @@ The system has a list of cave entrances and systems, with a number of tags added
 ### Track completed trips
 Completed trips can be added by a user to help them track their caving career. When entering a trip it's possible to add other trip participants.
 
-### Local development
-You'll only need Docker installed locally.
-```sh
-docker run --rm \
--u "$(id -u):$(id -g)" \
--v "$(pwd):/var/www/html" \
--w /var/www/html \
-laravelsail/php84-composer:latest \
-composer install --ignore-platform-reqs
+## Development Setup
 
-# The following command doesn't require PHP to be installed
-vendor/bin/sail up
+### Prerequisites
+- Docker and Docker Compose
+- Node.js and Yarn (for frontend development)
 
-# Run the migration
-docker exec -it subterra-laravel.test-1 php artisan migrate:fresh --seed
+### Backend Setup (Laravel API)
+
+1. **Install Dependencies**
+   ```bash
+   docker run --rm \
+   -u "$(id -u):$(id -g)" \
+   -v "$(pwd):/var/www/html" \
+   -w /var/www/html \
+   laravelsail/php84-composer:latest \
+   composer install --ignore-platform-reqs
+   ```
+
+2. **Environment Configuration**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your specific configuration
+   ```
+
+3. **Start Services**
+   ```bash
+   vendor/bin/sail up -d
+   ```
+
+4. **Database Setup**
+   ```bash
+   docker exec -it subterra-laravel.test-1 php artisan migrate:fresh --seed
+   ```
+
+5. **Generate Application Key**
+   ```bash
+   docker exec -it subterra-laravel.test-1 php artisan key:generate
+   ```
+
+### Frontend Setup (Vue.js)
+
+1. **Install Dependencies**
+   ```bash
+   cd frontend
+   yarn install
+   ```
+
+2. **Start Development Server**
+   ```bash
+   yarn dev
+   ```
+
+The frontend will be accessible at `http://localhost:3000`, with the API being proxied through the frontend.
+
+### Authentication Setup
+
+After setting up the application:
+
+1. Follow the OAuth flow and log into the application
+2. Request approval for club membership
+3. Grant admin privileges via tinker:
+   ```bash
+   docker exec -it subterra-laravel.test-1 php artisan tinker
+   
+   # Make yourself an admin and approve your account
+   $user = User::first(); 
+   $user->admin = true; 
+   $user->approved = true; 
+   $user->save();
+   
+   # Approve your club membership
+   $user = User::first(); 
+   $user->clubs->first()->pivot->status = 'approved'; 
+   $user->clubs->first()->pivot->save();
+   ```
+
+## API Documentation
+
+The Subterra API provides endpoints for managing caves, cave systems, trips, users, and clubs.
+
+### Authentication
+The API uses Laravel Sanctum for authentication. Users authenticate via Google OAuth.
+
+### Core Endpoints
+
+#### Caves
+- `GET /api/caves` - List all caves
+- `GET /api/caves/{cave}` - Get specific cave details
+- `POST /api/caves` - Create new cave (admin only)
+- `PUT /api/caves/{cave}` - Update cave (admin only)
+
+#### Cave Systems
+- `GET /api/cave_systems/{cave_system}` - Get cave system details
+- `PUT /api/cave_systems/{cave_system}` - Update cave system (admin only)
+- `POST /api/cave_systems_with_cave` - Create cave system with cave (admin only)
+
+#### Trips
+- `GET /api/trips` - List all trips
+- `POST /api/trips` - Create new trip
+- `GET /api/trips/{trip}` - Get trip details
+- `PUT /api/trips/{trip}` - Update trip
+- `DELETE /api/trips/{trip}` - Delete trip
+- `GET /api/me/trips` - Get current user's trips
+- `GET /api/me/trips/download` - Download user's trips as CSV
+
+#### Users
+- `GET /api/users` - List users
+- `GET /api/users/{user}` - Get user details
+- `PUT /api/users/{user}` - Update user
+- `GET /api/users/{user}/recent-trips` - Get user's recent trips
+- `GET /api/users/{user}/activity-heatmap` - Get user's activity heatmap
+- `GET /api/users/{user}/medals` - Get user's medals
+
+#### Clubs
+- `GET /api/clubs` - List clubs
+- `GET /api/clubs/{club}` - Get club details
+- `POST /api/clubs/{club}/join` - Request to join club
+
+#### Tags
+- `GET /api/tags` - List all tags
+
+### Authorization
+The API uses Laravel policies for authorization:
+- **CavePolicy**: Manages cave access (admin for create/update)
+- **TripPolicy**: Manages trip access (participants can edit their trips)
+- **UserPolicy**: Manages user access (users can edit themselves, admins can edit all)
+- **ClubPolicy**: Manages club access
+
+## Code Style and Quality
+
+### Code Style
+The project uses Laravel Pint for code style enforcement:
+```bash
+docker exec -it subterra-laravel.test-1 vendor/bin/pint
 ```
-The frontend can then be accessed on `http://localhost:3000`, with the api being proxied through the frontend.
-```sh
-# Run a tinker terminal (php)
-docker exec -it subterra-laravel.test-1 php artisan tinker
-# Once you've followed the Oauth flow and logged into the application and requested approval for club membership
-$user = User::first(); $user->is_admin = true; $user->is_approved = true; $user->save();
-# Manually approve your user's club status
-$user = User::first(); $user->clubs->first()->pivot->status = 'approved'; $user->clubs->first()->pivot->save();
+
+### Static Analysis
+PHPStan is configured for static analysis:
+```bash
+docker exec -it subterra-laravel.test-1 vendor/bin/phpstan analyse
 ```
+
+### Testing
+Run the test suite:
+```bash
+docker exec -it subterra-laravel.test-1 php artisan test
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes following the code style guidelines
+4. Write tests for new functionality
+5. Run the test suite to ensure everything passes
+6. Run code style checks: `vendor/bin/pint`
+7. Commit your changes (`git commit -m 'Add amazing feature'`)
+8. Push to the branch (`git push origin feature/amazing-feature`)
+9. Open a Pull Request
+
+### Code Standards
+- Follow PSR-12 coding standards
+- Use strict typing (`declare(strict_types=1)`)
+- Write comprehensive tests for new features
+- Use proper type hints for all methods
+- Follow Laravel best practices
 
 ## Deployment
+
 The system is deployed to fly.io using GitHub actions.
 
 ### Database
-for an interactive psql shell use `fly postgres connect -a subterra-db`.
-or for local proxying, use `fly proxy 5433:5432 -a subterra-db`
+For an interactive psql shell use `fly postgres connect -a subterra-db`.
+For local proxying, use `fly proxy 5433:5432 -a subterra-db`
 
 ### DNS
 https://admin.gandi.net/domain/8e5d26dc-8680-11ef-8ba7-00163e94b645/subterra.world/records
