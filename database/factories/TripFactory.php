@@ -26,6 +26,7 @@ class TripFactory extends Factory
             'name' => fake()->word(),
             'start_time' => now()->subMinutes(fake()->numberBetween(1, 60))->toDateTimeString(),
             'end_time' => now()->addMinutes(fake()->numberBetween(1, 60))->toDateTimeString(),
+            'visibility' => fake()->randomElement(['public', 'private', 'club']),
         ];
     }
 }

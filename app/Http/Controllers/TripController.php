@@ -23,22 +23,26 @@ class TripController extends Controller
 
     public function index(): ResourceCollection
     {
-        return TripResource::collection(Trip::all());
+        $user = auth()->user();
+        $trips = Trip::visibleTo($user)->get();
+        return TripResource::collection($trips);
     }
 
     public function indexMe(): ResourceCollection
     {
-        $userId = auth()->id();
+        $user = auth()->user();
+        $userId = $user->id;
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with('entrance')->orderBy('start_time', 'desc')->get();
+        })->with('entrance')->visibleTo($user)->with('entrance')->orderBy('start_time', 'desc')->get();
 
         return TripResource::collection($trips);
     }
 
     public function downloadMyTripsCsv(): StreamedResponse
     {
-        $userId = auth()->id();
+        $user = auth()->user();
+        $userId = $user->id;
         $filename = "my_trips.csv";
 
         $headers = [
@@ -49,7 +53,7 @@ class TripController extends Controller
             'Expires' => '0',
         ];
 
-        $callback = function () use ($userId) {
+        $callback = function () use ($user, $userId) {
             $handle = fopen('php://output', 'w');
 
             // Add CSV Header
@@ -69,6 +73,7 @@ class TripController extends Controller
             Trip::whereHas('participants', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
+            ->visibleTo($user)
             ->with('entrance') // Eager load relationships
             // ->orderBy('date', 'desc') // Revert orderBy back to 'date'
             ->chunk(200, function ($trips) use ($handle) {
@@ -95,7 +100,15 @@ class TripController extends Controller
 
     public function store(StoreTripRequest $request): TripResource
     {
-        $trip = Trip::create($request->validated());
+        $tripData = $request->all();
+        
+        // Set default visibility to 'public' if not provided
+        if (!isset($tripData['visibility'])) {
+            $tripData['visibility'] = 'public';
+        }
+        
+        $trip = Trip::create($tripData);
+        $trip->save();
 
         // Add the participants to the trip
         $participants = $request->input('participants', []);
@@ -134,6 +147,18 @@ class TripController extends Controller
 
     public function show(Trip $trip): TripResource
     {
+        $user = auth()->user();
+        
+        // Check if the trip is visible to the current user
+        $visibleTrips = Trip::visibleTo($user)->where('id', $trip->id);
+        
+        if (!$visibleTrips->exists()) {
+            abort(404, 'Trip not found');
+        }
+        
+        // Load relationships for the resource
+        $trip->load(['system', 'entrance', 'exit', 'participants', 'media']);
+        
         return new TripResource($trip);
     }
 

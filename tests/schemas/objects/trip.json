@@ -49,7 +49,12 @@
         "$ref": "media.json"
       }
     }
+    ,
+    "visibility": {
+      "type": "string",
+      "enum": ["public", "private", "club"]
+    }
   },
-  "required": ["id", "name", "description", "system", "entrance", "exit", "start_time", "participants", "media"],
+  "required": ["id", "name", "description", "system", "entrance", "exit", "start_time", "participants", "media", "visibility"],
   "additionalProperties": false
 }

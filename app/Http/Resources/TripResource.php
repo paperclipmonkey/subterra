@@ -24,6 +24,7 @@ class TripResource extends JsonResource
             'exit' => $this->exit,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
+            'visibility' => $this->visibility,
             'participants' => UserResource::collection($this->participants),
             'media' => MediaResource::collection($this->media),
         ];

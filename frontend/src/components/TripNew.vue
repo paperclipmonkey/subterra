@@ -170,6 +170,17 @@
               persistent-hint
             >
             </VuetifyTiptap>
+            <v-select
+              v-model="trip.visibility"
+              label="Trip Visibility"
+              :items="visibilityOptions"
+              item-title="label"
+              item-value="value"
+              :error-messages="validationErrors.visibility"
+              hint="Who can see this trip report"
+              persistent-hint
+              class="mb-4"
+            ></v-select>
             <v-file-input
               prepend-icon="mdi-camera"
               accept="image/*"
@@ -237,6 +248,7 @@
     end_time: '',
     participants: [],
     cave_system_id: null,
+    visibility: 'public',
   })
 
   const tripStartDate = ref(moment().format('YYYY-MM-DD'))
@@ -251,6 +263,24 @@
   const loading = ref(true)
 
   const validationErrors = ref({})
+
+  const visibilityOptions = [
+    { 
+      value: 'public', 
+      label: 'Public', 
+      description: 'Visible to everyone' 
+    },
+    { 
+      value: 'private', 
+      label: 'Private', 
+      description: 'Visible only to trip participants' 
+    },
+    { 
+      value: 'club', 
+      label: 'Club Members', 
+      description: 'Visible to members of your clubs' 
+    }
+  ]
 
   const rules = {
     name: [
