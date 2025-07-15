@@ -386,29 +386,31 @@
   }
 
   const addParticipant = (participant) => {
-    trip.participants.push(participant.id)
     // Add the user using an api endpoint
     fetch('/api/users', {
       method: 'POST',
       headers: {
-      'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(participant),
     })
-    .then(response => {
-      if (!response.ok) {
-      throw new Error('Failed to add participant');
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Participant added successfully:', data);
-    })
-    .catch(error => {
-      console.error('Error adding participant:', error);
-    });
-    users.value.push(participant) // So it can be referenced
-    showAddParticipant.value = false
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to add participant');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Use the full user object returned from the API
+        const newUser = data.data;
+        users.value.push(newUser); // So it can be referenced with all fields
+        trip.participants.push(newUser.id);
+        console.log('Participant added successfully:', newUser);
+        showAddParticipant.value = false;
+      })
+      .catch(error => {
+        console.error('Error adding participant:', error);
+      });
   }
 
   const cave_system_id = computed(() => {
