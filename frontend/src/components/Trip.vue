@@ -41,7 +41,7 @@
              </v-list-item>
              <v-list-item>
                <v-list-item-title>Date</v-list-item-title>
-               <v-list-item-subtitle>{{ formatDate(trip.start_time) }}</v-list-item-subtitle>
+               <v-list-item-subtitle>{{ formatDate(trip.start_time, trip.timezone) }}</v-list-item-subtitle>
              </v-list-item>
             <v-list-item>
               <v-list-item-title>Visibility</v-list-item-title>
@@ -86,14 +86,19 @@
             </v-list-item>
              <v-list-item>
                <v-list-item-title>Time</v-list-item-title>
-               <v-list-item-subtitle>{{ formatTime(trip.start_time) }}</v-list-item-subtitle>
+               <v-list-item-subtitle>
+                 {{ formatTime(trip.start_time, trip.timezone) }}
+                 <span v-if="trip.timezone && trip.timezone !== 'UTC'" class="text-caption text-medium-emphasis ml-2">
+                   ({{ formatTimezone(trip.timezone) }})
+                 </span>
+               </v-list-item-subtitle>
              </v-list-item>
              <v-list-item>
                <v-list-item-title>Duration</v-list-item-title>
                  <v-list-item-subtitle>
                  {{
                    (() => {
-                   const duration = moment.duration(moment(trip.end_time).diff(moment(trip.start_time)));
+                   const duration = momentTimezone.duration(momentTimezone.tz(trip.end_time, trip.timezone).diff(momentTimezone.tz(trip.start_time, trip.timezone)));
                    const hours = Math.floor(duration.asHours());
                    const minutes = duration.minutes();
                    return `${hours} hour${hours !== 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} min${minutes !== 1 ? 's' : ''}` : ''}`;
@@ -202,6 +207,7 @@
 
 <script setup>
 import moment from 'moment'
+import momentTimezone from 'moment-timezone'
 import VueMarkdown from 'vue-markdown-render'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'; 
@@ -212,12 +218,23 @@ const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
 
-const formatDate = (date) => {
-  return moment(date).format('DD-MM-YYYY')
+const formatDate = (date, timezone = 'UTC') => {
+  return momentTimezone(date).tz(timezone).format('DD-MM-YYYY')
 }
 
-const formatTime = (date) => {
-  return moment(date).format('HH:mm')
+const formatTime = (date, timezone = 'UTC') => {
+  return momentTimezone(date).tz(timezone).format('HH:mm')
+}
+
+const formatTimezone = (timezone) => {
+  if (!timezone || timezone === 'UTC') return ''
+  
+  // Get the timezone abbreviation and offset
+  const now = momentTimezone.tz(timezone)
+  const offset = now.format('Z')
+  const abbr = now.format('z')
+  
+  return `${abbr} (${offset})`
 }
 
 const currentUserWasOnTrip = computed(()=> {
@@ -255,6 +272,7 @@ const confirmDelete = async () => {
       location: {},
     },
     participants: [],
+    timezone: 'UTC',
   })
 
   onMounted(async () => {

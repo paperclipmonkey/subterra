@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Scopes\IsActiveScope;
+use App\Services\TimezoneService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,6 +52,22 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
     {
         return Attribute::make(
             get: fn (mixed $value, array $attributes): int => $this->start_time?->diffInMinutes($this->end_time) ?: 0,
+        );
+    }
+    
+    protected function timezone(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes): string {
+                // Get timezone from entrance cave location
+                if ($this->entrance && $this->entrance->location_lat && $this->entrance->location_lng) {
+                    return TimezoneService::getTimezoneFromCoordinates(
+                        $this->entrance->location_lat,
+                        $this->entrance->location_lng
+                    );
+                }
+                return 'UTC';
+            },
         );
     }
     

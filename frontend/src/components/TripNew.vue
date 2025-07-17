@@ -54,6 +54,10 @@
         </template>
         <template v-slot:item.2>
           <v-card title="When" flat>
+            <v-alert v-if="trip.timezone && trip.timezone !== 'UTC'" type="info" variant="tonal" class="mb-4">
+              <v-icon>mdi-clock-outline</v-icon>
+              Times will be saved in cave location timezone: <strong>{{ trip.timezone }}</strong>
+            </v-alert>
             <v-row>
               <v-col cols="6">
                 <v-text-field
@@ -239,6 +243,7 @@
 
 <script setup>
   import moment from 'moment'
+  import momentTimezone from 'moment-timezone'
   import { computed, reactive, ref, watch, onMounted } from 'vue'
   import AddParticipantManual from './AddParticipantManual.vue';
   import { convertFileToBase64 } from '@/utilities.js'
@@ -267,6 +272,7 @@
     participants: [],
     cave_system_id: null,
     visibility: 'public',
+    timezone: 'UTC',
   })
 
   const tripStartDate = ref(moment().format('YYYY-MM-DD'))
@@ -377,12 +383,14 @@
         delete loadedTrip.system
         Object.assign(trip,loadedTrip)
 
-        tripStartDate.value = moment(loadedTrip.start_time).format('YYYY-MM-DD')
-        tripStartTime.value = moment(loadedTrip.start_time).format('HH:mm')
+        // Convert UTC times to cave timezone for editing
+        const caveTimezone = loadedTrip.timezone || 'UTC'
+        tripStartDate.value = momentTimezone(loadedTrip.start_time).tz(caveTimezone).format('YYYY-MM-DD')
+        tripStartTime.value = momentTimezone(loadedTrip.start_time).tz(caveTimezone).format('HH:mm')
 
         // Calculate duration from start_time and end_time
-        const startTime = moment(loadedTrip.start_time)
-        const endTime = moment(loadedTrip.end_time)
+        const startTime = momentTimezone(loadedTrip.start_time).tz(caveTimezone)
+        const endTime = momentTimezone(loadedTrip.end_time).tz(caveTimezone)
         const durationInMinutes = endTime.diff(startTime, 'minutes')
         tripDurationHours.value = Math.floor(durationInMinutes / 60)
         tripDurationMinutes.value = durationInMinutes % 60
@@ -458,8 +466,13 @@
   })
 
   const start_time = computed(() => {
-    const entry = moment(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm')
-    return entry
+    // If we have a loaded trip with timezone, create the time in that timezone
+    if (trip.timezone && trip.timezone !== 'UTC') {
+      return momentTimezone.tz(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm', trip.timezone)
+    } else {
+      // For new trips or UTC, treat as local time that will be converted later
+      return moment(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm')
+    }
   })
 
   const end_time = computed(() => {
@@ -477,8 +490,22 @@
       if(!trip.exit_cave_id || !throughTrip.value) {
         trip.exit_cave_id = trip.entrance_cave_id
       }
-      trip.start_time = `${tripStartDate.value} ${tripStartTime.value}:00` // Add seconds for format Y-m-d H:i:s
-      trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm:ss') // Add seconds for format Y-m-d H:i:s
+      
+      // Convert times to UTC for storage
+      let startTimeUtc, endTimeUtc
+      
+      if (trip.timezone && trip.timezone !== 'UTC') {
+        // Convert from cave timezone to UTC
+        startTimeUtc = momentTimezone.tz(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm', trip.timezone).utc()
+        endTimeUtc = startTimeUtc.clone().add(tripDurationHours.value, 'hours').add(tripDurationMinutes.value, 'minutes')
+      } else {
+        // For new trips, assume local time and convert to UTC
+        startTimeUtc = moment(tripStartDate.value + ' ' + tripStartTime.value, 'YYYY-MM-DD HH:mm').utc()
+        endTimeUtc = startTimeUtc.clone().add(tripDurationHours.value, 'hours').add(tripDurationMinutes.value, 'minutes')
+      }
+      
+      trip.start_time = startTimeUtc.format('YYYY-MM-DD HH:mm:ss')
+      trip.end_time = endTimeUtc.format('YYYY-MM-DD HH:mm:ss')
       trip.cave_system_id = cave_system_id.value // Ensure system_id is set
       if(markdownOutput.value) {
         trip.description = markdownOutput.value // Copy the markdown output to the description field
