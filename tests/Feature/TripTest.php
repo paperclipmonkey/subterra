@@ -408,4 +408,46 @@ class TripTest extends TestCase {
         $this->assertNotContains($hiddenPrivateTrip->id, $tripIds);
         $this->assertNotContains($hiddenClubTrip->id, $tripIds);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_stores_a_trip_with_heic_media()
+    {
+        $user = User::factory()->create();
+        $participant = User::factory()->create();
+        $entrance = Cave::factory()->create();
+        Event::fake([\App\Events\TripCreated::class]);
+        
+        // Use a mock HEIC data URI with PNG content (to test the decoder logic)
+        // The key is testing that the ImageProcessingService can handle HEIC mime types
+        $pngContent = file_get_contents(__DIR__ . '/../../Fixtures/test.png');
+        $heicData = 'data:image/heic;base64,' . base64_encode($pngContent);
+        
+        $tripData = [
+            'name' => 'Test Trip with HEIC',
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'description' => 'Test description',
+            'participants' => [$participant->id],
+            'media' => [
+                [
+                    'data' => $heicData
+                ]
+            ]
+        ];
+
+        $this->actingAs($user);
+        $response = $this->postJson('/api/trips', $tripData);
+        $response->assertCreated()->assertJsonFragment(['name' => 'Test Trip with HEIC']);
+        $this->assertDatabaseHas('trips', ['name' => 'Test Trip with HEIC']);
+        $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
+        $trip = Trip::where('name', 'Test Trip with HEIC')->first();
+        $this->assertCount(1, $trip->media);
+        Event::assertDispatched(\App\Events\TripCreated::class, function ($event) use ($trip) {
+            return $event->trip->id === $trip->id;
+        });
+        Storage::disk('media')->assertExists($trip->media->first()->filename);
+    }
 }

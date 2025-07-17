@@ -13,10 +13,7 @@ class ImageProcessingService
     public function processAndStoreImage(array $imageData, string $directory, string $suffix = ''): string
     {
         $fileData = explode(',', $imageData['data']);
-        $image = Image::read($fileData[1], [
-            \Intervention\Image\Decoders\DataUriImageDecoder::class,
-            \Intervention\Image\Decoders\Base64ImageDecoder::class,
-        ])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
+        $image = Image::read($fileData[1])->scaleDown(2048, 2048)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 65));
 
         $filename = Str::uuid();
         if ($suffix) {
