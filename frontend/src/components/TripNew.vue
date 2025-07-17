@@ -362,6 +362,13 @@
         tripStartDate.value = moment(loadedTrip.start_time).format('YYYY-MM-DD')
         tripStartTime.value = moment(loadedTrip.start_time).format('HH:mm')
 
+        // Calculate duration from start_time and end_time
+        const startTime = moment(loadedTrip.start_time)
+        const endTime = moment(loadedTrip.end_time)
+        const durationInMinutes = endTime.diff(startTime, 'minutes')
+        tripDurationHours.value = Math.floor(durationInMinutes / 60)
+        tripDurationMinutes.value = durationInMinutes % 60
+
         if(loadedTrip.entrance_cave_id !== loadedTrip.exit_cave_id) {
           throughTrip.value = true
         }
