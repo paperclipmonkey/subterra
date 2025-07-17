@@ -210,9 +210,24 @@
                 </v-row>
               </v-container>
             </template>
-            <v-btn @click="submitForm" color="primary" class="mt-6" size="large" elevation="2" block>
-              <v-icon left>mdi-content-save</v-icon>
-              Save Trip
+            <v-btn 
+              @click="submitForm" 
+              color="primary" 
+              class="mt-6" 
+              size="large" 
+              elevation="2" 
+              block
+              :loading="isSaving"
+              :disabled="isSaving"
+            >
+              <template v-if="!isSaving">
+                <v-icon left>mdi-content-save</v-icon>
+                Save Trip
+              </template>
+              <template v-else>
+                <v-icon left class="mdi-spin">mdi-loading</v-icon>
+                Saving Trip...
+              </template>
             </v-btn>
           </v-card>
         </template>
@@ -227,14 +242,17 @@
   import { computed, reactive, ref, watch, onMounted } from 'vue'
   import AddParticipantManual from './AddParticipantManual.vue';
   import { convertFileToBase64 } from '@/utilities.js'
-  import { useRouter, useRoute } from 'vue-router';
+  import { useRouter, useRoute } from 'vue-router'
+  import { useNotificationStore } from '@/stores/notifications';
 
   const router = useRouter()
   const route = useRoute()
+  const notificationStore = useNotificationStore()
 
   const markdownOutput = ref('')
 
   const showAddParticipant = ref(false)
+  const isSaving = ref(false)
 
   let trip = reactive({
     id: -1,
@@ -446,34 +464,43 @@
   
   const submitForm = async () => {
     validationErrors.value = {} // Clear previous errors
-    if(!trip.exit_cave_id || !throughTrip.value) {
-      trip.exit_cave_id = trip.entrance_cave_id
-    }
-    trip.start_time = `${tripStartDate.value} ${tripStartTime.value}:00` // Add seconds for format Y-m-d H:i:s
-    trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm:ss') // Add seconds for format Y-m-d H:i:s
-    trip.cave_system_id = cave_system_id.value // Ensure system_id is set
-    if(markdownOutput.value) {
-      trip.description = markdownOutput.value // Copy the markdown output to the description field
-    }
+    isSaving.value = true // Start loading state
+    
+    try {
+      if(!trip.exit_cave_id || !throughTrip.value) {
+        trip.exit_cave_id = trip.entrance_cave_id
+      }
+      trip.start_time = `${tripStartDate.value} ${tripStartTime.value}:00` // Add seconds for format Y-m-d H:i:s
+      trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm:ss') // Add seconds for format Y-m-d H:i:s
+      trip.cave_system_id = cave_system_id.value // Ensure system_id is set
+      if(markdownOutput.value) {
+        trip.description = markdownOutput.value // Copy the markdown output to the description field
+      }
 
-    // Convert only new files to base64
-    const newMediaFiles = trip.media.filter(file => file instanceof File);
-    const base64Media = await Promise.all(newMediaFiles.map(file => convertFileToBase64(file)));
+      // Convert only new files to base64
+      const newMediaFiles = trip.media.filter(file => file instanceof File);
+      const base64Media = await Promise.all(newMediaFiles.map(file => convertFileToBase64(file)));
 
-    // Prepare payload, separating existing media IDs if needed by the backend
-    const payload = {
-      ...trip,
-      media: base64Media,
-      // If your backend needs existing media IDs separately, adjust here
-      // existing_media_ids: trip.existing_media?.map(m => m.id) || []
-    };
-    // Remove properties not expected by the backend if necessary
-    // delete payload.existing_media;
+      // Prepare payload, separating existing media IDs if needed by the backend
+      const payload = {
+        ...trip,
+        media: base64Media,
+        // If your backend needs existing media IDs separately, adjust here
+        // existing_media_ids: trip.existing_media?.map(m => m.id) || []
+      };
+      // Remove properties not expected by the backend if necessary
+      // delete payload.existing_media;
 
-    if(route.params.id) {
-      await updateTrip(payload)
-    } else {
-      await saveTrip(payload)
+      if(route.params.id) {
+        await updateTrip(payload)
+      } else {
+        await saveTrip(payload)
+      }
+    } catch (error) {
+      console.error('Error saving trip:', error)
+      notificationStore.showError('An unexpected error occurred while saving the trip. Please try again.')
+    } finally {
+      isSaving.value = false // End loading state
     }
   }
 
@@ -482,9 +509,13 @@
       const errorData = await response.json();
       validationErrors.value = errorData.errors;
       console.error('Validation failed:', errorData.errors);
+      notificationStore.showError('Please fix the validation errors and try again.')
+    } else if (response.status >= 500) {
+      console.error('Server error:', response.statusText);
+      notificationStore.showError('A server error occurred. Please try again later.')
     } else {
       console.error('Failed operation:', response.statusText);
-      // Handle other types of errors (e.g., display a generic error message)
+      notificationStore.showError('Failed to save trip. Please check your connection and try again.')
     }
   }
 
@@ -499,6 +530,7 @@
     })
     if (response.ok) {
       validationErrors.value = {} // Clear errors on success
+      notificationStore.showSuccess('Trip updated successfully! 🎉')
       router.push({ name: '/trip/[id]', params: { id: tripPayload.id } });
     } else {
       await handleApiError(response);
@@ -517,6 +549,7 @@
     if (response.ok) {
       validationErrors.value = {} // Clear errors on success
       const savedTrip = (await response.json()).data;
+      notificationStore.showSuccess('Trip saved successfully! 🚀')
       router.push({ name: '/trip/[id]', params: { id: savedTrip.id } });
     } else {
       await handleApiError(response);
@@ -537,5 +570,15 @@
 
   .existing_media {
     max-width: 200px;
+  }
+
+  /* Fun spinning animation for loading icon */
+  .mdi-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 </style>

@@ -32,6 +32,11 @@ router.onError((err, to) => {
 
 // Basic cookie functionality for login check
 router.beforeEach(async (to, from, next) => {
+  // Allow demo page without authentication
+  if (to.path === '/demo') {
+    return next()
+  }
+
   let user = await useAppStore().getUser()
 
   // Exception for magic link login page
