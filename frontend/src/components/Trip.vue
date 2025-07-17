@@ -90,7 +90,16 @@
              </v-list-item>
              <v-list-item>
                <v-list-item-title>Duration</v-list-item-title>
-               <v-list-item-subtitle>{{ moment(trip.end_time).diff(trip.start_time, 'hours')}} hours</v-list-item-subtitle>
+                 <v-list-item-subtitle>
+                 {{
+                   (() => {
+                   const duration = moment.duration(moment(trip.end_time).diff(moment(trip.start_time)));
+                   const hours = Math.floor(duration.asHours());
+                   const minutes = duration.minutes();
+                   return `${hours} hour${hours !== 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} min${minutes !== 1 ? 's' : ''}` : ''}`;
+                   })()
+                 }}
+                 </v-list-item-subtitle>
              </v-list-item>
           </v-list>
           <v-card-text v-if="trip.description">
