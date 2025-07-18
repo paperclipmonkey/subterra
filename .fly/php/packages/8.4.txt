@@ -14,3 +14,4 @@ php8.4-xml
 php8.4-zip
 php8.4-swoole
 php8.4-fpm
+php8.4-imagick
