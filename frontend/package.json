@@ -25,7 +25,7 @@
     "vuetify-pro-tiptap": "^2.6.0"
   },
   "devDependencies": {
-    "@indoorequal/vue-maplibre-gl": "^8.4.0",
+    "@indoorequal/vue-maplibre-gl": "^8.4.1",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vitest/ui": "^3.2.4",
     "@vue/test-utils": "^2.4.6",
