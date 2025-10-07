@@ -76,8 +76,8 @@ After setting up the application:
    
    # Make yourself an admin and approve your account
    $user = User::first(); 
-   $user->admin = true; 
-   $user->approved = true; 
+   $user->is_admin = true; 
+   $user->is_approved = true; 
    $user->save();
    
    # Approve your club membership
