@@ -5975,10 +5975,10 @@ vuetify-pro-tiptap@^2.6.0:
     "@tiptap/pm" "^2.11.9"
     "@tiptap/vue-3" "^2.11.9"
 
-vuetify@^3.5.9, vuetify@^3.9:
-  version "3.9.5"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.9.5.tgz#7f5c79d3789051606f99f2e330ea3a2339ad7bb7"
-  integrity sha512-rJBSo1FeKcJJaqTfVHbOdpFXCmgeEIGzrh6HBEMGjSflan6voPIMSiK2dTCUU4t9JeghwvJtoAE5eBuqYIkFVA==
+vuetify@^3.10, vuetify@^3.5.9:
+  version "3.10.4"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.10.4.tgz#8b1c3f4bf2cddbc3e1d2114f60835c4b6ef23c26"
+  integrity sha512-aatUQ0RM0i6VdkJaFyj3gydecuFmAgACNO3RwWznvjvIvRENQXxMRiv+vlGFoshbw2UG+zOPPMhO12OCPSa2UQ==
 
 w3c-keyname@^2.2.0:
   version "2.2.8"
