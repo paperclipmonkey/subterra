@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasShortId;
 use App\Models\Scopes\IsActiveScope;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +13,7 @@ use OwenIt\Auditing\Auditable;
 
 class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory, HasUuids, Auditable;
+    use HasFactory, HasShortId, Auditable;
 
     protected $fillable = [
         'name',

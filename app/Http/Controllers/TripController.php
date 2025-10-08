@@ -79,7 +79,7 @@ class TripController extends Controller
             ->chunk(200, function ($trips) use ($handle) {
                 foreach ($trips as $trip) {
                     fputcsv($handle, [
-                        $trip->id,
+                        $trip->short_id,
                         $trip->name,
                         $trip->start_time?->format('Y-m-d') ?? 'N/A', // Format date as needed
                         $trip->end_time?->format('Y-m-d') ?? 'N/A', // Format date as needed
