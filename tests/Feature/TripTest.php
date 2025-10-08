@@ -37,8 +37,8 @@ class TripTest extends TestCase {
         
         // Only public trip should be returned
         $tripIds = collect($response->json('data'))->pluck('id')->toArray();
-        $this->assertContains($publicTrip->id, $tripIds);
-        $this->assertNotContains($privateTrip->id, $tripIds);
+        $this->assertContains($publicTrip->short_id, $tripIds);
+        $this->assertNotContains($privateTrip->short_id, $tripIds);
         $this->assertResponseMatchesSchema($response, 'endpoints/trips-index');
     }
 
@@ -51,7 +51,7 @@ class TripTest extends TestCase {
 
         $this->actingAs($user);
         $response = $this->getJson('/api/me/trips');
-        $response->assertOk()->assertJsonFragment(['id' => $trip->id]);
+        $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -110,8 +110,8 @@ class TripTest extends TestCase {
     {
         $this->actingAs(User::factory()->create());
         $trip = Trip::factory()->create(['visibility' => 'public']); // Ensure visibility is public
-        $response = $this->getJson('/api/trips/' . $trip->id);
-        $response->assertOk()->assertJsonFragment(['id' => $trip->id]);
+        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
         $this->assertResponseMatchesSchema($response, 'endpoints/trips-show');
     }
 
@@ -134,15 +134,18 @@ class TripTest extends TestCase {
             'name' => 'Updated Trip',
             'start_time' => "2024-01-01 10:00:00",
             'end_time' => "2024-01-02 10:00:00",
-            'entrance_id' => $entrance->id,
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
             'description' => 'Updated description',
+            'visibility' => 'public',
             'participants' => [$participant->id],
             'media' => $media,
             'existing_media' => [],
         ];
 
         $this->actingAs($user);
-        $response = $this->putJson('/api/trips/' . $trip->id, $updateData);
+        $response = $this->putJson('/api/trips/' . $trip->short_id, $updateData);
         $response->assertOk();
         $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
@@ -157,7 +160,7 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $trip = Trip::factory()->create();
         $this->actingAs($user);
-        $response = $this->putJson('/api/trips/' . $trip->id, ['name' => 'Updated Trip']);
+        $response = $this->putJson('/api/trips/' . $trip->short_id, ['name' => 'Updated Trip']);
         $response->assertStatus(403)->assertJsonFragment(['message' => 'This action is unauthorized.']);
     }
 
@@ -180,15 +183,18 @@ class TripTest extends TestCase {
             'name' => 'Updated Trip',
             'start_time' => "2024-01-01 10:00:00",
             'end_time' => "2024-01-02 10:00:00",
-            'entrance_id' => $entrance->id,
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
             'description' => 'Updated description',
+            'visibility' => 'public',
             'participants' => [$participant->id],
             'media' => $media,
             'existing_media' => [],
         ];
 
         $this->actingAs(User::factory()->create(['is_admin' => true]));
-        $response = $this->putJson('/api/trips/' . $trip->id, $updateData);
+        $response = $this->putJson('/api/trips/' . $trip->short_id, $updateData);
         $response->assertOk();
         $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
@@ -204,7 +210,7 @@ class TripTest extends TestCase {
         $trip = Trip::factory()->create();
         $trip->participants()->attach($user);
         $this->actingAs($user);
-        $response = $this->deleteJson('/api/trips/' . $trip->id);
+        $response = $this->deleteJson('/api/trips/' . $trip->short_id);
         $response->assertOk()->assertJsonFragment(['message' => 'Trip deleted successfully']);
         $this->assertDatabaseMissing('trips', ['id' => $trip->id]);
     }
@@ -215,7 +221,7 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $trip = Trip::factory()->create();
         $this->actingAs($user);
-        $response = $this->deleteJson('/api/trips/' . $trip->id);
+        $response = $this->deleteJson('/api/trips/' . $trip->short_id);
         $response->assertStatus(403)->assertJsonFragment(['message' => 'This action is unauthorized.']);
     }
 
@@ -307,8 +313,8 @@ class TripTest extends TestCase {
         $trip = Trip::factory()->create(['visibility' => 'public']);
         
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->id);
-        $response->assertOk()->assertJsonFragment(['id' => $trip->id]);
+        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -319,8 +325,8 @@ class TripTest extends TestCase {
         $trip->participants()->attach($user);
         
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->id);
-        $response->assertOk()->assertJsonFragment(['id' => $trip->id]);
+        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -330,7 +336,7 @@ class TripTest extends TestCase {
         $trip = Trip::factory()->create(['visibility' => 'private']);
         
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->id);
+        $response = $this->getJson('/api/trips/' . $trip->short_id);
         $response->assertStatus(404);
     }
 
@@ -349,8 +355,8 @@ class TripTest extends TestCase {
         $trip->participants()->attach($participant);
         
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->id);
-        $response->assertOk()->assertJsonFragment(['id' => $trip->id]);
+        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -367,7 +373,7 @@ class TripTest extends TestCase {
         $trip->participants()->attach($participant);
         
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->id);
+        $response = $this->getJson('/api/trips/' . $trip->short_id);
         $response->assertStatus(404);
     }
 
@@ -400,13 +406,13 @@ class TripTest extends TestCase {
         $tripIds = collect($response->json('data'))->pluck('id')->toArray();
         
         // Should see public, private (participant), and club trips
-        $this->assertContains($publicTrip->id, $tripIds);
-        $this->assertContains($privateTrip->id, $tripIds);
-        $this->assertContains($clubTrip->id, $tripIds);
+        $this->assertContains($publicTrip->short_id, $tripIds);
+        $this->assertContains($privateTrip->short_id, $tripIds);
+        $this->assertContains($clubTrip->short_id, $tripIds);
         
         // Should not see private trip where not participant or club trip where not club member
-        $this->assertNotContains($hiddenPrivateTrip->id, $tripIds);
-        $this->assertNotContains($hiddenClubTrip->id, $tripIds);
+        $this->assertNotContains($hiddenPrivateTrip->short_id, $tripIds);
+        $this->assertNotContains($hiddenClubTrip->short_id, $tripIds);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
