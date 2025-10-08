@@ -58,7 +58,7 @@ class TripTest extends TestCase {
     public function it_downloads_my_trips_csv()
     {
         $user = User::factory()->create();
-        $trip = Trip::factory()->create();
+    $trip = Trip::factory()->create(['visibility' => 'public']);
         $trip->participants()->attach($user);
 
         $this->actingAs($user);
@@ -452,9 +452,9 @@ class TripTest extends TestCase {
             return $event->trip->id === $trip->id;
         });
         Storage::disk('media')->assertExists($trip->media->first()->filename);
-        $response->assertCreated()->assertJsonFragment(['name' => 'Test Trip With Media Metadata']);
+        $response->assertCreated()->assertJsonFragment(['name' => 'Test Trip With HEIC']);
         
-        $trip = Trip::where('name', 'Test Trip With Media Metadata')->first();
+        $trip = Trip::where('name', 'Test Trip With HEIC')->first();
         $this->assertCount(1, $trip->media);
         
         $mediaItem = $trip->media->first();
