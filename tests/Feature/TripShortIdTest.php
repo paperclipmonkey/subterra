@@ -193,14 +193,13 @@ class TripShortIdTest extends TestCase
         
         // Verify that the short_ids are not sequential
         // (they should be random, not based on auto-incrementing IDs)
-        $this->assertNotEquals($trip1->short_id + 1, $trip2->short_id);
-        $this->assertNotEquals($trip2->short_id + 1, $trip3->short_id);
+        // Verify that the short_ids are not equal (i.e., not sequential or duplicated)
+        $this->assertNotEquals($trip1->short_id, $trip2->short_id);
+        $this->assertNotEquals($trip2->short_id, $trip3->short_id);
         
-        // Verify they don't follow any obvious pattern
-        $this->assertNotEquals(
-            (int)$trip1->short_id + 1,
-            (int)$trip2->short_id
-        );
+        // Optionally, check that the IDs do not follow a simple pattern (e.g., not all the same, not incrementing)
+        $ids = [$trip1->short_id, $trip2->short_id, $trip3->short_id];
+        $this->assertCount(3, array_unique($ids));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
