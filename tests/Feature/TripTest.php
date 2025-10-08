@@ -58,7 +58,7 @@ class TripTest extends TestCase {
     public function it_downloads_my_trips_csv()
     {
         $user = User::factory()->create();
-        $trip = Trip::factory()->create();
+    $trip = Trip::factory()->create(['visibility' => 'public']);
         $trip->participants()->attach($user);
 
         $this->actingAs($user);
@@ -431,9 +431,13 @@ class TripTest extends TestCase {
             'exit_cave_id' => $entrance->id,
             'description' => 'Test description',
             'participants' => [$participant->id],
+            'visibility' => 'public',
             'media' => [
                 [
-                    'data' => $heicData
+                    'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png')),
+                    'taken_at' => '2024-01-01 12:00:00',
+                    'photographer' => 'John Doe',
+                    'copyright' => '© 2024 John Doe'
                 ]
             ]
         ];
@@ -449,5 +453,29 @@ class TripTest extends TestCase {
             return $event->trip->id === $trip->id;
         });
         Storage::disk('media')->assertExists($trip->media->first()->filename);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function media_resource_includes_metadata()
+    {
+        $user = User::factory()->create();
+        $trip = Trip::factory()->create(['visibility' => 'public']);
+        $trip->participants()->attach($user);
+        
+        // Create media with metadata
+        $trip->media()->create([
+            'filename' => 'test.webp',
+            'taken_at' => '2024-01-01 12:00:00',
+            'photographer' => 'Jane Smith',
+            'copyright' => '© 2024 Jane Smith'
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson('/api/trips/' . $trip->id);
+        
+        $response->assertOk()
+            ->assertJsonPath('data.media.0.taken_at', '2024-01-01T12:00:00.000000Z')
+            ->assertJsonPath('data.media.0.photographer', 'Jane Smith')
+            ->assertJsonPath('data.media.0.copyright', '© 2024 Jane Smith');
     }
 }

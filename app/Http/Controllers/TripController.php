@@ -141,7 +141,14 @@ class TripController extends Controller
     {
         foreach ($media as $file) {
             $filePath = $this->imageProcessingService->processAndStoreImage($file, 'trip');
-            $trip->media()->create(['filename' => $filePath]);
+            $mediaData = [
+                'filename' => $filePath,
+                'taken_at' => $file['taken_at'] ?? null,
+                'photographer' => $file['photographer'] ?? null,
+                'copyright' => $file['copyright'] ?? null,
+            ];
+            
+            $trip->media()->create($mediaData);
         }
     }
 
