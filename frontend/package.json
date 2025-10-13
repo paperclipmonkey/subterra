@@ -39,7 +39,7 @@
     "eslint-plugin-promise": "^6.4.0",
     "eslint-plugin-vue": "^10.4.0",
     "jsdom": "^26.1.0",
-    "maplibre-gl": "^5.5.0",
+    "maplibre-gl": "^5.9.0",
     "pinia": "^3.0.2",
     "sass-embedded": "1.89.2",
     "unplugin-auto-import": "^19.3.0",
