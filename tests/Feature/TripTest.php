@@ -477,7 +477,9 @@ class TripTest extends TestCase {
         ]);
 
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->id);
+        $response = $this->getJson('/api/trips/' . $trip->short_id);
+
+        
         
         $response->assertOk()
             ->assertJsonPath('data.media.0.taken_at', '2024-01-01T12:00:00.000000Z')
