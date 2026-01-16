@@ -1,61 +1,111 @@
 <template>
-  <v-card
-    title="My Trips"
-    flat
-  >
-    <template v-slot:text>
-      <v-text-field
-        v-model="search"
-        label="Search"
-        prepend-inner-icon="mdi-magnify"
-        variant="outlined"
-        hide-details
-        single-line
-      >
-      </v-text-field>
-    </template>
+  <v-container class="pa-0">
+    <div class="d-flex align-center justify-space-between mb-4 px-2">
+       <h1 class="text-h5 font-weight-bold">My Trips</h1>
+       <v-menu>
+          <template v-slot:activator="{ props }">
+            <v-btn icon="mdi-dots-vertical" variant="text" v-bind="props"></v-btn>
+          </template>
+          <v-list>
+             <v-list-item to="/create-trip" prepend-icon="mdi-plus">
+                <v-list-item-title>Log Trip</v-list-item-title>
+             </v-list-item>
+          </v-list>
+       </v-menu>
+    </div>
+
+    <v-text-field
+      v-model="search"
+      placeholder="Search trips..."
+      prepend-inner-icon="mdi-magnify"
+      variant="outlined"
+      hide-details
+      class="mb-4 px-2"
+      density="comfortable"
+      bg-color="surface"
+    ></v-text-field>
+
     <template v-if="tripStore.loading">
-      <v-card-text>
-        <v-progress-circular
-            indeterminate
-            size="64"
-            class="mx-auto my-4 d-flex justify-center"
-          color="primary"
-        ></v-progress-circular>
-      </v-card-text>
+       <div class="d-flex justify-center my-8">
+         <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+       </div>
     </template>
+
     <template v-else>
-      <template v-if="tripStore.trips.length === 0">
-        <v-card-text>
-          <p>You don't seem to have been on any trips yet.</p>
-          <router-link to="/caves">Find a cave to explore</router-link>, or <router-link to="/create-trip">Create a new trip report</router-link>
-        </v-card-text>
-      </template>
-      <template v-else>
-        <v-data-table
-          :headers="headers"
-          :items="tripStore.trips"
-          :search="search"
-          :items-per-page="10000"
-          hide-default-footer
+      <div v-if="tripStore.trips.length === 0" class="text-center py-8">
+        <v-icon size="64" color="grey lighten-10" icon="mdi-compass-outline" class="mb-4"></v-icon>
+        <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No trips yet</h3>
+        <p class="text-body-2 text-grey-darken-1 mb-6">Start your adventure by finding a cave or logging a trip.</p>
+        <div class="d-flex justify-center ga-4">
+           <v-btn color="primary" to="/caves" prepend-icon="mdi-map-search">Find Caves</v-btn>
+           <v-btn variant="outlined" color="primary" to="/create-trip" prepend-icon="mdi-plus">Log Trip</v-btn>
+        </div>
+      </div>
+
+      <v-row v-else class="px-2">
+        <v-col
+          v-for="trip in tripStore.trips"
+          :key="trip.id"
+          cols="12"
+          sm="6"
+          md="4"
         >
-          <template v-slot:item.name="{ item, value }">
-            <router-link :to="{name: '/trip/[id]', params: {id: item.id}}">
-              {{ value }}
-            </router-link>
-          </template>
-          <template v-slot:item.start_time="{ value }">
-            {{ formatDate(value) }}
-          </template>
-          <template v-slot:item.participants="{ value }">
-            <v-chip density="compact" size="small" v-for="participant in value" :key="participant.id" class="ma-1">
-              {{ participant.name }}
-            </v-chip>
-          </template>
-        </v-data-table>
-      </template>
+          <v-card
+            :to="`/trip/${trip.id}`"
+            elevation="2"
+            class="fill-height d-flex flex-column trip-card"
+            hover
+          >
+            <!-- Hero Image Placeholder or Map snapshot could go here -->
+            <div class="trip-card-header pa-4 pb-2">
+               <div class="d-flex justify-space-between align-start">
+                  <div>
+                    <div class="text-caption text-primary font-weight-bold mb-1">
+                      {{ formatDate(trip.start_time) }}
+                    </div>
+                    <h3 class="text-h6 font-weight-bold lh-tight mb-1">
+                      {{ trip.name }}
+                    </h3>
+                    <div class="text-body-2 text-medium-emphasis mb-2">
+                       {{ trip.entrance?.name || 'Unknown Entrance' }}
+                    </div>
+                  </div>
+               </div>
+            </div>
+
+            <v-divider class="mt-auto"></v-divider>
+            
+            <div class="pa-3 bg-grey-lighten-5">
+               <div class="d-flex align-center flex-wrap ga-1">
+                 <v-icon size="small" color="grey" icon="mdi-account-group" class="mr-1"></v-icon>
+                 <span v-if="!trip.participants || trip.participants.length === 0" class="text-caption text-grey">No participants</span>
+                 <template v-else>
+                    <v-chip
+                      v-for="(participant, i) in trip.participants.slice(0, 3)"
+                      :key="participant.id"
+                      size="x-small"
+                      variant="flat"
+                      class="bg-white"
+                      border
+                    >
+                      {{ participant.name }}
+                    </v-chip>
+                    <v-chip
+                      v-if="trip.participants.length > 3"
+                      size="x-small"
+                      variant="flat"
+                      class="bg-grey-lighten-3"
+                    >
+                      +{{ trip.participants.length - 3 }}
+                    </v-chip>
+                 </template>
+               </div>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
     </template>
-  </v-card>
+  </v-container>
 </template>
 
 <script setup>

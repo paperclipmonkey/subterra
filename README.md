@@ -71,13 +71,12 @@ After setting up the application:
 1. Follow the OAuth flow and log into the application
 2. Request approval for club membership
 3. Grant admin privileges via tinker:
-   ```bash
    docker exec -it subterra-laravel.test-1 php artisan tinker
    
    # Make yourself an admin and approve your account
    $user = User::first(); 
-   $user->admin = true; 
-   $user->approved = true; 
+   $user->is_admin = true;
+   $user->is_approved = true;
    $user->save();
    
    # Approve your club membership

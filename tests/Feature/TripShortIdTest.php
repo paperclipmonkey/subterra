@@ -129,7 +129,7 @@ class TripShortIdTest extends TestCase
         $response = $this->get('/api/me/trips/download');
         
         $response->assertOk();
-        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
         
         // Check that the CSV content includes the short_id
         $csvContent = $response->streamedContent();

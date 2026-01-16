@@ -30,55 +30,55 @@ onMounted(fetchNews)
   font-family: Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 
-vue-markdown h1,
-vue-markdown h2,
-vue-markdown h3 {
+.vue-markdown h1,
+.vue-markdown h2,
+.vue-markdown h3 {
   font-weight: 500;
   margin-bottom: 16px;
-  color: #ffffff;
+  color: #1a1a1a;
 }
 
-vue-markdown p {
+.vue-markdown p {
   margin-bottom: 16px;
-  color: rgba(255, 255, 255, 0.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 
-vue-markdown a {
-  color: #64b5f6;
+.vue-markdown a {
+  color: #1976D2;
   text-decoration: none;
 }
 
-vue-markdown a:hover {
+.vue-markdown a:hover {
   text-decoration: underline;
 }
 
-vue-markdown ul,
-vue-markdown ol {
+.vue-markdown ul,
+.vue-markdown ol {
   padding-left: 24px;
   margin-bottom: 16px;
-  color: rgba(255, 255, 255, 0.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 
-vue-markdown li {
+.vue-markdown li {
   margin-bottom: 8px;
 }
 
-vue-markdown code {
-  background-color: #424242;
+.vue-markdown code {
+  background-color: #f5f5f5;
   padding: 2px 4px;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
-  color: #ffffff;
+  color: #d32f2f;
 }
 
-vue-markdown pre {
-  background-color: #424242;
+.vue-markdown pre {
+  background-color: #f5f5f5;
   padding: 16px;
   border-radius: 4px;
   overflow-x: auto;
-  color: #ffffff;
+  color: #333;
 }
 </style>

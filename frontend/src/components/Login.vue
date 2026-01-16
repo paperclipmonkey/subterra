@@ -236,68 +236,68 @@ onMounted(async () => {
 
 <style scoped>
 .login-bg {
-  background: linear-gradient(180deg, #232526 0%, #414345 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
   min-height: 100vh;
   position: relative;
 }
 .main-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 2.2rem;
-  color: #fff;
+  color: #2d3436;
   letter-spacing: 1px;
+  font-weight: 700;
 }
 .subtitle {
-  color: #b2bec3;
+  color: #636e72;
   font-size: 1.1rem;
 }
 .welcome {
-  color: #dfe6e9;
+  color: #636e72;
   font-size: 1rem;
   margin-top: 0.5rem;
+  font-weight: 500;
 }
 .login-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #4285f4;
-  color: #fff;
+  background: white;
+  color: #757575;
   border-radius: 12px;
-  padding: 1rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   font-weight: 600;
   font-size: 1.1rem;
-  box-shadow: 0 4px 16px rgba(66, 133, 244, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   text-decoration: none;
-  border: none;
+  border: 1px solid #dadce0;
 }
 .login-btn:hover {
-  background: #3367d6;
+  background: #f8f9fa;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 .signin {
   display: inline-block;
   margin-right: 0.5rem;
-  height: 28px;
+  height: 24px;
 }
 
 /* Divider styles */
 .divider-text {
-  background: linear-gradient(180deg, #232526 0%, #414345 100%);
-  color: #ffffff;
+  background: transparent;
+  color: #b2bec3;
   padding: 0 1.5rem;
   font-size: 1rem;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Email login card styles */
 .email-login-card {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
+  background: white;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 .email-login-title {
   color: #2d3436;
@@ -309,12 +309,11 @@ onMounted(async () => {
 
 /* Email sent confirmation styles */
 .email-sent-card {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
+  background: white;
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 .email-sent-title {
   color: #00b894;
@@ -341,13 +340,13 @@ onMounted(async () => {
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 16px rgba(66, 133, 244, 0.3);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
   transition: all 0.3s ease;
 }
 
 .custom-submit-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+  box-shadow: 0 6px 16px rgba(66, 133, 244, 0.3);
 }
 
 .custom-reset-btn {
@@ -371,7 +370,7 @@ onMounted(async () => {
   margin-top: 2rem;
 }
 .features-title {
-  color: #fff;
+  color: #2d3436;
   font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -389,9 +388,9 @@ onMounted(async () => {
   height: 60px;
 }
 .feature-label {
-  color: #dfe6e9;
-  font-size: 0.98rem;
-  font-weight: 500;
+  color: #636e72;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 .info-text {
   color: #b2bec3;
@@ -404,13 +403,14 @@ onMounted(async () => {
   font-size: 0.97rem;
 }
 .github-link {
-  color: #fff;
-  text-decoration: underline;
+  color: #4285f4;
+  text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
 .github-link:hover {
-  color: #4285f4;
+  color: #3367d6;
+  text-decoration: underline;
 }
 .cave-graphic {
   position: absolute;

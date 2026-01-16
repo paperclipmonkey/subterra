@@ -26,10 +26,10 @@
                 </v-card-subtitle>
               </v-img>
               <template v-else> 
-                <v-card-title class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                <v-card-title>
                   {{ cave.name }}
                 </v-card-title>
-                <v-card-subtitle class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                <v-card-subtitle>
                   {{ cave.location_name }}
                 </v-card-subtitle>
               </template>

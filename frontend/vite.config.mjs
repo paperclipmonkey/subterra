@@ -90,11 +90,10 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      // string shorthand: http://localhost:5173/foo -> http://localhost:4567/foo
-      '/api': 'http://host.docker.internal',
-      '/storage': 'http://host.docker.internal',
-      '/media': 'http://host.docker.internal',
-      'public': 'http://host.docker.internal',
+      '/api': 'http://127.0.0.1',
+      '/storage': 'http://127.0.0.1',
+      '/media': 'http://127.0.0.1',
+      'public': 'http://127.0.0.1',
     },
     host: '0.0.0.0',
   },

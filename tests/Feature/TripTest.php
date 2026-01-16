@@ -64,7 +64,7 @@ class TripTest extends TestCase {
         $this->actingAs($user);
         $response = $this->get('/api/me/trips/download');
         $response->assertOk();
-        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
         $response->assertHeader('Content-Disposition');
         $this->assertStringContainsString('Trip ID', $response->streamedContent());
     }
