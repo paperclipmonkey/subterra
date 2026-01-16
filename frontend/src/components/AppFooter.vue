@@ -1,7 +1,7 @@
 <template>
   <div class="footer">
   <v-footer app>
-      <v-bottom-navigation>
+      <v-bottom-navigation bg-color="surface" elevation="4">
       <v-btn
         v-for="item in items"
         :key="item.title"

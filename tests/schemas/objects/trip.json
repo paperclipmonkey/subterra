@@ -4,8 +4,8 @@
   "type": "object",
   "properties": {
     "id": {
-      "type": "integer",
-      "minimum": 1
+      "type": "string",
+      "pattern": "^[0-9a-zA-Z]{8,10}$"
     },
     "name": {
       "type": "string",

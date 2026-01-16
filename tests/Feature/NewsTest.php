@@ -31,9 +31,10 @@ class NewsTest extends TestCase
         $json = $response->json();
 
         // The files should be reversed, so 'second-news' comes first
-        $this->assertEquals([
-            'second-news' => 'Second news content',
-            'first-news' => 'First news content',
-        ], $json);
+        $this->assertCount(2, $json);
+        $this->assertEquals('second-news', $json[0]['id']);
+        $this->assertEquals('Second news content', $json[0]['content']);
+        $this->assertEquals('first-news', $json[1]['id']);
+        $this->assertEquals('First news content', $json[1]['content']);
     }
 }
