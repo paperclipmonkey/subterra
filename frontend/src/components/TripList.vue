@@ -1,64 +1,48 @@
-<template>
-  <v-container class="pa-0">
-    <div class="d-flex align-center justify-space-between mb-4 px-2">
-       <h1 class="text-h5 font-weight-bold">My Trips</h1>
-       <v-menu>
-          <template v-slot:activator="{ props }">
-            <v-btn icon="mdi-dots-vertical" variant="text" v-bind="props"></v-btn>
-          </template>
-          <v-list>
-             <v-list-item to="/create-trip" prepend-icon="mdi-plus">
+  <template>
+    <v-container class="pa-0 fill-height flex-column align-stretch">
+      <!-- Sticky Header Area -->
+      <div class="sticky-header bg-background pt-2 pb-2 px-2 z-index-10">
+        <div class="d-flex align-center justify-space-between mb-2">
+          <h1 class="text-h5 font-weight-bold ml-1">My Trips</h1>
+          <v-menu>
+            <template v-slot:activator="{ props }">
+              <v-btn icon="mdi-dots-vertical" variant="text" v-bind="props"></v-btn>
+            </template>
+            <v-list>
+              <v-list-item to="/create-trip" prepend-icon="mdi-plus">
                 <v-list-item-title>Log Trip</v-list-item-title>
-             </v-list-item>
-          </v-list>
-       </v-menu>
-    </div>
-
-    <v-text-field
-      v-model="search"
-      placeholder="Search trips..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      hide-details
-      class="mb-4 px-2"
-      density="comfortable"
-      bg-color="surface"
-    ></v-text-field>
-
-    <template v-if="tripStore.loading">
-       <div class="d-flex justify-center my-8">
-         <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
-       </div>
-    </template>
-
-    <template v-else>
-      <div v-if="tripStore.trips.length === 0" class="text-center py-8">
-        <v-icon size="64" color="grey lighten-10" icon="mdi-compass-outline" class="mb-4"></v-icon>
-        <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No trips yet</h3>
-        <p class="text-body-2 text-grey-darken-1 mb-6">Start your adventure by finding a cave or logging a trip.</p>
-        <div class="d-flex justify-center ga-4">
-           <v-btn color="primary" to="/caves" prepend-icon="mdi-map-search">Find Caves</v-btn>
-           <v-btn variant="outlined" color="primary" to="/create-trip" prepend-icon="mdi-plus">Log Trip</v-btn>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </div>
+
+        <v-text-field v-model="search" placeholder="Search trips..." prepend-inner-icon="mdi-magnify" variant="outlined"
+          hide-details density="comfortable" bg-color="surface" class="rounded-lg"></v-text-field>
       </div>
 
-      <v-row v-else class="px-2">
-        <v-col
-          v-for="trip in tripStore.trips"
-          :key="trip.id"
-          cols="12"
-          sm="6"
-          md="4"
-        >
-          <v-card
-            :to="`/trip/${trip.id}`"
-            elevation="2"
-            class="fill-height d-flex flex-column trip-card"
-            hover
-          >
-            <!-- Hero Image Placeholder or Map snapshot could go here -->
-            <div class="trip-card-header pa-4 pb-2">
-               <div class="d-flex justify-space-between align-start">
+      <template v-if="tripStore.loading">
+        <div class="d-flex justify-center my-8">
+          <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+        </div>
+      </template>
+
+      <template v-else>
+        <div v-if="tripStore.trips.length === 0" class="text-center py-8">
+          <v-icon size="64" color="grey lighten-10" icon="mdi-compass-outline" class="mb-4"></v-icon>
+          <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No trips yet</h3>
+          <p class="text-body-2 text-grey-darken-1 mb-6">Start your adventure by finding a cave or logging a trip.</p>
+          <div class="d-flex justify-center ga-4">
+            <v-btn color="primary" to="/caves" prepend-icon="mdi-map-search">Find Caves</v-btn>
+            <v-btn variant="outlined" color="primary" to="/create-trip" prepend-icon="mdi-plus">Log Trip</v-btn>
+          </div>
+        </div>
+
+        <v-row v-else class="px-2 pb-16 overflow-y-auto flex-grow-1">
+          <v-col v-for="trip in tripStore.trips" :key="trip.id" cols="12" sm="6" md="4">
+            <v-card :to="`/trip/${trip.id}`" elevation="2" class="fill-height d-flex flex-column trip-card" hover>
+              <!-- Hero Image Placeholder or Map snapshot could go here -->
+              <div class="trip-card-header pa-4 pb-2">
+                <div class="d-flex justify-space-between align-start">
                   <div>
                     <div class="text-caption text-primary font-weight-bold mb-1">
                       {{ formatDate(trip.start_time) }}
@@ -67,71 +51,76 @@
                       {{ trip.name }}
                     </h3>
                     <div class="text-body-2 text-medium-emphasis mb-2">
-                       {{ trip.entrance?.name || 'Unknown Entrance' }}
+                      {{ trip.entrance?.name || 'Unknown Entrance' }}
                     </div>
                   </div>
-               </div>
-            </div>
+                </div>
+              </div>
 
-            <v-divider class="mt-auto"></v-divider>
-            
-            <div class="pa-3 bg-grey-lighten-5">
-               <div class="d-flex align-center flex-wrap ga-1">
-                 <v-icon size="small" color="grey" icon="mdi-account-group" class="mr-1"></v-icon>
-                 <span v-if="!trip.participants || trip.participants.length === 0" class="text-caption text-grey">No participants</span>
-                 <template v-else>
-                    <v-chip
-                      v-for="(participant, i) in trip.participants.slice(0, 3)"
-                      :key="participant.id"
-                      size="x-small"
-                      variant="flat"
-                      class="bg-white"
-                      border
-                    >
+              <v-divider class="mt-auto"></v-divider>
+
+              <div class="pa-3 bg-grey-lighten-5">
+                <div class="d-flex align-center flex-wrap ga-1">
+                  <v-icon size="small" color="grey" icon="mdi-account-group" class="mr-1"></v-icon>
+                  <span v-if="!trip.participants || trip.participants.length === 0" class="text-caption text-grey">No
+                    participants</span>
+                  <template v-else>
+                    <v-chip v-for="(participant, i) in trip.participants.slice(0, 3)" :key="participant.id"
+                      size="x-small" variant="flat" class="bg-white" border>
                       {{ participant.name }}
                     </v-chip>
-                    <v-chip
-                      v-if="trip.participants.length > 3"
-                      size="x-small"
-                      variant="flat"
-                      class="bg-grey-lighten-3"
-                    >
+                    <v-chip v-if="trip.participants.length > 3" size="x-small" variant="flat" class="bg-grey-lighten-3">
                       +{{ trip.participants.length - 3 }}
                     </v-chip>
-                 </template>
-               </div>
-            </div>
-          </v-card>
-        </v-col>
-      </v-row>
-    </template>
-  </v-container>
-</template>
+                  </template>
+                </div>
+              </div>
+            </v-card>
+          </v-col>
+        </v-row>
+      </template>
+    </v-container>
+  </template>
+
+<style scoped>
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: rgb(var(--v-theme-background));
+  /* Ensure opaque background */
+}
+
+/* Fallback if variable doesn't work */
+.bg-background {
+  background-color: #f7f7f7;
+}
+</style>
 
 <script setup>
-  import moment from 'moment'
-  import { useAppStore } from '@/stores/app'
-  import { useTripStore } from '@/stores/trips';
+import moment from 'moment'
+import { useAppStore } from '@/stores/app'
+import { useTripStore } from '@/stores/trips';
 import { parse } from 'vue/compiler-sfc';
 
-  const store = useAppStore()  
-  const tripStore = useTripStore()
-  const search = ref('')
-  const headers = ref([
-    { title: 'Name', key: 'name' },
-    { title: 'Date', key: 'start_time' },
-    // { title: 'system', key: 'system.name' },
-    { title: 'entrance', key: 'entrance.name' },
-    { title: 'participants', key: 'participants' }
-  ])
+const store = useAppStore()
+const tripStore = useTripStore()
+const search = ref('')
+const headers = ref([
+  { title: 'Name', key: 'name' },
+  { title: 'Date', key: 'start_time' },
+  // { title: 'system', key: 'system.name' },
+  { title: 'entrance', key: 'entrance.name' },
+  { title: 'participants', key: 'participants' }
+])
 
-  const formatDate = (date) => {
-    let parsedDate = moment(date);
-    return parsedDate.isValid() ? parsedDate.format('DD-MM-YYYY') : '~'
-  }
+const formatDate = (date) => {
+  let parsedDate = moment(date);
+  return parsedDate.isValid() ? parsedDate.format('DD-MM-YYYY') : '~'
+}
 
-  onMounted(async () => {
-    await store.getUser() // Check if user is logged in
-    await tripStore.getTrips()
-  })
+onMounted(async () => {
+  await store.getUser() // Check if user is logged in
+  await tripStore.getTrips()
+})
 </script>

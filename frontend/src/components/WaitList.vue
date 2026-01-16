@@ -13,8 +13,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import ClubMembershipConfirmation from './ClubMembershipConfirmation.vue';
 
+const router = useRouter();
 const pendingClubs = ref([]);
 
 const fetchPendingClubs = async () => {
@@ -26,9 +28,9 @@ const fetchPendingClubs = async () => {
     pendingClubs.value = (user.clubs || []).filter(c => c.status === 'pending');
     let approvedClubs = (user.clubs || []).filter(c => c.status === 'approved');
 
-    if(approvedClubs.length > 0) {
+    if(user.is_approved) {
       // If we've been approved, redirect to /caves
-      window.location.href = '/trips';
+      router.push('/trips');
     }
 
     // If there are pending clubs, refresh the list every 5 seconds until a club is approved, then redirect

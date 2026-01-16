@@ -12,6 +12,7 @@ import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 
+// Force restart
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
