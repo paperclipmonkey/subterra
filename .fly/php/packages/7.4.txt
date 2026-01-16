@@ -15,3 +15,4 @@ php7.4-xml
 php7.4-zip
 php7.4-swoole
 php7.4-fpm
+php7.4-imagick
