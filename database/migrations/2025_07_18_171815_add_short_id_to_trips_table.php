@@ -12,9 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add short_id column to trips table
+        // Add short_id column to trips table as nullable first
         Schema::table('trips', function (Blueprint $table) {
-            $table->string('short_id', 10)->after('id')->unique();
+            $table->string('short_id', 10)->after('id')->nullable();
         });
 
         // Generate short IDs for existing trips
@@ -24,6 +24,12 @@ return new class extends Migration
                 ->where('id', $trip->id)
                 ->update(['short_id' => $this->generateShortId()]);
         }
+
+        // Apply Not Null and Unique constraints
+        Schema::table('trips', function (Blueprint $table) {
+            $table->string('short_id', 10)->nullable(false)->change();
+            $table->unique('short_id');
+        });
     }
 
     /**
