@@ -75,7 +75,12 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
             $q->where('visibility', 'public');
             
             if ($user) {
-                // Private trips are visible to participants
+                // Participants can always see their trips
+                $q->orWhereHas('participants', function ($participantQuery) use ($user) {
+                    $participantQuery->where('user_id', $user->id);
+                });
+
+                // Private trips are visible to participants (covered above, but logic kept for structure if needed)
                 $q->orWhere(function ($privateQuery) use ($user) {
                     $privateQuery->where('visibility', 'private')
                                 ->whereHas('participants', function ($participantQuery) use ($user) {
