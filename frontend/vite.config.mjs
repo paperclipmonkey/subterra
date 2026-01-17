@@ -79,7 +79,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [
         { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
-        { find: /^.*\.css$/, replacement: fileURLToPath(new URL('./tests/styleMock.js', import.meta.url)) },
+        ...(isTest ? [{ find: /^.*\.css$/, replacement: fileURLToPath(new URL('./tests/styleMock.js', import.meta.url)) }] : []),
       ],
       extensions: [
         '.js',
