@@ -55,7 +55,7 @@ services:
         networks:
             - sail
     node:
-        image: 'node:22'
+        image: 'node:24'
         volumes:
             - './frontend:/var/www/html'
         working_dir: '/var/www/html'
