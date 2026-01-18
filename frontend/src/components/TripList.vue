@@ -39,7 +39,7 @@
 
         <div v-else class="px-2 pb-16 overflow-y-auto flex-grow-1" style="min-height: 0;">
           <v-row>
-            <v-col v-for="trip in tripStore.trips" :key="trip.id" cols="12" sm="6" md="4">
+            <v-col v-for="trip in filteredTrips" :key="trip.id" cols="12" sm="6" md="4">
               <v-card :to="`/trips/${trip.id}`" elevation="2" class="fill-height d-flex flex-column trip-card" hover>
                 <!-- Hero Image Placeholder or Map snapshot could go here -->
                 <div class="trip-card-header pa-4 pb-2">
@@ -102,18 +102,37 @@
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
 import { useTripStore } from '@/stores/trips';
-import { parse } from 'vue/compiler-sfc';
 
 const store = useAppStore()
 const tripStore = useTripStore()
 const search = ref('')
-const headers = ref([
-  { title: 'Name', key: 'name' },
-  { title: 'Date', key: 'start_time' },
-  // { title: 'system', key: 'system.name' },
-  { title: 'entrance', key: 'entrance.name' },
-  { title: 'participants', key: 'participants' }
-])
+
+const filteredTrips = computed(() => {
+  if (!search.value.trim()) {
+    return tripStore.trips
+  }
+
+  const query = search.value.toLowerCase().trim()
+
+  return tripStore.trips.filter(trip => {
+    // Search by trip name
+    if (trip.name?.toLowerCase().includes(query)) {
+      return true
+    }
+
+    // Search by entrance name
+    if (trip.entrance?.name?.toLowerCase().includes(query)) {
+      return true
+    }
+
+    // Search by participant names
+    if (trip.participants?.some(p => p.name?.toLowerCase().includes(query))) {
+      return true
+    }
+
+    return false
+  })
+})
 
 const formatDate = (date) => {
   let parsedDate = moment(date);
@@ -125,3 +144,4 @@ onMounted(async () => {
   await tripStore.getTrips()
 })
 </script>
+

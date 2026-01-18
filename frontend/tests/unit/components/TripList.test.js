@@ -22,10 +22,35 @@ vi.mock('@/stores/app', () => ({
   })
 }))
 
+// Sample trips data for testing filtering
+const mockTrips = [
+  {
+    id: 1,
+    name: 'Expedition to Great Cave',
+    entrance: { name: 'Main Entrance' },
+    participants: [{ id: 1, name: 'Alice Smith' }, { id: 2, name: 'Bob Jones' }],
+    start_time: '2024-01-15T10:00:00Z'
+  },
+  {
+    id: 2,
+    name: 'Training Session',
+    entrance: { name: 'Side Entrance' },
+    participants: [{ id: 3, name: 'Charlie Brown' }],
+    start_time: '2024-01-10T10:00:00Z'
+  },
+  {
+    id: 3,
+    name: 'Survey Trip',
+    entrance: { name: 'Main Entrance' },
+    participants: [{ id: 1, name: 'Alice Smith' }],
+    start_time: '2024-01-05T10:00:00Z'
+  }
+]
+
 vi.mock('@/stores/trips', () => ({
   useTripStore: () => ({
     getTrips: vi.fn().mockResolvedValue([]),
-    trips: [],
+    trips: mockTrips,
     loading: false
   })
 }))
@@ -35,7 +60,7 @@ describe('TripList', () => {
     setActivePinia(createPinia())
   })
 
-  it('initializes with correct data', () => {
+  it('initializes with empty search', () => {
     const wrapper = mount(TripList, {
       global: {
         plugins: [createPinia()],
@@ -44,8 +69,6 @@ describe('TripList', () => {
     })
 
     expect(wrapper.vm.search).toBe('')
-    expect(Array.isArray(wrapper.vm.headers)).toBe(true)
-    expect(wrapper.vm.headers.length).toBeGreaterThan(0)
   })
 
   it('has formatDate method that works correctly', () => {
@@ -60,20 +83,6 @@ describe('TripList', () => {
     expect(formattedDate).toBe('15-12-2023')
   })
 
-  it('has proper table headers configuration', () => {
-    const wrapper = mount(TripList, {
-      global: {
-        plugins: [createPinia()],
-        stubs: { 'v-menu': true, 'v-icon': true }
-      }
-    })
-
-    const expectedHeaders = ['Name', 'Date', 'entrance', 'participants']
-    const actualHeaders = wrapper.vm.headers.map(h => h.title)
-
-    expect(actualHeaders).toEqual(expectedHeaders)
-  })
-
   it('renders component without errors', () => {
     const wrapper = mount(TripList, {
       global: {
@@ -83,5 +92,82 @@ describe('TripList', () => {
     })
 
     expect(wrapper.exists()).toBe(true)
+  })
+
+  // Regression tests for search filtering
+  describe('search filtering', () => {
+    it('returns all trips when search is empty', () => {
+      const wrapper = mount(TripList, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { 'v-menu': true, 'v-icon': true }
+        }
+      })
+
+      wrapper.vm.search = ''
+      expect(wrapper.vm.filteredTrips).toHaveLength(3)
+    })
+
+    it('filters trips by name (case-insensitive)', () => {
+      const wrapper = mount(TripList, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { 'v-menu': true, 'v-icon': true }
+        }
+      })
+
+      wrapper.vm.search = 'expedition'
+      expect(wrapper.vm.filteredTrips).toHaveLength(1)
+      expect(wrapper.vm.filteredTrips[0].name).toBe('Expedition to Great Cave')
+    })
+
+    it('filters trips by entrance name', () => {
+      const wrapper = mount(TripList, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { 'v-menu': true, 'v-icon': true }
+        }
+      })
+
+      wrapper.vm.search = 'Main Entrance'
+      expect(wrapper.vm.filteredTrips).toHaveLength(2)
+    })
+
+    it('filters trips by participant name', () => {
+      const wrapper = mount(TripList, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { 'v-menu': true, 'v-icon': true }
+        }
+      })
+
+      wrapper.vm.search = 'Charlie'
+      expect(wrapper.vm.filteredTrips).toHaveLength(1)
+      expect(wrapper.vm.filteredTrips[0].name).toBe('Training Session')
+    })
+
+    it('returns empty array when no trips match the search', () => {
+      const wrapper = mount(TripList, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { 'v-menu': true, 'v-icon': true }
+        }
+      })
+
+      wrapper.vm.search = 'nonexistent'
+      expect(wrapper.vm.filteredTrips).toHaveLength(0)
+    })
+
+    it('ignores whitespace-only search', () => {
+      const wrapper = mount(TripList, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { 'v-menu': true, 'v-icon': true }
+        }
+      })
+
+      wrapper.vm.search = '   '
+      expect(wrapper.vm.filteredTrips).toHaveLength(3)
+    })
   })
 })
