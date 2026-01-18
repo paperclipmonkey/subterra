@@ -22,10 +22,16 @@
       "type": "string"
     },
     "hero_image": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "entrance_image": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "tags": {
       "type": "array",
@@ -34,16 +40,28 @@
       }
     },
     "location_name": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "location_country": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "location_lat": {
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "location_lng": {
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "system": {
       "$ref": "cave-system.json"
@@ -56,8 +74,58 @@
     },
     "previously_done": {
       "type": "boolean"
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "caves_count": {
+            "type": "integer"
+          },
+          "photo_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_official": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ]
+      }
     }
   },
-  "required": ["id", "slug", "name", "description", "access_info", "tags", "system", "trips", "previously_done"],
+  "required": [
+    "id",
+    "slug",
+    "name",
+    "description",
+    "access_info",
+    "tags",
+    "system",
+    "trips",
+    "previously_done"
+  ],
   "additionalProperties": false
 }
