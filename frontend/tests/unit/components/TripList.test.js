@@ -38,10 +38,11 @@ describe('TripList', () => {
   it('initializes with correct data', () => {
     const wrapper = mount(TripList, {
       global: {
-        plugins: [createPinia()]
+        plugins: [createPinia()],
+        stubs: { 'v-menu': true, 'v-icon': true }
       }
     })
-    
+
     expect(wrapper.vm.search).toBe('')
     expect(Array.isArray(wrapper.vm.headers)).toBe(true)
     expect(wrapper.vm.headers.length).toBeGreaterThan(0)
@@ -50,10 +51,11 @@ describe('TripList', () => {
   it('has formatDate method that works correctly', () => {
     const wrapper = mount(TripList, {
       global: {
-        plugins: [createPinia()]
+        plugins: [createPinia()],
+        stubs: { 'v-menu': true, 'v-icon': true }
       }
     })
-    
+
     const formattedDate = wrapper.vm.formatDate('2023-12-15T10:00:00Z')
     expect(formattedDate).toBe('15-12-2023')
   })
@@ -61,23 +63,25 @@ describe('TripList', () => {
   it('has proper table headers configuration', () => {
     const wrapper = mount(TripList, {
       global: {
-        plugins: [createPinia()]
+        plugins: [createPinia()],
+        stubs: { 'v-menu': true, 'v-icon': true }
       }
     })
-    
+
     const expectedHeaders = ['Name', 'Date', 'entrance', 'participants']
     const actualHeaders = wrapper.vm.headers.map(h => h.title)
-    
+
     expect(actualHeaders).toEqual(expectedHeaders)
   })
 
   it('renders component without errors', () => {
     const wrapper = mount(TripList, {
       global: {
-        plugins: [createPinia()]
+        plugins: [createPinia()],
+        stubs: { 'v-menu': true, 'v-icon': true }
       }
     })
-    
+
     expect(wrapper.exists()).toBe(true)
   })
 })

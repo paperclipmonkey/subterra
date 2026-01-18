@@ -15,11 +15,11 @@ vi.mock('moment', () => {
           if (format === 'HH:mm') return '10:00'
           return '2024-01-15T10:00:00'
         },
-        clone: function() { return this },
-        add: function() { return this }
+        clone: function () { return this },
+        add: function () { return this }
       }
     }
-    
+
     // Parse specific test dates - create a moment-like object
     const testDate = new Date(date)
     const momentObj = {
@@ -43,13 +43,13 @@ vi.mock('moment', () => {
         }
         return 0
       },
-      clone: function() { return this },
-      add: function() { return this }
+      clone: function () { return this },
+      add: function () { return this }
     }
-    
+
     return momentObj
   }
-  
+
   return { default: mockMoment }
 })
 
@@ -75,7 +75,7 @@ describe('TripNew - Duration Loading', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    
+
     // Mock successful API responses
     fetch.mockImplementation((url) => {
       if (url === '/api/caves') {
@@ -87,7 +87,7 @@ describe('TripNew - Duration Loading', () => {
           })
         })
       }
-      
+
       if (url === '/api/users/me') {
         return Promise.resolve({
           json: () => Promise.resolve({
@@ -95,7 +95,7 @@ describe('TripNew - Duration Loading', () => {
           })
         })
       }
-      
+
       if (url === '/api/users') {
         return Promise.resolve({
           json: () => Promise.resolve({
@@ -105,7 +105,7 @@ describe('TripNew - Duration Loading', () => {
           })
         })
       }
-      
+
       if (url === '/api/trips/123') {
         return Promise.resolve({
           json: () => Promise.resolve({
@@ -125,7 +125,7 @@ describe('TripNew - Duration Loading', () => {
           })
         })
       }
-      
+
       return Promise.reject(new Error('Unknown URL'))
     })
   })
@@ -149,7 +149,15 @@ describe('TripNew - Duration Loading', () => {
           'v-row': { template: '<div><slot /></div>' },
           'v-col': { template: '<div><slot /></div>' },
           'VuetifyTiptap': { template: '<div></div>' },
-          'AddParticipantManual': { template: '<div></div>' }
+          'AddParticipantManual': { template: '<div></div>' },
+          'v-expand-transition': true,
+          'v-img': true,
+          'v-spacer': true,
+          'v-icon': true,
+          'v-expand-transition': true,
+          'v-img': true,
+          'v-spacer': true,
+          'v-icon': true
         }
       }
     })
@@ -157,17 +165,17 @@ describe('TripNew - Duration Loading', () => {
     // Wait for the component to finish loading
     await nextTick()
     await new Promise(resolve => setTimeout(resolve, 100))
-    
+
     // The loading should be complete and duration should be calculated
     expect(wrapper.vm.loading).toBe(false)
-    
+
     // Check that duration was correctly calculated from the mock data
     // start_time: '2024-01-15T10:00:00Z'
     // end_time: '2024-01-15T11:30:00Z'
     // Duration should be 1 hour 30 minutes
     expect(wrapper.vm.tripDurationHours).toBe(1)
     expect(wrapper.vm.tripDurationMinutes).toBe(30)
-    
+
     // Also verify that start date and time were set correctly
     expect(wrapper.vm.tripStartDate).toBe('2024-01-15')
     expect(wrapper.vm.tripStartTime).toBe('10:00')
@@ -176,7 +184,7 @@ describe('TripNew - Duration Loading', () => {
   it('sets default duration values when creating new trip', async () => {
     // Override route to simulate creating new trip (no ID)
     mockRoute.params = {}
-    
+
     const wrapper = mount(TripNew, {
       global: {
         plugins: [createPinia()],
@@ -195,7 +203,11 @@ describe('TripNew - Duration Loading', () => {
           'v-row': { template: '<div><slot /></div>' },
           'v-col': { template: '<div><slot /></div>' },
           'VuetifyTiptap': { template: '<div></div>' },
-          'AddParticipantManual': { template: '<div></div>' }
+          'AddParticipantManual': { template: '<div></div>' },
+          'v-expand-transition': true,
+          'v-img': true,
+          'v-spacer': true,
+          'v-icon': true
         }
       }
     })
@@ -203,10 +215,10 @@ describe('TripNew - Duration Loading', () => {
     // Wait for the component to finish loading
     await nextTick()
     await new Promise(resolve => setTimeout(resolve, 100))
-    
+
     // The loading should be complete and default duration should be set
     expect(wrapper.vm.loading).toBe(false)
-    
+
     // Check that default duration values are used for new trips
     expect(wrapper.vm.tripDurationHours).toBe(4)
     expect(wrapper.vm.tripDurationMinutes).toBe(0)

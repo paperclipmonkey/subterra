@@ -247,8 +247,6 @@ onMounted(async () => {
     if (userData && userData.data && userData.data.email) {
       console.log('User is logged in')
       router.push('/trips')
-    } else {
-      console.log('User is not logged in')
     }
   } catch (e) {
     console.log('User is not logged in')

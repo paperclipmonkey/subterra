@@ -5,6 +5,12 @@ import WaitList from '@/components/WaitList.vue'
 // Mock fetch globally
 global.fetch = vi.fn()
 
+// Mock router
+const pushMock = vi.fn()
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: pushMock })
+}))
+
 describe('WaitList', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -20,7 +26,7 @@ describe('WaitList', () => {
     })
 
     const wrapper = mount(WaitList)
-    
+
     expect(wrapper.exists()).toBe(true)
   })
 
@@ -33,13 +39,13 @@ describe('WaitList', () => {
     })
 
     const wrapper = mount(WaitList)
-    
+
     expect(wrapper.vm.pendingClubs).toEqual([])
   })
 
   it('has fetchPendingClubs method', () => {
     const wrapper = mount(WaitList)
-    
+
     expect(typeof wrapper.vm.fetchPendingClubs).toBe('function')
   })
 
@@ -52,7 +58,7 @@ describe('WaitList', () => {
     })
 
     const wrapper = mount(WaitList)
-    
+
     // Component should mount without errors
     expect(wrapper.vm.$el).toBeDefined()
   })
