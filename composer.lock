@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e60b2102ed2b00b012aba311394a2d04",
+    "content-hash": "53e470825225b172a8644eb0a4bf3dd8",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -7212,6 +7212,65 @@
             "time": "2025-12-18T07:04:31+00:00"
         },
         {
+            "name": "thesmsworks/smsw-php-sdk",
+            "version": "1.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/TheSMSWorks/smsw-php-sdk.git",
+                "reference": "0b85595fef12fcf10a4d111f781f8c5e12adf952"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/TheSMSWorks/smsw-php-sdk/zipball/0b85595fef12fcf10a4d111f781f8c5e12adf952",
+                "reference": "0b85595fef12fcf10a4d111f781f8c5e12adf952",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "guzzlehttp/guzzle": "^7.3",
+                "guzzlehttp/psr7": "^1.7 || ^2.0",
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.5",
+                "phpunit/phpunit": "^8.0 || ^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "OpenAPI\\Client\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "unlicense"
+            ],
+            "authors": [
+                {
+                    "name": "OpenAPI",
+                    "homepage": "https://openapi-generator.tech"
+                }
+            ],
+            "description": "The SMS Works provides a low-cost, reliable SMS API for developers. Pay only for delivered texts, all failed UK messages are refunded.",
+            "homepage": "https://openapi-generator.tech",
+            "keywords": [
+                "api",
+                "openapi",
+                "openapi-generator",
+                "openapitools",
+                "php",
+                "rest",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/TheSMSWorks/smsw-php-sdk/issues",
+                "source": "https://github.com/TheSMSWorks/smsw-php-sdk/tree/1.9.0"
+            },
+            "time": "2023-12-15T11:35:16+00:00"
+        },
+        {
             "name": "tijsverkoyen/css-to-inline-styles",
             "version": "v2.4.0",
             "source": {
@@ -10475,8 +10534,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.5"
+        "php": "^8.4"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

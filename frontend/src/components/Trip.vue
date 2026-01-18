@@ -16,7 +16,7 @@
             <v-spacer></v-spacer>
             <template v-if="currentUserWasOnTrip">
                <v-btn icon="mdi-pencil" variant="tonal" color="white" class="mr-2 backdrop-blur"
-                  @click="$router.push({ name: '/trips/[id].edit', params: { id: trip.id } })"></v-btn>
+                  @click="$router.push('/trips/' + trip.id + '/edit')"></v-btn>
                <v-btn icon="mdi-delete" variant="tonal" color="error" class="backdrop-blur text-white"
                   @click="showDeleteConfirmDialog = true"></v-btn>
             </template>
@@ -110,7 +110,7 @@
                         </template>
                         <v-list-item-subtitle class="text-caption mb-1">Entrance</v-list-item-subtitle>
                         <v-list-item-title>
-                           <router-link :to="{ name: '/caves/[id]', params: { id: trip.entrance.slug } }"
+                           <router-link :to="'/caves/' + trip.entrance.slug"
                               class="text-decoration-none font-weight-bold text-high-emphasis text-primary">
                               {{ trip.entrance.name }}
                            </router-link>
@@ -128,7 +128,7 @@
                         </template>
                         <v-list-item-subtitle class="text-caption mb-1">Exit</v-list-item-subtitle>
                         <v-list-item-title>
-                           <router-link :to="{ name: '/caves/[id]', params: { id: trip.exit.slug } }"
+                           <router-link :to="'/caves/' + trip.exit.slug"
                               class="text-decoration-none font-weight-bold text-high-emphasis text-primary">
                               {{ trip.exit.name }}
                            </router-link>
@@ -146,7 +146,7 @@
                         </template>
                         <v-list-item-subtitle class="text-caption mb-1">Start Time</v-list-item-subtitle>
                         <v-list-item-title class="font-weight-medium">{{ formatTime(trip.start_time)
-                        }}</v-list-item-title>
+                           }}</v-list-item-title>
                      </v-list-item>
 
                      <v-divider inset></v-divider>
@@ -160,7 +160,7 @@
                         </template>
                         <v-list-item-subtitle class="text-caption mb-1">Duration</v-list-item-subtitle>
                         <v-list-item-title class="font-weight-medium">{{ formatDuration(trip.start_time, trip.end_time)
-                        }}</v-list-item-title>
+                           }}</v-list-item-title>
                      </v-list-item>
                   </v-list>
                </v-card>
@@ -174,7 +174,7 @@
                   <v-divider></v-divider>
                   <v-list class="py-2">
                      <v-list-item v-for="participant in trip.participants" :key="participant.id"
-                        :to="{ name: '/profile/[id]', params: { id: participant.id } }" rounded="lg" class="ma-2 mb-1">
+                        :to="'/profile/' + participant.id" rounded="lg" class="ma-2 mb-1">
                         <template v-slot:prepend>
                            <v-avatar color="grey-lighten-2" size="40" class="border">
                               <v-img :src="participant.photo || '/default-avatar.png'" :alt="participant.name"

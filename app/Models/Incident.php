@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+
+class Incident extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'callout_id',
+        'status',
+        'resolved_at',
+    ];
+
+    protected $casts = [
+        'resolved_at' => 'datetime',
+    ];
+
+    public function callout(): BelongsTo
+    {
+        return $this->belongsTo(Callout::class);
+    }
+
+    public function controller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'incident_controller_id');
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(IncidentNote::class);
+    }
+    
+    public function scopeOpen(Builder $query): Builder
+    {
+        return $query->where('status', 'open');
+    }
+
+    public function scopeUnacknowledged(Builder $query): Builder
+    {
+        return $query->whereNull('incident_controller_id');
+    }
+    
+    public function resolve(): void
+    {
+        $this->update([
+            'status' => 'resolved',
+            'resolved_at' => now(),
+        ]);
+        
+        $this->callout->update(['status' => 'resolved']);
+    }
+}

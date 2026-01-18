@@ -22,7 +22,7 @@
                         size="small" prepend-icon="mdi-account-group-outline" class="font-weight-medium">
                         {{ profile.clubs[0].name }}
                         <span v-if="profile.clubs.length > 1" class="ml-1 opacity-70">+{{ profile.clubs.length - 1
-                        }}</span>
+                           }}</span>
                      </v-chip>
                      <div class="text-body-2 text-medium-emphasis text-truncate" v-if="profile.bio"
                         style="max-width: 100%;">
@@ -35,8 +35,7 @@
                <div class="d-flex gap-1 mt-4 mt-sm-0 flex-wrap justify-center" v-if="profile.id === user.id">
                   <!-- Edit -->
                   <v-btn icon variant="text" color="grey-darken-1"
-                     @click="$router.push({ name: '/profile/[id].edit', params: { id: profile.id } })"
-                     v-tooltip="'Edit Profile'">
+                     @click="$router.push('/profile/' + profile.id + '/edit')" v-tooltip="'Edit Profile'">
                      <v-icon>mdi-pencil</v-icon>
                   </v-btn>
 
@@ -89,7 +88,7 @@
                   </v-avatar>
                   <div>
                      <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatDuration(profile.stats.duration)
-                     }}</div>
+                        }}</div>
                      <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
                         Underground</div>
                   </div>

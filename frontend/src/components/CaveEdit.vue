@@ -202,7 +202,7 @@ const saveCave = async () => {
     body: JSON.stringify(cave.value),
   })
   if (response.ok) {
-    router.push({ name: '/caves/[id]', params: { id: cave.value.slug } })
+    router.push('/caves/' + cave.value.slug)
   }
 }
 

@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Models;
+
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Builder;
+
+class Callout extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'trip_id',
+        'cave_id',
+        'exit_cave_id',
+        'callout_time',
+        'expected_exit_time',
+        'description',
+        'trip_plan',
+        'car_details',
+        'team_details',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'status',
+        'aws_watchdog_id',
+    ];
+
+    protected $casts = [
+        'callout_time' => 'datetime',
+        'expected_exit_time' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    public function cave(): BelongsTo
+    {
+        return $this->belongsTo(Cave::class, 'cave_id');
+    }
+
+    public function exitCave(): BelongsTo
+    {
+        return $this->belongsTo(Cave::class, 'exit_cave_id');
+    }
+
+    public function trip(): BelongsTo
+    {
+        return $this->belongsTo(Trip::class);
+    }
+
+    public function participants(): HasMany
+    {
+        return $this->hasMany(CalloutParticipant::class);
+    }
+
+    public function incident(): HasOne
+    {
+        return $this->hasOne(Incident::class);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
+    }
+    
+    public function scopeTriggered(Builder $query): Builder
+    {
+        return $query->where('status', 'triggered');
+    }
+
+    public function scopeDueBefore(Builder $query, Carbon|string $time): Builder
+    {
+        return $query->where('callout_time', '<=', $time);
+    }
+}

@@ -6,7 +6,7 @@
         <v-btn icon="mdi-arrow-left" variant="text" @click="$router.push('/caves')" class="mr-2"></v-btn>
         <v-spacer></v-spacer>
         <v-btn v-if="appStore.user.is_admin" variant="text" append-icon="mdi-pencil"
-          @click="$router.push({ name: '/caves/[id].edit', params: { id: route.params.id } })">
+          @click="$router.push('/caves/' + route.params.id + '/edit')">
           Edit Cave
         </v-btn>
       </v-col>
@@ -113,14 +113,14 @@
                 <div class="d-flex align-center justify-space-between mb-2">
                   <h3 class="text-h6">{{ cave.system.name }}</h3>
                   <v-btn v-if="appStore.user.is_admin" size="small" variant="text" icon="mdi-pencil"
-                    @click="$router.push({ name: '/cave-systems/[id].edit', params: { id: cave.system.id } })"></v-btn>
+                    @click="$router.push('/cave-systems/' + cave.system.id + '/edit')"></v-btn>
                 </div>
                 <vue-markdown :source="cave.system.description || '_No system description._'"
                   class="text-body-1 mb-4" />
 
                 <v-chip-group class="mb-4">
                   <v-chip v-for="tag in cave.system.tags" :key="tag.tag" size="small" variant="outlined">{{ tag.tag
-                    }}</v-chip>
+                  }}</v-chip>
                 </v-chip-group>
 
                 <v-divider class="mb-4"></v-divider>
@@ -261,7 +261,7 @@
           <div class="text-caption text-grey mb-2">Tags</div>
           <v-chip-group>
             <v-chip v-for="tag in cave.tags" :key="tag.tag" size="small" color="secondary" variant="tonal">{{ tag.tag
-              }}</v-chip>
+            }}</v-chip>
           </v-chip-group>
         </v-card>
 
@@ -269,8 +269,8 @@
         <v-card v-if="cave.system?.caves?.length > 1" class="mb-4 rounded-lg" elevation="1">
           <v-card-title class="text-subtitle-1">System Entrances</v-card-title>
           <v-list density="compact">
-            <v-list-item v-for="ent in cave.system.caves" :key="ent.id"
-              :to="{ name: '/caves/[id]', params: { id: ent.slug } }" :active="ent.id === cave.id">
+            <v-list-item v-for="ent in cave.system.caves" :key="ent.id" :to="'/caves/' + ent.slug"
+              :active="ent.id === cave.id">
               <template v-slot:prepend>
                 <v-icon icon="mdi-cave" size="small"></v-icon>
               </template>

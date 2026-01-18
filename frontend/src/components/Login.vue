@@ -1,129 +1,169 @@
 <template>
-  <v-container class="fill-height login-bg" fluid>
-    <v-responsive class="align-center fill-height">
-      <v-img class="mb-4" height="180" src="@/assets/subterra.svg" />
-      <div class="text-center mb-2">
-        <h1 class="main-title">Subterra.world</h1>
-        <p class="welcome">Welcome to Subterra – the platform for cavers to plan trips, share experiences, and explore
-          the underground world together.</p>
-      </div>
-      <div class="py-2" />
-      <v-row>
-        <v-col>
-          <a href="/api/google/redirect" class="btn btn-primary login-btn">
-            <img class="signin" src="/google-signin.svg" />
-          </a>
-        </v-col>
-      </v-row>
+  <v-container class="fill-height pa-0" fluid>
+    <v-row no-gutters class="fill-height">
+      <!-- Left Column: Login Form -->
+      <v-col cols="12" md="6" lg="5" class="d-flex align-center justify-center bg-white fill-height position-relative">
+        <div class="login-container pa-6 pa-md-10">
+          <!-- Logo & Brand -->
+          <div class="text-center mb-8">
+            <v-img src="@/assets/subterra.svg" height="80" contain class="mb-4" />
+            <h1 class="text-h3 font-weight-bold primary--text mb-2">Subterra</h1>
+            <p class="text-subtitle-1 grey--text text--darken-1">The Community Caving Platform</p>
+          </div>
 
-      <div class="py-4" />
+          <!-- BCA Requirement Notice -->
+          <v-alert color="amber darken-4" variant="tonal" icon="mdi-shield-account" class="mb-8" border="start"
+            density="comfortable">
+            <div class="text-body-2 font-weight-medium">
+              Member Access Only
+            </div>
+            <div class="text-caption mt-1">
+              Subterra is exclusively available to active members of the <strong>British Caving Association
+                (BCA)</strong>.
+            </div>
+          </v-alert>
 
-      <v-row justify="center">
-        <v-col cols="12" class="text-center">
-          <v-divider class="my-4">
-            <span class="divider-text">or</span>
-          </v-divider>
-        </v-col>
-      </v-row>
+          <!-- Login Methods -->
+          <div class="mb-6">
+            <v-btn href="/api/google/redirect" block size="large" color="white" class="google-btn text-none mb-6"
+              elevation="2">
+              <img src="/google-signin.svg" height="24" class="mr-3" />
+              Sign in with Google
+            </v-btn>
 
-      <!-- Magic Link Login Form -->
-      <v-row v-if="!emailSent" justify="center">
-        <v-col cols="12" md="8" lg="6">
-          <v-card class="email-login-card" elevation="0">
-            <v-card-title class="email-login-title">
-              🔐 Login with Email
-            </v-card-title>
-            <v-card-text>
-              <!-- Error Alert -->
-              <v-alert v-if="showError" type="error" variant="tonal" class="mb-4" closable
+            <div class="d-flex align-center mb-6">
+              <v-divider></v-divider>
+              <span class="mx-4 text-caption grey--text">OR</span>
+              <v-divider></v-divider>
+            </div>
+
+            <!-- Email Login -->
+            <v-card v-if="!emailSent" elevation="0" class="transparent">
+              <v-alert v-if="showError" type="error" variant="tonal" class="mb-4" closable density="compact"
                 @click:close="showError = false">
                 {{ errorMessage }}
               </v-alert>
 
               <v-form @submit.prevent="sendMagicLink" ref="emailForm">
-                <v-text-field v-model="email" label="Enter your email address" type="email" :rules="emailRules"
-                  variant="outlined" prepend-inner-icon="mdi-email" class="mb-4 custom-text-field"
-                  :loading="sendingEmail" color="primary" bg-color="white" />
+                <v-text-field v-model="email" label="Email Address" type="email" :rules="emailRules" variant="outlined"
+                  density="comfortable" prepend-inner-icon="mdi-email-outline" class="mb-2"
+                  hide-details="auto"></v-text-field>
                 <v-btn type="submit" color="primary" block size="large" :loading="sendingEmail"
-                  :disabled="!email || sendingEmail" class="custom-submit-btn" elevation="2">
-                  <v-icon left class="mr-2">mdi-send</v-icon>
-                  Send Magic Link
+                  :disabled="!email || sendingEmail" class="mt-4 text-none font-weight-bold" elevation="0">
+                  Send Verification Link
                 </v-btn>
               </v-form>
-              <div class="text-center mt-4">
-                <small class="form-helper-text">
-                  We'll send you a secure link to log in instantly
-                </small>
+              <div class="text-center mt-3">
+                <span class="text-caption grey--text">We'll send you a tailored magic link to log in.</span>
               </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
+            </v-card>
 
-      <!-- Email Sent Confirmation -->
-      <v-row v-if="emailSent" justify="center">
-        <v-col cols="12" md="8" lg="6">
-          <v-card class="email-sent-card" elevation="0">
-            <v-card-text class="text-center">
-              <v-icon size="80" color="success" class="mb-4">mdi-email-check-outline</v-icon>
-              <h3 class="email-sent-title">✨ Check Your Email</h3>
-              <p class="email-sent-text">
-                We've sent a magic link to <br><strong class="email-highlight">{{ email }}</strong><br>
-                Click the link in your email to log in securely.
+            <!-- Email Sent Success -->
+            <v-card v-else class="text-center py-4 bg-green-lighten-5" variant="flat">
+              <v-icon color="success" size="48" class="mb-2">mdi-email-check</v-icon>
+              <h3 class="text-h6 font-weight-bold success--text mb-1">Check your inbox</h3>
+              <p class="text-body-2 mb-4">
+                We've sent a magic link to <strong>{{ email }}</strong>
               </p>
-              <v-btn variant="outlined" color="primary" @click="resetForm" class="mt-6 custom-reset-btn"
-                prepend-icon="mdi-arrow-left">
-                Send to a different email
+              <v-btn variant="text" color="primary" size="small" prepend-icon="mdi-arrow-left" @click="resetForm">
+                Try a different email
               </v-btn>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
+            </v-card>
+          </div>
 
-      <div class="py-2" />
-      <v-row class="features-row" justify="center">
-        <v-col cols="12" class="text-center mb-2">
-          <h3 class="features-title">What can you do on Subterra?</h3>
-        </v-col>
-        <v-col cols="6" sm="3" class="feature-col">
-          <div class="feature-icon-placeholder">🗺️</div>
-          <div class="feature-label">Explore caves in a region</div>
-        </v-col>
-        <v-col cols="6" sm="3" class="feature-col">
-          <div class="feature-icon-placeholder">🕒</div>
-          <div class="feature-label">Check recent trips to a cave</div>
-        </v-col>
-        <v-col cols="6" sm="3" class="feature-col">
-          <div class="feature-icon-placeholder">📓</div>
-          <div class="feature-label">Save your caving log book online</div>
-        </v-col>
-        <v-col cols="6" sm="3" class="feature-col">
-          <div class="feature-icon-placeholder">📢</div>
-          <div class="feature-label">Share trip reports with others</div>
-        </v-col>
-      </v-row>
-      <div class="text-center mt-4">
-        <small class="info-text">
-          Subterra is a community-driven platform for caving enthusiasts. Share, discover, and connect!<br>
-          <span class="opensource-note">
-            Subterra is <strong>open source</strong> — view or contribute on
-            <a href="https://github.com/paperclipmonkey/subterra" target="_blank" rel="noopener"
-              class="github-link">GitHub</a>.
-          </span>
-        </small>
-      </div>
-    </v-responsive>
-    <!-- <v-img class="cave-graphic" src="/cave-entrance.svg" height="120" contain /> -->
+          <!-- Footer -->
+          <div class="text-center mt-auto pt-8">
+            <div class="d-flex justify-center gap-4 mb-2">
+              <!-- Future links: Terms | Privacy | Help -->
+            </div>
+            <div class="text-caption grey--text text--lighten-1">
+              Subterra is <a href="https://github.com/paperclipmonkey/subterra"
+                class="text-decoration-none primary--text">Open Source</a>. Only go underground with a plan.
+            </div>
+          </div>
+        </div>
+      </v-col>
+
+      <!-- Right Column: Hero Image & Features -->
+      <v-col cols="12" md="6" lg="7" class="d-none d-md-flex position-relative align-end pa-10 overflow-hidden">
+        <!-- Background Slideshow -->
+        <div class="hero-slideshow">
+          <div v-for="(image, index) in heroImages" :key="index" class="hero-slide"
+            :style="{ backgroundImage: `url(${image})` }" :class="{ active: currentHeroIndex === index }"></div>
+        </div>
+
+        <!-- Background Overlay -->
+        <div class="hero-overlay"></div>
+
+        <!-- Hero Content -->
+        <div class="hero-content position-relative z-index-2 text-white mw-600">
+          <h2 class="text-h2 font-weight-black mb-6 text-shadow">
+            Explore the<br>Depths Together
+          </h2>
+
+          <v-row class="features-grid">
+            <v-col cols="12" sm="6" class="mb-4">
+              <div class="d-flex align-start">
+                <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
+                  <v-icon color="white">mdi-map-search</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="font-weight-bold text-subtitle-1">Discover Caves</div>
+                  <div class="text-body-2 opacity-80">Access detailed cave data, surveys, and conditions across the UK.
+                  </div>
+                </div>
+              </div>
+            </v-col>
+            <v-col cols="12" sm="6" class="mb-4">
+              <div class="d-flex align-start">
+                <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
+                  <v-icon color="white">mdi-notebook-check</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="font-weight-bold text-subtitle-1">Plan & Track</div>
+                  <div class="text-body-2 opacity-80">Organize trips and utilize our live callout tracking for safer
+                    expeditions.</div>
+                </div>
+              </div>
+            </v-col>
+            <v-col cols="12" sm="6" class="mb-4">
+              <div class="d-flex align-start">
+                <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
+                  <v-icon color="white">mdi-account-group</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="font-weight-bold text-subtitle-1">Community Logbook</div>
+                  <div class="text-body-2 opacity-80">Share trip reports, photos, and contribute to the national record.
+                  </div>
+                </div>
+              </div>
+            </v-col>
+          </v-row>
+        </div>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const store = useAppStore()
+
+// Hero Slideshow
+const currentHeroIndex = ref(0)
+const heroImages = ref([
+  'login-images/3.jpeg',
+  'login-images/1.jpeg',
+  'login-images/5.jpeg',
+  'login-images/4.jpeg',
+  'login-images/2.jpeg',
+  'login-images/6.jpeg',
+])
+let slideshowInterval = null
 
 // Email login state
 const email = ref('')
@@ -189,221 +229,113 @@ const resetForm = () => {
 }
 
 onMounted(async () => {
+  // Start slideshow
+  slideshowInterval = setInterval(() => {
+    currentHeroIndex.value = (currentHeroIndex.value + 1) % heroImages.value.length
+  }, 5000)
+
   // Load the user endpoint to check if the user is logged in
   await fetch('/api/livez') // Warm the database
-  const userResonse = await fetch('/api/users/me')
-  const userEmail = (await userResonse.json()).data.email
-  if (userEmail) {
-    console.log('User is logged in')
-    router.push('/trips')
-  } else {
+  const userResponse = await fetch('/api/users/me')
+  try {
+    const userData = await userResponse.json()
+    if (userData && userData.data && userData.data.email) {
+      console.log('User is logged in')
+      router.push('/trips')
+    } else {
+      console.log('User is not logged in')
+    }
+  } catch (e) {
     console.log('User is not logged in')
   }
+})
+
+onUnmounted(() => {
+  if (slideshowInterval) clearInterval(slideshowInterval)
 })
 </script>
 
 <style scoped>
-.login-bg {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
-  min-height: 100vh;
-  position: relative;
+.login-container {
+  width: 100%;
+  max-width: 480px;
 }
 
-.main-title {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 2.2rem;
-  color: #2d3436;
-  letter-spacing: 1px;
-  font-weight: 700;
+.google-btn {
+  border: 1px solid #ddd;
+  transition: all 0.2s;
 }
 
-.subtitle {
-  color: #636e72;
-  font-size: 1.1rem;
-}
-
-.welcome {
-  color: #636e72;
-  font-size: 1rem;
-  margin-top: 0.5rem;
-  font-weight: 500;
-}
-
-.login-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  color: #757575;
-  border-radius: 12px;
-  padding: 0.8rem 1.5rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  text-decoration: none;
-  border: 1px solid #dadce0;
-}
-
-.login-btn:hover {
-  background: #f8f9fa;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.signin {
-  display: inline-block;
-  margin-right: 0.5rem;
-  height: 24px;
-}
-
-/* Divider styles */
-.divider-text {
-  background: transparent;
-  color: #b2bec3;
-  padding: 0 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* Email login card styles */
-.email-login-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.email-login-title {
-  color: #2d3436;
-  font-weight: 700;
-  font-size: 1.4rem;
-  padding-bottom: 1rem;
-  text-align: center;
-}
-
-/* Email sent confirmation styles */
-.email-sent-card {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.email-sent-title {
-  color: #00b894;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-}
-
-.email-sent-text {
-  color: #2d3436;
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 0;
-}
-
-/* Enhanced form styling */
-.custom-text-field {
-  border-radius: 12px;
-}
-
-.custom-submit-btn {
-  background: linear-gradient(135deg, #4285f4 0%, #3367d6 100%);
-  color: white;
-  border-radius: 12px;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
-  transition: all 0.3s ease;
-}
-
-.custom-submit-btn:hover {
+.google-btn:hover {
+  background-color: #f8f9fa !important;
+  border-color: #ccc;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(66, 133, 244, 0.3);
 }
 
-.custom-reset-btn {
-  border-radius: 12px;
-  font-weight: 500;
-  text-transform: none;
-  border: 2px solid #4285f4;
-}
+/* Removed .hero-column background-image */
 
-.form-helper-text {
-  color: #636e72;
-  font-style: italic;
-}
-
-.email-highlight {
-  color: #4285f4;
-  font-size: 1.2rem;
-}
-
-.features-row {
-  margin-top: 2rem;
-}
-
-.features-title {
-  color: #2d3436;
-  font-size: 1.2rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.feature-col {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.feature-icon-placeholder {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 60px;
-}
-
-.feature-label {
-  color: #636e72;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.info-text {
-  color: #b2bec3;
-  font-size: 0.95rem;
-}
-
-.opensource-note {
-  display: block;
-  margin-top: 0.5em;
-  color: #b2bec3;
-  font-size: 0.97rem;
-}
-
-.github-link {
-  color: #4285f4;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.github-link:hover {
-  color: #3367d6;
-  text-decoration: underline;
-}
-
-.cave-graphic {
+.hero-slideshow {
   position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  opacity: 0.8;
-  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #1a1a1a;
+  /* Fix for transparency artifacts */
+}
+
+.hero-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out, transform 10s linear;
+  /* Smooth reset */
+  /* Optional: Add a subtle zoom effect */
+  transform: scale(1.05);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+.hero-slide.active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 1.5s ease-in-out, transform 6s linear;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.2) 100%);
+  z-index: 1;
+}
+
+.z-index-2 {
+  /* Changed from z-index-1 to z-index-2 for content */
+  z-index: 2;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.opacity-80 {
+  opacity: 0.9;
+}
+
+.bg-opacity-20 {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.mw-600 {
+  max-width: 600px;
 }
 </style>

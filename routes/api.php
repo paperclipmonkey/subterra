@@ -17,6 +17,20 @@ use App\Http\Controllers\MagicLinkController;
 use App\Http\Controllers\HutController;
 use App\Http\Controllers\CollectionController;
 
+use App\Http\Controllers\WebhookController;
+
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
+Route::post('/webhooks/incoming-sms', [WebhookController::class, 'handleIncomingSms']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
+    Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel']);
+    Route::get('/callouts/{id}', [App\Http\Controllers\CalloutController::class, 'show']);
+});
+
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
         return new UserDetailEmailResource($request->user());
@@ -99,6 +113,8 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
         ->name('admin.users.toggle-admin');
 
     // --- Admin Club Endpoints ---
+    Route::get('/callouts', [App\Http\Controllers\Admin\CalloutController::class, 'index'])->name('admin.callouts.index');
+
     Route::get('/clubs', [ClubController::class, 'adminIndex'])->name('admin.clubs.index');
     Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');
     Route::put('/clubs/{club}', [ClubController::class, 'update'])->name('admin.clubs.update');
@@ -125,6 +141,19 @@ Route::get('logout', function (Request $request) {
 
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{id}', [App\Http\Controllers\NewsController::class, 'show'])->name('news.show');
+
+// --- Admin ---
+Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
+    Route::post('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'store']);
+    Route::delete('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'destroy']);
+
+    Route::get('/incidents', [App\Http\Controllers\Admin\IncidentController::class, 'index']);
+    Route::get('/incidents/{id}', [App\Http\Controllers\Admin\IncidentController::class, 'show']);
+    Route::post('/incidents/{id}/acknowledge', [App\Http\Controllers\Admin\IncidentController::class, 'acknowledge']);
+    Route::post('/incidents/{id}/notes', [App\Http\Controllers\Admin\IncidentController::class, 'addNote']);
+    Route::post('/incidents/{id}/resolve', [App\Http\Controllers\Admin\IncidentController::class, 'resolve']);
+});
 
 Route::get('/livez', function(Request $request) {
     try {

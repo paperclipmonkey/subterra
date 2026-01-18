@@ -25,9 +25,9 @@
               </template>
               <v-card-text>Length:{{ (Math.round(cave.system.length / 10) * 10) / 1000 }}km Depth:{{
                 cave.system.vertical_range
-                }}m</v-card-text>
+              }}m</v-card-text>
               <v-card-actions>
-                <v-btn @click="$router.push({ name: '/caves/[id]', params: { id: cave.slug } })">
+                <v-btn @click="$router.push({ path: '/caves/' + cave.slug })">
                   View
                 </v-btn>
                 <v-btn :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`" target="_blank"

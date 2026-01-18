@@ -287,6 +287,52 @@ onMounted(async () => {
       trip.cave_system_id = foundCave.system.id
     }
 
+    if (route.query.date) {
+      tripStartDate.value = route.query.date
+    }
+
+    if (route.query.exit_cave_id) {
+      const exitCave = caves.value.find(cave => cave.id == route.query.exit_cave_id)
+      if (exitCave) {
+        trip.exit_cave_id = exitCave.id
+        throughTrip.value = (trip.exit_cave_id != trip.entrance_cave_id)
+      }
+    }
+
+    if (route.query.callout_id) {
+      try {
+        const res = await fetch(`/api/callouts/${route.query.callout_id}`);
+        const calloutData = (await res.json()).data;
+        if (calloutData) {
+          // Pre-fill plan/description
+          trip.description = `**Originally a Callout:**\n\n${calloutData.trip_plan}`;
+          if (calloutData.trip_plan) {
+            markdownOutput.value = trip.description; // Ensure tiptap sees it if needed
+          }
+
+          // Pre-fill participants
+          // calloutData.participants -> array of objects with user_id or manual name
+          if (calloutData.participants && Array.isArray(calloutData.participants)) {
+            calloutData.participants.forEach(p => {
+              if (p.user_id) {
+                // Add existing user ID if not already there
+                if (!trip.participants.includes(p.user_id)) {
+                  trip.participants.push(p.user_id);
+                }
+              } else {
+                // If it's a manual participant (no user_id), we might need to add them manually to the trip?
+                // For now, simpler to just handle registered users or log it
+                console.log('Manual participant from callout, consider adding to description:', p.name);
+                trip.description += `\n- Guest: ${p.name}`;
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load callout data", e);
+      }
+    }
+
     // Load existing trip
     if (route.params.id) {
       const response = await fetch(`/api/trips/${route.params.id}`)
@@ -467,7 +513,7 @@ const updateTrip = async (tripPayload) => {
   if (response.ok) {
     validationErrors.value = {} // Clear errors on success
     notificationStore.showSuccess('Trip updated successfully! 🎉')
-    router.push({ name: '/trips/[id]', params: { id: tripPayload.id } });
+    router.push('/trips/' + tripPayload.id);
   } else {
     await handleApiError(response);
   }
@@ -486,7 +532,7 @@ const saveTrip = async (tripPayload) => {
     validationErrors.value = {} // Clear errors on success
     const savedTrip = (await response.json()).data;
     notificationStore.showSuccess('Trip saved successfully! 🚀')
-    router.push({ name: '/trips/[id]', params: { id: savedTrip.id } });
+    router.push('/trips/' + savedTrip.id);
   } else {
     await handleApiError(response);
   }

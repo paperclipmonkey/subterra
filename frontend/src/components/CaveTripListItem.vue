@@ -2,10 +2,10 @@
   <v-list-item> <!-- not marked as done -->
     <div>
       <v-list-item-title>
-        <RouterLink :to="{ name: '/trips/[id]', params: { id: trip.id } }">{{ trip.name }}</RouterLink>
+        <RouterLink :to="'/trips/' + trip.id">{{ trip.name }}</RouterLink>
       </v-list-item-title>
       <v-list-item-subtitle>{{ moment(trip.end_time).isValid() ? moment(trip.end_time).fromNow() : '~'
-        }}</v-list-item-subtitle>
+      }}</v-list-item-subtitle>
       <v-list-item-subtitle>{{ trip.description }}</v-list-item-subtitle>
       <v-list-item-subtitle>Duration: {{ moment(trip.end_time).isValid() ? moment(trip.end_time).diff(trip.start_time,
         'hours') : '~' }} hours</v-list-item-subtitle>

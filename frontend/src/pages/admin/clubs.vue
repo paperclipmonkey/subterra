@@ -5,55 +5,36 @@
         <h1>Club Administration</h1>
         <v-row justify="space-between" class="mb-4">
           <v-col cols="12" md="6">
-            <v-text-field
-              v-model="search"
-              append-inner-icon="mdi-magnify"
-              label="Search Clubs (Name, Location)"
-              single-line
-              hide-details
-            ></v-text-field>
+            <v-text-field v-model="search" append-inner-icon="mdi-magnify" label="Search Clubs (Name, Location)"
+              single-line hide-details></v-text-field>
           </v-col>
           <v-col cols="12" md="auto" class="d-flex align-center justify-end">
-             <v-btn color="primary" @click="openCreateDialog">
-               <v-icon start>mdi-plus</v-icon> Create Club
-             </v-btn>
+            <v-btn color="primary" @click="openCreateDialog">
+              <v-icon start>mdi-plus</v-icon> Create Club
+            </v-btn>
           </v-col>
         </v-row>
 
-        <v-data-table
-          :headers="headers"
-          :items="clubs"
-          :loading="loading"
-          :search="search"
-          :items-per-page="1000"
-          :sort-by="[{ key: 'name', order: 'asc' }]"
-          hide-default-footer
-          class="elevation-1"
-          item-value="id"
-          @click:row="handleRowClick"
-        >
+        <v-data-table :headers="headers" :items="clubs" :loading="loading" :search="search" :items-per-page="1000"
+          :sort-by="[{ key: 'name', order: 'asc' }]" hide-default-footer class="elevation-1" item-value="id"
+          @click:row="handleRowClick">
           <template v-slot:item.is_active="{ item }">
-            <v-btn
-              icon
-              variant="text"
-              size="small"
-              @click.stop="toggleEnabled(item)"
-              :loading="item.loadingEnabled"
-              :color="item.is_active ? 'green' : 'red'"
-            >
+            <v-btn icon variant="text" size="small" @click.stop="toggleEnabled(item)" :loading="item.loadingEnabled"
+              :color="item.is_active ? 'green' : 'red'">
               <v-icon>
                 {{ item.is_active ? 'mdi-check-circle' : 'mdi-close-circle' }}
               </v-icon>
-              <v-tooltip activator="parent" location="top">{{ item.is_active ? 'Disable Club' : 'Enable Club' }}</v-tooltip>
+              <v-tooltip activator="parent" location="top">{{ item.is_active ? 'Disable Club' : 'Enable Club'
+                }}</v-tooltip>
             </v-btn>
           </template>
-           <template v-slot:item.website="{ item }">
-             <a :href="item.website" target="_blank" @click.stop>{{ item.website }}</a>
-           </template>
-           <template v-slot:item.description="{ item }">
-             <div class="text-truncate" style="max-width: 200px;" :title="item.description">{{ item.description }}</div>
-           </template>
-           <!-- Action column removed -->
+          <template v-slot:item.website="{ item }">
+            <a :href="item.website" target="_blank" @click.stop>{{ item.website }}</a>
+          </template>
+          <template v-slot:item.description="{ item }">
+            <div class="text-truncate" style="max-width: 200px;" :title="item.description">{{ item.description }}</div>
+          </template>
+          <!-- Action column removed -->
         </v-data-table>
       </v-col>
     </v-row>
@@ -129,10 +110,10 @@ const updateClubInList = (updatedClub) => {
       loadingEnabled: false, // Reset loading flag
     };
   } else {
-     clubs.value.push({
-       ...clubData,
-       loadingEnabled: false,
-     });
+    clubs.value.push({
+      ...clubData,
+      loadingEnabled: false,
+    });
   }
 };
 
@@ -165,7 +146,7 @@ const handleRowClick = (event, { item }) => {
     target = target.parentNode;
   }
   // Navigate to the club's public page using its slug
-  router.push({ name: '/club/[slug]', params: { slug: item.slug } });
+  router.push('/club/' + item.slug);
 };
 
 onMounted(() => {
@@ -176,6 +157,7 @@ onMounted(() => {
 
 <style scoped>
 .v-data-table :deep(tbody tr) {
-  cursor: pointer; /* Keep pointer cursor for row click to edit */
+  cursor: pointer;
+  /* Keep pointer cursor for row click to edit */
 }
 </style>

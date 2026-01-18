@@ -87,4 +87,14 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         return $this->hasMany(Collection::class);
     }
+
+    public function activeCallout(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Callout::class)->whereIn('status', ['active', 'triggered']);
+    }
+
+    public function callouts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Callout::class);
+    }
 }

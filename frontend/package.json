@@ -21,6 +21,7 @@
     "tiptap-markdown": "^0.9.0",
     "vue": "^3.5.26",
     "vue-markdown-render": "^2.3.0",
+    "vue-toastification": "^2.0.0-rc.5",
     "vue3-calendar-heatmap": "^2.0.5",
     "vuetify": "^3.11.6",
     "vuetify-pro-tiptap": "^2.8.2"

@@ -35,6 +35,12 @@ return [
         ],
     ],
 
+    'sms_works' => [
+        'api_key' => env('SMS_WORKS_API_KEY'),
+        'sender_id' => env('SMS_WORKS_SENDER_ID', 'Subterra'),
+        'enabled' => env('SMS_ENABLED', true),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

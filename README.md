@@ -80,7 +80,6 @@ After setting up the application:
    $user->save();
    
    # Approve your club membership
-   $user = User::first(); 
    $user->clubs->first()->pivot->status = 'approved'; 
    $user->clubs->first()->pivot->save();
    ```
