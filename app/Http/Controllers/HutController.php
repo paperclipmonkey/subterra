@@ -14,6 +14,24 @@ class HutController extends Controller
         return Hut::with('club')->get();
     }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'club_id' => 'required|exists:clubs,id',
+            'location_lat' => 'nullable|numeric',
+            'location_lng' => 'nullable|numeric',
+            'amenities' => 'nullable|array',
+            'external_url' => 'nullable|url',
+            'booking_info' => 'nullable|string',
+        ]);
+
+        $hut = Hut::create($validated);
+
+        return response()->json($hut, 201);
+    }
+
     public function show(Hut $hut)
     {
         $hut->load(['club', 'reciprocalClubs']);

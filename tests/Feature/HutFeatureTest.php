@@ -63,4 +63,33 @@ class HutFeatureTest extends TestCase
             $this->assertEquals($nearbyCave->id, $caves[0]['id']);
         }
     }
+
+    public function test_can_create_hut()
+    {
+        $user = User::factory()->create();
+        $club = Club::factory()->create();
+
+        $hutData = [
+            'name' => 'The Belfy',
+            'description' => 'A great hut',
+            'external_url' => 'https://bec-cave.org.uk/',
+            'booking_info' => "Contact the booking secretary\n",
+            'location_lat' => 51.251708,
+            'location_lng' => -2.657503,
+            'club_id' => $club->id,
+            'amenities' => ["Showers, two bunk rooms, kitchen, log fire"]
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('name', 'The Belfy')
+            ->assertJsonPath('club_id', $club->id)
+            ->assertJsonPath('amenities', ["Showers, two bunk rooms, kitchen, log fire"]);
+
+        $this->assertDatabaseHas('huts', [
+            'name' => 'The Belfy',
+            'club_id' => $club->id,
+        ]);
+    }
 }
