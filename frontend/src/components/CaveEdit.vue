@@ -10,8 +10,8 @@
       </v-col>
     </v-row>
     <v-form @submit.prevent="saveCave">
-    <v-row>
-      <v-col cols="12">
+      <v-row>
+        <v-col cols="12">
           <v-card>
             <v-card-title>
               <v-text-field v-model="cave.name" label="Cave Name" required></v-text-field>
@@ -23,97 +23,72 @@
               <v-text-field v-model="cave.location_name" label="Location Name" required></v-text-field>
               <v-text-field v-model="cave.location_country" label="Country" required></v-text-field>
 
-              <mgl-map
-                :map-style="style"
-                :center="initmapCentre"
-                :zoom="zoom"
-                height="350px"
-              >
+              <mgl-map :map-style="style" :center="initmapCentre" :zoom="zoom" height="350px">
                 <mgl-marker :draggable="true" v-model:coordinates="coordinates" color="#cc0000" />
                 <mgl-navigation-control />
-                <MglGeolocateControl/>
+                <MglGeolocateControl />
               </mgl-map>
               <v-text-field v-model="cave.location_lat" label="Latitude" required></v-text-field>
               <v-text-field v-model="cave.location_lng" label="Longitude" required></v-text-field>
-              <v-file-input
-                prepend-icon="mdi-camera"
-                accept="image/*"
-                label="Hero Image"
-                v-model="cave.hero_image"
-                chips
-              ></v-file-input>
-              <v-file-input
-                prepend-icon="mdi-camera"
-                accept="image/*"
-                label="Entrance Image"
-                v-model="cave.entrance_image"
-                chips
-              ></v-file-input>
+              <v-file-input prepend-icon="mdi-camera" accept="image/*" label="Hero Image" v-model="cave.hero_image"
+                chips></v-file-input>
+              <v-file-input prepend-icon="mdi-camera" accept="image/*" label="Entrance Image"
+                v-model="cave.entrance_image" chips></v-file-input>
             </v-card-text>
           </v-card>
-      </v-col>
-    </v-row>
+        </v-col>
+      </v-row>
 
-    <v-row>
-      <v-col>
-        <v-card>
+      <v-row>
+        <v-col>
+          <v-card>
             <v-card-title>Tags</v-card-title>
             <v-card-text>
-          <template v-for="(groupItems, groupName) in tagsAvailable">
+              <template v-for="(groupItems, groupName) in tagsAvailable">
 
-            <template v-if="groupItems.some(item => item.assignable)">
-              <h2 class="text-h6 mb-2 tagGroupTitle">{{groupName}}</h2>
+                <template v-if="groupItems.some(item => item.assignable)">
+                  <h2 class="text-h6 mb-2 tagGroupTitle">{{ groupName }}</h2>
 
-              <v-chip-group
-                v-model="selectedTags[groupName]"
-                column
-                :multiple="true"
-              >
-                <template v-for="tag in groupItems">
-                  <v-chip
-                    v-if="tag.assignable"
-                    :text="tag.tag"
-                    variant="outlined"
-                    :value="tag.tag"
-                    filter
-                  ></v-chip>
+                  <v-chip-group v-model="selectedTags[groupName]" column :multiple="true">
+                    <template v-for="tag in groupItems">
+                      <v-chip v-if="tag.assignable" :text="tag.tag" variant="outlined" :value="tag.tag" filter></v-chip>
+                    </template>
+                  </v-chip-group>
                 </template>
-              </v-chip-group>
-            </template>
-          </template>
-        </v-card-text>
-        <v-divider class="mt-2"></v-divider>
+              </template>
+            </v-card-text>
+            <v-divider class="mt-2"></v-divider>
           </v-card>
-      </v-col>
-    </v-row>
+        </v-col>
+      </v-row>
 
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>System</v-card-title>
-          <v-card-subtitle>{{ cave.system.name }}</v-card-subtitle>
+      <v-row>
+        <v-col cols="12">
+          <v-card>
+            <v-card-title>System</v-card-title>
+            <v-card-subtitle>{{ cave.system.name }}</v-card-subtitle>
+            <v-card-text>
+              <vue-markdown :source="cave.system.description" />
+              <p> Tags:
+                <v-chip v-for="tag in cave.system.tags" :key="tag" class="ma-1">
+                  {{ tag.tag }}
+                </v-chip>
+              </p>
+              <p><strong>Length:</strong> {{ Math.round(cave.system.length) }} m</p>
+              <p><strong>Vertical Range:</strong> {{ cave.system.vertical_range }} m</p>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col>
           <v-card-text>
-            <vue-markdown :source="cave.system.description" />
-            <p> Tags:
-              <v-chip v-for="tag in cave.system.tags" :key="tag" class="ma-1">
-                {{ tag.tag }}
-              </v-chip>
-            </p>
-            <p><strong>Length:</strong> {{ Math.round(cave.system.length) }} m</p>
-            <p><strong>Vertical Range:</strong> {{ cave.system.vertical_range }} m</p>
+            <v-btn type="submit" color="primary">Save</v-btn>
           </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col>
-        <v-card-text>
-          <v-btn type="submit" color="primary">Save</v-btn>
-        </v-card-text>
-      </v-col>
-    </v-row>
-  </v-form>
+        </v-col>
+      </v-row>
+    </v-form>
 
   </v-container>
 </template>
@@ -166,7 +141,7 @@ const cave = ref({
 
 const tagsAvailable = ref({});
 
-const initmapCentre = ref([0,0])
+const initmapCentre = ref([0, 0])
 
 
 const coordinates = ref(LngLat.convert([cave.value.location_lng, cave.value.location_lat]));
@@ -189,7 +164,7 @@ const fetchCave = async () => {
   initmapCentre.value = [cave.value.location_lng, cave.value.location_lat]
 
   selectedTags.value = cave.value.tags.reduce((acc, tag) => {
-    if(tag.type !== 'cave') { // Only show cave tags
+    if (tag.type !== 'cave') { // Only show cave tags
       return acc
     }
     if (!acc[tag.category]) {
@@ -201,7 +176,7 @@ const fetchCave = async () => {
 
   const tagsresponse = await fetch('/api/tags');
   tagsAvailable.value = (await tagsresponse.json())
-  
+
   // TODO: remove tags that aren't related to a cave
 }
 
@@ -211,11 +186,11 @@ const saveCave = async () => {
     return acc.concat(tags.map(tag => ({ category, tag })))
   }, [])
 
-  if(cave.value.hero_image instanceof File) {
+  if (cave.value.hero_image instanceof File) {
     cave.value.hero_image = await convertFileToBase64(cave.value.hero_image);
   }
 
-  if(cave.value.entrance_image instanceof File) {
+  if (cave.value.entrance_image instanceof File) {
     cave.value.entrance_image = await convertFileToBase64(cave.value.entrance_image);
   }
 
@@ -227,7 +202,7 @@ const saveCave = async () => {
     body: JSON.stringify(cave.value),
   })
   if (response.ok) {
-    router.push({ name: '/cave/[id]', params: { id: cave.value.slug } })
+    router.push({ name: '/caves/[id]', params: { id: cave.value.slug } })
   }
 }
 

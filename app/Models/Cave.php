@@ -56,9 +56,24 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->hasMany(Trip::class, 'cave_system_id', 'cave_system_id');
     }
 
+    public function entranceTrips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'entrance_cave_id');
+    }
+
+    public function exitTrips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'exit_cave_id');
+    }
+
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class);
+    }
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class, 'cave_collection');
     }
 
     public function getRouteKeyName(): string

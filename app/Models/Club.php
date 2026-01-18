@@ -80,6 +80,16 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->users()->wherePivot('status', 'pending');
     }
 
+    public function huts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Hut::class);
+    }
+
+    public function reciprocalHuts(): BelongsToMany
+    {
+        return $this->belongsToMany(Hut::class, 'hut_reciprocal_club');
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';

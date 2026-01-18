@@ -1,99 +1,97 @@
 <template>
-  <v-card
-    class="mx-auto"
-    max-width="500"
-    color="surface-variant"
-  >
-    <v-container fluid>
-      <v-row dense>
-        <v-col
-          v-for="card in cards"
-          :key="card.title"
-          :cols="card.flex"
-        >
-          <v-card>
+  <v-container>
+    <v-toolbar flat color="transparent" class="mb-4">
+      <v-toolbar-title class="text-h4 font-weight-bold pl-0">
+        Collections
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <div style="width: 300px" class="mr-4">
+        <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="Search collections" single-line
+          hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface"></v-text-field>
+      </div>
+      <CollectionEditModal v-if="userStore.user.is_admin" />
+    </v-toolbar>
+
+    <div v-if="loading" class="d-flex justify-center my-12">
+      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+    </div>
+
+    <v-alert v-if="error" type="error" class="mb-4" variant="tonal">{{ error }}</v-alert>
+
+    <v-row v-else>
+      <v-col v-for="collection in filteredCollections" :key="collection.id" cols="12" md="6" lg="4">
+        <v-hover v-slot="{ isHovering, props }">
+          <v-card :to="`/collections/${collection.slug}`" link class="rounded-xl transition-swing"
+            :elevation="isHovering ? 8 : 2" v-bind="props" height="100%">
             <v-img
-              :src="card.src"
-              class="align-end"
-              gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
-              height="200px"
-              cover
-              link
-            >
-              <router-link :to="{name:'/collection/[id]',params:{id:card.id}}">
-                <v-card-title class="text-white" v-text="card.title"></v-card-title>
-              </router-link>
+              :src="collection.photo_path || 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
+              class="align-end" gradient="to top, rgba(0,0,0,0.8), rgba(0,0,0,0) 50%" height="220px" cover>
+              <div class="d-flex justify-space-between align-end pa-4 w-100">
+                <div>
+                  <v-card-title class="text-white text-h5 font-weight-bold pa-0 mb-1" style="line-height: 1.2;">
+                    {{ collection.name }}
+                  </v-card-title>
+                  <v-card-subtitle class="text-white pa-0 opacity-80">
+                    {{ collection.caves_count }} Caves
+                  </v-card-subtitle>
+                </div>
+                <v-chip v-if="collection.is_official" color="primary" size="small" variant="flat"
+                  class="font-weight-bold">
+                  Official
+                </v-chip>
+              </div>
             </v-img>
 
-            <v-card-actions>
-              <v-spacer></v-spacer>
-
-              <v-btn
-                color="medium-emphasis"
-                icon="mdi-heart"
-                size="small"
-              ></v-btn>
-
-              <v-btn
-                color="medium-emphasis"
-                icon="mdi-bookmark"
-                size="small"
-              ></v-btn>
-
-              <!-- <v-btn
-                color="medium-emphasis"
-                icon="mdi-share-variant"
-                size="small"
-              ></v-btn> -->
-            </v-card-actions>
+            <v-card-text class="pt-4">
+              <div class="text-body-1 text-grey-darken-1 text-truncate-2-lines">
+                {{ collection.description || 'No description available.' }}
+              </div>
+            </v-card-text>
           </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
-  </v-card>
+        </v-hover>
+      </v-col>
+    </v-row>
+    <div v-if="!loading && filteredCollections.length === 0" class="text-center text-grey my-12">
+      <v-icon size="64" color="grey-lighten-2" class="mb-4">mdi-folder-search-outline</v-icon>
+      <div class="text-h6">No collections found</div>
+      <p>Try adjusting your search terms</p>
+    </div>
+  </v-container>
 </template>
 
 <script setup>
-  import { useAppStore } from '@/stores/app'
-  import { useCaveStore } from '@/stores/caves';
+import { computed, onMounted, ref } from 'vue'
+import { useCollectionStore } from '@/stores/collections'
+import { useAppStore } from '@/stores/app'
+import CollectionEditModal from '@/components/CollectionEditModal.vue'
 
-  const store = useAppStore()  
-  const caveStore = useCaveStore()
+const collectionStore = useCollectionStore()
+const userStore = useAppStore()
+const search = ref('')
 
-  const search = ref('')
-  const headers = ref([
-    { title: 'Name', key: 'name' },
-    { title: 'Length', key: 'system.length' },
-    { title: 'Depth', key: 'system.vertical_range' },
-    { title: 'Location', key: 'location' },
-    { title: 'Tags', key: 'tags' }
-  ])
+onMounted(() => {
+  collectionStore.fetchCollections()
+})
 
-  const caves = ref([])
-  onMounted(async () => {
-    await caveStore.getList()
-  })
+const collections = computed(() => collectionStore.collections)
+const loading = computed(() => collectionStore.loading)
+const error = computed(() => collectionStore.error)
 
-  const tab = ref('list')
-
-  const cards = ref([
-    {
-      id: 1,
-      title: 'Top 10 hardest caves in the UK',
-      src: 'https://cncc.org.uk/media/large/dd76cad6-5c8b-09a1-a1b6-58ae15d83e1b.jpg',
-      flex: 12,
-    },
-    {
-      id: 2,
-      title: 'Gaping Gill winch meet quick list',
-      src: 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Gaping_Gill.jpg',
-      flex: 6,
-    },
-    {
-      id: 3,
-      title: 'Mendip caves worth doing',
-      src: 'https://live.staticflickr.com/8236/8437745500_837976d520_b.jpg',
-      flex: 6,
-    }
-  ])
+const filteredCollections = computed(() => {
+  if (!search.value) return collections.value
+  const term = search.value.toLowerCase()
+  return collections.value.filter(c =>
+    c.name.toLowerCase().includes(term) ||
+    (c.description && c.description.toLowerCase().includes(term))
+  )
+})
 </script>
+
+<style scoped>
+.text-truncate-2-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

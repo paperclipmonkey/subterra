@@ -467,7 +467,7 @@ const updateTrip = async (tripPayload) => {
   if (response.ok) {
     validationErrors.value = {} // Clear errors on success
     notificationStore.showSuccess('Trip updated successfully! 🎉')
-    router.push({ name: '/trip/[id]', params: { id: tripPayload.id } });
+    router.push({ name: '/trips/[id]', params: { id: tripPayload.id } });
   } else {
     await handleApiError(response);
   }
@@ -486,7 +486,7 @@ const saveTrip = async (tripPayload) => {
     validationErrors.value = {} // Clear errors on success
     const savedTrip = (await response.json()).data;
     notificationStore.showSuccess('Trip saved successfully! 🚀')
-    router.push({ name: '/trip/[id]', params: { id: savedTrip.id } });
+    router.push({ name: '/trips/[id]', params: { id: savedTrip.id } });
   } else {
     await handleApiError(response);
   }

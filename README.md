@@ -74,7 +74,7 @@ After setting up the application:
    docker exec -it subterra-laravel.test-1 php artisan tinker
    
    # Make yourself an admin and approve your account
-   $user = User::first(); 
+   $user = User::where('email','<YOUR_EMAIL_HERE>')->first(); 
    $user->is_admin = true;
    $user->is_approved = true;
    $user->save();

@@ -54,12 +54,14 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.name === '/') {
     if (user.email) {
+      console.log('[Debug] Redirecting / to /trips because user is logged in')
       return next({ name: '/trips' })
     }
     return next()
   }
 
   if (!user.is_approved && !['/waitlist', '/news', '/profile/[id]', '/profile/[id].edit'].includes(to.name)) {
+    console.log('[Debug] User not approved, redirecting to /waitlist')
     return next({ name: '/waitlist' })
   }
 
@@ -67,13 +69,16 @@ router.beforeEach(async (to, from, next) => {
   if (to.path.startsWith('/admin')) {
     if (!user.is_admin) {
       // Redirect non-admins away from admin pages
+      console.log('[Debug] User not admin, redirecting to /trips')
       return next({ name: '/trips' }); // Or wherever you want to redirect them
     }
   }
 
   if (user.email) {
+    console.log('[Debug] User logged in, allowing navigation to:', to.fullPath)
     return next()
   }
+  console.log('[Debug] User not logged in, redirecting to /')
   return next({ name: '/' })
 })
 

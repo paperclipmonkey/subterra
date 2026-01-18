@@ -14,6 +14,8 @@ use App\Http\Controllers\ClubController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\MagicLinkController;
+use App\Http\Controllers\HutController;
+use App\Http\Controllers\CollectionController;
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
@@ -73,6 +75,16 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/admin/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.pending.index');
     Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
     Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
+    Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
+    Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
+
+    # Huts
+    Route::apiResource('huts', HutController::class)->only(['index', 'show']);
+
+    # Collections
+    Route::apiResource('collections', CollectionController::class);
+    Route::post('collections/{collection}/caves', [CollectionController::class, 'addCave']);
+    Route::delete('collections/{collection}/caves/{cave}', [CollectionController::class, 'removeCave']);
 });
 
 

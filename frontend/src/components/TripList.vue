@@ -40,7 +40,7 @@
         <div v-else class="px-2 pb-16 overflow-y-auto flex-grow-1" style="min-height: 0;">
           <v-row>
             <v-col v-for="trip in tripStore.trips" :key="trip.id" cols="12" sm="6" md="4">
-              <v-card :to="`/trip/${trip.id}`" elevation="2" class="fill-height d-flex flex-column trip-card" hover>
+              <v-card :to="`/trips/${trip.id}`" elevation="2" class="fill-height d-flex flex-column trip-card" hover>
                 <!-- Hero Image Placeholder or Map snapshot could go here -->
                 <div class="trip-card-header pa-4 pb-2">
                   <div class="d-flex justify-space-between align-start">

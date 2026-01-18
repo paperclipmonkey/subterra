@@ -1,28 +1,23 @@
 <template>
   <v-container class="fill-height login-bg" fluid>
-    <v-responsive
-      class="align-center fill-height"
-    >
-      <v-img
-        class="mb-4"
-        height="180"
-        src="@/assets/subterra.svg"
-      />
+    <v-responsive class="align-center fill-height">
+      <v-img class="mb-4" height="180" src="@/assets/subterra.svg" />
       <div class="text-center mb-2">
         <h1 class="main-title">Subterra.world</h1>
-        <p class="welcome">Welcome to Subterra – the platform for cavers to plan trips, share experiences, and explore the underground world together.</p>
+        <p class="welcome">Welcome to Subterra – the platform for cavers to plan trips, share experiences, and explore
+          the underground world together.</p>
       </div>
       <div class="py-2" />
       <v-row>
         <v-col>
           <a href="/api/google/redirect" class="btn btn-primary login-btn">
-            <img class="signin" src="/google-signin.svg"/>
+            <img class="signin" src="/google-signin.svg" />
           </a>
         </v-col>
       </v-row>
-      
+
       <div class="py-4" />
-      
+
       <v-row justify="center">
         <v-col cols="12" class="text-center">
           <v-divider class="my-4">
@@ -30,7 +25,7 @@
           </v-divider>
         </v-col>
       </v-row>
-      
+
       <!-- Magic Link Login Form -->
       <v-row v-if="!emailSent" justify="center">
         <v-col cols="12" md="8" lg="6">
@@ -40,40 +35,17 @@
             </v-card-title>
             <v-card-text>
               <!-- Error Alert -->
-              <v-alert
-                v-if="showError"
-                type="error"
-                variant="tonal"
-                class="mb-4"
-                closable
-                @click:close="showError = false"
-              >
+              <v-alert v-if="showError" type="error" variant="tonal" class="mb-4" closable
+                @click:close="showError = false">
                 {{ errorMessage }}
               </v-alert>
-              
+
               <v-form @submit.prevent="sendMagicLink" ref="emailForm">
-                <v-text-field
-                  v-model="email"
-                  label="Enter your email address"
-                  type="email"
-                  :rules="emailRules"
-                  variant="outlined"
-                  prepend-inner-icon="mdi-email"
-                  class="mb-4 custom-text-field"
-                  :loading="sendingEmail"
-                  color="primary"
-                  bg-color="white"
-                />
-                <v-btn
-                  type="submit"
-                  color="primary"
-                  block
-                  size="large"
-                  :loading="sendingEmail"
-                  :disabled="!email || sendingEmail"
-                  class="custom-submit-btn"
-                  elevation="2"
-                >
+                <v-text-field v-model="email" label="Enter your email address" type="email" :rules="emailRules"
+                  variant="outlined" prepend-inner-icon="mdi-email" class="mb-4 custom-text-field"
+                  :loading="sendingEmail" color="primary" bg-color="white" />
+                <v-btn type="submit" color="primary" block size="large" :loading="sendingEmail"
+                  :disabled="!email || sendingEmail" class="custom-submit-btn" elevation="2">
                   <v-icon left class="mr-2">mdi-send</v-icon>
                   Send Magic Link
                 </v-btn>
@@ -87,7 +59,7 @@
           </v-card>
         </v-col>
       </v-row>
-      
+
       <!-- Email Sent Confirmation -->
       <v-row v-if="emailSent" justify="center">
         <v-col cols="12" md="8" lg="6">
@@ -99,20 +71,15 @@
                 We've sent a magic link to <br><strong class="email-highlight">{{ email }}</strong><br>
                 Click the link in your email to log in securely.
               </p>
-              <v-btn 
-                variant="outlined" 
-                color="primary" 
-                @click="resetForm"
-                class="mt-6 custom-reset-btn"
-                prepend-icon="mdi-arrow-left"
-              >
+              <v-btn variant="outlined" color="primary" @click="resetForm" class="mt-6 custom-reset-btn"
+                prepend-icon="mdi-arrow-left">
                 Send to a different email
               </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
-      
+
       <div class="py-2" />
       <v-row class="features-row" justify="center">
         <v-col cols="12" class="text-center mb-2">
@@ -140,7 +107,8 @@
           Subterra is a community-driven platform for caving enthusiasts. Share, discover, and connect!<br>
           <span class="opensource-note">
             Subterra is <strong>open source</strong> — view or contribute on
-            <a href="https://github.com/paperclipmonkey/subterra" target="_blank" rel="noopener" class="github-link">GitHub</a>.
+            <a href="https://github.com/paperclipmonkey/subterra" target="_blank" rel="noopener"
+              class="github-link">GitHub</a>.
           </span>
         </small>
       </div>
@@ -179,7 +147,7 @@ const sendMagicLink = async () => {
   sendingEmail.value = true
   showError.value = false
   errorMessage.value = ''
-  
+
   try {
     const response = await fetch('/api/auth/magic-link', {
       method: 'POST',
@@ -195,7 +163,7 @@ const sendMagicLink = async () => {
     } else {
       const error = await response.json()
       console.error('Failed to send magic link:', error)
-      
+
       // Show user-friendly error message
       errorMessage.value = error.message || 'Failed to send magic link. Please try again.'
       showError.value = true
@@ -225,9 +193,9 @@ onMounted(async () => {
   await fetch('/api/livez') // Warm the database
   const userResonse = await fetch('/api/users/me')
   const userEmail = (await userResonse.json()).data.email
-  if(userEmail) {
+  if (userEmail) {
     console.log('User is logged in')
-    router.push({ name: '/trips' })
+    router.push('/trips')
   } else {
     console.log('User is not logged in')
   }
@@ -240,6 +208,7 @@ onMounted(async () => {
   min-height: 100vh;
   position: relative;
 }
+
 .main-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 2.2rem;
@@ -247,16 +216,19 @@ onMounted(async () => {
   letter-spacing: 1px;
   font-weight: 700;
 }
+
 .subtitle {
   color: #636e72;
   font-size: 1.1rem;
 }
+
 .welcome {
   color: #636e72;
   font-size: 1rem;
   margin-top: 0.5rem;
   font-weight: 500;
 }
+
 .login-btn {
   display: flex;
   align-items: center;
@@ -272,11 +244,13 @@ onMounted(async () => {
   text-decoration: none;
   border: 1px solid #dadce0;
 }
+
 .login-btn:hover {
   background: #f8f9fa;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
+
 .signin {
   display: inline-block;
   margin-right: 0.5rem;
@@ -299,6 +273,7 @@ onMounted(async () => {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
+
 .email-login-title {
   color: #2d3436;
   font-weight: 700;
@@ -315,12 +290,14 @@ onMounted(async () => {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
+
 .email-sent-title {
   color: #00b894;
   font-weight: 700;
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
+
 .email-sent-text {
   color: #2d3436;
   font-size: 1.1rem;
@@ -369,16 +346,19 @@ onMounted(async () => {
 .features-row {
   margin-top: 2rem;
 }
+
 .features-title {
   color: #2d3436;
   font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.5px;
 }
+
 .feature-col {
   text-align: center;
   margin-bottom: 1rem;
 }
+
 .feature-icon-placeholder {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
@@ -387,31 +367,37 @@ onMounted(async () => {
   justify-content: center;
   height: 60px;
 }
+
 .feature-label {
   color: #636e72;
   font-size: 0.9rem;
   font-weight: 600;
 }
+
 .info-text {
   color: #b2bec3;
   font-size: 0.95rem;
 }
+
 .opensource-note {
   display: block;
   margin-top: 0.5em;
   color: #b2bec3;
   font-size: 0.97rem;
 }
+
 .github-link {
   color: #4285f4;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
+
 .github-link:hover {
   color: #3367d6;
   text-decoration: underline;
 }
+
 .cave-graphic {
   position: absolute;
   left: 50%;

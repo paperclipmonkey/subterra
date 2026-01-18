@@ -6,6 +6,7 @@ use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\TripResource;
+use App\Http\Resources\CollectionResource;
 use Illuminate\Support\Facades\Storage;
 
 class CaveResource extends JsonResource
@@ -87,6 +88,7 @@ class CaveResource extends JsonResource
             ],
             'trips' => TripResource::collection($this->trips),
             'previously_done' => $previoslyDoneTag->tag === 'Previously Done',
+            'collections' => CollectionResource::collection($this->whenLoaded('collections')),
         ];
     }
 }

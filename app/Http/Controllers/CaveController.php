@@ -29,8 +29,18 @@ class CaveController extends Controller
         return new CaveResource($cave);
     }
 
-    public function show(Cave $cave): CaveResource
+    public function show($id)
     {
+        $query = Cave::with(['system', 'system.caves', 'system.files', 'trips.participants', 'trips.media', 'tags', 'collections']);
+
+        if (is_numeric($id)) {
+            $cave = $query->where('id', $id)->first();
+        }
+
+        if (!isset($cave)) {
+            $cave = $query->where('slug', $id)->firstOrFail();
+        }
+
         return new CaveResource($cave);
     }
 

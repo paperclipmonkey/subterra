@@ -22,7 +22,7 @@
                         size="small" prepend-icon="mdi-account-group-outline" class="font-weight-medium">
                         {{ profile.clubs[0].name }}
                         <span v-if="profile.clubs.length > 1" class="ml-1 opacity-70">+{{ profile.clubs.length - 1
-                           }}</span>
+                        }}</span>
                      </v-chip>
                      <div class="text-body-2 text-medium-emphasis text-truncate" v-if="profile.bio"
                         style="max-width: 100%;">
@@ -89,7 +89,7 @@
                   </v-avatar>
                   <div>
                      <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatDuration(profile.stats.duration)
-                        }}</div>
+                     }}</div>
                      <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
                         Underground</div>
                   </div>
@@ -151,7 +151,7 @@
                   <v-list lines="two" v-if="recentTrips.length > 0" class="py-0">
                      <template v-for="(trip, index) in recentTrips" :key="trip.id">
                         <v-divider v-if="index > 0" inset></v-divider>
-                        <v-list-item :to="`/trip/${trip.id}`" class="py-4 px-6 hover-bg">
+                        <v-list-item :to="`/trips/${trip.id}`" class="py-4 px-6 hover-bg">
                            <template v-slot:prepend>
                               <div
                                  class="d-flex flex-column align-center justify-center bg-blue-lighten-5 rounded-lg pa-2 mr-4"

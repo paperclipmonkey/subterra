@@ -1,175 +1,169 @@
 <template>
-  <v-card
-    :disabled="loading"
-    :loading="loading"
-    class="mx-auto my-12"
-  >
-    <template v-slot:loader="{ isActive }">
-      <v-progress-linear
-        :active="isActive"
-        color="deep-purple"
-        height="4"
-        indeterminate
-      ></v-progress-linear>
-    </template>
+  <v-container v-if="loading">
+    <v-skeleton-loader type="article, image"></v-skeleton-loader>
+  </v-container>
 
+  <v-card v-else-if="collection" class="mx-auto my-4 rounded-xl overflow-hidden" elevation="4">
     <v-img
-      height="250"
-      src="https://upload.wikimedia.org/wikipedia/commons/d/d3/Gaping_Gill.jpg"
-      cover
-    ></v-img>
-
-    <v-card-item>
-      <v-card-title>Gaping Gill winch meet quick list</v-card-title>
-
-      <v-card-subtitle>
-        <span class="me-1">Local Favorite</span>
-
-        <v-icon
-          color="error"
-          icon="mdi-fire-circle"
-          size="small"
-        ></v-icon>
-      </v-card-subtitle>
-    </v-card-item>
-
-    <v-card-text>
-      <v-row
-        align="center"
-        class="mx-0"
-      >
-        <v-rating
-          :model-value="4.5"
-          color="amber"
-          density="compact"
-          size="small"
-          half-increments
-          readonly
-        ></v-rating>
-
-        <div class="text-grey ms-4">
-          4.5 (413)
-        </div>
-      </v-row>
-
-      <div class="my-4 text-subtitle-1">
-        $ • Italian, Cafe
+      :src="collection.photo_path || 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
+      height="350" cover class="align-end" gradient="to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 60%">
+      <div class="position-absolute top-0 left-0 pa-4" style="z-index: 1;">
+        <v-btn icon="mdi-arrow-left" variant="tonal" color="white" @click="$router.push('/collections')"
+          class="backdrop-blur"></v-btn>
       </div>
 
-      <div>11 of the best entrances to Gaping Gill to do on a winch meet weekend. How many can you tick off?</div>
+      <div class="position-absolute top-0 right-0 pa-4" style="z-index: 1;">
+        <CollectionEditModal :collection="collection" />
+      </div>
 
-      <div>From (B)ar Pot to (W)ade's entrance</div>
+      <v-container class="pb-6">
+        <div class="d-flex align-center mb-2">
+          <v-chip v-if="collection.is_official" color="primary" class="font-weight-bold mr-2">Official
+            Collection</v-chip>
+          <v-chip variant="outlined" color="white" class="backdrop-blur">{{ collection.caves_count }} Caves</v-chip>
+        </div>
+        <h1 class="text-h3 text-white font-weight-bold mb-2">{{ collection.name }}</h1>
+      </v-container>
+    </v-img>
 
-      <br/>
+    <v-container class="py-6">
+      <div class="d-flex flex-column gap-2 mb-6">
+        <div class="d-flex justify-space-between align-end mb-2">
+          <div class="text-h6 font-weight-bold">Progress</div>
+          <div class="text-subtitle-1 font-weight-medium text-primary">
+            {{ tickedCount }} / {{ totalCount }} Completed ({{ progress }}%)
+          </div>
+        </div>
+        <v-progress-linear :model-value="progress" color="primary" height="12" rounded striped></v-progress-linear>
+      </div>
 
-    <v-divider class="mx-4 mb-1"></v-divider>
+      <div v-if="collection.description" class="mb-6">
+        <div class="text-h6 font-weight-bold mb-2">About this Collection</div>
+        <div class="markdown-body text-body-1 text-grey-darken-3">
+          <VueMarkdown :source="collection.description" />
+        </div>
+      </div>
+    </v-container>
 
-    <v-card-title>Tags</v-card-title>
+    <v-tabs v-model="tab" color="primary" align-tabs="center" grow>
+      <v-tab value="list" class="font-weight-bold"><v-icon start>mdi-format-list-bulleted</v-icon> List View</v-tab>
+      <v-tab value="map" class="font-weight-bold"><v-icon start>mdi-map</v-icon> Map View</v-tab>
+    </v-tabs>
 
-    <div class="px-4 mb-2">
-      <v-chip-group v-model="selection" selected-class="bg-deep-purple-lighten-2">
-        <v-chip>Winch Meet</v-chip>
-        <v-chip>Gaping Gill</v-chip>
-        <v-chip>Yorkshire</v-chip>
-      </v-chip-group>
-    </div>
+    <v-window v-model="tab">
+      <v-window-item value="list">
+        <v-container>
+          <div v-if="collection.caves && collection.caves.length > 0">
+            <v-row>
+              <v-col v-for="cave in collection.caves" :key="cave.id" cols="12" md="6">
+                <v-card :to="`/caves/${cave.slug}`" link class="d-flex flex-row align-center rounded-lg" elevation="1"
+                  height="100">
+                  <v-avatar rounded="0" size="100">
+                    <v-img :src="cave.hero_image || 'https://via.placeholder.com/100'" cover></v-img>
+                  </v-avatar>
+                  <div class="pa-4 flex-grow-1" style="min-width: 0;">
+                    <div class="text-h6 font-weight-bold text-truncate">{{ cave.name }}</div>
+                    <div class="text-caption text-grey-darken-1">
+                      <v-icon size="small" start>mdi-map-marker</v-icon>{{ cave.location_name }}
+                    </div>
+                  </div>
+                  <div class="pr-4 d-flex align-center">
+                    <v-icon v-if="cave.is_ticked" color="success" class="mr-2"
+                      title="Completed">mdi-check-circle</v-icon>
+                    <v-icon color="grey-lighten-1">mdi-chevron-right</v-icon>
+                  </div>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
+          <div v-else class="text-center py-12">
+            <v-icon size="64" color="grey-lighten-2">mdi-cave</v-icon>
+            <div class="text-h6 text-grey mt-4">No caves in this collection yet.</div>
+            <div v-if="canEdit" class="text-caption text-grey">Edit the collection to add some caves!</div>
+          </div>
+        </v-container>
+      </v-window-item>
 
-    <v-divider class="mx-4 mb-1"></v-divider>
-    <v-card-title>Caves</v-card-title>
-    Completed:
-    <v-progress-linear
-          color="orange-darken-3"
-          height="12"
-          model-value="75"
-          rounded="lg"
-        >
-          <!-- <v-badge
-            :style="`right: ${review}`"
-            class="position-absolute"
-            color="white"
-            dot
-            inline
-          ></v-badge> -->
-        </v-progress-linear>
-    </v-card-text>
-
-    <div class="px-4 mb-2">
-      <v-row align="center" justify="center" dense>
-        <v-col cols="12" md="6">
-          <v-card
-            class="mx-auto"
-            color="deep-purple-lighten-2"
-            subtitle="Gaping Gill"
-            title="Main Shaft"
-          >
-            <v-card-text>First descended in 1895, this is the most direct entrance to the main chamber</v-card-text>
-          </v-card>
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-card
-            append-icon="mdi-check"
-            class="mx-auto"
-            subtitle="A recent connection to the system, only found in 2015"
-            title="Small Mammal Pot"
-          >
-            <v-card-text>To the West of Bar Pot you'll find Small Mammal, a sporting entrance series</v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-    </div>
-    <!-- <v-card-actions>
-      <v-btn
-        color="deep-purple-lighten-2"
-        text="Reserve"
-        block
-        border
-        @click="reserve"
-      ></v-btn>
-    </v-card-actions> -->
+      <v-window-item value="map">
+        <div style="height: 600px;">
+          <CaveMap :caves="collection.caves" v-if="collection.caves && collection.caves.length > 0" />
+          <div v-else class="d-flex justify-center align-center fill-height bg-grey-lighten-4">
+            <div class="text-center text-grey">
+              <v-icon size="48" class="mb-2">mdi-map-off</v-icon>
+              <div>No locations to display</div>
+            </div>
+          </div>
+        </div>
+      </v-window-item>
+    </v-window>
   </v-card>
+
+  <v-container v-else>
+    <v-alert type="error">Collection not found</v-alert>
+  </v-container>
 </template>
 
 <script setup>
-  import { useAppStore } from '@/stores/app'
-  import { useCaveStore } from '@/stores/caves';
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useCollectionStore } from '@/stores/collections'
+import { useAppStore } from '@/stores/app'
+import CollectionEditModal from '@/components/CollectionEditModal.vue'
+import CaveMap from '@/components/CaveMap.vue'
+import VueMarkdown from 'vue-markdown-render'
 
-  const store = useAppStore()  
-  const caveStore = useCaveStore()
+const route = useRoute()
+const collectionStore = useCollectionStore()
+const userStore = useAppStore()
 
-  const search = ref('')
-  const headers = ref([
-    { title: 'Name', key: 'name' },
-    { title: 'Length', key: 'system.length' },
-    { title: 'Depth', key: 'system.vertical_range' },
-    { title: 'Location', key: 'location' },
-    { title: 'Tags', key: 'tags' }
-  ])
+const tab = ref('list')
 
-  const caves = ref([])
-  onMounted(async () => {
-    await caveStore.getList()
-  })
+onMounted(() => {
+  collectionStore.fetchCollection(route.params.id)
+})
 
-  const tab = ref('list')
+// Watch for route changes to refetch if we navigate between collections
+watch(() => route.params.id, (newId) => {
+  if (newId) collectionStore.fetchCollection(newId)
+})
 
-  const cards = ref([
-    {
-      id: 1,
-      title: 'Top 10 hardest caves in the UK',
-      src: 'https://cncc.org.uk/media/large/dd76cad6-5c8b-09a1-a1b6-58ae15d83e1b.jpg',
-      flex: 12,
-    },
-    {
-      id: 2,
-      title: 'Gaping Gill winch meet quick list',
-      src: 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Gaping_Gill.jpg',
-      flex: 6,
-    },
-    {
-      id: 3,
-      title: 'Mendip caves worth doing',
-      src: 'https://live.staticflickr.com/8236/8437745500_837976d520_b.jpg',
-      flex: 6,
-    }
-  ])
+const collection = computed(() => collectionStore.currentCollection)
+const loading = computed(() => collectionStore.loading)
+
+const tickedCount = computed(() => {
+  if (!collection.value || !collection.value.caves) return 0;
+  return collection.value.caves.filter(c => c.is_ticked).length;
+})
+
+const totalCount = computed(() => {
+  if (!collection.value || !collection.value.caves) return 0;
+  return collection.value.caves.length;
+})
+
+const progress = computed(() => {
+  if (totalCount.value === 0) return 0;
+  return Math.round((tickedCount.value / totalCount.value) * 100);
+})
+
+const canEdit = computed(() => {
+  if (!collection.value) return false;
+  return userStore.user.is_admin || userStore.user.id === collection.value.user_id
+})
+
 </script>
+
+<style scoped>
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.opacity-90 {
+  opacity: 0.9;
+}
+
+.opacity-80 {
+  opacity: 0.8;
+}
+</style>

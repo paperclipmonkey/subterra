@@ -22,39 +22,23 @@
                 <v-icon start>mdi-account-group</v-icon> {{ club.member_count }} members
               </v-chip>
               <!-- Edit Club Button (Club Admins Only) -->
-              <v-btn
-                v-if="isClubAdmin"
-                class="ml-2"
-                color="primary"
-                variant="outlined"
-                @click="openEditClubModal('details')"
-                size="small"
-              >
+              <v-btn v-if="isClubAdmin" class="ml-2" color="primary" variant="outlined"
+                @click="openEditClubModal('details')" size="small">
                 <v-icon start>mdi-pencil</v-icon> Edit Club
               </v-btn>
-              <v-btn
-                v-if="isClubAdmin"
-                class="ml-2"
-                color="info"
-                variant="outlined"
-                @click="openEditClubModal('pending')"
-                size="small"
-              >
+              <v-btn v-if="isClubAdmin" class="ml-2" color="info" variant="outlined"
+                @click="openEditClubModal('pending')" size="small">
                 <v-icon start>mdi-account-clock</v-icon> Pending Requests
               </v-btn>
             </div>
           </v-card-text>
         </v-card>
-    <!-- Club Edit Modal -->
-    <ClubEditModal
-      v-if="club"
-      v-model="showEditClubModal"
-      :clubSlug="club.slug"
-      :initialTab="editClubTab"
-      @saved="onClubEditSaved"
-    />
+        <!-- Club Edit Modal -->
+        <ClubEditModal v-if="club" v-model="showEditClubModal" :clubSlug="club.slug" :initialTab="editClubTab"
+          @saved="onClubEditSaved" />
         <!-- Loading/Error State for Club Info -->
-        <v-alert v-else-if="loadingError" type="error" variant="outlined">Club not found or could not be loaded.</v-alert>
+        <v-alert v-else-if="loadingError" type="error" variant="outlined">Club not found or could not be
+          loaded.</v-alert>
         <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
@@ -76,14 +60,8 @@
           <v-card>
             <v-card-title>Logged Trips Heatmap</v-card-title>
             <v-card-text>
-              <calendar-heatmap
-                dark-mode
-                :values="heatmapData"
-                :end-date="endDate"
-                :range-color='["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]'
-                tooltip-unit="trips"
-                :max="10"
-              />
+              <calendar-heatmap dark-mode :values="heatmapData" :end-date="endDate"
+                :range-color='["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]' tooltip-unit="trips" :max="10" />
             </v-card-text>
           </v-card>
         </v-col>
@@ -93,13 +71,8 @@
           <v-card>
             <v-card-title>Recent Trips</v-card-title>
             <v-list v-if="recentTrips.length > 0">
-              <v-list-item
-                v-for="trip in recentTrips"
-                :key="trip.id"
-                :to="`/trip/${trip.id}`"
-                :title="trip.name || 'Untitled Trip'"
-                :subtitle="`On ${moment(trip.start_time).format('YYYY-MM-DD')}`"
-              >
+              <v-list-item v-for="trip in recentTrips" :key="trip.id" :to="`/trips/${trip.id}`"
+                :title="trip.name || 'Untitled Trip'" :subtitle="`On ${moment(trip.start_time).format('YYYY-MM-DD')}`">
               </v-list-item>
             </v-list>
             <v-card-text v-else>No recent trips found.</v-card-text>
@@ -111,12 +84,8 @@
           <v-card>
             <v-card-title>Members</v-card-title>
             <v-list v-if="members.length > 0">
-              <v-list-item
-                v-for="member in members"
-                :key="member.id"
-                :to="`/profile/${member.id}`"
-                :title="member.name"
-              >
+              <v-list-item v-for="member in members" :key="member.id" :to="`/profile/${member.id}`"
+                :title="member.name">
                 <template v-slot:prepend>
                   <v-avatar size="small" class="mr-2">
                     <!-- TODO: Add a default avatar image to public folder -->
@@ -242,8 +211,9 @@ onMounted(async () => {
 .v-card {
   margin-bottom: 1rem;
 }
+
 /* Ensure heatmap container allows responsiveness if needed */
-.v-card-text > div[style*="width"] {
+.v-card-text>div[style*="width"] {
   max-width: 100%;
   overflow-x: auto;
 }
@@ -257,6 +227,7 @@ onMounted(async () => {
   padding: 5px 10px;
   border-radius: 4px;
   font-size: 0.8rem;
-  z-index: 1000; /* Ensure tooltip is above other elements */
+  z-index: 1000;
+  /* Ensure tooltip is above other elements */
 }
 </style>

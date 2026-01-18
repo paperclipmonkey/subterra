@@ -79,4 +79,12 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         return $this->belongsToMany(Medal::class)->withTimestamps()->withPivot('awarded_at');
     }
+
+    /**
+     * Get the collections owned by the user.
+     */
+    public function collections(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Collection::class);
+    }
 }
