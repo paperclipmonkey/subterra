@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@mdi/font": "7.4.47",
+    "axios": "^1.13.2",
     "core-js": "^3.47.0",
     "mande": "^2.0.9",
     "moment": "^2.30.1",
