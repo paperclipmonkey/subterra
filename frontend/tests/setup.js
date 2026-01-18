@@ -56,7 +56,8 @@ config.global.stubs = {
   'v-autocomplete': true,
   'v-checkbox': true,
   'v-alert': true,
-  'VuetifyTiptap': true,
+  'MilkdownEditor': true,
+  'MilkdownInner': true,
   'ClubMembershipConfirmation': true
 }
 

@@ -112,9 +112,9 @@
                 variant="outlined" class="mb-4"></v-text-field>
 
               <div class="text-caption mb-2 text-medium-emphasis">Description</div>
-              <VuetifyTiptap @change="updatedDescription" v-model="trip.description" output="text"
-                markdown-theme="github" class="mb-4">
-              </VuetifyTiptap>
+              <MilkdownEditor v-model="trip.description" @change="updatedDescription"
+                placeholder="Describe your adventure..." class="mb-4" />
+
               <div class="v-messages mb-4">
                 <div class="v-messages__wrapper">
                   <div class="v-messages__message">Describe what happened on the trip. This will be visible to all
@@ -172,6 +172,7 @@
 import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue';
+import MilkdownEditor from './MilkdownEditor.vue';
 import { convertFileToBase64 } from '@/utilities.js'
 import { useRouter, useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications';
@@ -377,8 +378,11 @@ const closeAddParticipant = () => {
   showAddParticipant.value = false
 }
 
-const updatedDescription = (editor) => {
-  markdownOutput.value = editor.editor.storage.markdown.getMarkdown()
+const updatedDescription = (event) => {
+  // Milkdown passes { markdown } object in change event
+  if (event && event.markdown) {
+    markdownOutput.value = event.markdown
+  }
 }
 
 const removeExistingMedia = (media) => {

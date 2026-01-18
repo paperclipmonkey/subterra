@@ -13,19 +13,23 @@
   },
   "dependencies": {
     "@mdi/font": "7.4.47",
+    "@milkdown/crepe": "^7.18.0",
+    "@milkdown/ctx": "^7.18.0",
+    "@milkdown/kit": "^7.18.0",
+    "@milkdown/plugin-listener": "^7.18.0",
+    "@milkdown/vue": "^7.18.0",
     "axios": "^1.13.2",
     "core-js": "^3.47.0",
     "mande": "^2.0.9",
+    "md-editor-v3": "^6.3.1",
     "moment": "^2.30.1",
     "roboto-fontface": "*",
     "tippy.js": "^6.3.7",
-    "tiptap-markdown": "^0.9.0",
     "vue": "^3.5.26",
     "vue-markdown-render": "^2.3.0",
     "vue-toastification": "^2.0.0-rc.5",
     "vue3-calendar-heatmap": "^2.0.5",
-    "vuetify": "^3.11.6",
-    "vuetify-pro-tiptap": "^2.8.2"
+    "vuetify": "^3.11.6"
   },
   "devDependencies": {
     "@indoorequal/vue-maplibre-gl": "^8.4.2",
