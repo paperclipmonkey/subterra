@@ -156,13 +156,18 @@ const store = useAppStore()
 // Hero Slideshow
 const currentHeroIndex = ref(0)
 const heroImages = ref([
-  'login-images/3.jpeg',
-  'login-images/1.jpeg',
-  'login-images/5.jpeg',
-  'login-images/4.jpeg',
-  'login-images/2.jpeg',
-  'login-images/6.jpeg',
-])
+  'login-images/1.webp',
+  'login-images/2.webp',
+  'login-images/3.webp',
+  'login-images/4.webp',
+  'login-images/5.webp',
+  'login-images/6.webp',
+  'login-images/7.webp',
+  'login-images/8.webp',
+  'login-images/9.webp',
+  'login-images/10.webp',
+  'login-images/11.webp',
+].sort(() => Math.random() - 0.5))
 let slideshowInterval = null
 
 // Email login state
