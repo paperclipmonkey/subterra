@@ -16,6 +16,9 @@ class Incident extends Model
         'callout_id',
         'status',
         'resolved_at',
+        'incident_controller_id',
+        'acknowledged_at',
+        'police_log_number',
     ];
 
     protected $casts = [

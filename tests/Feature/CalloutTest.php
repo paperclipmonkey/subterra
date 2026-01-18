@@ -118,4 +118,44 @@ class CalloutTest extends TestCase
 
         $response->assertStatus(404); // Scoped findOrFail returns 404
     }
+
+    public function test_user_can_mark_safe_after_rescue_initiated()
+    {
+        Mail::fake();
+        $user = User::factory()->create();
+        $callout = Callout::factory()->create([
+            'user_id' => $user->id, 
+            'status' => 'triggered'
+        ]);
+        
+        // Create an incident for this callout (simulating rescue initiated)
+        $incident = \App\Models\Incident::create([
+            'callout_id' => $callout->id,
+            'status' => 'open'
+        ]);
+
+        // User cancels their callout
+        $response = $this->actingAs($user)
+            ->postJson("/api/callouts/{$callout->id}/cancel");
+
+        $response->assertStatus(200);
+        
+        // Callout should NOT be deleted, but status should be 'cancelled'
+        $this->assertDatabaseHas('callouts', [
+            'id' => $callout->id,
+            'status' => 'cancelled'
+        ]);
+
+        // Incident should remain OPEN
+        $this->assertDatabaseHas('incidents', [
+            'id' => $incident->id,
+            'status' => 'open'
+        ]);
+
+        // Should have a system note
+        $this->assertDatabaseHas('incident_notes', [
+            'incident_id' => $incident->id,
+            'user_id' => null, // System note
+        ]);
+    }
 }

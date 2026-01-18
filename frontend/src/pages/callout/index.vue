@@ -15,6 +15,22 @@
 
                     <!-- Wizard Form -->
                     <v-card-text>
+                        <!-- Duty Officer Banner -->
+                        <v-alert v-if="onCallOfficer" color="info" variant="tonal" class="mb-4" border="start"
+                            density="compact">
+                            <div class="d-flex align-center">
+                                <v-avatar color="primary" size="32" class="mr-3">
+                                    <v-img v-if="onCallOfficer.photo" :src="onCallOfficer.photo"></v-img>
+                                    <span v-else class="text-h6 white--text">{{ onCallOfficer.name.charAt(0) }}</span>
+                                </v-avatar>
+                                <div>
+                                    <div class="text-caption font-weight-bold">On Call Duty Officer</div>
+                                    <div class="text-body-2">{{ onCallOfficer.name }} is monitoring active callouts.
+                                    </div>
+                                </div>
+                            </div>
+                        </v-alert>
+
                         <v-stepper v-model="step" vertical class="elevation-0">
                             <v-stepper-header class="elevation-0" style="box-shadow: none;">
                                 <v-stepper-step :complete="step > 1" step="1">Location</v-stepper-step>
@@ -135,6 +151,16 @@
                                             class="mt-4" required></v-text-field>
 
                                         <!-- Emergency Contact Removed -->
+
+                                        <v-alert type="warning" variant="outlined" density="compact" class="mt-6"
+                                            icon="mdi-shield-check">
+                                            <div class="text-caption">
+                                                <strong>Privacy Notice:</strong> Your information (including team
+                                                details) will be securely stored and
+                                                <strong>automatically deleted 7 days</strong> after your trip completion
+                                                for your privacy.
+                                            </div>
+                                        </v-alert>
                                     </div>
                                 </v-window-item>
                             </v-window>
@@ -204,7 +230,8 @@ export default {
                 trip_plan: '',
                 // expected_exit_time: '',
                 callout_time: '',
-            }
+            },
+            onCallOfficer: null,
         };
     },
     computed: {
@@ -247,7 +274,8 @@ export default {
     async mounted() {
         await Promise.all([
             this.fetchCaves(),
-            this.fetchUsers()
+            this.fetchUsers(),
+            this.fetchDutyOfficer()
         ]);
 
         if (this.currentUser && this.currentUser.active_callout) {
@@ -284,6 +312,14 @@ export default {
                 this.users = response.data.data;
             } catch (e) {
                 console.error(e);
+            }
+        },
+        async fetchDutyOfficer() {
+            try {
+                const response = await axios.get('/api/duty-officers/current');
+                this.onCallOfficer = response.data.data;
+            } catch (e) {
+                console.error("Failed to fetch duty officer", e);
             }
         },
 

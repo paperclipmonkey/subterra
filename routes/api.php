@@ -47,6 +47,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
     # Users
     Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
+    Route::get('/duty-officers/current', [App\Http\Controllers\DutyOfficerController::class, 'current']);
 
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
     Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);

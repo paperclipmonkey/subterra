@@ -96,8 +96,9 @@ export default {
     methods: {
         async fetchUsers() {
             try {
-                const res = await axios.get('/api/users');
-                this.users = res.data.data;
+                const res = await axios.get('/api/admin/users');
+                // Filter to only show approved admins
+                this.users = res.data.data.filter(u => u.is_admin && u.is_approved);
             } catch (e) {
                 console.error("Error fetching users", e);
             }

@@ -153,8 +153,23 @@ class CalloutService
                 \Illuminate\Support\Facades\Log::error("Email Failure cancelling callout: " . $e->getMessage());
         }
 
-        // 3. Delete from DB (Strict retention: Cancelled = Deleted)
-        // We actually hard delete it as per requirements "Cancelled callouts are deleted immediately"
+        // 3. Check for Active Incident
+        if ($callout->incident()->exists()) {
+            // DO NOT DELETE if rescue is underway. 
+            // Mark user as safe but leave incident for admin to close.
+            $callout->update(['status' => 'cancelled']);
+            
+            // Add system note to incident
+            $callout->incident->notes()->create([
+                'user_id' => null, // System note
+                'content' => 'USER MARKED THEMSELVES SAFE via App. Please verify and resolve incident.'
+            ]);
+            
+            return;
+        }
+
+        // 4. Delete from DB (Strict retention: Cancelled = Deleted)
+        // Only if no incident was ever created (i.e. user is safe before panic time)
         $callout->delete();
     }
 

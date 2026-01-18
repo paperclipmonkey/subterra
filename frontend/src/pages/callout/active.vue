@@ -2,11 +2,21 @@
     <v-container>
         <v-row justify="center">
             <v-col cols="12" md="8" lg="6">
-                <v-card class="mb-6 elevation-10" color="red darken-4" dark>
+                <!-- Rescue Active Banner -->
+                <v-alert v-if="callout.incident" type="error" prominent class="mb-6 elevation-5"
+                    icon="mdi-alert-octagram">
+                    <div class="text-h6 font-weight-bold">RESCUE IN PROGRESS</div>
+                    <div>
+                        Incident #{{ callout.incident.id }} has been opened. Emergency services may have been contacted.
+                        If you are safe, please click "I AM SAFE" immediately to inform the rescue team.
+                    </div>
+                </v-alert>
+
+                <v-card class="mb-6 elevation-10" :color="callout.incident ? 'grey darken-4' : 'red darken-4'" dark>
                     <v-card-text class="text-center pa-6">
-                        <div class="text-h6 mb-2">RESCUE WILL BE ACTIVATED IN</div>
+                        <div class="text-h6 mb-2">{{ callout.incident ? 'RESCUE ACTIVATED' : 'RESCUE WILL BE ACTIVATED IN' }}</div>
                         <div class="text-h2 font-weight-black mb-2 white--text">
-                            {{ timeRemaining }}
+                            {{ callout.incident ? 'OVERDUE' : timeRemaining }}
                         </div>
                         <div class="subtitle-1">
                             {{ formatTime(callout.callout_time) }} - {{ formatDate(callout.callout_time) }}

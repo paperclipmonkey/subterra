@@ -84,6 +84,11 @@ After setting up the application:
    $user->clubs->first()->pivot->save();
    ```
 
+## Run scheduled tasks
+```bash
+docker exec -it subterra-laravel.test-1 php artisan schedule:work
+```
+
 ## API Documentation
 
 The Subterra API provides endpoints for managing caves, cave systems, trips, users, and clubs.

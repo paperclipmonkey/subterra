@@ -18,9 +18,6 @@ class IncidentTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true, 'is_approved' => true]);
         
         // Create incidents with various statuses to exercise the ordering logic
-        // We need callouts for incidents really, assuming factories exist
-        // Or manually create:
-        
         $u = User::factory()->create();
         
         $c1 = Callout::factory()->create(['user_id' => $u->id]);
@@ -39,5 +36,26 @@ class IncidentTest extends TestCase
         // Assert
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
+    }
+
+    public function test_admin_can_acknowledge_incident()
+    {
+        // Arrange
+        $admin = User::factory()->create(['is_admin' => true, 'is_approved' => true]);
+        $callout = Callout::factory()->create();
+        $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+
+        // Act
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/incidents/{$incident->id}/acknowledge");
+
+        // Assert
+        $response->assertStatus(200);
+        
+        $freshIncident = $incident->fresh();
+        
+        $this->assertEquals($admin->id, $freshIncident->incident_controller_id);
+        $this->assertNotNull($freshIncident->acknowledged_at);
+        $this->assertEquals('managed', $freshIncident->status);
     }
 }

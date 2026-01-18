@@ -98,7 +98,6 @@ class CaveController extends Controller
 ### Frontend (Vue.js)
 
 #### Code Style
-- Use Prettier for code formatting
 - Follow Vue.js style guide
 - Use TypeScript where possible
 - Use Vuetify components consistently

@@ -19,6 +19,7 @@ vi.mock('axios', () => ({
             if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
             if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
             if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
+            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: 'Officer Jenny', photo: null } } })
             return Promise.resolve({ data: {} })
         }),
         post: vi.fn(() => Promise.resolve({ data: { callout: { id: 99 } } }))
@@ -66,7 +67,9 @@ describe('Callout Wizard', () => {
                     'v-dialog': true,
                     'v-progress-circular': true,
                     'v-card-title': true,
-                    'v-card-actions': true
+                    'v-card-actions': true,
+                    'v-avatar': true,
+                    'v-img': true
                 }
             }
         })

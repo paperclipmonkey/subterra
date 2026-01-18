@@ -47,7 +47,7 @@ class UserDetailEmailResource extends JsonResource
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),
                 'duration' => $this->trips->sum('duration'),
             ],
-            'active_callout' => $this->activeCallout ? $this->activeCallout->load(['cave', 'participants']) : null,
+            'active_callout' => $this->activeCallout ? $this->activeCallout->load(['cave', 'participants', 'incident']) : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
