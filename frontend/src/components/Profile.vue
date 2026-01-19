@@ -201,7 +201,7 @@
 
                            <v-list-item-subtitle class="d-flex align-center text-body-2">
                               <v-icon size="small" icon="mdi-map-marker" class="mr-1"></v-icon>
-                              {{ trip.system_name || 'System Unknown' }}
+                              {{ trip.entrance?.name || 'Unknown Entrance' }}
                            </v-list-item-subtitle>
 
                            <template v-slot:append>

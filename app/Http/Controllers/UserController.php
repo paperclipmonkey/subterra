@@ -153,6 +153,7 @@ class UserController extends Controller
                 $query->where('user_id', $user->id);
             })
             ->where('start_time', '>=', Carbon::now()->subYear())
+            ->with('entrance', 'participants')
             ->orderBy('start_time', 'desc')
             ->limit(10)
             ->get();
