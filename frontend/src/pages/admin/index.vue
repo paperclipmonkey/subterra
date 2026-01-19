@@ -9,6 +9,43 @@
 
     <!-- Administrative Links -->
     <v-row class="mb-6">
+      <!-- Duty Officer Status -->
+      <v-col cols="12" md="6" lg="3">
+        <v-card height="100%" class="d-flex flex-column" :color="dutyOfficerColor" dark>
+          <v-card-title class="pb-1">
+            <v-icon left>mdi-police-badge</v-icon> Duty Officer
+          </v-card-title>
+          <v-card-text class="flex-grow-1">
+            <div v-if="loadingOfficer">
+              <v-progress-linear indeterminate color="white"></v-progress-linear>
+            </div>
+            <div v-else-if="currentOfficer">
+              <div class="text-h6 font-weight-bold">{{ currentOfficer.name }}</div>
+              <div class="caption">On Call Now</div>
+            </div>
+            <div v-else>
+               <div class="text-h6 font-weight-bold">NO COVERAGE</div>
+               <div class="caption">System Unmonitored</div>
+            </div>
+
+            <v-divider class="my-3" v-if="!loadingOfficer"></v-divider>
+
+            <div v-if="!loadingOfficer">
+               <div v-if="nextGapIsSoon" class="d-flex align-center font-weight-bold yellow--text text--lighten-4">
+                  <v-icon small left color="yellow lighten-4">mdi-alert</v-icon>
+                  Gap starts {{ getRelativeTime(nextGapStart) }}
+               </div>
+               <div v-else class="caption">
+                  Covered until {{ formatDate(nextGapStart) }}
+               </div>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn text block to="/admin/rota">Manage Rota</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+
       <v-col cols="12" md="6" lg="3">
         <v-card to="/admin/users" link hover height="100%">
           <v-card-title><v-icon left>mdi-account-group</v-icon> Users</v-card-title>
@@ -22,24 +59,13 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="6" lg="3">
-        <v-card to="/admin/rota" link hover height="100%">
-          <v-card-title><v-icon left>mdi-calendar-clock</v-icon> On-Call Rota</v-card-title>
-          <v-card-text>Manage safety coverage.</v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" md="6" lg="3">
         <v-card to="/admin/cave-system-with-cave" link hover height="100%">
           <v-card-title><v-icon left>mdi-map-marker-plus</v-icon> Add Cave</v-card-title>
           <v-card-text>Add System & Entrance.</v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="12" md="6" lg="3">
-        <v-card to="/admin/pages" link hover height="100%">
-          <v-card-title><v-icon left>mdi-file-document-multiple</v-icon> Pages</v-card-title>
-          <v-card-text>Manage content pages.</v-card-text>
-        </v-card>
-      </v-col>
     </v-row>
+
 
     <h2 class="headline mb-4">Active & Recent Incidents</h2>
     <v-row class="mb-6">
@@ -135,8 +161,11 @@ export default {
   data() {
     return {
       loading: true,
+      loadingOfficer: true,
       incidents: [],
       callouts: [],
+      currentOfficer: null,
+      nextGapStart: null,
       now: moment()
     };
   },
@@ -158,14 +187,25 @@ export default {
       if (this.systemStatus === 'ACTIVE') return 'Incident in progress.';
       if (this.systemStatus === 'WATCHDOG ACTIVE') return this.callouts.length + ' active callouts monitored.';
       return 'Systems operational. No active callouts.';
+    },
+    dutyOfficerColor() {
+      if (!this.currentOfficer) return 'red darken-3';
+      if (this.nextGapIsSoon) return 'orange darken-3';
+      return 'success darken-2';
+    },
+    nextGapIsSoon() {
+      if (!this.nextGapStart) return false;
+      // Warn if gap is within 24 hours
+      return moment(this.nextGapStart).diff(this.now, 'hours') < 24;
     }
   },
   async mounted() {
-    await Promise.all([this.fetchIncidents(), this.fetchCallouts()]);
+    await Promise.all([this.fetchIncidents(), this.fetchCallouts(), this.fetchDutyOfficer()]);
     // Poll every 30s
     this.poll = setInterval(() => {
       this.fetchIncidents();
       this.fetchCallouts();
+      this.fetchDutyOfficer();
     }, 30000);
     // Ticker every 1s
     this.ticker = setInterval(() => {
@@ -195,8 +235,26 @@ export default {
         this.loading = false;
       }
     },
+    async fetchDutyOfficer() {
+      try {
+        const res = await axios.get('/api/duty-officers/current');
+        this.currentOfficer = res.data.data;
+        this.nextGapStart = res.data.data.next_gap_start;
+      } catch (e) {
+        console.error("Duty Officer Fetch Error", e);
+        if (e.response && e.response.status === 404) {
+          this.currentOfficer = null;
+          this.nextGapStart = e.response.data.data ? e.response.data.data.next_gap_start : moment();
+        }
+      } finally {
+        this.loadingOfficer = false;
+      }
+    },
     formatDate(d) {
       return moment(d).format('HH:mm DD/MM');
+    },
+    getRelativeTime(d) {
+      return moment(d).fromNow();
     },
     getCountdown(time) {
       const t = moment(time);

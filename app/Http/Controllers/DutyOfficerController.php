@@ -15,19 +15,55 @@ class DutyOfficerController extends Controller
     public function current(Request $request): JsonResponse
     {
         // Check for an active On Call Shift
-        $shift = OnCallShift::with('user')->covering(now())->first();
-        $officer = $shift?->user;
+        $currentShift = OnCallShift::with('user')->covering(now())->first();
+        $officer = $currentShift?->user;
+
+        // Calculate next gap
+        // 1. Get all future shifts starting from now (or the start of the current shift)
+        $searchStart = $currentShift ? $currentShift->start_at : now();
+        
+        $futureShifts = OnCallShift::where('end_at', '>', now())
+            ->orderBy('start_at')
+            ->get();
+
+        $coveredUntil = now();
+        
+        if ($currentShift) {
+            $coveredUntil = $currentShift->end_at;
+        }
+
+        // Check continuity
+        foreach ($futureShifts as $shift) {
+            // If the shift starts after the current coverage ends (with a small buffer for seconds alignment), we found a gap
+            // Using 1 minute buffer to be safe against second-precision issues
+            if ($shift->start_at->subMinutes(1)->gt($coveredUntil)) {
+                break;
+            }
+            
+            // Extend coverage if this shift goes later
+            if ($shift->end_at->gt($coveredUntil)) {
+                $coveredUntil = $shift->end_at;
+            }
+        }
+
+        $nextGapStart = $coveredUntil;
 
         if (!$officer) {
             return response()->json([
                 'message' => 'No duty officer currently on shift.',
+                'data' => [
+                    'next_gap_start' => $nextGapStart,
+                    'is_covered' => false
+                ]
             ], 404);
         }
 
         return response()->json([
             'data' => [
                 'name' => $officer->name,
-                'photo' => $officer->photo, // Assuming 'photo' is a URL or path
+                'photo' => $officer->photo,
+                'next_gap_start' => $nextGapStart,
+                'is_covered' => true
             ]
         ]);
     }
