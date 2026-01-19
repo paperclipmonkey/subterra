@@ -16,7 +16,7 @@ class IncidentController extends Controller
     public function index()
     {
         // Get Open incidents first, then Resolved
-        $incidents = Incident::with(['callout', 'controller', 'callout.user'])
+        $incidents = Incident::with(['callout', 'controller', 'callout.user', 'callout.cave'])
             ->orderByRaw("CASE status WHEN 'open' THEN 1 WHEN 'managed' THEN 2 WHEN 'resolved' THEN 3 ELSE 4 END")
             ->orderBy('created_at', 'desc')
             ->take(20)

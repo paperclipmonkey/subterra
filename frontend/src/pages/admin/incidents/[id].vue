@@ -132,11 +132,38 @@
                             </v-col>
                             <v-col cols="12">
                                 <strong>Car Details:</strong> {{ incident.callout.car_details || 'N/A' }}
+                                <div class="mt-1" v-if="incident.callout.car_registration || incident.callout.car_parking">
+                                    <v-chip x-small v-if="incident.callout.car_registration" class="mr-1" label>
+                                      Reg: {{ incident.callout.car_registration }}
+                                    </v-chip>
+                                    <span v-if="incident.callout.car_parking" class="text-caption grey--text text--darken-2">
+                                      Parking: {{ incident.callout.car_parking }}
+                                    </span>
+                                </div>
                             </v-col>
                             <v-col cols="12">
                                 <strong>Trip Plan:</strong>
                                 <div class="grey lighten-4 pa-3 rounded mt-1">
                                     {{ incident.callout.trip_plan }}
+                                </div>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-divider class="my-2"></v-divider>
+                                <div class="text-subtitle-2 mb-2">Location Information</div>
+                                
+                                <div v-if="incident.callout.cave">
+                                    <strong>Cave Location:</strong> 
+                                    {{ incident.callout.cave.location_lat }}, {{ incident.callout.cave.location_lng }}
+                                    <span v-if="incident.callout.cave.location_name">({{ incident.callout.cave.location_name }})</span>
+                                </div>
+
+                                <div v-if="incident.callout.location_data" class="mt-2">
+                                    <strong>Callout Origin:</strong>
+                                    <span v-if="incident.callout.location_data.coords">
+                                        {{ incident.callout.location_data.coords.latitude.toFixed(5) }}, 
+                                        {{ incident.callout.location_data.coords.longitude.toFixed(5) }}
+                                    </span>
+                                    <span v-else class="grey--text font-italic">No GPS data</span>
                                 </div>
                             </v-col>
                         </v-row>
