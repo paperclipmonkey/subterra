@@ -266,7 +266,7 @@ const confirmDelete = async () => {
    try {
       const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE' })
       if (response.ok) {
-         router.push({ name: '/trips' })
+         router.push('/trips')
       }
    } catch (e) {
       console.error("Failed to delete trip", e)
