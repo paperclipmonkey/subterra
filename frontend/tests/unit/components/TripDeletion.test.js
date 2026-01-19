@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Trip from '@/components/Trip.vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -22,19 +22,16 @@ vi.mock('vue-router', () => ({
 
 // Mock moment
 vi.mock('moment', () => {
+    const momentFn = (date) => ({
+        format: () => 'formatted-date',
+        diff: () => 3600000, // 1 hour
+    })
+    momentFn.duration = (diff) => ({
+        asHours: () => 1,
+        minutes: () => 0
+    })
     return {
-        default: (date) => ({
-            format: () => 'formatted-date',
-            diff: () => 3600000, // 1 hour
-            duration: {
-                asHours: () => 1,
-                minutes: () => 0
-            }
-        }),
-        duration: (diff) => ({
-            asHours: () => 1,
-            minutes: () => 0
-        })
+        default: momentFn
     }
 })
 
@@ -71,15 +68,15 @@ describe('Trip.vue', () => {
         })
 
         // Mock fetch for trip data and delete action
-        mockFetch = vi.fn((url) => {
-            if (url.includes('DELETE')) {
+        mockFetch = vi.fn((url, options) => {
+            if (options && options.method === 'DELETE') {
                 return Promise.resolve({ ok: true })
             }
             return Promise.resolve({
                 json: () => Promise.resolve({ data: mockTrip })
             })
         })
-        global.fetch = mockFetch
+        vi.stubGlobal('fetch', mockFetch)
     })
 
     it('redirects to /trips after successful deletion', async () => {
@@ -87,25 +84,25 @@ describe('Trip.vue', () => {
             global: {
                 plugins: [createPinia()],
                 stubs: {
-                    'v-img': true,
+                    'v-img': { template: '<div class="v-img-stub"><slot /><slot name="placeholder" /></div>' },
                     'v-icon': true,
                     'v-btn': true,
                     'v-spacer': true,
-                    'v-container': true,
+                    'v-container': { template: '<div class="v-container-stub"><slot /></div>' },
                     'v-chip': true,
-                    'v-row': true,
-                    'v-col': true,
-                    'v-card': true,
-                    'v-card-title': true,
+                    'v-row': { template: '<div class="v-row-stub"><slot /></div>' },
+                    'v-col': { template: '<div class="v-col-stub"><slot /></div>' },
+                    'v-card': { template: '<div class="v-card-stub"><slot /></div>' },
+                    'v-card-title': { template: '<div class="v-card-title-stub"><slot /></div>' },
                     'v-divider': true,
-                    'v-card-text': true,
-                    'v-hover': true,
+                    'v-card-text': { template: '<div class="v-card-text-stub"><slot /></div>' },
+                    'v-hover': { template: '<div><slot :isHovering="false" :props="{}" /></div>' },
                     'v-progress-circular': true,
-                    'v-list': true,
-                    'v-list-item': true,
-                    'v-avatar': true,
-                    'v-list-item-title': true,
-                    'v-list-item-subtitle': true,
+                    'v-list': { template: '<div><slot /></div>' },
+                    'v-list-item': { template: '<div><slot /><slot name="prepend" /></div>' },
+                    'v-avatar': { template: '<div><slot /></div>' },
+                    'v-list-item-title': { template: '<div><slot /></div>' },
+                    'v-list-item-subtitle': { template: '<div><slot /></div>' },
                     'v-dialog': {
                         template: '<div v-if="modelValue"><slot /><slot name="actions" /></div>',
                         props: ['modelValue']
@@ -117,8 +114,11 @@ describe('Trip.vue', () => {
         })
 
         // Wait for mount and data fetch
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await flushPromises()
         await wrapper.vm.$nextTick()
+
+        // Assert GET fetch was called
+        expect(mockFetch).toHaveBeenCalledWith('/api/trips/123')
 
         // Verify trip loaded
         expect(wrapper.text()).toContain('Test Trip')
@@ -130,6 +130,9 @@ describe('Trip.vue', () => {
 
         // 2. Call confirmDelete directly
         await wrapper.vm.confirmDelete()
+
+        // Wait for delete promise
+        await flushPromises()
 
         // Assert fetch DELETE was called
         expect(mockFetch).toHaveBeenCalledWith('/api/trips/123', { method: 'DELETE' })
