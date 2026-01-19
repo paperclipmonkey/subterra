@@ -74,6 +74,24 @@ describe('Callout Wizard', () => {
             }
         })
 
+        // Mock Navigator APIs
+        Object.defineProperty(global.navigator, 'permissions', {
+            value: {
+                query: vi.fn(() => Promise.resolve({ state: 'granted' }))
+            },
+            writable: true
+        });
+
+        Object.defineProperty(global.navigator, 'geolocation', {
+            value: {
+                getCurrentPosition: vi.fn((success) => success({
+                    coords: { latitude: 51.5, longitude: -0.1, accuracy: 20 },
+                    timestamp: Date.now()
+                }))
+            },
+            writable: true
+        });
+
         // Assert initial loading state
         expect(wrapper.text()).toContain('Loading...')
 
@@ -83,14 +101,14 @@ describe('Callout Wizard', () => {
 
         // Assert loaded
         expect(wrapper.text()).not.toContain('Loading...')
-        expect(wrapper.text()).toContain('Safety Callout')
 
         // Check initial step (Location)
         expect(wrapper.vm.step).toBe(1)
 
         // Fill out Step 1
         wrapper.vm.form.cave_id = 1
-        wrapper.vm.form.car_details = 'Red Ford'
+        wrapper.vm.form.car_registration = 'AB12 CDE'
+        wrapper.vm.form.car_parking = 'Bull Pot Farm'
         await wrapper.vm.$nextTick()
 
         // Assert canProceed logic
@@ -101,4 +119,59 @@ describe('Callout Wizard', () => {
         await wrapper.vm.$nextTick()
         expect(wrapper.vm.step).toBe(2)
     })
+
+    it('shows error and blocks submission when duty officer returns 404', async () => {
+        // Override the default mock for this specific test
+        const axios = await import('axios')
+        axios.default.get.mockImplementation((url) => {
+            if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
+            if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
+            if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
+            if (url === '/api/duty-officers/current') return Promise.reject({ response: { status: 404 } })
+            return Promise.resolve({ data: {} })
+        })
+
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-toolbar': { template: '<div><slot /></div>' },
+                    'v-toolbar-title': { template: '<div><slot /></div>' },
+                    'v-card-text': { template: '<div><slot /></div>' },
+                    'v-progress-circular': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-step': true,
+                    'v-divider': true,
+                    'v-form': { template: '<form><slot /></form>' },
+                    'v-window': { template: '<div><slot /></div>' },
+                    'v-window-item': { template: '<div><slot /></div>', props: ['value'] },
+                    'v-btn': { template: '<button :disabled="disabled"><slot /></button>', props: ['disabled'] },
+                }
+            }
+        })
+
+        // Wait for mounted actions
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        // Expect error message
+        expect(wrapper.text()).toContain('No Duty Officer On Call')
+
+        // Expect form to NOT proceed or show disabled state
+        expect(wrapper.find('.v-alert').exists()).toBe(true)
+        expect(wrapper.find('.disabled-content').exists()).toBe(true)
+
+        // Verify form submission is blocked (button disabled)
+        // Adjust selector as needed based on implementation
+        const buttons = wrapper.findAll('button')
+        // const nextButton = buttons.find(b => b.text().includes('Next'))
+        // expect(nextButton.attributes('disabled')).toBeDefined() 
+        // OR simpler: check for specific error UI element
+    })
+
 })

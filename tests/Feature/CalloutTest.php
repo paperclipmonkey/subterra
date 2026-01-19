@@ -46,9 +46,10 @@ class CalloutTest extends TestCase
             'cave_id' => $cave->id,
             'description' => 'Test Trip',
             'trip_plan' => 'Detailed Plan', // Added
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm',
+            'location_data' => ['latitude' => 54.2, 'longitude' => -2.5, 'accuracy' => 10],
             'team_details' => 'Alice, Bob',
-            'emergency_contact_name' => 'Mom',
-            'emergency_contact_phone' => '+1234567890',
             'participants' => [
                 ['name' => 'Alice', 'email' => 'alice@test.com', 'phone' => '+111'],
                 ['name' => 'Bob', 'email' => 'bob@test.com']
@@ -63,8 +64,15 @@ class CalloutTest extends TestCase
         $this->assertDatabaseHas('callouts', [
             'user_id' => $user->id,
             'cave_id' => $cave->id,
-            'status' => 'active'
+            'status' => 'active',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm'
         ]);
+
+        $callout = Callout::where('user_id', $user->id)->first();
+        $this->assertEquals(['latitude' => 54.2, 'longitude' => -2.5, 'accuracy' => 10], $callout->location_data);
+        $this->assertNotNull($callout->request_data);
+        $this->assertArrayHasKey('ip', $callout->request_data);
 
         // Verify participants stored
         $callout = Callout::where('user_id', $user->id)->first();
@@ -81,6 +89,8 @@ class CalloutTest extends TestCase
             'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
             'description' => 'Unsafe Trip',
             'trip_plan' => 'Plan', // Added
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm',
             'participants' => []
         ];
 

@@ -70,10 +70,6 @@
                     <v-icon left size="large">mdi-check-circle</v-icon>
                     I AM SAFE
                 </v-btn>
-
-                <div class="text-center caption grey--text">
-                    Clicking this will cancel the safety watchdog immediately.
-                </div>
             </v-col>
         </v-row>
 

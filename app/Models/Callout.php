@@ -24,16 +24,22 @@ class Callout extends Model
         'description',
         'trip_plan',
         'car_details',
+        'car_registration',
+        'car_parking',
         'team_details',
         'emergency_contact_name',
         'emergency_contact_phone',
         'status',
         'aws_watchdog_id',
+        'location_data',
+        'request_data',
     ];
 
     protected $casts = [
         'callout_time' => 'datetime',
         'expected_exit_time' => 'datetime',
+        'location_data' => 'array',
+        'request_data' => 'array',
     ];
 
     public function user(): BelongsTo

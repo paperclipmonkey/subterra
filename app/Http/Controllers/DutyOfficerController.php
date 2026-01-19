@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\OnCallShift;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,20 +14,14 @@ class DutyOfficerController extends Controller
      */
     public function current(Request $request): JsonResponse
     {
-        // For now, we simulate an "On Call" rota by picking a random active admin.
-        // In a real system, this might check a rota table or calendar.
-        $officer = User::where('is_admin', true)
-            ->where('is_active', true)
-            ->inRandomOrder()
-            ->first();
+        // Check for an active On Call Shift
+        $shift = OnCallShift::with('user')->covering(now())->first();
+        $officer = $shift?->user;
 
         if (!$officer) {
             return response()->json([
-                'data' => [
-                    'name' => 'Subterra Team', // Fallback
-                    'photo' => null,
-                ]
-            ]);
+                'message' => 'No duty officer currently on shift.',
+            ], 404);
         }
 
         return response()->json([

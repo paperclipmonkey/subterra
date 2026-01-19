@@ -24,14 +24,14 @@ class CalloutController extends Controller
         $data = $request->validate([
             'cave_id' => 'nullable|exists:caves,id',
             'exit_cave_id' => 'nullable|exists:caves,id',
-            // 'expected_exit_time' => 'required|date|after:now', // Removed
-            'callout_time' => 'required|date|after:now', // Removed dependency on expected_exit_time
+            'callout_time' => 'required|date|after:now',
             'description' => 'nullable|string',
             'trip_plan' => 'required|string',
-            'car_details' => 'nullable|string',
+            'car_details' => 'nullable|string', // kept for backward compatibility
+            'car_registration' => 'required|string',
+            'car_parking' => 'required|string',
+            'location_data' => 'nullable|array',
             'team_details' => 'nullable|string',
-            // 'emergency_contact_name' => 'required|string', // Removed
-            // 'emergency_contact_phone' => 'required|string', // Removed
             'trip_id' => 'nullable|exists:trips,id',
             'participants' => 'nullable|array',
             'participants.*.user_id' => 'nullable|exists:users,id',
@@ -39,6 +39,11 @@ class CalloutController extends Controller
             'participants.*.phone' => 'nullable|string',
             'participants.*.email' => 'nullable|email',
         ]);
+
+        $data['request_data'] = [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ];
 
         try {
             $callout = $this->calloutService->create($request->user(), $data);
