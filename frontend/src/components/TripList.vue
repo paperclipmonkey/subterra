@@ -37,7 +37,7 @@
           </div>
         </div>
 
-        <div v-else class="px-2 pb-16 overflow-y-auto flex-grow-1" style="min-height: 0;">
+        <div v-else class="px-3 pb-16 overflow-y-auto flex-grow-1" style="min-height: 0;">
           <v-row>
             <v-col v-for="trip in filteredTrips" :key="trip.id" cols="12" sm="6" md="4">
               <v-card :to="`/trips/${trip.id}`" elevation="2" class="fill-height d-flex flex-column trip-card" hover>
