@@ -45,6 +45,9 @@ Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCall
 
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
+    // Public Pages
+    Route::get('/pages/{slug}', [App\Http\Controllers\PageController::class, 'publicShow']);
+
     # Users
     Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
     Route::get('/duty-officers/current', [App\Http\Controllers\DutyOfficerController::class, 'current']);
@@ -127,6 +130,8 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     Route::get('/clubs/{club}/members', [ClubController::class, 'getApprovedMembers'])->name('admin.clubs.members.index');
     // This syncs *approved* members and their admin status
     Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
+
+    Route::apiResource('pages', App\Http\Controllers\PageController::class);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {

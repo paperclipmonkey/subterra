@@ -33,6 +33,12 @@
           <v-card-text>Add System & Entrance.</v-card-text>
         </v-card>
       </v-col>
+      <v-col cols="12" md="6" lg="3">
+        <v-card to="/admin/pages" link hover height="100%">
+          <v-card-title><v-icon left>mdi-file-document-multiple</v-icon> Pages</v-card-title>
+          <v-card-text>Manage content pages.</v-card-text>
+        </v-card>
+      </v-col>
     </v-row>
 
     <h2 class="headline mb-4">Active & Recent Incidents</h2>
