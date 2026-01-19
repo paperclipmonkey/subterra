@@ -137,6 +137,39 @@
                   </div>
                </v-card>
 
+
+               <!-- Clubs -->
+               <v-card class="rounded-xl mb-6" elevation="0" border v-if="profile.clubs && profile.clubs.length > 0">
+                  <v-card-title class="py-4 px-6 d-flex align-center">
+                     <v-icon icon="mdi-account-group" color="indigo" class="mr-2"></v-icon>
+                     <span class="text-h6 font-weight-bold">Clubs</span>
+                  </v-card-title>
+                  <v-divider></v-divider>
+                  <v-list lines="one" class="py-0">
+                     <template v-for="(club, index) in profile.clubs" :key="club.slug">
+                        <v-divider v-if="index > 0" inset></v-divider>
+                        <v-list-item :to="`/club/${club.slug}`" class="py-3 px-6 hover-bg">
+                           <template v-slot:prepend>
+                              <v-avatar color="indigo-lighten-5" class="mr-4">
+                                 <v-icon color="indigo" icon="mdi-shield-account"></v-icon>
+                              </v-avatar>
+                           </template>
+
+                           <v-list-item-title class="text-body-1 font-weight-bold">
+                              {{ club.name }}
+                           </v-list-item-title>
+
+                           <template v-slot:append>
+                              <v-chip v-if="club.is_admin" color="primary" size="x-small" variant="flat" class="mr-2">
+                                 Admin
+                              </v-chip>
+                              <v-icon icon="mdi-chevron-right" color="grey-lighten-1"></v-icon>
+                           </template>
+                        </v-list-item>
+                     </template>
+                  </v-list>
+               </v-card>
+
                <!-- Recent Trips -->
                <v-card class="rounded-xl" elevation="0" border>
                   <v-card-title class="py-4 px-6 d-flex align-center">
