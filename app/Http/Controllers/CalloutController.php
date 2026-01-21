@@ -103,7 +103,6 @@ class CalloutController extends Controller
                     'cave_name' => $caveName,
                     'lat' => $lat,
                     'lng' => $lng,
-                    'team_size' => $callout->participants->count(), 
                 ];
             });
 

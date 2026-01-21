@@ -198,6 +198,7 @@ const saveCave = async () => {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify(cave.value),
   })

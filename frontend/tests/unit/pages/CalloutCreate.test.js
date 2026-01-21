@@ -184,4 +184,47 @@ describe('Callout Wizard', () => {
         // OR simpler: check for specific error UI element
     })
 
+    it('calculates callout duration hint correctly', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-img': true,
+                    'v-avatar': true,
+                    'v-expand-transition': true,
+                    'v-textarea': true,
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-step': true,
+                    'v-divider': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-progress-circular': true,
+                    'v-alert': true,
+                }
+            }
+        })
+
+        // Mock current time
+        const now = new Date('2025-01-01T12:00:00')
+        vi.setSystemTime(now)
+
+        // Set callout time to 5 hours 30 mins later
+        wrapper.vm.form.callout_time = '2025-01-01T17:30:00'
+
+        expect(wrapper.vm.calloutDurationHint).toBe('That is 5 hours and 30 minutes from now.')
+
+        // Restoration happens automatically or manually
+        vi.useRealTimers()
+    })
 })

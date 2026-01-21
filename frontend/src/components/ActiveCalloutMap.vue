@@ -8,7 +8,7 @@
             <v-card width="200px">
               <v-card-title class="subtitle-2">{{ callout.cave_name || 'Unknown Location' }}</v-card-title>
               <v-card-text class="caption pa-2">
-                <div>Team Size: {{ callout.team_size || 'Unknown' }}</div>
+                <!-- Team Size removed as per request -->
                 <!-- Exiting time removed as per request -->
               </v-card-text>
             </v-card>

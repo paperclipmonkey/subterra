@@ -1,0 +1,60 @@
+<?php
+
+namespace App\Notifications;
+
+use App\Channels\SmsChannel;
+use App\Models\Callout;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+
+class CalloutImminentNotification extends Notification implements ShouldQueue
+{
+    use Queueable;
+
+    public Callout $callout;
+
+    /**
+     * Create a new notification instance.
+     */
+    public function __construct(Callout $callout)
+    {
+        $this->callout = $callout;
+    }
+
+    /**
+     * Get the notification's delivery channels.
+     *
+     * @return array<int, string>
+     */
+    public function via(object $notifiable): array
+    {
+        return ['mail', SmsChannel::class];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): MailMessage
+    {
+        $url = url('/admin/callouts/' . $this->callout->id); // Link to callout admin view?
+
+        return (new MailMessage)
+                    ->subject('ALERT: Incoming Callout Due Soon - ' . $this->callout->cave->name)
+                    ->greeting('Heads Up')
+                    ->line('A callout is due in approximately 15 minutes.')
+                    ->line('**Cave:** ' . $this->callout->cave->name)
+                    ->line('**Due Time:** ' . $this->callout->callout_time->format('H:i'))
+                    ->line('Please stand by and ensure you are ready to respond if it becomes overdue.')
+                    ->action('View Callout', $url);
+    }
+
+    /**
+     * Get the SMS representation of the notification.
+     */
+    public function toSms(object $notifiable): string
+    {
+        return "ALERT: Callout at {$this->callout->cave->name} due in 15 mins ({$this->callout->callout_time->format('H:i')}). Please stand by. Subterra.";
+    }
+}

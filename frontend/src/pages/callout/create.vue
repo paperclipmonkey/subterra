@@ -188,7 +188,9 @@
 
                                             <v-text-field v-model="form.callout_time"
                                                 label="Callout Alarm Time (Panic Time)" type="datetime-local" outlined
-                                                class="mt-4" required></v-text-field>
+                                                class="mt-4" required
+                                                :hint="calloutDurationHint"
+                                                persistent-hint></v-text-field>
 
                                             <!-- Emergency Contact Removed -->
 
@@ -309,6 +311,27 @@ export default {
         isFormValid() {
             return this.form.callout_time &&
                 !this.phoneError;
+        },
+        calloutDurationHint() {
+            if (!this.form.callout_time) return '';
+            const end = moment(this.form.callout_time);
+            const now = moment();
+
+            if (!end.isValid()) return '';
+
+            if (end.isBefore(now)) {
+                return 'This time is in the past!';
+            }
+
+            const duration = moment.duration(end.diff(now));
+            const hours = Math.floor(duration.asHours());
+            const minutes = duration.minutes();
+
+            let text = `That is ${hours} hours`;
+            if (minutes > 0) text += ` and ${minutes} minutes`;
+            text += ' from now.';
+
+            return text;
         }
     },
     watch: {
