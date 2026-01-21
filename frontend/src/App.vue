@@ -5,7 +5,7 @@
       class="text-white cursor-pointer px-4" height="40" @click="router.push('/callout/active')"
       style="cursor: pointer; z-index: 9999;" window>
       <v-icon color="white" class="mr-2">mdi-alert-circle</v-icon>
-      <span class="font-weight-bold">ACTIVE CALLOUT IN PROGRESS</span>
+      <span class="font-weight-bold">OPEN CALLOUT IN PROGRESS</span>
       <v-spacer></v-spacer>
       <span class="d-none d-sm-flex">
         EXPECTED: {{ formatTime(appStore.user.active_callout.callout_time) }}

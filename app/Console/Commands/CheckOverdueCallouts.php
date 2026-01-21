@@ -25,7 +25,7 @@ class CheckOverdueCallouts extends Command
      *
      * @var string
      */
-    protected $description = 'Check for active callouts that have passed their panic time and trigger them.';
+    protected $description = 'Check for open callouts that have passed their panic time and trigger them.';
 
     /**
      * Execute the console command.

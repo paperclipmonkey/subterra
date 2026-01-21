@@ -32,7 +32,6 @@ return new class extends Migration
             
             // Timing
             $table->dateTime('callout_time');
-            $table->dateTime('expected_exit_time')->nullable();
 
             // Details
             $table->text('description'); // Fallback / Simple Description

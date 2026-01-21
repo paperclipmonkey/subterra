@@ -56,7 +56,7 @@
       <v-col cols="12" v-else-if="incidents.length === 0">
         <v-card class="pa-5 text-center">
           <v-icon size="64" color="grey lighten-2">mdi-check-circle-outline</v-icon>
-          <p class="grey--text mt-2">All quiet. No active callouts or recent incidents.</p>
+          <p class="grey--text mt-2">All quiet. No open callouts or recent incidents.</p>
         </v-card>
       </v-col>
 
@@ -165,8 +165,8 @@ export default {
     statusMessage() {
       if (this.systemStatus === 'CRTICAL') return 'Unacknowledged incidents require immediate attention.';
       if (this.systemStatus === 'ACTIVE') return 'Incident in progress.';
-      if (this.systemStatus === 'WATCHDOG ACTIVE') return this.callouts.length + ' active callouts monitored.';
-      return 'Systems operational. No active callouts.';
+      if (this.systemStatus === 'WATCHDOG ACTIVE') return this.callouts.length + ' open callouts monitored.';
+      return 'Systems operational. No open callouts.';
     },
     dutyOfficerColor() {
       if (!this.currentOfficer) return 'red darken-3';

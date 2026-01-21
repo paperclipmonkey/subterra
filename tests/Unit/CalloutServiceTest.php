@@ -91,7 +91,7 @@ class CalloutServiceTest extends TestCase
 
     public function test_triggers_callout_and_creates_incident()
     {
-        // Arrange: Existing active callout (assuming validation passed previously)
+        // Arrange: Existing open callout (assuming validation passed previously)
         $callout = \App\Models\Callout::factory()->create([
             'status' => 'active',
             'user_id' => $this->user->id,

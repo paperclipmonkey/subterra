@@ -39,7 +39,6 @@ class CalloutService
                 'cave_id' => $data['cave_id'] ?? null,
                 'exit_cave_id' => $data['exit_cave_id'] ?? null,
                 'callout_time' => $calloutTime,
-                'expected_exit_time' => isset($data['expected_exit_time']) ? Carbon::parse($data['expected_exit_time']) : null,
                 'description' => $data['description'] ?? 'Callout created via API', 
                 'trip_plan' => $data['trip_plan'] ?? null,
                 'car_details' => $data['car_details'] ?? null,

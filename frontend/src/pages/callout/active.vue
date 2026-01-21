@@ -149,7 +149,7 @@ const cancelCallout = async () => {
         await axios.post(`/api/callouts/${callout.value.id}/cancel`);
         toast.success("Callout Cancelled");
 
-        // Update user state to remove active callout
+        // Update user state to remove open callout
         await appStore.getUser();
 
         // Show convert dialog

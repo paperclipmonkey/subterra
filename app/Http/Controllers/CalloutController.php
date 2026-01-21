@@ -73,4 +73,40 @@ class CalloutController extends Controller
         $callout = Auth::user()->callouts()->with('participants')->findOrFail($id);
         return response()->json(['data' => $callout]);
     }
+
+    /**
+     * Get Open callouts for the public map.
+     */
+    public function active()
+    {
+        $callouts = \App\Models\Callout::query()
+            ->whereIn('status', ['active', 'triggered'])
+            ->with(['cave:id,name,location_lat,location_lng,location_name', 'participants'])
+            ->get()
+            ->map(function ($callout) {
+                // Resolve location: Cave takes precedence, then manual location data
+                $lat = null;
+                $lng = null;
+                $caveName = 'Unknown Location';
+
+                if ($callout->cave) {
+                    $lat = $callout->cave->location_lat;
+                    $lng = $callout->cave->location_lng;
+                    $caveName = $callout->cave->name;
+                } elseif (!empty($callout->location_data) && isset($callout->location_data['latitude'], $callout->location_data['longitude'])) {
+                    $lat = $callout->location_data['latitude'];
+                    $lng = $callout->location_data['longitude'];
+                }
+
+                return [
+                    'id' => $callout->id,
+                    'cave_name' => $caveName,
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'team_size' => $callout->participants->count(), 
+                ];
+            });
+
+        return response()->json(['data' => $callouts]);
+    }
 }

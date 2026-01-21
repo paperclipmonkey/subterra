@@ -44,7 +44,7 @@ class WebhookController extends Controller
 
     private function processSafeReply(string $phone)
     {
-        // Find active callout for this phone number
+        // Find open callout for this phone number
         // We match the user's phone number to the sender
         $callout = Callout::active()
             ->whereHas('user', function ($query) use ($phone) {
@@ -58,7 +58,7 @@ class WebhookController extends Controller
             return response()->json(['message' => 'Callout cancelled'], 200);
         }
 
-        Log::warning("Received SAFE reply from {$phone} but no active callout found.");
-        return response()->json(['message' => 'No active callout found'], 404);
+        Log::warning("Received SAFE reply from {$phone} but no open callout found.");
+        return response()->json(['message' => 'No open callout found'], 404);
     }
 }

@@ -46,7 +46,9 @@ class CaveController extends Controller
 
     public function update(UpdateCaveRequest $request, Cave $cave): CaveResource
     {
-        $cave->update($request->validated());
+        $data = $request->validated();
+        unset($data['hero_image'], $data['entrance_image']);
+        $cave->update($data);
 
         // Update tags
         $tags = collect($request->input('tags', []))->map(function ($tag) {

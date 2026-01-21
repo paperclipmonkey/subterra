@@ -27,6 +27,7 @@ Route::post('/webhooks/incoming-sms', [WebhookController::class, 'handleIncoming
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
+    Route::get('/callouts/active', [App\Http\Controllers\CalloutController::class, 'active']);
     Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel']);
     Route::get('/callouts/{id}', [App\Http\Controllers\CalloutController::class, 'show']);
 });

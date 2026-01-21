@@ -20,7 +20,6 @@ class Callout extends Model
         'cave_id',
         'exit_cave_id',
         'callout_time',
-        'expected_exit_time',
         'description',
         'trip_plan',
         'car_details',
@@ -37,7 +36,6 @@ class Callout extends Model
 
     protected $casts = [
         'callout_time' => 'datetime',
-        'expected_exit_time' => 'datetime',
         'location_data' => 'array',
         'request_data' => 'array',
     ];
