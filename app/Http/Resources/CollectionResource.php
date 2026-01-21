@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
+use App\Http\Resources\CaveResource;
+
 class CollectionResource extends JsonResource
 {
     /**
@@ -22,7 +24,7 @@ class CollectionResource extends JsonResource
             'description' => $this->description,
             'caves_count' => $this->caves_count,
             'photo_path' => $this->photo_path ? Storage::disk('media')->url($this->photo_path) : null,
-            'is_official' => $this->is_official,
+            'caves' => CaveResource::collection($this->whenLoaded('caves')),
         ];
     }
 }

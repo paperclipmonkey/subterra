@@ -35,10 +35,6 @@
                     {{ collection.caves_count }} Caves
                   </v-card-subtitle>
                 </div>
-                <v-chip v-if="collection.is_official" color="primary" size="small" variant="flat"
-                  class="font-weight-bold">
-                  Official
-                </v-chip>
               </div>
             </v-img>
 

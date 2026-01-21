@@ -75,7 +75,6 @@ class TestDataSeeder extends Seeder
                 'user_id' => $user->id,
                 'name' => 'Top 5 Beginner Caves',
                 'description' => 'A curated list of caves perfect for beginners.',
-                'is_official' => true,
             ]
         );
 
@@ -89,7 +88,6 @@ class TestDataSeeder extends Seeder
                 'user_id' => $user->id,
                 'name' => 'Vertical Challenges',
                 'description' => 'Caves that require SRT skills.',
-                'is_official' => false,
             ]
         );
         

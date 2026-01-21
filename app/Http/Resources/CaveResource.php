@@ -89,6 +89,13 @@ class CaveResource extends JsonResource
             'trips' => TripResource::collection($this->trips),
             'previously_done' => $previoslyDoneTag->tag === 'Previously Done',
             'collections' => CollectionResource::collection($this->whenLoaded('collections')),
+            'pivot' => $this->whenPivotLoaded('cave_collection', function () {
+                return [
+                    'description' => $this->pivot->description,
+                    'sort_order' => $this->pivot->sort_order,
+                ];
+            }),
+            'is_ticked' => $this->when(isset($this->is_ticked), $this->is_ticked),
         ];
     }
 }

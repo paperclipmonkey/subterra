@@ -120,4 +120,28 @@ class CaveTest extends TestCase
         $this->assertNull($cave->hero_image);
         $this->assertNull($cave->entrance_image);
     }
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_preserves_images_when_string_url_is_passed()
+    {
+        $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
+        $cave = Cave::factory()->create([
+            'hero_image' => 'caves/existing_hero.webp',
+            'entrance_image' => 'caves/existing_entrance.webp',
+        ]);
+
+        // Simulate sending back the URL string (what the frontend does)
+        $data = [
+            'hero_image' => 'https://example.com/caves/existing_hero.webp',
+            'entrance_image' => 'https://example.com/caves/existing_entrance.webp',
+        ];
+
+        $response = $this->putJson('/api/caves/' . $cave->slug, $data);
+
+        $response->assertOk();
+        $cave = $cave->fresh();
+        // The controller logic should ignore the string and NOT update the field, so it remains as it was in DB
+        // (Note: The controller does NOT download the image from the URL, it just ignores it, preserving DB value)
+        $this->assertEquals('caves/existing_hero.webp', $cave->hero_image);
+        $this->assertEquals('caves/existing_entrance.webp', $cave->entrance_image);
+    }
 }

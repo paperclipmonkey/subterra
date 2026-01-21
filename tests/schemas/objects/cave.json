@@ -103,9 +103,6 @@
               "string",
               "null"
             ]
-          },
-          "is_official": {
-            "type": "boolean"
           }
         },
         "required": [

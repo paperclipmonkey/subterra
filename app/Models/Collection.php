@@ -17,11 +17,10 @@ class Collection extends Model
         'slug',
         'description',
         'photo_path',
-        'is_official',
     ];
 
     protected $casts = [
-        'is_official' => 'boolean',
+        //
     ];
 
     public function getRouteKeyName()
@@ -53,6 +52,8 @@ class Collection extends Model
 
     public function caves(): BelongsToMany
     {
-        return $this->belongsToMany(Cave::class, 'cave_collection');
+        return $this->belongsToMany(Cave::class, 'cave_collection')
+            ->withPivot(['description', 'sort_order'])
+            ->orderByPivot('sort_order');
     }
 }

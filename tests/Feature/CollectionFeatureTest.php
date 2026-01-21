@@ -14,6 +14,13 @@ class CollectionFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \App\Models\Tag::create(['tag' => 'Previously Done', 'category' => 'system', 'type' => 'status']);
+        \App\Models\Tag::create(['tag' => 'Not Done Yet', 'category' => 'system', 'type' => 'status']);
+    }
+
     public function test_can_list_collections()
     {
         $user = User::factory()->create();
@@ -22,7 +29,7 @@ class CollectionFeatureTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/collections');
 
         $response->assertStatus(200)
-            ->assertJsonCount(3);
+            ->assertJsonStructure(['data' => [['id', 'name', 'slug', 'caves_count', 'photo_path']]]);
     }
 
     public function test_can_view_collection_by_slug()
@@ -33,15 +40,21 @@ class CollectionFeatureTest extends TestCase
             'name' => 'My Test Collection',
             'slug' => 'my-test-collection', // Explicitly set it to match expectation
         ]);
+        $cave = Cave::factory()->create();
+        $collection->caves()->attach($cave, ['description' => 'Test Note', 'sort_order' => 1]);
 
         $response = $this->actingAs($user)->getJson("/api/collections/{$collection->slug}");
 
         $response->assertStatus(200)
             ->assertJson([
-                'id' => $collection->id,
-                'name' => 'My Test Collection',
-                'slug' => 'my-test-collection',
-            ]);
+                'data' => [
+                    'id' => $collection->id,
+                    'name' => 'My Test Collection',
+                    'slug' => 'my-test-collection',
+                ]
+            ])
+            ->assertJsonPath('data.caves.0.pivot.description', 'Test Note')
+            ->assertJsonPath('data.caves.0.pivot.sort_order', 1);
     }
 
     public function test_collection_progress_calculation()
@@ -53,7 +66,7 @@ class CollectionFeatureTest extends TestCase
 
         // Initially not ticked
         $response = $this->actingAs($user)->getJson("/api/collections/{$collection->slug}");
-        $response->assertJsonPath('caves.0.is_ticked', false);
+        $response->assertJsonPath('data.caves.0.is_ticked', false);
 
         // Create a trip where user participated
         $trip = Trip::factory()->create();
@@ -76,7 +89,7 @@ class CollectionFeatureTest extends TestCase
         // If not, we might fail here, which is good TDD.
         
         $response = $this->actingAs($user)->getJson("/api/collections/{$collection->slug}");
-        $response->assertJsonPath('caves.0.is_ticked', true);
+        $response->assertJsonPath('data.caves.0.is_ticked', true);
         
         // Also verify that just being in the same system doesn't tick it (optional but good)
         // This confirms strict checking.
@@ -91,7 +104,27 @@ class CollectionFeatureTest extends TestCase
         $newData = ['name' => 'Updated Name'];
         
         $response = $this->actingAs($admin)->putJson("/api/collections/{$collection->slug}", $newData);
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+             ->assertJsonPath('data.name', 'Updated Name');
         $this->assertDatabaseHas('collections', ['id' => $collection->id, 'name' => 'Updated Name']);
+    }
+
+    public function test_create_collection_returns_consistent_response()
+    {
+         $user = User::factory()->create();
+         $cave = Cave::factory()->create();
+         
+         $data = [
+             'name' => 'New Collection',
+             'caves' => [
+                 ['id' => $cave->id, 'description' => 'Initial Note'],
+             ]
+         ];
+         
+         $response = $this->actingAs($user)->postJson('/api/collections', $data);
+         
+         $response->assertStatus(201)
+             ->assertJsonStructure(['data' => ['id', 'name', 'slug', 'caves' => [['pivot' => ['description']]]]])
+             ->assertJsonPath('data.caves.0.pivot.description', 'Initial Note');
     }
 }

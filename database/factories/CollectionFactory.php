@@ -20,7 +20,6 @@ class CollectionFactory extends Factory
             'user_id' => \App\Models\User::factory(),
             'name' => $this->faker->words(3, true),
             'description' => $this->faker->sentence(),
-            'is_official' => $this->faker->boolean(20),
             'slug' => $this->faker->slug(),
         ];
     }

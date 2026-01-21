@@ -7,11 +7,13 @@ use App\Models\Cave;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Resources\CollectionResource;
+
 class CollectionController extends Controller
 {
     public function index()
     {
-        return Collection::withCount('caves')->get();
+        return CollectionResource::collection(Collection::withCount('caves')->get());
     }
 
     public function show(Collection $collection)
@@ -29,20 +31,18 @@ class CollectionController extends Controller
                  $q->whereHas('participants', function ($u) use ($user) {
                     $u->where('users.id', $user->id);
                 });
-            }]);
+            }])->orderByPivot('sort_order');
         }]);
 
         // Transform collection to standard "is_ticked"
-        // Since we can't easily do "OR" in withExists in one go, we load both and merge in PHP.
-        // It's a small performance cost for better accuracy.
-        // Note: We are returning the model, so we can append an attribute or just let frontend handle it.
-        // But the frontend expects `is_ticked`.
         $collection->caves->each(function($cave) {
             $cave->is_ticked = $cave->is_entrance || $cave->is_exit;
+            // Ensure pivot data is accessible if needed, though it's on pivot property
+            // $cave->playlist_description = $cave->pivot->description; 
             unset($cave->is_entrance, $cave->is_exit);
         });
 
-        return $collection;
+        return new CollectionResource($collection);
     }
 
     public function store(Request $request)
@@ -50,15 +50,33 @@ class CollectionController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'photo_path' => 'nullable|string',
-            'is_official' => 'boolean',
+            'photo' => 'nullable|image|max:10485760', // 10MB
+            'caves' => 'nullable|array',
+            'caves.*.id' => 'required|exists:caves,id',
+            'caves.*.description' => 'nullable|string',
         ]);
 
-        $validated['user_id'] = Auth::id(); // Assign to current user
+        $validated['user_id'] = Auth::id();
+
+        if ($request->hasFile('photo')) {
+            $validated['photo_path'] = $request->file('photo')->store('collections', 'media');
+        }
+        
+        unset($validated['photo']);
+        unset($validated['caves']);
 
         $collection = Collection::create($validated);
 
-        return response()->json($collection, 201);
+        if ($request->has('caves')) {
+            $this->syncCaves($collection, $request->input('caves'));
+        }
+
+        // Reload caves with pivot data for consistent response
+        $collection->load(['caves' => function ($query) {
+             $query->orderByPivot('sort_order');
+        }]);
+
+        return new CollectionResource($collection);
     }
 
     public function update(Request $request, Collection $collection)
@@ -71,13 +89,31 @@ class CollectionController extends Controller
         $validated = $request->validate([
             'name' => 'string|max:255',
             'description' => 'nullable|string',
-            'photo_path' => 'nullable|string',
-            'is_official' => 'boolean',
+            'photo' => 'nullable|image|max:10485760',
+            'caves' => 'nullable|array',
+            'caves.*.id' => 'required|exists:caves,id',
+            'caves.*.description' => 'nullable|string',
         ]);
+
+        if ($request->hasFile('photo')) {
+            $validated['photo_path'] = $request->file('photo')->store('collections', 'media');
+        }
+        
+        unset($validated['photo']);
+        unset($validated['caves']);
 
         $collection->update($validated);
 
-        return response()->json($collection);
+        if ($request->has('caves')) {
+            $this->syncCaves($collection, $request->input('caves'));
+        }
+
+        // Reload caves with pivot data for consistent response
+        $collection->load(['caves' => function ($query) {
+             $query->orderByPivot('sort_order');
+        }]);
+
+        return new CollectionResource($collection);
     }
 
     public function destroy(Request $request, Collection $collection)
@@ -100,7 +136,9 @@ class CollectionController extends Controller
             'cave_id' => 'required|exists:caves,id',
         ]);
 
-        $collection->caves()->syncWithoutDetaching([$request->cave_id]);
+        // Default to append?
+        $count = $collection->caves()->count();
+        $collection->caves()->syncWithoutDetaching([$request->cave_id => ['sort_order' => $count]]);
 
         return response()->json(['message' => 'Cave added']);
     }
@@ -114,5 +152,21 @@ class CollectionController extends Controller
         $collection->caves()->detach($cave->id);
 
         return response()->json(['message' => 'Cave removed']);
+    }
+    
+    protected function syncCaves(Collection $collection, array $caves)
+    {
+        $syncData = [];
+        foreach ($caves as $index => $caveData) {
+            // Check if caveData is array or just ID (compatibility)
+            $id = is_array($caveData) ? $caveData['id'] : $caveData;
+            $description = is_array($caveData) ? ($caveData['description'] ?? null) : null;
+            
+            $syncData[$id] = [
+                'description' => $description,
+                'sort_order' => $index,
+            ];
+        }
+        $collection->caves()->sync($syncData);
     }
 }

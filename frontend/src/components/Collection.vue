@@ -18,8 +18,6 @@
 
       <v-container class="pb-6">
         <div class="d-flex align-center mb-2">
-          <v-chip v-if="collection.is_official" color="primary" class="font-weight-bold mr-2">Official
-            Collection</v-chip>
           <v-chip variant="outlined" color="white" class="backdrop-blur">{{ collection.caves_count }} Caves</v-chip>
         </div>
         <h1 class="text-h3 text-white font-weight-bold mb-2">{{ collection.name }}</h1>
@@ -57,14 +55,17 @@
             <v-row>
               <v-col v-for="cave in collection.caves" :key="cave.id" cols="12" md="6">
                 <v-card :to="`/caves/${cave.slug}`" link class="d-flex flex-row align-center rounded-lg" elevation="1"
-                  height="100">
-                  <v-avatar rounded="0" size="100">
-                    <v-img :src="cave.hero_image || 'https://via.placeholder.com/100'" cover></v-img>
+                  height="100%">
+                  <v-avatar rounded="0" size="100" class="h-100">
+                    <v-img :src="cave.hero_image || 'https://via.placeholder.com/100'" cover class="h-100"></v-img>
                   </v-avatar>
                   <div class="pa-4 flex-grow-1" style="min-width: 0;">
                     <div class="text-h6 font-weight-bold text-truncate">{{ cave.name }}</div>
                     <div class="text-caption text-grey-darken-1">
                       <v-icon size="small" start>mdi-map-marker</v-icon>{{ cave.location_name }}
+                    </div>
+                    <div v-if="cave.pivot && cave.pivot.description" class="text-body-2 mt-2 font-italic text-grey-darken-3 markdown-body">
+                      <VueMarkdown :source="cave.pivot.description" />
                     </div>
                   </div>
                   <div class="pr-4 d-flex align-center">
