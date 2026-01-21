@@ -10,14 +10,7 @@
             </template>
           </v-tooltip>
         </v-btn>
-        <v-btn v-if="userStore.user.is_admin" key="admin" to="/admin" title="Admin" icon>
-          <v-icon icon="mdi-account-cog" />
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on, attrs }">
-              <span v-bind="attrs" :v-on="attrs">Admin</span>
-            </template>
-          </v-tooltip>
-        </v-btn>
+
       </v-bottom-navigation>
     </v-footer>
   </div>
@@ -45,9 +38,10 @@ const items = [
   //   href: '/collections',
   // },
   {
-    title: 'News',
-    icon: `mdi-newspaper`,
-    href: '/news',
+    title: 'Callout',
+    icon: `mdi-alert-octagram`,
+    href: '/callout',
+    class: 'v-btn--active-warning' // Optional styling if needed, or just standard
   },
   {
     title: 'Profile',

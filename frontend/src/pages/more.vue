@@ -20,11 +20,29 @@
                 </v-card>
             </v-col>
             <v-col cols="12" md="6">
-                <v-card :to="{ path: '/callout' }" link height="150" class="d-flex align-center justify-center">
+                <v-card :to="{ path: '/news' }" link height="150" class="d-flex align-center justify-center">
                     <div class="text-center">
-                        <v-icon size="48" color="warning" class="mb-2">mdi-alert-octagram</v-icon>
-                        <div class="text-h5">Safety Callout</div>
-                        <div class="text-body-2 text-medium-emphasis">Notify Cave Rescue if you are overdue</div>
+                        <v-icon size="48" color="success" class="mb-2">mdi-newspaper</v-icon>
+                        <div class="text-h5">News</div>
+                        <div class="text-body-2 text-medium-emphasis">Latest club updates and announcements</div>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="6" v-if="userStore.user.is_admin">
+                <v-card :to="{ path: '/admin' }" link height="150" class="d-flex align-center justify-center">
+                    <div class="text-center">
+                        <v-icon size="48" color="error" class="mb-2">mdi-alert-decagram</v-icon>
+                        <div class="text-h5">Callout Admin</div>
+                        <div class="text-body-2 text-medium-emphasis">Incidents & Operations</div>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="6" v-if="userStore.user.is_admin">
+                <v-card :to="{ path: '/admin/system' }" link height="150" class="d-flex align-center justify-center">
+                    <div class="text-center">
+                        <v-icon size="48" color="blue-grey" class="mb-2">mdi-cogs</v-icon>
+                        <div class="text-h5">System Admin</div>
+                        <div class="text-body-2 text-medium-emphasis">Users, Clubs & Data</div>
                     </div>
                 </v-card>
             </v-col>
@@ -33,4 +51,7 @@
 </template>
 
 <script setup>
+import { useAppStore } from '@/stores/app';
+
+const userStore = useAppStore();
 </script>
