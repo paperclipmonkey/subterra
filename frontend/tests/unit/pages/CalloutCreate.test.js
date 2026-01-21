@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import CalloutIndex from '@/pages/callout/index.vue'
+import CalloutIndex from '@/pages/callout/create.vue'
 
 // Mock dependencies
 const pushMock = vi.fn()
@@ -69,7 +69,11 @@ describe('Callout Wizard', () => {
                     'v-card-title': true,
                     'v-card-actions': true,
                     'v-avatar': true,
-                    'v-img': true
+                    'v-img': true,
+                    'v-expand-transition': true,
+                    'v-icon': true,
+                    'v-textarea': true,
+                    'v-spacer': true,
                 }
             }
         })
@@ -151,6 +155,12 @@ describe('Callout Wizard', () => {
                     'v-window': { template: '<div><slot /></div>' },
                     'v-window-item': { template: '<div><slot /></div>', props: ['value'] },
                     'v-btn': { template: '<button :disabled="disabled"><slot /></button>', props: ['disabled'] },
+                    'v-img': true,
+                    'v-avatar': true,
+                    'v-expand-transition': true,
+                    'v-icon': true,
+                    'v-textarea': true,
+                    'v-spacer': true,
                 }
             }
         })

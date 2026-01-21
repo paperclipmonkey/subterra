@@ -55,6 +55,9 @@ describe('Profile.vue', () => {
 
         const wrapper = mount(Profile, {
             global: {
+                directives: {
+                    tooltip: {}
+                },
                 stubs: {
                     'v-container': { template: '<div><slot /></div>' },
                     'v-row': { template: '<div><slot /></div>' },
@@ -114,6 +117,9 @@ describe('Profile.vue', () => {
 
         const wrapper = mount(Profile, {
             global: {
+                directives: {
+                    tooltip: {}
+                },
                 stubs: {
                     'v-container': { template: '<div><slot /></div>' },
                     'v-row': { template: '<div><slot /></div>' },
@@ -169,6 +175,9 @@ describe('Profile.vue', () => {
 
         const wrapper = mount(Profile, {
             global: {
+                directives: {
+                    tooltip: {}
+                },
                 stubs: {
                     'v-container': { template: '<div><slot /></div>' },
                     'v-row': { template: '<div><slot /></div>' },
