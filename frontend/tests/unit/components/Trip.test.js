@@ -14,10 +14,11 @@ vi.mock('vue-markdown-render', () => ({
 
 // Mock moment
 vi.mock('moment', () => {
+  const isDateValid = (date) => !!date && date !== 'invalid'
   const mockMoment = (date) => ({
-    isValid: () => !!date && date !== 'invalid',
+    isValid: () => isDateValid(date),
     format: (format) => {
-      if (!date || date === 'invalid') return 'Invalid Date'
+      if (!isDateValid(date)) return 'Invalid Date'
       if (format === 'ddd, D MMM YYYY') return 'Mon, 15 Dec 2023'
       if (format === 'HH:mm') return '14:30'
       return '2023-12-15'
