@@ -24,7 +24,12 @@
                                     item-value="id" label="Club" required :loading="loadingClubs"></v-autocomplete>
                             </v-col>
                             <v-col cols="12">
-                                <v-textarea v-model="editedHut.description" label="Description"></v-textarea>
+                                <div class="text-subtitle-2 mb-2">Description</div>
+                                <MilkdownEditor 
+                                    v-model="editedHut.description" 
+                                    @change="updateDescription"
+                                    placeholder="Write description here..." 
+                                />
                             </v-col>
                             <v-col cols="12">
                                 <v-text-field v-model="editedHut.external_url" label="External URL"></v-text-field>
@@ -39,6 +44,10 @@
                             <v-col cols="12" md="6">
                                 <v-text-field v-model.number="editedHut.location_lng" label="Longitude"
                                     type="number"></v-text-field>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-file-input v-model="editedHut.image" label="Hut Image" accept="image/*"
+                                    prepend-icon="mdi-camera" show-size truncate-length="50"></v-file-input>
                             </v-col>
                             <v-col cols="12">
                                 <v-combobox v-model="editedHut.amenities" label="Amenities" multiple chips
@@ -68,6 +77,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useHutStore } from '@/stores/huts'
 import { mande } from 'mande'
+import { convertFileToBase64 } from '@/utilities.js'
+import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
 const props = defineProps({
     hut: {
@@ -94,7 +105,8 @@ const defaultHut = {
     location_lat: null,
     location_lng: null,
     club_id: null,
-    amenities: []
+    amenities: [],
+    image: null
 }
 
 const editedHut = ref({ ...defaultHut })
@@ -131,6 +143,12 @@ watch(() => props.hut, (newVal) => {
     }
 }, { immediate: true })
 
+const updateDescription = (event) => {
+    if (event && event.markdown) {
+        editedHut.value.description = event.markdown;
+    }
+}
+
 const close = () => {
     dialog.value = false
     if (props.hut) {
@@ -143,6 +161,13 @@ const close = () => {
 
 const save = async () => {
     try {
+        if (editedHut.value.image instanceof File) {
+            editedHut.value.image = await convertFileToBase64(editedHut.value.image)
+        } else if (Array.isArray(editedHut.value.image) && editedHut.value.image.length > 0 && editedHut.value.image[0] instanceof File) {
+            // Vuetify file input can return an array
+            editedHut.value.image = await convertFileToBase64(editedHut.value.image[0])
+        }
+
         if (isNew.value) {
             await hutStore.createHut(editedHut.value)
         } else {

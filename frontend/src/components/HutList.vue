@@ -20,7 +20,7 @@
                     <v-card :to="`/huts/${hut.id}`" link>
                         <!-- Placeholder image if mostly not available, or map snapshot -->
                         <v-img height="200px" cover
-                            src="https://images.unsplash.com/photo-1499678329028-101435549a4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+                            :src="hut.image_url"
                             gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
                             <v-card-title class="text-white align-end d-flex fill-height">{{ hut.name }}</v-card-title>
                         </v-img>

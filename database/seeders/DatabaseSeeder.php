@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             TestDataSeeder::class,
             TagSeeder::class,
             CaveSeeder::class,
+            HutSeeder::class,
         ]);
     }
 }

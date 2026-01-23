@@ -4,7 +4,7 @@
     </v-container>
     <v-container v-else-if="hut">
         <v-img height="300"
-            src="https://images.unsplash.com/photo-1499678329028-101435549a4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
+            :src="hut.image_url"
             cover class="mb-4 rounded">
             <div class="position-absolute top-0 left-0 pa-4 d-flex" style="z-index: 1;">
                 <v-btn icon="mdi-arrow-left" variant="tonal" color="white" @click="$router.push('/huts')"
@@ -28,7 +28,9 @@
                 <v-card class="mb-4">
                     <v-card-title>About</v-card-title>
                     <v-card-text>
-                        <p v-if="hut.description">{{ hut.description }}</p>
+                        <div class="vue-markdown" v-if="hut.description">
+                             <VueMarkdownRender :source="hut.description" />
+                        </div>
                         <p v-else class="text-grey font-italic">No description available.</p>
 
                         <v-divider class="my-3"></v-divider>
@@ -131,6 +133,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import VueMarkdownRender from 'vue-markdown-render'
 import { useRoute } from 'vue-router'
 import { useHutStore } from '@/stores/huts'
 
@@ -175,5 +178,61 @@ const lnglat = computed(() => {
 .backdrop-blur {
     backdrop-filter: blur(4px);
     background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+:deep(.vue-markdown) {
+    font-family: Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(0, 0, 0, 0.87);
+}
+
+:deep(.vue-markdown h1),
+:deep(.vue-markdown h2),
+:deep(.vue-markdown h3) {
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+}
+
+:deep(.vue-markdown p) {
+    margin-bottom: 16px;
+    color: rgba(0, 0, 0, 0.87);
+}
+
+:deep(.vue-markdown a) {
+    color: #1976D2;
+    text-decoration: none;
+}
+
+:deep(.vue-markdown a:hover) {
+    text-decoration: underline;
+}
+
+:deep(.vue-markdown ul),
+:deep(.vue-markdown ol) {
+    padding-left: 24px;
+    margin-bottom: 16px;
+    color: rgba(0, 0, 0, 0.87);
+}
+
+:deep(.vue-markdown li) {
+    margin-bottom: 8px;
+}
+
+:deep(.vue-markdown code) {
+    background-color: #f5f5f5;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    color: #d32f2f;
+}
+
+:deep(.vue-markdown pre) {
+    background-color: #f5f5f5;
+    padding: 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    color: #333;
 }
 </style>
