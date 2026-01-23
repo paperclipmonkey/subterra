@@ -25,6 +25,7 @@ vi.mock('moment', () => {
     const momentFn = (date) => ({
         format: () => 'formatted-date',
         diff: () => 3600000, // 1 hour
+        isValid: () => true,
     })
     momentFn.duration = (diff) => ({
         asHours: () => 1,

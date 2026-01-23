@@ -6,8 +6,9 @@ import TripList from '@/components/TripList.vue'
 // Mock moment
 vi.mock('moment', () => {
   const mockMoment = (date) => ({
-    isValid: () => true,
+    isValid: () => !!date && date !== 'invalid',
     format: (format) => {
+      if (!date || date === 'invalid') return 'Invalid Date'
       if (format === 'DD-MM-YYYY') return '15-12-2023'
       return '2023-12-15'
     }
@@ -81,6 +82,30 @@ describe('TripList', () => {
 
     const formattedDate = wrapper.vm.formatDate('2023-12-15T10:00:00Z')
     expect(formattedDate).toBe('15-12-2023')
+  })
+
+  it('returns "~" for invalid dates', () => {
+    const wrapper = mount(TripList, {
+      global: {
+        plugins: [createPinia()],
+        stubs: { 'v-menu': true, 'v-icon': true }
+      }
+    })
+
+    const formattedDate = wrapper.vm.formatDate('invalid')
+    expect(formattedDate).toBe('~')
+  })
+
+  it('returns "~" for null dates', () => {
+    const wrapper = mount(TripList, {
+      global: {
+        plugins: [createPinia()],
+        stubs: { 'v-menu': true, 'v-icon': true }
+      }
+    })
+
+    const formattedDate = wrapper.vm.formatDate(null)
+    expect(formattedDate).toBe('~')
   })
 
   it('renders component without errors', () => {

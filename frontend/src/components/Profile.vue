@@ -189,9 +189,9 @@
                                  class="d-flex flex-column align-center justify-center bg-blue-lighten-5 rounded-lg pa-2 mr-4"
                                  style="width: 50px; height: 50px;">
                                  <div class="text-caption text-blue font-weight-bold text-uppercase"
-                                    style="line-height: 1;">{{ moment(trip.start_time).format('MMM') }}</div>
+                                    style="line-height: 1;">{{ formatTripDateMonth(trip.start_time) }}</div>
                                  <div class="text-h6 text-blue-darken-2 font-weight-black" style="line-height: 1;">{{
-                                    moment(trip.start_time).format('D') }}</div>
+                                    formatTripDateDay(trip.start_time) }}</div>
                               </div>
                            </template>
 
@@ -289,6 +289,16 @@ const openMedalModal = (medal) => {
 }
 const selectedMedal = ref({});
 const isMedalModalOpen = ref(false);
+
+const formatTripDateMonth = (date) => {
+   const parsed = moment(date)
+   return parsed.isValid() ? parsed.format('MMM') : '-'
+}
+
+const formatTripDateDay = (date) => {
+   const parsed = moment(date)
+   return parsed.isValid() ? parsed.format('D') : '-'
+}
 
 const formatNumber = (num) => {
    return new Intl.NumberFormat().format(num || 0)

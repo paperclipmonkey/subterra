@@ -243,8 +243,14 @@ const heroImage = computed(() => {
    return ''
 })
 
-const formatDate = (date) => moment(date).format('ddd, D MMM YYYY')
-const formatTime = (date) => moment(date).format('HH:mm')
+const formatDate = (date) => {
+   const parsed = moment(date)
+   return parsed.isValid() ? parsed.format('ddd, D MMM YYYY') : '-'
+}
+const formatTime = (date) => {
+   const parsed = moment(date)
+   return parsed.isValid() ? parsed.format('HH:mm') : '-'
+}
 const formatDuration = (start, end) => {
    if (!end) return '-'
    const duration = moment.duration(moment(end).diff(moment(start)));
