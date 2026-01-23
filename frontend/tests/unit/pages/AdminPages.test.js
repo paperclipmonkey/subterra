@@ -36,6 +36,19 @@ describe('AdminPagesIndex.vue', () => {
                         template: '<div><div v-for="item in items" :key="item.id" class="row">{{ item.title }}</div></div>'
                     },
                     'v-icon': true,
+                    'ActiveCalloutMap': { template: '<div>Map</div>' },
+                    'v-expand-transition': { template: '<div><slot /></div>' },
+                    'v-progress-linear': true,
+                    'v-chip': true,
+                    'v-divider': true,
+                    'v-alert': true,
+                    'v-card-text': true,
+                    'v-card-title': true,
+                    'v-card-actions': true,
+                    'v-expansion-panels': { template: '<div><slot /></div>' },
+                    'v-expansion-panel': { template: '<div><slot /></div>' },
+                    'v-expansion-panel-header': { template: '<div><slot /></div>' },
+                    'v-expansion-panel-content': { template: '<div><slot /></div>' }
                 }
             }
         })

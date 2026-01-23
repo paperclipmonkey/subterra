@@ -121,6 +121,9 @@ class CalloutService
                  \Illuminate\Support\Facades\Log::error("Email Failure creating callout: " . $e->getMessage());
                  // Don't rollback transaction for email failure
             }
+            
+            // 7. Dispatch Created Event (Slack, etc)
+            \App\Events\CalloutCreated::dispatch($callout);
 
             return $callout;
         });

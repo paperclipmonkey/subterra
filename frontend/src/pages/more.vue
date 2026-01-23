@@ -29,7 +29,7 @@
                 </v-card>
             </v-col>
             <v-col cols="12" md="6" v-if="userStore.user.is_admin">
-                <v-card :to="{ path: '/admin' }" link height="150" class="d-flex align-center justify-center">
+                <v-card :to="{ path: '/admin/callout' }" link height="150" class="d-flex align-center justify-center">
                     <div class="text-center">
                         <v-icon size="48" color="error" class="mb-2">mdi-alert-decagram</v-icon>
                         <div class="text-h5">Callout Admin</div>

@@ -102,11 +102,7 @@ class CheckOverdueCallouts extends Command
     {
         $this->info("Warning DO about imminent callout ID: {$callout->id}");
         
-        // Notify designated On-Call Officer (or all admins if none?)
-        // Assuming we notify all admins for now as 'Duty Officer' is a role not just a shift?
-        // Or strictly the person on shift.
-        // Let's try to find the actual shift person first.
-        
+        // 1. Notify Duty Officer(s)
         $shift = \App\Models\OnCallShift::where('start_at', '<=', now())
             ->where('end_at', '>=', now())
             ->first();
@@ -122,6 +118,17 @@ class CheckOverdueCallouts extends Command
 
         if ($notifiables->isNotEmpty()) {
             Notification::send($notifiables, new \App\Notifications\CalloutImminentNotification($callout));
+        }
+
+        // 2. Notify Callout Contact (User/Participants) - NEW
+        if ($callout->user) {
+             // Only notify the creator for now, or maybe the emergency contact? 
+             // Requirement: "both the DO and the contact for the callout party"
+             // Assuming "contact" refers to the user who created it (the caver), advising them to check in.
+             
+             // We use a new notification class for this specific messaging.
+             $callout->user->notify(new \App\Notifications\CalloutImminentContactNotification($callout));
+             $this->info("Sent imminent warning to user ID: {$callout->user->id}");
         }
     }
 
@@ -163,7 +170,6 @@ class CheckOverdueCallouts extends Command
             $callout->refresh();
 
             // 3. Notify Admins (Trigger Alert)
-            // Ideally: Notify Current DO primarily. Check OnCallShift.
              $shift = \App\Models\OnCallShift::where('start_at', '<=', now())
                 ->where('end_at', '>=', now())
                 ->first();
@@ -173,8 +179,6 @@ class CheckOverdueCallouts extends Command
                 $notifiables->push($shift->user);
             }
             
-            // Always notify other admins too? The trigger is serious.
-            // Let's stick to existing logic: Notify ALL admins for a trigger.
             $admins = User::where('is_admin', true)->where('is_active', true)->get();
             
             if ($admins->isEmpty()) {
@@ -182,6 +186,16 @@ class CheckOverdueCallouts extends Command
             } else {
                 Notification::send($admins, new OverdueCalloutNotification($callout));
                 $this->info("Sent notifications to " . $admins->count() . " admins.");
+            }
+
+            // 4. Send Slack Alert - NEW
+            try {
+                $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
+                $msg = "🚨 *URGENT: CALLOUT OVERDUE*\nLocation: *{$caveName}*\nUser: {$callout->user->name}\nDue: {$callout->callout_time->format('H:i')}\n<" . url('/admin/incidents/' . $incident->id) . "|View Incident>";
+                
+                \Spatie\SlackAlerts\Facades\SlackAlert::to('callouts')->message($msg);
+            } catch (\Exception $e) {
+                Log::error("Failed to send Overdue Slack Alert: " . $e->getMessage());
             }
         });
     }

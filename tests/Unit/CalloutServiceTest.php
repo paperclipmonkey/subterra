@@ -50,6 +50,8 @@ class CalloutServiceTest extends TestCase
             ->once()
             ->with('999', Mockery::pattern('/listed on a callout/'));
 
+        \Illuminate\Support\Facades\Event::fake();
+
         // Act
         $callout = $this->service->create($this->user, [
             'callout_time' => $tomorrowNoon->toDateTimeString(),
@@ -73,6 +75,10 @@ class CalloutServiceTest extends TestCase
             'name' => 'Bob',
             'phone' => '999',
         ]);
+
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\CalloutCreated::class, function ($event) use ($callout) {
+            return $event->callout->id === $callout->id;
+        });
     }
 
     public function test_fails_when_no_admin_is_on_call()

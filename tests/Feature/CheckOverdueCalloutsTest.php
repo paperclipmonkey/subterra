@@ -61,6 +61,13 @@ class CheckOverdueCalloutsTest extends TestCase
                 return $notification->callout->id === $callout->id;
             }
         );
+
+        // Verify Contact also notified
+        $user = $callout->user; // Factory creates user
+        Notification::assertSentTo(
+             [$user],
+             \App\Notifications\CalloutImminentContactNotification::class
+        );
     }
 
     public function test_does_not_warn_if_callout_is_not_in_imminent_window()

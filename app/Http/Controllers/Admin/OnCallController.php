@@ -52,6 +52,8 @@ class OnCallController extends Controller
 
         $shift = OnCallShift::create($data);
 
+        \App\Events\OnCallShiftCreated::dispatch($shift);
+
         return response()->json([
             'message' => 'Shift created',
             'data' => $shift->load('user')
