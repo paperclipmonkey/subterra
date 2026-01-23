@@ -134,13 +134,18 @@ CSV;
             $club = null;
             // If they are a caving club then create or find the club
             if (isset($data['caveclub']) && strtoupper($data['caveclub']) === 'TRUE') {
-                $club = Club::firstOrCreate(
-                    ['name' => $clubName],
-                    [
-                        'slug' => Str::slug($clubName),
-                        'is_active' => true,
-                    ]
-                );
+                $slug = Str::slug($clubName);
+                $club = Club::where('slug', $slug)->first();
+
+                if (!$club) {
+                   $club = Club::firstOrCreate(
+                        ['name' => $clubName],
+                        [
+                            'slug' => $slug,
+                            'is_active' => true,
+                        ]
+                    );
+                }
             }
 
             // Map fields
