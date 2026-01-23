@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import CalloutIndex from '@/pages/callout/index.vue'
 
 // Mock dependencies
@@ -35,6 +35,25 @@ vi.mock('@/components/ActiveCalloutMap.vue', () => ({
     default: { template: '<div class="active-callout-map"></div>' }
 }))
 
+// Shared stub configuration
+const getStubConfig = () => ({
+    'v-container': { template: '<div><slot /></div>' },
+    'v-row': { template: '<div><slot /></div>' },
+    'v-col': { template: '<div><slot /></div>' },
+    'v-card': { template: '<div><slot /></div>' },
+    'v-card-text': { template: '<div><slot /></div>' },
+    'v-icon': true,
+    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+    'v-btn': { template: '<button :disabled="disabled" :to="to"><slot /></button>', props: ['disabled', 'to'] },
+    'v-avatar': { template: '<div><slot /></div>' },
+    'v-img': true,
+    'v-expansion-panels': { template: '<div><slot /></div>' },
+    'v-expansion-panel': { template: '<div><slot /></div>' },
+    'v-expansion-panel-title': { template: '<div><slot /></div>' },
+    'v-expansion-panel-text': { template: '<div><slot /></div>' },
+    'ActiveCalloutMap': { template: '<div class="active-callout-map"></div>' }
+})
+
 describe('Callout Index Page', () => {
     it('enables START CALLOUT button when duty officer is on call', async () => {
         const axios = await import('axios')
@@ -47,28 +66,12 @@ describe('Callout Index Page', () => {
 
         const wrapper = mount(CalloutIndex, {
             global: {
-                stubs: {
-                    'v-container': { template: '<div><slot /></div>' },
-                    'v-row': { template: '<div><slot /></div>' },
-                    'v-col': { template: '<div><slot /></div>' },
-                    'v-card': { template: '<div><slot /></div>' },
-                    'v-card-text': { template: '<div><slot /></div>' },
-                    'v-icon': true,
-                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
-                    'v-btn': { template: '<button :disabled="disabled" :to="to"><slot /></button>', props: ['disabled', 'to'] },
-                    'v-avatar': { template: '<div><slot /></div>' },
-                    'v-img': true,
-                    'v-expansion-panels': { template: '<div><slot /></div>' },
-                    'v-expansion-panel': { template: '<div><slot /></div>' },
-                    'v-expansion-panel-title': { template: '<div><slot /></div>' },
-                    'v-expansion-panel-text': { template: '<div><slot /></div>' },
-                    'ActiveCalloutMap': { template: '<div class="active-callout-map"></div>' }
-                }
+                stubs: getStubConfig()
             }
         })
 
-        // Wait for mounted hooks to complete
-        await new Promise(resolve => setTimeout(resolve, 10))
+        // Wait for all promises to resolve
+        await flushPromises()
         await wrapper.vm.$nextTick()
 
         // Verify duty officer is loaded
@@ -92,28 +95,12 @@ describe('Callout Index Page', () => {
 
         const wrapper = mount(CalloutIndex, {
             global: {
-                stubs: {
-                    'v-container': { template: '<div><slot /></div>' },
-                    'v-row': { template: '<div><slot /></div>' },
-                    'v-col': { template: '<div><slot /></div>' },
-                    'v-card': { template: '<div><slot /></div>' },
-                    'v-card-text': { template: '<div><slot /></div>' },
-                    'v-icon': true,
-                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
-                    'v-btn': { template: '<button :disabled="disabled" :to="to"><slot /></button>', props: ['disabled', 'to'] },
-                    'v-avatar': { template: '<div><slot /></div>' },
-                    'v-img': true,
-                    'v-expansion-panels': { template: '<div><slot /></div>' },
-                    'v-expansion-panel': { template: '<div><slot /></div>' },
-                    'v-expansion-panel-title': { template: '<div><slot /></div>' },
-                    'v-expansion-panel-text': { template: '<div><slot /></div>' },
-                    'ActiveCalloutMap': { template: '<div class="active-callout-map"></div>' }
-                }
+                stubs: getStubConfig()
             }
         })
 
-        // Wait for mounted hooks to complete
-        await new Promise(resolve => setTimeout(resolve, 10))
+        // Wait for all promises to resolve
+        await flushPromises()
         await wrapper.vm.$nextTick()
 
         // Verify no duty officer is loaded
@@ -141,28 +128,12 @@ describe('Callout Index Page', () => {
 
         const wrapper = mount(CalloutIndex, {
             global: {
-                stubs: {
-                    'v-container': { template: '<div><slot /></div>' },
-                    'v-row': { template: '<div><slot /></div>' },
-                    'v-col': { template: '<div><slot /></div>' },
-                    'v-card': { template: '<div><slot /></div>' },
-                    'v-card-text': { template: '<div><slot /></div>' },
-                    'v-icon': true,
-                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
-                    'v-btn': { template: '<button :disabled="disabled"><slot /></button>', props: ['disabled'] },
-                    'v-avatar': { template: '<div><slot /></div>' },
-                    'v-img': true,
-                    'v-expansion-panels': { template: '<div><slot /></div>' },
-                    'v-expansion-panel': { template: '<div><slot /></div>' },
-                    'v-expansion-panel-title': { template: '<div><slot /></div>' },
-                    'v-expansion-panel-text': { template: '<div><slot /></div>' },
-                    'ActiveCalloutMap': { template: '<div class="active-callout-map"></div>' }
-                }
+                stubs: getStubConfig()
             }
         })
 
-        // Wait for mounted hooks to complete
-        await new Promise(resolve => setTimeout(resolve, 10))
+        // Wait for all promises to resolve
+        await flushPromises()
         await wrapper.vm.$nextTick()
 
         // Verify messaging doesn't use "unmonitored"
