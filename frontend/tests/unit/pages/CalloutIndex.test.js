@@ -9,7 +9,12 @@ vi.mock('vue-router', () => ({
 
 // Mock data
 const mockActiveCallouts = []
-const mockDutyOfficer = { name: 'Officer Jenny', photo: null, next_gap_start: '2026-01-24T10:00:00Z' }
+// Use a dynamic date that's always in the future
+const mockDutyOfficer = { 
+    name: 'Officer Jenny', 
+    photo: null, 
+    next_gap_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() 
+}
 
 // Mock Axios
 vi.mock('axios', () => ({
