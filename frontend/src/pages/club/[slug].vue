@@ -72,7 +72,7 @@
             <v-card-title>Recent Trips</v-card-title>
             <v-list v-if="recentTrips.length > 0">
               <v-list-item v-for="trip in recentTrips" :key="trip.id" :to="`/trips/${trip.id}`"
-                :title="trip.name || 'Untitled Trip'" :subtitle="`On ${moment(trip.start_time).format('YYYY-MM-DD')}`">
+                :title="trip.name || 'Untitled Trip'" :subtitle="`On ${moment(trip.start_time).isValid() ? moment(trip.start_time).format('YYYY-MM-DD') : '-'}`">
               </v-list-item>
             </v-list>
             <v-card-text v-else>No recent trips found.</v-card-text>

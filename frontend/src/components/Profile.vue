@@ -189,9 +189,9 @@
                                  class="d-flex flex-column align-center justify-center bg-blue-lighten-5 rounded-lg pa-2 mr-4"
                                  style="width: 50px; height: 50px;">
                                  <div class="text-caption text-blue font-weight-bold text-uppercase"
-                                    style="line-height: 1;">{{ moment(trip.start_time).format('MMM') }}</div>
+                                    style="line-height: 1;">{{ moment(trip.start_time).isValid() ? moment(trip.start_time).format('MMM') : '-' }}</div>
                                  <div class="text-h6 text-blue-darken-2 font-weight-black" style="line-height: 1;">{{
-                                    moment(trip.start_time).format('D') }}</div>
+                                    moment(trip.start_time).isValid() ? moment(trip.start_time).format('D') : '-' }}</div>
                               </div>
                            </template>
 
