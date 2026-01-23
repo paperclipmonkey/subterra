@@ -38,13 +38,13 @@
                                     Online: {{ onCallOfficer.name }}
                                 </div>
                                 <div class="text-h6 error--text" v-else>
-                                    Unmonitored / No Officer On Call
+                                    No Officer On Call
                                 </div>
                                 <div class="text-body-2" v-if="onCallOfficer">
                                     Monitoring open callouts until {{ formatFullDate(onCallOfficer.next_gap_start) }}
                                 </div>
                                 <div class="text-body-2" v-else>
-                                    Please ensure you leave details with a trusted friend.
+                                    Callouts cannot be created at this time. Please leave details with a trusted friend.
                                 </div>
                             </div>
                         </div>
@@ -85,7 +85,11 @@
                     </div>
                     
                     <div v-else>
-                        <v-btn x-large color="warning" size="x-large" block to="/callout/create" class="mb-4 font-weight-bold elevation-4">
+                        <v-alert v-if="!onCallOfficer" type="warning" variant="tonal" class="mb-4" border="start">
+                            <div class="text-h6">Callouts Not Available</div>
+                            <div>There is no Duty Officer on call at this time. Please ensure you leave callout details with a trusted friend before heading underground.</div>
+                        </v-alert>
+                        <v-btn x-large color="warning" size="x-large" block to="/callout/create" class="mb-4 font-weight-bold elevation-4" :disabled="!onCallOfficer">
                             START CALLOUT
                             <v-icon right class="ml-2">mdi-arrow-right</v-icon>
                         </v-btn>
