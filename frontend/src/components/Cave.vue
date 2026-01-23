@@ -5,6 +5,7 @@
       <v-col cols="12" class="d-flex align-center">
         <v-btn icon="mdi-arrow-left" variant="text" @click="$router.push('/caves')" class="mr-2"></v-btn>
         <v-spacer></v-spacer>
+        <CorrectionModal v-if="cave" entity-type="cave" :entity-id="cave.id" :entity-name="cave.name" class="mr-2" />
         <v-btn v-if="appStore.user.is_admin" variant="text" append-icon="mdi-pencil"
           @click="$router.push('/caves/' + route.params.id + '/edit')">
           Edit Cave
@@ -312,6 +313,7 @@ import MarkAsDone from './MarkAsDone.vue'
 import VueMarkdown from 'vue-markdown-render'
 import { markCaveAsDone } from '@/stores/markAsDone';
 import { useCollectionStore } from '@/stores/collections';
+import CorrectionModal from '@/components/CorrectionModal.vue'
 
 import {
   MglMap,

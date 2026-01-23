@@ -6,7 +6,8 @@ return [
      */
     'webhook_urls' => [
         'signups' => env('SLACK_SIGNUPS_WEBHOOK'),
-        'trips' => env('SLACK_TRIPS_CHANNEL'),
+        'trips' => env('SLACK_TRIPS_WEBHOOK'),
+        'corrections' => env('SLACK_CORRECTIONS_WEBHOOK'),
     ],
 
     /*

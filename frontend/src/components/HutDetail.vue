@@ -25,8 +25,11 @@
 
         <v-row>
             <v-col cols="12" md="8">
-                <v-card class="mb-4">
-                    <v-card-title>About</v-card-title>
+<v-card class="mb-4">
+                    <v-card-title class="d-flex justify-space-between align-center">
+                        About
+                        <CorrectionModal entity-type="hut" :entity-id="hut.id" :entity-name="hut.name" />
+                    </v-card-title>
                     <v-card-text>
                         <div class="vue-markdown" v-if="hut.description">
                              <VueMarkdownRender :source="hut.description" />
@@ -139,6 +142,7 @@ import { useHutStore } from '@/stores/huts'
 
 import { useAppStore } from '@/stores/app'
 import HutEditModal from '@/components/HutEditModal.vue'
+import CorrectionModal from '@/components/CorrectionModal.vue'
 
 const route = useRoute()
 const hutStore = useHutStore()

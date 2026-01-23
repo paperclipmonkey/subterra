@@ -36,7 +36,10 @@
       </div>
 
       <div v-if="collection.description" class="mb-6">
-        <div class="text-h6 font-weight-bold mb-2">About this Collection</div>
+        <div class="d-flex justify-space-between align-center mb-2">
+            <div class="text-h6 font-weight-bold">About this Collection</div>
+            <CorrectionModal entity-type="collection" :entity-id="collection.id" :entity-name="collection.name" />
+        </div>
         <div class="markdown-body text-body-1 text-grey-darken-3">
           <VueMarkdown :source="collection.description" />
         </div>
@@ -112,6 +115,7 @@ import { useAppStore } from '@/stores/app'
 import CollectionEditModal from '@/components/CollectionEditModal.vue'
 import CaveMap from '@/components/CaveMap.vue'
 import VueMarkdown from 'vue-markdown-render'
+import CorrectionModal from '@/components/CorrectionModal.vue'
 
 const route = useRoute()
 const collectionStore = useCollectionStore()

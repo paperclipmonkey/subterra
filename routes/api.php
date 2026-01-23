@@ -46,6 +46,9 @@ Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCall
 
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
+    
+    Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
+
     // Public Pages
     Route::get('/pages/{slug}', [App\Http\Controllers\PageController::class, 'publicShow']);
 
