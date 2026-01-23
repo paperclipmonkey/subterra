@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Hut;
 use App\Models\Cave;
+use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class HutController extends Controller
 {
+    public function __construct(
+        private readonly ImageProcessingService $imageProcessingService
+    ) {}
+
     public function index()
     {
         return Hut::with('club')->get();
@@ -29,12 +34,18 @@ class HutController extends Controller
 
         $hut = Hut::create($validated);
 
+        // Process image if provided
+        $this->processImageField($request, $hut);
+
+        // Sync tags if provided
+        $this->syncTags($request, $hut);
+
         return response()->json($hut, 201);
     }
 
     public function show(Hut $hut)
     {
-        $hut->load(['club', 'reciprocalClubs']);
+        $hut->load(['club', 'reciprocalClubs', 'tags']);
         
         // Find nearby caves (within 10km)
         // Haversine formula
@@ -61,5 +72,57 @@ class HutController extends Controller
         }
 
         return $hut;
+    }
+
+    public function update(Request $request, Hut $hut)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'club_id' => 'required|exists:clubs,id',
+            'location_lat' => 'nullable|numeric',
+            'location_lng' => 'nullable|numeric',
+            'amenities' => 'nullable|array',
+            'external_url' => 'nullable|url',
+            'booking_info' => 'nullable|string',
+        ]);
+
+        $hut->update($validated);
+
+        // Process image if provided
+        $this->processImageField($request, $hut);
+
+        // Sync tags if provided
+        $this->syncTags($request, $hut);
+
+        return response()->json($hut);
+    }
+
+    private function processImageField(Request $request, Hut $hut): void
+    {
+        if ($request->has('image') && $request->input('image') !== null) {
+            $imageData = $request->input('image');
+            if (is_array($imageData)) {
+                $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'huts');
+                $hut->update(['image' => $filePath]);
+            }
+        } elseif ($request->has('image') && $request->input('image') === null) {
+            // Explicitly remove image if null is passed
+            $hut->update(['image' => null]);
+        }
+    }
+
+    private function syncTags(Request $request, Hut $hut): void
+    {
+        if ($request->has('tags')) {
+            $tags = collect($request->input('tags', []))->map(function ($tag) {
+                return \App\Models\Tag::where([
+                    'category' => $tag['category'],
+                    'tag' => $tag['tag'],
+                    'assignable' => true
+                ])->first()?->id;
+            })->filter();
+            $hut->tags()->sync($tags);
+        }
     }
 }

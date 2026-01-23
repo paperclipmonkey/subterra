@@ -20,6 +20,7 @@ class Hut extends Model
         'amenities',
         'external_url',
         'booking_info',
+        'image',
     ];
 
     protected $casts = [
@@ -36,5 +37,10 @@ class Hut extends Model
     public function reciprocalClubs(): BelongsToMany
     {
         return $this->belongsToMany(Club::class, 'hut_reciprocal_club');
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
     }
 }
