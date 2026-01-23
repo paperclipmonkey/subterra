@@ -20,6 +20,7 @@ class Hut extends Model
         'amenities',
         'external_url',
         'booking_info',
+        'image',
     ];
 
     protected $casts = [

@@ -13,7 +13,7 @@ class HutFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_list_huts()
+    public function test_can_list_huts(): void
     {
         $user = User::factory()->create();
         $club = Club::factory()->create();
@@ -25,7 +25,7 @@ class HutFeatureTest extends TestCase
             ->assertJsonCount(3);
     }
 
-    public function test_can_view_hut_details_with_nearby_caves()
+    public function test_can_view_hut_details_with_nearby_caves(): void
     {
         $user = User::factory()->create();
         $club = Club::factory()->create();
@@ -64,7 +64,7 @@ class HutFeatureTest extends TestCase
         }
     }
 
-    public function test_can_create_hut()
+    public function test_can_create_hut(): void
     {
         $user = User::factory()->create();
         $club = Club::factory()->create();
@@ -91,5 +91,92 @@ class HutFeatureTest extends TestCase
             'name' => 'The Belfy',
             'club_id' => $club->id,
         ]);
+    }
+
+    public function test_can_create_hut_with_image(): void
+    {
+        $user = User::factory()->create();
+        $club = Club::factory()->create();
+
+        // Create a simple base64 encoded 1x1 pixel PNG
+        $imageData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        
+        $hutData = [
+            'name' => 'Test Hut',
+            'description' => 'A test hut with image',
+            'club_id' => $club->id,
+            'image' => [
+                'data' => 'data:image/png;base64,' . $imageData,
+            ]
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('name', 'Test Hut');
+
+        $hut = Hut::where('name', 'Test Hut')->first();
+        $this->assertNotNull($hut);
+        $this->assertNotNull($hut->image);
+        $this->assertStringContainsString('huts/', $hut->image);
+        $this->assertStringEndsWith('.webp', $hut->image);
+    }
+
+    public function test_can_update_hut(): void
+    {
+        $user = User::factory()->create();
+        $club = Club::factory()->create();
+        $hut = Hut::factory()->create([
+            'club_id' => $club->id,
+            'name' => 'Original Name',
+        ]);
+
+        $updateData = [
+            'name' => 'Updated Name',
+            'description' => 'Updated description',
+            'club_id' => $club->id,
+            'location_lat' => 51.251708,
+            'location_lng' => -2.657503,
+        ];
+
+        $response = $this->actingAs($user)->putJson("/api/huts/{$hut->id}", $updateData);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('name', 'Updated Name')
+            ->assertJsonPath('description', 'Updated description');
+
+        $this->assertDatabaseHas('huts', [
+            'id' => $hut->id,
+            'name' => 'Updated Name',
+        ]);
+    }
+
+    public function test_can_update_hut_with_image(): void
+    {
+        $user = User::factory()->create();
+        $club = Club::factory()->create();
+        $hut = Hut::factory()->create([
+            'club_id' => $club->id,
+        ]);
+
+        // Create a simple base64 encoded 1x1 pixel PNG
+        $imageData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        
+        $updateData = [
+            'name' => $hut->name,
+            'club_id' => $club->id,
+            'image' => [
+                'data' => 'data:image/png;base64,' . $imageData,
+            ]
+        ];
+
+        $response = $this->actingAs($user)->putJson("/api/huts/{$hut->id}", $updateData);
+
+        $response->assertStatus(200);
+
+        $hut->refresh();
+        $this->assertNotNull($hut->image);
+        $this->assertStringContainsString('huts/', $hut->image);
+        $this->assertStringEndsWith('.webp', $hut->image);
     }
 }
