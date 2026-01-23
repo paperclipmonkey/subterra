@@ -37,15 +37,12 @@ class HutController extends Controller
         // Process image if provided
         $this->processImageField($request, $hut);
 
-        // Sync tags if provided
-        $this->syncTags($request, $hut);
-
         return response()->json($hut, 201);
     }
 
     public function show(Hut $hut)
     {
-        $hut->load(['club', 'reciprocalClubs', 'tags']);
+        $hut->load(['club', 'reciprocalClubs']);
         
         // Find nearby caves (within 10km)
         // Haversine formula
@@ -92,9 +89,6 @@ class HutController extends Controller
         // Process image if provided
         $this->processImageField($request, $hut);
 
-        // Sync tags if provided
-        $this->syncTags($request, $hut);
-
         return response()->json($hut);
     }
 
@@ -109,20 +103,6 @@ class HutController extends Controller
         } elseif ($request->has('image') && $request->input('image') === null) {
             // Explicitly remove image if null is passed
             $hut->update(['image' => null]);
-        }
-    }
-
-    private function syncTags(Request $request, Hut $hut): void
-    {
-        if ($request->has('tags')) {
-            $tags = collect($request->input('tags', []))->map(function ($tag) {
-                return \App\Models\Tag::where([
-                    'category' => $tag['category'],
-                    'tag' => $tag['tag'],
-                    'assignable' => true
-                ])->first()?->id;
-            })->filter();
-            $hut->tags()->sync($tags);
         }
     }
 }

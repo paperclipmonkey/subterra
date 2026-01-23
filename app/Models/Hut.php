@@ -38,9 +38,4 @@ class Hut extends Model
     {
         return $this->belongsToMany(Club::class, 'hut_reciprocal_club');
     }
-
-    public function tags(): BelongsToMany
-    {
-        return $this->belongsToMany(Tag::class);
-    }
 }
