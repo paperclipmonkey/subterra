@@ -24,7 +24,9 @@ class HutController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'club_id' => 'required|exists:clubs,id',
+            'club_id' => 'nullable|exists:clubs,id',
+            'reciprocal_clubs' => 'nullable|array',
+            'reciprocal_clubs.*' => 'exists:clubs,id',
             'location_lat' => 'nullable|numeric',
             'location_lng' => 'nullable|numeric',
             'amenities' => 'nullable|array',
@@ -33,6 +35,10 @@ class HutController extends Controller
         ]);
 
         $hut = Hut::create($validated);
+
+        if (isset($validated['reciprocal_clubs'])) {
+            $hut->reciprocalClubs()->sync($validated['reciprocal_clubs']);
+        }
 
         // Process image if provided
         $this->processImageField($request, $hut);
@@ -76,7 +82,9 @@ class HutController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'club_id' => 'required|exists:clubs,id',
+            'club_id' => 'nullable|exists:clubs,id',
+            'reciprocal_clubs' => 'nullable|array',
+            'reciprocal_clubs.*' => 'exists:clubs,id',
             'location_lat' => 'nullable|numeric',
             'location_lng' => 'nullable|numeric',
             'amenities' => 'nullable|array',
@@ -85,6 +93,10 @@ class HutController extends Controller
         ]);
 
         $hut->update($validated);
+
+        if (isset($validated['reciprocal_clubs'])) {
+            $hut->reciprocalClubs()->sync($validated['reciprocal_clubs']);
+        }
 
         // Process image if provided
         $this->processImageField($request, $hut);
@@ -104,5 +116,11 @@ class HutController extends Controller
             // Explicitly remove image if null is passed
             $hut->update(['image' => null]);
         }
+    }
+
+    public function destroy(Hut $hut)
+    {
+        $hut->delete();
+        return response()->json(null, 204);
     }
 }

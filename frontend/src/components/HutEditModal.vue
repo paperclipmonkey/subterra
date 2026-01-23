@@ -21,7 +21,11 @@
                             </v-col>
                             <v-col cols="12" md="6">
                                 <v-autocomplete v-model="editedHut.club_id" :items="clubs" item-title="name"
-                                    item-value="id" label="Club" required :loading="loadingClubs"></v-autocomplete>
+                                    item-value="id" label="Club" clearable :loading="loadingClubs"></v-autocomplete>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-autocomplete v-model="editedHut.reciprocal_clubs" :items="clubs" item-title="name"
+                                    item-value="id" label="Reciprocal Clubs" multiple chips closable-chips :loading="loadingClubs"></v-autocomplete>
                             </v-col>
                             <v-col cols="12">
                                 <div class="text-subtitle-2 mb-2">Description</div>
@@ -60,6 +64,9 @@
             </v-card-text>
 
             <v-card-actions>
+                <v-btn v-if="!isNew" color="error" variant="text" @click="deleteHut" :loading="deleting">
+                    Delete
+                </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn color="blue-darken-1" variant="text" @click="close">
                     Cancel
@@ -74,6 +81,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useHutStore } from '@/stores/huts'
 import { mande } from 'mande'
@@ -90,6 +98,7 @@ const props = defineProps({
 
 const userStore = useAppStore()
 const hutStore = useHutStore()
+const router = useRouter()
 const clubsApi = mande('/api/admin/clubs')
 
 const dialog = ref(false)
@@ -106,6 +115,7 @@ const defaultHut = {
     location_lng: null,
     club_id: null,
     amenities: [],
+    reciprocal_clubs: [],
     image: null
 }
 
@@ -138,6 +148,11 @@ watch(() => props.hut, (newVal) => {
         editedHut.value = JSON.parse(JSON.stringify(newVal))
         // Ensure amenities is an array (sometimes it might be null from API)
         if (!editedHut.value.amenities) editedHut.value.amenities = []
+        if (newVal.reciprocal_clubs) {
+            editedHut.value.reciprocal_clubs = newVal.reciprocal_clubs.map(c => c.id)
+        } else {
+            editedHut.value.reciprocal_clubs = []
+        }
     } else {
         editedHut.value = { ...defaultHut }
     }
@@ -154,6 +169,11 @@ const close = () => {
     if (props.hut) {
         editedHut.value = JSON.parse(JSON.stringify(props.hut))
         if (!editedHut.value.amenities) editedHut.value.amenities = []
+        if (props.hut.reciprocal_clubs) {
+            editedHut.value.reciprocal_clubs = props.hut.reciprocal_clubs.map(c => c.id)
+        } else {
+            editedHut.value.reciprocal_clubs = []
+        }
     } else {
         editedHut.value = { ...defaultHut }
     }
@@ -184,6 +204,27 @@ const save = async () => {
     } catch (e) {
         console.error(e)
         alert('Failed to save: ' + e.message)
+    }
+}
+
+const deleting = ref(false)
+
+const deleteHut = async () => {
+    if (!confirm('Are you certain you want to delete this hut? This action cannot be undone.')) {
+        return;
+    }
+
+    deleting.value = true;
+    try {
+        await hutStore.deleteHut(editedHut.value.id);
+        dialog.value = false;
+        await hutStore.fetchHuts();
+        router.push('/huts')
+    } catch (e) {
+        console.error(e);
+        alert('Failed to delete: ' + e.message);
+    } finally {
+        deleting.value = false;
     }
 }
 </script>

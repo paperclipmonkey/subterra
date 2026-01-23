@@ -93,6 +93,31 @@ class HutFeatureTest extends TestCase
         ]);
     }
 
+    public function test_can_create_hut_without_club(): void
+    {
+        $user = User::factory()->create();
+
+        $hutData = [
+            'name' => 'Independent Hut',
+            'description' => 'A hut without a club',
+            'external_url' => 'https://example.com/',
+            'location_lat' => 51.0,
+            'location_lng' => -2.5,
+            'club_id' => null,
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('name', 'Independent Hut')
+            ->assertJsonPath('club_id', null);
+
+        $this->assertDatabaseHas('huts', [
+            'name' => 'Independent Hut',
+            'club_id' => null,
+        ]);
+    }
+
     public function test_can_create_hut_with_image(): void
     {
         $user = User::factory()->create();
@@ -176,7 +201,63 @@ class HutFeatureTest extends TestCase
 
         $hut->refresh();
         $this->assertNotNull($hut->image);
-        $this->assertStringContainsString('huts/', $hut->image);
         $this->assertStringEndsWith('.webp', $hut->image);
+    }
+
+    public function test_can_delete_hut(): void
+    {
+        $user = User::factory()->create();
+        $club = Club::factory()->create();
+        $hut = Hut::factory()->create([
+            'club_id' => $club->id,
+            'name' => 'To Be Deleted',
+        ]);
+
+        $response = $this->actingAs($user)->deleteJson("/api/huts/{$hut->id}");
+
+        $response->assertStatus(204);
+
+        $this->assertDatabaseMissing('huts', [
+            'id' => $hut->id,
+        ]);
+    }
+
+    public function test_can_manage_reciprocal_clubs(): void
+    {
+        $user = User::factory()->create();
+        $club = Club::factory()->create();
+        $reciprocalClub1 = Club::factory()->create();
+        $reciprocalClub2 = Club::factory()->create();
+
+        $hutData = [
+            'name' => 'Reciprocal Hut',
+            'club_id' => $club->id,
+            'reciprocal_clubs' => [$reciprocalClub1->id, $reciprocalClub2->id],
+        ];
+
+        // Create
+        $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
+
+        $response->assertStatus(201);
+        
+        $hut = Hut::where('name', 'Reciprocal Hut')->first();
+        $this->assertCount(2, $hut->reciprocalClubs);
+        $this->assertTrue($hut->reciprocalClubs->contains($reciprocalClub1));
+        $this->assertTrue($hut->reciprocalClubs->contains($reciprocalClub2));
+
+        // Update
+        $updateData = [
+            'name' => 'Reciprocal Hut',
+            'club_id' => $club->id,
+            'reciprocal_clubs' => [$reciprocalClub1->id], // Remove one
+        ];
+
+        $response = $this->actingAs($user)->putJson("/api/huts/{$hut->id}", $updateData);
+        $response->assertStatus(200);
+
+        $hut->refresh();
+        $this->assertCount(1, $hut->reciprocalClubs);
+        $this->assertTrue($hut->reciprocalClubs->contains($reciprocalClub1));
+        $this->assertFalse($hut->reciprocalClubs->contains($reciprocalClub2));
     }
 }

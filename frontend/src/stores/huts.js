@@ -47,6 +47,14 @@ export const useHutStore = defineStore('huts', {
                 this.error = err.message;
                 throw err;
             }
+        },
+        async deleteHut(id) {
+            try {
+                return await api.delete(id);
+            } catch (err) {
+                this.error = err.message;
+                throw err;
+            }
         }
     },
 })

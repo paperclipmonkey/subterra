@@ -101,7 +101,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
 
     # Huts
-    Route::apiResource('huts', HutController::class)->only(['index', 'show', 'store', 'update']);
+    Route::apiResource('huts', HutController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 
     # Collections
     Route::apiResource('collections', CollectionController::class);

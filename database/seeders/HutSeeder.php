@@ -131,14 +131,17 @@ CSV;
                 continue;
             }
 
-            // Create or find the club
-            $club = Club::firstOrCreate(
-                ['name' => $clubName],
-                [
-                    'slug' => Str::slug($clubName),
-                    'is_active' => true,
-                ]
-            );
+            $club = null;
+            // If they are a caving club then create or find the club
+            if (isset($data['caveclub']) && strtoupper($data['caveclub']) === 'TRUE') {
+                $club = Club::firstOrCreate(
+                    ['name' => $clubName],
+                    [
+                        'slug' => Str::slug($clubName),
+                        'is_active' => true,
+                    ]
+                );
+            }
 
             // Map fields
             $hutName = !empty($data['hutname']) ? $data['hutname'] : $clubName . ' Hut'; 
@@ -181,15 +184,17 @@ CSV;
 
             $descriptionString = implode("\n\n", $description);
 
-            // Create Hut
-            Hut::create([
-                'name' => $hutName,
-                'club_id' => $club->id,
-                'description' => $descriptionString,
-                'external_url' => $website,
-                'location_lat' => $lat,
-                'location_lng' => $lng,
-            ]);
+            // Create Hut - updateOrCreate to be idempotent
+            Hut::updateOrCreate(
+                ['name' => $hutName], 
+                [
+                    'club_id' => $club ? $club->id : null,
+                    'description' => $descriptionString,
+                    'external_url' => $website,
+                    'location_lat' => $lat,
+                    'location_lng' => $lng,
+                ]
+            );
         }
     }
 }
