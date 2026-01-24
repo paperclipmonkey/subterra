@@ -68,9 +68,41 @@
            <template v-slot:item.created_at="{ item }">
             {{ moment(item.created_at).format('DD/MM/YYYY') }}
           </template>
+          <template v-slot:item.actions="{ item }">
+            <v-btn
+              icon
+              variant="text"
+              size="small"
+              color="error"
+              @click.stop="confirmDelete(item)"
+              :loading="item.loadingDelete"
+            >
+              <v-icon>mdi-delete</v-icon>
+              <v-tooltip activator="parent" location="top">Delete User</v-tooltip>
+            </v-btn>
+          </template>
         </v-data-table>
       </v-col>
     </v-row>
+
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="400">
+      <v-card>
+        <v-card-title class="text-h5 bg-error text-white">
+          Delete User?
+        </v-card-title>
+        <v-card-text class="pt-4">
+          Are you sure you want to delete <strong>{{ userToDelete?.name || userToDelete?.email }}</strong>?
+          <br><br>
+          This will permanently remove their profile, trips, and sensitive safety data. This action cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="cancelDelete">Cancel</v-btn>
+          <v-btn color="error" variant="flat" @click="executeDelete">Delete Permanently</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -93,6 +125,7 @@ const headers = [
   { title: 'Admin', key: 'is_admin', sortable: true, align: 'center' }, // Centered icons
   { title: 'Clubs', key: 'clubs', sortable: true },
   { title: 'Joined', key: 'created_at', sortable: true }, // Added created_at header
+  { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
 ];
 
 const fetchUsers = async () => {
@@ -104,7 +137,8 @@ const fetchUsers = async () => {
       ...user,
       loadingApproval: false,
       loadingAdmin: false,
-    })); 
+      loadingDelete: false,
+    }));
   } catch (error) {
     console.error('Error fetching users:', error);
     // Handle error display if needed (e.g., snackbar)
@@ -113,15 +147,50 @@ const fetchUsers = async () => {
   }
 };
 
+// Deletion State
+const deleteDialog = ref(false);
+const userToDelete = ref(null);
+
+const confirmDelete = (user) => {
+  userToDelete.value = user;
+  deleteDialog.value = true;
+};
+
+const cancelDelete = () => {
+  deleteDialog.value = false;
+  userToDelete.value = null;
+};
+
+const executeDelete = async () => {
+  if (!userToDelete.value) return;
+
+  const user = userToDelete.value;
+  user.loadingDelete = true;
+  deleteDialog.value = false;
+
+  try {
+    const deleteApi = mande(`/api/users/${user.id}`);
+    await deleteApi.delete();
+    // Remove from local list
+    users.value = users.value.filter(u => u.id !== user.id);
+  } catch (error) {
+    console.error(`Error deleting user ${user.id}:`, error);
+    user.loadingDelete = false;
+  } finally {
+    userToDelete.value = null;
+  }
+};
+
 // Function to update user in the local array
 const updateUserInList = (updatedUser) => {
   const index = users.value.findIndex(u => u.id === updatedUser.id);
   if (index !== -1) {
     // Preserve loading state if needed, or reset it
-    users.value[index] = { 
-      ...updatedUser, 
+    users.value[index] = {
+      ...updatedUser,
       loadingApproval: false, // Reset loading flags
-      loadingAdmin: false 
+      loadingAdmin: false,
+      loadingDelete: false
     };
   }
 };
@@ -137,8 +206,8 @@ const toggleApproval = async (user) => {
     // Handle error display
     user.loadingApproval = false; // Reset loading on error
   } finally {
-     // Ensure loading state is always reset
-     if (user) user.loadingApproval = false;
+    // Ensure loading state is always reset
+    if (user) user.loadingApproval = false;
   }
 };
 
@@ -147,10 +216,10 @@ const toggleAdmin = async (user) => {
   try {
     const toggleApi = mande(`/api/admin/users/${user.id}/toggle-admin`);
     const updatedUser = await toggleApi.put();
-     updateUserInList(updatedUser.data || updatedUser);
+    updateUserInList(updatedUser.data || updatedUser);
   } catch (error) {
     console.error(`Error toggling admin for user ${user.id}:`, error);
-     // Handle error display
+    // Handle error display
     user.loadingAdmin = false; // Reset loading on error
   } finally {
     // Ensure loading state is always reset
@@ -185,6 +254,7 @@ onMounted(() => {
 .v-data-table :deep(tbody tr) {
   cursor: pointer;
 }
+
 /* Optional: Add specific styling for the action buttons if needed */
 .v-data-table :deep(td .v-btn) {
   /* Example: Adjust margin if needed */
