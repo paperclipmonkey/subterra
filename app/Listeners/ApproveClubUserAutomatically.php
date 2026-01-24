@@ -14,7 +14,7 @@ class ApproveClubUserAutomatically implements ShouldQueue
     public function handle(ClubAccessResponded $event)
     {
         $user = $event->user;
-        if (!$user->is_approved) {
+        if ($event->status === 'approved' && !$user->is_approved) {
             $user->is_approved = true;
             $user->save();
         }

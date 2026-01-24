@@ -3,7 +3,7 @@
       <!-- Sticky Header Area -->
       <div class="sticky-header bg-background pt-2 pb-2 px-2 z-index-10 flex-shrink-0">
         <div class="d-flex align-center justify-space-between mb-2">
-          <h1 class="text-h5 font-weight-bold ml-1">My Trips</h1>
+          <h1 class="text-h5 font-weight-bold ml-1">{{ tripsUser ? `${tripsUser.name}'s Trips` : (route.query.user_id ? 'User Trips' : 'My Trips') }}</h1>
           <v-menu>
             <template v-slot:activator="{ props }">
               <v-btn icon="mdi-dots-vertical" variant="text" v-bind="props"></v-btn>
@@ -102,6 +102,8 @@
 </style>
 
 <script setup>
+import { useRoute } from 'vue-router'
+import { mande } from 'mande'
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
 import { useTripStore } from '@/stores/trips';
@@ -142,10 +144,29 @@ const formatDate = (date) => {
   return parsedDate.isValid() ? parsedDate.format('DD-MM-YYYY') : '~'
 }
 
+const route = useRoute()
+const tripsUser = ref(null)
+
 onMounted(async () => {
   tripStore.loading = true
   await store.getUser() // Check if user is logged in
-  await tripStore.getTrips()
+
+  const query = { ...route.query }
+
+  if (query.user_id) {
+    try {
+      const userApi = mande(`/api/users/${query.user_id}`)
+      const response = await userApi.get()
+      tripsUser.value = response.data || response
+    } catch (e) {
+      console.error("Failed to load user", e)
+    }
+  } else {
+    // If no user_id in query, default to current user
+    query.user_id = store.user?.id
+    tripsUser.value = store.user
+  }
+
+  await tripStore.getTrips(query)
 })
 </script>
-

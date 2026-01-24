@@ -1,6 +1,6 @@
 <template>
-  <v-dialog v-model="props.isActive" max-width="500">
-    <template v-slot:default="{ isActive }">
+  <v-dialog :model-value="props.isActive" @update:model-value="$emit('close')" max-width="500">
+    <template v-slot:default>
       <v-card rounded="lg">
         <v-card-title class="d-flex justify-space-between align-center">
           <div class="text-h5 text-medium-emphasis ps-2">
@@ -10,7 +10,7 @@
           <v-btn
             icon="mdi-close"
             variant="text"
-            @click="isActive.value = false"
+            @click="$emit('close')"
           ></v-btn>
         </v-card-title>
 
@@ -42,7 +42,7 @@
             class="text-none"
             rounded="xl"
             text="Cancel"
-            @click="isActive.value = false"
+            @click="$emit('close')"
           ></v-btn>
 
           <v-btn

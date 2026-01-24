@@ -27,10 +27,13 @@ class UserTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_a_collection_of_users()
     {
-        $this->actingAs(User::factory()->create(), 'sanctum');
-        $users = User::factory()->count(3)->create();
+        $this->actingAs(User::factory()->create(['name' => 'Test User 1']), 'sanctum');
+        $users = User::factory()->count(3)->create([
+            'name' => fake()->name() . ' Test'
+        ]);
 
-        $response = $this->getJson(route('users.index'));
+        // Search for 'test' which appears in all user names
+        $response = $this->getJson(route('users.index', ['search' => 'test']));
 
         $response->assertOk();
         $response->assertJsonCount(4, 'data');
@@ -150,22 +153,23 @@ class UserTest extends TestCase
     public function it_filters_users_by_visibility()
     {
         $club = \App\Models\Club::factory()->create();
-        $currentUser = User::factory()->create();
+        $currentUser = User::factory()->create(['name' => 'Test Current User']);
         $currentUser->clubs()->attach($club->id, ['status' => 'approved']);
 
         // User in same club with 'club' visibility
-        $clubUser = User::factory()->create(['visibility_addable' => 'club']);
+        $clubUser = User::factory()->create(['visibility_addable' => 'club', 'name' => 'Test Club User']);
         $clubUser->clubs()->attach($club->id, ['status' => 'approved']);
 
         // User in different club with 'club' visibility
-        $otherClubUser = User::factory()->create(['visibility_addable' => 'club']);
+        $otherClubUser = User::factory()->create(['visibility_addable' => 'club', 'name' => 'Test Other User']);
 
         // Public user
-        $publicUser = User::factory()->create(['visibility_addable' => 'public']);
+        $publicUser = User::factory()->create(['visibility_addable' => 'public', 'name' => 'Test Public User']);
 
         $this->actingAs($currentUser, 'sanctum');
 
-        $response = $this->getJson(route('users.index'));
+        // Search for 'test' which appears in all user names
+        $response = $this->getJson(route('users.index', ['search' => 'test']));
 
         $response->assertOk();
         $response->assertJsonFragment(['id' => $clubUser->id]);

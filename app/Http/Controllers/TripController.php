@@ -24,7 +24,16 @@ class TripController extends Controller
     public function index(): ResourceCollection
     {
         $user = auth()->user();
-        $trips = Trip::visibleTo($user)->get();
+        $query = Trip::visibleTo($user);
+
+        // Only filter by user_id if explicitly provided
+        $query->when(request()->input('user_id'), function ($q, $userId) {
+            $q->whereHas('participants', function ($pq) use ($userId) {
+                $pq->where('users.id', $userId);
+            });
+        });
+
+        $trips = $query->with(['participants.clubs', 'entrance', 'media'])->orderBy('start_time', 'desc')->get();
         return TripResource::collection($trips);
     }
 

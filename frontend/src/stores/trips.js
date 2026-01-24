@@ -1,7 +1,7 @@
 // Utilities
 import { defineStore } from 'pinia'
 import { mande } from 'mande'
-const api = mande('/api/me/trips')
+const tripsApi = mande('/api/trips')
 
 export const useTripStore = defineStore('trips', {
   state: () => ({
@@ -11,10 +11,16 @@ export const useTripStore = defineStore('trips', {
   }),
 
   actions: {
-    async getTrips() {
+    async getTrips(filters = {}) {
       this.loading = true
-      this.trips = (await api.get()).data
-      this.loading = false
+      try {
+        const response = await tripsApi.get({ query: filters })
+        this.trips = response.data || response
+      } catch (e) {
+        console.error(e)
+      } finally {
+        this.loading = false
+      }
     },
   },
 })

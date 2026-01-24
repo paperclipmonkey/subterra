@@ -136,7 +136,9 @@
                                                 item-title="name" item-value="id" outlined
                                                 prepend-inner-icon="mdi-account-search"
                                                 @update:model-value="addSubterraUser" v-model="userSelect" return-object
-                                                clearable hint="Search for club members..."></v-autocomplete>
+                                                clearable hint="Type 3+ characters to search for users..."
+                                                v-bind:search-input.sync="userSearchInput"
+                                                @update:search="onUserSearch"></v-autocomplete>
 
                                             <v-list class="mb-4">
                                                 <v-list-item v-for="(p, i) in form.participants" :key="i">
@@ -295,6 +297,8 @@ export default {
             locationStatus: null,
             onCallOfficer: null,
             officerError: false,
+            userSearchInput: '',
+            searchTimeout: null,
         };
     },
     computed: {
@@ -450,9 +454,12 @@ export default {
             try {
                 const me = await axios.get('/api/users/me');
                 this.currentUser = me.data.data;
+                // Add me to the users list instantly
+                this.users = [this.currentUser];
 
-                const response = await axios.get('/api/users');
-                this.users = response.data.data;
+                // Removed full user list fetch for privacy
+                // const response = await axios.get('/api/users');
+                // this.users = response.data.data;
             } catch (e) {
                 console.error(e);
             }
@@ -548,6 +555,27 @@ export default {
                     date: moment().format('YYYY-MM-DD'), // Default to today
                 }
             });
+        },
+        onUserSearch(val) {
+            if (this.searchTimeout) clearTimeout(this.searchTimeout);
+            if (!val || val.length < 3) return;
+
+            this.searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await axios.get(`/api/users?search=${encodeURIComponent(val)}`);
+                    const matches = response.data.data;
+
+                    // Merge matches, avoiding duplicates
+                    const existingIds = this.users.map(u => u.id);
+                    matches.forEach(match => {
+                        if (!existingIds.includes(match.id)) {
+                            this.users.push(match);
+                        }
+                    });
+                } catch (e) {
+                    console.error("Search failed", e);
+                }
+            }, 300);
         }
     }
 };

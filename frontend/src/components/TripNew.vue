@@ -77,8 +77,10 @@
               <v-autocomplete label="Participants" :items="users" item-title="name" item-value="id" multiple chips
                 closable-chips v-model="trip.participants" :rules="rules.participants"
                 :error-messages="validationErrors.participants"
-                hint="Add everyone who was on the trip. All participants can edit this report." persistent-hint
+                hint="Type 3+ characters to search for users. All participants can edit this report." persistent-hint
                 autocomplete="off" name="random_unique_user_search_field"
+                v-model:search="userSearch"
+                @update:search="onUserSearch"
                 variant="outlined">
                 <template v-slot:chip="{ props, item }">
                   <v-chip v-bind="props" :prepend-avatar="item.raw.photo" :text="item.raw.name"></v-chip>
@@ -217,6 +219,31 @@ const users = ref([])
 const caves = ref([])
 const loading = ref(true)
 
+const userSearch = ref('')
+let searchTimeout = null
+
+const onUserSearch = (val) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  if (!val || val.length < 3) return
+
+  searchTimeout = setTimeout(async () => {
+    try {
+      const response = await fetch(`/api/users?search=${encodeURIComponent(val)}`)
+      const matches = (await response.json()).data
+
+      // Merge matches with existing users (to keep selected ones visible)
+      const existingIds = users.value.map(u => u.id)
+      matches.forEach(match => {
+        if (!existingIds.includes(match.id)) {
+          users.value.push(match)
+        }
+      })
+    } catch (e) {
+      console.error('Error searching users', e)
+    }
+  }, 300)
+}
+
 const validationErrors = ref({})
 
 const visibilityOptions = [
@@ -280,13 +307,19 @@ onMounted(async () => {
     let response = await fetch('/api/caves')
     caves.value = (await response.json()).data
 
-    // Load users
+    // Load users (Removed full load)
     const userResonse = await fetch('/api/users/me')
-    userId.value = (await userResonse.json()).data.id
-    response = await fetch('/api/users')
-    users.value = (await response.json()).data
+    const userData = await userResonse.json()
+    userId.value = userData.data.id
+    // response = await fetch('/api/users')
+    // users.value = (await response.json()).data
+
+    // Add self to users list so it displays correctly
+    const me = userData.data;
+    users.value = [me];
+
     if (!trip.participants.length) {
-      trip.participants.push(users.value.find(user => user.id === userId.value).id)
+      trip.participants.push(me.id)
     }
 
     if (route.query.cave_id) {

@@ -58,7 +58,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         return [
             'email_verified_at' => 'datetime',
-            'approved' => 'boolean',
+            'is_approved' => 'boolean',
             'is_admin' => 'boolean',
             'is_active' => 'boolean',
             'tos_agreed_at' => 'datetime',

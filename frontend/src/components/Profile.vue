@@ -184,7 +184,7 @@
                      <v-icon icon="mdi-history" color="primary" class="mr-2"></v-icon>
                      <span class="text-h6 font-weight-bold">Recent Trips</span>
                      <v-spacer></v-spacer>
-                     <v-btn variant="text" size="small" color="primary" to="/trips" append-icon="mdi-arrow-right">View
+                     <v-btn variant="text" size="small" color="primary" :to="`/trips?user_id=${profile.id}`" append-icon="mdi-arrow-right">View
                         All</v-btn>
                   </v-card-title>
 

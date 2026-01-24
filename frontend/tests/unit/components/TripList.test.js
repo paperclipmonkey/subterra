@@ -16,10 +16,18 @@ vi.mock('moment', () => {
   return { default: mockMoment }
 })
 
+// Mock vue-router
+vi.mock('vue-router', () => ({
+  useRoute: () => ({
+    query: {}
+  })
+}))
+
 // Mock the stores completely to avoid network calls
 vi.mock('@/stores/app', () => ({
   useAppStore: () => ({
-    getUser: vi.fn().mockResolvedValue({})
+    getUser: vi.fn().mockResolvedValue({}),
+    user: { id: 1, name: 'Test User' }
   })
 }))
 

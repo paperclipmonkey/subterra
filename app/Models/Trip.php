@@ -57,7 +57,7 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
     
     public function participants()
     {
-        return $this->belongsToMany(User::class)->withoutGlobalScope(IsActiveScope::class);
+        return $this->belongsToMany(User::class)->withoutGlobalScopes();
     }
 
     public function media()

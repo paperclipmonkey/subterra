@@ -486,4 +486,34 @@ class TripTest extends TestCase {
             ->assertJsonPath('data.media.0.photographer', 'Jane Smith')
             ->assertJsonPath('data.media.0.copyright', '© 2024 Jane Smith');
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_filters_trips_index_by_user_id()
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+        $viewer = User::factory()->create();
+
+        $tripA = Trip::factory()->create(['visibility' => 'public', 'start_time' => now()]);
+        $tripA->participants()->attach($userA);
+
+        $tripB = Trip::factory()->create(['visibility' => 'public', 'start_time' => now()->subDay()]);
+        $tripB->participants()->attach($userB);
+
+        $this->actingAs($viewer);
+        
+        // Filter by User A
+        $responseA = $this->getJson("/api/trips?user_id={$userA->id}");
+        $responseA->assertOk();
+        $tripIdsA = collect($responseA->json('data'))->pluck('id')->toArray();
+        $this->assertContains($tripA->short_id, $tripIdsA);
+        $this->assertNotContains($tripB->short_id, $tripIdsA);
+
+        // Filter by User B
+        $responseB = $this->getJson("/api/trips?user_id={$userB->id}");
+        $responseB->assertOk();
+        $tripIdsB = collect($responseB->json('data'))->pluck('id')->toArray();
+        $this->assertContains($tripB->short_id, $tripIdsB);
+        $this->assertNotContains($tripA->short_id, $tripIdsB);
+    }
 }

@@ -18,9 +18,15 @@ use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
-    public function index(): ResourceCollection
+    public function index(Request $request): ResourceCollection
     {
         $currentUser = auth()->user();
+        $search = $request->input('search');
+
+        // If no search term or too short, return empty list
+        if (!$search || strlen($search) < 3) {
+            return UserResource::collection(collect());
+        }
 
         // Get IDs of users in the same clubs
         $clubUserIds = collect();
@@ -31,7 +37,7 @@ class UserController extends Controller
             ->pluck('users')
             ->flatten()
             ->pluck('id')
-            ->unique()
+            ->unique() // Unique is sufficient, no need to filter distinct
             ->filter(fn($id) => $id !== $currentUser->id); // Remove self if present
         }
 
@@ -51,36 +57,63 @@ class UserController extends Controller
             }
         }
         
-
-        // Score and filter users: +2 for each shared trip, +1 for same club
-        $users = User::all()->filter(function ($user) use ($currentUser, $clubUserIds) {
+        // Find users matching search term (Name or Email)
+        // Using LOWER() for case-insensitive search (works on both PostgreSQL and SQLite)
+        $users = User::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%'])
+            ->orWhereRaw('LOWER(email) = ?', [strtolower($search)])
+            ->get()
+        ->filter(function ($user) use ($currentUser, $clubUserIds, $tripUserCounts, $search) {
             // Always allow self
             if ($currentUser && $user->id === $currentUser->id) {
                 return true;
             }
 
-            // Public users are always visible
+            // Allow exact email match regardless of other rules (if they know the email, they can add)
+            if (strcasecmp($user->email, $search) === 0) {
+                 return true;
+            }
+
+            // Public users are visible
             if ($user->visibility_addable === 'public') {
                 return true;
             }
 
-            // Club users are only visible to club members
-            if ($user->visibility_addable === 'club') {
-                return $clubUserIds->contains($user->id);
+            // Users in shared clubs are visible (regardless of their visibility_addable setting)
+            if ($clubUserIds->contains($user->id)) {
+                return true;
             }
 
-            return true; // Default to visible
-        })->map(function ($user) use ($clubUserIds, $tripUserCounts, $currentUser) {
+            // Users with shared trip history are visible
+            if (isset($tripUserCounts[$user->id])) {
+                return true; 
+            }
+
+            // If none of the above, hide them
+            return false; 
+
+        })->map(function ($user) use ($clubUserIds, $tripUserCounts) {
             $score = 0;
+            // Priority 1 (High): Previous Trips
+            if (isset($tripUserCounts[$user->id])) {
+                // Give a high score for trips, potentially weighted by count
+                $score += 10 + ($tripUserCounts[$user->id]); 
+            }
+            
+            // Priority 2: Clubs in common
             if ($clubUserIds->contains($user->id)) {
+                $score += 5;
+            }
+            
+            // Priority 3: Public (Base visibility)
+            if ($user->visibility_addable === 'public') {
                 $score += 1;
             }
-            if (isset($tripUserCounts[$user->id])) {
-                $score += 2 * $tripUserCounts[$user->id];
-            }
+
             $user->proximity_score = $score;
             return $user;
-        })->sortByDesc('proximity_score')->values();
+        })
+        ->sortByDesc('proximity_score')
+        ->values();
 
         return UserResource::collection($users);
     }
@@ -141,8 +174,9 @@ class UserController extends Controller
         return new UserDetailEmailResource($user);
     }
 
-    public function show(User $user): UserDetailResource
+    public function show($id): UserDetailResource
     {
+        $user = User::withoutGlobalScopes()->findOrFail($id);
         return new UserDetailResource($user);
     }
 
