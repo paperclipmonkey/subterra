@@ -196,6 +196,55 @@ class UserController extends Controller
         ]);
     }
 
+    public function export(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $data = [
+            'profile' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'bio' => $user->bio,
+                'is_active' => $user->is_active,
+                'is_approved' => $user->is_approved,
+                'tos_agreed_at' => $user->tos_agreed_at,
+                'created_at' => $user->created_at,
+            ],
+            'clubs' => $user->clubs->map(fn($club) => [
+                'name' => $club->name,
+                'status' => $club->pivot->status,
+                'is_admin' => $club->pivot->is_admin,
+            ]),
+            'medals' => $user->medals->map(fn($medal) => [
+                'name' => $medal->name,
+                'description' => $medal->description,
+                'awarded_at' => $medal->pivot->awarded_at,
+            ]),
+            'trips' => $user->trips->map(fn($trip) => [
+                'id' => $trip->id,
+                'start_time' => $trip->start_time,
+                'end_time' => $trip->end_time,
+                'description' => $trip->description,
+                'visibility' => $trip->visibility,
+            ]),
+            'callouts' => $user->callouts->map(fn($callout) => [
+                'id' => $callout->id,
+                'callout_time' => $callout->callout_time,
+                'description' => $callout->description,
+                'status' => $callout->status,
+                'car_registration' => $callout->car_registration,
+                'emergency_contact_name' => $callout->emergency_contact_name,
+                'emergency_contact_phone' => $callout->emergency_contact_phone,
+            ]),
+        ];
+
+        $filename = 'subterra_data_export_' . now()->format('Y-m-d') . '.json';
+
+        return response()->json($data, 200, [
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
     /**
      * Delete a user account. Deletes any trips where the user was the only participant.
      * Keeps all other trips (removes user from them).

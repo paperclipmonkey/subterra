@@ -32,6 +32,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'bio',
         'is_admin',
         'tos_agreed_at',
+        'privacy_policy_agreed_at',
     ];
 
     /**
@@ -56,6 +57,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
             'is_admin' => 'boolean',
             'is_active' => 'boolean',
             'tos_agreed_at' => 'datetime',
+            'privacy_policy_agreed_at' => 'datetime',
         ];
     }
 

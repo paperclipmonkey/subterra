@@ -47,8 +47,8 @@ router.beforeEach(async (to, from, next) => {
   let user = await useAppStore().getUser()
   // console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_approved: user?.is_approved, is_admin: user?.is_admin })
 
-  // Exception for magic link login page
-  if (to.path.startsWith('/magiclink/')) {
+  // Exception for magic link login page and CMS pages
+  if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/')) {
     return next()
   }
 

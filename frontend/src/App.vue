@@ -38,6 +38,9 @@
         <v-btn icon="mdi-close" variant="text" @click="notificationStore.hideNotification()"></v-btn>
       </template>
     </v-snackbar>
+
+    <!-- GDPR Privacy & Cookie Notice Banner -->
+    <PrivacyNotice />
   </v-app>
 </template>
 
@@ -46,6 +49,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
+import PrivacyNotice from '@/components/PrivacyNotice.vue'
 import moment from 'moment'
 
 const notificationStore = useNotificationStore()

@@ -204,9 +204,16 @@
                                             <v-alert type="warning" variant="outlined" density="compact" class="mt-6"
                                                 icon="mdi-shield-check">
                                                 <div class="text-caption">
+                                                    <strong>Third-Party Consent:</strong> By providing emergency contact details, you confirm that you have their explicit permission to share their personal data with Subterra for rescue purposes.
+                                                </div>
+                                            </v-alert>
+
+                                            <v-alert type="info" variant="outlined" density="compact" class="mt-4"
+                                                icon="mdi-clock-outline">
+                                                <div class="text-caption">
                                                     <strong>Privacy Notice:</strong> Your information (including team
                                                     details) will be securely stored and
-                                                    <strong>automatically deleted 7 days</strong> after your trip completion
+                                                    <strong>automatically deleted 30 days</strong> after your trip completion
                                                     for your privacy.
                                                 </div>
                                             </v-alert>

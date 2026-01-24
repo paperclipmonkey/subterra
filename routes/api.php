@@ -44,13 +44,14 @@ Route::get('/users/me', function (Request $request) {
 Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink']);
 Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCallback']);
 
+// Public CMS Pages
+Route::get('/pages/{slug}', [App\Http\Controllers\PageController::class, 'publicShow']);
+
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
     
     Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
 
-    // Public Pages
-    Route::get('/pages/{slug}', [App\Http\Controllers\PageController::class, 'publicShow']);
 
     # Users
     Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
@@ -91,6 +92,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
     Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
     Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
+    Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
     Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
 
     // --- Club Admin Pending Member Management ---

@@ -48,6 +48,8 @@ class UserDetailEmailResource extends JsonResource
                 'duration' => $this->trips->sum('duration'),
             ],
             'active_callout' => $this->activeCallout ? $this->activeCallout->load(['cave', 'participants', 'incident']) : null,
+            'tos_agreed_at' => $this->tos_agreed_at,
+            'privacy_policy_agreed_at' => $this->privacy_policy_agreed_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

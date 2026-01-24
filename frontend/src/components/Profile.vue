@@ -39,11 +39,17 @@
                      <v-icon>mdi-pencil</v-icon>
                   </v-btn>
 
-                  <!-- Download -->
-                  <v-btn icon variant="text" color="grey-darken-1" href="/api/me/trips/download" download="my_trips.csv"
-                     v-tooltip="'Export Trips'">
-                     <v-icon>mdi-download</v-icon>
-                  </v-btn>
+                   <!-- Export CSV -->
+                   <v-btn icon variant="text" color="grey-darken-1" href="/api/me/trips/download" download="my_trips.csv"
+                      v-tooltip="'Export Trips (CSV)'">
+                      <v-icon>mdi-file-export</v-icon>
+                   </v-btn>
+
+                   <!-- Download All Data (JSON) -->
+                   <v-btn icon variant="text" color="primary" href="/api/user/export" download="subterra_data.json"
+                      v-tooltip="'Download My Data (JSON)'">
+                      <v-icon>mdi-database-export</v-icon>
+                   </v-btn>
 
                   <!-- Logout -->
                   <v-btn icon variant="text" color="error" href="/api/logout" v-tooltip="'Logout'">
