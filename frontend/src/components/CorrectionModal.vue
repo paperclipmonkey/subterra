@@ -21,7 +21,7 @@
           Found a mistake on the <strong>{{ entityName }}</strong> page? Please let us know.
         </p>
         
-        <v-form v-model="valid" @submit.prevent="submit">
+        <v-form ref="form" v-model="valid" @submit.prevent="submit">
           <v-textarea
             v-model="correction"
             label="Correction Details"
@@ -57,7 +57,10 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRoute } from 'vue-router'; // If needed for URL, but window.location is safer for full URL
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const form = ref(null);
 
 const props = defineProps({
   entityType: {
@@ -111,7 +114,13 @@ const submit = async () => {
     snackbarText.value = 'Thank you! Your correction has been submitted.';
     snackbarColor.value = 'success';
     snackbar.value = true;
-    correction.value = ''; // Reset form
+
+    // Reset form and validation state
+    if (form.value) {
+      form.value.reset();
+    }
+    correction.value = ''; // Ensure data is cleared
+
     setTimeout(() => {
       dialog.value = false;
     }, 1500);

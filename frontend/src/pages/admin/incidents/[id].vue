@@ -327,7 +327,7 @@ export default {
                 await axios.post(`/api/admin/incidents/${this.incident.id}/resolve`, { notes: this.resolveNotes });
                 this.showResolveDialog = false;
                 this.$toast.success('Incident Resolved.');
-                this.$router.push('/admin');
+                this.$router.push('/admin/callout');
             } catch (e) {
                 this.$toast.error('Failed to resolve.');
             }

@@ -5,7 +5,7 @@
         <!-- Club Info Card -->
         <v-card v-if="club">
           <v-card-title>
-            <h1>{{ club.name }}</h1>
+            <h1 class="text-wrap">{{ club.name }}</h1>
           </v-card-title>
           <v-card-subtitle v-if="club.location">
             <v-icon start>mdi-map-marker</v-icon> {{ club.location }}
