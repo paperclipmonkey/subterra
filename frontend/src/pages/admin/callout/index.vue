@@ -1,213 +1,239 @@
 <template>
   <v-container>
+    <!-- Page Header -->
+    <div class="mb-6">
+         <h2 class="display-1 font-weight-bold grey--text text--darken-3 mb-1">
+            Callout Dashboard
+         </h2>
+         <p class="subtitle-1 grey--text text--darken-1">
+            Real-time monitoring of teams underground. Overdue trips trigger automatic incidents.
+         </p>
+    </div>
 
-    <!-- Top Section: Status and Duty Officer -->
-    <v-row class="mb-6">
-       <!-- Duty Officer Status -->
-      <v-col cols="12" md="4" lg="3">
-        <v-card height="100%" class="d-flex flex-column" :color="dutyOfficerColor" dark>
-          <v-card-title class="pb-1">
-            <v-icon left>mdi-police-badge</v-icon> Duty Officer
-          </v-card-title>
-          <v-card-text class="flex-grow-1">
-            <div v-if="loadingOfficer">
-              <v-progress-linear indeterminate color="white"></v-progress-linear>
-            </div>
-            <div v-else-if="currentOfficer">
-              <div class="text-h6 font-weight-bold">{{ currentOfficer.name }}</div>
-              <div class="caption">On Call Now</div>
-            </div>
-            <div v-else>
-               <div class="text-h6 font-weight-bold">NO COVERAGE</div>
-               <div class="caption">System Unmonitored</div>
-            </div>
-
-            <v-divider class="my-3" v-if="!loadingOfficer"></v-divider>
-
-            <div v-if="!loadingOfficer">
-               <div v-if="nextGapIsSoon" class="d-flex align-center font-weight-bold yellow--text text--lighten-4">
-                  <v-icon small left color="yellow lighten-4">mdi-alert</v-icon>
-                  Gap starts {{ getRelativeTime(nextGapStart) }}
-               </div>
-               <div v-else class="caption">
-                  Covered until {{ formatDate(nextGapStart) }}
-               </div>
-            </div>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn text block to="/admin/rota">Manage Rota</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-
-      <!-- System Status Banner -->
+    <v-row>
+      <!-- LEFT COLUMN: Main Content -->
       <v-col cols="12" md="8" lg="9">
-         <v-alert :type="statusColor" prominent border="left" class="fill-height d-flex align-center">
-          <div>
-            <h3 class="headline">System Status: {{ systemStatus }}</h3>
-            <p class="mb-0">{{ statusMessage }}</p>
-          </div>
-        </v-alert>
-      </v-col>
-    </v-row>
 
-    <!-- LIVE ACTIONS SECTION -->
-    <div v-if="callouts.length > 0 || activeIncidents.length > 0">
-        <div class="d-flex align-center justify-space-between mb-4">
-            <h2 class="headline error--text text--darken-1">
-                <v-icon color="error darken-1" left large>mdi-alert-octagram</v-icon>
-                Active Operations
-            </h2>
-            <v-btn v-if="callouts.length > 0" small text @click="showMap = !showMap">
-                <v-icon left>mdi-map</v-icon> {{ showMap ? 'Hide Map' : 'Show Map' }}
-            </v-btn>
+        <!-- LIVE ACTIONS SECTION -->
+        <div v-if="callouts.length > 0 || activeIncidents.length > 0">
+            <div class="d-flex align-center justify-space-between mb-4">
+                <v-btn v-if="callouts.length > 0" small text @click="showMap = !showMap" class="ml-auto">
+                    <v-icon left>mdi-map</v-icon> {{ showMap ? 'Hide Map' : 'Show Map' }}
+                </v-btn>
+            </div>
+            
+            <!-- Optional Map View -->
+            <v-expand-transition>
+                <div v-if="showMap && callouts.length > 0" class="mb-6">
+                    <ActiveCalloutMap :callouts="callouts" />
+                </div>
+            </v-expand-transition>
+            
+            <!-- Active Incidents (Priority) -->
+            <div v-if="activeIncidents.length > 0" class="mb-8">
+                 <h3 class="title error--text mb-3 d-flex align-center">
+                    <v-icon color="error" class="mr-2">mdi-alert-octagram</v-icon> 
+                    Open Incidents
+                 </h3>
+                 <v-row>
+                    <v-col cols="12" v-for="incident in activeIncidents" :key="incident.id">
+                        <v-card color="red lighten-5" light hover :to="'/admin/incidents/' + incident.id" class="elevation-3" style="border: 2px solid #e53935">
+                        <v-card-title class="red--text text--darken-3">
+                            <v-icon left color="red darken-3">mdi-bell-ring</v-icon>
+                            OPEN INCIDENT - #{{ incident.id }}
+                        </v-card-title>
+                        <v-card-text>
+                            <div class="text-h5 mb-2 font-weight-bold black--text">
+                            {{ incident.callout.cave ? incident.callout.cave.name : 'Unknown Location' }}
+                            </div>
+                            <p class="mb-1 black--text"><strong>Callout Time:</strong> {{ formatDate(incident.callout.callout_time) }}</p>
+                            <p v-if="incident.incident_controller_id" class="black--text">
+                                <v-icon small left>mdi-account-star</v-icon>
+                                Controller: {{ incident.controller.name }}
+                            </p>
+                            <div v-else class="d-flex align-center mt-2 pa-2 red lighten-4 rounded">
+                                <v-icon small left color="red darken-4">mdi-alert</v-icon>
+                                <span class="font-weight-bold red--text text--darken-4">UNACKNOWLEDGED - ACTION REQUIRED</span>
+                            </div>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn block color="error">
+                            Manage Incident
+                            </v-btn>
+                        </v-card-actions>
+                        </v-card>
+                    </v-col>
+                 </v-row>
+            </div>
+            
+            <!-- Live Callouts -->
+            <div v-if="callouts.length > 0" class="mb-6">
+                <h3 class="title grey--text text--darken-1 mb-3 d-flex align-center">
+                    <v-icon class="mr-2">mdi-watch</v-icon>
+                    Monitored Callouts
+                </h3>
+                <v-card v-for="callout in callouts" :key="callout.id" class="mb-4 elevation-1" outlined>
+                    <div class="px-4 pt-3 pb-1">
+                        <div class="d-flex align-center flex-wrap">
+                            <!-- Status Indicator -->
+                            <v-icon :color="callout.has_incident ? 'error' : 'success'" class="mr-3" size="32">
+                                {{ callout.has_incident ? 'mdi-alert-circle' : 'mdi-run' }}
+                            </v-icon>
+
+                            <!-- Location -->
+                            <div class="mr-6 flex-grow-1" style="min-width: 200px;">
+                                <div class="font-weight-bold text-h6">
+                                {{ callout.cave_name }}
+                                <span v-if="callout.exit_cave_name" class="grey--text text--darken-1">
+                                    <v-icon small>mdi-arrow-right</v-icon> {{ callout.exit_cave_name }}
+                                </span>
+                                </div>
+                                <div class="subtitle-2 grey--text">
+                                Team: {{ callout.team_size }} • Due: {{ formatDate(callout.callout_time) }}
+                                </div>
+                            </div>
+
+                            <!-- Countdown -->
+                            <div class="text-h4 font-weight-black mr-6 text-right"
+                                :class="callout.has_incident ? 'error--text' : 'primary--text'">
+                                {{ getCountdown(callout.callout_time) }}
+                            </div>
+
+                            <!-- Actions -->
+                            <v-btn v-if="callout.has_incident" color="error" large depressed
+                                :to="'/admin/incidents/' + callout.incident_id">
+                                View Incident
+                            </v-btn>
+                            <v-chip v-else label color="success" outlined>
+                                Monitoring
+                            </v-chip>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar / Timeline -->
+                    <v-progress-linear
+                        :value="getCalloutProgress(callout)"
+                        :color="getCalloutProgressColor(callout)"
+                        height="6"
+                        rounded
+                        class="mt-2"
+                    ></v-progress-linear>
+                </v-card>
+            </div>
+
+
         </div>
         
-        <!-- Optional Map View -->
-        <v-expand-transition>
-            <div v-if="showMap && callouts.length > 0" class="mb-6">
-                <ActiveCalloutMap :callouts="callouts" />
-            </div>
-        </v-expand-transition>
-        
-        <!-- Live Callouts -->
-        <div v-if="callouts.length > 0" class="mb-6">
-            <h3 class="title grey--text text--darken-1 mb-2">Monitored Callouts</h3>
-            <v-card v-for="callout in callouts" :key="callout.id" class="mb-4 elevation-2" outlined>
-                <div class="px-4 pt-3 pb-1">
-                    <div class="d-flex align-center flex-wrap">
-                        <!-- Status Indicator -->
-                        <v-icon :color="callout.has_incident ? 'error' : 'success'" class="mr-3" size="32">
-                            {{ callout.has_incident ? 'mdi-alert-circle' : 'mdi-run' }}
-                        </v-icon>
-
-                        <!-- Location -->
-                        <div class="mr-6 flex-grow-1" style="min-width: 200px;">
-                            <div class="font-weight-bold text-h6">
-                            {{ callout.cave_name }}
-                            <span v-if="callout.exit_cave_name" class="grey--text text--darken-1">
-                                <v-icon small>mdi-arrow-right</v-icon> {{ callout.exit_cave_name }}
-                            </span>
-                            </div>
-                            <div class="subtitle-2 grey--text">
-                            Team: {{ callout.team_size }} • Due: {{ formatDate(callout.callout_time) }}
-                            </div>
-                        </div>
-
-                        <!-- Countdown -->
-                        <div class="text-h4 font-weight-black mr-6 text-right"
-                            :class="callout.has_incident ? 'error--text' : 'primary--text'">
-                            {{ getCountdown(callout.callout_time) }}
-                        </div>
-
-                        <!-- Actions -->
-                        <v-btn v-if="callout.has_incident" color="error" large depressed
-                            :to="'/admin/incidents/' + callout.incident_id">
-                            View Incident
-                        </v-btn>
-                        <v-chip v-else label color="success" outlined>
-                            Monitoring
-                        </v-chip>
-                    </div>
-                </div>
-
-                <!-- Progress Bar / Timeline -->
-                <v-progress-linear
-                    :value="getCalloutProgress(callout)"
-                    :color="getCalloutProgressColor(callout)"
-                    height="6"
-                    rounded
-                    class="mt-2"
-                ></v-progress-linear>
+        <div v-else-if="!loading" class="mb-8">
+            <v-card class="pa-10 text-center rounded-xl" outlined>
+              <v-icon size="80" color="success lighten-4">mdi-check-circle-outline</v-icon>
+              <h2 class="text-h4 mt-4 font-weight-thin grey--text text--darken-2">All Quiet</h2>
+              <p class="grey--text mt-2 text-h6">No open operations.</p>
             </v-card>
         </div>
 
-        <!-- Active Incidents -->
-        <div v-if="activeIncidents.length > 0" class="mb-6">
-             <h3 class="title grey--text text--darken-1 mb-2">Open Incidents</h3>
-             <v-row>
-                <v-col cols="12" md="6" v-for="incident in activeIncidents" :key="incident.id">
-                    <v-card color="red lighten-5" light hover :to="'/admin/incidents/' + incident.id" class="elevation-3" style="border: 2px solid #e53935">
-                    <v-card-title class="red--text text--darken-3">
-                        <v-icon left color="red darken-3">mdi-bell-ring</v-icon>
-                        OPEN INCIDENT
-                    </v-card-title>
-                    <v-card-text>
-                        <div class="text-h5 mb-2 font-weight-bold black--text">
-                        {{ incident.callout.cave ? incident.callout.cave.name : 'Unknown Location' }}
-                        </div>
-                        <p class="mb-1 black--text"><strong>Callout Time:</strong> {{ formatDate(incident.callout.callout_time) }}</p>
-                        <p v-if="incident.incident_controller_id" class="black--text">
-                            <v-icon small left>mdi-account-star</v-icon>
-                            Controller: {{ incident.controller.name }}
-                        </p>
-                        <div v-else class="d-flex align-center mt-2 pa-2 red lighten-4 rounded">
-                            <v-icon small left color="red darken-4">mdi-alert</v-icon>
-                            <span class="font-weight-bold red--text text--darken-4">UNACKNOWLEDGED - ACTION REQUIRED</span>
-                        </div>
-                    </v-card-text>
-                    <v-card-actions>
-                        <v-btn block color="error">
-                        Manage Incident
-                        </v-btn>
-                    </v-card-actions>
-                    </v-card>
-                </v-col>
-             </v-row>
-        </div>
-    </div>
-    
-    <div v-else-if="!loading" class="mb-8">
-        <v-card class="pa-10 text-center rounded-xl" outlined>
-          <v-icon size="80" color="success lighten-4">mdi-check-circle-outline</v-icon>
-          <h2 class="text-h4 mt-4 font-weight-thin grey--text text--darken-2">All Quiet</h2>
-          <p class="grey--text mt-2 text-h6">No open operations.</p>
-        </v-card>
-    </div>
+        <v-divider class="mb-6"></v-divider>
 
-    <v-divider class="mb-6"></v-divider>
+        <!-- Historic / Resolved Incidents -->
+        <v-expansion-panels v-if="historicIncidents.length > 0" class="mb-6" flat>
+            <v-expansion-panel>
+                <v-expansion-panel-header>
+                    <div class="d-flex align-center">
+                        <v-icon left color="grey">mdi-history</v-icon>
+                        Resolved & Historic Incidents
+                        <span class="ml-2 grey--text">({{ historicIncidents.length }})</span>
+                    </div>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                    <v-data-table
+                        :headers="historicHeaders"
+                        :items="historicIncidents"
+                        :items-per-page="5"
+                        dense
+                        class="elevation-0"
+                        :show-select="false"
+                        :disable-sort="false"
+                    >
+                        <template v-slot:item.status="{ item }">
+                             <v-chip :color="getIncidentColor(item.status)" dark small label>
+                                {{ item.status.toUpperCase() }}
+                             </v-chip>
+                        </template>
+                        <template v-slot:item.location="{ item }">
+                            {{ item.callout.cave ? item.callout.cave.name : 'Unknown Location' }}
+                        </template>
+                        <template v-slot:item.date="{ item }">
+                            {{ formatDate(item.callout.callout_time) }}
+                        </template>
+                        <template v-slot:item.actions="{ item }">
+                             <v-btn icon small :to="'/admin/incidents/' + item.id">
+                                <v-icon>mdi-eye</v-icon>
+                             </v-btn>
+                        </template>
+                    </v-data-table>
+                </v-expansion-panel-content>
+            </v-expansion-panel>
+        </v-expansion-panels>
+        
+      </v-col>
 
-    <!-- Historic / Resolved Incidents -->
-    <v-expansion-panels v-if="historicIncidents.length > 0" class="mb-6">
-        <v-expansion-panel>
-            <v-expansion-panel-header>
-                <div class="d-flex align-center">
-                    <v-icon left color="grey">mdi-history</v-icon>
-                    Resolved & Historic Incidents
-                    <span class="ml-2 grey--text">({{ historicIncidents.length }})</span>
+      <!-- RIGHT COLUMN: Status Widgets -->
+      <v-col cols="12" md="4" lg="3">
+         <!-- System Status Banner (moved to card) -->
+         <v-card class="mb-4" outlined>
+            <v-alert :type="statusColor" tile class="mb-0">
+                <h3 class="headline mb-1">Status: {{ systemStatus }}</h3>
+                <div class="caption">{{ statusMessage }}</div>
+            </v-alert>
+         </v-card>
+
+         <!-- Duty Officer Status -->
+         <v-card class="d-flex flex-column mb-4" :color="dutyOfficerColor" dark>
+           <v-card-title class="pb-1 subtitle-1 font-weight-bold">
+             <v-icon left small>mdi-police-badge</v-icon> Duty Officer
+           </v-card-title>
+           <v-card-text class="flex-grow-1">
+             <div v-if="loadingOfficer">
+               <v-progress-linear indeterminate color="white"></v-progress-linear>
+             </div>
+             <div v-else-if="currentOfficer">
+               <div class="text-h6 font-weight-bold">{{ currentOfficer.name }}</div>
+               <div class="caption">On Call Now</div>
+             </div>
+             <div v-else>
+                <div class="text-h6 font-weight-bold">NO COVERAGE</div>
+                <div class="caption">System Unmonitored</div>
+             </div>
+ 
+             <v-divider class="my-3" v-if="!loadingOfficer"></v-divider>
+ 
+             <div v-if="!loadingOfficer">
+                <div v-if="nextGapIsSoon" class="d-flex align-center font-weight-bold yellow--text text--lighten-4">
+                   <v-icon small left color="yellow lighten-4">mdi-alert</v-icon>
+                   Gap starts {{ getRelativeTime(nextGapStart) }}
                 </div>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content>
-                <v-data-table
-                    :headers="historicHeaders"
-                    :items="historicIncidents"
-                    :items-per-page="5"
-                    dense
-                    class="elevation-0"
-                    show-select={false}
-                    disable-sort={false}
-                >
-                    <template v-slot:item.status="{ item }">
-                         <v-chip :color="getIncidentColor(item.status)" dark small label>
-                            {{ item.status.toUpperCase() }}
-                         </v-chip>
-                    </template>
-                    <template v-slot:item.location="{ item }">
-                        {{ item.callout.cave ? item.callout.cave.name : 'Unknown Location' }}
-                    </template>
-                    <template v-slot:item.date="{ item }">
-                        {{ formatDate(item.callout.callout_time) }}
-                    </template>
-                    <template v-slot:item.actions="{ item }">
-                         <v-btn icon small :to="'/admin/incidents/' + item.id">
-                            <v-icon>mdi-eye</v-icon>
-                         </v-btn>
-                    </template>
-                </v-data-table>
-            </v-expansion-panel-content>
-        </v-expansion-panel>
-    </v-expansion-panels>
-    
+                <div v-else class="caption">
+                   Covered until {{ formatDate(nextGapStart) }}
+                </div>
+             </div>
+           </v-card-text>
+           <v-card-actions>
+             <v-btn text block small to="/admin/rota">Manage Rota</v-btn>
+           </v-card-actions>
+         </v-card>
+
+         <!-- Info / Legend Card -->
+         <v-card outlined class="bg-grey-lighten-4">
+            <v-card-title class="subtitle-2">Legend</v-card-title>
+            <v-card-text class="caption">
+                <div class="d-flex align-center mb-1"><v-icon small color="success" class="mr-2">mdi-run</v-icon> Active Callout</div>
+                <div class="d-flex align-center mb-1"><v-icon small color="error" class="mr-2">mdi-alert-octagram</v-icon> Active Incident</div>
+                <div class="d-flex align-center"><v-icon small color="grey" class="mr-2">mdi-history</v-icon> Resolved</div>
+            </v-card-text>
+         </v-card>
+
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
