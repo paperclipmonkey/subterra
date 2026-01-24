@@ -121,7 +121,6 @@
     "access_info",
     "tags",
     "system",
-    "trips",
     "previously_done"
   ],
   "additionalProperties": false

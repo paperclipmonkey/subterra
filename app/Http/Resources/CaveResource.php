@@ -18,9 +18,20 @@ class CaveResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $previoslyDoneTag = $this->trips->filter(function ($trip) use ($request) {
-            return $trip->participants->contains('id', $request->user()->id);
-        })->count() > 0 ? Tag::where('tag', 'Previously Done')->first() : Tag::where('tag', 'Not Done Yet')->first();
+        $user = $request->user();
+        $hasDone = false;
+
+        if ($this->relationLoaded('trips')) {
+             $hasDone = $this->trips->contains(function ($trip) use ($user) {
+                 return $trip->participants->contains('id', $user->id);
+             });
+        } elseif ($user) {
+             $hasDone = $this->trips()->whereHas('participants', function($q) use($user) {
+                 $q->where('users.id', $user->id);
+             })->exists();
+        }
+
+        $previoslyDoneTag = $hasDone ? Tag::where('tag', 'Previously Done')->first() : Tag::where('tag', 'Not Done Yet')->first();
         
         $systemLengthTags = collect([]);
         if ($this->system) {
@@ -86,7 +97,7 @@ class CaveResource extends JsonResource
                     ];
                 }) : [],
             ],
-            'trips' => TripResource::collection($this->trips),
+            'trips' => TripResource::collection($this->whenLoaded('trips')),
             'previously_done' => $previoslyDoneTag->tag === 'Previously Done',
             'collections' => CollectionResource::collection($this->whenLoaded('collections')),
             'pivot' => $this->whenPivotLoaded('cave_collection', function () {
