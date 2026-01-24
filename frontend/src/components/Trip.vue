@@ -221,10 +221,12 @@ import VueMarkdown from 'vue-markdown-render'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app';
 import { ref, computed, onMounted } from 'vue';
+import { useToast } from "vue-toastification";
 
 const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
+const toast = useToast()
 
 const trip = ref(null)
 const showDeleteConfirmDialog = ref(false);
@@ -272,10 +274,14 @@ const confirmDelete = async () => {
    try {
       const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE' })
       if (response.ok) {
+         toast.success('Trip deleted successfully')
          router.push('/trips')
+      } else {
+         toast.error('Failed to delete trip')
       }
    } catch (e) {
       console.error("Failed to delete trip", e)
+      toast.error('Failed to delete trip: ' + (e.message || 'Unknown error'))
    }
 }
 

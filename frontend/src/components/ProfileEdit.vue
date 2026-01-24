@@ -198,8 +198,10 @@
 import router from '@/router';
 import { ref, onMounted, computed } from 'vue' // Import computed
 import { useRoute } from 'vue-router'
+import { useToast } from "vue-toastification"
 
 const route = useRoute()
+const toast = useToast()
 
 const profile = ref({
   "name": "",
@@ -270,13 +272,11 @@ const save = async () => {
     profile.value.email_tagged = updatedProfile.email_tagged
     profile.value.email_platform_news = updatedProfile.email_platform_news
     profile.value.visibility_addable = updatedProfile.visibility_addable
-    // Optionally re-fetch profile to get latest club status if save affects it indirectly
-    // await fetchProfile(); 
-    // Consider showing a success message
+    toast.success('Profile updated successfully!')
     router.push({ name: '/profile/[id]', params: { id: route.params.id } }) // Redirect only if necessary
   } catch (error) {
     console.error("Error saving profile:", error);
-    // Show error message to user
+    toast.error('Failed to save profile: ' + (error.message || 'Unknown error'))
   }
 }
 
@@ -342,13 +342,13 @@ const requestToJoinClub = async () => {
 
     // Success!
     closeJoinClubModal();
+    toast.success('Club join request submitted! Awaiting approval.')
     // Re-fetch profile data to show the new pending request
     await fetchProfile();
-    // Show success message to user
 
   } catch (error) {
     console.error("Error requesting to join club:", error);
-    // Show error message to user within the modal or via a toast
+    toast.error('Failed to join club: ' + (error.message || 'Unknown error'))
   }
 }
 
@@ -380,12 +380,12 @@ const deleteAccount = async () => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    alert("Your account has been deleted successfully.");
+    toast.success('Your account has been deleted successfully')
     // Optionally show a goodbye message or redirect to login/home
     router.push({ name: '/' });
   } catch (error) {
     console.error('Error deleting account:', error);
-    // Optionally show error to user
+    toast.error('Failed to delete account: ' + (error.message || 'Unknown error'))
   } finally {
     deletingAccount.value = false;
     closeDeleteModal();
