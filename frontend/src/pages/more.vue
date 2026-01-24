@@ -24,7 +24,7 @@
                     <div class="text-center">
                         <v-icon size="48" color="success" class="mb-2">mdi-newspaper</v-icon>
                         <div class="text-h5">News</div>
-                        <div class="text-body-2 text-medium-emphasis">Latest club updates and announcements</div>
+                        <div class="text-body-2 text-medium-emphasis">Latest platform updates and announcements</div>
                     </div>
                 </v-card>
             </v-col>
