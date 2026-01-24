@@ -14,7 +14,8 @@
             <v-card-text>
               <v-autocomplete label="Location" :items="caves" item-title="name" :rules="rules.location" item-value="id"
                 v-model="trip.entrance_cave_id" :error-messages="validationErrors.entrance_cave_id"
-                hint="Select the cave entrance where the trip started." persistent-hint variant="outlined">
+                hint="Select the cave entrance where the trip started." persistent-hint variant="outlined"
+                autocomplete="off" name="random_unique_cave_search_field">
                 <template v-slot:item="{ props, item }">
                   <v-list-item v-bind="props" :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
                     :title="item.raw.name"></v-list-item>
@@ -25,10 +26,12 @@
                   hint="Tick if you exited from a different entrance." persistent-hint class="mt-2"></v-checkbox>
                 <v-expand-transition>
                   <div v-if="throughTrip">
-                    <v-autocomplete label="Exit" :items="caves.filter(cave => cave.system.id === cave_system_id)"
+                    <v-autocomplete label="Exit"
+                      :items="caves.filter(cave => cave.system.id === cave_system_id && cave.id !== trip.entrance_cave_id)"
                       item-title="name" item-value="id" v-model="trip.exit_cave_id"
                       :error-messages="validationErrors.exit_cave_id"
                       hint="Select the cave entrance where the trip ended." persistent-hint variant="outlined"
+                      autocomplete="off" name="random_unique_exit_search_field"
                       class="mt-2"></v-autocomplete>
                   </div>
                 </v-expand-transition>
@@ -72,8 +75,10 @@
           <v-card title="Who" class="mb-4">
             <v-card-text>
               <v-autocomplete label="Participants" :items="users" item-title="name" item-value="id" multiple chips
-                closable-chips v-model="trip.participants"
+                closable-chips v-model="trip.participants" :rules="rules.participants"
+                :error-messages="validationErrors.participants"
                 hint="Add everyone who was on the trip. All participants can edit this report." persistent-hint
+                autocomplete="off" name="random_unique_user_search_field"
                 variant="outlined">
                 <template v-slot:chip="{ props, item }">
                   <v-chip v-bind="props" :prepend-avatar="item.raw.photo" :text="item.raw.name"></v-chip>
@@ -259,6 +264,12 @@ const rules = {
     () => {
       if (tripDurationHours.value > 0 || tripDurationMinutes.value > 0) return true
       return 'Duration must be greater than zero.'
+    }
+  ],
+  participants: [
+    value => {
+      if (value && value.length > 0) return true
+      return 'At least one participant is required.'
     }
   ]
 }

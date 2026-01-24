@@ -33,7 +33,7 @@ class CalloutController extends Controller
             'location_data' => 'nullable|array',
             'team_details' => 'nullable|string',
             'trip_id' => 'nullable|exists:trips,id',
-            'participants' => 'nullable|array',
+            'participants' => 'required|array|min:1',
             'participants.*.user_id' => 'nullable|exists:users,id',
             'participants.*.name' => 'required|string',
             'participants.*.phone' => 'nullable|string',

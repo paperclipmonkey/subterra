@@ -26,8 +26,11 @@ class StoreCaveRequest extends FormRequest
             'cave_system_id' => ['nullable', 'integer', 'exists:cave_systems,id'],
             'length' => ['nullable', 'numeric', 'min:0'],
             'depth' => ['nullable', 'numeric', 'min:0'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'location_lat' => ['required', 'numeric', 'between:-90,90'],
+            'location_lng' => ['required', 'numeric', 'between:-180,180'],
+            'location_name' => ['required', 'string', 'max:255'],
+            'location_country' => ['required', 'string', 'max:255'],
+            'access_info' => ['nullable', 'string'],
             'hero_image' => ['nullable', 'array'],
             'entrance_image' => ['nullable', 'array'],
         ];

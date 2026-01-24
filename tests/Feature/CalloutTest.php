@@ -91,7 +91,9 @@ class CalloutTest extends TestCase
             'trip_plan' => 'Plan', // Added
             'car_registration' => 'AB12 CDE',
             'car_parking' => 'Bull Pot Farm',
-            'participants' => []
+            'participants' => [
+                ['name' => 'Test User', 'phone' => '+111']
+            ]
         ];
 
         $response = $this->actingAs($user)

@@ -74,4 +74,37 @@ class CaveSystemTest extends TestCase
         $response = $this->json('PUT', "/api/cave_systems/{$caveSystem->id}", $data);
         $response->assertForbidden();
     }
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_can_delete_files_from_cave_system()
+    {
+        Storage::fake('media');
+        $caveSystem = CaveSystem::factory()->create();
+        
+        // Create a file attached to the system
+        $file = \App\Models\CaveSystemFile::create([
+            'cave_system_id' => $caveSystem->id,
+            'filename' => 'todelete.pdf',
+            'original_filename' => 'todelete.pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 123,
+        ]);
+
+        // Fake the file existence on disk
+        Storage::disk('media')->put("cave_system_files/{$caveSystem->id}/todelete.pdf", 'content');
+
+        $data = [
+            'name' => $caveSystem->name,
+            'deleted_files' => [$file->id],
+        ];
+
+        $response = $this->json('PUT', "/api/cave_systems/{$caveSystem->id}", $data);
+
+        $response->assertOk();
+
+        // Check DB
+        $this->assertDatabaseMissing('cave_system_files', ['id' => $file->id]);
+
+        // Check Storage
+        Storage::disk('media')->assertMissing("cave_system_files/{$caveSystem->id}/todelete.pdf");
+    }
 }
