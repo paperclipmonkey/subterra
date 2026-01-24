@@ -250,4 +250,27 @@ class UserTest extends TestCase
         $this->assertDatabaseMissing('collections', ['id' => $collection->id]);
         $this->assertDatabaseMissing('on_call_shifts', ['id' => $shift->id]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function admin_deletion_clears_incident_controller_role()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $callout = \App\Models\Callout::factory()->create();
+        $incident = \App\Models\Incident::factory()->create([
+            'callout_id' => $callout->id,
+            'incident_controller_id' => $admin->id
+        ]);
+
+        $this->actingAs($admin, 'sanctum');
+        $response = $this->deleteJson("/api/users/{$admin->id}");
+
+        $response->assertOk();
+        $this->assertDatabaseMissing('users', ['id' => $admin->id]);
+        
+        // Verify incident controller is now NULL
+        $this->assertDatabaseHas('incidents', [
+            'id' => $incident->id,
+            'incident_controller_id' => null
+        ]);
+    }
 }
