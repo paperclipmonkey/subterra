@@ -346,14 +346,19 @@ export default {
     async fetchDutyOfficer() {
       try {
         const res = await axios.get('/api/duty-officers/current');
-        this.currentOfficer = res.data.data;
-        this.nextGapStart = res.data.data.next_gap_start;
+        const data = res.data.data;
+
+        if (data.is_covered) {
+          this.currentOfficer = data;
+          this.nextGapStart = data.next_gap_start;
+        } else {
+          this.currentOfficer = null;
+          this.nextGapStart = data.next_gap_start || moment();
+        }
       } catch (e) {
         console.error("Duty Officer Fetch Error", e);
-        if (e.response && e.response.status === 404) {
-          this.currentOfficer = null;
-          this.nextGapStart = e.response.data.data ? e.response.data.data.next_gap_start : moment();
-        }
+        this.currentOfficer = null;
+        this.nextGapStart = moment();
       } finally {
         this.loadingOfficer = false;
       }

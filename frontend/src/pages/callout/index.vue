@@ -149,9 +149,16 @@ export default {
         async fetchDutyOfficer() {
             try {
                 const res = await axios.get('/api/duty-officers/current');
-                this.onCallOfficer = res.data.data;
+                const data = res.data.data;
+
+                if (data.is_covered) {
+                    this.onCallOfficer = data;
+                } else {
+                    this.onCallOfficer = null;
+                }
             } catch (e) {
                 console.error("Failed to fetch duty officer", e);
+                this.onCallOfficer = null;
             }
         },
         formatDate(d) {

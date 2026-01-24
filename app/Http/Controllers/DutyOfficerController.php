@@ -50,12 +50,13 @@ class DutyOfficerController extends Controller
 
         if (!$officer) {
             return response()->json([
-                'message' => 'No duty officer currently on shift.',
                 'data' => [
+                    'name' => null,
+                    'photo' => null,
                     'next_gap_start' => $nextGapStart,
                     'is_covered' => false
                 ]
-            ], 404);
+            ], 200);
         }
 
         return response()->json([

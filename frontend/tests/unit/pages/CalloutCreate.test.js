@@ -19,7 +19,7 @@ vi.mock('axios', () => ({
             if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
             if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
             if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
-            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: 'Officer Jenny', photo: null } } })
+            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: 'Officer Jenny', photo: null, is_covered: true } } })
             return Promise.resolve({ data: {} })
         }),
         post: vi.fn(() => Promise.resolve({ data: { callout: { id: 99 } } }))
@@ -131,7 +131,7 @@ describe('Callout Wizard', () => {
             if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
             if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
             if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
-            if (url === '/api/duty-officers/current') return Promise.reject({ response: { status: 404 } })
+            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: null, photo: null, is_covered: false } } })
             return Promise.resolve({ data: {} })
         })
 

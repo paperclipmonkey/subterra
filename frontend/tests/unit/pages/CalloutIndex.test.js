@@ -10,10 +10,11 @@ vi.mock('vue-router', () => ({
 // Mock data
 const mockActiveCallouts = []
 // Use a dynamic date that's always in the future
-const mockDutyOfficer = { 
-    name: 'Officer Jenny', 
-    photo: null, 
-    next_gap_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() 
+const mockDutyOfficer = {
+    name: 'Officer Jenny',
+    photo: null,
+    next_gap_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    is_covered: true
 }
 
 // Mock Axios
@@ -94,7 +95,7 @@ describe('Callout Index Page', () => {
         // Override axios mock to return 404 for duty officer
         axios.default.get.mockImplementation((url) => {
             if (url === '/api/callouts/active') return Promise.resolve({ data: { data: mockActiveCallouts } })
-            if (url === '/api/duty-officers/current') return Promise.reject({ response: { status: 404 } })
+            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: null, photo: null, is_covered: false } } })
             return Promise.resolve({ data: {} })
         })
 
@@ -127,7 +128,7 @@ describe('Callout Index Page', () => {
         // Override axios mock to return 404 for duty officer
         axios.default.get.mockImplementation((url) => {
             if (url === '/api/callouts/active') return Promise.resolve({ data: { data: mockActiveCallouts } })
-            if (url === '/api/duty-officers/current') return Promise.reject({ response: { status: 404 } })
+            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: null, photo: null, is_covered: false } } })
             return Promise.resolve({ data: {} })
         })
 

@@ -80,14 +80,20 @@ class DutyOfficerTest extends TestCase
         );
     }
 
-    public function test_it_returns_404_when_no_duty_officer_is_scheduled()
+    public function test_it_returns_200_with_is_covered_false_when_no_duty_officer_is_scheduled()
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get('/api/duty-officers/current')
-            ->assertStatus(404);
-            // ->assertJson(['message' => 'No duty officer currently on shift.']); // Optional msg check
+            ->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'name' => null,
+                    'photo' => null,
+                    'is_covered' => false
+                ]
+            ]);
     }
 
     public function test_deleting_shift_returns_affected_callouts_info()

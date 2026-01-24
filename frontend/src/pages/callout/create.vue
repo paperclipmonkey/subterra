@@ -467,13 +467,19 @@ export default {
         async fetchDutyOfficer() {
             try {
                 const response = await axios.get('/api/duty-officers/current');
-                this.onCallOfficer = response.data.data;
+                const data = response.data.data;
+
+                if (data.is_covered) {
+                    this.onCallOfficer = data;
+                    this.officerError = false;
+                } else {
+                    this.onCallOfficer = null;
+                    this.officerError = true;
+                }
             } catch (e) {
                 console.error("Failed to fetch duty officer", e);
-                if (e.response && e.response.status === 404) {
-                    this.officerError = true;
-                    this.onCallOfficer = null;
-                }
+                this.officerError = true;
+                this.onCallOfficer = null;
             }
         },
 
