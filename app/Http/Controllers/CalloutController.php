@@ -21,6 +21,10 @@ class CalloutController extends Controller
      */
     public function store(Request $request)
     {
+        if (!$request->user()->is_approved) {
+            abort(403, 'You must be an approved member to activate callouts.');
+        }
+
         $data = $request->validate([
             'cave_id' => 'nullable|exists:caves,id',
             'exit_cave_id' => 'nullable|exists:caves,id',

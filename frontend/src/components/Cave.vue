@@ -57,7 +57,19 @@
               <v-divider class="mb-6"></v-divider>
 
               <div class="text-h6 mb-3 font-weight-bold">Access Information</div>
-              <div v-if="cave.access_info">
+              <div v-if="!appStore.user.is_approved">
+                <v-alert icon="mdi-lock" border="start" border-color="grey" elevation="0" color="grey-lighten-3"
+                  class="mb-4">
+                  <v-icon color="grey-darken-2" size="40" class="mr-4">mdi-lock</v-icon>
+                  <div>
+                    <div class="text-body-2 text-grey-darken-2">
+                      Access information is restricted to approved club members.
+                      <router-link :to="`/profile/${appStore.user.id}`" class="text-decoration-none font-weight-bold">Join a club</router-link> to view details.
+                    </div>
+                  </div>
+                </v-alert>
+              </div>
+              <div v-else-if="cave.access_info">
                 <v-alert icon="mdi-lock-alert" border="start" border-color="warning" elevation="0" color="warning"
                   variant="tonal" class="mb-4">
                   <vue-markdown :source="cave.access_info" />
@@ -126,26 +138,53 @@
 
                 <v-divider class="mb-4"></v-divider>
 
-                <h4 class="text-subtitle-1 font-weight-bold mb-2">References</h4>
-                <vue-markdown :source="cave.system.references || '_No references listed._'" class="text-body-2 mb-4" />
+                <!-- References -->
+                <div class="mb-6" v-if="appStore.user.is_approved && cave.system.references && cave.system.references.length > 0">
+                  <div class="text-subtitle-1 font-weight-bold mb-2">References</div>
+                  <v-list density="compact" class="bg-grey-lighten-5 rounded-lg border">
+                    <v-list-item v-for="(ref, i) in cave.system.references" :key="i" class="py-2">
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="primary" class="mr-3">mdi-book-open-page-variant</v-icon>
+                      </template>
+                      <v-list-item-title class="text-body-2 font-weight-medium">
+                        {{ ref.title }}
+                      </v-list-item-title>
+                      <v-list-item-subtitle class="text-caption mt-1">
+                        {{ ref.authors }} ({{ ref.year }}) - {{ ref.publication }}
+                      </v-list-item-subtitle>
+                    </v-list-item>
+                  </v-list>
+                </div>
 
-                <v-divider class="mb-4"></v-divider>
+                <!-- Files -->
+                <div class="mb-6" v-if="appStore.user.is_approved && cave.system.files && cave.system.files.length > 0">
+                  <div class="text-subtitle-1 font-weight-bold mb-2">Surveys & Documents</div>
+                  <v-row dense>
+                    <v-col v-for="file in cave.system.files" :key="file.id" cols="12" sm="6">
+                      <v-card variant="outlined" class="h-100 hover-card" :href="file.url" target="_blank">
+                        <div class="d-flex align-center pa-3">
+                          <v-avatar color="primary-lighten-5" class="mr-3" rounded>
+                            <v-icon color="primary">mdi-file-document-outline</v-icon>
+                          </v-avatar>
+                          <div class="flex-grow-1 overflow-hidden">
+                            <div class="text-body-2 font-weight-bold text-truncate">{{ file.original_filename }}</div>
+                            <div class="text-caption text-medium-emphasis">{{ file.details || 'No description' }}</div>
+                          </div>
+                          <v-icon size="small" color="grey">mdi-download</v-icon>
+                        </div>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </div>
 
-                <h4 class="text-subtitle-1 font-weight-bold mb-2">Files</h4>
-                <v-list v-if="cave.system.files && cave.system.files.length > 0" lines="two" density="compact">
-                  <v-list-item v-for="file in cave.system.files" :key="file.id" :href="file.url" target="_blank"
-                    rel="noopener noreferrer" prepend-icon="mdi-file-document-outline">
-                    <template v-slot:prepend>
-                      <v-avatar rounded="0" class="mr-3">
-                        <v-img v-if="isImage(file.mime_type)" :src="file.url" cover class="rounded border"></v-img>
-                        <v-icon v-else>{{ getFileIcon(file.mime_type) }}</v-icon>
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title class="font-weight-medium">{{ file.original_filename }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ formatBytes(file.size) }}</v-list-item-subtitle>
-                  </v-list-item>
-                </v-list>
-                <p v-else class="text-grey text-caption">No files attached.</p>
+                <!-- Unapproved User Placeholder -->
+                <div v-if="!appStore.user.is_approved" class="text-center pa-8 bg-grey-lighten-5 rounded-lg border border-dashed">
+                    <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-shield-lock-outline</v-icon>
+                    <div class="text-body-1 font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
+                    <div class="text-caption text-grey-darken-1 mb-4">
+                        References, surveys, and technical documents are available to approved club members.
+                    </div>
+                </div>
               </template>
               <v-alert v-else type="warning" variant="tonal">No system information available.</v-alert>
             </v-window-item>
@@ -208,19 +247,29 @@
       <v-col cols="12" md="4">
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg" elevation="1">
-          <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
-            <mgl-marker :coordinates="lnglat" color="#cc0000" />
-            <mgl-navigation-control />
-            <mgl-fullscreen-control />
-          </mgl-map>
+          <template v-if="appStore.user.is_approved">
+            <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
+              <mgl-marker :coordinates="lnglat" color="#cc0000" />
+              <mgl-navigation-control />
+              <mgl-fullscreen-control />
+            </mgl-map>
+          </template>
+          <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
+            <div class="text-center pa-4">
+              <v-icon size="48" color="grey" class="mb-2">mdi-map-lock</v-icon>
+              <div class="text-h6 text-grey-darken-1">Location Locked</div>
+              <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
+            </div>
+          </div>
           <v-card-text>
             <div class="d-flex justify-space-between align-center">
               <div>
                 <div class="text-caption text-grey">Coordinates</div>
-                <div class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                <div v-if="appStore.user.is_approved && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
                   cave.location_lng.toFixed(5) }}</div>
+                <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
               </div>
-              <div class="d-flex">
+              <div class="d-flex" v-if="appStore.user.is_approved">
                 <v-tooltip text="Copy Coordinates" location="top">
                   <template v-slot:activator="{ props }">
                     <v-btn icon="mdi-content-copy" size="small" variant="text" v-bind="props"

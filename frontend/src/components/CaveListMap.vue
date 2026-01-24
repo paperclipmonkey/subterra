@@ -1,7 +1,15 @@
 <template>
   <v-card class="map-container">
     <v-card-text class="map-holder">
-      <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" ref="map">
+      <div v-if="!appStore.user.is_approved" class="d-flex align-center justify-center bg-grey-lighten-4 h-100 flex-column text-center">
+            <v-icon size="64" color="grey" class="mb-4">mdi-map-lock</v-icon>
+            <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
+            <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
+              Cave locations and map features are exclusive to approved club members.
+            </p>
+            <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
+      </div>
+      <mgl-map v-else :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" ref="map">
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id"
           :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
@@ -51,6 +59,9 @@
 </template>
 
 <script setup>
+import { useAppStore } from '@/stores/app'
+const appStore = useAppStore()
+
 import { useCaveStore } from '@/stores/caves'
 const caveStore = useCaveStore()
 

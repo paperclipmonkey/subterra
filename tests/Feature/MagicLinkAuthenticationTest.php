@@ -38,12 +38,31 @@ class MagicLinkAuthenticationTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_does_not_set_tos_agreed_at_if_checkbox_not_checked()
+    {
+        Mail::fake();
+
+        $response = $this->postJson('/api/auth/magic-link', [
+            'email' => 'newuser_no_tos@example.com',
+            // 'agreed_to_tos' => false // default or explicit false
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'newuser_no_tos@example.com',
+            'tos_agreed_at' => null
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_send_magic_link_for_new_user()
     {
         Mail::fake();
 
         $response = $this->postJson('/api/auth/magic-link', [
-            'email' => 'newuser@example.com'
+            'email' => 'newuser@example.com',
+            'agreed_to_tos' => true
         ]);
 
         $response->assertStatus(200)
@@ -58,6 +77,9 @@ class MagicLinkAuthenticationTest extends TestCase
             'is_active' => true, // Changed to true as new users are now active
             'is_approved' => false
         ]);
+        
+        $user = User::where('email', 'newuser@example.com')->first();
+        $this->assertNotNull($user->tos_agreed_at);
 
         Mail::assertSent(\App\Mail\MagicLinkMail::class, function ($mail) {
             return $mail->hasTo('newuser@example.com');

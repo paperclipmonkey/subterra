@@ -36,7 +36,14 @@
                             <div>There is currently no one monitoring callouts. Please leave your callout with a trusted friend.</div>
                         </v-alert>
 
-                        <div :class="{ 'disabled-content': officerError }">
+                        <div v-if="!isApproved" class="mb-6 pa-4 bg-grey-lighten-4 rounded border text-center">
+                            <v-icon size="48" color="grey" class="mb-2">mdi-shield-lock</v-icon>
+                            <h3 class="text-h6 mb-2">Member Access Only</h3>
+                            <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
+                            <v-btn color="primary" :to="`/profile/${currentUser?.id}`">Join a Club</v-btn>
+                        </div>
+
+                        <div v-else :class="{ 'disabled-content': officerError }">
                             <v-stepper v-model="step" vertical class="elevation-0">
                                 <v-stepper-header class="elevation-0" style="box-shadow: none;">
                                     <v-stepper-step :complete="step > 1" step="1">Location</v-stepper-step>
@@ -49,7 +56,7 @@
                                 </v-stepper-header>
                             </v-stepper>
 
-                            <v-form ref="form" v-model="valid" @submit.prevent="submitCallout">
+                        <v-form ref="form" v-model="valid" @submit.prevent="submitCallout">
                                 <v-window v-model="step">
 
                                     <!-- STEP 1: LOCATION -->
@@ -332,6 +339,13 @@ export default {
             text += ' from now.';
 
             return text;
+        },
+        isApproved() {
+            // Check store first then local user object
+            const appStore = useAppStore();
+            if (appStore.user && appStore.user.is_approved) return true;
+            if (this.currentUser && this.currentUser.is_approved) return true;
+            return false;
         }
     },
     watch: {

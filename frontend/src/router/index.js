@@ -37,7 +37,7 @@ router.onError((err, to) => {
 
 // Basic cookie functionality for login check
 router.beforeEach(async (to, from, next) => {
-  console.log('[Debug] Router beforeEach', { to: to.fullPath, from: from.fullPath })
+  // console.log('[Debug] Router beforeEach', { to: to.fullPath, from: from.fullPath })
 
   // Allow demo page without authentication
   if (to.path === '/demo') {
@@ -45,7 +45,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   let user = await useAppStore().getUser()
-  console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_approved: user?.is_approved, is_admin: user?.is_admin })
+  // console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_approved: user?.is_approved, is_admin: user?.is_admin })
 
   // Exception for magic link login page
   if (to.path.startsWith('/magiclink/')) {
@@ -62,31 +62,28 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.name === '/') {
     if (user.email) {
-      console.log('[Debug] Redirecting / to /trips because user is logged in')
+      // console.log('[Debug] Redirecting / to /trips because user is logged in')
       return next({ path: '/trips' })
     }
     return next()
   }
 
-  if (!user.is_approved && !['/waitlist', '/news', '/profile/[id]', '/profile/[id].edit', '/callout'].includes(to.name)) {
-    console.log('[Debug] User not approved, redirecting to /waitlist')
-    return next({ path: '/waitlist' })
-  }
+
 
   // Admin route check
   if (to.path.startsWith('/admin')) {
     if (!user.is_admin) {
       // Redirect non-admins away from admin pages
-      console.log('[Debug] User not admin, redirecting to /trips')
+      // console.log('[Debug] User not admin, redirecting to /trips')
       return next({ path: '/trips' }); // Or wherever you want to redirect them
     }
   }
 
   if (user.email) {
-    console.log('[Debug] User logged in, allowing navigation to:', to.fullPath)
+    // console.log('[Debug] User logged in, allowing navigation to:', to.fullPath)
     return next()
   }
-  console.log('[Debug] User not logged in, redirecting to /')
+  // console.log('[Debug] User not logged in, redirecting to /')
   return next({ path: '/' })
 })
 

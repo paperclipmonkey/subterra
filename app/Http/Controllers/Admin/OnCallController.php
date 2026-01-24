@@ -66,8 +66,28 @@ class OnCallController extends Controller
     public function destroy($id)
     {
         $shift = OnCallShift::findOrFail($id);
+        
+        // Check for active or triggered callouts during this shift period
+        $affectedCallouts = \App\Models\Callout::whereIn('status', ['active', 'triggered'])
+            ->where('callout_time', '>=', $shift->start_at)
+            ->where('callout_time', '<=', $shift->end_at)
+            ->with(['cave:id,name', 'user:id,name'])
+            ->get()
+            ->map(function ($callout) {
+                return [
+                    'id' => $callout->id,
+                    'callout_time' => $callout->callout_time,
+                    'cave_name' => $callout->cave?->name ?? 'Unknown Location',
+                    'user_name' => $callout->user?->name ?? 'Unknown User',
+                ];
+            });
+        
         $shift->delete();
 
-        return response()->json(['message' => 'Shift removed']);
+        return response()->json([
+            'message' => 'Shift removed',
+            'affected_callouts' => $affectedCallouts,
+            'count' => $affectedCallouts->count()
+        ]);
     }
 }

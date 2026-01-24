@@ -89,6 +89,8 @@
             return-object
             :loading="loadingClubs"
             clearable
+            autocomplete="off"
+            name="random_unique_club_search_field"
           >
              <template v-slot:item="{ props, item }">
               <v-list-item
@@ -192,11 +194,11 @@ const save = async () => {
     const updatedProfile = (await response.json()).data
     // Merge updated data carefully, especially if API doesn't return full profile
     profile.value.name = updatedProfile.name
-    profile.value.bio = updatedProfile.bio 
+    profile.value.bio = updatedProfile.bio
     // Optionally re-fetch profile to get latest club status if save affects it indirectly
     // await fetchProfile(); 
     // Consider showing a success message
-    router.push({ name: '/profile/[id]', params: { id: route.params.id} }) // Redirect only if necessary
+    router.push({ name: '/profile/[id]', params: { id: route.params.id } }) // Redirect only if necessary
   } catch (error) {
     console.error("Error saving profile:", error);
     // Show error message to user
@@ -237,7 +239,7 @@ const openJoinClubModal = () => {
   showJoinClubModal.value = true;
   // Fetch clubs if not already loaded or needs refresh
   if (allClubs.value.length === 0) {
-      fetchAllClubs();
+    fetchAllClubs();
   }
 }
 
@@ -259,14 +261,14 @@ const requestToJoinClub = async () => {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
     // Success!
     closeJoinClubModal();
     // Re-fetch profile data to show the new pending request
-    await fetchProfile(); 
+    await fetchProfile();
     // Show success message to user
 
   } catch (error) {
@@ -319,7 +321,7 @@ onMounted(async () => {
   await fetchProfile();
   // Fetch all clubs needed for the join request modal
   // We don't necessarily need to wait for this for the initial profile display
-  fetchAllClubs(); 
+  fetchAllClubs();
 })
 </script>
 
@@ -349,6 +351,6 @@ h3 {
 }
 
 .v-card-actions {
-    justify-content: flex-end;
+  justify-content: flex-end;
 }
 </style>

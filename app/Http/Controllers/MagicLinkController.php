@@ -40,6 +40,7 @@ class MagicLinkController extends Controller
                     'name' => null, // Will be set later in profile
                     'is_active' => true, // Enable the user since they're requesting access
                     'is_approved' => false, // Still needs admin approval
+                    'tos_agreed_at' => $request->boolean('agreed_to_tos') ? now() : null,
                 ]);
             } else {
                 // If user exists but is inactive, reactivate them

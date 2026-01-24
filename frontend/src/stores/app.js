@@ -12,6 +12,7 @@ export const useAppStore = defineStore('app', {
       email: '',
       is_admin: false,
       is_approved: false,
+      clubs: [],
     },
     loading: false,
     //

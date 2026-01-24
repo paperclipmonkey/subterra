@@ -39,6 +39,7 @@ class GoogleLoginController extends Controller
                     'email' => $googleUser->email, 
                     'photo' => $photoUrl,
                     'is_active' => true,
+                    'tos_agreed_at' => now(), // Assume implicit agreement via UI gatekeeping
                 ]);
                 event(new UserCreated($user));
             } else {

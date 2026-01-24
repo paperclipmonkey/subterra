@@ -75,8 +75,9 @@ class CaveResource extends JsonResource
             'tags' => TagResource::collection($tags->filter(function($tag) { return $tag instanceof Tag; })),
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,
-            'location_lat' => $this->location_lat,
-            'location_lng' => $this->location_lng,
+            'location_lat' => $request->user()?->is_approved ? $this->location_lat : null,
+            'location_lng' => $request->user()?->is_approved ? $this->location_lng : null,
+            'access_info' => $request->user()?->is_approved ? ($this->access_info ?? '') : null,
             'system' => [
                 'id' => $this->system->id,
                 'name' => $this->system->name,
@@ -85,8 +86,8 @@ class CaveResource extends JsonResource
                 'vertical_range' => $this->system->vertical_range,
                 'caves' => $this->system->caves,
                 'tags' => TagResource::collection($this->system->tags->merge($systemLengthTags)),
-                'references' => $this->system->references,
-                'files' => $this->system->files ? $this->system->files->map(function ($file) {
+                'references' => $request->user()?->is_approved ? $this->system->references : [],
+                'files' => $request->user()?->is_approved && $this->system->files ? $this->system->files->map(function ($file) {
                     return [
                         'id' => $file->id,
                         'url' => Storage::disk('media')->url('cave_system_files/' . $file->cave_system_id . '/' . $file->filename),
@@ -95,8 +96,7 @@ class CaveResource extends JsonResource
                         'size' => $file->size,
                         'details' => $file->details,
                     ];
-                }) : [],
-            ],
+                }) : [],            ],
             'trips' => TripResource::collection($this->whenLoaded('trips')),
             'previously_done' => $previoslyDoneTag->tag === 'Previously Done',
             'collections' => CollectionResource::collection($this->whenLoaded('collections')),

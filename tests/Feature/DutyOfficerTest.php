@@ -89,4 +89,72 @@ class DutyOfficerTest extends TestCase
             ->assertStatus(404);
             // ->assertJson(['message' => 'No duty officer currently on shift.']); // Optional msg check
     }
+
+    public function test_deleting_shift_returns_affected_callouts_info()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        
+        // Create a shift
+        $shift = OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => now()->addHour(),
+            'end_at' => now()->addHours(3),
+        ]);
+
+        // Create callouts during this shift
+        $user = User::factory()->create();
+        $callout1 = \App\Models\Callout::factory()->create([
+            'user_id' => $user->id,
+            'callout_time' => now()->addHours(2),
+            'status' => 'active',
+        ]);
+        
+        $callout2 = \App\Models\Callout::factory()->create([
+            'user_id' => $user->id,
+            'callout_time' => now()->addHours(2)->addMinutes(30),
+            'status' => 'triggered',
+        ]);
+
+        // Create a callout outside the shift period (should not be affected)
+        \App\Models\Callout::factory()->create([
+            'user_id' => $user->id,
+            'callout_time' => now()->addHours(5),
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->deleteJson("/api/admin/shifts/{$shift->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'message',
+                'affected_callouts',
+                'count'
+            ]);
+
+        $this->assertEquals(2, $response->json('count'));
+        $this->assertCount(2, $response->json('affected_callouts'));
+    }
+
+    public function test_deleting_shift_with_no_callouts_returns_empty_array()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        
+        $shift = OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => now()->addHour(),
+            'end_at' => now()->addHours(3),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->deleteJson("/api/admin/shifts/{$shift->id}");
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Shift removed',
+                'count' => 0
+            ]);
+
+        $this->assertEmpty($response->json('affected_callouts'));
+    }
 }

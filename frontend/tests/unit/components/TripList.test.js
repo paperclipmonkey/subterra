@@ -119,6 +119,27 @@ describe('TripList', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
+  it('renders download trips menu item', () => {
+    const wrapper = mount(TripList, {
+      global: {
+        plugins: [createPinia()],
+        stubs: {
+          'v-container': { template: '<div><slot></slot></div>' },
+          'v-menu': { template: '<div><slot name="activator" :props="{}"></slot><slot></slot></div>' },
+          'v-list': { template: '<div><slot></slot></div>' },
+          'v-list-item': { template: '<div class="v-list-item" :href="href"><slot></slot></div>', props: ['href'] },
+          'v-list-item-title': true,
+          'v-btn': true,
+          'v-icon': true
+        }
+      }
+    })
+
+    const downloadItem = wrapper.findAll('.v-list-item').find(item => item.attributes('href') === '/api/me/trips/download')
+    expect(downloadItem).toBeDefined()
+    expect(downloadItem.exists()).toBe(true)
+  })
+
   // Regression tests for search filtering
   describe('search filtering', () => {
     it('returns all trips when search is empty', () => {

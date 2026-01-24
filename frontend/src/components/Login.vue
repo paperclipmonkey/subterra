@@ -25,8 +25,19 @@
 
           <!-- Login Methods -->
           <div class="mb-6">
+            <v-checkbox v-model="agreedToToS" color="primary" hide-details class="mb-4">
+              <template v-slot:label>
+                <div class="text-body-2">
+                  I agree to the 
+                  <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold" @click.stop>
+                    Terms of Service
+                  </router-link>
+                </div>
+              </template>
+            </v-checkbox>
+
             <v-btn href="/api/google/redirect" block size="large" color="white" class="google-btn text-none mb-6"
-              elevation="2">
+              elevation="2" :disabled="!agreedToToS">
               <img src="/google-signin.svg" height="24" class="mr-3" />
               Sign in with Google
             </v-btn>
@@ -49,7 +60,7 @@
                   density="comfortable" prepend-inner-icon="mdi-email-outline" class="mb-2"
                   hide-details="auto"></v-text-field>
                 <v-btn type="submit" color="primary" block size="large" :loading="sendingEmail"
-                  :disabled="!email || sendingEmail" class="mt-4 text-none font-weight-bold" elevation="0">
+                  :disabled="!email || sendingEmail || !agreedToToS" class="mt-4 text-none font-weight-bold" elevation="0">
                   Send Verification Link
                 </v-btn>
               </v-form>
@@ -177,6 +188,7 @@ const sendingEmail = ref(false)
 const emailForm = ref(null)
 const errorMessage = ref('')
 const showError = ref(false)
+const agreedToToS = ref(false)
 
 // Email validation rules
 const emailRules = [
@@ -200,7 +212,10 @@ const sendMagicLink = async () => {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ email: email.value })
+      body: JSON.stringify({
+        email: email.value,
+        agreed_to_tos: agreedToToS.value
+      })
     })
 
     if (response.ok) {

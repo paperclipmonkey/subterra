@@ -84,6 +84,7 @@ class SlackNotificationTest extends TestCase
         SlackAlert::expectMessagesSent(function ($message) use ($callout) {
             return ($message['webhookUrl'] ?? '') === 'https://hooks.slack.com/services/test/overdue' &&
                    str_contains($message['text'] ?? '', 'OVERDUE') &&
+                   str_contains($message['text'] ?? '', '<!channel>') &&
                    str_contains($message['text'] ?? '', $callout->id);
         });
     }

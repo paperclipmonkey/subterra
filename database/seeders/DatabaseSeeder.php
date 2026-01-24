@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             TagSeeder::class,
             CaveSeeder::class,
             HutSeeder::class,
+            PageSeeder::class,
         ]);
     }
 }

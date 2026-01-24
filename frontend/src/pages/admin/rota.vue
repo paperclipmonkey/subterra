@@ -146,12 +146,34 @@ export default {
             }
         },
         async deleteShift(id) {
+            // Initial confirmation
             if (!confirm("Remove this shift?")) return;
+
             try {
-                await axios.delete(`/api/admin/shifts/${id}`);
-                this.$toast.success('Shift removed');
+                // Delete the shift and get information about affected callouts from backend
+                const response = await axios.delete(`/api/admin/shifts/${id}`);
+
+                // Check if there are affected callouts
+                if (response.data.count > 0) {
+                    const calloutsList = response.data.affected_callouts;
+                    const calloutDetails = calloutsList.map(c =>
+                        `  • ${c.cave_name} (${c.user_name}) at ${new Date(c.callout_time).toLocaleString()}`
+                    ).join('\n');
+
+                    const message = `⚠️ WARNING: This shift had ${response.data.count} open callout(s)!\n\n` +
+                        `${calloutDetails}\n\n` +
+                        `These callouts are now UNMONITORED.\n` +
+                        `You should add another Duty Officer to cover these callouts immediately.`;
+
+                    alert(message);
+                    this.$toast.warning(`Shift removed - ${response.data.count} callout(s) now unmonitored!`);
+                } else {
+                    this.$toast.success('Shift removed');
+                }
+
                 await this.fetchShifts();
             } catch (e) {
+                console.error(e);
                 this.$toast.error('Failed to delete shift');
             }
         }

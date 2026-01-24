@@ -12,6 +12,9 @@
               <v-list-item to="/create-trip" prepend-icon="mdi-plus">
                 <v-list-item-title>Log Trip</v-list-item-title>
               </v-list-item>
+              <v-list-item href="/api/me/trips/download" download="my_trips.csv" prepend-icon="mdi-download">
+                <v-list-item-title>Download Trips</v-list-item-title>
+              </v-list-item>
             </v-list>
           </v-menu>
         </div>

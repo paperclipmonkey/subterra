@@ -4,6 +4,7 @@
       <v-col>
         <ClubMembershipConfirmation
           :pendingClubs="pendingClubs"
+          :user="user"
           @membershipConfirmed="fetchPendingClubs"
         />
       </v-col>
@@ -18,17 +19,19 @@ import ClubMembershipConfirmation from './ClubMembershipConfirmation.vue';
 
 const router = useRouter();
 const pendingClubs = ref([]);
+const user = ref({});
 
 const fetchPendingClubs = async () => {
   try {
     const response = await fetch('/api/users/me');
     if (!response.ok) throw new Error('Failed to fetch user clubs');
-    const user = (await response.json()).data;
+    const userData = (await response.json()).data;
+    user.value = userData;
     // Filter clubs with status 'pending'
-    pendingClubs.value = (user.clubs || []).filter(c => c.status === 'pending');
-    let approvedClubs = (user.clubs || []).filter(c => c.status === 'approved');
+    pendingClubs.value = (userData.clubs || []).filter(c => c.status === 'pending');
+    let approvedClubs = (userData.clubs || []).filter(c => c.status === 'approved');
 
-    if(user.is_approved) {
+    if (userData.is_approved) {
       // If we've been approved, redirect to /caves
       router.push('/trips');
     }
