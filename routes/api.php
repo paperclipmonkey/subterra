@@ -136,6 +136,7 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
 
     Route::apiResource('pages', App\Http\Controllers\PageController::class);
+    Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
 });
 
 Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
