@@ -22,7 +22,7 @@ class CalloutController extends Controller
     public function store(Request $request)
     {
         if (!$request->user()->is_approved) {
-            abort(403, 'You must be an approved member to activate callouts.');
+            abort(403, 'You must be an approved member to open callouts.');
         }
 
         $data = $request->validate([
@@ -67,9 +67,12 @@ class CalloutController extends Controller
     {
         $callout = Auth::user()->callouts()->findOrFail($id);
         
-        $this->calloutService->cancel($callout);
+        $trip = $this->calloutService->cancel($callout);
 
-        return response()->json(['message' => 'Callout cancelled successfully.']);
+        return response()->json([
+            'message' => 'Callout cancelled successfully.',
+            'trip_id' => $trip ? $trip->short_id : null
+        ]);
     }
 
     public function show($id)

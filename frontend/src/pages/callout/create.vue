@@ -173,7 +173,7 @@
                                             </v-alert>
 
                                             <v-textarea v-model="form.medical_info" label="Additional Team Details"
-                                                hint="Any relevant details (Medical info, experience levels, etc.) for the team."
+                                                hint="Any relevant details for the team."
                                                 persistent-hint outlined rows="2" class="mt-6"></v-textarea>
                                         </div>
                                     </v-window-item>
@@ -232,7 +232,7 @@
                                         @click="step++">Next</v-btn>
                                     <v-btn color="warning" v-if="step === 4" @click="submitCallout" :loading="processing"
                                         :disabled="!isFormValid">
-                                        Activate Callout
+                                        Open Callout
                                     </v-btn>
                                 </div>
                             </v-form>
@@ -519,7 +519,7 @@ export default {
                 this.$router.push('/callout/active');
             } catch (e) {
                 console.error('Callout Error:', e);
-                const errorMsg = e.response?.data?.message || e.message || 'Failed to activate callout.';
+                const errorMsg = e.response?.data?.message || e.message || 'Failed to open callout.';
                 this.$toast.error(errorMsg);
             } finally {
                 this.processing = false;

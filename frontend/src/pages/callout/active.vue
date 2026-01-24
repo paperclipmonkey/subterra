@@ -89,17 +89,18 @@
         </v-dialog>
 
         <!-- Convert to Trip Dialog -->
-        <v-dialog v-model="convertToTrip" persistent max-width="400">
+        <v-dialog v-model="convertToTrip" persistent max-width="500">
             <v-card>
-                <v-card-title class="headline text-center">Glad you're safe!</v-card-title>
-                <v-card-text class="text-center">
+                <v-card-title class="headline text-center pt-6">Glad you're safe!</v-card-title>
+                <v-card-text class="text-center pb-6">
                     <v-icon size="64" color="green" class="mb-4">mdi-party-popper</v-icon>
-                    <p>Would you like to save this callout as a trip report?</p>
+                    <p class="text-h6 mb-2">We've logged a private trip report for you.</p>
+                    <p class="text-body-2">Would you like to edit the details or publish it for others to see?</p>
                 </v-card-text>
-                <v-card-actions>
+                <v-card-actions class="pb-6 px-6">
+                    <v-btn color="grey" variant="text" @click="finish">Close</v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn color="grey" text @click="finish">No Thanks</v-btn>
-                    <v-btn color="primary" @click="createTrip">Create Trip Report</v-btn>
+                    <v-btn color="primary" @click="editTrip" elevation="2">Edit / Publish Trip Report</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -121,6 +122,7 @@ const toast = useToast();
 
 const confirmSafe = ref(false);
 const convertToTrip = ref(false);
+const newTripId = ref(null);
 const now = ref(moment());
 let timer = null;
 
@@ -146,8 +148,11 @@ const formatDate = (t) => moment(t).format('ddd Do MMM');
 const cancelCallout = async () => {
     confirmSafe.value = false;
     try {
-        await axios.post(`/api/callouts/${callout.value.id}/cancel`);
+        const response = await axios.post(`/api/callouts/${callout.value.id}/cancel`);
         toast.success("Callout Cancelled");
+
+        // Store the returned trip_id for the edit action
+        newTripId.value = response.data.trip_id;
 
         // Update user state to remove open callout
         await appStore.getUser();
@@ -164,16 +169,12 @@ const finish = () => {
     router.push('/');
 };
 
-const createTrip = () => {
-    router.push({
-        path: '/create-trip',
-        query: {
-            callout_id: callout.value.id,
-            cave_id: callout.value.cave_id,
-            exit_cave_id: callout.value.exit_cave_id,
-            date: moment(callout.value.created_at).format('YYYY-MM-DD'),
-        }
-    });
+const editTrip = () => {
+    if (newTripId.value) {
+        router.push(`/trips/${newTripId.value}/edit`);
+    } else {
+        router.push('/');
+    }
 };
 
 onMounted(() => {

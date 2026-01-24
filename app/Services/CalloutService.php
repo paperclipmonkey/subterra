@@ -147,12 +147,16 @@ class CalloutService
     /**
      * Cancel a callout (Mark as resolved/safe).
      */
-    public function cancel(Callout $callout): void
+    public function cancel(Callout $callout): ?\App\Models\Trip
     {
-        // 1. Remove from AWS (Best effort or sync?)
+        // 1. Create a Trip record from the callout
+        // We do this before deleting the callout to preserve its data/participants
+        $trip = $this->createTripFromCallout($callout);
+
+        // 2. Remove from AWS (Best effort or sync?)
         // $this->awsService->cancelWatchdog($callout);
 
-        // 2. Send Cancellation Emails
+        // 3. Send Cancellation Emails
         try {
             // Ensure participants are loaded
             $callout->loadMissing('participants');
@@ -174,7 +178,7 @@ class CalloutService
                 \Illuminate\Support\Facades\Log::error("Email Failure cancelling callout: " . $e->getMessage());
         }
 
-        // 3. Check for Active Incident
+        // 4. Check for Active Incident
         if ($callout->incident()->exists()) {
             // DO NOT DELETE if rescue is underway. 
             // Mark user as safe but leave incident for admin to close.
@@ -186,12 +190,54 @@ class CalloutService
                 'content' => 'USER MARKED THEMSELVES SAFE via App. Please verify and resolve incident.'
             ]);
             
-            return;
+            return $trip;
         }
 
-        // 4. Delete from DB (Strict retention: Cancelled = Deleted)
+        // 5. Delete from DB (Strict retention: Cancelled = Deleted)
         // Only if no incident was ever created (i.e. user is safe before panic time)
         $callout->delete();
+
+        return $trip;
+    }
+
+    /**
+     * Create a Trip record from a Callout.
+     */
+    private function createTripFromCallout(Callout $callout): \App\Models\Trip
+    {
+        $cave = $callout->cave;
+        $systemId = $cave ? $cave->cave_system_id : null;
+
+        // If for some reason we have a callout without a cave, we still need a system ID.
+        // Based on frontend this shouldn't happen, but we should be safe.
+        if (!$systemId && $cave) {
+             $systemId = $cave->cave_system_id;
+        }
+
+        $trip = \App\Models\Trip::create([
+            'name' => ($cave ? $cave->name : 'Custom Location') . ' Trip',
+            'description' => $callout->description,
+            'start_time' => $callout->created_at,
+            'end_time' => now(), // Time of cancellation
+            'cave_system_id' => $systemId,
+            'entrance_cave_id' => $callout->cave_id,
+            'exit_cave_id' => $callout->exit_cave_id ?: $callout->cave_id,
+            'visibility' => 'private',
+        ]);
+
+        // Add creator as participant
+        $participants = collect([$callout->user_id]);
+
+        // Add other registered users from callout participants
+        $registeredParticipants = $callout->participants()
+            ->whereNotNull('user_id')
+            ->pluck('user_id');
+        
+        $participants = $participants->concat($registeredParticipants)->unique();
+
+        $trip->participants()->sync($participants);
+
+        return $trip;
     }
 
     /**
