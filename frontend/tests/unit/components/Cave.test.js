@@ -88,7 +88,10 @@ describe('Cave Component', () => {
                     'v-card-title': true,
                     'v-card-text': true,
                     'v-card-actions': true,
-                    'v-list-item-subtitle': true
+                    'v-list-item-subtitle': true,
+                    'v-textarea': true,
+                    'v-form': true,
+                    'v-snackbar': true
                 }
             }
         })

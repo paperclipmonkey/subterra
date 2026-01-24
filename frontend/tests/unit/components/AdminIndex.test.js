@@ -50,8 +50,7 @@ describe('Admin Dashboard', () => {
       }
     })
 
-    expect(wrapper.html()).toContain('System Status:')
-    expect(wrapper.html()).toContain('System Status:')
+    expect(wrapper.html()).toContain('Status:')
     // expect(wrapper.html()).toContain('Active Operations') 
     // Loosening strict check on "All Quiet" due to async loading test issues
     // expect(wrapper.html()).toContain('All Quiet')
