@@ -37,30 +37,37 @@
                  </h3>
                  <v-row>
                     <v-col cols="12" v-for="incident in activeIncidents" :key="incident.id">
-                        <v-card color="red lighten-5" light hover :to="'/admin/incidents/' + incident.id" class="elevation-3" style="border: 2px solid #e53935">
-                        <v-card-title class="red--text text--darken-3">
-                            <v-icon left color="red darken-3">mdi-bell-ring</v-icon>
-                            OPEN INCIDENT - #{{ incident.id }}
-                        </v-card-title>
-                        <v-card-text>
-                            <div class="text-h5 mb-2 font-weight-bold black--text">
-                            {{ incident.callout.cave ? incident.callout.cave.name : 'Unknown Location' }}
+                        <v-card hover :to="'/admin/incidents/' + incident.id" class="elevation-3"
+                            style="border-left: 8px solid #d32f2f; overflow: hidden;">
+                            <div class="pa-4 d-flex align-center">
+                                <v-icon color="error" size="48" class="mr-4">mdi-alert-decagram</v-icon>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-center mb-1">
+                                        <span class="text-overline font-weight-black error--text mr-2">OPEN INCIDENT
+                                            #{{ incident.id }}</span>
+                                        <v-chip v-if="!incident.incident_controller_id" color="error" x-small label
+                                            class="px-2 white--text shadow-none">UNACKNOWLEDGED</v-chip>
+                                    </div>
+                                    <div class="text-h5 font-weight-bold mb-1 black--text">
+                                        {{ incident.callout.cave ? incident.callout.cave.name : 'Unknown Location' }}
+                                    </div>
+                                    <div class="text-body-2 grey--text text--darken-2">
+                                        <v-icon small left>mdi-clock-outline</v-icon>
+                                        <strong>Due:</strong> {{ formatDate(incident.callout.callout_time) }}
+                                        <span v-if="incident.incident_controller_id" class="ml-4 text-uppercase">
+                                            <v-icon small left>mdi-account-star</v-icon>
+                                            Controller: {{ incident.controller.name }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <v-btn color="error" depressed large class="font-weight-bold ml-4 d-none d-sm-flex">
+                                    MANAGE INCIDENT
+                                </v-btn>
                             </div>
-                            <p class="mb-1 black--text"><strong>Callout Time:</strong> {{ formatDate(incident.callout.callout_time) }}</p>
-                            <p v-if="incident.incident_controller_id" class="black--text">
-                                <v-icon small left>mdi-account-star</v-icon>
-                                Controller: {{ incident.controller.name }}
-                            </p>
-                            <div v-else class="d-flex align-center mt-2 pa-2 red lighten-4 rounded">
-                                <v-icon small left color="red darken-4">mdi-alert</v-icon>
-                                <span class="font-weight-bold red--text text--darken-4">UNACKNOWLEDGED - ACTION REQUIRED</span>
-                            </div>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-btn block color="error">
-                            Manage Incident
+                            <!-- Mobile only button -->
+                            <v-btn color="error" block tile large class="font-weight-bold d-flex d-sm-none">
+                                MANAGE INCIDENT
                             </v-btn>
-                        </v-card-actions>
                         </v-card>
                     </v-col>
                  </v-row>

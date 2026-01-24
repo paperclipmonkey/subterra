@@ -52,6 +52,15 @@ class ClubController extends Controller
         }
         // Load count for detail view
         $club->loadCount('users');
+
+        if (auth()->check()) {
+            $user = auth()->user();
+            $isClubAdmin = $user->is_admin || $club->users()->where('user_id', $user->id)->wherePivot('is_admin', true)->exists();
+            if ($isClubAdmin) {
+                $club->loadCount('pendingUsers');
+            }
+        }
+
         return response()->json(new ClubDetailResource($club));
     }
 

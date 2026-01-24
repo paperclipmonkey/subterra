@@ -24,6 +24,7 @@ class ClubDetailResource extends JsonResource
             'is_active' => $this->is_active,
             // Ensure 'users_count' is loaded via withCount('users') in the controller for efficiency
             'member_count' => $this->whenCounted('users', $this->member_count), // Use whenCounted if using withCount
+            'pending_users_count' => $this->whenCounted('pendingUsers'),
             // 'member_count' => $this->member_count, // Or directly use accessor
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

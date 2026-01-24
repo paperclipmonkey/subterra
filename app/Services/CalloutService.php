@@ -82,11 +82,9 @@ class CalloutService
                     foreach ($data['participants'] as $p) {
                         // Ensure we have a phone number either from user or input
                         $phone = $p['phone'] ?? null;
-                        if (!$phone && isset($p['user_id'])) {
-                             // Theoretically could fetch user phone here if missing, but should be passed in data
-                        }
                         
-                        if ($phone) {
+                        // Avoid sending a "participant" SMS to the creator if they already got the "creator" SMS above
+                        if ($phone && $phone !== $user->phone) {
                             $this->smsService->sendMessage(
                                 $phone,
                                 "Subterra: You are listed on a callout for {$user->name}. Returns: {$calloutTime->format('H:i')}."
@@ -128,10 +126,16 @@ class CalloutService
             // 8. Slack Notification
             try {
                 $location = $callout->cave ? $callout->cave->name : 'Custom Location';
-                $participants = $callout->participants()->count() + 1; // + User
+                
+                // Calculate participants correctly:
+                // If creator is in the participants list, use the count.
+                // If creator is NOT in the participants list (unlikely based on frontend but possible via API), add 1.
+                $pCount = $callout->participants()->count();
+                $creatorIsParticipant = $callout->participants()->where('user_id', $user->id)->exists();
+                $totalParticipants = $creatorIsParticipant ? $pCount : $pCount + 1;
                 
                 \Spatie\SlackAlerts\Facades\SlackAlert::to('callouts-open')
-                    ->message(":wave: New Callout: *{$location}* | Party of {$participants} | Return: {$callout->callout_time->format('H:i')}");
+                    ->message(":wave: New Callout: *{$location}* | Party of {$totalParticipants} | Return: {$callout->callout_time->format('H:i')}");
             } catch (\Exception $e) {
                 // Ignore Slack failures
             }

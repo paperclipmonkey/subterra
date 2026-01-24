@@ -40,13 +40,15 @@
                   </v-btn>
 
                    <!-- Export CSV -->
-                   <v-btn icon variant="text" color="grey-darken-1" href="/api/me/trips/download" download="my_trips.csv"
+                   <v-btn icon variant="text" color="grey-darken-1"
+                      @click="openDownloadDialog('Export Trips (CSV)', 'Your trip history will be exported as a CSV file.', '/api/me/trips/download')"
                       v-tooltip="'Export Trips (CSV)'">
                       <v-icon>mdi-file-export</v-icon>
                    </v-btn>
 
                    <!-- Download All Data (JSON) -->
-                   <v-btn icon variant="text" color="primary" href="/api/user/export" download="subterra_data.json"
+                   <v-btn icon variant="text" color="primary"
+                      @click="openDownloadDialog('Download My Data (JSON)', 'All your profile data, trips, and memberships will be exported as a JSON file.', '/api/user/export')"
                       v-tooltip="'Download My Data (JSON)'">
                       <v-icon>mdi-database-export</v-icon>
                    </v-btn>
@@ -237,8 +239,26 @@
                @click="isMedalModalOpen = false">Close</v-btn>
          </v-card>
       </v-dialog>
-   </div>
-</template>
+ 
+       <!-- Download Confirmation Dialog -->
+       <v-dialog v-model="isDownloadDialogOpen" max-width="400">
+          <v-card class="rounded-xl pa-4">
+             <v-card-title class="text-h6 font-weight-bold">
+                <v-icon color="primary" class="mr-2">mdi-download</v-icon>
+                {{ downloadTitle }}
+             </v-card-title>
+             <v-card-text class="text-body-1 py-4">
+                {{ downloadDescription }}
+             </v-card-text>
+             <v-card-actions class="pt-2">
+                <v-spacer></v-spacer>
+                <v-btn variant="text" color="grey-darken-1" @click="isDownloadDialogOpen = false">Cancel</v-btn>
+                <v-btn variant="flat" color="primary" @click="confirmDownload" class="px-6">Download</v-btn>
+             </v-card-actions>
+          </v-card>
+       </v-dialog>
+    </div>
+ </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -264,6 +284,24 @@ const heatmapData = ref([]);
 const endDate = ref(new Date());
 const medals = ref([]);
 let user = ref({});
+
+// Download Dialog State
+const isDownloadDialogOpen = ref(false);
+const downloadTitle = ref('');
+const downloadDescription = ref('');
+const downloadLink = ref('');
+
+const openDownloadDialog = (title, description, link) => {
+   downloadTitle.value = title;
+   downloadDescription.value = description;
+   downloadLink.value = link;
+   isDownloadDialogOpen.value = true;
+}
+
+const confirmDownload = () => {
+   window.location.href = downloadLink.value;
+   isDownloadDialogOpen.value = false;
+}
 
 onMounted(async () => {
    try {

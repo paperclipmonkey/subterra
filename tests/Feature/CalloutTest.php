@@ -170,4 +170,48 @@ class CalloutTest extends TestCase
             'user_id' => null, // System note
         ]);
     }
+
+    public function test_creator_does_not_receive_redundant_sms_when_in_participants()
+    {
+        Mail::fake();
+        $user = User::factory()->create(['phone' => '07123456789']);
+        $cave = Cave::factory()->create();
+
+        // Create On-Call Shift coverage
+        $admin = User::factory()->create(['is_admin' => true]);
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'description' => 'Test Trip',
+            'trip_plan' => 'Detailed Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm',
+            'participants' => [
+                ['name' => $user->name, 'user_id' => $user->id, 'phone' => $user->phone], // Creator is here
+                ['name' => 'Friend', 'phone' => '07987654321']
+            ]
+        ];
+
+        // Mock SmsService to count calls
+        $smsMock = Mockery::mock(SmsService::class);
+        
+        // Should be called 2 times: once for creator registration, once for Friend (participant)
+        // Explicitly NOT called for creator as participant.
+        $smsMock->shouldReceive('sendMessage')
+            ->times(2)
+            ->andReturn((object) ['messageid' => 'mocked']);
+
+        $this->app->instance(SmsService::class, $smsMock);
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(201);
+    }
 }

@@ -107,6 +107,34 @@ class ClubTest extends TestCase
         $response->assertStatus(404);
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function show_returns_pending_users_count_for_admin()
+    {
+        $club = Club::factory()->enabled()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $club->users()->attach($user1->id, ['status' => 'pending']);
+        $club->users()->attach($user2->id, ['status' => 'pending']);
+
+        // Admin can see it
+        $response = $this->actingAs($this->adminUser, 'sanctum')->getJson("/api/clubs/{$club->slug}");
+        $response->assertStatus(200)
+                 ->assertJsonPath('pending_users_count', 2);
+
+        // Regular user cannot see it
+        $response = $this->actingAs($this->regularUser, 'sanctum')->getJson("/api/clubs/{$club->slug}");
+        $response->assertStatus(200);
+        $data = $response->json();
+        $this->assertArrayNotHasKey('pending_users_count', $data);
+
+        // Club admin can see it
+        $clubAdmin = User::factory()->create();
+        $club->users()->attach($clubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+        $response = $this->actingAs($clubAdmin, 'sanctum')->getJson("/api/clubs/{$club->slug}");
+        $response->assertStatus(200)
+                 ->assertJsonPath('pending_users_count', 2);
+    }
+
     // --- Store Tests ---
 
     #[\PHPUnit\Framework\Attributes\Test]

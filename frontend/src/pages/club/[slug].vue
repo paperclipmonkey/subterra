@@ -28,7 +28,8 @@
               </v-btn>
               <v-btn v-if="isClubAdmin" class="ml-2" color="info" variant="outlined"
                 @click="openEditClubModal('pending')" size="small">
-                <v-icon start>mdi-account-clock</v-icon> Pending Requests
+                <v-icon start>mdi-account-clock</v-icon> Pending Requests <span
+                  v-if="club.pending_users_count > 0">({{ club.pending_users_count }})</span>
               </v-btn>
             </div>
           </v-card-text>

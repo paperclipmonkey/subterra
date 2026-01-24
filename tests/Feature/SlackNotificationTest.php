@@ -60,6 +60,82 @@ class SlackNotificationTest extends TestCase
         SlackAlert::expectMessagesSent(function ($message) use ($cave) {
             return ($message['webhookUrl'] ?? '') === 'https://hooks.slack.com/services/test/open' &&
                    str_contains($message['text'] ?? '', 'New Callout') &&
+                   str_contains($message['text'] ?? '', 'Party of 2') &&
+                   str_contains($message['text'] ?? '', $cave->name);
+        });
+    }
+
+    public function test_new_callout_without_creator_in_participants_sends_correct_count()
+    {
+        SlackAlert::fake();
+        config()->set('slack-alerts.webhook_urls.callouts-open', 'https://hooks.slack.com/services/test/open');
+        
+        $user = User::factory()->create();
+        $cave = Cave::first();
+        
+        // Setup Shift
+        \App\Models\OnCallShift::create([
+            'user_id' => $user->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->addDays(1)->endOfDay(),
+        ]);
+
+        $calloutData = [
+            'cave_id' => $cave->id,
+            'callout_time' => now()->addHours(2)->toDateTimeString(),
+            'trip_plan' => 'Solo exploration',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Layby',
+            'participants' => [
+                ['name' => 'John Guest'] // Creator is NOT here
+            ]
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $calloutData);
+        $response->assertStatus(201);
+
+        SlackAlert::expectMessagesSent(function ($message) use ($cave) {
+            return ($message['webhookUrl'] ?? '') === 'https://hooks.slack.com/services/test/open' &&
+                   str_contains($message['text'] ?? '', 'New Callout') &&
+                   str_contains($message['text'] ?? '', 'Party of 2') &&
+                   str_contains($message['text'] ?? '', $cave->name);
+        });
+    }
+
+    public function test_new_callout_with_creator_in_participants_sends_correct_count()
+    {
+        SlackAlert::fake();
+        config()->set('slack-alerts.webhook_urls.callouts-open', 'https://hooks.slack.com/services/test/open');
+        
+        $user = User::factory()->create();
+        $cave = Cave::first();
+        
+        // Setup Shift
+        \App\Models\OnCallShift::create([
+            'user_id' => $user->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->addDays(1)->endOfDay(),
+        ]);
+
+        $calloutData = [
+            'cave_id' => $cave->id,
+            'callout_time' => now()->addHours(2)->toDateTimeString(),
+            'trip_plan' => 'Trip with friends',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Layby',
+            'participants' => [
+                ['name' => $user->name, 'user_id' => $user->id],
+                ['name' => 'Friend 1']
+            ]
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $calloutData);
+        $response->assertStatus(201);
+
+        SlackAlert::expectMessagesSent(function ($message) use ($cave) {
+            return ($message['webhookUrl'] ?? '') === 'https://hooks.slack.com/services/test/open' &&
+                   str_contains($message['text'] ?? '', 'New Callout') &&
+                   str_contains($message['text'] ?? '', 'Party of 2') &&
                    str_contains($message['text'] ?? '', $cave->name);
         });
     }
