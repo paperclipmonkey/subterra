@@ -28,6 +28,7 @@ class StoreCaveRequest extends FormRequest
             'depth' => ['nullable', 'numeric', 'min:0'],
             'location_lat' => ['required', 'numeric', 'between:-90,90'],
             'location_lng' => ['required', 'numeric', 'between:-180,180'],
+            'location_alt' => ['nullable', 'numeric'],
             'location_name' => ['required', 'string', 'max:255'],
             'location_country' => ['required', 'string', 'max:255'],
             'access_info' => ['nullable', 'string'],

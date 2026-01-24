@@ -77,6 +77,7 @@ class CaveResource extends JsonResource
             'location_country' => $this->location_country,
             'location_lat' => $request->user()?->is_approved ? $this->location_lat : null,
             'location_lng' => $request->user()?->is_approved ? $this->location_lng : null,
+            'location_alt' => $request->user()?->is_approved ? $this->location_alt : null,
             'access_info' => $request->user()?->is_approved ? ($this->access_info ?? '') : null,
             'system' => [
                 'id' => $this->system->id,

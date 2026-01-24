@@ -74,6 +74,10 @@ class CaveSystemController extends Controller
         return response()->json(new CaveSystemResource($caveSystem));
     }
 
+    public function __construct(
+        private readonly \App\Services\ImageProcessingService $imageProcessingService
+    ) {}
+
     /**
      * Create a new cave system and its first cave in one request.
      */
@@ -102,9 +106,45 @@ class CaveSystemController extends Controller
 
         $caveData = $request->input('cave');
         $caveData['cave_system_id'] = $caveSystem->id;
+        
+        // Remove non-column fields
+        $imageData = [
+            'hero_image' => $caveData['hero_image'] ?? null,
+            'entrance_image' => $caveData['entrance_image'] ?? null,
+        ];
+        $tagsData = $caveData['tags'] ?? [];
+        
+        unset($caveData['hero_image'], $caveData['entrance_image'], $caveData['tags']);
+
         $cave = \App\Models\Cave::create($caveData);
 
+        // Process Images
+        foreach (['hero_image', 'entrance_image'] as $field) {
+            if (!empty($imageData[$field]) && is_array($imageData[$field])) {
+                $suffix = str_replace('_image', '', $field);
+                $filePath = $this->imageProcessingService->processAndStoreImage($imageData[$field], 'caves', $suffix);
+                $cave->update([$field => $filePath]);
+            }
+        }
+
+        // Process Tags
+        if (!empty($tagsData)) {
+            $tags = collect($tagsData)->map(function ($tag) {
+                return \App\Models\Tag::where([
+                    'category' => $tag['category'],
+                    'tag' => $tag['tag'],
+                    'assignable' => true
+                ])->first()?->id;
+            })->filter();
+            $cave->tags()->sync($tags);
+        }
+
         $caveSystem->load('caves');
+        
+        // Refresh cave to get images and tags
+        $cave->refresh();
+        $cave->load('tags');
+        
         return response()->json([
             'system' => new \App\Http\Resources\CaveSystemResource($caveSystem),
             'cave' => new \App\Http\Resources\CaveResource($cave),

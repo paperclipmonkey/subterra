@@ -24,7 +24,10 @@ class CaveController extends Controller
 
     public function store(StoreCaveRequest $request): CaveResource
     {
-        $cave = Cave::create($request->validated());
+        $validData = $request->validated();
+        $validData['slug'] = \Illuminate\Support\Str::slug($validData['name']);
+        
+        $cave = Cave::create($validData);
 
         return new CaveResource($cave);
     }

@@ -153,6 +153,7 @@ class TagSeeder extends Seeder
             "type"=> "cave",
             "category"=> "previously done",
             "description"=> "A cave you are yet to visit",
+            "assignable" => false,
         ]);
 
         Tag::factory()->create([
@@ -160,6 +161,7 @@ class TagSeeder extends Seeder
             "type"=> "cave",
             "category"=> "previously done",
             "description"=> "A cave you've previously visited",
+            "assignable" => false,
         ]);
     }
 }

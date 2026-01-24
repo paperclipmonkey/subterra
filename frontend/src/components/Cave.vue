@@ -139,21 +139,11 @@
                 <v-divider class="mb-4"></v-divider>
 
                 <!-- References -->
-                <div class="mb-6" v-if="appStore.user.is_approved && cave.system.references && cave.system.references.length > 0">
+                <div class="mb-6" v-if="appStore.user.is_approved && cave.system.references">
                   <div class="text-subtitle-1 font-weight-bold mb-2">References</div>
-                  <v-list density="compact" class="bg-grey-lighten-5 rounded-lg border">
-                    <v-list-item v-for="(ref, i) in cave.system.references" :key="i" class="py-2">
-                      <template v-slot:prepend>
-                        <v-icon size="small" color="primary" class="mr-3">mdi-book-open-page-variant</v-icon>
-                      </template>
-                      <v-list-item-title class="text-body-2 font-weight-medium">
-                        {{ ref.title }}
-                      </v-list-item-title>
-                      <v-list-item-subtitle class="text-caption mt-1">
-                        {{ ref.authors }} ({{ ref.year }}) - {{ ref.publication }}
-                      </v-list-item-subtitle>
-                    </v-list-item>
-                  </v-list>
+                  <v-card variant="tonal" class="pa-4 bg-grey-lighten-5">
+                    <vue-markdown :source="cave.system.references" class="text-body-2" />
+                  </v-card>
                 </div>
 
                 <!-- Files -->

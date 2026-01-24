@@ -28,6 +28,7 @@ class UpdateCaveRequest extends FormRequest
             'depth' => ['nullable', 'numeric', 'min:0'],
             'location_lat' => ['sometimes', 'numeric', 'between:-90,90'],
             'location_lng' => ['sometimes', 'numeric', 'between:-180,180'],
+            'location_alt' => ['sometimes', 'nullable', 'numeric'],
             'location_name' => ['sometimes', 'required', 'string', 'max:255'],
             'location_country' => ['sometimes', 'required', 'string', 'max:255'],
             'access_info' => ['nullable', 'string'],

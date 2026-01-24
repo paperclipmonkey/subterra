@@ -63,6 +63,12 @@
         "null"
       ]
     },
+    "location_alt": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
     "system": {
       "$ref": "cave-system.json"
     },

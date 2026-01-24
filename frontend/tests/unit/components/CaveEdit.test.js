@@ -78,7 +78,10 @@ describe('CaveEdit.vue', () => {
                     'v-icon': { template: '<span><slot /></span>' },
                     'v-toolbar-title': { template: '<h1><slot /></h1>' },
                     'v-divider': { template: '<hr />' },
-                    'v-form': { template: '<form><slot /></form>' }, // Removed event handler to simplify
+                    'v-form': {
+                        template: '<form><slot /></form>',
+                        methods: { validate: () => Promise.resolve({ valid: true }) }
+                    },
                     'v-card': { template: '<div><slot /></div>' },
                     'v-card-title': { template: '<h2><slot /></h2>' },
                     'v-card-text': { template: '<div><slot /></div>' },
@@ -88,11 +91,13 @@ describe('CaveEdit.vue', () => {
                     'v-file-input': { template: '<input type="file" />' },
                     'v-chip-group': { template: '<div><slot /></div>' },
                     'v-chip': { template: '<span><slot /></span>' },
+                    'v-snackbar': { template: '<div><slot /></div>' },
                     'vue-markdown': { template: '<div></div>' },
                     'mgl-map': { template: '<div><slot /></div>' },
                     'mgl-navigation-control': { template: '<div></div>' },
                     'mgl-geolocate-control': { template: '<div></div>' },
-                    'mgl-marker': { template: '<div></div>' }
+                    'mgl-marker': { template: '<div></div>' },
+                    'CaveForm': { template: '<div></div>' }
                 }
             }
         })
