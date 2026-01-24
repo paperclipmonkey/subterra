@@ -1,65 +1,75 @@
 <template>
-    <v-container>
-        <v-toolbar flat color="transparent">
-            <v-toolbar-title>Huts</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn-toggle v-model="viewMode" mandatory class="mr-2" density="compact" color="primary">
-                <v-btn value="grid" icon="mdi-view-grid"></v-btn>
-                <v-btn value="map" icon="mdi-map"></v-btn>
-            </v-btn-toggle>
-            <HutEditModal v-if="userStore.user.is_admin" />
-        </v-toolbar>
+    <v-card flat class="h-100 d-flex flex-column">
+        <template v-slot:text>
+            <div class="d-flex align-center">
+                <v-text-field v-model="search" label="Search" prepend-inner-icon="mdi-magnify" variant="outlined"
+                    hide-details single-line density="compact" class="flex-grow-1 mr-4">
+                </v-text-field>
+                <HutEditModal v-if="userStore.user.is_admin" />
+            </div>
+        </template>
 
-        <div v-if="loading" class="d-flex justify-center my-4">
-            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-        </div>
+        <v-tabs v-model="tab" align-tabs="center" density="compact">
+            <v-tab value="map">Map</v-tab>
+            <v-tab value="list">List</v-tab>
+        </v-tabs>
 
-        <div v-else-if="viewMode === 'grid'">
-            <v-row>
-                <v-col v-for="hut in huts" :key="hut.id" cols="12" md="6" lg="4">
-                    <v-card :to="`/huts/${hut.id}`" link>
-                        <!-- Placeholder image if mostly not available, or map snapshot -->
-                        <v-img height="200px" cover
-                            :src="hut.image_url"
-                            gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-                            <v-card-title class="text-white align-end d-flex fill-height">{{ hut.name }}</v-card-title>
-                        </v-img>
-                        <v-card-text>
-                            <div class="mb-2">
-                                <v-icon size="small" start>mdi-home-group</v-icon>
-                                {{ hut.club?.name || 'Unknown Club' }}
-                            </div>
-                            <div v-if="hut.location_lat && hut.location_lng" class="text-caption">
-                                <v-icon size="small" start>mdi-map-marker</v-icon>
-                                {{ hut.location_lat.toFixed(4) }}, {{ hut.location_lng.toFixed(4) }}
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
-        </div>
+        <v-divider></v-divider>
 
-        <div v-else-if="viewMode === 'map'">
-            <HutListMap />
-        </div>
-    </v-container>
+        <v-tabs-window v-model="tab" class="flex-grow-1">
+            <v-tabs-window-item value="map" class="h-100">
+                <HutListMap :huts="huts" />
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="list" class="h-100 overflow-y-auto">
+                <v-container>
+                    <div v-if="loading" class="d-flex justify-center my-4">
+                        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                    </div>
+                    <HutListList v-else :huts="huts" />
+                </v-container>
+            </v-tabs-window-item>
+        </v-tabs-window>
+    </v-card>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useHutStore } from '@/stores/huts'
 import { useAppStore } from '@/stores/app'
+import { useRoute, useRouter } from 'vue-router'
 import HutListMap from '@/components/HutListMap.vue'
+import HutListList from '@/components/HutListList.vue'
 import HutEditModal from '@/components/HutEditModal.vue'
 
 const hutStore = useHutStore()
 const userStore = useAppStore()
-const viewMode = ref('grid')
+const route = useRoute()
+const router = useRouter()
+
+const tab = ref(route.query.view || 'map')
+const search = ref(route.query.search || '')
 
 onMounted(() => {
     hutStore.fetchHuts()
 })
 
-const huts = computed(() => hutStore.huts)
+watch(tab, (newTab) => {
+    router.replace({ query: { ...route.query, view: newTab } })
+})
+
+watch(search, (newSearch) => {
+    router.replace({ query: { ...route.query, search: newSearch } })
+})
+
+const huts = computed(() => {
+    if (!search.value) return hutStore.huts
+    const term = search.value.toLowerCase()
+    return hutStore.huts.filter(hut =>
+        (hut.name && hut.name.toLowerCase().includes(term)) ||
+        (hut.club && hut.club.name && hut.club.name.toLowerCase().includes(term)) ||
+        (hut.description && hut.description.toLowerCase().includes(term))
+    )
+})
 const loading = computed(() => hutStore.loading)
 </script>

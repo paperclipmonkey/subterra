@@ -2,7 +2,7 @@
     <v-card class="map-container">
         <v-card-text class="map-holder">
             <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" ref="map">
-                <mgl-marker v-for="(hut, index) in hutStore.huts" :key="hut.id"
+                <mgl-marker v-for="(hut, index) in huts" :key="hut.id"
                     :coordinates="[hut.location_lng, hut.location_lat]">
                     <mgl-popup ref="popupRefs">
                         <v-card>
@@ -50,8 +50,13 @@
 </template>
 
 <script setup>
-import { useHutStore } from '@/stores/huts'
-const hutStore = useHutStore()
+// Removed store usage for huts, now coming from props
+const props = defineProps({
+    huts: {
+        type: Array,
+        default: () => []
+    }
+})
 
 import {
     MglMap,
@@ -77,7 +82,7 @@ watch(() => mapOne.isLoaded, (isLoaded) => {
     mapOne.map.resize()
 
     watch(
-        () => hutStore.huts,
+        () => props.huts,
         (huts) => {
             if (huts.length > 0 && mapOne.isLoaded) {
                 const bounds = new maplibregl.LngLatBounds();
