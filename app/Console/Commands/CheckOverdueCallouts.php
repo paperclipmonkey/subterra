@@ -188,12 +188,12 @@ class CheckOverdueCallouts extends Command
                 $this->info("Sent notifications to " . $admins->count() . " admins.");
             }
 
-            // 4. Send Slack Alert - NEW
+            // 4. Send Slack Alert
             try {
                 $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
-                $msg = "🚨 *URGENT: CALLOUT OVERDUE*\nLocation: *{$caveName}*\nUser: {$callout->user->name}\nDue: {$callout->callout_time->format('H:i')}\n<" . url('/admin/incidents/' . $incident->id) . "|View Incident>";
+                $msg = "🚨 *OVERDUE CALLOUT TRIGGERED*\nLocation: *{$caveName}*\nUser: *{$callout->user->name}*\nDue: {$callout->callout_time->format('H:i')}\n<" . url('/admin/incidents/' . $incident->id) . "|View Incident>";
                 
-                \Spatie\SlackAlerts\Facades\SlackAlert::to('callouts')->message($msg);
+                \Spatie\SlackAlerts\Facades\SlackAlert::to('callouts-overdue')->message($msg);
             } catch (\Exception $e) {
                 Log::error("Failed to send Overdue Slack Alert: " . $e->getMessage());
             }

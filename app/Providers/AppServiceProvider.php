@@ -32,9 +32,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Event::listen(
-            \App\Events\UserCreated::class,
             [\App\Listeners\SendNewUserSignupEmailToAdmins::class, 'handle']
         );
+
+        \App\Models\Incident::observe(\App\Observers\IncidentObserver::class);
+        \App\Models\IncidentNote::observe(\App\Observers\IncidentNoteObserver::class);
 
         // Add your custom route binding here
         Route::bind('user_without_scopes', function($id) {

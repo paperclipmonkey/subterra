@@ -125,6 +125,17 @@ class CalloutService
             // 7. Dispatch Created Event (Slack, etc)
             \App\Events\CalloutCreated::dispatch($callout);
 
+            // 8. Slack Notification
+            try {
+                $location = $callout->cave ? $callout->cave->name : 'Custom Location';
+                $participants = $callout->participants()->count() + 1; // + User
+                
+                \Spatie\SlackAlerts\Facades\SlackAlert::to('callouts-open')
+                    ->message(":wave: New Callout: *{$location}* | Party of {$participants} | Return: {$callout->callout_time->format('H:i')}");
+            } catch (\Exception $e) {
+                // Ignore Slack failures
+            }
+
             return $callout;
         });
     }
