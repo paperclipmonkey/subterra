@@ -149,7 +149,10 @@
                                                         <v-col class="flex-grow-1" cols="auto" sm="5">
                                                             <v-text-field v-model="p.phone" label="Phone (Mobile)" dense
                                                                 outlined hide-details placeholder="07... or +44..."
-                                                                :rules="[validateUKPhone]"></v-text-field>
+                                                                :rules="[validateUKPhone]"
+                                                                :readonly="p.locked && !!p.phone"
+                                                                :hint="p.locked && !!p.phone ? 'This number is from their profile' : ''"
+                                                                :persistent-hint="p.locked && !!p.phone"></v-text-field>
                                                         </v-col>
                                                         <v-col cols="auto" sm="2" class="d-flex justify-center">
                                                             <v-btn icon color="error" x-small @click="removeParticipant(i)"
@@ -475,7 +478,7 @@ export default {
                 this.form.participants.push({
                     user_id: this.currentUser.id,
                     name: this.currentUser.name,
-                    phone: '', // Don't prefill phone
+                    phone: this.currentUser.phone || '',
                     email: this.currentUser.email,
                     locked: true
                 });
@@ -486,9 +489,9 @@ export default {
             this.form.participants.push({
                 user_id: user.id,
                 name: user.name,
-                phone: '', // Don't prefill phone
+                phone: user.phone || '',
                 email: user.email,
-                locked: false
+                locked: !!user.phone
             });
             this.userSelect = null;
         },

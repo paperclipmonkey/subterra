@@ -37,6 +37,28 @@
             "null"
           ]
         },
+        "phone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "email_trophies": {
+          "type": "boolean"
+        },
+        "email_tagged": {
+          "type": "boolean"
+        },
+        "email_platform_news": {
+          "type": "boolean"
+        },
+        "visibility_addable": {
+          "type": "string",
+          "enum": [
+            "public",
+            "club"
+          ]
+        },
         "clubs": {
           "type": "array",
           "items": {
@@ -200,6 +222,11 @@
         "stats",
         "tos_agreed_at",
         "privacy_policy_agreed_at",
+        "phone",
+        "email_trophies",
+        "email_tagged",
+        "email_platform_news",
+        "visibility_addable",
         "created_at",
         "updated_at"
       ],

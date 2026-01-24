@@ -25,14 +25,7 @@
       </div>
       <v-divider></v-divider>
       
-      <div class="tags">
-        <h3>Tags:</h3>
-        <v-chip-group v-if="profile.tags && profile.tags.length">
-          <v-chip v-for="tag in profile.tags" :key="tag" outlined>{{ tag }}</v-chip>
-        </v-chip-group>
-        <p v-else>No tags yet.</p>
-      </div>
-      <v-divider></v-divider>
+      <!-- Display User's Clubs -->
 
       <!-- Display User's Clubs -->
       <div class="clubs pa-4">
@@ -63,6 +56,70 @@
           outlined
           rows="4"
         ></v-textarea>
+      </div>
+      <v-divider></v-divider>
+
+      <!-- Phone Number section -->
+      <div class="phone-edit pa-4">
+        <h3>Phone Number:</h3>
+        <v-text-field
+          label="Your mobile number"
+          v-model="profile.phone"
+          outlined
+          :rules="phoneRules"
+          hint="Must be exactly 11 digits (07...) or 13 characters (+44...)."
+          persistent-hint
+        ></v-text-field>
+        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency.</p>
+      </div>
+      <v-divider></v-divider>
+
+      <!-- Email Preferences section -->
+      <div class="email-prefs pa-4">
+        <h3>Email Communications:</h3>
+        <v-switch
+          v-model="profile.email_trophies"
+          label="Trophies"
+          hint="Get notified when you earn a new medal"
+          persistent-hint
+          color="primary"
+        ></v-switch>
+        <v-switch
+          v-model="profile.email_tagged"
+          label="Tagged in Trips"
+          hint="Get notified when someone tags you in a trip report"
+          persistent-hint
+          color="primary"
+        ></v-switch>
+        <v-switch
+          v-model="profile.email_platform_news"
+          label="Platform News"
+          hint="Stay up to date with new features and announcements"
+          persistent-hint
+          color="primary"
+        ></v-switch>
+      </div>
+      <v-divider></v-divider>
+
+      <!-- Trip & Callout Visibility section -->
+      <div class="trip-visibility pa-4">
+        <h3>Addable to Trips & Callouts:</h3>
+        <p class="text-body-2 mb-4">Control who can add you to their trip reports and safety callouts. People can always add you if they know your email address.</p>
+        <v-btn-toggle
+          v-model="profile.visibility_addable"
+          mandatory
+          color="primary"
+          variant="outlined"
+        >
+          <v-btn value="public">
+            <v-icon left>mdi-earth</v-icon>
+            Public
+          </v-btn>
+          <v-btn value="club">
+            <v-icon left>mdi-account-group</v-icon>
+            Club Members Only
+          </v-btn>
+        </v-btn-toggle>
       </div>
       <v-card-actions class="pa-4">
           <v-btn @click="openDeleteModal" color="error" variant="outlined" class="mr-auto">Delete Account</v-btn>
@@ -149,9 +206,13 @@ const profile = ref({
   "id": 0,
   "photo": "",
   "stats": {},
-  "tags": [],
   "clubs": [], // Expect clubs data here from API
   "bio": "", // Added bio to initial structure
+  "phone": "",
+  "email_trophies": true,
+  "email_tagged": true,
+  "email_platform_news": true,
+  "visibility_addable": "public",
 })
 
 const allClubs = ref([]) // To store all clubs fetched from API
@@ -168,6 +229,10 @@ const nameRules = [
   v => (v && v.length <= 100) || 'Name must be less than 100 characters'
 ]
 
+const phoneRules = [
+  v => !v || /^(07[0-9]{9}|\+44[0-9]{10})$/.test(v) || 'Must be exactly 11 digits (07...) or 13 characters (+44...) long',
+]
+
 // Filter clubs the user can request to join (not already a member or pending)
 const availableClubs = computed(() => {
   if (!profile.value.clubs || !allClubs.value) return []
@@ -177,7 +242,7 @@ const availableClubs = computed(() => {
 
 const save = async () => {
   try {
-    const response = await fetch(`/api/users/${route.params.id}`, {
+    const response = await fetch(`/api/users/me`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -186,6 +251,11 @@ const save = async () => {
       body: JSON.stringify({
         name: profile.value.name,
         bio: profile.value.bio,
+        phone: profile.value.phone,
+        email_trophies: profile.value.email_trophies,
+        email_tagged: profile.value.email_tagged,
+        email_platform_news: profile.value.email_platform_news,
+        visibility_addable: profile.value.visibility_addable,
       }),
     })
     if (!response.ok) {
@@ -195,6 +265,11 @@ const save = async () => {
     // Merge updated data carefully, especially if API doesn't return full profile
     profile.value.name = updatedProfile.name
     profile.value.bio = updatedProfile.bio
+    profile.value.phone = updatedProfile.phone
+    profile.value.email_trophies = updatedProfile.email_trophies
+    profile.value.email_tagged = updatedProfile.email_tagged
+    profile.value.email_platform_news = updatedProfile.email_platform_news
+    profile.value.visibility_addable = updatedProfile.visibility_addable
     // Optionally re-fetch profile to get latest club status if save affects it indirectly
     // await fetchProfile(); 
     // Consider showing a success message
@@ -207,7 +282,7 @@ const save = async () => {
 
 const fetchProfile = async () => {
   try {
-    const response = await fetch(`/api/users/${route.params.id}`)
+    const response = await fetch(`/api/users/me`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -296,7 +371,7 @@ const closeDeleteModal = () => {
 const deleteAccount = async () => {
   deletingAccount.value = true;
   try {
-    const response = await fetch(`/api/users/${route.params.id}`, {
+    const response = await fetch(`/api/users/me`, {
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',
@@ -335,7 +410,6 @@ onMounted(async () => {
   margin-left: 16px;
 }
 
-.tags,
 .clubs,
 .bio,
 .name-edit {

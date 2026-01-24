@@ -39,6 +39,10 @@ Route::get('/users/me', function (Request $request) {
         return abort(400, 'No user logged in');
     }
 })->name('users.me');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update');
+    Route::delete('/users/me', [App\Http\Controllers\UserController::class, 'destroyMe'])->name('users.me.destroy');
+});
 
 // Magic link authentication routes (no auth required)
 Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink']);

@@ -113,6 +113,142 @@ class UserTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_updates_user_preferences()
+    {
+        $user = User::factory()->create([
+            'phone' => null,
+            'email_trophies' => true,
+            'email_tagged' => true,
+            'email_platform_news' => true,
+            'visibility_addable' => 'public',
+        ]);
+
+        $payload = [
+            'phone' => '07123456789',
+            'email_trophies' => false,
+            'email_tagged' => false,
+            'email_platform_news' => false,
+            'visibility_addable' => 'club',
+        ];
+
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->putJson(route('users.store', $user), $payload);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'phone' => '07123456789',
+            'email_trophies' => false,
+            'email_tagged' => false,
+            'email_platform_news' => false,
+            'visibility_addable' => 'club',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_filters_users_by_visibility()
+    {
+        $club = \App\Models\Club::factory()->create();
+        $currentUser = User::factory()->create();
+        $currentUser->clubs()->attach($club->id, ['status' => 'approved']);
+
+        // User in same club with 'club' visibility
+        $clubUser = User::factory()->create(['visibility_addable' => 'club']);
+        $clubUser->clubs()->attach($club->id, ['status' => 'approved']);
+
+        // User in different club with 'club' visibility
+        $otherClubUser = User::factory()->create(['visibility_addable' => 'club']);
+
+        // Public user
+        $publicUser = User::factory()->create(['visibility_addable' => 'public']);
+
+        $this->actingAs($currentUser, 'sanctum');
+
+        $response = $this->getJson(route('users.index'));
+
+        $response->assertOk();
+        $response->assertJsonFragment(['id' => $clubUser->id]);
+        $response->assertJsonFragment(['id' => $publicUser->id]);
+        $response->assertJsonMissing(['id' => $otherClubUser->id]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_updates_current_user_preferences()
+    {
+        $user = User::factory()->create([
+            'phone' => null,
+            'email_trophies' => true,
+        ]);
+
+        $payload = [
+            'phone' => '07123456789',
+            'email_trophies' => false,
+        ];
+
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->putJson(route('users.me.update'), $payload);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'phone' => '07123456789',
+            'email_trophies' => false,
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_deletes_current_user()
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->deleteJson(route('users.me.destroy'));
+
+        $response->assertOk();
+        $this->assertDatabaseMissing('users', [
+            'id' => $user->id,
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_validates_uk_phone_numbers()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'sanctum');
+
+        // Valid 07... (11 digits)
+        $response = $this->putJson(route('users.me.update'), ['phone' => '07123456789']);
+        $response->assertOk();
+
+        // Valid +44... (13 chars)
+        $response = $this->putJson(route('users.me.update'), ['phone' => '+447123456789']);
+        $response->assertOk();
+
+        // Invalid: too short (10 digits)
+        $response = $this->putJson(route('users.me.update'), ['phone' => '0712345678']);
+        $response->assertStatus(422);
+
+        // Invalid: too long (12 digits)
+        $response = $this->putJson(route('users.me.update'), ['phone' => '071234567890']);
+        $response->assertStatus(422);
+
+        // Invalid: +44 too short (12 chars)
+        $response = $this->putJson(route('users.me.update'), ['phone' => '+44712345678']);
+        $response->assertStatus(422);
+
+        // Invalid: +44 too long (14 chars)
+        $response = $this->putJson(route('users.me.update'), ['phone' => '+4471234567890']);
+        $response->assertStatus(422);
+
+        // Invalid: wrong prefix
+        $response = $this->putJson(route('users.me.update'), ['phone' => '01123456789']);
+        $response->assertStatus(422);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_deletion_removes_user_and_deletes_solo_trips()
     {
         $this->withoutExceptionHandling();

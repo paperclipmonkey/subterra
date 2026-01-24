@@ -52,8 +52,25 @@ class UserController extends Controller
         }
         
 
-        // Score users: +2 for each shared trip, +1 for same club
-        $users = User::all()->map(function ($user) use ($clubUserIds, $tripUserCounts, $currentUser) {
+        // Score and filter users: +2 for each shared trip, +1 for same club
+        $users = User::all()->filter(function ($user) use ($currentUser, $clubUserIds) {
+            // Always allow self
+            if ($currentUser && $user->id === $currentUser->id) {
+                return true;
+            }
+
+            // Public users are always visible
+            if ($user->visibility_addable === 'public') {
+                return true;
+            }
+
+            // Club users are only visible to club members
+            if ($user->visibility_addable === 'club') {
+                return $clubUserIds->contains($user->id);
+            }
+
+            return true; // Default to visible
+        })->map(function ($user) use ($clubUserIds, $tripUserCounts, $currentUser) {
             $score = 0;
             if ($clubUserIds->contains($user->id)) {
                 $score += 1;
@@ -135,9 +152,13 @@ class UserController extends Controller
     public function store(User $user, Request $request): UserDetailEmailResource
     {
         $validatedData = $request->validate([
-            'bio' => 'nullable|string',
-            'name' => 'nullable|string|max:255',
-            // Add validation for other editable fields if needed
+            'bio' => ['nullable', 'string'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'regex:/^(07[0-9]{9}|\+44[0-9]{10})$/'],
+            'email_trophies' => ['nullable', 'boolean'],
+            'email_tagged' => ['nullable', 'boolean'],
+            'email_platform_news' => ['nullable', 'boolean'],
+            'visibility_addable' => ['nullable', 'string', 'in:public,club'],
         ]);
 
         $user->update($validatedData);
@@ -287,5 +308,17 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'Account deleted.'], 200);
+    }
+
+    public function updateMe(Request $request): UserDetailEmailResource
+    {
+        $user = $request->user();
+        return $this->store($user, $request);
+    }
+
+    public function destroyMe(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        return $this->destroy($request, $user);
     }
 }

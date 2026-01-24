@@ -26,6 +26,10 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'is_active' => true,
             'is_approved' => true,
+            'email_trophies' => true,
+            'email_tagged' => true,
+            'email_platform_news' => true,
+            'visibility_addable' => 'public',
         ];
     }
 }

@@ -22,6 +22,11 @@ class UserDetailEmailResource extends JsonResource
             'email'=> $this->email,
             'photo' => $this->photo,
             'bio' => $this->bio,
+            'phone' => $this->phone,
+            'email_trophies' => $this->email_trophies,
+            'email_tagged' => $this->email_tagged,
+            'email_platform_news' => $this->email_platform_news,
+            'visibility_addable' => $this->visibility_addable,
             // Eager load approvedClubs if not already done in controller
             'clubs' => $this->clubs->map(function ($club) {
                 return [

@@ -255,7 +255,6 @@ const profile = ref({
    "id": 0,
    "photo": "",
    "stats": { caves: 0, trips: 0, duration: 0 },
-   "tags": [],
    "bio": "",
    "clubs": [],
 })

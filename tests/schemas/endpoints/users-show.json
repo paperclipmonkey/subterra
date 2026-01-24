@@ -22,10 +22,23 @@
           "minLength": 1
         },
         "photo": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "bio": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "visibility_addable": {
+          "type": "string",
+          "enum": [
+            "public",
+            "club"
+          ]
         },
         "clubs": {
           "type": "array",
@@ -47,7 +60,12 @@
                 "type": "string"
               }
             },
-            "required": ["name", "slug", "is_admin", "status"],
+            "required": [
+              "name",
+              "slug",
+              "is_admin",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
@@ -66,19 +84,34 @@
                 "type": "string"
               },
               "image_url": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "awarded_at": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "format": "date-time"
               }
             },
-            "required": ["id", "name", "description", "image_url", "awarded_at"],
+            "required": [
+              "id",
+              "name",
+              "description",
+              "image_url",
+              "awarded_at"
+            ],
             "additionalProperties": false
           }
         },
         "is_admin": {
-          "type": ["boolean", "null"]
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "is_approved": {
           "type": "boolean"
@@ -99,7 +132,11 @@
               "minimum": 0
             }
           },
-          "required": ["trips", "caves", "duration"],
+          "required": [
+            "trips",
+            "caves",
+            "duration"
+          ],
           "additionalProperties": false
         },
         "created_at": {
@@ -111,10 +148,22 @@
           "format": "date-time"
         }
       },
-      "required": ["id", "name", "clubs", "medals", "is_approved", "stats", "created_at", "updated_at"],
+      "required": [
+        "id",
+        "name",
+        "clubs",
+        "medals",
+        "is_approved",
+        "stats",
+        "visibility_addable",
+        "created_at",
+        "updated_at"
+      ],
       "additionalProperties": false
     }
   },
-  "required": ["data"],
+  "required": [
+    "data"
+  ],
   "additionalProperties": false
 }

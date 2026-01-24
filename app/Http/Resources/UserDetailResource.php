@@ -21,6 +21,7 @@ class UserDetailResource extends JsonResource
             'name' => $this->name,
             'photo' => $this->photo,
             'bio' => $this->bio,
+            'visibility_addable' => $this->visibility_addable,
             // Eager load approvedClubs if not already done in controller
             'clubs' => $this->clubs->map(function ($club) {
                 return [
