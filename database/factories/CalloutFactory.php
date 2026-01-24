@@ -14,6 +14,7 @@ class CalloutFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'cave_id' => \App\Models\Cave::factory(),
             'description' => $this->faker->sentence,
             'callout_time' => $this->faker->dateTimeBetween('now', '+1 week'),
             'emergency_contact_name' => $this->faker->name,

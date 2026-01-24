@@ -20,15 +20,27 @@ class CalloutController extends Controller
             ->get();
 
         $data = $callouts->map(function ($callout) {
+            $lat = null;
+            $lng = null;
+            if ($callout->cave) {
+                $lat = $callout->cave->location_lat;
+                $lng = $callout->cave->location_lng;
+            } elseif (!empty($callout->location_data) && isset($callout->location_data['latitude'], $callout->location_data['longitude'])) {
+                $lat = $callout->location_data['latitude'];
+                $lng = $callout->location_data['longitude'];
+            }
+
             return [
                 'id' => $callout->id,
                 'status' => $callout->status,
                 'cave_name' => $callout->cave ? $callout->cave->name : $callout->description,
                 'exit_cave_name' => $callout->exitCave ? $callout->exitCave->name : null,
                 'callout_time' => $callout->callout_time,
-                'team_size' => $callout->participants->count(), // User says +1 was wrong, so likely participants table includes everyone.
+                'team_size' => $callout->participants->count(),
                 'has_incident' => $callout->status === 'triggered',
                 'incident_id' => $callout->incident ? $callout->incident->id : null,
+                'lat' => $lat,
+                'lng' => $lng,
             ];
         });
 

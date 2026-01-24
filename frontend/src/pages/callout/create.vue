@@ -172,7 +172,7 @@
                                                 At least one participant must have a valid mobile phone number.
                                             </v-alert>
 
-                                            <v-textarea v-model="form.medical_info" label="Additional Team Details"
+                                            <v-textarea v-model="form.team_details" label="Additional Team Details"
                                                 hint="Any relevant details for the team."
                                                 persistent-hint outlined rows="2" class="mt-6"></v-textarea>
                                         </div>
@@ -288,7 +288,7 @@ export default {
                 car_parking: '',
                 location_data: null,
                 participants: [],
-                medical_info: '',
+                team_details: '',
                 trip_plan: '',
                 callout_time: '',
             },

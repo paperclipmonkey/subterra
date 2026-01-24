@@ -2,8 +2,8 @@
   <v-card class="map-container">
     <v-card-text class="map-holder">
       <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" ref="map">
-      <mgl-marker v-if="mapOne.isLoaded" v-for="(callout) in validCallouts" :key="callout.id"
-          :coordinates="{ lng: callout.lng, lat: callout.lat }">
+      <mgl-marker v-for="(callout) in validCallouts" :key="callout.id"
+          :coordinates="[callout.lng, callout.lat]">
           <mgl-popup>
             <v-card width="200px">
               <v-card-title class="subtitle-2">{{ callout.cave_name || 'Unknown Location' }}</v-card-title>
@@ -23,7 +23,6 @@
 
 <script setup>
 import { computed, watch } from 'vue';
-import moment from 'moment';
 import {
   MglMap,
   MglFullscreenControl,
@@ -42,11 +41,13 @@ const props = defineProps({
 });
 
 const validCallouts = computed(() => {
-  return props.callouts.filter(c => c && c.lat && c.lng).map(c => ({
-    ...c,
-    lat: Number(c.lat),
-    lng: Number(c.lng)
-  }));
+  return props.callouts
+    .filter(c => c && (c.lat || c.location_lat) && (c.lng || c.location_lng))
+    .map(c => ({
+      ...c,
+      lat: Number(c.lat || c.location_lat),
+      lng: Number(c.lng || c.location_lng)
+    }));
 });
 
 const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
@@ -63,7 +64,7 @@ const updateBounds = () => {
     });
 
     if (!bounds.isEmpty()) {
-      mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 12 });
+      mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 8 });
     }
   }
 };
@@ -75,12 +76,12 @@ watch(() => mapOne.isLoaded, (isLoaded) => {
   }
 });
 
-watch(() => props.callouts, () => {
+watch(() => validCallouts.value, () => {
   updateBounds();
-}, { deep: true });
+}, { deep: true, immediate: true });
 </script>
 
-<style scoped>
+<style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 .map-container {
@@ -92,5 +93,15 @@ watch(() => props.callouts, () => {
   padding: 0;
   width: 100%;
   height: 100%;
+}
+
+.maplibregl-popup .maplibregl-popup-content {
+  padding: 0;
+  background: transparent;
+}
+
+.maplibregl-popup-content .maplibregl-popup-close-button {
+  right: 6px;
+  top: 0px;
 }
 </style>

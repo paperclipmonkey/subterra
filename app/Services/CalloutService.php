@@ -39,7 +39,7 @@ class CalloutService
                 'cave_id' => $data['cave_id'] ?? null,
                 'exit_cave_id' => $data['exit_cave_id'] ?? null,
                 'callout_time' => $calloutTime,
-                'description' => $data['description'] ?? 'Callout created via API', 
+                'description' => $data['description'] ?? $data['trip_plan'] ?? 'Callout created via API', 
                 'trip_plan' => $data['trip_plan'] ?? null,
                 'car_details' => $data['car_details'] ?? null,
                 'car_registration' => $data['car_registration'] ?? null,
@@ -208,15 +208,15 @@ class CalloutService
         $cave = $callout->cave;
         $systemId = $cave ? $cave->cave_system_id : null;
 
-        // If for some reason we have a callout without a cave, we still need a system ID.
-        // Based on frontend this shouldn't happen, but we should be safe.
-        if (!$systemId && $cave) {
-             $systemId = $cave->cave_system_id;
+        if (!$systemId) {
+            // If we don't have a system, we can't create a valid trip record
+            // based on the current database constraints.
+            return new \App\Models\Trip(); // Return empty model or handle differently
         }
 
         $trip = \App\Models\Trip::create([
             'name' => ($cave ? $cave->name : 'Custom Location') . ' Trip',
-            'description' => $callout->description,
+            'description' => $callout->trip_plan ?: $callout->description,
             'start_time' => $callout->created_at,
             'end_time' => now(), // Time of cancellation
             'cave_system_id' => $systemId,

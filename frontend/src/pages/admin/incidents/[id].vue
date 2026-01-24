@@ -95,8 +95,7 @@
                                     Team: {{ incident.callout.participants.length }} people<br>
                                     Overdue: {{ formatTime(incident.callout.callout_time) }} ({{
                                         incident.callout.callout_time ? formatRelativeTime(incident.callout.callout_time) :
-                                            '' }})<br>
-                                    Medical: {{ incident.callout.medical_info || 'None known' }}
+                                            '' }})
                                 </div>
                                 <v-checkbox v-model="script.providedInfo" label="Details passed to operator" dense
                                     hide-details color="success" :disabled="!script.statedNature"></v-checkbox>
@@ -125,13 +124,22 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="6">
-                                <strong>Cave:</strong> {{ incident.callout.cave?.name }}
+                                <strong>Cave:</strong> 
+                                <router-link v-if="incident.callout.cave" :to="'/caves/' + incident.callout.cave.slug">
+                                    {{ incident.callout.cave.name }}
+                                </router-link>
                             </v-col>
                             <v-col cols="6">
-                                <strong>Exit Cave:</strong> {{ incident.callout.exit_cave?.name || 'Same' }}
+                                <strong>Exit Cave:</strong>
+                                <template v-if="incident.callout.exit_cave">
+                                    <router-link :to="'/caves/' + incident.callout.exit_cave.slug">
+                                        {{ incident.callout.exit_cave.name }}
+                                    </router-link>
+                                </template>
+                                <span v-else>Same</span>
                             </v-col>
                             <v-col cols="12">
-                                <strong>Car Details:</strong> {{ incident.callout.car_details || 'N/A' }}
+                                <strong v-if="incident.callout.car_details">Car Details:</strong> {{ incident.callout.car_details }}
                                 <div class="mt-1" v-if="incident.callout.car_registration || incident.callout.car_parking">
                                     <v-chip x-small v-if="incident.callout.car_registration" class="mr-1" label>
                                       Reg: {{ incident.callout.car_registration }}
@@ -139,6 +147,12 @@
                                     <span v-if="incident.callout.car_parking" class="text-caption grey--text text--darken-2">
                                       Parking: {{ incident.callout.car_parking }}
                                     </span>
+                                </div>
+                            </v-col>
+                            <v-col cols="12" v-if="incident.callout.team_details">
+                                <strong>Party Info:</strong>
+                                <div class="grey lighten-4 pa-3 rounded mt-1">
+                                    {{ incident.callout.team_details }}
                                 </div>
                             </v-col>
                             <v-col cols="12">
@@ -158,10 +172,10 @@
                                 </div>
 
                                 <div v-if="incident.callout.location_data" class="mt-2">
-                                    <strong>Callout Origin:</strong>
-                                    <span v-if="incident.callout.location_data.coords">
-                                        {{ incident.callout.location_data.coords.latitude.toFixed(5) }}, 
-                                        {{ incident.callout.location_data.coords.longitude.toFixed(5) }}
+                                    <strong>Callout opened at location:</strong>
+                                    <span v-if="incident.callout.location_data.latitude">
+                                        {{ incident.callout.location_data.latitude.toFixed(5) }}, 
+                                        {{ incident.callout.location_data.longitude.toFixed(5) }}
                                     </span>
                                     <span v-else class="grey--text font-italic">No GPS data</span>
                                 </div>
@@ -177,7 +191,10 @@
                                     <v-icon>mdi-account</v-icon>
                                 </v-list-item-avatar>
                                 <v-list-item-content>
-                                    <v-list-item-title>{{ p.name }}</v-list-item-title>
+                                    <v-list-item-title>
+                                        <router-link v-if="p.user_id" :to="'/profile/' + p.user_id">{{ p.name }}</router-link>
+                                        <span v-else>{{ p.name }}</span>
+                                    </v-list-item-title>
                                     <v-list-item-subtitle>{{ p.phone || 'No phone' }}</v-list-item-subtitle>
                                 </v-list-item-content>
                             </v-list-item>
