@@ -140,6 +140,7 @@ const formatDate = (date) => {
 }
 
 onMounted(async () => {
+  tripStore.loading = true
   await store.getUser() // Check if user is logged in
   await tripStore.getTrips()
 })
