@@ -72,7 +72,7 @@ After setting up the application:
    $user->is_approved = true;
    $user->save();
    
-   # Approve your club membership
+   // Approve your club membership
    $user->clubs->first()->pivot->status = 'approved'; 
    $user->clubs->first()->pivot->save();
    ```
