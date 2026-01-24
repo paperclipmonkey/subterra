@@ -5,7 +5,7 @@
          <!-- Profile Header Card -->
          <v-card class="rounded-xl mb-6 overflow-hidden" elevation="0" border>
             <div class="bg-gradient-primary px-6 pt-4 pb-12 pt-sm-10 pb-sm-16"></div>
-            <div class="px-6 pb-6 mt-n10 mt-sm-n12 d-flex flex-column flex-sm-row align-end">
+            <div class="px-6 pb-6 mt-n10 mt-sm-n12 d-flex flex-column flex-sm-row align-center align-sm-end">
 
                <v-avatar size="100" class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-sm-0 d-sm-none">
                   <v-img :src="profile.photo || '/default-avatar.png'" cover></v-img>
@@ -16,7 +16,7 @@
                </v-avatar>
 
                <div class="ml-sm-6 mt-4 mt-sm-0 flex-grow-1 text-center text-sm-left" style="min-width: 0;">
-                  <h1 class="text-h4 font-weight-bold text-grey-darken-4 mb-1 text-truncate">{{ profile.name }}</h1>
+                  <h1 class="text-h5 text-sm-h4 font-weight-bold text-grey-darken-4 mb-1 text-truncate">{{ profile.name }}</h1>
                   <div class="d-flex align-center justify-center justify-sm-start flex-wrap gap-2">
                      <v-chip v-if="profile.clubs && profile.clubs.length > 0" color="primary" variant="flat"
                         size="small" prepend-icon="mdi-account-group-outline" class="font-weight-medium">
