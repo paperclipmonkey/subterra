@@ -7,7 +7,7 @@ on:
       - main
       - develop
 jobs:
-  test:
+  backend-tests:
     runs-on: ubuntu-latest
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
@@ -19,20 +19,8 @@ jobs:
         with:
           php-version: '8.4'
           extensions: mbstring, bcmath, sqlite3
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'yarn'
-          cache-dependency-path: frontend/yarn.lock
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
-      - name: Install frontend dependencies
-        run: cd frontend && yarn install --frozen-lockfile
-      - name: Run frontend tests
-        run: cd frontend && yarn test:run
-      - name: Build frontend
-        run: cd frontend && yarn run build
       - name: Copy .env if needed
         run: |
           if [ ! -f .env ]; then cp .env.example .env; fi
@@ -45,3 +33,23 @@ jobs:
         run: php artisan migrate --force
       - name: Run tests
         run: vendor/bin/phpunit
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install frontend dependencies
+        run: cd frontend && yarn install --frozen-lockfile
+      - name: Run frontend tests
+        run: cd frontend && yarn test:run
+      - name: Build frontend
+        run: cd frontend && yarn run build

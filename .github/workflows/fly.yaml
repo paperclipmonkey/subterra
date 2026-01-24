@@ -4,9 +4,8 @@ on:
     branches:
       - main
 jobs:
-  test-and-deploy:
+  backend-tests:
     runs-on: ubuntu-latest
-    concurrency: deploy-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
@@ -31,6 +30,36 @@ jobs:
         run: php artisan migrate --force
       - name: Run tests
         run: vendor/bin/phpunit
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install frontend dependencies
+        run: cd frontend && yarn install --frozen-lockfile
+      - name: Run frontend tests
+        run: cd frontend && yarn test:run
+      - name: Build frontend
+        run: cd frontend && yarn run build
+
+  deploy:
+    needs: [backend-tests, frontend-tests]
+    runs-on: ubuntu-latest
+    concurrency: deploy-group
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Make HTTP request # Ensure the api is up. Helps with postgres going to sleep
         run: |
           curl -s https://subterra.world/api/livez > /dev/null; sleep 15
