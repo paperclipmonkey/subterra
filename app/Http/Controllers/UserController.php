@@ -207,6 +207,12 @@ class UserController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // 1. Delete user photo if it's not the default
+        if ($user->photo && $user->photo !== 'profile/default.webp' && $user->photo !== 'profile/default.png') {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->photo);
+        }
+
+        // 2. Clear trips
         // Find all trips where this user is a participant
         $trips = $user->trips()->get();
         foreach ($trips as $trip) {
@@ -220,10 +226,14 @@ class UserController extends Controller
             }
         }
 
-        // Remove user from any clubs (detach from pivot)
+        // 3. Detach from clubs and medals
         $user->clubs()->detach();
+        $user->medals()->detach();
 
-        // Delete the user
+        // 4. Delete the user
+        // related callouts, incidents, onto_call_shifts, and collections 
+        // will be deleted via database cascades.
+        // incident_notes will be set to null via database cascade (set null).
         $user->delete();
 
         return response()->json(['message' => 'Account deleted.'], 200);

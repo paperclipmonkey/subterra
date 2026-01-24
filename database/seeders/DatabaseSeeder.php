@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             CaveSeeder::class,
             HutSeeder::class,
             PageSeeder::class,
+            PrivacyPolicySeeder::class,
         ]);
     }
 }

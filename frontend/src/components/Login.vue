@@ -32,6 +32,10 @@
                   <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold" @click.stop>
                     Terms of Service
                   </router-link>
+                  and
+                  <router-link to="/pages/privacy-policy" class="text-decoration-none font-weight-bold" @click.stop>
+                    Privacy Policy
+                  </router-link>
                 </div>
               </template>
             </v-checkbox>
@@ -85,7 +89,9 @@
           <!-- Footer -->
           <div class="text-center mt-auto pt-8">
             <div class="d-flex justify-center gap-4 mb-2">
-              <!-- Future links: Terms | Privacy | Help -->
+              <router-link to="/pages/terms-of-service" class="text-caption text-decoration-none grey--text">Terms</router-link>
+              <span class="text-caption grey--text">•</span>
+              <router-link to="/pages/privacy-policy" class="text-caption text-decoration-none grey--text">Privacy</router-link>
             </div>
             <div class="text-caption grey--text text--lighten-1">
               Subterra is <a href="https://github.com/paperclipmonkey/subterra"

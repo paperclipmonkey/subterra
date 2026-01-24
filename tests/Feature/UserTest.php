@@ -163,4 +163,91 @@ class UserTest extends TestCase
         $response->assertOk();
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_deletion_removes_photo_and_orphans_incident_notes()
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'photo' => 'profile/custom-photo.jpg'
+        ]);
+        
+        // Ensure the file exists in our fake storage
+        Storage::disk('public')->put('profile/custom-photo.jpg', 'fake-image-content');
+
+        // Create an incident note from this user
+        $callout = \App\Models\Callout::factory()->create();
+        $incident = \App\Models\Incident::factory()->create(['callout_id' => $callout->id]);
+        $note = \App\Models\IncidentNote::factory()->create([
+            'incident_id' => $incident->id,
+            'user_id' => $user->id,
+            'content' => 'This is an important safety note.'
+        ]);
+
+        $this->actingAs($user, 'sanctum');
+        $response = $this->deleteJson("/api/users/{$user->id}");
+        $response->assertOk();
+
+        // Verify photo is gone
+        Storage::disk('public')->assertMissing('profile/custom-photo.jpg');
+
+        // Verify note still exists but user_id is null
+        $this->assertDatabaseHas('incident_notes', [
+            'id' => $note->id,
+            'user_id' => null,
+            'content' => 'This is an important safety note.'
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_deletion_is_completely_thorough_and_preserves_defaults()
+    {
+        Storage::fake('public');
+
+        // Create a user with the DEFAULT photo
+        $user = User::factory()->create([
+            'photo' => 'profile/default.webp'
+        ]);
+        Storage::disk('public')->put('profile/default.webp', 'shared-default-image');
+
+        // 1. Check Medals Detachment
+        $medal = \App\Models\Medal::factory()->create();
+        $user->medals()->attach($medal->id, ['awarded_at' => now()]);
+
+        // 2. Check Callouts and Cascades
+        $callout = \App\Models\Callout::factory()->create(['user_id' => $user->id]);
+        $incident = \App\Models\Incident::factory()->create(['callout_id' => $callout->id]);
+        
+        // 3. Check Collections Cascade
+        $collection = \App\Models\Collection::factory()->create(['user_id' => $user->id]);
+
+        // 4. Check OnCallShifts Cascade
+        $shift = \App\Models\OnCallShift::create([
+            'user_id' => $user->id,
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHours(8),
+        ]);
+
+        $this->actingAs($user, 'sanctum');
+        $response = $this->deleteJson("/api/users/{$user->id}");
+        $response->assertOk();
+
+        // ASSERTIONS
+        
+        // Account is gone
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+
+        // DEFAULT PHOTO IS PRESERVED (IMPORTANT!)
+        Storage::disk('public')->assertExists('profile/default.webp');
+
+        // Detachments
+        $this->assertDatabaseMissing('medal_user', ['user_id' => $user->id, 'medal_id' => $medal->id]);
+
+        // Cascades
+        $this->assertDatabaseMissing('callouts', ['id' => $callout->id]);
+        $this->assertDatabaseMissing('incidents', ['id' => $incident->id]);
+        $this->assertDatabaseMissing('collections', ['id' => $collection->id]);
+        $this->assertDatabaseMissing('on_call_shifts', ['id' => $shift->id]);
+    }
 }
