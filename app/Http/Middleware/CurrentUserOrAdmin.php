@@ -18,7 +18,9 @@ class CurrentUserOrAdmin
         {
             return $next($request);
         }
-        if($request->route('user') && $request->route('user')->id === $request->user()->id)
+        $targetUser = $request->route('user') ?? $request->route('user_without_scopes');
+
+        if($targetUser instanceof \App\Models\User && $targetUser->id === $request->user()->id)
         {
             return $next($request);
         }

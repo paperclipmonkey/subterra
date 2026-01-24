@@ -93,7 +93,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
     Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
     Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
-    Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
+    Route::delete('/users/{user_without_scopes}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
 
     // --- Club Admin Pending Member Management ---
     Route::get('/admin/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.pending.index');

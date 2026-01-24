@@ -249,8 +249,9 @@ class UserController extends Controller
      * Delete a user account. Deletes any trips where the user was the only participant.
      * Keeps all other trips (removes user from them).
      */
-    public function destroy(Request $request, User $user): JsonResponse
+    public function destroy(Request $request, User $user_without_scopes): JsonResponse
     {
+        $user = $user_without_scopes;
         // Only allow the user themselves or an admin to delete
         if ($request->user()->id !== $user->id && !$request->user()->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
