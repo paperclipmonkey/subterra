@@ -25,6 +25,16 @@ This document explains how to set up and run the Subterra system locally for dev
    cp .env.example .env
    # Edit .env with your specific configuration
    ```
+   
+   **Optional: Weather Feature Configuration**
+   
+   To enable the cave weather feature, you need a Pirate Weather API key:
+   1. Sign up for a free API key at [pirateweather.net](https://pirateweather.net)
+   2. Add the key to your `.env` file:
+      ```
+      PIRATE_WEATHER_API_KEY=your_api_key_here
+      ```
+   3. The weather tab will display "Weather service temporarily unavailable" if no API key is configured.
 
 3. **Start Services**
    ```bash
@@ -94,6 +104,8 @@ The API uses Laravel Sanctum for authentication. Users authenticate via Google O
 #### Caves
 - `GET /api/caves` - List all caves
 - `GET /api/caves/{cave}` - Get specific cave details
+- `GET /api/caves/{cave}/weather/forecast` - Get current weather and forecast for cave location
+- `GET /api/caves/{cave}/weather/historical` - Get historical weather (last 7 days) for cave location
 - `POST /api/caves` - Create new cave (admin only)
 - `PUT /api/caves/{cave}` - Update cave (admin only)
 
