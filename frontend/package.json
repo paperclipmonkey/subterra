@@ -19,7 +19,7 @@
     "@milkdown/plugin-listener": "^7.18.0",
     "@milkdown/vue": "^7.18.0",
     "axios": "^1.13.2",
-    "core-js": "^3.47.0",
+    "core-js": "^3.48.0",
     "mande": "^2.0.9",
     "md-editor-v3": "^6.3.1",
     "moment": "^2.30.1",
