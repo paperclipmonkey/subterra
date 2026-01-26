@@ -53,3 +53,62 @@ jobs:
         run: cd frontend && yarn test:run
       - name: Build frontend
         run: cd frontend && yarn run build
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install frontend dependencies
+        run: cd frontend && yarn install --frozen-lockfile
+      - name: Install Playwright Browsers
+        run: cd frontend && npx playwright install --with-deps chromium
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, bcmath, sqlite3
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Copy .env if needed
+        run: |
+          if [ ! -f .env ]; then cp .env.example .env; fi
+      - name: Generate app key
+        run: php artisan key:generate
+      - name: Set up SQLite database
+        run: |
+          touch database.sqlite
+      - name: Run migrations
+        run: php artisan migrate --force
+      - name: Start Laravel server
+        run: php artisan serve --host=0.0.0.0 --port=8000 &
+        env:
+          APP_ENV: testing
+      - name: Wait for Laravel server
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/api/livez 2>/dev/null; then
+              echo "Server is up!"
+              break
+            fi
+            echo "Waiting for server... ($i/30)"
+            sleep 2
+          done
+      - name: Run E2E tests
+        run: cd frontend && BASE_URL=http://localhost:5173 yarn test:e2e
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
