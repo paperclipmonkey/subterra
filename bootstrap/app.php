@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
+        $middleware->alias([
+            'track.api' => \App\Http\Middleware\TrackApiInteraction::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

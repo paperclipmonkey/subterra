@@ -49,7 +49,7 @@ class ApiInteractionTest extends TestCase
         
         $this->assertEquals(0, ApiInteraction::count());
         
-        $this->get('/api/trips/' . $trip->id);
+        $this->get('/api/trips/' . $trip->short_id);
         
         $this->assertEquals(1, ApiInteraction::count());
         
@@ -142,7 +142,7 @@ class ApiInteractionTest extends TestCase
         }
         
         for ($i = 0; $i < 8; $i++) {
-            $this->get('/api/trips/' . $trip->id);
+            $this->get('/api/trips/' . $trip->short_id);
         }
 
         $this->actingAs($admin);
