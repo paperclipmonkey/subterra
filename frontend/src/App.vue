@@ -13,6 +13,20 @@
       <v-icon class="ml-2">mdi-chevron-right</v-icon>
     </v-system-bar>
 
+    <v-system-bar v-else-if="appStore.user.on_call" color="deep-purple-darken-2" class="text-white cursor-pointer px-4"
+      height="40" @click="router.push('/admin/callout')" style="cursor: pointer; z-index: 9999;" window>
+      <v-icon color="white" class="mr-2">mdi-shield-check</v-icon>
+      <span class="font-weight-bold">ON-CALL DUTY OFFICER</span>
+      <v-spacer></v-spacer>
+      <span class="d-none d-sm-flex mr-4" v-if="appStore.user.on_call_until">
+        REMAINING: {{ formatRemainingTime(appStore.user.on_call_until) }}
+      </span>
+      <span class="font-weight-bold">
+        {{ appStore.user.open_callouts_count }} OPEN CALLOUTS
+      </span>
+      <v-icon class="ml-2">mdi-chevron-right</v-icon>
+    </v-system-bar>
+ 
     <v-system-bar v-else-if="appStore.user.id && !appStore.user.is_approved" color="warning"
       class="text-white px-4" height="40" style="z-index: 9999;" window>
       <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? 'mdi-account-clock' : 'mdi-account-plus' }}</v-icon>
@@ -61,6 +75,14 @@ const hasPendingApprovals = computed(() => {
 })
 
 const formatTime = (t) => moment(t).format('HH:mm')
+
+const formatRemainingTime = (t) => {
+  const diff = moment(t).diff(moment())
+  const duration = moment.duration(diff)
+  const hours = Math.floor(duration.asHours())
+  const minutes = duration.minutes()
+  return `${hours}h ${minutes}m`
+}
 
 const notificationColor = computed(() => {
   switch (notificationStore.type) {
