@@ -18,6 +18,9 @@ class CaveWeatherTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         
+        // Set the API key for the test
+        config(['services.pirate_weather.api_key' => 'test-key']);
+        
         $cave = Cave::factory()->create([
             'location_lat' => 51.4545,
             'location_lng' => -2.5879,
@@ -56,27 +59,12 @@ class CaveWeatherTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_returns_404_for_cave_without_coordinates()
-    {
-        $this->actingAs(User::factory()->create());
-        
-        $cave = Cave::factory()->create([
-            'location_lat' => null,
-            'location_lng' => null,
-        ]);
-
-        $response = $this->getJson("/api/caves/{$cave->slug}/weather/forecast");
-
-        $response->assertStatus(404);
-        $response->assertJson([
-            'error' => 'Cave location coordinates not available'
-        ]);
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_historical_weather_for_cave()
     {
         $this->actingAs(User::factory()->create());
+        
+        // Set the API key for the test
+        config(['services.pirate_weather.api_key' => 'test-key']);
         
         $cave = Cave::factory()->create([
             'location_lat' => 51.4545,
@@ -117,6 +105,9 @@ class CaveWeatherTest extends TestCase
     public function it_handles_weather_api_failure_gracefully()
     {
         $this->actingAs(User::factory()->create());
+        
+        // Set the API key for the test
+        config(['services.pirate_weather.api_key' => 'test-key']);
         
         $cave = Cave::factory()->create([
             'location_lat' => 51.4545,

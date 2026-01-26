@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class WeatherService
 {
-    private string $apiKey;
+    private ?string $apiKey;
     private string $baseUrl = 'https://api.pirateweather.net';
 
     public function __construct()
