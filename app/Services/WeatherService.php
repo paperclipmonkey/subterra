@@ -107,7 +107,7 @@ class WeatherService
         $weatherData = [];
         $now = time();
         
-        for ($i = 7; $i >= 0; $i--) {
+        for ($i = 6; $i >= 0; $i--) {
             $timestamp = $now - ($i * self::SECONDS_PER_DAY);
             $data = $this->getHistoricalWeather($latitude, $longitude, $timestamp);
             
