@@ -40,7 +40,7 @@
             </v-col>
             <v-col cols="4">
               <div class="text-caption">Pressure</div>
-              <div class="text-body-2">{{ Math.round(weatherData.currently.pressure) }} mb</div>
+              <div class="text-body-2">{{ Math.round(weatherData.currently.pressure) }} hPa</div>
             </v-col>
           </v-row>
         </v-card-text>

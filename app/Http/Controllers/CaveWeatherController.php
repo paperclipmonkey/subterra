@@ -46,7 +46,7 @@ class CaveWeatherController extends Controller
     }
 
     /**
-     * Get historical weather for a cave (last week)
+     * Get historical weather for a cave (last 7 days)
      */
     public function historical(Cave $cave): JsonResponse
     {

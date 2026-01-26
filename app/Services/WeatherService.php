@@ -71,7 +71,9 @@ class WeatherService
             return null;
         }
 
-        $cacheKey = "weather_historical_{$latitude}_{$longitude}_{$timestamp}";
+        $normalizedLatitude = number_format(round($latitude, 5), 5, '.', '');
+        $normalizedLongitude = number_format(round($longitude, 5), 5, '.', '');
+        $cacheKey = "weather_historical_{$normalizedLatitude}_{$normalizedLongitude}_{$timestamp}";
         
         return Cache::remember($cacheKey, self::HISTORICAL_CACHE_TTL, function () use ($latitude, $longitude, $timestamp) {
             try {
@@ -100,7 +102,7 @@ class WeatherService
     }
 
     /**
-     * Get weather for the last week
+     * Get weather for the last 7 days
      */
     public function getLastWeekWeather(float $latitude, float $longitude): array
     {
