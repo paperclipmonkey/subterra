@@ -31,7 +31,9 @@ class WeatherService
             return null;
         }
 
-        $cacheKey = "weather_forecast_{$latitude}_{$longitude}";
+        $normalizedLatitude = number_format(round($latitude, 5), 5, '.', '');
+        $normalizedLongitude = number_format(round($longitude, 5), 5, '.', '');
+        $cacheKey = "weather_forecast_{$normalizedLatitude}_{$normalizedLongitude}";
         
         return Cache::remember($cacheKey, self::FORECAST_CACHE_TTL, function () use ($latitude, $longitude) {
             try {
