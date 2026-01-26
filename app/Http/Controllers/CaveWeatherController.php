@@ -45,29 +45,4 @@ class CaveWeatherController extends Controller
         ]);
     }
 
-    /**
-     * Get historical weather for a cave (last 7 days)
-     */
-    public function historical(Cave $cave): JsonResponse
-    {
-        if (!$cave->location_lat || !$cave->location_lng) {
-            return response()->json([
-                'error' => 'Cave location coordinates not available'
-            ], 404);
-        }
-
-        $historicalData = $this->weatherService->getLastWeekWeather(
-            $cave->location_lat,
-            $cave->location_lng
-        );
-
-        if (empty($historicalData)) {
-            return response()->json([
-                'error' => 'Unable to fetch historical weather data'
-            ], 503);
-        }
-        return response()->json([
-            'data' => $historicalData
-        ]);
-    }
 }

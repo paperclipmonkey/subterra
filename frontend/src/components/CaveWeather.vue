@@ -30,24 +30,20 @@
           <!-- Additional Details -->
           <v-divider class="my-4 border-opacity-25"></v-divider>
           <v-row dense class="text-blue-grey-lighten-3">
-            <v-col cols="4">
+            <v-col cols="6">
               <div class="text-caption">Wind</div>
               <div class="text-body-2">{{ Math.round(weatherData.currently.windSpeed) }} km/h</div>
             </v-col>
-            <v-col cols="4">
+            <v-col cols="6">
               <div class="text-caption">Humidity</div>
               <div class="text-body-2">{{ Math.round(weatherData.currently.humidity * 100) }}%</div>
-            </v-col>
-            <v-col cols="4">
-              <div class="text-caption">Pressure</div>
-              <div class="text-body-2">{{ Math.round(weatherData.currently.pressure) }} hPa</div>
             </v-col>
           </v-row>
         </v-card-text>
       </v-card>
 
       <!-- 24-Hour Forecast -->
-      <v-card v-if="hourlyForecast.length > 0" class="mb-4 rounded-lg" elevation="1">
+      <v-card v-if="hourlyForecast.length > 0" class="rounded-lg" elevation="1">
         <v-card-title class="text-subtitle-1 font-weight-bold">Next 24 Hours</v-card-title>
         <v-card-text class="pa-4">
           <div class="hourly-scroll">
@@ -67,30 +63,6 @@
                   {{ Math.round(hour.precipProbability * 100) }}%
                 </div>
               </div>
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <!-- Weekly History - Rainfall Summary -->
-      <v-card v-if="historicalData.length > 0" class="mb-4 rounded-lg" elevation="1">
-        <v-card-title class="text-subtitle-1 font-weight-bold">Last 7 Days - Rainfall</v-card-title>
-        <v-card-text class="pa-4">
-          <div v-for="day in historicalData" :key="day.time" class="d-flex align-center py-3 border-b">
-            <div class="flex-grow-1">
-              <div class="text-body-2 font-weight-medium">{{ formatDate(day.time) }}</div>
-            </div>
-            <div class="text-right">
-              <span class="text-body-2 font-weight-medium">{{ getRainfall(day) }} mm</span>
-            </div>
-          </div>
-          <v-divider class="my-3"></v-divider>
-          <div class="d-flex align-center">
-            <div class="flex-grow-1">
-              <div class="text-body-2 font-weight-bold">Total Rainfall</div>
-            </div>
-            <div class="text-right">
-              <span class="text-h6 font-weight-bold text-primary">{{ totalRainfall }} mm</span>
             </div>
           </div>
         </v-card-text>
@@ -150,20 +122,10 @@ const props = defineProps({
 const loading = ref(true);
 const error = ref(null);
 const weatherData = ref(null);
-const historicalData = ref([]);
 
 const hourlyForecast = computed(() => {
   if (!weatherData.value?.hourly?.data) return [];
   return weatherData.value.hourly.data.slice(0, 24);
-});
-
-const totalRainfall = computed(() => {
-  if (!historicalData.value || historicalData.value.length === 0) return 0;
-  return historicalData.value.reduce((total, day) => {
-    // precipAccumulation is in cm, convert to mm
-    const precipitation = (day.precipAccumulation || 0) * 10;
-    return total + precipitation;
-  }, 0).toFixed(1);
 });
 
 const fetchWeatherData = async () => {
@@ -186,13 +148,6 @@ const fetchWeatherData = async () => {
     }
     const forecastData = await forecastResponse.json();
     weatherData.value = forecastData.data;
-
-    // Fetch historical data
-    const historicalResponse = await fetch(`/api/caves/${props.caveId}/weather/historical`);
-    if (historicalResponse.ok) {
-      const histData = await historicalResponse.json();
-      historicalData.value = histData.data || [];
-    }
   } catch (err) {
     console.error('Error fetching weather:', err);
     error.value = 'Failed to load weather data';
@@ -204,27 +159,6 @@ const fetchWeatherData = async () => {
 const formatHour = (timestamp) => {
   const date = new Date(timestamp * 1000);
   return date.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
-};
-
-const formatDate = (timestamp) => {
-  const date = new Date(timestamp * 1000);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  
-  if (date.toDateString() === today.toDateString()) {
-    return 'Today';
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  }
-  
-  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-};
-
-const getRainfall = (day) => {
-  // Pirate Weather provides precipitation in cm, convert to mm
-  const precipitation = (day.precipAccumulation || 0) * 10;
-  return precipitation.toFixed(1);
 };
 
 const getWeatherIcon = (icon) => {
