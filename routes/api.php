@@ -65,6 +65,8 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
     Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show'])
         ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Cave::class);
+    Route::get('/caves/{cave}/weather/forecast', [App\Http\Controllers\CaveWeatherController::class, 'forecast']);
+    Route::get('/caves/{cave}/weather/historical', [App\Http\Controllers\CaveWeatherController::class, 'historical']);
     
     Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
     Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class);

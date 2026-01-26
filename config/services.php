@@ -45,6 +45,10 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URL'),
-    ]
+    ],
+
+    'pirate_weather' => [
+        'api_key' => env('PIRATE_WEATHER_API_KEY'),
+    ],
 
 ];
