@@ -72,43 +72,25 @@
         </v-card-text>
       </v-card>
 
-      <!-- Weekly History -->
+      <!-- Weekly History - Rainfall Summary -->
       <v-card v-if="historicalData.length > 0" class="mb-4 rounded-lg" elevation="1">
-        <v-card-title class="text-subtitle-1 font-weight-bold">Last 7 Days</v-card-title>
+        <v-card-title class="text-subtitle-1 font-weight-bold">Last 7 Days - Rainfall</v-card-title>
         <v-card-text class="pa-4">
           <div v-for="day in historicalData" :key="day.time" class="d-flex align-center py-3 border-b">
             <div class="flex-grow-1">
               <div class="text-body-2 font-weight-medium">{{ formatDate(day.time) }}</div>
-              <div class="text-caption text-grey">{{ day.summary }}</div>
             </div>
-            <v-icon size="32" class="mx-4" :color="getWeatherColor(day.icon)">
-              {{ getWeatherIcon(day.icon) }}
-            </v-icon>
-            <div class="text-right" style="min-width: 100px;">
-              <span class="text-body-2 font-weight-medium">{{ Math.round(day.temperatureHigh) }}°</span>
-              <span class="text-grey mx-1">/</span>
-              <span class="text-body-2 text-grey">{{ Math.round(day.temperatureLow) }}°</span>
+            <div class="text-right">
+              <span class="text-body-2 font-weight-medium">{{ getRainfall(day) }} mm</span>
             </div>
           </div>
-        </v-card-text>
-      </v-card>
-
-      <!-- Daily Forecast -->
-      <v-card v-if="dailyForecast.length > 0" class="rounded-lg" elevation="1">
-        <v-card-title class="text-subtitle-1 font-weight-bold">Extended Forecast</v-card-title>
-        <v-card-text class="pa-4">
-          <div v-for="day in dailyForecast" :key="day.time" class="d-flex align-center py-3 border-b">
+          <v-divider class="my-3"></v-divider>
+          <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-body-2 font-weight-medium">{{ formatDate(day.time) }}</div>
-              <div class="text-caption text-grey">{{ day.summary }}</div>
+              <div class="text-body-2 font-weight-bold">Total Rainfall</div>
             </div>
-            <v-icon size="32" class="mx-4" :color="getWeatherColor(day.icon)">
-              {{ getWeatherIcon(day.icon) }}
-            </v-icon>
-            <div class="text-right" style="min-width: 100px;">
-              <span class="text-body-2 font-weight-medium">{{ Math.round(day.temperatureHigh) }}°</span>
-              <span class="text-grey mx-1">/</span>
-              <span class="text-body-2 text-grey">{{ Math.round(day.temperatureLow) }}°</span>
+            <div class="text-right">
+              <span class="text-h6 font-weight-bold text-primary">{{ totalRainfall }} mm</span>
             </div>
           </div>
         </v-card-text>
@@ -175,9 +157,12 @@ const hourlyForecast = computed(() => {
   return weatherData.value.hourly.data.slice(0, 24);
 });
 
-const dailyForecast = computed(() => {
-  if (!weatherData.value?.daily?.data) return [];
-  return weatherData.value.daily.data.slice(1, 8); // Skip today, show next 7 days
+const totalRainfall = computed(() => {
+  if (!historicalData.value || historicalData.value.length === 0) return 0;
+  return historicalData.value.reduce((total, day) => {
+    const precipitation = day.precipAccumulation || 0;
+    return total + precipitation;
+  }, 0).toFixed(1);
 });
 
 const fetchWeatherData = async () => {
@@ -233,6 +218,12 @@ const formatDate = (timestamp) => {
   }
   
   return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+const getRainfall = (day) => {
+  // Pirate Weather provides precipitation in mm
+  const precipitation = day.precipAccumulation || 0;
+  return precipitation.toFixed(1);
 };
 
 const getWeatherIcon = (icon) => {
