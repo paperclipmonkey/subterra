@@ -92,12 +92,12 @@ export default defineConfig(({ mode }) => {
       ],
     },
     server: {
-      port: 3000,
+      port: 5173,
       proxy: {
-        '/api': 'http://127.0.0.1',
-        '/storage': 'http://127.0.0.1',
-        '/media': 'http://127.0.0.1',
-        'public': 'http://127.0.0.1',
+        '/api': process.env.CI ? 'http://127.0.0.1:8000' : 'http://127.0.0.1',
+        '/storage': process.env.CI ? 'http://127.0.0.1:8000' : 'http://127.0.0.1',
+        '/media': process.env.CI ? 'http://127.0.0.1:8000' : 'http://127.0.0.1',
+        'public': process.env.CI ? 'http://127.0.0.1:8000' : 'http://127.0.0.1',
       },
       host: '0.0.0.0',
     },

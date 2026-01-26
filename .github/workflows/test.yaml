@@ -103,7 +103,7 @@ jobs:
             sleep 2
           done
       - name: Run E2E tests
-        run: cd frontend && BASE_URL=http://localhost:5173 yarn test:e2e
+        run: cd frontend && yarn test:e2e
         env:
           CI: true
       - uses: actions/upload-artifact@v4
@@ -111,4 +111,10 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-screenshots
+          path: frontend/test-results/
           retention-days: 30
