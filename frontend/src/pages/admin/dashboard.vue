@@ -95,7 +95,7 @@ const getResourceUrl = (record) => {
 const generateSparklinePoints = (data) => {
   if (!data || data.length === 0) return ''
 
-  // Use reduce to find min/max for better performance with large arrays
+  // Find min/max values using a simple loop
   let max = 1
   let min = 0
 

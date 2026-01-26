@@ -55,6 +55,12 @@ class DashboardController extends Controller
             $model = $modelCache[$interaction->trackable_type][$interaction->trackable_id] ?? null;
             
             if (!$model) {
+                // Log missing models to help identify data integrity issues
+                \Log::warning('API interaction tracked for missing model', [
+                    'trackable_type' => $interaction->trackable_type,
+                    'trackable_id' => $interaction->trackable_id,
+                    'total_interactions' => $interaction->total_interactions,
+                ]);
                 return null;
             }
 
@@ -164,10 +170,6 @@ class DashboardController extends Controller
      */
     private function getModelName($model): string
     {
-        if (method_exists($model, 'getAttribute')) {
-            return $model->getAttribute('name') ?? $model->getAttribute('title') ?? $model->getAttribute('slug') ?? 'Unknown';
-        }
-        
-        return 'Unknown';
+        return $model->name ?? $model->title ?? $model->slug ?? 'Unknown';
     }
 }

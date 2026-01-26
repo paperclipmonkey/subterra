@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('trackable_type');
             $table->unsignedBigInteger('trackable_id');
+            // Interactions are immutable audit records, so we only store when they were created.
+            // The corresponding Eloquent model disables automatic timestamps ($timestamps = false),
+            // hence there is no "updated_at" column by design.
             $table->timestamp('created_at');
             
             $table->index(['trackable_type', 'trackable_id', 'created_at']);

@@ -174,6 +174,15 @@ class ApiInteractionTest extends TestCase
         
         // Check sparkline is an array of 30 values
         $this->assertCount(30, $data[0]['sparkline']);
+        
+        // Verify sparkline values are all numeric and non-negative
+        foreach ($data[0]['sparkline'] as $value) {
+            $this->assertIsInt($value);
+            $this->assertGreaterThanOrEqual(0, $value);
+        }
+        
+        // Verify the sum of sparkline values equals total_interactions
+        $this->assertEquals($data[0]['total_interactions'], array_sum($data[0]['sparkline']));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -186,5 +195,21 @@ class ApiInteractionTest extends TestCase
         $response = $this->getJson('/api/admin/dashboard/popular-records');
         
         $response->assertStatus(403);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_does_not_track_failed_requests()
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+        
+        $this->assertEquals(0, ApiInteraction::count());
+        
+        // Request a non-existent cave (should return 404)
+        $this->get('/api/caves/non-existent-slug');
+        
+        // No interaction should be tracked for failed requests
+        $this->assertEquals(0, ApiInteraction::count());
     }
 }
