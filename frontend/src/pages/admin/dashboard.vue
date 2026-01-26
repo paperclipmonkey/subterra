@@ -80,9 +80,22 @@ const getTypeColor = (type) => {
 const generateSparklinePoints = (data) => {
   if (!data || data.length === 0) return ''
   
-  const max = Math.max(...data, 1) // Avoid division by zero
-  const min = Math.min(...data, 0)
-  const range = max - min || 1 // Avoid division by zero
+  // Use reduce to find min/max for better performance with large arrays
+  let max = 1
+  let min = 0
+  
+  if (data.length > 0) {
+    max = data[0]
+    min = data[0]
+    for (let i = 1; i < data.length; i++) {
+      if (data[i] > max) max = data[i]
+      if (data[i] < min) min = data[i]
+    }
+    // Ensure we have at least some range
+    if (max === min) max = min + 1
+  }
+  
+  const range = max - min
   
   const points = data.map((value, index) => {
     const x = (index / (data.length - 1 || 1)) * (sparklineWidth - 2 * sparklinePadding) + sparklinePadding

@@ -75,9 +75,15 @@ class TrackApiInteraction
             if (is_numeric($param) || is_string($param)) {
                 // Try to find the model using the route parameter
                 // This handles both regular IDs and custom route keys like short_id
-                $model = $modelClass::where(function ($query) use ($param, $modelClass) {
+                // Create a temporary instance only once to get the route key name
+                static $routeKeyCache = [];
+                if (!isset($routeKeyCache[$modelClass])) {
                     $instance = new $modelClass();
-                    $routeKeyName = $instance->getRouteKeyName();
+                    $routeKeyCache[$modelClass] = $instance->getRouteKeyName();
+                }
+                $routeKeyName = $routeKeyCache[$modelClass];
+                
+                $model = $modelClass::where(function ($query) use ($param, $routeKeyName) {
                     $query->where($routeKeyName, $param)
                           ->orWhere('id', $param);
                 })->first();

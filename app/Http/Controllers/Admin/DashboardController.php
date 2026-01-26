@@ -16,7 +16,7 @@ class DashboardController extends Controller
      */
     public function popularRecords(): JsonResponse
     {
-        $popularRecords = ApiInteraction::select(
+        $interactions = ApiInteraction::select(
             'trackable_type',
             'trackable_id',
             DB::raw('COUNT(*) as total_interactions')
@@ -24,9 +24,23 @@ class DashboardController extends Controller
         ->groupBy('trackable_type', 'trackable_id')
         ->orderBy('total_interactions', 'desc')
         ->limit(10)
-        ->get()
-        ->map(function ($interaction) {
-            $model = $interaction->trackable_type::find($interaction->trackable_id);
+        ->get();
+
+        // Group interactions by type for efficient querying
+        $interactionsByType = $interactions->groupBy('trackable_type');
+        
+        // Fetch all models in bulk queries
+        $modelCache = [];
+        foreach ($interactionsByType as $type => $typeInteractions) {
+            $ids = $typeInteractions->pluck('trackable_id')->toArray();
+            if (class_exists($type)) {
+                $modelCache[$type] = $type::whereIn('id', $ids)->get()->keyBy('id');
+            }
+        }
+
+        // Map interactions to results
+        $popularRecords = $interactions->map(function ($interaction) use ($modelCache) {
+            $model = $modelCache[$interaction->trackable_type][$interaction->trackable_id] ?? null;
             
             if (!$model) {
                 return null;
