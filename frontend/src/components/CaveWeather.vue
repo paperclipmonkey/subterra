@@ -217,7 +217,7 @@ const fetchWeatherData = async () => {
 
 const formatHour = (timestamp) => {
   const date = new Date(timestamp * 1000);
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+  return date.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
 };
 
 const formatDate = (timestamp) => {
@@ -232,7 +232,7 @@ const formatDate = (timestamp) => {
     return 'Yesterday';
   }
   
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
 const getWeatherIcon = (icon) => {

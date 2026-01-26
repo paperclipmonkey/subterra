@@ -12,6 +12,9 @@ class WeatherService
 {
     private ?string $apiKey;
     private string $baseUrl = 'https://api.pirateweather.net';
+    private const FORECAST_CACHE_TTL = 1800; // 30 minutes
+    private const HISTORICAL_CACHE_TTL = 86400; // 24 hours
+    private const SECONDS_PER_DAY = 86400;
 
     public function __construct()
     {
@@ -30,7 +33,7 @@ class WeatherService
 
         $cacheKey = "weather_forecast_{$latitude}_{$longitude}";
         
-        return Cache::remember($cacheKey, 1800, function () use ($latitude, $longitude) {
+        return Cache::remember($cacheKey, self::FORECAST_CACHE_TTL, function () use ($latitude, $longitude) {
             try {
                 $url = "{$this->baseUrl}/forecast/{$this->apiKey}/{$latitude},{$longitude}";
                 $response = Http::timeout(10)->get($url, [
@@ -68,7 +71,7 @@ class WeatherService
 
         $cacheKey = "weather_historical_{$latitude}_{$longitude}_{$timestamp}";
         
-        return Cache::remember($cacheKey, 86400, function () use ($latitude, $longitude, $timestamp) {
+        return Cache::remember($cacheKey, self::HISTORICAL_CACHE_TTL, function () use ($latitude, $longitude, $timestamp) {
             try {
                 $url = "{$this->baseUrl}/forecast/{$this->apiKey}/{$latitude},{$longitude},{$timestamp}";
                 $response = Http::timeout(10)->get($url, [
@@ -103,7 +106,7 @@ class WeatherService
         $now = time();
         
         for ($i = 7; $i >= 0; $i--) {
-            $timestamp = $now - ($i * 86400);
+            $timestamp = $now - ($i * self::SECONDS_PER_DAY);
             $data = $this->getHistoricalWeather($latitude, $longitude, $timestamp);
             
             if ($data && isset($data['daily']['data'][0])) {
