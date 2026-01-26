@@ -193,6 +193,22 @@ test.describe('Feature Name', () => {
 6. **Wait for elements** - Use `toBeVisible()` with timeouts
 7. **Clean assertions** - One clear assertion per test when possible
 
+### Selector Strategy
+
+**Note on Selectors:** These tests use flexible text-based selectors (e.g., `text=/pattern/i`, `filter({ hasText: /text/i })`) to match the current implementation without data-testid attributes. For production-grade tests, consider adding `data-testid` attributes to key UI elements for more robust selectors:
+
+```vue
+<!-- Recommended for better test stability -->
+<input data-testid="callout-trip-plan" />
+<button data-testid="submit-callout" />
+```
+
+Then in tests:
+```javascript
+await page.locator('[data-testid="callout-trip-plan"]').fill('Test');
+await page.locator('[data-testid="submit-callout"]').click();
+```
+
 ### Preventing False Positives
 
 When testing callout functionality, ensure:
