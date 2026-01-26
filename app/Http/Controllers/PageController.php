@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PageResource;
 use App\Models\Page;
 use Illuminate\Http\Request;
 
@@ -9,7 +10,7 @@ class PageController extends Controller
 {
     public function index()
     {
-        return Page::orderBy('title')->get();
+        return PageResource::collection(Page::orderBy('title')->get());
     }
 
     public function store(Request $request)
@@ -22,12 +23,12 @@ class PageController extends Controller
 
         $page = Page::create($validated + ['user_id' => $request->user()->id]);
 
-        return response()->json($page, 201);
+        return new PageResource($page);
     }
 
     public function show(Page $page)
     {
-        return $page;
+        return new PageResource($page);
     }
 
     public function update(Request $request, Page $page)
@@ -40,7 +41,7 @@ class PageController extends Controller
 
         $page->update($validated + ['user_id' => $request->user()->id]);
 
-        return $page;
+        return new PageResource($page);
     }
 
     public function destroy(Page $page)
@@ -49,10 +50,9 @@ class PageController extends Controller
         return response()->noContent();
     }
 
-    public function publicShow($slug)
+    public function publicShow(Page $page)
     {
-        $page = Page::where('slug', $slug)->firstOrFail();
         $page->increment('access_count');
-        return $page;
+        return new PageResource($page);
     }
 }

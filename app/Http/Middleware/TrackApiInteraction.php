@@ -64,7 +64,8 @@ class TrackApiInteraction
         }
 
         $content = json_decode($response->getContent(), true);
-        if (!isset($content['data']['id'])) {
+        $id = $content['data']['id'] ?? $content['id'] ?? null;
+        if (!$id) {
             return null;
         }
 

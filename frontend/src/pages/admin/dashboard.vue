@@ -34,7 +34,11 @@
                 {{ record.type }}
               </v-chip>
             </td>
-            <td>{{ record.name }}</td>
+            <td>
+              <router-link :to="getResourceUrl(record)" class="text-decoration-none font-weight-bold">
+                {{ record.name }}
+              </router-link>
+            </td>
             <td class="text-right">{{ record.total_interactions }}</td>
             <td class="text-center">
               <div class="sparkline-container">
@@ -73,17 +77,28 @@ const getTypeColor = (type) => {
     'Cave': 'primary',
     'Trip': 'success',
     'Collection': 'secondary',
+    'Page': 'info',
   }
   return colors[type] || 'grey'
 }
 
+const getResourceUrl = (record) => {
+  const routes = {
+    'Cave': '/caves/',
+    'Trip': '/trips/',
+    'Collection': '/collections/',
+    'Page': '/pages/',
+  }
+  return (routes[record.type] || '/') + record.identifier
+}
+
 const generateSparklinePoints = (data) => {
   if (!data || data.length === 0) return ''
-  
+
   // Use reduce to find min/max for better performance with large arrays
   let max = 1
   let min = 0
-  
+
   if (data.length > 0) {
     max = data[0]
     min = data[0]
@@ -94,22 +109,22 @@ const generateSparklinePoints = (data) => {
     // Ensure we have at least some range
     if (max === min) max = min + 1
   }
-  
+
   const range = max - min
-  
+
   const points = data.map((value, index) => {
     const x = (index / (data.length - 1 || 1)) * (sparklineWidth - 2 * sparklinePadding) + sparklinePadding
     const y = sparklineHeight - sparklinePadding - ((value - min) / range) * (sparklineHeight - 2 * sparklinePadding)
     return `${x},${y}`
   })
-  
+
   return points.join(' ')
 }
 
 const fetchPopularRecords = async () => {
   loading.value = true
   error.value = null
-  
+
   try {
     const response = await api.get()
     popularRecords.value = response.data

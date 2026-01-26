@@ -49,7 +49,8 @@ Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink']);
 Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCallback']);
 
 // Public CMS Pages
-Route::get('/pages/{slug}', [App\Http\Controllers\PageController::class, 'publicShow']);
+Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'publicShow'])
+    ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Page::class);
 
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');

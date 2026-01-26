@@ -55,6 +55,7 @@ class DashboardController extends Controller
             return [
                 'type' => class_basename($interaction->trackable_type),
                 'id' => $interaction->trackable_id,
+                'identifier' => $model->getRouteKey(),
                 'name' => $this->getModelName($model),
                 'total_interactions' => $interaction->total_interactions,
                 'sparkline' => $sparklineData,
@@ -105,7 +106,7 @@ class DashboardController extends Controller
     private function getModelName($model): string
     {
         if (method_exists($model, 'getAttribute')) {
-            return $model->getAttribute('name') ?? $model->getAttribute('slug') ?? 'Unknown';
+            return $model->getAttribute('name') ?? $model->getAttribute('title') ?? $model->getAttribute('slug') ?? 'Unknown';
         }
         
         return 'Unknown';

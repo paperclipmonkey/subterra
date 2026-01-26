@@ -57,58 +57,58 @@ const isEditing = ref(false);
 const saving = ref(false);
 
 const page = reactive({
-    title: '',
-    slug: '',
-    content: '',
+  title: '',
+  slug: '',
+  content: '',
 });
 
 const generateSlug = (val) => {
-    if (!isEditing.value && val) {
-        page.slug = val.toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
-    }
+  if (!isEditing.value && val) {
+    page.slug = val.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  }
 };
 
 const updateContent = (event) => {
-    if (event && event.markdown) {
-        page.content = event.markdown;
-    }
+  if (event && event.markdown) {
+    page.content = event.markdown;
+  }
 }
 
 const savePage = async () => {
-    saving.value = true;
-    try {
-        if (isEditing.value) {
-            await pagesApi.put(page.id, page);
-            notificationStore.showSuccess('Page updated successfully');
-        } else {
-            await pagesApi.post(page);
-            notificationStore.showSuccess('Page created successfully');
-        }
-        router.push('/admin/pages');
-    } catch (error) {
-        console.error(error);
-        notificationStore.showError('Failed to save page');
-    } finally {
-        saving.value = false;
+  saving.value = true;
+  try {
+    if (isEditing.value) {
+      await pagesApi.put(page.id, page);
+      notificationStore.showSuccess('Page updated successfully');
+    } else {
+      await pagesApi.post(page);
+      notificationStore.showSuccess('Page created successfully');
     }
+    router.push('/admin/pages');
+  } catch (error) {
+    console.error(error);
+    notificationStore.showError('Failed to save page');
+  } finally {
+    saving.value = false;
+  }
 };
 
 onMounted(async () => {
-    if (route.query.id) {
-        isEditing.value = true;
-        try {
-            // Fetch specific page via ID. 
-            // Note: The Admin Controller resource usually supports GET /admin/pages/{id}
-            // If mande works with `.get(id)`, it appends /id
-            const data = await pagesApi.get(route.query.id);
-            Object.assign(page, data);
-        } catch (error) {
-            console.error('Error loading page', error);
-            notificationStore.showError('Failed to load page');
-        }
+  if (route.query.id) {
+    isEditing.value = true;
+    try {
+      // Fetch specific page via ID. 
+      // Note: The Admin Controller resource usually supports GET /admin/pages/{id}
+      // If mande works with `.get(id)`, it appends /id
+      const { data } = await pagesApi.get(route.query.id);
+      Object.assign(page, data);
+    } catch (error) {
+      console.error('Error loading page', error);
+      notificationStore.showError('Failed to load page');
     }
+  }
 });
 </script>

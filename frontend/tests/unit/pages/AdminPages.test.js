@@ -18,10 +18,12 @@ describe('AdminPagesIndex.vue', () => {
     })
 
     it('fetches and displays pages', async () => {
-        mockGet.mockResolvedValue([
-            { id: 1, title: 'Page 1', slug: 'page-1', access_count: 10 },
-            { id: 2, title: 'Page 2', slug: 'page-2', access_count: 5 },
-        ])
+        mockGet.mockResolvedValue({
+            data: [
+                { id: 1, title: 'Page 1', slug: 'page-1', access_count: 10 },
+                { id: 2, title: 'Page 2', slug: 'page-2', access_count: 5 },
+            ]
+        })
 
         const wrapper = mount(AdminPagesIndex, {
             global: {

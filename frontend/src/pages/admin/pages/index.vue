@@ -44,33 +44,33 @@ const loading = ref(false);
 const search = ref('');
 
 const headers = [
-    { title: 'ID', key: 'id', sortable: true },
-    { title: 'Title', key: 'title', sortable: true },
-    { title: 'Slug', key: 'slug', sortable: true },
-    { title: 'Views', key: 'access_count', sortable: true },
-    { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+  { title: 'ID', key: 'id', sortable: true },
+  { title: 'Title', key: 'title', sortable: true },
+  { title: 'Slug', key: 'slug', sortable: true },
+  { title: 'Views', key: 'access_count', sortable: true },
+  { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
 ];
 
 const fetchPages = async () => {
-    loading.value = true;
-    try {
-        pages.value = await pagesApi.get();
-    } catch (e) {
-        console.error(e);
-    } finally {
-        loading.value = false;
-    }
+  loading.value = true;
+  try {
+    pages.value = (await pagesApi.get()).data;
+  } catch (e) {
+    console.error(e);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const deletePage = async (page) => {
-    if (!confirm('Are you sure you want to delete this page?')) return;
-    try {
-        await pagesApi.delete(page.id);
-        await fetchPages();
-    } catch (e) {
-        console.error(e);
-        alert('Failed to delete page');
-    }
+  if (!confirm('Are you sure you want to delete this page?')) return;
+  try {
+    await pagesApi.delete(page.id);
+    await fetchPages();
+  } catch (e) {
+    console.error(e);
+    alert('Failed to delete page');
+  }
 };
 
 onMounted(fetchPages);

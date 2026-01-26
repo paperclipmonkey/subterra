@@ -119,7 +119,7 @@ describe('Trip.vue', () => {
         await wrapper.vm.$nextTick()
 
         // Assert GET fetch was called
-        expect(mockFetch).toHaveBeenCalledWith('/api/trips/123')
+        expect(mockFetch).toHaveBeenCalledWith('/api/trips/123', { headers: { 'Accept': 'application/json' } })
 
         // Verify trip loaded
         expect(wrapper.text()).toContain('Test Trip')
@@ -136,7 +136,10 @@ describe('Trip.vue', () => {
         await flushPromises()
 
         // Assert fetch DELETE was called
-        expect(mockFetch).toHaveBeenCalledWith('/api/trips/123', { method: 'DELETE' })
+        expect(mockFetch).toHaveBeenCalledWith('/api/trips/123', {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json' }
+        })
 
         // Assert router push was called with Correct path
         expect(mockRouterPush).toHaveBeenCalledWith('/trips')
