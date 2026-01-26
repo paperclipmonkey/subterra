@@ -91,7 +91,7 @@ class ApiInteractionTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_does_not_track_post_requests()
+    public function it_does_not_track_non_get_requests()
     {
         $admin = User::factory()->create(['is_admin' => true]);
         $cave = Cave::factory()->create();

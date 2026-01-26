@@ -38,19 +38,28 @@ class DashboardController extends Controller
             }
         }
 
+        // Fetch all sparkline data in a single query
+        $thirtyDaysAgo = now()->subDays(30);
+        $typeIdPairs = $interactions->map(function ($interaction) {
+            return [
+                'type' => $interaction->trackable_type,
+                'id' => $interaction->trackable_id,
+            ];
+        });
+
+        // Build sparkline cache
+        $sparklineCache = $this->getSparklineDataBulk($typeIdPairs, $thirtyDaysAgo);
+
         // Map interactions to results
-        $popularRecords = $interactions->map(function ($interaction) use ($modelCache) {
+        $popularRecords = $interactions->map(function ($interaction) use ($modelCache, $sparklineCache) {
             $model = $modelCache[$interaction->trackable_type][$interaction->trackable_id] ?? null;
             
             if (!$model) {
                 return null;
             }
 
-            // Get sparkline data (last 30 days)
-            $sparklineData = $this->getSparklineData(
-                $interaction->trackable_type,
-                $interaction->trackable_id
-            );
+            $cacheKey = $interaction->trackable_type . ':' . $interaction->trackable_id;
+            $sparklineData = $sparklineCache[$cacheKey] ?? array_fill(0, 30, 0);
 
             return [
                 'type' => class_basename($interaction->trackable_type),
@@ -70,7 +79,57 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get sparkline data for the last 30 days.
+     * Get sparkline data for multiple records in bulk.
+     */
+    private function getSparklineDataBulk($typeIdPairs, $thirtyDaysAgo): array
+    {
+        // Fetch all interactions for all type/id pairs in a single query
+        $allInteractions = ApiInteraction::where('created_at', '>=', $thirtyDaysAgo)
+            ->where(function ($query) use ($typeIdPairs) {
+                foreach ($typeIdPairs as $pair) {
+                    $query->orWhere(function ($q) use ($pair) {
+                        $q->where('trackable_type', $pair['type'])
+                          ->where('trackable_id', $pair['id']);
+                    });
+                }
+            })
+            ->select(
+                'trackable_type',
+                'trackable_id',
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->groupBy('trackable_type', 'trackable_id', 'date')
+            ->orderBy('date')
+            ->get();
+
+        // Organize data by type:id
+        $dailyCountsByRecord = [];
+        foreach ($allInteractions as $interaction) {
+            $key = $interaction->trackable_type . ':' . $interaction->trackable_id;
+            $dailyCountsByRecord[$key][$interaction->date] = $interaction->count;
+        }
+
+        // Generate sparklines with missing days filled in
+        $sparklineCache = [];
+        foreach ($typeIdPairs as $pair) {
+            $key = $pair['type'] . ':' . $pair['id'];
+            $dailyCounts = $dailyCountsByRecord[$key] ?? [];
+            
+            $sparkline = [];
+            for ($i = 29; $i >= 0; $i--) {
+                $date = now()->subDays($i)->format('Y-m-d');
+                $sparkline[] = $dailyCounts[$date] ?? 0;
+            }
+            
+            $sparklineCache[$key] = $sparkline;
+        }
+
+        return $sparklineCache;
+    }
+
+    /**
+     * Get sparkline data for the last 30 days (single record - deprecated, kept for backward compatibility).
      */
     private function getSparklineData(string $type, int $id): array
     {

@@ -24,11 +24,21 @@ class TrackApiInteraction
                 ?? $this->findModelFromResponse($response, $modelClass, $request);
 
             if ($model && isset($model->id)) {
-                ApiInteraction::create([
-                    'trackable_type' => get_class($model),
-                    'trackable_id' => $model->id,
-                    'created_at' => now(),
-                ]);
+                try {
+                    ApiInteraction::create([
+                        'trackable_type' => get_class($model),
+                        'trackable_id' => $model->id,
+                        'created_at' => now(),
+                    ]);
+                } catch (\Exception $e) {
+                    // Log the error but don't prevent the response from being returned
+                    // Tracking failures should not impact user experience
+                    \Log::error('Failed to track API interaction', [
+                        'model' => get_class($model),
+                        'id' => $model->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
 
