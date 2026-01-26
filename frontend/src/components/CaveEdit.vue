@@ -91,7 +91,7 @@ const cave = ref({
 
 const fetchCave = async () => {
   try {
-    const response = await fetch(`/api/caves/${route.params.id}`)
+    const response = await fetch(`/api/caves/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
     if (response.ok) {
       const data = (await response.json()).data
       cave.value = data

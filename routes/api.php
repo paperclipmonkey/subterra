@@ -49,7 +49,8 @@ Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink']);
 Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCallback']);
 
 // Public CMS Pages
-Route::get('/pages/{slug}', [App\Http\Controllers\PageController::class, 'publicShow']);
+Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'publicShow'])
+    ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Page::class);
 
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
@@ -62,7 +63,8 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/duty-officers/current', [App\Http\Controllers\DutyOfficerController::class, 'current']);
 
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
-    Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show']);
+    Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show'])
+        ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Cave::class);
     
     Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
     Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class);
@@ -74,7 +76,8 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     # Trips
     Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
     Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
-    Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']);
+    Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
+        ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Trip::class);
     Route::put('/trips/{trip}', [App\Http\Controllers\TripController::class, 'update']);
     Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
 
@@ -110,7 +113,10 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::apiResource('huts', HutController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 
     # Collections
-    Route::apiResource('collections', CollectionController::class);
+    Route::apiResource('collections', CollectionController::class)->except(['show']);
+    Route::get('collections/{collection}', [CollectionController::class, 'show'])
+        ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Collection::class)
+        ->name('collections.show');
     Route::post('collections/{collection}/caves', [CollectionController::class, 'addCave']);
     Route::delete('collections/{collection}/caves/{cave}', [CollectionController::class, 'removeCave']);
 });
@@ -118,6 +124,8 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
 
 // --- Admin Routes ---
 Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
+    Route::get('/dashboard/popular-records', [App\Http\Controllers\Admin\DashboardController::class, 'popularRecords'])->name('admin.dashboard.popular-records');
+    
     Route::get('/users', [UserController::class, 'adminIndex'])->name('admin.users.index');
     Route::put('/users/{user_without_scopes}/toggle-approval', [UserController::class, 'toggleApproval'])
         ->withoutScopedBindings()

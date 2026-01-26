@@ -22,7 +22,7 @@ class PageTest extends TestCase
             ->getJson('/api/admin/pages');
 
         $response->assertStatus(200)
-            ->assertJsonCount(2);
+            ->assertJsonCount(2, 'data');
     }
 
     public function test_admin_can_create_page()
@@ -39,7 +39,7 @@ class PageTest extends TestCase
             ->postJson('/api/admin/pages', $payload);
 
         $response->assertStatus(201)
-            ->assertJsonFragment(['title' => 'Test Page']);
+            ->assertJsonPath('data.title', 'Test Page');
 
         $this->assertDatabaseHas('pages', ['slug' => 'test-page']);
     }
@@ -56,10 +56,10 @@ class PageTest extends TestCase
         ];
 
         $response = $this->actingAs($admin)
-            ->putJson("/api/admin/pages/{$page->id}", $payload);
+            ->putJson("/api/admin/pages/{$page->slug}", $payload);
 
         $response->assertStatus(200)
-            ->assertJsonFragment(['title' => 'Updated Page']);
+            ->assertJsonPath('data.title', 'Updated Page');
 
         $this->assertDatabaseHas('pages', ['title' => 'Updated Page']);
     }
@@ -70,7 +70,7 @@ class PageTest extends TestCase
         $page = Page::factory()->create();
 
         $response = $this->actingAs($admin)
-            ->deleteJson("/api/admin/pages/{$page->id}");
+            ->deleteJson("/api/admin/pages/{$page->slug}");
 
         $response->assertStatus(204);
 

@@ -167,7 +167,7 @@ const entranceImageFile = ref(null)
 
 // Initialize tags
 const fetchTags = async () => {
-  const response = await fetch('/api/tags')
+  const response = await fetch('/api/tags', { headers: { 'Accept': 'application/json' } })
   tagsAvailable.value = await response.json()
   syncTagsFromModel()
 }

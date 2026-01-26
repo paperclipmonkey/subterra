@@ -3,6 +3,12 @@
     <h2 class="headline mb-4">System Administration</h2>
     <v-row>
       <v-col cols="12" md="6" lg="3">
+        <v-card to="/admin/dashboard" link hover height="100%">
+          <v-card-title><v-icon left>mdi-chart-line</v-icon> Dashboard</v-card-title>
+          <v-card-text>API interactions & trends.</v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="6" lg="3">
         <v-card to="/admin/users" link hover height="100%">
           <v-card-title><v-icon left>mdi-account-group</v-icon> Users</v-card-title>
           <v-card-text>Manage accounts & approvals.</v-card-text>

@@ -35,7 +35,7 @@ const fetchPage = async () => {
     try {
         const res = await fetch(`/api/pages/${route.params.slug}`);
         if (res.ok) {
-            page.value = await res.json();
+            page.value = (await res.json()).data;
         }
     } catch (e) {
         console.error(e);

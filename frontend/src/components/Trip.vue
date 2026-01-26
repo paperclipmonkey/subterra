@@ -272,7 +272,7 @@ const getVisibilityIcon = (vis) => {
 const confirmDelete = async () => {
    showDeleteConfirmDialog.value = false;
    try {
-      const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE', headers: { 'Accept': 'application/json' } })
       if (response.ok) {
          toast.success('Trip deleted successfully')
          router.push('/trips')
@@ -291,7 +291,7 @@ const openMedia = (url) => {
 
 onMounted(async () => {
    try {
-      const response = await fetch(`/api/trips/${route.params.id}`)
+      const response = await fetch(`/api/trips/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
       const json = await response.json()
       trip.value = json.data
    } catch (e) {
