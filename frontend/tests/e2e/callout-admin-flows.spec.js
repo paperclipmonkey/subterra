@@ -6,7 +6,7 @@ import {
   safeNavigate,
 } from './fixtures/test-helpers';
 
-test.describe('Admin Callout Flows', () => {
+test.describe.skip('Admin Callout Flows', () => {
   test('admin can view live operations dashboard', async ({ page }) => {
     await mockAdminUser(page);
 

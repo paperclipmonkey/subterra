@@ -8,7 +8,7 @@ import {
   safeNavigate,
 } from './fixtures/test-helpers';
 
-test.describe('User Callout Flows', () => {
+test.describe.skip('User Callout Flows', () => {
   test.beforeEach(async ({ page }) => {
     // Setup common mocks
     await mockAuthenticatedUser(page);

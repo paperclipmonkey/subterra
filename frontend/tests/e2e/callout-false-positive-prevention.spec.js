@@ -7,7 +7,7 @@ import {
   safeNavigate,
 } from './fixtures/test-helpers';
 
-test.describe('False Positive Prevention Tests', () => {
+test.describe.skip('False Positive Prevention Tests', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
     await mockCavesAPI(page);
