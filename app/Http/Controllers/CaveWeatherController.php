@@ -61,6 +61,11 @@ class CaveWeatherController extends Controller
             $cave->location_lng
         );
 
+        if (empty($historicalData)) {
+            return response()->json([
+                'error' => 'Unable to fetch historical weather data'
+            ], 503);
+        }
         return response()->json([
             'data' => $historicalData
         ]);
