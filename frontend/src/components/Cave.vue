@@ -42,6 +42,7 @@
             <v-tab value="overview">Overview</v-tab>
             <v-tab value="trips">Trips <v-badge v-if="cave.trips?.length" :content="cave.trips.length" inline
                 color="grey-lighten-1"></v-badge></v-tab>
+            <v-tab value="weather">Weather</v-tab>
             <v-tab value="system">System Info</v-tab>
             <v-tab value="media">Media</v-tab>
             <v-tab value="collections">Collections</v-tab>
@@ -118,6 +119,11 @@
                   </v-card-actions>
                 </v-card>
               </v-dialog>
+            </v-window-item>
+
+            <!-- Weather Tab -->
+            <v-window-item value="weather">
+              <CaveWeather :cave-id="cave.slug || cave.id" />
             </v-window-item>
 
             <!-- System Tab -->
@@ -353,6 +359,7 @@ import VueMarkdown from 'vue-markdown-render'
 import { markCaveAsDone } from '@/stores/markAsDone';
 import { useCollectionStore } from '@/stores/collections';
 import CorrectionModal from '@/components/CorrectionModal.vue'
+import CaveWeather from '@/components/CaveWeather.vue'
 
 import {
   MglMap,
