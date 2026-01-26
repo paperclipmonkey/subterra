@@ -31,8 +31,8 @@ class WeatherService
             return null;
         }
 
-        $normalizedLatitude = number_format(round($latitude, 5), 5, '.', '');
-        $normalizedLongitude = number_format(round($longitude, 5), 5, '.', '');
+        $normalizedLatitude = number_format(round($latitude, 2), 2, '.', '');
+        $normalizedLongitude = number_format(round($longitude, 2), 2, '.', '');
         $cacheKey = "weather_forecast_{$normalizedLatitude}_{$normalizedLongitude}";
         
         return Cache::remember($cacheKey, self::FORECAST_CACHE_TTL, function () use ($latitude, $longitude) {
@@ -71,8 +71,8 @@ class WeatherService
             return null;
         }
 
-        $normalizedLatitude = number_format(round($latitude, 5), 5, '.', '');
-        $normalizedLongitude = number_format(round($longitude, 5), 5, '.', '');
+        $normalizedLatitude = number_format(round($latitude, 2), 2, '.', '');
+        $normalizedLongitude = number_format(round($longitude, 2), 2, '.', '');
         $cacheKey = "weather_historical_{$normalizedLatitude}_{$normalizedLongitude}_{$timestamp}";
         
         return Cache::remember($cacheKey, self::HISTORICAL_CACHE_TTL, function () use ($latitude, $longitude, $timestamp) {
