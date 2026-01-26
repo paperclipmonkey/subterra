@@ -115,7 +115,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     # Collections
     Route::apiResource('collections', CollectionController::class)->except(['show']);
     Route::get('collections/{collection}', [CollectionController::class, 'show'])
-        ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Collection::class);
+        ->middleware('track.api:' . \App\Models\Collection::class);
     Route::post('collections/{collection}/caves', [CollectionController::class, 'addCave']);
     Route::delete('collections/{collection}/caves/{cave}', [CollectionController::class, 'removeCave']);
 });
