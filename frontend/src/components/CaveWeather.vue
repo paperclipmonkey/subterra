@@ -160,7 +160,8 @@ const hourlyForecast = computed(() => {
 const totalRainfall = computed(() => {
   if (!historicalData.value || historicalData.value.length === 0) return 0;
   return historicalData.value.reduce((total, day) => {
-    const precipitation = day.precipAccumulation || 0;
+    // precipAccumulation is in cm, convert to mm
+    const precipitation = (day.precipAccumulation || 0) * 10;
     return total + precipitation;
   }, 0).toFixed(1);
 });
@@ -221,8 +222,8 @@ const formatDate = (timestamp) => {
 };
 
 const getRainfall = (day) => {
-  // Pirate Weather provides precipitation in mm
-  const precipitation = day.precipAccumulation || 0;
+  // Pirate Weather provides precipitation in cm, convert to mm
+  const precipitation = (day.precipAccumulation || 0) * 10;
   return precipitation.toFixed(1);
 };
 

@@ -115,6 +115,13 @@ class WeatherService
             
             if ($data && isset($data['daily']['data'][0])) {
                 $weatherData[] = $data['daily']['data'][0];
+            } else {
+                // Add a placeholder entry for days where data is not available
+                $weatherData[] = [
+                    'time' => $timestamp,
+                    'precipAccumulation' => 0,
+                    'summary' => 'No data available',
+                ];
             }
         }
         
