@@ -4,7 +4,7 @@ import {
   mockAdminUser,
   mockAuthenticatedUser,
   safeNavigate,
-} from '../fixtures/test-helpers.js';
+} from './fixtures/test-helpers';
 
 test.describe('Admin Callout Flows', () => {
   test('admin can view live operations dashboard', async ({ page }) => {

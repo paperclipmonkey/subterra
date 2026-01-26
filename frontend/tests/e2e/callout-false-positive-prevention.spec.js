@@ -5,7 +5,7 @@ import {
   mockCavesAPI,
   mockDutyOfficerAPI,
   safeNavigate,
-} from '../fixtures/test-helpers.js';
+} from './fixtures/test-helpers';
 
 test.describe('False Positive Prevention Tests', () => {
   test.beforeEach(async ({ page }) => {

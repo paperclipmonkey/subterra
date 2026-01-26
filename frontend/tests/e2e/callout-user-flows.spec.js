@@ -6,7 +6,7 @@ import {
   mockDutyOfficerAPI,
   mockCalloutsAPI,
   safeNavigate,
-} from '../fixtures/test-helpers.js';
+} from './fixtures/test-helpers';
 
 test.describe('User Callout Flows', () => {
   test.beforeEach(async ({ page }) => {
