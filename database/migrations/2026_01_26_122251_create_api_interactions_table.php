@@ -17,8 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('trackable_id');
             $table->timestamp('created_at');
             
-            $table->index(['trackable_type', 'trackable_id']);
-            $table->index('created_at');
+            $table->index(['trackable_type', 'trackable_id', 'created_at']);
         });
     }
 
