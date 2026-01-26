@@ -113,7 +113,10 @@ const generateSparklinePoints = (data) => {
   const range = max - min
 
   const points = data.map((value, index) => {
-    const x = (index / (data.length - 1 || 1)) * (sparklineWidth - 2 * sparklinePadding) + sparklinePadding
+    // For single-point datasets, treat the width as 1 to avoid division by zero.
+    // The early return above guarantees data.length > 0 here.
+    const denominator = data.length > 1 ? (data.length - 1) : 1
+    const x = (index / denominator) * (sparklineWidth - 2 * sparklinePadding) + sparklinePadding
     const y = sparklineHeight - sparklinePadding - ((value - min) / range) * (sparklineHeight - 2 * sparklinePadding)
     return `${x},${y}`
   })
