@@ -58,6 +58,30 @@ export async function mockAuthenticatedUser(page, userData = {}) {
     });
   });
 
+  // Mock CSRF token endpoint
+  await page.route('**/sanctum/csrf-cookie', async (route) => {
+    await route.fulfill({
+      status: 204,
+      headers: {
+        'Set-Cookie': 'XSRF-TOKEN=test-token; Path=/; SameSite=Lax',
+      },
+    });
+  });
+
+  // Catch-all for other API calls to prevent hanging
+  await page.route('**/api/**', async (route) => {
+    // Only handle if not already handled by more specific routes
+    if (!route.request().url().match(/(user|users\/me|callouts|caves|duty-officers|admin)/)) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: [] }),
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
   return defaultUser;
 }
 

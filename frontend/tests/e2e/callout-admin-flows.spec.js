@@ -172,8 +172,8 @@ test.describe('Admin Callout Flows', () => {
 
     await safeNavigate(page, '/admin/callout');
 
-    // Should show empty state message
-    await expect(page.locator('text=/no.*active.*callout|no.*operations/i')).toBeVisible();
+    // Should show empty state message - use more specific locator
+    await expect(page.locator('p.grey--text:has-text("No open operations")')).toBeVisible();
   });
 
   test('admin dashboard updates when callout status changes', async ({ page }) => {

@@ -6,6 +6,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   
+  /* Maximum time one test can run for */
+  timeout: 30 * 1000,
+  
   /* Run tests in files in parallel */
   fullyParallel: true,
   
@@ -15,8 +18,8 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Opt out of parallel tests on CI - use 2 workers for better performance */
+  workers: process.env.CI ? 2 : undefined,
   
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
@@ -29,9 +32,14 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     
-    /* Take screenshot always for artifacts */
-    screenshot: 'on',
-    video: 'retain-on-failure',
+    /* Take screenshot only on failure for better performance */
+    screenshot: 'only-on-failure',
+    
+    /* No video recording to improve performance */
+    video: 'off',
+    
+    /* Set action timeout */
+    actionTimeout: 10 * 1000,
   },
 
   /* Configure projects for major browsers */
