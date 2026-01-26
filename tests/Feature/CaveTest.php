@@ -48,6 +48,22 @@ class CaveTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_can_view_a_cave_by_slug_with_non_numeric_slug()
+    {
+        $this->actingAs(User::factory()->create());
+        
+        $cave = Cave::factory()->create([
+            'slug' => 'qui-a-repellat-numquam'
+        ]);
+
+        // This triggers the TrackApiInteraction middleware
+        $response = $this->getJson("/api/caves/{$cave->slug}");
+
+        $response->assertOk();
+        $response->assertJsonFragment(['slug' => 'qui-a-repellat-numquam']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_updates_a_cave_and_syncs_tags() {
         $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
         $cave = Cave::factory()->create();

@@ -18,7 +18,8 @@ export async function markCaveAsDone({ cave, userId }) {
     const response = await fetch('/api/trips', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify(trip)
     })

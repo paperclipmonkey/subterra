@@ -394,7 +394,7 @@ const linkedCollections = computed(() => {
 
 const fetchCave = async () => {
   try {
-    const response = await fetch(`/api/caves/${route.params.id}`)
+    const response = await fetch(`/api/caves/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

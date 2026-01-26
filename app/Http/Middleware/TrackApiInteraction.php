@@ -84,10 +84,12 @@ class TrackApiInteraction
                 $routeKeyName = $routeKeyCache[$modelClass];
                 
                 $model = $modelClass::where(function ($query) use ($param, $routeKeyName) {
-                    $query->where($routeKeyName, $param)
-                          ->orWhere('id', $param);
+                    $query->where($routeKeyName, $param);
+                    if ($routeKeyName !== 'id' && is_numeric($param)) {
+                        $query->orWhere('id', $param);
+                    }
                 })->first();
-                
+
                 if ($model) {
                     return $model;
                 }
