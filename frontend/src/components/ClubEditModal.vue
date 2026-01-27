@@ -30,7 +30,8 @@
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12">
-                  <v-textarea v-model="editedClub.description" label="Description (Markdown supported)" rows="3"></v-textarea>
+                  <div class="text-subtitle-2 mb-1">Description (Markdown supported)</div>
+                  <MilkdownEditor v-model="editedClub.description" placeholder="Write about your club..." />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="editedClub.website" label="Website URL" :rules="[rules.url]"></v-text-field>
@@ -141,12 +142,14 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { mande } from 'mande';
 import { useRouter } from 'vue-router';
+import MilkdownEditor from '@/components/MilkdownEditor.vue';
+import { useToast } from "vue-toastification";
 const props = defineProps({
   clubSlug: String,
   modelValue: Boolean,
   initialTab: { type: String, default: 'details' },
 });
-const emit = defineEmits(['update:modelValue','saved']);
+const emit = defineEmits(['update:modelValue', 'saved']);
 
 const dialogVisible = ref(props.modelValue);
 watch(() => props.modelValue, v => dialogVisible.value = v);
@@ -173,6 +176,7 @@ const selectedUserToAdd = ref(null);
 const memberDataChanged = ref(false);
 const saving = ref(false);
 const router = useRouter();
+const toast = useToast();
 
 const fetchClub = async () => {
   if (!props.clubSlug) return;
@@ -232,7 +236,10 @@ const rejectMemberRequest = async (pendingUser) => {
 };
 const saveClubAndMembers = async () => {
   if (!editedClub.value.name) return;
-  if (editedClub.value.website && !rules.url(editedClub.value.website)) return;
+  // Fix: validation returns a string error message if invalid, or true if valid.
+  // We need to check if it does NOT return true.
+  if (editedClub.value.website && rules.url(editedClub.value.website) !== true) return;
+
   saving.value = true;
   try {
     // Save club details
@@ -254,10 +261,12 @@ const saveClubAndMembers = async () => {
       await membersApi.put(membersPayload);
       memberDataChanged.value = false;
     }
-    emit('saved');
     dialogVisible.value = false;
+    emit('saved');
+    toast.success('Club updated successfully');
   } catch (e) {
-    // Optionally show error
+    console.error(e);
+    toast.error('Failed to update club: ' + (e.message || 'Unknown error'));
   } finally {
     saving.value = false;
   }

@@ -170,7 +170,7 @@ async function fetchClubData() {
   loadingError.value = false;
   memberDataLoading.value = true;
   isApprovedMember.value = false;
-  club.value = null;
+  // club.value = null; // Don't clear club data to avoid destroying child components like modals
   recentTrips.value = [];
   members.value = [];
   heatmapData.value = [];

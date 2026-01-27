@@ -9,12 +9,12 @@
       ></v-text-field>
     </v-card-title>
     <v-card-text>
-      <v-textarea
+      <div class="text-subtitle-2 mt-4 mb-1">System description (Optional)</div>
+      <MilkdownEditor
         v-model="internalSystem.description"
-        label="System description"
-        :rules="[v => !!v || 'Description is required']"
-        required
-      ></v-textarea>
+        placeholder="Detailed description of the cave system..."
+        class="mb-4"
+      />
       <v-row>
         <v-col cols="12" md="6">
           <v-text-field
@@ -42,10 +42,12 @@
         :hint="'Lowercase, a-z, 0-9, _ and - only'"
         persistent-hint
       ></v-text-field>
-      <v-textarea
+      <div class="text-subtitle-2 mt-4 mb-1">References</div>
+      <MilkdownEditor
         v-model="internalSystem.references"
-        label="References"
-      ></v-textarea>
+        placeholder="References, sources, etc."
+        class="mb-4"
+      />
     </v-card-text>
 
     <!-- Files Section (Optional, only show if files exist or are being added) -->
@@ -85,6 +87,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
 const props = defineProps({
   modelValue: {

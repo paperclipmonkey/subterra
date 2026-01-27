@@ -14,7 +14,8 @@
               <v-text-field label="Club Slug*" v-model="clubSlug" required></v-text-field>
             </v-col>
             <v-col cols="12">
-              <v-textarea label="Description" v-model="clubDescription"></v-textarea>
+              <div class="text-subtitle-2 mb-1">Description</div>
+              <MilkdownEditor v-model="clubDescription" placeholder="Markdown supported..." />
             </v-col>
           </v-row>
         </v-container>
@@ -36,6 +37,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { mande } from 'mande'; // Import mande
+import MilkdownEditor from '@/components/MilkdownEditor.vue';
 
 const props = defineProps({
   modelValue: Boolean,

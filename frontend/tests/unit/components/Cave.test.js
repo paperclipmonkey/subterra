@@ -110,4 +110,76 @@ describe('Cave Component', () => {
         expect(wrapper.text()).toContain('Yorkshire Classics')
         expect(wrapper.text()).toContain('5 Caves')
     })
+
+    it('does not render system description if missing', async () => {
+        // Mock API response with empty system description
+        global.fetch = vi.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({
+                    data: {
+                        ...mockCave,
+                        system: {
+                            id: 1,
+                            name: 'Test System',
+                            description: '' // Empty description
+                        }
+                    }
+                })
+            })
+        )
+
+        const wrapper = mount(Cave, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div class="v-container"><slot /></div>' },
+                    'v-row': { template: '<div class="v-row"><slot /></div>' },
+                    'v-col': { template: '<div class="v-col"><slot /></div>' },
+                    'v-card': { template: '<div class="v-card"><slot /></div>' },
+                    'v-img': { template: '<div class="v-img"><slot /></div>' },
+                    'v-icon': true,
+                    'v-btn': true,
+                    'v-spacer': true,
+                    'v-tabs': { template: '<div class="v-tabs"><slot /></div>' },
+                    'v-tab': { template: '<div class="v-tab"><slot /></div>' },
+                    'v-badge': true,
+                    'v-divider': true,
+                    'v-window': { template: '<div class="v-window"><slot /></div>' },
+                    'v-window-item': { template: '<div class="v-window-item"><slot /></div>' },
+                    'vue-markdown': { template: '<div class="vue-markdown">MARKDOWN CONTENT</div>' },
+                    'v-alert': true,
+                    'v-chip-group': true,
+                    'v-chip': true,
+                    'v-tooltip': true,
+                    'v-list': true,
+                    'v-list-item': true,
+                    'v-list-item-title': true,
+                    'CaveTripListItem': true,
+                    'v-progress-circular': true,
+                    'v-avatar': true,
+                    'v-dialog': true,
+                    'v-card-title': true,
+                    'v-card-text': true,
+                    'v-card-actions': true,
+                    'v-list-item-subtitle': true,
+                    'v-textarea': true,
+                    'v-form': true,
+                    'v-snackbar': true,
+                    'CorrectionModal': true,
+                    'CaveWeather': true
+                }
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        // Switch to system tab
+        wrapper.vm.activeTab = 'system'
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).toContain('Test System')
+        expect(wrapper.find('.vue-markdown').exists()).toBe(false)
+        expect(wrapper.text()).not.toContain('_No system description._')
+    })
 })

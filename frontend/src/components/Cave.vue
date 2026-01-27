@@ -134,7 +134,7 @@
                   <v-btn v-if="appStore.user.is_admin" size="small" variant="text" icon="mdi-pencil"
                     @click="$router.push('/cave-systems/' + cave.system.id + '/edit')"></v-btn>
                 </div>
-                <vue-markdown :source="cave.system.description || '_No system description._'"
+                <vue-markdown v-if="cave.system.description" :source="cave.system.description"
                   class="text-body-1 mb-4" />
 
                 <v-chip-group class="mb-4">

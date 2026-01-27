@@ -26,13 +26,14 @@ class PageController extends Controller
         return new PageResource($page);
     }
 
-    public function show(Page $page)
+    public function show($id)
     {
-        return new PageResource($page);
+        return new PageResource(Page::findOrFail($id));
     }
 
-    public function update(Request $request, Page $page)
+    public function update(Request $request, $id)
     {
+        $page = Page::findOrFail($id);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:pages,slug,' . $page->id,
@@ -44,8 +45,9 @@ class PageController extends Controller
         return new PageResource($page);
     }
 
-    public function destroy(Page $page)
+    public function destroy($id)
     {
+        $page = Page::findOrFail($id);
         $page->delete();
         return response()->noContent();
     }

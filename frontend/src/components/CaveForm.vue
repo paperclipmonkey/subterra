@@ -11,18 +11,18 @@
       </v-card-title>
       <v-card-text>
         <sub>Entrance information. E.g. Where to find it, where to park. Information about access.</sub>
-        <v-textarea
+        <div class="text-subtitle-2 mt-4 mb-1">Description</div>
+        <MilkdownEditor
           v-model="internalCave.description"
-          label="Description"
-          :rules="[v => !!v || 'Description is required']"
-          required
-        ></v-textarea>
-        <v-textarea
+          placeholder="Detailed description of the cave..."
+          class="mb-4"
+        />
+        <div class="text-subtitle-2 mt-4 mb-1">Access Info</div>
+        <MilkdownEditor
           v-model="internalCave.access_info"
-          label="Access Info"
-          :rules="[v => !!v || 'Access info is required']"
-          required
-        ></v-textarea>
+          placeholder="Entrance information. E.g. Where to find it, where to park."
+          class="mb-4"
+        />
         <v-text-field
           v-model="internalCave.location_name"
           label="Location Name"
@@ -139,6 +139,7 @@ import {
 } from '@indoorequal/vue-maplibre-gl'
 import { LngLat } from 'maplibre-gl'
 import { convertFileToBase64 } from '@/utilities.js'
+import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
 const props = defineProps({
   modelValue: {

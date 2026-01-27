@@ -20,7 +20,8 @@
                                 <v-text-field v-model="editedCollection.name" label="Name" required></v-text-field>
                             </v-col>
                             <v-col cols="12">
-                                <v-textarea v-model="editedCollection.description" label="Description"></v-textarea>
+                                <div class="text-subtitle-2 mb-1">Description</div>
+                                <MilkdownEditor v-model="editedCollection.description" placeholder="About this collection..." />
                             </v-col>
                             <v-col cols="12">
                                 <v-file-input v-model="photoFile" label="Photo" accept="image/*" prepend-icon="mdi-camera"
@@ -54,8 +55,9 @@
                                     <v-list-item-title class="font-weight-bold">{{ cave.name }}</v-list-item-title>
                                     <v-list-item-subtitle>{{ cave.location_name }}</v-list-item-subtitle>
                                     
-                                    <v-textarea v-model="cave.playlist_description" label="Note (Markdown supported)" rows="1" auto-grow
-                                        hide-details density="compact" variant="underlined" class="mt-2"></v-textarea>
+                                    <div class="text-subtitle-2 mt-4 mb-1">Note</div>
+                                    <MilkdownEditor v-model="cave.playlist_description" 
+                                        placeholder="Add a note about this cave in the collection..." />
 
                                     <template v-slot:append>
                                         <v-btn icon="mdi-delete" size="small" color="error" variant="text"
@@ -91,6 +93,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'
 import { useCaveStore } from '@/stores/caves'
+import MilkdownEditor from '@/components/MilkdownEditor.vue';
 
 const props = defineProps({
     collection: {

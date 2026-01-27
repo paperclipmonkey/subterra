@@ -56,7 +56,7 @@ class PageTest extends TestCase
         ];
 
         $response = $this->actingAs($admin)
-            ->putJson("/api/admin/pages/{$page->slug}", $payload);
+            ->putJson("/api/admin/pages/{$page->id}", $payload);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.title', 'Updated Page');
@@ -70,7 +70,7 @@ class PageTest extends TestCase
         $page = Page::factory()->create();
 
         $response = $this->actingAs($admin)
-            ->deleteJson("/api/admin/pages/{$page->slug}");
+            ->deleteJson("/api/admin/pages/{$page->id}");
 
         $response->assertStatus(204);
 
