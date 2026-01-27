@@ -94,6 +94,9 @@ import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'
 import { useCaveStore } from '@/stores/caves'
 import MilkdownEditor from '@/components/MilkdownEditor.vue';
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 const props = defineProps({
     collection: {
@@ -189,9 +192,23 @@ const save = async () => {
         }
 
         dialog.value = false
+        toast.success(isNew.value ? 'Collection created successfully' : 'Collection updated successfully');
     } catch (e) {
+        let errorMessage = 'Failed to save collection';
+        // Check for backend validation errors
+        if (e.response && e.response.data) {
+            if (e.response.data.errors) {
+                // Combine the first error of each field for a concise message
+                errorMessage = Object.values(e.response.data.errors).flat()[0];
+            } else if (e.response.data.message) {
+                errorMessage = e.response.data.message;
+            }
+        } else if (e.message) {
+            errorMessage = e.message;
+        }
         console.error(e)
-        alert('Failed to save: ' + e.message)
+        // alert('Failed to save: ' + e.message)
+        toast.error(errorMessage);
     } finally {
         saving.value = false;
     }
