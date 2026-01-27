@@ -1,9 +1,6 @@
 // Utilities
 import { defineStore } from 'pinia'
-import { mande } from 'mande'
-// import { useRouter } from 'vue-router';
-// const router = useRouter();
-const api = mande('/api/users/me', { headers: { 'Accept': 'application/json' } })
+import { api } from '@/plugins/api'
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -22,7 +19,8 @@ export const useAppStore = defineStore('app', {
     async getUser() {
       try {
         this.loading = true
-        this.user = (await api.get()).data
+        const response = await api.get('/api/users/me')
+        this.user = response.data.data
         this.loading = false
         return this.user
         // showTooltip(`Welcome back ${this.userData.name}!`)

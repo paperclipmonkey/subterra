@@ -39,6 +39,12 @@
         "$ref": "tag.json"
       }
     },
+    "caving_region": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "location_name": {
       "type": [
         "string",
@@ -126,6 +132,7 @@
     "description",
     "access_info",
     "tags",
+    "caving_region",
     "system",
     "previously_done"
   ],

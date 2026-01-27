@@ -62,7 +62,10 @@ class CalloutToTripTest extends TestCase
         $this->assertTrue($trip->participants->contains($user->id));
         $this->assertTrue($trip->participants->contains($friend->id));
 
-        // Verify callout is deleted (or status changed if incident exists, but here no incident)
-        $this->assertDatabaseMissing('callouts', ['id' => $callout->id]);
+        // Verify callout status is changed to cancelled
+        $this->assertDatabaseHas('callouts', [
+            'id' => $callout->id,
+            'status' => 'cancelled'
+        ]);
     }
 }

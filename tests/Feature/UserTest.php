@@ -413,4 +413,36 @@ class UserTest extends TestCase
             'incident_controller_id' => null
         ]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_includes_on_call_information_in_user_resource()
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        
+        // 1. Create an on-call shift for this user
+        \App\Models\OnCallShift::create([
+            'user_id' => $user->id,
+            'start_at' => now()->subHour(),
+            'end_at' => now()->addHours(2),
+        ]);
+
+        // 2. Create some open callouts (active and triggered)
+        \App\Models\Callout::factory()->create(['status' => 'active']);
+        \App\Models\Callout::factory()->create(['status' => 'triggered']);
+        \App\Models\Callout::factory()->create(['status' => 'cancelled']); // Should not be counted
+
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->getJson(route('users.me'));
+
+        $response->assertOk();
+        $response->assertJson([
+            'data' => [
+                'on_call' => true,
+                'open_callouts_count' => 2,
+            ]
+        ]);
+        
+        $this->assertNotNull($response->json('data.on_call_until'));
+    }
 }

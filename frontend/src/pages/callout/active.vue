@@ -1,6 +1,9 @@
 <template>
     <v-container>
-        <v-row justify="center">
+        <v-row v-if="loading" justify="center" class="pa-10">
+            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+        </v-row>
+        <v-row v-else justify="center">
             <v-col cols="12" md="8" lg="6">
                 <!-- Rescue Active Banner -->
                 <v-alert v-if="callout.incident" type="error" prominent class="mb-6 elevation-5"
@@ -111,22 +114,23 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAppStore } from '@/stores/app';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import moment from 'moment';
 import { useToast } from "vue-toastification";
 
 const appStore = useAppStore();
 const router = useRouter();
+const route = useRoute();
 const toast = useToast();
 
 const confirmSafe = ref(false);
 const convertToTrip = ref(false);
 const newTripId = ref(null);
 const now = ref(moment());
+const callout = ref({});
+const loading = ref(true);
 let timer = null;
-
-const callout = computed(() => appStore.user.active_callout || {});
 
 const timeRemaining = computed(() => {
     if (!callout.value.callout_time) return '--:--:--';
@@ -147,15 +151,33 @@ const formatDate = (t) => moment(t).format('ddd Do MMM');
 
 const cancelCallout = async () => {
     confirmSafe.value = false;
+
+    // Attempt to get location for cancellation snapshot
+    let locationData = null;
+    if (navigator.geolocation) {
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+            });
+            locationData = `${position.coords.latitude},${position.coords.longitude} (acc: ${position.coords.accuracy}m)`;
+        } catch (e) {
+            console.log("Could not get location for cancellation", e);
+        }
+    }
+
     try {
-        const response = await axios.post(`/api/callouts/${callout.value.id}/cancel`);
+        const response = await axios.post(`/api/callouts/${callout.value.id}/cancel`, {
+            location: locationData
+        });
         toast.success("Callout Cancelled");
 
         // Store the returned trip_id for the edit action
         newTripId.value = response.data.trip_id;
 
-        // Update user state to remove open callout
-        await appStore.getUser();
+        // Update user state to remove open callout if logged in
+        if (appStore.user.id) {
+            await appStore.getUser();
+        }
 
         // Show convert dialog
         convertToTrip.value = true;
@@ -177,14 +199,36 @@ const editTrip = () => {
     }
 };
 
-onMounted(() => {
-    if (!callout.value.id) {
-        // Fallback if accessed via URL directly but no data in store yet
-        // Could force refetch user or redirect
-        if (!appStore.user.id) {
-            appStore.getUser();
+const fetchCallout = async (id) => {
+    try {
+        const res = await axios.get(`/api/callouts/${id}`);
+        callout.value = res.data.data;
+    } catch (e) {
+        toast.error("Could not load callout details.");
+        console.error(e);
+    } finally {
+        loading.value = false;
+    }
+};
+
+onMounted(async () => {
+    const idFromUrl = route.query.id;
+
+    if (idFromUrl) {
+        await fetchCallout(idFromUrl);
+    } else if (appStore.user.active_callout) {
+        callout.value = appStore.user.active_callout;
+        loading.value = false;
+    } else {
+        // Try to fetch user just in case
+        await appStore.getUser();
+        if (appStore.user.active_callout) {
+            callout.value = appStore.user.active_callout;
+            loading.value = false;
         } else {
-            router.push('/callout'); // Redirect back if really no callout?
+            loading.value = false;
+            toast.info("No active callout found.");
+            router.push('/callout');
         }
     }
 

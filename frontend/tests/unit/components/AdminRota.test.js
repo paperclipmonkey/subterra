@@ -5,13 +5,23 @@ import axios from 'axios'
 import { nextTick } from 'vue'
 
 // Mock axios
-vi.mock('axios', () => ({
-    default: {
+vi.mock('axios', () => {
+    const mock = {
         get: vi.fn(),
         post: vi.fn(),
-        delete: vi.fn()
+        put: vi.fn(),
+        delete: vi.fn(),
+        create: vi.fn().mockReturnThis(),
+        interceptors: {
+            request: { use: vi.fn(), eject: vi.fn() },
+            response: { use: vi.fn(), eject: vi.fn() }
+        }
     }
-}))
+    return {
+        default: mock,
+        ...mock
+    }
+})
 
 describe('Admin Rota', () => {
     beforeEach(() => {
@@ -41,7 +51,10 @@ describe('Admin Rota', () => {
                     'v-col': { template: '<div class="v-col"><slot /></div>' },
                     'v-select': { template: '<select class="v-select"></select>' },
                     'v-text-field': { template: '<input class="v-text-field" />' },
-                    'v-data-table': { template: '<div class="v-data-table">Data Table</div>' }
+                    'v-data-table': { template: '<div class="v-data-table">Data Table</div>' },
+                    'v-btn-toggle': { template: '<div class="v-btn-toggle"><slot /></div>' },
+                    'v-btn': { template: '<button><slot /></button>' },
+                    'v-icon': { template: '<i></i>' }
                 },
                 mocks: {
                     $router: {
@@ -83,11 +96,14 @@ describe('Admin Rota', () => {
             data: { data: mockShifts }
         })
 
-        axios.delete.mockResolvedValue({
-            data: {
-                message: 'Shift removed',
-                affected_callouts: mockAffectedCallouts,
-                count: 1
+        axios.delete.mockRejectedValue({
+            response: {
+                status: 422,
+                data: {
+                    message: 'WARNING: This shift has 1 open callout(s) and cannot be removed without leaving them UNMONITORED!',
+                    affected_callouts: mockAffectedCallouts,
+                    count: mockAffectedCallouts.length
+                }
             }
         })
 
@@ -112,7 +128,8 @@ describe('Admin Rota', () => {
                     'v-col': { template: '<div class="v-col"><slot /></div>' },
                     'v-select': { template: '<select class="v-select"></select>' },
                     'v-text-field': { template: '<input class="v-text-field" />' },
-                    'v-data-table': { template: '<div class="v-data-table">Data Table</div>' }
+                    'v-data-table': { template: '<div class="v-data-table">Data Table</div>' },
+                    'v-btn-toggle': { template: '<div class="v-btn-toggle"><slot /></div>' }
                 },
                 mocks: {
                     $router: {
@@ -147,8 +164,9 @@ describe('Admin Rota', () => {
         expect(alertMessage).toContain('Test Cave')
         expect(alertMessage).toContain('UNMONITORED')
 
-        // Verify toast warning was called
-        expect(wrapper.vm.$toast.warning).toHaveBeenCalledWith('Shift removed - 1 callout(s) now unmonitored!')
+        // Verify toast error was called with the message from API
+        expect(wrapper.vm.$toast.error).toHaveBeenCalled()
+        expect(wrapper.vm.$toast.error.mock.calls[0][0]).toContain('UNMONITORED')
 
         confirmSpy.mockRestore()
         alertSpy.mockRestore()
@@ -183,7 +201,8 @@ describe('Admin Rota', () => {
                     'v-col': { template: '<div class="v-col"><slot /></div>' },
                     'v-select': { template: '<select class="v-select"></select>' },
                     'v-text-field': { template: '<input class="v-text-field" />' },
-                    'v-data-table': { template: '<div class="v-data-table">Data Table</div>' }
+                    'v-data-table': { template: '<div class="v-data-table">Data Table</div>' },
+                    'v-btn-toggle': { template: '<div class="v-btn-toggle"><slot /></div>' }
                 },
                 mocks: {
                     $router: {

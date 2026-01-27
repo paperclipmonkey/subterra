@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import CalloutIndex from '@/pages/callout/create.vue'
 
 // Mock dependencies
@@ -13,8 +13,8 @@ const mockCaves = [{ id: 1, name: 'Alum Pot', location_name: 'Yorkshire', system
 const mockUsers = [{ id: 2, name: 'Alice' }, { id: 3, name: 'Bob' }]
 const mockUserMe = { id: 1, name: 'Test User', email: 'test@example.com', is_approved: true }
 
-vi.mock('axios', () => ({
-    default: {
+vi.mock('axios', () => {
+    const mock = {
         get: vi.fn((url) => {
             if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
             if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
@@ -22,9 +22,18 @@ vi.mock('axios', () => ({
             if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: 'Officer Jenny', photo: null, is_covered: true } } })
             return Promise.resolve({ data: {} })
         }),
-        post: vi.fn(() => Promise.resolve({ data: { callout: { id: 99 } } }))
+        post: vi.fn(() => Promise.resolve({ data: { callout: { id: 99 } } })),
+        create: vi.fn().mockReturnThis(),
+        interceptors: {
+            request: { use: vi.fn(), eject: vi.fn() },
+            response: { use: vi.fn(), eject: vi.fn() }
+        }
     }
-}))
+    return {
+        default: mock,
+        ...mock
+    }
+})
 
 // Mock Store
 vi.mock('@/stores/app', () => ({
@@ -36,6 +45,24 @@ vi.mock('@/stores/app', () => ({
 
 describe('Callout Wizard', () => {
     it('renders wizard and loads initial data', async () => {
+        // Mock Navigator APIs
+        Object.defineProperty(global.navigator, 'permissions', {
+            value: {
+                query: vi.fn(() => Promise.resolve({ state: 'granted' }))
+            },
+            writable: true
+        });
+
+        Object.defineProperty(global.navigator, 'geolocation', {
+            value: {
+                getCurrentPosition: vi.fn((success) => success({
+                    coords: { latitude: 51.5, longitude: -0.1, accuracy: 20 },
+                    timestamp: Date.now()
+                }))
+            },
+            writable: true
+        });
+
         const wrapper = mount(CalloutIndex, {
             global: {
                 stubs: {
@@ -48,7 +75,7 @@ describe('Callout Wizard', () => {
                     'v-card-text': { template: '<div class="v-card-text"><slot /></div>' },
                     'v-stepper': { template: '<div class="v-stepper"><slot /></div>' },
                     'v-stepper-header': { template: '<div class="v-stepper-header"><slot /></div>' },
-                    'v-stepper-step': { template: '<div class="v-stepper-step"><slot /></div>' },
+                    'v-stepper-item': { template: '<div class="v-stepper-item"><slot /></div>' },
                     'v-divider': true,
                     'v-form': { template: '<form><slot /></form>' },
                     'v-window': { template: '<div class="v-window"><slot /></div>' },
@@ -78,29 +105,11 @@ describe('Callout Wizard', () => {
             }
         })
 
-        // Mock Navigator APIs
-        Object.defineProperty(global.navigator, 'permissions', {
-            value: {
-                query: vi.fn(() => Promise.resolve({ state: 'granted' }))
-            },
-            writable: true
-        });
-
-        Object.defineProperty(global.navigator, 'geolocation', {
-            value: {
-                getCurrentPosition: vi.fn((success) => success({
-                    coords: { latitude: 51.5, longitude: -0.1, accuracy: 20 },
-                    timestamp: Date.now()
-                }))
-            },
-            writable: true
-        });
-
         // Assert initial loading state
         expect(wrapper.text()).toContain('Loading...')
 
         // Wait for mounted hooks
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await flushPromises()
         await wrapper.vm.$nextTick()
 
         // Assert loaded
@@ -110,13 +119,19 @@ describe('Callout Wizard', () => {
         expect(wrapper.vm.step).toBe(1)
 
         // Fill out Step 1
-        wrapper.vm.form.cave_id = 1
-        wrapper.vm.form.car_registration = 'AB12 CDE'
-        wrapper.vm.form.car_parking = 'Bull Pot Farm'
+        await wrapper.setData({
+            form: {
+                ...wrapper.vm.form,
+                cave_id: 1,
+                car_registration: 'AB12 CDE',
+                car_parking: 'Bull Pot Farm',
+                location_data: { latitude: 51.5, longitude: -0.1 }
+            }
+        })
         await wrapper.vm.$nextTick()
 
         // Assert canProceed logic
-        expect(wrapper.vm.canProceed).toBeTruthy()
+        expect(wrapper.vm.canProceed).toBe(true)
 
         // Move to next step
         wrapper.vm.step++
@@ -149,7 +164,7 @@ describe('Callout Wizard', () => {
                     'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                     'v-stepper': true,
                     'v-stepper-header': true,
-                    'v-stepper-step': true,
+                    'v-stepper-item': true,
                     'v-divider': true,
                     'v-form': { template: '<form><slot /></form>' },
                     'v-window': { template: '<div><slot /></div>' },
@@ -166,7 +181,7 @@ describe('Callout Wizard', () => {
         })
 
         // Wait for mounted actions
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await flushPromises()
         await wrapper.vm.$nextTick()
 
         // Expect error message
@@ -201,7 +216,7 @@ describe('Callout Wizard', () => {
                     'v-textarea': true,
                     'v-stepper': true,
                     'v-stepper-header': true,
-                    'v-stepper-step': true,
+                    'v-stepper-item': true,
                     'v-divider': true,
                     'v-form': true,
                     'v-window': true,

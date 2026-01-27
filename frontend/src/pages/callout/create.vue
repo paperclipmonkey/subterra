@@ -3,7 +3,7 @@
         <v-row justify="center">
             <v-col cols="12" md="8">
                 <v-card class="elevation-2">
-                    <v-toolbar color="warning" dark>
+                    <v-toolbar color="warning">
                         <v-toolbar-title>Safety Callout</v-toolbar-title>
                     </v-toolbar>
 
@@ -44,15 +44,15 @@
                         </div>
 
                         <div v-else :class="{ 'disabled-content': officerError }">
-                            <v-stepper v-model="step" vertical class="elevation-0">
+                            <v-stepper v-model="step" class="elevation-0">
                                 <v-stepper-header class="elevation-0" style="box-shadow: none;">
-                                    <v-stepper-step :complete="step > 1" step="1">Location</v-stepper-step>
+                                    <v-stepper-item :complete="step > 1" :value="1" title="Location"></v-stepper-item>
                                     <v-divider></v-divider>
-                                    <v-stepper-step :complete="step > 2" step="2">Team</v-stepper-step>
+                                    <v-stepper-item :complete="step > 2" :value="2" title="Team"></v-stepper-item>
                                     <v-divider></v-divider>
-                                    <v-stepper-step :complete="step > 3" step="3">Plan</v-stepper-step>
+                                    <v-stepper-item :complete="step > 3" :value="3" title="Plan"></v-stepper-item>
                                     <v-divider></v-divider>
-                                    <v-stepper-step step="4">Safety</v-stepper-step>
+                                    <v-stepper-item :value="4" title="Safety"></v-stepper-item>
                                 </v-stepper-header>
                             </v-stepper>
 
@@ -65,9 +65,10 @@
                                             <p class="text-body-1 mb-4">Where are you going and where are you parking?</p>
 
                                             <v-autocomplete v-model="form.cave_id" label="Cave Entrance" :items="caves"
-                                                item-title="name" item-value="id" outlined
+                                                item-title="name" item-value="id" variant="outlined"
                                                 placeholder="Search for a cave..."
                                                 autocomplete="off"
+                                                :error-messages="errorMessages('cave_id')"
                                                 name="cave_search_no_autofill">
                                                 <template v-slot:item="{ props, item }">
                                                     <v-list-item v-bind="props" :subtitle="item.raw.location_name"
@@ -83,7 +84,7 @@
                                                 <div v-if="isThroughTrip">
                                                     <v-autocomplete label="Exit Cave" :items="systemEntrances"
                                                         item-title="name" item-value="id" v-model="form.exit_cave_id"
-                                                        outlined class="mt-2"
+                                                        variant="outlined" class="mt-2"
                                                         autocomplete="off"
                                                         name="exit_cave_search_no_autofill"></v-autocomplete>
                                                 </div>
@@ -93,13 +94,15 @@
                                             <v-row>
                                                 <v-col cols="12" md="6">
                                                     <v-text-field v-model="form.car_registration" label="Car Registration"
-                                                        hint="e.g. AB12 CDE" persistent-hint outlined required
-                                                        :rules="[v => !!v || 'Registration is required']"></v-text-field>
+                                                        hint="e.g. AB12 CDE" persistent-hint variant="outlined" required
+                                                        :rules="[v => !!v || 'Registration is required']"
+                                                        :error-messages="errorMessages('car_registration')"></v-text-field>
                                                 </v-col>
                                                 <v-col cols="12" md="6">
                                                     <v-text-field v-model="form.car_parking" label="Where are you parking?"
-                                                        hint="e.g. Bull Pot Farm" persistent-hint outlined required
-                                                        :rules="[v => !!v || 'Parking location is required']"></v-text-field>
+                                                        hint="e.g. Bull Pot Farm" persistent-hint variant="outlined" required
+                                                        :rules="[v => !!v || 'Parking location is required']"
+                                                        :error-messages="errorMessages('car_parking')"></v-text-field>
                                                 </v-col>
                                             </v-row>
 
@@ -111,8 +114,8 @@
                                                 
                                                 <v-alert v-if="!form.location_data" :type="locationStatus === 'error' ? 'warning' : 'info'" variant="text" density="compact" class="mb-0 pa-0">
                                                     <div class="d-flex align-center">
-                                                        <v-btn small color="primary" @click="getLocation" :loading="locationStatus === 'loading'" class="mr-3">
-                                                            <v-icon left>mdi-crosshairs-gps</v-icon> Share Location
+                                                        <v-btn size="small" color="primary" @click="getLocation" :loading="locationStatus === 'loading'" class="mr-3" prepend-icon="mdi-crosshairs-gps">
+                                                            Share Location
                                                         </v-btn>
                                                         <span class="text-caption red--text font-weight-bold" v-if="locationStatus === 'error'">Location access is required to proceed. Please enable it in your browser settings.</span>
                                                         <span class="text-caption" v-else>Please allow location access if prompted. Required for safety.</span>
@@ -133,31 +136,31 @@
 
                                             <!-- Add User Autocomplete -->
                                             <v-autocomplete label="Add Subterra User" :items="availableUsers"
-                                                item-title="name" item-value="id" outlined
+                                                item-title="name" item-value="id" variant="outlined"
                                                 prepend-inner-icon="mdi-account-search"
                                                 @update:model-value="addSubterraUser" v-model="userSelect" return-object
                                                 clearable hint="Type 3+ characters to search for users..."
-                                                v-bind:search-input.sync="userSearchInput"
+                                                v-model:search="userSearchInput"
                                                 @update:search="onUserSearch"></v-autocomplete>
 
                                             <v-list class="mb-4">
                                                 <v-list-item v-for="(p, i) in form.participants" :key="i">
                                                     <v-row align="center" dense>
                                                         <v-col cols="12" sm="5">
-                                                            <v-text-field v-model="p.name" label="Name" dense outlined
+                                                            <v-text-field v-model="p.name" label="Name" density="compact" variant="outlined"
                                                                 hide-details :readonly="p.locked"
                                                                 :prepend-icon="p.user_id ? 'mdi-account-check' : 'mdi-account'"></v-text-field>
                                                         </v-col>
                                                         <v-col class="flex-grow-1" cols="auto" sm="5">
-                                                            <v-text-field v-model="p.phone" label="Phone (Mobile)" dense
-                                                                outlined hide-details placeholder="07... or +44..."
+                                                            <v-text-field v-model="p.phone" label="Phone (Mobile)" density="compact"
+                                                                variant="outlined" hide-details placeholder="07... or +44..."
                                                                 :rules="[validateUKPhone]"
                                                                 :readonly="p.locked && !!p.phone"
                                                                 :hint="p.locked && !!p.phone ? 'This number is from their profile' : ''"
                                                                 :persistent-hint="p.locked && !!p.phone"></v-text-field>
                                                         </v-col>
                                                         <v-col cols="auto" sm="2" class="d-flex justify-center">
-                                                            <v-btn icon color="error" x-small @click="removeParticipant(i)"
+                                                            <v-btn icon color="error" size="x-small" @click="removeParticipant(i)"
                                                                 :disabled="p.locked" style="aspect-ratio: 1;">
                                                                 <v-icon>mdi-delete</v-icon>
                                                             </v-btn>
@@ -166,17 +169,18 @@
                                                 </v-list-item>
                                             </v-list>
 
-                                            <v-btn text color="primary" @click="addManualParticipant">
-                                                <v-icon left>mdi-plus</v-icon> Add Manual Guest
+                                            <v-btn variant="text" color="primary" @click="addManualParticipant" prepend-icon="mdi-plus">
+                                                Add Manual Guest
                                             </v-btn>
 
-                                            <v-alert v-if="phoneError" type="error" dense class="mt-4">
+                                            <v-alert v-if="phoneError" type="error" density="compact" class="mt-4">
                                                 At least one participant must have a valid mobile phone number.
                                             </v-alert>
 
                                             <v-textarea v-model="form.team_details" label="Additional Team Details"
                                                 hint="Any relevant details for the team."
-                                                persistent-hint outlined rows="2" class="mt-6"></v-textarea>
+                                                persistent-hint variant="outlined" rows="2" class="mt-6"
+                                                :error-messages="errorMessages('team_details')"></v-textarea>
                                         </div>
                                     </v-window-item>
 
@@ -186,23 +190,25 @@
                                             <p class="text-body-1 mb-4">What is the plan?</p>
                                             <v-textarea v-model="form.trip_plan" label="Trip Plan / Route"
                                                 hint="Describe your intended route (e.g. 'Through trip from Top to Bottom, exiting via Wretched Rabbit')"
-                                                persistent-hint outlined rows="5"></v-textarea>
+                                                persistent-hint variant="outlined" rows="5"
+                                                :error-messages="errorMessages('trip_plan')"></v-textarea>
                                         </div>
                                     </v-window-item>
 
                                     <!-- STEP 4: SAFETY -->
                                     <v-window-item :value="4">
                                         <div class="pa-4">
-                                            <v-alert type="info" text dense class="mb-4">
+                                            <v-alert type="info" variant="text" density="compact" class="mb-4">
                                                 <strong>Callout Time:</strong> When we call 999. Give yourself a safety
                                                 margin!
                                             </v-alert>
 
                                             <v-text-field v-model="form.callout_time"
-                                                label="Callout Alarm Time (Panic Time)" type="datetime-local" outlined
+                                                label="Callout Alarm Time (Panic Time)" type="datetime-local" variant="outlined"
                                                 class="mt-4" required
                                                 :hint="calloutDurationHint"
-                                                persistent-hint></v-text-field>
+                                                persistent-hint
+                                                :error-messages="errorMessages('callout_time')"></v-text-field>
 
                                             <!-- Emergency Contact Removed -->
 
@@ -227,7 +233,7 @@
                                 </v-window>
 
                                 <div class="d-flex justify-space-between pa-4">
-                                    <v-btn text v-if="step > 1" @click="step--">Back</v-btn>
+                                    <v-btn variant="text" v-if="step > 1" @click="step--">Back</v-btn>
                                     <v-spacer v-else></v-spacer>
 
                                     <v-btn color="primary" v-if="step < 4" :disabled="!canProceed"
@@ -254,7 +260,7 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn text @click="activeCallout = null; showSuccessDialog = false">No, thanks</v-btn>
+                    <v-btn variant="text" @click="activeCallout = null; showSuccessDialog = false">No, thanks</v-btn>
                     <v-btn color="primary" @click="convertToTrip">Yes, Create Trip Report</v-btn>
                 </v-card-actions>
             </v-card>
@@ -264,12 +270,17 @@
 </template>
 
 <script>
-import axios from 'axios';
 import moment from 'moment';
 import { useAppStore } from '@/stores/app';
+import { api } from '@/plugins/api';
+import { useFormErrors } from '@/composables/useFormErrors';
 
 export default {
     name: 'CalloutView',
+    setup() {
+        const { setErrors, clearErrors, errorMessages } = useFormErrors();
+        return { setErrors, clearErrors, errorMessages };
+    },
     data() {
         return {
             loading: true,
@@ -324,7 +335,9 @@ export default {
         canProceed() {
             if (this.officerError) return false;
             // Step 1: Cave, Car Details AND Location are now required
-            if (this.step === 1) return this.form.cave_id && this.form.car_registration && this.form.car_parking && this.form.location_data;
+            if (this.step === 1) {
+                return !!(this.form.cave_id && this.form.car_registration && this.form.car_parking && this.form.location_data);
+            }
             if (this.step === 2) return !this.phoneError;
             if (this.step === 3) return this.form.trip_plan.length > 0;
             return true;
@@ -444,7 +457,7 @@ export default {
         },
         async fetchCaves() {
             try {
-                const response = await axios.get('/api/caves');
+                const response = await api.get('/api/caves');
                 this.caves = response.data.data;
             } catch (e) {
                 console.error(e);
@@ -452,21 +465,18 @@ export default {
         },
         async fetchUsers() {
             try {
-                const me = await axios.get('/api/users/me');
+                const me = await api.get('/api/users/me');
                 this.currentUser = me.data.data;
                 // Add me to the users list instantly
                 this.users = [this.currentUser];
 
-                // Removed full user list fetch for privacy
-                // const response = await axios.get('/api/users');
-                // this.users = response.data.data;
             } catch (e) {
                 console.error(e);
             }
         },
         async fetchDutyOfficer() {
             try {
-                const response = await axios.get('/api/duty-officers/current');
+                const response = await api.get('/api/duty-officers/current');
                 const data = response.data.data;
 
                 if (data.is_covered) {
@@ -518,8 +528,9 @@ export default {
             if (this.phoneError) return;
 
             this.processing = true;
+            this.clearErrors();
             try {
-                const response = await axios.post('/api/callouts', this.form);
+                const response = await api.post('/api/callouts', this.form);
                 this.activeCallout = response.data.callout;
 
                 // Refresh user state to acknowledge the new open callout
@@ -532,8 +543,11 @@ export default {
                 this.$router.push('/callout/active');
             } catch (e) {
                 console.error('Callout Error:', e);
-                const errorMsg = e.response?.data?.message || e.message || 'Failed to open callout.';
-                this.$toast.error(errorMsg);
+                this.setErrors(e);
+                if (e.response?.status !== 422) {
+                    const errorMsg = e.response?.data?.message || e.message || 'Failed to open callout.';
+                    this.$toast.error(errorMsg);
+                }
             } finally {
                 this.processing = false;
             }
@@ -543,11 +557,11 @@ export default {
 
             this.processing = true;
             try {
-                await axios.post(`/api/callouts/${this.activeCallout.id}/cancel`);
+                await api.post(`/api/callouts/${this.activeCallout.id}/cancel`);
                 this.showSuccessDialog = true;
                 this.$toast.success('Callout cancelled.');
             } catch (e) {
-                this.$toast.error('Failed to cancel.');
+                // Global interceptor handles this
             } finally {
                 this.processing = false;
             }
@@ -568,7 +582,7 @@ export default {
 
             this.searchTimeout = setTimeout(async () => {
                 try {
-                    const response = await axios.get(`/api/users?search=${encodeURIComponent(val)}`);
+                    const response = await api.get(`/api/users?search=${encodeURIComponent(val)}`);
                     const matches = response.data.data;
 
                     // Merge matches, avoiding duplicates

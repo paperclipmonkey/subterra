@@ -28,9 +28,11 @@ Route::post('/webhooks/incoming-sms', [WebhookController::class, 'handleIncoming
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
     Route::get('/callouts/active', [App\Http\Controllers\CalloutController::class, 'active']);
-    Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel']);
-    Route::get('/callouts/{id}', [App\Http\Controllers\CalloutController::class, 'show']);
 });
+
+// Guest accessible callout routes
+Route::get('/callouts/{id}', [App\Http\Controllers\CalloutController::class, 'show']);
+Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel']);
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
@@ -172,6 +174,7 @@ Route::get('/news/{id}', [App\Http\Controllers\NewsController::class, 'show'])->
 Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
     Route::post('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'store']);
+    Route::put('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'update']);
     Route::delete('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'destroy']);
 
     Route::get('/incidents', [App\Http\Controllers\Admin\IncidentController::class, 'index']);

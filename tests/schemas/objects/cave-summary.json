@@ -23,30 +23,72 @@
       "minimum": 1
     },
     "location_name": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "location_country": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "location_lat": {
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "location_lng": {
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "location_alt": {
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "access_info": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "hero_image": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "entrance_image": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "caving_region": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "$ref": "tag.json"
+      }
     }
   },
-  "required": ["id", "name", "slug", "description", "cave_system_id"],
+  "required": [
+    "id",
+    "name",
+    "slug",
+    "description",
+    "cave_system_id"
+  ],
   "additionalProperties": false
 }

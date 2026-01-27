@@ -193,9 +193,8 @@ class CalloutService
             return $trip;
         }
 
-        // 5. Delete from DB (Strict retention: Cancelled = Deleted)
-        // Only if no incident was ever created (i.e. user is safe before panic time)
-        $callout->delete();
+        // 5. Mark as cancelled (instead of deleting)
+        $callout->update(['status' => 'cancelled']);
 
         return $trip;
     }

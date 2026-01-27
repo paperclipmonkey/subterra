@@ -15,10 +15,10 @@
                     </div>
                 </div>
                 <v-spacer></v-spacer>
-                <v-btn v-if="!incident.controller" color="white" light large @click="acknowledge" :loading="processing">
+                <v-btn v-if="!incident.controller" color="warning" class="black--text" light large @click="acknowledge" :loading="processing">
                     ACKNOWLEDGE & TAKE CONTROL
                 </v-btn>
-                <v-btn v-else-if="incident.status !== 'resolved'" color="white" outlined
+                <v-btn v-else-if="incident.status !== 'resolved'" color="success"
                     @click="showResolveDialog = true">
                     RESOLVE INCIDENT
                 </v-btn>
@@ -39,28 +39,15 @@
             <!-- LEFT COLUMN: INCIDENT DETAILS & PROTOCOL -->
             <v-col cols="12" md="7">
 
-                <!-- Police Log Number Display -->
-                <v-card v-if="incident.police_log_number" class="mb-4">
-                    <v-card-title class="green darken-2 white--text">
-                        <v-icon left color="white">mdi-police-badge</v-icon>
-                        Police Log Number
-                    </v-card-title>
-                    <v-card-text class="text-center pa-6">
-                        <div class="text-h4 font-weight-bold mb-4">{{ incident.police_log_number }}</div>
-                        <v-alert color="amber darken-1" variant="flat" icon="mdi-phone-in-talk"
-                            class="text-left white--text">
-                            <strong>Next Step:</strong> Stay with your phone and await a call from <strong>Cave
-                                Rescue</strong>.
-                            They will contact you for further information.
-                        </v-alert>
-                    </v-card-text>
-                </v-card>
 
-                <!-- Rescue Protocol (hidden once log number is recorded) -->
-                <v-card class="mb-4" v-if="incident.status !== 'resolved' && !incident.police_log_number">
+
+                <!-- Rescue Protocol -->
+                <v-card class="mb-4" v-if="incident.status !== 'resolved' && !dismissedProtocol">
                     <v-card-title class="grey lighten-4">
-                        <v-icon left color="blue">mdi-shield-check</v-icon>
-                        Rescue Protocol
+                        <div class="d-flex align-center">
+                            <v-icon left color="blue">mdi-shield-check</v-icon>
+                            Rescue Protocol
+                        </div>
                     </v-card-title>
                     <v-card-text class="pt-4">
                         <v-timeline density="compact" align="start" truncate-line="start">
@@ -72,6 +59,12 @@
                                 </template>
                                 <div class="mb-2 font-weight-bold">Initiate Call</div>
                                 <div>Dial 999 and ask for <strong>POLICE</strong>.</div>
+                                <div class="mt-1" v-if="policeRegion">
+                                    Request Police for <strong>{{ policeRegion }}</strong> region.
+                                </div>
+                                <div class="mt-1 red--text font-weight-bold" v-else>
+                                    Ask caller for the correct Police region.
+                                </div>
                                 <v-checkbox v-model="script.calledPolice" label="Connected to Police Dispatch" dense
                                     hide-details color="success"></v-checkbox>
                             </v-timeline-item>
@@ -101,20 +94,15 @@
                                     hide-details color="success" :disabled="!script.statedNature"></v-checkbox>
                             </v-timeline-item>
 
-                            <!-- Step 4: Log Number -->
-                            <v-timeline-item dot-color="green" size="small" icon="mdi-file-document">
-                                <div class="mb-2 font-weight-bold">Record Log Number</div>
-                                <div class="d-flex align-center">
-                                    <v-text-field v-model="policeLogInput" label="Police Log Number" dense outlined
-                                        hide-details class="mr-2"></v-text-field>
-                                    <v-btn color="success" icon @click="savePoliceLog"
-                                        :disabled="!policeLogInput || !script.providedInfo">
-                                        <v-icon>mdi-check</v-icon>
-                                    </v-btn>
-                                </div>
-                            </v-timeline-item>
+
 
                         </v-timeline>
+                        
+                        <div class="d-flex justify-end mt-4">
+                            <v-btn color="success" variant="tonal" @click="dismissProtocol">
+                                <v-icon left>mdi-check-circle</v-icon> Done
+                            </v-btn>
+                        </div>
                     </v-card-text>
                 </v-card>
 
@@ -169,15 +157,54 @@
                                     <strong>Cave Location:</strong> 
                                     {{ incident.callout.cave.location_lat }}, {{ incident.callout.cave.location_lng }}
                                     <span v-if="incident.callout.cave.location_name">({{ incident.callout.cave.location_name }})</span>
+                                    <div class="mt-1">
+                                        <v-btn x-small variant="tonal" color="primary" class="mr-1" @click="copyToClipboard(`${incident.callout.cave.location_lat},${incident.callout.cave.location_lng}`)">
+                                            <v-icon size="12" class="mr-1">mdi-content-copy</v-icon> Lat,Lng
+                                        </v-btn>
+                                        <v-btn x-small variant="tonal" class="mr-1" :href="`https://gridreferencefinder.com/index.php?lt=${formatCoord(incident.callout.cave.location_lat)}&lg=${formatCoord(incident.callout.cave.location_lng)}`" target="_blank">
+                                            <v-icon size="12" class="mr-1">mdi-map-marker-path</v-icon> OS Grid
+                                        </v-btn>
+                                        <v-btn x-small variant="tonal" :href="`https://what3words.com/${formatCoord(incident.callout.cave.location_lat)},${formatCoord(incident.callout.cave.location_lng)}`" target="_blank">
+                                            <v-icon size="12" class="mr-1">mdi-map-marker-radius</v-icon> W3W
+                                        </v-btn>
+                                    </div>
                                 </div>
 
-                                <div v-if="incident.callout.location_data" class="mt-2">
+                                <div v-if="incident.callout.exit_cave" class="mt-4">
+                                    <strong>Exit Cave Location:</strong> 
+                                    {{ incident.callout.exit_cave.location_lat }}, {{ incident.callout.exit_cave.location_lng }}
+                                    <div class="mt-1">
+                                        <v-btn x-small variant="tonal" color="primary" class="mr-1" @click="copyToClipboard(`${incident.callout.exit_cave.location_lat},${incident.callout.exit_cave.location_lng}`)">
+                                            <v-icon size="12" class="mr-1">mdi-content-copy</v-icon> Lat,Lng
+                                        </v-btn>
+                                        <v-btn x-small variant="tonal" class="mr-1" :href="`https://gridreferencefinder.com/index.php?lt=${formatCoord(incident.callout.exit_cave.location_lat)}&lg=${formatCoord(incident.callout.exit_cave.location_lng)}`" target="_blank">
+                                            <v-icon size="12" class="mr-1">mdi-map-marker-path</v-icon> OS Grid
+                                        </v-btn>
+                                        <v-btn x-small variant="tonal" :href="`https://what3words.com/${formatCoord(incident.callout.exit_cave.location_lat)},${formatCoord(incident.callout.exit_cave.location_lng)}`" target="_blank">
+                                            <v-icon size="12" class="mr-1">mdi-map-marker-radius</v-icon> W3W
+                                        </v-btn>
+                                    </div>
+                                </div>
+
+                                <div v-if="incident.callout.location_data" class="mt-4">
                                     <strong>Callout opened at location:</strong>
                                     <span v-if="incident.callout.location_data.latitude">
                                         {{ incident.callout.location_data.latitude.toFixed(5) }}, 
                                         {{ incident.callout.location_data.longitude.toFixed(5) }}
                                     </span>
                                     <span v-else class="grey--text font-italic">No GPS data</span>
+
+                                    <div class="mt-1" v-if="incident.callout.location_data.latitude">
+                                        <v-btn x-small variant="tonal" color="primary" class="mr-1" @click="copyToClipboard(`${incident.callout.location_data.latitude.toFixed(5)},${incident.callout.location_data.longitude.toFixed(5)}`)">
+                                            <v-icon size="12" class="mr-1">mdi-content-copy</v-icon> Lat,Lng
+                                        </v-btn>
+                                        <v-btn x-small variant="tonal" class="mr-1" :href="`https://gridreferencefinder.com/index.php?lt=${formatCoord(incident.callout.location_data.latitude)}&lg=${formatCoord(incident.callout.location_data.longitude)}`" target="_blank">
+                                            <v-icon size="12" class="mr-1">mdi-map-marker-path</v-icon> OS Grid
+                                        </v-btn>
+                                        <v-btn x-small variant="tonal" :href="`https://what3words.com/${formatCoord(incident.callout.location_data.latitude)},${formatCoord(incident.callout.location_data.longitude)}`" target="_blank">
+                                            <v-icon size="12" class="mr-1">mdi-map-marker-radius</v-icon> W3W
+                                        </v-btn>
+                                    </div>
                                 </div>
                             </v-col>
                         </v-row>
@@ -229,6 +256,68 @@
                         </v-btn>
                     </v-card-actions>
                 </v-card>
+
+                <!-- Incident Map -->
+                <v-card class="mt-4 overflow-hidden">
+                    <v-card-title class="grey lighten-4 py-2 text-subtitle-2">
+                        <v-icon left size="20">mdi-map</v-icon>
+                        Incident Locations
+                    </v-card-title>
+                    <v-card-text class="pa-0">
+                        <mgl-map
+                            ref="mapRef"
+                            :map-style="mapStyle"
+                            :center="[-2, 53]"
+                            :zoom="5"
+                            height="400px"
+                            @load="onMapLoad"
+                        >
+                            <!-- Cave Entrance -->
+                            <mgl-marker 
+                                v-if="incident.callout.cave" 
+                                :coordinates="[incident.callout.cave.location_lng, incident.callout.cave.location_lat]" 
+                                :anchor="'bottom'"
+                            >
+                                <template v-slot:marker>
+                                    <div class="marker-container">
+                                        <div class="marker-label">Entrance</div>
+                                        <v-icon size="24" color="#ff0000">mdi-map-marker</v-icon>
+                                    </div>
+                                </template>
+                            </mgl-marker>
+
+                            <!-- Cave Exit (if different) -->
+                            <mgl-marker 
+                                v-if="incident.callout.exit_cave" 
+                                :coordinates="[incident.callout.exit_cave.location_lng, incident.callout.exit_cave.location_lat]" 
+                                :anchor="'bottom'"
+                            >
+                                <template v-slot:marker>
+                                    <div class="marker-container">
+                                        <div class="marker-label">Exit</div>
+                                        <v-icon size="24" color="#008000">mdi-map-marker</v-icon>
+                                    </div>
+                                </template>
+                            </mgl-marker>
+
+                            <!-- Callout Origin -->
+                            <mgl-marker 
+                                v-if="incident.callout.location_data && incident.callout.location_data.latitude" 
+                                :coordinates="[incident.callout.location_data.longitude, incident.callout.location_data.latitude]" 
+                                :anchor="'bottom'"
+                            >
+                                <template v-slot:marker>
+                                    <div class="marker-container">
+                                        <div class="marker-label">Origin</div>
+                                        <v-icon size="24" color="#0000ff">mdi-map-marker</v-icon>
+                                    </div>
+                                </template>
+                            </mgl-marker>
+                            
+                            <mgl-navigation-control />
+                        </mgl-map>
+                    </v-card-text>
+                </v-card>
             </v-col>
         </v-row>
 
@@ -253,21 +342,37 @@
 <script>
 import axios from 'axios';
 import moment from 'moment';
+import {
+    MglMap,
+    MglNavigationControl,
+    MglMarker,
+    MglPopup,
+} from '@indoorequal/vue-maplibre-gl';
+import maplibregl from 'maplibre-gl';
 
 export default {
+    components: {
+        MglMap,
+        MglNavigationControl,
+        MglMarker,
+        MglPopup
+    },
     data() {
         return {
             incident: null,
+            mapInstance: null,
+            mapStyle: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge',
             script: {
                 calledPolice: false,
                 statedNature: false,
                 providedInfo: false
             },
-            policeLogInput: '',
+            dismissedProtocol: false,
             newNote: '',
             processing: false,
             showResolveDialog: false,
-            resolveNotes: 'Safe and well.'
+            resolveNotes: 'Safe and well.',
+            hasFittedBounds: false
         };
     },
     computed: {
@@ -276,6 +381,21 @@ export default {
             if (this.incident.status === 'open') return 'red';
             if (this.incident.status === 'managed') return 'orange darken-3';
             return 'green';
+        },
+        policeRegion() {
+            if (!this.incident || !this.incident.callout || !this.incident.callout.cave || !this.incident.callout.cave.tags) return null;
+            const regionTag = this.incident.callout.cave.tags.find(t => t.category === 'region');
+            return regionTag ? regionTag.tag : null;
+        }
+    },
+    watch: {
+        incident: {
+            handler(newVal) {
+                if (newVal) {
+                    this.fitMapToBounds();
+                }
+            },
+            immediate: false // fetchIncident calls it manually or via onMapLoad
         }
     },
     async mounted() {
@@ -293,16 +413,99 @@ export default {
         clearInterval(this.poll);
     },
     methods: {
+
         async fetchIncident() {
             try {
                 const res = await axios.get(`/api/admin/incidents/${this.$route.params.id}`);
                 this.incident = res.data.data;
-                if (this.incident.police_log_number && this.policeLogInput === '') {
-                    this.policeLogInput = this.incident.police_log_number;
+
+                // Check if protocol has been dismissed via note
+                const dismissNote = "Police have been contacted and they're waiting to hear from cave rescue.";
+                if (this.incident.notes.some(n => n.content.includes(dismissNote))) {
+                    this.dismissedProtocol = true;
                 }
             } catch (e) {
                 console.error(e);
             }
+        },
+        onMapLoad(event) {
+            this.mapInstance = event.map;
+            this.mapInstance.resize();
+            this.fitMapToBounds();
+        },
+        fitMapToBounds() {
+            if (!this.mapInstance || !this.incident || !this.incident.callout || this.hasFittedBounds) return;
+            const points = [];
+            const c = this.incident.callout;
+
+            const isValid = (lat, lng) =>
+                lat !== null && lat !== undefined && !isNaN(parseFloat(lat)) && parseFloat(lat) !== 0 &&
+                lng !== null && lng !== undefined && !isNaN(parseFloat(lng)) && parseFloat(lng) !== 0;
+
+            if (c.cave && isValid(c.cave.location_lat, c.cave.location_lng))
+                points.push([parseFloat(c.cave.location_lng), parseFloat(c.cave.location_lat)]);
+
+            if (c.exit_cave && isValid(c.exit_cave.location_lat, c.exit_cave.location_lng))
+                points.push([parseFloat(c.exit_cave.location_lng), parseFloat(c.exit_cave.location_lat)]);
+
+            if (c.location_data?.latitude && isValid(c.location_data.latitude, c.location_data.longitude))
+                points.push([parseFloat(c.location_data.longitude), parseFloat(c.location_data.latitude)]);
+
+            if (points.length > 0) {
+                const bounds = new maplibregl.LngLatBounds();
+                points.forEach(p => bounds.extend(p));
+
+                if (points.length > 1) {
+                    this.mapInstance.fitBounds(bounds, {
+                        padding: 50,
+                        maxZoom: 15,
+                        duration: 1000
+                    });
+                    this.hasFittedBounds = true;
+                } else {
+                    this.mapInstance.setCenter(points[0]);
+                    this.mapInstance.setZoom(15);
+                    this.hasFittedBounds = true;
+                }
+            } else {
+                // Default view if no valid points are found
+                this.mapInstance.setCenter([-3.29, 54.46]); // Approximate center of UK caving regions
+                this.mapInstance.setZoom(7);
+                this.hasFittedBounds = true;
+            }
+        },
+        async dismissProtocol() {
+            try {
+                const note = "Police have been contacted and they're waiting to hear from cave rescue.";
+                await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: note });
+                this.$toast.success('Protocol dismissed and logged.');
+                this.dismissedProtocol = true;
+                this.fetchIncident();
+            } catch (e) {
+                this.$toast.error('Failed to log dismissal.');
+            }
+        },
+        copyToClipboard(text) {
+            if (!navigator.clipboard) {
+                this.$toast.error('Clipboard access not available');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                this.$toast.success('Copied to clipboard!');
+            }).catch(err => {
+                this.$toast.error('Failed to copy');
+            });
+        },
+        formatCoord(val) {
+            if (val === null || val === undefined || isNaN(val)) return '';
+            const num = parseFloat(val);
+            const str = num.toString();
+            const parts = str.split('.');
+            // Ensure at least 5 decimal places for reliability, but preserve more if present
+            if (parts.length < 2 || parts[1].length < 5) {
+                return num.toFixed(5);
+            }
+            return str;
         },
         async acknowledge() {
             this.processing = true;
@@ -327,18 +530,7 @@ export default {
                 console.error(e);
             }
         },
-        async savePoliceLog() {
-            try {
-                await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, {
-                    content: `Police Log Number recorded: ${this.policeLogInput}`,
-                    police_log_number: this.policeLogInput
-                });
-                this.$toast.success('Log number saved.');
-                this.fetchIncident();
-            } catch (e) {
-                console.error(e);
-            }
-        },
+
         async resolveIncident() {
             try {
                 await axios.post(`/api/admin/incidents/${this.incident.id}/resolve`, { notes: this.resolveNotes });
@@ -361,3 +553,27 @@ export default {
     }
 };
 </script>
+
+<style lang="scss">
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+.marker-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    // No transform here, using MapLibre's anchor="bottom"
+}
+
+.marker-label {
+    background: white;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid #666;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+    margin-bottom: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color: #333;
+}
+</style>

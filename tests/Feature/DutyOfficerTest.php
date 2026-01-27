@@ -131,14 +131,12 @@ class DutyOfficerTest extends TestCase
         $response = $this->actingAs($admin)
             ->deleteJson("/api/admin/shifts/{$shift->id}");
 
-        $response->assertStatus(200)
+        $response->assertStatus(422)
             ->assertJsonStructure([
                 'message',
-                'affected_callouts',
-                'count'
+                'affected_callouts'
             ]);
 
-        $this->assertEquals(2, $response->json('count'));
         $this->assertCount(2, $response->json('affected_callouts'));
     }
 
@@ -157,8 +155,7 @@ class DutyOfficerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'message' => 'Shift removed',
-                'count' => 0
+                'message' => 'Shift removed'
             ]);
 
         $this->assertEmpty($response->json('affected_callouts'));

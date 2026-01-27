@@ -21,6 +21,7 @@ class OnCallController extends Controller
         $shifts = OnCallShift::with('user')
             ->where('start_at', '<=', $end)
             ->where('end_at', '>=', $start)
+            ->orderBy('start_at')
             ->get();
 
         return response()->json([
@@ -61,33 +62,111 @@ class OnCallController extends Controller
     }
 
     /**
+     * Update a shift
+     */
+    public function update(Request $request, $id)
+    {
+        $shift = OnCallShift::findOrFail($id);
+
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after:start_at',
+        ]);
+
+        // Check for overlaps with other shifts for the same user (excluding this shift)
+        $exists = OnCallShift::where('user_id', $data['user_id'])
+            ->where('id', '!=', $id)
+            ->where(function ($query) use ($data) {
+                $query->whereBetween('start_at', [$data['start_at'], $data['end_at']])
+                      ->orWhereBetween('end_at', [$data['start_at'], $data['end_at']]);
+            })->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'User already has a shift in this range'], 409);
+        }
+
+        // Check for orphaned callouts if the shift is shortened or person changed
+        $uncoveredCallouts = $this->getUncoveredCalloutsAfterModification($shift, $data['start_at'], $data['end_at'], $data['user_id']);
+
+        if ($uncoveredCallouts->isNotEmpty()) {
+            return response()->json([
+                'message' => 'Cannot modify shift: would leave ' . $uncoveredCallouts->count() . ' callout(s) unmonitored.',
+                'affected_callouts' => $uncoveredCallouts
+            ], 422);
+        }
+
+        $shift->update($data);
+
+        return response()->json([
+            'message' => 'Shift updated',
+            'data' => $shift->load('user')
+        ]);
+    }
+
+    /**
      * Remove a shift
      */
     public function destroy($id)
     {
         $shift = OnCallShift::findOrFail($id);
         
-        // Check for active or triggered callouts during this shift period
-        $affectedCallouts = \App\Models\Callout::whereIn('status', ['active', 'triggered'])
-            ->where('callout_time', '>=', $shift->start_at)
-            ->where('callout_time', '<=', $shift->end_at)
-            ->with(['cave:id,name', 'user:id,name'])
-            ->get()
-            ->map(function ($callout) {
-                return [
-                    'id' => $callout->id,
-                    'callout_time' => $callout->callout_time,
-                    'cave_name' => $callout->cave?->name ?? 'Unknown Location',
-                    'user_name' => $callout->user?->name ?? 'Unknown User',
-                ];
-            });
+        // Check if deleting this shift leaves callouts uncovered
+        $uncoveredCallouts = $this->getUncoveredCalloutsAfterModification($shift, null, null, null, true);
+
+        if ($uncoveredCallouts->isNotEmpty()) {
+            return response()->json([
+                'message' => 'Cannot remove shift: would leave ' . $uncoveredCallouts->count() . ' callout(s) unmonitored.',
+                'affected_callouts' => $uncoveredCallouts
+            ], 422);
+        }
         
         $shift->delete();
 
         return response()->json([
-            'message' => 'Shift removed',
-            'affected_callouts' => $affectedCallouts,
-            'count' => $affectedCallouts->count()
+            'message' => 'Shift removed'
         ]);
+    }
+
+    /**
+     * Helper to find callouts that would become unmonitored
+     */
+    private function getUncoveredCalloutsAfterModification($shift, $newStart = null, $newEnd = null, $newUser = null, $isDelete = false)
+    {
+        // 1. Find callouts that were covered by the original shift
+        $callouts = \App\Models\Callout::whereIn('status', ['active', 'triggered'])
+            ->where('callout_time', '>=', $shift->start_at)
+            ->where('callout_time', '<=', $shift->end_at)
+            ->get();
+
+        if ($callouts->isEmpty()) {
+            return collect();
+        }
+
+        // 2. Filter to those NOT covered by the new parameters OR not covered by any OTHER shift
+        return $callouts->filter(function ($callout) use ($shift, $newStart, $newEnd, $isDelete) {
+            // If it's still covered by the new shift bounds (and not a delete), it's fine
+            if (!$isDelete && $newStart && $newEnd) {
+                $calloutTime = $callout->callout_time;
+                if ($calloutTime->between($newStart, $newEnd)) {
+                    return false;
+                }
+            }
+
+            // Otherwise, check if ANY OTHER shift covers it
+            $hasOtherCoverage = OnCallShift::where('id', '!=', $shift->id)
+                ->where('start_at', '<=', $callout->callout_time)
+                ->where('end_at', '>=', $callout->callout_time)
+                ->exists();
+
+            return !$hasOtherCoverage;
+        })->map(function ($callout) {
+            return [
+                'id' => $callout->id,
+                'callout_time' => $callout->callout_time,
+                'cave_name' => $callout->cave?->name ?? 'Unknown Location',
+                'user_name' => $callout->user?->name ?? 'Unknown User',
+            ];
+        });
     }
 }

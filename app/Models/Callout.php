@@ -14,6 +14,19 @@ class Callout extends Model
 {
     use HasFactory;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = str()->random(16);
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'trip_id',
@@ -32,6 +45,9 @@ class Callout extends Model
         'aws_watchdog_id',
         'location_data',
         'request_data',
+        'cancelled_ip',
+        'cancelled_user_agent',
+        'cancelled_location',
     ];
 
     protected $casts = [

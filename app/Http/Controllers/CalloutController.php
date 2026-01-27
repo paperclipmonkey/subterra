@@ -63,9 +63,24 @@ class CalloutController extends Controller
     /**
      * Cancel a callout.
      */
-    public function cancel($id)
+    public function cancel(Request $request, $id)
     {
-        $callout = Auth::user()->callouts()->findOrFail($id);
+        $callout = \App\Models\Callout::findOrFail($id);
+        
+        // If logged in, ensure it's their callout (or they are admin)
+        if (Auth::check()) {
+            if (Auth::user()->id !== $callout->user_id && !Auth::user()->is_admin) {
+                abort(403, 'Unauthorized.');
+            }
+        }
+
+        // Record cancellation snapshot
+        $callout->update([
+            'status' => 'cancelled',
+            'cancelled_ip' => $request->ip(),
+            'cancelled_user_agent' => $request->userAgent(),
+            'cancelled_location' => $request->input('location'), // Optional location from frontend
+        ]);
         
         $trip = $this->calloutService->cancel($callout);
 
@@ -77,7 +92,12 @@ class CalloutController extends Controller
 
     public function show($id)
     {
-        $callout = Auth::user()->callouts()->with('participants')->findOrFail($id);
+        $callout = \App\Models\Callout::with('participants')->findOrFail($id);
+        
+        // If logged in, we might want to check permissions, but the requirement says 
+        // "make it possible to load the callout details page without being logged in"
+        // which implies if you have the ID (random string), you can see it.
+        
         return response()->json(['data' => $callout]);
     }
 

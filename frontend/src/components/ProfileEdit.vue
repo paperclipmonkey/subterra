@@ -19,6 +19,7 @@
           v-model="profile.name"
           outlined
           :rules="nameRules"
+          :error-messages="errorMessages('name')"
           hint="This will be displayed to other cavers"
           required
         ></v-text-field>
@@ -54,6 +55,7 @@
           label="Bio"
           v-model="profile.bio"
           outlined
+          :error-messages="errorMessages('bio')"
           rows="4"
         ></v-textarea>
       </div>
@@ -67,6 +69,7 @@
           v-model="profile.phone"
           outlined
           :rules="phoneRules"
+          :error-messages="errorMessages('phone')"
           hint="Must be exactly 11 digits (07...) or 13 characters (+44...)."
           persistent-hint
         ></v-text-field>
@@ -199,6 +202,10 @@ import router from '@/router';
 import { ref, onMounted, computed } from 'vue' // Import computed
 import { useRoute } from 'vue-router'
 import { useToast } from "vue-toastification"
+import { api } from '@/plugins/api'
+import { useFormErrors } from '@/composables/useFormErrors'
+
+const { setErrors, clearErrors, errorMessages } = useFormErrors()
 
 const route = useRoute()
 const toast = useToast()
@@ -243,27 +250,19 @@ const availableClubs = computed(() => {
 });
 
 const save = async () => {
+  clearErrors()
   try {
-    const response = await fetch(`/api/users/me`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json', // Good practice
-      },
-      body: JSON.stringify({
-        name: profile.value.name,
-        bio: profile.value.bio,
-        phone: profile.value.phone,
-        email_trophies: profile.value.email_trophies,
-        email_tagged: profile.value.email_tagged,
-        email_platform_news: profile.value.email_platform_news,
-        visibility_addable: profile.value.visibility_addable,
-      }),
+    const response = await api.put(`/api/users/me`, {
+      name: profile.value.name,
+      bio: profile.value.bio,
+      phone: profile.value.phone,
+      email_trophies: profile.value.email_trophies,
+      email_tagged: profile.value.email_tagged,
+      email_platform_news: profile.value.email_platform_news,
+      visibility_addable: profile.value.visibility_addable,
     })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const updatedProfile = (await response.json()).data
+
+    const updatedProfile = response.data.data
     // Merge updated data carefully, especially if API doesn't return full profile
     profile.value.name = updatedProfile.name
     profile.value.bio = updatedProfile.bio
@@ -276,31 +275,28 @@ const save = async () => {
     router.push({ name: '/profile/[id]', params: { id: route.params.id } }) // Redirect only if necessary
   } catch (error) {
     console.error("Error saving profile:", error);
-    toast.error('Failed to save profile: ' + (error.message || 'Unknown error'))
+    setErrors(error)
+    if (error.response?.status !== 422) {
+      toast.error('Failed to save profile: ' + (error.response?.data?.message || error.message || 'Unknown error'))
+    }
   }
 }
 
 const fetchProfile = async () => {
   try {
-    const response = await fetch(`/api/users/me`)
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    profile.value = (await response.json()).data
+    const response = await api.get(`/api/users/me`)
+    profile.value = response.data.data
   } catch (error) {
     console.error("Error fetching profile:", error);
-    // Handle error (e.g., show message, redirect)
+    // Global interceptor handles the toast
   }
 }
 
 const fetchAllClubs = async () => {
   loadingClubs.value = true;
   try {
-    const response = await fetch('/api/clubs'); // Assuming this endpoint exists
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    allClubs.value = (await response.json()).data; // Assuming API returns { data: [...] }
+    const response = await api.get('/api/clubs'); // Assuming this endpoint exists
+    allClubs.value = response.data.data; // Assuming API returns { data: [...] }
   } catch (error) {
     console.error("Error fetching clubs:", error);
     allClubs.value = []; // Reset on error
@@ -326,19 +322,9 @@ const requestToJoinClub = async () => {
   if (!selectedClubToJoinId.value) return;
 
   try {
-    const response = await fetch(`/api/clubs/${selectedClubToJoinId.value.slug}/join`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ club_id: selectedClubToJoinId.value.id }), // Send club ID
+    const response = await api.post(`/api/clubs/${selectedClubToJoinId.value.slug}/join`, {
+      club_id: selectedClubToJoinId.value.id
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
 
     // Success!
     closeJoinClubModal();
@@ -348,7 +334,7 @@ const requestToJoinClub = async () => {
 
   } catch (error) {
     console.error("Error requesting to join club:", error);
-    toast.error('Failed to join club: ' + (error.message || 'Unknown error'))
+    // Global interceptor handles the toast
   }
 }
 
@@ -371,21 +357,13 @@ const closeDeleteModal = () => {
 const deleteAccount = async () => {
   deletingAccount.value = true;
   try {
-    const response = await fetch(`/api/users/me`, {
-      method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    await api.delete(`/api/users/me`);
     toast.success('Your account has been deleted successfully')
     // Optionally show a goodbye message or redirect to login/home
     router.push({ name: '/' });
   } catch (error) {
     console.error('Error deleting account:', error);
-    toast.error('Failed to delete account: ' + (error.message || 'Unknown error'))
+    // Global interceptor handles the toast
   } finally {
     deletingAccount.value = false;
     closeDeleteModal();

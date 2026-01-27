@@ -9,6 +9,7 @@ import vuetify from './vuetify'
 import pinia from '@/stores'
 import router from '@/router'
 import toast from './toast'
+import api from './api'
 
 export function registerPlugins(app) {
   app
@@ -16,5 +17,6 @@ export function registerPlugins(app) {
     .use(router)
     .use(pinia)
     .use(toast)
+    .use(api)
 }
 

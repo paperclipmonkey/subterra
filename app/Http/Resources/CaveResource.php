@@ -73,6 +73,7 @@ class CaveResource extends JsonResource
             'hero_image' => $this->hero_image ? Storage::disk('media')->url($this->hero_image) : null,
             'entrance_image' => $this->entrance_image ? Storage::disk('media')->url($this->entrance_image) : null,
             'tags' => TagResource::collection($tags->filter(function($tag) { return $tag instanceof Tag; })),
+            'caving_region' => $this->caving_region,
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,
             'location_lat' => $request->user()?->is_approved ? $this->location_lat : null,

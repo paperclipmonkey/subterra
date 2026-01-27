@@ -5,11 +5,41 @@ import axios from 'axios'
 import moment from 'moment'
 
 // Mock dependencies
-vi.mock('axios')
+vi.mock('axios', () => {
+    const mock = {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+        create: vi.fn().mockReturnThis(),
+        interceptors: {
+            request: { use: vi.fn(), eject: vi.fn() },
+            response: { use: vi.fn(), eject: vi.fn() }
+        }
+    }
+    return {
+        default: mock,
+        ...mock
+    }
+})
 vi.mock('moment')
 vi.mock('vue-router', () => ({
     useRoute: () => ({ params: { id: '1' } }),
     useRouter: () => ({ push: vi.fn() })
+}))
+vi.mock('@indoorequal/vue-maplibre-gl', () => ({
+    MglMap: { template: '<div><slot /></div>' },
+    MglNavigationControl: { template: '<div></div>' },
+    MglMarker: { template: '<div><slot /></div>' },
+    MglPopup: { template: '<div><slot /></div>' },
+}))
+vi.mock('maplibre-gl', () => ({
+    default: {
+        Map: vi.fn(),
+        Marker: vi.fn(),
+        Popup: vi.fn(),
+        NavigationControl: vi.fn(),
+    }
 }))
 
 describe('IncidentDetails.vue', () => {
@@ -63,6 +93,10 @@ describe('IncidentDetails.vue', () => {
                     'v-dialog': true,
                     'v-container': { template: '<div><slot></slot></div>' },
                     'v-list-item-avatar': true, // Add missing stub
+                    'MglMap': { template: '<div class="mgl-map-stub"><slot /></div>' },
+                    'MglNavigationControl': true,
+                    'MglMarker': { template: '<div class="mgl-marker-stub"><slot /></div>' },
+                    'MglPopup': { template: '<div class="mgl-popup-stub"><slot /></div>' },
                 },
                 mocks: {
                     $toast: { success: vi.fn(), error: vi.fn() },
@@ -108,6 +142,10 @@ describe('IncidentDetails.vue', () => {
                     'v-card-actions': true,
                     'v-dialog': true,
                     'v-list-item-avatar': true,
+                    'MglMap': true,
+                    'MglNavigationControl': true,
+                    'MglMarker': true,
+                    'MglPopup': true,
                 },
                 mocks: {
                     $toast: { success: vi.fn(), error: vi.fn() },
@@ -154,6 +192,10 @@ describe('IncidentDetails.vue', () => {
                     'v-card-actions': true,
                     'v-dialog': true,
                     'v-list-item-avatar': true,
+                    'MglMap': true,
+                    'MglNavigationControl': true,
+                    'MglMarker': true,
+                    'MglPopup': true,
                 },
                 mocks: {
                     $toast: { success: vi.fn(), error: vi.fn() },
@@ -211,6 +253,10 @@ describe('IncidentDetails.vue', () => {
                     'v-card-actions': true,
                     'v-dialog': true,
                     'v-list-item-avatar': true,
+                    'MglMap': true,
+                    'MglNavigationControl': true,
+                    'MglMarker': true,
+                    'MglPopup': true,
                 },
                 mocks: {
                     $toast: { success: vi.fn(), error: vi.fn() },

@@ -48,7 +48,7 @@ router.beforeEach(async (to, from, next) => {
   // console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_approved: user?.is_approved, is_admin: user?.is_admin })
 
   // Exception for magic link login page and CMS pages
-  if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/')) {
+  if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/') || to.path === '/callout/active') {
     return next()
   }
 

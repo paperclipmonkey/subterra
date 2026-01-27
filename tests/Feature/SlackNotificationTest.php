@@ -157,11 +157,13 @@ class SlackNotificationTest extends TestCase
 
         $this->artisan('callouts:check-overdue');
 
-        SlackAlert::expectMessagesSent(function ($message) use ($callout) {
+        $incident = \App\Models\Incident::where('callout_id', $callout->id)->first();
+
+        SlackAlert::expectMessagesSent(function ($message) use ($incident) {
             return ($message['webhookUrl'] ?? '') === 'https://hooks.slack.com/services/test/overdue' &&
                    str_contains($message['text'] ?? '', 'OVERDUE') &&
                    str_contains($message['text'] ?? '', '<!channel>') &&
-                   str_contains($message['text'] ?? '', $callout->id);
+                   str_contains($message['text'] ?? '', $incident->id);
         });
     }
 

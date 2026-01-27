@@ -61,12 +61,12 @@
                                     </div>
                                 </div>
                                 <v-btn color="error" depressed large class="font-weight-bold ml-4 d-none d-sm-flex">
-                                    MANAGE INCIDENT
+                                    VIEW INCIDENT
                                 </v-btn>
                             </div>
                             <!-- Mobile only button -->
                             <v-btn color="error" block tile large class="font-weight-bold d-flex d-sm-none">
-                                MANAGE INCIDENT
+                                VIEW INCIDENT
                             </v-btn>
                         </v-card>
                     </v-col>
@@ -144,19 +144,19 @@
         <!-- Historic / Resolved Incidents -->
         <v-expansion-panels v-if="historicIncidents.length > 0" class="mb-6" flat>
             <v-expansion-panel>
-                <v-expansion-panel-header>
+                <v-expansion-panel-title>
                     <div class="d-flex align-center">
                         <v-icon left color="grey">mdi-history</v-icon>
                         Resolved & Historic Incidents
                         <span class="ml-2 grey--text">({{ historicIncidents.length }})</span>
                     </div>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
                     <v-data-table
                         :headers="historicHeaders"
                         :items="historicIncidents"
                         :items-per-page="5"
-                        dense
+                        density="compact"
                         class="elevation-0"
                         :show-select="false"
                         :disable-sort="false"
@@ -178,7 +178,7 @@
                              </v-btn>
                         </template>
                     </v-data-table>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
             </v-expansion-panel>
         </v-expansion-panels>
         
@@ -239,6 +239,70 @@
             </v-card-text>
          </v-card>
 
+         <!-- Duty Officer FAQ -->
+         <v-card outlined class="bg-grey-lighten-4 mt-4 mb-16">
+             <v-card-title class="subtitle-2 grey--text text--darken-2">
+                 Duty Officer FAQ
+             </v-card-title>
+             <v-card-text class="pa-0">
+                 <v-expansion-panels flat variant="accordion">
+                 
+                <v-expansion-panel>
+                     <v-expansion-panel-title class="pa-2 font-weight-bold">
+                         1. How am I contacted?
+                     </v-expansion-panel-title>
+                     <v-expansion-panel-text class="pa-2 pt-0 caption grey--text text--darken-1">
+                         When a callout becomes overdue, the system automatically triggers an <strong>Incident</strong>. You will receive an immediate SMS to your registered mobile number an email alert, and a post in Slack #callouts-overdue.
+                     </v-expansion-panel-text>
+                 </v-expansion-panel>
+
+                 <v-expansion-panel>
+                     <v-expansion-panel-title class="pa-2 font-weight-bold">
+                         2. What should I do?
+                     </v-expansion-panel-title>
+                     <v-expansion-panel-text class="pa-2 pt-0 caption grey--text text--darken-1">
+                         <ol class="pl-3">
+                             <li><strong>Login</strong> to this dashboard immediately.</li>
+                             <li><strong>Acknowledge</strong> the incident to stop escalations.</li>
+                             <li><strong>Check Details</strong>: Review the trip plan and team info.</li>
+                             <li><strong>Attempt Contact</strong>: Call the contact details provided in the callout. This could be for multiple participants.</li>
+                             <li><strong>Initiate Rescue</strong>: If no contact, use the "Rescue Protocol" script to call 999.</li>
+                             <li><strong>Wait for Cave Rescue</strong>: They will call you back, asking for more details about the trip.</li>
+                         </ol>
+                     </v-expansion-panel-text>
+                 </v-expansion-panel>
+
+                 <v-expansion-panel>
+                     <v-expansion-panel-title class="pa-2 font-weight-bold">
+                         3. Notification Channels?
+                     </v-expansion-panel-title>
+                     <v-expansion-panel-text class="pa-2 pt-0 caption grey--text text--darken-1">
+                         We use Slack for general monitoring. Join the <code>#callouts-open</code> channel to see live trips being created and <code>#callouts-overdue</code> for urgent overdue alarms.
+                     </v-expansion-panel-text>
+                 </v-expansion-panel>
+
+                 <v-expansion-panel>
+                     <v-expansion-panel-title class="pa-2 font-weight-bold">
+                         4. What if I miss it?
+                     </v-expansion-panel-title>
+                     <v-expansion-panel-text class="pa-2 pt-0 caption grey--text text--darken-1">
+                         If you do not acknowledge the incident within 15 minutes, the system escalates to <strong>every Duty Officer</strong>. The first person to click "Acknowledge and take control" then becomes the incident controller.
+                     </v-expansion-panel-text>
+                 </v-expansion-panel>
+
+                 <v-expansion-panel>
+                     <v-expansion-panel-title class="pa-2 font-weight-bold">
+                         5. Platform Stability?
+                     </v-expansion-panel-title>
+                     <v-expansion-panel-text class="pa-2 pt-0 caption grey--text text--darken-1">
+                         We use a secondary Watchdog that operates independently of this website. If the site goes down, the Watchdog will still trigger SMS alerts to every Duty Officer directly with the full callout details. Please use Slack or another method to coordinate with your team.
+                     </v-expansion-panel-text>
+                 </v-expansion-panel>
+
+             </v-expansion-panels>
+             </v-card-text>
+         </v-card>
+
       </v-col>
     </v-row>
   </v-container>
@@ -273,10 +337,10 @@ export default {
   },
   computed: {
     activeIncidents() {
-      return this.incidents.filter(i => i.status === 'open');
+      return this.incidents.filter(i => i.status === 'open' || i.status === 'managed');
     },
     historicIncidents() {
-      return this.incidents.filter(i => i.status !== 'open');
+      return this.incidents.filter(i => i.status !== 'open' && i.status !== 'managed');
     },
     systemStatus() {
       if (this.activeIncidents.length > 0) return 'CRITICAL';

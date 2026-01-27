@@ -43,8 +43,8 @@ describe('Admin Dashboard', () => {
           'v-data-table': { template: '<div>Data Table</div>' },
           'v-expansion-panels': { template: '<div><slot /></div>' },
           'v-expansion-panel': { template: '<div><slot /></div>' },
-          'v-expansion-panel-header': { template: '<div><slot /></div>' },
-          'v-expansion-panel-content': { template: '<div><slot /></div>' },
+          'v-expansion-panel-title': { template: '<div><slot /></div>' },
+          'v-expansion-panel-text': { template: '<div><slot /></div>' },
           'v-divider': true
         }
       }
@@ -79,8 +79,8 @@ describe('Admin Dashboard', () => {
           'v-data-table': { template: '<div>Data Table</div>' },
           'v-expansion-panels': { template: '<div><slot /></div>' },
           'v-expansion-panel': { template: '<div><slot /></div>' },
-          'v-expansion-panel-header': { template: '<div><slot /></div>' },
-          'v-expansion-panel-content': { template: '<div><slot /></div>' },
+          'v-expansion-panel-title': { template: '<div><slot /></div>' },
+          'v-expansion-panel-text': { template: '<div><slot /></div>' },
           'v-divider': true
         }
       }

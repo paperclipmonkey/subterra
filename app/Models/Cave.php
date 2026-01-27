@@ -16,6 +16,7 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
     use HasFactory, Auditable;
 
     public $timestamps = false;
+    protected $appends = ['caving_region'];
 
     protected $fillable = [
         'name',
@@ -79,5 +80,10 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    public function getCavingRegionAttribute()
+    {
+        return $this->tags->where('category', 'region')->first()?->tag;
     }
 }

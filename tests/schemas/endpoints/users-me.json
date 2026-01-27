@@ -210,6 +210,20 @@
             "null"
           ],
           "format": "date-time"
+        },
+        "on_call": {
+          "type": "boolean"
+        },
+        "on_call_until": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "open_callouts_count": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "required": [
@@ -227,6 +241,9 @@
         "email_tagged",
         "email_platform_news",
         "visibility_addable",
+        "on_call",
+        "on_call_until",
+        "open_callouts_count",
         "created_at",
         "updated_at"
       ],

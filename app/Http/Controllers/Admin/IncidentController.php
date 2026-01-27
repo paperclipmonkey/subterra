@@ -31,7 +31,7 @@ class IncidentController extends Controller
     public function show($id)
     {
         $incident = Incident::with([
-            'callout.cave', 
+            'callout.cave.tags', 
             'callout.exitCave', 
             'callout.user', 
             'callout.participants', 

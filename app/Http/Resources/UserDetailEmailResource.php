@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Callout;
+use App\Models\OnCallShift;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -53,6 +55,9 @@ class UserDetailEmailResource extends JsonResource
                 'duration' => $this->trips->sum('duration'),
             ],
             'active_callout' => $this->activeCallout ? $this->activeCallout->load(['cave', 'participants', 'incident']) : null,
+            'on_call' => OnCallShift::covering(now())->where('user_id', $this->id)->exists(),
+            'on_call_until' => OnCallShift::covering(now())->where('user_id', $this->id)->first()?->end_at,
+            'open_callouts_count' => Callout::whereIn('status', ['active', 'triggered'])->count(),
             'tos_agreed_at' => $this->tos_agreed_at,
             'privacy_policy_agreed_at' => $this->privacy_policy_agreed_at,
             'created_at' => $this->created_at,
