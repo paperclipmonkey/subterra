@@ -246,4 +246,55 @@ class CalloutTest extends TestCase
 
         $response->assertStatus(201);
     }
+
+    public function test_cannot_create_concurrent_callouts_for_same_participant()
+    {
+        // 1. Setup Admin & Coverage
+        $admin = User::factory()->create(['is_admin' => true]);
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        // 2. Setup Existing Callout with Participant "Bob"
+        $user1 = User::factory()->create();
+        $cave = Cave::factory()->create();
+        
+        // Use service directly or just create models? 
+        // Better to use models to check validation against them.
+        $bobPhone = '+447999123456';
+        
+        $activeCallout = Callout::factory()->create([
+            'status' => 'active',
+            'callout_time' => Carbon::now()->addHours(2)
+        ]);
+        $activeCallout->participants()->create([
+            'name' => 'Bob',
+            'phone' => $bobPhone
+        ]);
+
+        // 3. Attempt to create NEW callout with "Bob"
+        $user2 = User::factory()->create();
+        
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'description' => 'Concurrent Trip',
+            'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Parking',
+            'participants' => [
+                ['name' => 'Should Fail', 'phone' => $bobPhone] 
+            ]
+        ];
+
+        $response = $this->actingAs($user2)
+            ->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+             'message' => "One or more participants (or you) are already in an active callout. Please resolve the existing callout first."
+        ]);
+    }
 }

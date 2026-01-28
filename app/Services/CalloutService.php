@@ -31,6 +31,34 @@ class CalloutService
             throw new Exception("Cannot create callout: No administrator is on-call at " . $calloutTime->toDateTimeString());
         }
 
+        // 1b. Validate Participants are not already in an active callout.
+        // Collect all checking phones
+        $phonesToCheck = collect($data['participants'] ?? [])->pluck('phone')->filter();
+        if ($user->phone) {
+            $phonesToCheck->push($user->phone);
+        }
+        
+        // Also fetch phones for any user_ids provided in participants if phone is missing?
+        // For now, rely on provided phones or strictly enforce "One active callout per person"
+        
+        if ($phonesToCheck->isNotEmpty()) {
+            $existingCallout = Callout::query()
+                ->whereIn('status', ['active', 'triggered'])
+                ->where(function ($query) use ($phonesToCheck) {
+                    $query->whereHas('participants', function ($q) use ($phonesToCheck) {
+                        $q->whereIn('phone', $phonesToCheck);
+                    })
+                    ->orWhereHas('user', function ($q) use ($phonesToCheck) {
+                        $q->whereIn('phone', $phonesToCheck);
+                    });
+                })
+                ->first();
+
+            if ($existingCallout) {
+                 throw new Exception("One or more participants (or you) are already in an active callout. Please resolve the existing callout first.");
+            }
+        }
+
         return DB::transaction(function () use ($user, $data, $calloutTime) {
             // 2. Create Callout Record
             $callout = Callout::create([

@@ -188,7 +188,7 @@ class UserController extends Controller
         $validatedData = $request->validate([
             'bio' => ['nullable', 'string'],
             'name' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'regex:/^(07[0-9]{9}|\+44[0-9]{10})$/'],
+            'phone' => ['nullable', 'string', 'regex:/^(07[0-9]{9}|\+44[0-9]{10})$/', 'unique:users,phone,' . $user->id],
             'email_trophies' => ['nullable', 'boolean'],
             'email_tagged' => ['nullable', 'boolean'],
             'email_platform_news' => ['nullable', 'boolean'],

@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Channels\SmsChannel;
+use App\Channels\ClickSendChannel;
 use App\Models\Callout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,7 +30,7 @@ class OverdueCalloutNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', SmsChannel::class];
+        return ['mail', ClickSendChannel::class];
     }
 
     /**
@@ -52,9 +52,9 @@ class OverdueCalloutNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the SMS representation of the notification.
+     * Get the ClickSend SMS representation of the notification.
      */
-    public function toSms(object $notifiable): string
+    public function toClickSend(object $notifiable): string
     {
         // SMS length limit is usually 160 chars.
         return "URGENT: Callout Overdue! Cave: {$this->callout->cave->name}. Due: {$this->callout->callout_time->format('H:i')}. Check Dashboard immediately.";

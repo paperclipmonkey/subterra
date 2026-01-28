@@ -51,6 +51,14 @@ class CheckOverdueCalloutsTest extends TestCase
             'status' => 'active'
         ]);
 
+        // Verify Contact also notified
+        // Create a participant
+        $participant = \App\Models\CalloutParticipant::create([
+            'callout_id' => $callout->id,
+            'name' => 'Participant 1',
+            'phone' => '+447999999999',
+        ]);
+        
         $this->artisan('callouts:check-overdue')
              ->assertExitCode(0);
 
@@ -62,10 +70,8 @@ class CheckOverdueCalloutsTest extends TestCase
             }
         );
 
-        // Verify Contact also notified
-        $user = $callout->user; // Factory creates user
         Notification::assertSentTo(
-             [$user],
+             [$participant],
              \App\Notifications\CalloutImminentContactNotification::class
         );
     }
@@ -152,7 +158,7 @@ class CheckOverdueCalloutsTest extends TestCase
 
         Notification::assertSentTo(
             [$admin],
-            IncidentEscalatedNotification::class
+            \App\Notifications\UnmanagedIncidentNotification::class
         );
 
         // Assert System Note added
@@ -181,7 +187,7 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $this->artisan('callouts:check-overdue');
 
-        Notification::assertNotSentTo([$admin], IncidentEscalatedNotification::class);
+        Notification::assertNotSentTo([$admin], \App\Notifications\UnmanagedIncidentNotification::class);
     }
 
     public function test_does_not_escalate_if_incident_is_fresh()
@@ -200,7 +206,7 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $this->artisan('callouts:check-overdue');
 
-        Notification::assertNotSentTo([$admin], IncidentEscalatedNotification::class);
+        Notification::assertNotSentTo([$admin], \App\Notifications\UnmanagedIncidentNotification::class);
     }
 
     public function test_does_not_duplicate_escalation_if_already_escalated()
@@ -225,7 +231,7 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $this->artisan('callouts:check-overdue');
 
-        Notification::assertNotSentTo([$admin], IncidentEscalatedNotification::class);
+        Notification::assertNotSentTo([$admin], \App\Notifications\UnmanagedIncidentNotification::class);
     }
 
     public function test_triggers_overdue_callouts_and_notifies_admins()

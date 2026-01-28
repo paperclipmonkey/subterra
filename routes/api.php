@@ -24,6 +24,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/webhooks/incoming-sms', [WebhookController::class, 'handleIncomingSms']);
+Route::post('/webhooks/clicksend/sms', [\App\Http\Controllers\Webhook\ClickSendController::class, 'handleSms']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);

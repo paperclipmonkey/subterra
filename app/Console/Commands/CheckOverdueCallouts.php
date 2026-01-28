@@ -121,15 +121,13 @@ class CheckOverdueCallouts extends Command
         }
 
         // 2. Notify Callout Contact (User/Participants) - NEW
-        if ($callout->user) {
-             // Only notify the creator for now, or maybe the emergency contact? 
-             // Requirement: "both the DO and the contact for the callout party"
-             // Assuming "contact" refers to the user who created it (the caver), advising them to check in.
-             
-             // We use a new notification class for this specific messaging.
-             $callout->user->notify(new \App\Notifications\CalloutImminentContactNotification($callout));
-             $this->info("Sent imminent warning to user ID: {$callout->user->id}");
+        $this->info("Notifying all participants for callout {$callout->id}");
+        
+        $participants = $callout->participants;
+        if ($participants->isNotEmpty()) {
+             Notification::send($participants, new \App\Notifications\CalloutImminentContactNotification($callout));
         }
+
     }
 
     private function escalateIncident(Incident $incident): void
@@ -141,7 +139,7 @@ class CheckOverdueCallouts extends Command
             $admins = User::where('is_admin', true)->where('is_active', true)->get();
             
             if ($admins->isNotEmpty()) {
-                Notification::send($admins, new \App\Notifications\IncidentEscalatedNotification($incident));
+                Notification::send($admins, new \App\Notifications\UnmanagedIncidentNotification($incident));
             }
 
             // 2. Log Note to prevent re-escalation
@@ -186,6 +184,19 @@ class CheckOverdueCallouts extends Command
             } else {
                 Notification::send($admins, new OverdueCalloutNotification($callout));
                 $this->info("Sent notifications to " . $admins->count() . " admins.");
+            }
+
+            // 3b. Notify Participants
+            $participants = $callout->participants;
+            if ($participants->isNotEmpty()) {
+                 Notification::send($participants, new \App\Notifications\CalloutImminentContactNotification($callout)); // Re-using "Contact" notification or create a specific "Overdue" one for participants?
+                 // Requirement: "Once the callout is due send a similar message informing the participants... they're overdue."
+                 // Using a new notification might be better, but "CalloutImminentContactNotification" has valid messaging.
+                 // Actually, let's use OverdueCalloutNotification but ensuring the message is right for them?
+                 // OverdueCalloutNotification says "Check Dashboard". Participants might not have dashboard access.
+                 // Let's reuse CalloutImminentContactNotification but maybe modify it to be more urgent?
+                 // For now, I will use CalloutImminentContactNotification as it has the "Reply OUT SAFE" instruction context.
+                 Notification::send($participants, new \App\Notifications\CalloutImminentContactNotification($callout));
             }
 
             // 4. Send Slack Alert

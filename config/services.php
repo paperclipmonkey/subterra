@@ -51,4 +51,10 @@ return [
         'api_key' => env('PIRATE_WEATHER_API_KEY'),
     ],
 
+    'clicksend' => [
+        'username' => env('CLICKSEND_USERNAME'),
+        'api_key' => env('CLICKSEND_API_KEY'),
+        'webhook_secret' => env('CLICKSEND_WEBHOOK_SECRET'),
+    ],
+
 ];
