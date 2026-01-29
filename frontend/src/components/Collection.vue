@@ -111,6 +111,15 @@
     </v-window>
   </v-card>
 
+  <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
+    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+    <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
+    <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+    <v-btn color="primary" variant="flat" to="/collections" prepend-icon="mdi-arrow-left">
+        Back to Collections
+    </v-btn>
+  </v-container>
+
   <v-container v-else>
     <v-alert type="error">Collection not found</v-alert>
   </v-container>
@@ -143,6 +152,7 @@ watch(() => route.params.id, (newId) => {
 
 const collection = computed(() => collectionStore.currentCollection)
 const loading = computed(() => collectionStore.loading)
+const error = computed(() => collectionStore.error)
 
 const tickedCount = computed(() => {
   if (!collection.value || !collection.value.caves) return 0;

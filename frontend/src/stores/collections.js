@@ -49,12 +49,16 @@ export const useCollectionStore = defineStore('collections', {
         async fetchCollection(id) {
             this.loading = true
             this.error = null
-            this.currentCollection = null // Reset to avoid showing stale data
+            this.currentCollection = null
             try {
                 const response = await api.get(id)
                 this.currentCollection = response.data || response
             } catch (err) {
-                this.error = err.message
+                if (err.response && err.response.status === 404) {
+                    this.error = "Collection not found. It may have been deleted or you may have the wrong link."
+                } else {
+                    this.error = "Failed to load collection. Please try again later."
+                }
             } finally {
                 this.loading = false
             }

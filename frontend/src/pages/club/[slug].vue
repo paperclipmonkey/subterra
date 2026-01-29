@@ -38,14 +38,20 @@
         <ClubEditModal v-if="club" v-model="showEditClubModal" :clubSlug="club.slug" :initialTab="editClubTab"
           @saved="onClubEditSaved" />
         <!-- Loading/Error State for Club Info -->
-        <v-alert v-else-if="loadingError" type="error" variant="outlined">Club not found or could not be
-          loaded.</v-alert>
+        <v-container v-else-if="error" class="text-center mt-6">
+          <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+          <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
+          <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+          <v-btn color="primary" variant="flat" to="/" prepend-icon="mdi-arrow-left">
+            Back to Home
+          </v-btn>
+        </v-container>
         <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
 
     <!-- Member Specific Content Wrapper -->
-    <template v-if="club && !loadingError"> <!-- Only render this section if club loaded -->
+    <template v-if="club && !error"> <!-- Only render this section if club loaded -->
       <!-- Loading State for Member Data -->
       <v-row v-if="memberDataLoading">
         <v-col cols="12" class="text-center py-5">
@@ -130,7 +136,7 @@ const club = ref(null);
 const recentTrips = ref([]);
 const members = ref([]);
 const heatmapData = ref([]);
-const loadingError = ref(false);
+const error = ref(null);
 const memberDataLoading = ref(true);
 const isApprovedMember = ref(false);
 const endDate = ref(new Date());
@@ -167,7 +173,7 @@ function formatTripDate(date) {
 
 async function fetchClubData() {
   const clubSlug = route.params.slug;
-  loadingError.value = false;
+  error.value = null;
   memberDataLoading.value = true;
   isApprovedMember.value = false;
   // club.value = null; // Don't clear club data to avoid destroying child components like modals
@@ -197,7 +203,11 @@ async function fetchClubData() {
     }
   } catch (e) {
     club.value = null;
-    loadingError.value = true;
+    if (e.response && e.response.status === 404) {
+      error.value = "Club not found. It may have been deleted or you may have the wrong link.";
+    } else {
+      error.value = "Failed to load club. Please try again later.";
+    }
     memberDataLoading.value = false;
   }
 }

@@ -74,6 +74,7 @@ describe('Trip.vue', () => {
                 return Promise.resolve({ ok: true })
             }
             return Promise.resolve({
+                ok: true,
                 json: () => Promise.resolve({ data: mockTrip })
             })
         })

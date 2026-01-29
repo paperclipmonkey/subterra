@@ -14,9 +14,11 @@
         </div>
       </v-sheet>
     </div>
-    <div v-else class="text-center mt-12">
-        <h2 class="text-h4">Page not found</h2>
-        <v-btn to="/" class="mt-4" color="primary">Go Home</v-btn>
+    <div v-else-if="error" class="text-center mt-12">
+        <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+        <h2 class="text-h4 mb-2">Page not found</h2>
+        <p class="text-body-1 text-grey mb-4">{{ error }}</p>
+        <v-btn to="/" color="primary" variant="flat">Go Home</v-btn>
     </div>
   </v-container>
 </template>
@@ -30,15 +32,23 @@ import moment from 'moment';
 const route = useRoute();
 const page = ref(null);
 const loading = ref(true);
+const error = ref(null);
 
 const fetchPage = async () => {
+    loading.value = true;
+    error.value = null;
     try {
         const res = await fetch(`/api/pages/${route.params.slug}`);
-        if (res.ok) {
+        if (res.status === 404) {
+            error.value = "Page not found.";
+        } else if (!res.ok) {
+            error.value = "Failed to load page. Please try again later.";
+        } else {
             page.value = (await res.json()).data;
         }
     } catch (e) {
         console.error(e);
+        error.value = "An unexpected error occurred.";
     } finally {
         loading.value = false;
     }

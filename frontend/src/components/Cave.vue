@@ -328,9 +328,18 @@
       </v-col>
     </v-row>
   </v-container>
-  <v-container v-else class="fill-height d-flex justify-center align-center">
+  <v-container v-else-if="loading" class="fill-height d-flex justify-center align-center">
     <v-progress-circular indeterminate color="primary"></v-progress-circular>
   </v-container>
+  
+  <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
+      <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+      <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
+      <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+      <v-btn color="primary" variant="flat" to="/caves" prepend-icon="mdi-arrow-left">
+         Back to Caves
+      </v-btn>
+   </v-container>
 </template>
 
 
@@ -377,6 +386,8 @@ const collectionStore = useCollectionStore()
 
 const route = useRoute()
 const cave = ref(null)
+const loading = ref(true)
+const error = ref(null)
 const activeTab = ref('overview')
 const showConfirmModal = ref(false)
 
@@ -400,26 +411,34 @@ const linkedCollections = computed(() => {
 })
 
 const fetchCave = async () => {
+  loading.value = true
+  error.value = null
   try {
     const response = await fetch(`/api/caves/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const responseData = await response.json();
-    cave.value = responseData.data;
+    if (response.status === 404) {
+      error.value = "Cave not found. It may have been deleted or you may have the wrong link."
+    } else if (!response.ok) {
+      error.value = "Failed to load cave. Please try again later."
+    } else {
+      const responseData = await response.json();
+      cave.value = responseData.data;
 
-    if (cave.value && cave.value.system) {
-      cave.value.system.files = cave.value.system.files || [];
-      cave.value.system.caves = cave.value.system.caves || [];
-    } else if (cave.value) {
-      cave.value.system = { files: [], caves: [] };
-    }
-    if (!cave.value.trips) {
-      cave.value.trips = [];
+      if (cave.value && cave.value.system) {
+        cave.value.system.files = cave.value.system.files || [];
+        cave.value.system.caves = cave.value.system.caves || [];
+      } else if (cave.value) {
+        cave.value.system = { files: [], caves: [] };
+      }
+      if (!cave.value.trips) {
+        cave.value.trips = [];
+      }
     }
 
-  } catch (error) {
-    console.error("Failed to fetch cave data:", error);
+  } catch (e) {
+    console.error("Failed to fetch cave data:", e);
+    error.value = "An unexpected error occurred."
+  } finally {
+    loading.value = false
   }
 }
 

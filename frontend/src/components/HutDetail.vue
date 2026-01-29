@@ -129,6 +129,15 @@
             </v-col>
         </v-row>
     </v-container>
+    <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
+        <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+        <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
+        <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+        <v-btn color="primary" variant="flat" to="/huts" prepend-icon="mdi-arrow-left">
+            Back to Huts
+        </v-btn>
+    </v-container>
+
     <v-container v-else>
         <v-alert type="error">Hut not found</v-alert>
     </v-container>
@@ -154,6 +163,7 @@ onMounted(() => {
 
 const hut = computed(() => hutStore.currentHut)
 const loading = computed(() => hutStore.loading)
+const error = computed(() => hutStore.error)
 
 // Map Setup
 import {

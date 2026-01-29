@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Trip from '@/components/Trip.vue'
+
+// ... (existing mocks remain same)
 
 // Mock vue-markdown-render
 vi.mock('vue-markdown-render', () => ({
@@ -71,7 +72,7 @@ const mockTrip = {
 const getStubsConfig = () => ({
   'v-img': true,
   'v-btn': true,
-  'v-container': true,
+  'v-container': { template: '<div><slot /></div>' },
   'v-spacer': true,
   'v-chip': true,
   'v-icon': true,
@@ -112,9 +113,8 @@ describe('Trip', () => {
       }
     })
 
-    // Wait for component to mount and fetch data
-    await wrapper.vm.$nextTick()
-    
+    await flushPromises()
+
     const formattedDate = wrapper.vm.formatDate('2023-12-15T14:30:00Z')
     expect(formattedDate).toBe('Mon, 15 Dec 2023')
   })
@@ -132,8 +132,8 @@ describe('Trip', () => {
       }
     })
 
-    await wrapper.vm.$nextTick()
-    
+    await flushPromises()
+
     const formattedDate = wrapper.vm.formatDate('invalid')
     expect(formattedDate).toBe('-')
   })
@@ -151,8 +151,8 @@ describe('Trip', () => {
       }
     })
 
-    await wrapper.vm.$nextTick()
-    
+    await flushPromises()
+
     const formattedDate = wrapper.vm.formatDate(null)
     expect(formattedDate).toBe('-')
   })
@@ -170,9 +170,48 @@ describe('Trip', () => {
       }
     })
 
-    await wrapper.vm.$nextTick()
-    
+    await flushPromises()
+
     const formattedTime = wrapper.vm.formatTime(null)
     expect(formattedTime).toBe('-')
   })
+
+  it('displays error message on 404', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({})
+    })
+
+    const wrapper = mount(Trip, {
+      global: {
+        plugins: [createPinia()],
+        stubs: getStubsConfig()
+      }
+    })
+
+    await flushPromises()
+    console.log(wrapper.html())
+    expect(wrapper.text()).toContain('Trip not found')
+    // Ensure loading is false (which it is if we see text)
+  })
+
+  it('displays generic error message on other errors', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({})
+    })
+
+    const wrapper = mount(Trip, {
+      global: {
+        plugins: [createPinia()],
+        stubs: getStubsConfig()
+      }
+    })
+
+    await flushPromises()
+    expect(wrapper.text()).toContain('Failed to load trip')
+  })
 })
+

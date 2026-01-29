@@ -1,6 +1,19 @@
 <template>
    <div class="fill-height bg-grey-lighten-5">
-      <v-container class="py-8 px-4" style="max-width: 1200px;">
+      <v-container v-if="loading" class="fill-height d-flex justify-center align-center">
+         <v-progress-circular indeterminate color="primary"></v-progress-circular>
+      </v-container>
+
+      <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
+         <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+         <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
+         <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+         <v-btn color="primary" variant="flat" to="/" prepend-icon="mdi-arrow-left">
+            Back to Home
+         </v-btn>
+      </v-container>
+
+      <v-container v-else class="py-8 px-4" style="max-width: 1200px;">
 
          <!-- Profile Header Card -->
          <v-card class="rounded-xl mb-6 overflow-hidden" elevation="0" border>
@@ -279,6 +292,9 @@ const profile = ref({
    "clubs": [],
 })
 
+const loading = ref(true)
+const error = ref(null)
+
 const recentTrips = ref([]);
 const heatmapData = ref([]);
 const endDate = ref(new Date());
@@ -304,6 +320,8 @@ const confirmDownload = () => {
 }
 
 onMounted(async () => {
+   loading.value = true
+   error.value = null
    try {
       const userApi = mande(`/api/users/${route.params.id}`);
       const response = await userApi.get();
@@ -321,8 +339,15 @@ onMounted(async () => {
       ]);
       recentTrips.value = recentTripsResp.data || recentTripsResp;
       heatmapData.value = heatmapResp || [];
-   } catch (error) {
-      console.error(`Error fetching profile or activity for user ${route.params.id}:`, error);
+   } catch (err) {
+      console.error(`Error fetching profile or activity for user ${route.params.id}:`, err);
+      if (err.response && err.response.status === 404) {
+         error.value = "User not found. It may have been deleted or you may have the wrong link."
+      } else {
+         error.value = "Failed to load profile. Please try again later."
+      }
+   } finally {
+      loading.value = false
    }
 })
 

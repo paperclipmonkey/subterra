@@ -24,10 +24,16 @@ export const useHutStore = defineStore('huts', {
         },
         async fetchHut(id) {
             this.loading = true
+            this.error = null
+            this.currentHut = null
             try {
                 this.currentHut = await api.get(id)
             } catch (err) {
-                this.error = err.message
+                if (err.response && err.response.status === 404) {
+                    this.error = "Hut not found. It may have been deleted or you may have the wrong link."
+                } else {
+                    this.error = "Failed to load hut. Please try again later."
+                }
             } finally {
                 this.loading = false
             }
