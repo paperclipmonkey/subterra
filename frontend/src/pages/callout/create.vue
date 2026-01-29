@@ -96,13 +96,15 @@
                                                     <v-text-field v-model="form.car_registration" label="Car Registration"
                                                         hint="e.g. AB12 CDE" persistent-hint variant="outlined" required
                                                         :rules="[v => !!v || 'Registration is required']"
-                                                        :error-messages="errorMessages('car_registration')"></v-text-field>
+                                                        :error-messages="errorMessages('car_registration')"
+                                                        autocomplete="off"></v-text-field>
                                                 </v-col>
                                                 <v-col cols="12" md="6">
                                                     <v-text-field v-model="form.car_parking" label="Where are you parking?"
                                                         hint="e.g. Bull Pot Farm" persistent-hint variant="outlined" required
                                                         :rules="[v => !!v || 'Parking location is required']"
-                                                        :error-messages="errorMessages('car_parking')"></v-text-field>
+                                                        :error-messages="errorMessages('car_parking')"
+                                                        autocomplete="off"></v-text-field>
                                                 </v-col>
                                             </v-row>
 
@@ -141,40 +143,42 @@
                                                 @update:model-value="addSubterraUser" v-model="userSelect" return-object
                                                 clearable hint="Type 3+ characters to search for users..."
                                                 v-model:search="userSearchInput"
-                                                @update:search="onUserSearch"></v-autocomplete>
+                                                @update:search="onUserSearch"
+                                                autocomplete="off"></v-autocomplete>
 
-                                            <v-list class="mb-4">
-                                                <v-list-item v-for="(p, i) in form.participants" :key="i">
+
+                                            <div class="mb-4">
+                                                <div v-for="(p, i) in form.participants" :key="p.local_id" class="mb-3">
                                                     <v-row align="center" dense>
                                                         <v-col cols="12" sm="5">
                                                             <v-text-field v-model="p.name" label="Name" density="compact" variant="outlined"
-                                                                hide-details :readonly="p.locked"
+                                                                hide-details :readonly="p.user_id === currentUser?.id"
                                                                 :prepend-icon="p.user_id ? 'mdi-account-check' : 'mdi-account'"></v-text-field>
                                                         </v-col>
                                                         <v-col class="flex-grow-1" cols="auto" sm="5">
-                                                            <v-text-field v-model="p.phone" label="Phone (Mobile)" density="compact"
+                                                            <v-text-field :model-value="p.phone" @update:model-value="updatePhone(i, $event)" label="Phone (Mobile)" density="compact"
                                                                 variant="outlined" hide-details placeholder="07... or +44..."
-                                                                :rules="[validateUKPhone]"
                                                                 :readonly="p.locked && !!p.phone"
                                                                 :hint="p.locked && !!p.phone ? 'This number is from their profile' : ''"
                                                                 :persistent-hint="p.locked && !!p.phone"></v-text-field>
                                                         </v-col>
                                                         <v-col cols="auto" sm="2" class="d-flex justify-center">
                                                             <v-btn icon color="error" size="x-small" @click="removeParticipant(i)"
-                                                                :disabled="p.locked" style="aspect-ratio: 1;">
+                                                                :disabled="p.user_id === currentUser?.id" style="aspect-ratio: 1;">
                                                                 <v-icon>mdi-delete</v-icon>
                                                             </v-btn>
                                                         </v-col>
                                                     </v-row>
-                                                </v-list-item>
-                                            </v-list>
+                                                </div>
+                                            </div>
+
 
                                             <v-btn variant="text" color="primary" @click="addManualParticipant" prepend-icon="mdi-plus">
                                                 Add Manual Guest
                                             </v-btn>
 
                                             <v-alert v-if="phoneError" type="error" density="compact" class="mt-4">
-                                                At least one participant must have a valid mobile phone number.
+                                                You must provide a valid UK mobile phone number (07... or +44...).
                                             </v-alert>
 
                                             <v-textarea v-model="form.team_details" label="Additional Team Details"
@@ -329,8 +333,20 @@ export default {
             return this.systemEntrances.length;
         },
         phoneError() {
-            const hasPhone = this.form.participants.some(p => p.phone && p.phone.trim().length > 0);
-            return !hasPhone;
+            // Only the current user's phone is required and must be valid
+            const currentUserParticipant = this.form.participants.find(p => p.user_id === this.currentUser?.id);
+            if (!currentUserParticipant || !currentUserParticipant.phone || currentUserParticipant.phone.trim().length === 0) {
+                return true;
+            }
+            // Validate format
+            const phone = currentUserParticipant.phone.replace(/\s+/g, '');
+            if (phone.startsWith('07')) {
+                return phone.length !== 11;
+            }
+            if (phone.startsWith('+44')) {
+                return phone.length !== 13;
+            }
+            return true; // Invalid format
         },
         canProceed() {
             if (this.officerError) return false;
@@ -493,23 +509,28 @@ export default {
             }
         },
 
+        generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        },
         prefillForm() {
             const now = moment();
             this.form.callout_time = now.clone().add(5, 'hours').format('YYYY-MM-DDTHH:mm');
 
             if (this.currentUser) {
                 this.form.participants.push({
+                    local_id: this.generateId(),
                     user_id: this.currentUser.id,
                     name: this.currentUser.name,
                     phone: this.currentUser.phone || '',
                     email: this.currentUser.email,
-                    locked: true
+                    locked: !!this.currentUser.phone
                 });
             }
         },
         addSubterraUser(user) {
             if (!user) return;
             this.form.participants.push({
+                local_id: this.generateId(),
                 user_id: user.id,
                 name: user.name,
                 phone: user.phone || '',
@@ -519,10 +540,13 @@ export default {
             this.userSelect = null;
         },
         addManualParticipant() {
-            this.form.participants.push({ name: '', phone: '', user_id: null, locked: false });
+            this.form.participants.push({ local_id: this.generateId(), name: '', phone: '', user_id: null, locked: false });
         },
         removeParticipant(index) {
             this.form.participants.splice(index, 1);
+        },
+        updatePhone(index, value) {
+            this.form.participants[index].phone = value;
         },
         async submitCallout() {
             if (this.phoneError) return;
