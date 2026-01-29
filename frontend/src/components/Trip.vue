@@ -210,8 +210,18 @@
    </div>
 
    <!-- Loading State -->
-   <v-container v-else class="fill-height d-flex justify-center align-center">
+   <v-container v-else-if="loading" class="fill-height d-flex justify-center align-center">
       <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+   </v-container>
+
+   <!-- Error State -->
+   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
+      <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+      <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
+      <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+      <v-btn color="primary" variant="flat" to="/trips" prepend-icon="mdi-arrow-left">
+         Back to Trips
+      </v-btn>
    </v-container>
 </template>
 
@@ -229,6 +239,8 @@ const route = useRoute()
 const toast = useToast()
 
 const trip = ref(null)
+const loading = ref(true)
+const error = ref(null)
 const showDeleteConfirmDialog = ref(false);
 
 const currentUserWasOnTrip = computed(() => {
@@ -290,12 +302,22 @@ const openMedia = (url) => {
 }
 
 onMounted(async () => {
+   loading.value = true
    try {
       const response = await fetch(`/api/trips/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
-      const json = await response.json()
-      trip.value = json.data
+      if (response.status === 404) {
+         error.value = "Trip not found. It may have been deleted or you may have the wrong link."
+      } else if (!response.ok) {
+         error.value = "Failed to load trip. Please try again later."
+      } else {
+         const json = await response.json()
+         trip.value = json.data
+      }
    } catch (e) {
       console.error("Failed to fetch trip", e)
+      error.value = "An unexpected error occurred."
+   } finally {
+      loading.value = false
    }
 })
 </script>
