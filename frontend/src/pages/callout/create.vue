@@ -202,20 +202,11 @@
                                     <!-- STEP 4: SAFETY -->
                                     <v-window-item :value="4">
                                         <div class="pa-4">
-                                            <v-alert type="info" variant="text" density="compact" class="mb-4">
-                                                <strong>Callout Time:</strong> When we call 999. Give yourself a safety
-                                                margin!
-                                            </v-alert>
+                                            <p class="text-body-1 mb-4">When should we call 999?</p>
 
-                                            <v-text-field v-model="form.callout_time"
-                                                label="Callout Alarm Time (Panic Time)" type="datetime-local" variant="outlined"
-                                                class="mt-4" required
-                                                :hint="calloutDurationHint"
-                                                persistent-hint
-                                                :error-messages="errorMessages('callout_time')"></v-text-field>
+                                            <CalloutTimePicker v-model="form.callout_time" />
 
-                                            <!-- Emergency Contact Removed -->
-
+                                            <!-- Third-Party Consent Notice -->
                                             <v-alert type="warning" variant="outlined" density="compact" class="mt-6"
                                                 icon="mdi-shield-check">
                                                 <div class="text-caption">
@@ -223,6 +214,7 @@
                                                 </div>
                                             </v-alert>
 
+                                            <!-- Privacy Notice -->
                                             <v-alert type="info" variant="outlined" density="compact" class="mt-4"
                                                 icon="mdi-clock-outline">
                                                 <div class="text-caption">
@@ -278,9 +270,13 @@ import moment from 'moment';
 import { useAppStore } from '@/stores/app';
 import { api } from '@/plugins/api';
 import { useFormErrors } from '@/composables/useFormErrors';
+import CalloutTimePicker from '@/components/CalloutTimePicker.vue';
 
 export default {
     name: 'CalloutView',
+    components: {
+        CalloutTimePicker
+    },
     setup() {
         const { setErrors, clearErrors, errorMessages } = useFormErrors();
         return { setErrors, clearErrors, errorMessages };
