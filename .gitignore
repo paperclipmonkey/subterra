@@ -24,4 +24,4 @@ yarn-error.log
 .DS_Store
 database.sqlite
 TODO.md
-aws-watchdog/node_modules/
+gcp-watchdog/node_modules/
