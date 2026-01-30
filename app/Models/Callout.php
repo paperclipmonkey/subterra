@@ -42,7 +42,6 @@ class Callout extends Model
         'emergency_contact_name',
         'emergency_contact_phone',
         'status',
-        'aws_watchdog_id',
         'location_data',
         'request_data',
         'cancelled_ip',

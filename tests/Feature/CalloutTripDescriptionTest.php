@@ -8,6 +8,7 @@ use App\Models\Callout;
 use App\Models\OnCallShift;
 use App\Services\CalloutService;
 use App\Services\SmsService;
+use App\Services\GcpWatchdogService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 
@@ -32,11 +33,16 @@ class CalloutTripDescriptionTest extends TestCase
         // 2. Mock SMS Service
         $smsMock = Mockery::mock(SmsService::class);
         $smsMock->shouldReceive('sendMessage')->zeroOrMoreTimes();
-        $service = new CalloutService($smsMock);
+        // Mock the GCP Watchdog service
+        $mockWatchdog = Mockery::mock(GcpWatchdogService::class);
+        $mockWatchdog->shouldReceive('register')->andReturn(null);
+        $mockWatchdog->shouldReceive('cancel')->andReturn(true);
+
+        $calloutService = new CalloutService($smsMock, $mockWatchdog); // Modified this line
 
         // 3. Create Callout via Service (simulating frontend)
         // Frontend sends 'trip_plan' but NOT 'description'
-        $callout = $service->create($user, [
+        $callout = $calloutService->create($user, [ // Modified this line
             'cave_id' => $cave->id,
             'callout_time' => now()->addHours(5)->toDateTimeString(),
             'trip_plan' => 'Detailed route: Main Entrance to Sump 1',
@@ -53,7 +59,7 @@ class CalloutTripDescriptionTest extends TestCase
         // $this->assertEquals('Callout created via API', $callout->description);
 
         // 5. Cancel Callout to generate Trip
-        $trip = $service->cancel($callout);
+        $trip = $calloutService->cancel($callout);
 
         // 6. Assert Trip Description
         // This is what the user expects: it should NOT be the default message

@@ -20,7 +20,6 @@ class CalloutFactory extends Factory
             'emergency_contact_name' => $this->faker->name,
             'emergency_contact_phone' => $this->faker->phoneNumber,
             'status' => 'active',
-            'aws_watchdog_id' => $this->faker->uuid,
         ];
     }
 }

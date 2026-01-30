@@ -57,4 +57,11 @@ return [
         'webhook_secret' => env('CLICKSEND_WEBHOOK_SECRET'),
     ],
 
+    'gcp_watchdog' => [
+        'url' => env('GCP_WATCHDOG_URL'),
+        'api_key' => env('GCP_WATCHDOG_API_KEY'),
+        'test_email' => env('GCP_WATCHDOG_TEST_EMAIL', 'admin@subterra.world'),
+        'test_phone' => env('GCP_WATCHDOG_TEST_PHONE'),
+    ],
+
 ];

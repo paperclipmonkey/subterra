@@ -12,10 +12,12 @@ use Exception;
 class CalloutService
 {
     private SmsService $smsService;
+    private GcpWatchdogService $watchdogService;
 
-    public function __construct(SmsService $smsService)
+    public function __construct(SmsService $smsService, GcpWatchdogService $watchdogService)
     {
         $this->smsService = $smsService;
+        $this->watchdogService = $watchdogService;
     }
 
     /**
@@ -92,8 +94,13 @@ class CalloutService
                 }
             }
             
-            // 4. TODO: Synchronous Call to AWS Watchdog (Phase 4 Integration)
-            // $this->awsService->registerWatchdog($callout);
+            // 4. Register with GCP Watchdog
+            try {
+                $this->watchdogService->register($callout);
+            } catch (Exception $e) {
+                \Illuminate\Support\Facades\Log::error("GCP Watchdog registration failed: " . $e->getMessage());
+                // Don't fail the callout creation if watchdog registration fails
+            }
 
             // 5. Send Confirmations (Phase 3 Notifications)
             try {
@@ -181,8 +188,13 @@ class CalloutService
         // We do this before deleting the callout to preserve its data/participants
         $trip = $this->createTripFromCallout($callout);
 
-        // 2. Remove from AWS (Best effort or sync?)
-        // $this->awsService->cancelWatchdog($callout);
+        // 2. Cancel GCP Watchdog
+        try {
+            $this->watchdogService->cancel($callout);
+        } catch (Exception $e) {
+            \Illuminate\Support\Facades\Log::error("GCP Watchdog cancellation failed: " . $e->getMessage());
+            // Continue with cancellation even if watchdog fails
+        }
 
         // 3. Send Cancellation Emails
         try {
