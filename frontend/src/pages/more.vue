@@ -46,6 +46,15 @@
                     </div>
                 </v-card>
             </v-col>
+            <v-col cols="12" md="6">
+                <v-card href="https://status.subterra.world/" target="_blank" rel="noopener" link height="150" class="d-flex align-center justify-center">
+                    <div class="text-center">
+                        <v-icon size="48" color="info" class="mb-2">mdi-heart-pulse</v-icon>
+                        <div class="text-h5">System Status</div>
+                        <div class="text-body-2 text-medium-emphasis">Platform availability and monitoring</div>
+                    </div>
+                </v-card>
+            </v-col>
             <v-col cols="12">
                 <v-divider class="my-4"></v-divider>
             </v-col>

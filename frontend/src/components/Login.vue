@@ -92,6 +92,8 @@
               <router-link to="/pages/terms-of-service" class="text-caption text-decoration-none grey--text">Terms</router-link>
               <span class="text-caption grey--text">•</span>
               <router-link to="/pages/privacy-policy" class="text-caption text-decoration-none grey--text">Privacy</router-link>
+              <span class="text-caption grey--text">•</span>
+              <a href="https://status.subterra.world/" target="_blank" rel="noopener" class="text-caption text-decoration-none grey--text">Status</a>
             </div>
             <div class="text-caption grey--text text--lighten-1">
               Subterra is <a href="https://github.com/paperclipmonkey/subterra"
