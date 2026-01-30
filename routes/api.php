@@ -33,7 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Guest accessible callout routes
 Route::get('/callouts/{id}', [App\Http\Controllers\CalloutController::class, 'show']);
-Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel']);
+Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel'])
+    ->middleware('throttle:10,1'); // Max 10 attempts per minute to prevent abuse
 
 Route::get('/users/me', function (Request $request) {
     if($request->user()) {
@@ -187,9 +188,15 @@ Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
 
 Route::get('/livez', function(Request $request) {
     try {
-        $result = DB::table('users')->raw(DB::raw("SELECT 1 + 1 AS result"));
-        return response()->json(['status' => 'ok', 'result' => $result], 200);
+        // Simple health check - just verify DB connection
+        DB::select('SELECT 1');
+        return response()->json(['status' => 'ok'], 200);
     } catch (\Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        // Log error details internally, but don't expose to client
+        \Log::error('Health check failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['status' => 'error'], 500);
     }
 });

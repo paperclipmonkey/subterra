@@ -20,7 +20,8 @@ class CaveSystemController extends Controller
 
     public function store(StoreCaveSystemRequest $request)
     {
-        CaveSystem::create($request->all())->save();
+        $validated = $request->validated();
+        CaveSystem::create($validated)->save();
     }
 
     public function show(CaveSystem $caveSystem)
@@ -44,12 +45,31 @@ class CaveSystemController extends Controller
 
         // Handle new file uploads
         if ($request->hasFile('new_files')) {
+            // Allowed MIME types for security
+            $allowedMimes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+            ];
+            
             $details = $request->input('new_file_details', []);
 
             foreach ($request->file('new_files') as $index => $file) {
                 if ($file->isValid()) {
-                    // Generate a unique filename (e.g., using hashName or UUID)
-                    $filename = uniqid() . '_' . $file->getClientOriginalName();
+                    // SERVER-SIDE MIME validation (don't trust client)
+                    $mimeType = $file->getMimeType();
+                    
+                    if (!in_array($mimeType, $allowedMimes)) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'new_files.' . $index => 'File type not allowed. Only PDF and image files are permitted.'
+                        ]);
+                    }
+                    
+                    // Use hash-based naming to prevent path traversal and collisions
+                    $extension = $file->extension();
+                    $filename = hash('sha256', $file->getClientOriginalName() . time() . $index) . '.' . $extension;
                     $path = "cave_system_files/{$caveSystem->id}";
 
                     // Save the file to the 'media' disk
@@ -58,12 +78,12 @@ class CaveSystemController extends Controller
                     // Get details for this file, ensuring index exists
                     $fileDetails = $details[$index] ?? null;
 
-                    // Create database record
+                    // Create database record with server-detected MIME type
                     $caveSystem->files()->create([
                         'filename'          => $filename,
                         'details'           => $fileDetails,
                         'original_filename' => $file->getClientOriginalName(),
-                        'mime_type'         => $file->getClientMimeType(),
+                        'mime_type'         => $mimeType,  // Use server-detected, not client
                         'size'              => $file->getSize(),
                     ]);
                 }

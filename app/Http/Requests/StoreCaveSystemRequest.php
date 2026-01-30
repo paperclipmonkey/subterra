@@ -19,7 +19,12 @@ class StoreCaveSystemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'length' => 'nullable|integer|min:0',
+            'vertical_range' => 'nullable|integer',
+            'slug' => 'nullable|string|max:255|unique:cave_systems,slug',
+            'references' => 'nullable|string',
         ];
     }
 }

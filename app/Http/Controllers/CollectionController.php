@@ -59,7 +59,22 @@ class CollectionController extends Controller
         $validated['user_id'] = Auth::id();
 
         if ($request->hasFile('photo')) {
-            $validated['photo_path'] = $request->file('photo')->store('collections', 'media');
+            $photo = $request->file('photo');
+            
+            // SERVER-SIDE validation
+            $mimeType = $photo->getMimeType();
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (!in_array($mimeType, $allowedMimes)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'photo' => 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.'
+                ]);
+            }
+            
+            // Use hash-based filename to prevent path traversal
+            $extension = $photo->extension();
+            $filename = hash('sha256', 'collection_' . time() . Auth::id()) . '.' . $extension;
+            $validated['photo_path'] = $photo->storeAs('collections', $filename, 'media');
         }
         
         unset($validated['photo']);
@@ -96,7 +111,22 @@ class CollectionController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $validated['photo_path'] = $request->file('photo')->store('collections', 'media');
+            $photo = $request->file('photo');
+            
+            // SERVER-SIDE validation
+            $mimeType = $photo->getMimeType();
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (!in_array($mimeType, $allowedMimes)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'photo' => 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.'
+                ]);
+            }
+            
+            // Use hash-based filename to prevent path traversal
+            $extension = $photo->extension();
+            $filename = hash('sha256', 'collection_' . time() . Auth::id()) . '.' . $extension;
+            $validated['photo_path'] = $photo->storeAs('collections', $filename, 'media');
         }
         
         unset($validated['photo']);

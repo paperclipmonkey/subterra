@@ -57,10 +57,14 @@ class UserController extends Controller
             }
         }
         
+        
         // Find users matching search term (Name or Email)
-        // Using LOWER() for case-insensitive search (works on both PostgreSQL and SQLite)
-        $users = User::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%'])
-            ->orWhereRaw('LOWER(email) = ?', [strtolower($search)])
+        // LIKE is case-insensitive in MySQL by default
+        // But email exact match needs case-insensitive comparison with LOWER
+        $users = User::where(function($query) use ($search) {
+                $query->where('name', 'LIKE', '%' . $search . '%')
+                      ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+            })
             ->get()
         ->filter(function ($user) use ($currentUser, $clubUserIds, $tripUserCounts, $search) {
             // Always allow self
@@ -165,11 +169,14 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
-            'is_active' => false,
-            'is_approved' => false,
-            'is_admin' => false,
             'photo' => $defaultPhotoPath, 
         ]);
+        
+        // Explicitly set guarded fields (not mass assignable)
+        $user->is_active = false;
+        $user->is_approved = false;
+        $user->is_admin = false;
+        $user->save();
 
         return new UserDetailEmailResource($user);
     }

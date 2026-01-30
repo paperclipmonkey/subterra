@@ -38,15 +38,19 @@ class MagicLinkController extends Controller
                 $user = User::create([
                     'email' => $email,
                     'name' => null, // Will be set later in profile
-                    'is_active' => true, // Enable the user since they're requesting access
-                    'is_approved' => false, // Still needs admin approval
                     'tos_agreed_at' => $request->boolean('agreed_to_tos') ? now() : null,
                     'privacy_policy_agreed_at' => $request->boolean('agreed_to_tos') ? now() : null,
                 ]);
+                
+                // Explicitly set guarded fields
+                $user->is_active = true; // Enable the user since they're requesting access
+                $user->is_approved = false; // Still needs admin approval
+                $user->save();
             } else {
                 // If user exists but is inactive, reactivate them
                 if (!$user->is_active) {
-                    $user->update(['is_active' => true]);
+                    $user->is_active = true;
+                    $user->save();
                 }
             }
 

@@ -27,10 +27,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'name',
         'email',
         'photo',
-        'is_active',
-        'is_approved',
         'bio',
-        'is_admin',
         'phone',
         'tos_agreed_at',
         'privacy_policy_agreed_at',
@@ -38,6 +35,18 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'email_tagged',
         'email_platform_news',
         'visibility_addable',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     * Protects against privilege escalation attacks.
+     *
+     * @var array<int, string>
+     */
+    protected $guarded = [
+        'is_admin',
+        'is_approved',
+        'is_active',
     ];
 
     /**
