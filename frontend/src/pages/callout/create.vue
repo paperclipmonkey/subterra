@@ -337,7 +337,8 @@ export default {
             userSearchInput: '',
             searchTimeout: null,
             showLeaveDialog: false,
-            pendingNavigation: null,
+            pendingRoute: null, // Store the destination route instead of callback
+            allowLeave: false,
         };
     },
     computed: {
@@ -647,12 +648,22 @@ export default {
         },
         confirmLeave() {
             this.showLeaveDialog = false;
-            if (this.pendingNavigation) {
-                this.pendingNavigation();
+            this.allowLeave = true;
+            // Navigate to the pending route
+            if (this.pendingRoute) {
+                const route = this.pendingRoute;
+                this.pendingRoute = null;
+                this.$router.push(route);
             }
         }
     },
     beforeRouteLeave(to, from, next) {
+        // Allow navigation if user clicked "Leave Anyway"
+        if (this.allowLeave) {
+            this.allowLeave = false; // Reset for future navigations
+            return next();
+        }
+
         // Allow navigation if they already completed the callout or have an active one
         if (this.activeCallout || !this.form.participants.length) {
             return next();
@@ -662,8 +673,8 @@ export default {
         const isFormComplete = this.step === 4 && this.isFormValid;
         if (!isFormComplete) {
             this.showLeaveDialog = true;
-            this.pendingNavigation = () => next();
-            next(false); // Cancel navigation initially
+            this.pendingRoute = to; // Store where they want to go
+            next(false); // Cancel navigation
         } else {
             next(); // Allow navigation
         }
