@@ -242,4 +242,155 @@ describe('Callout Wizard', () => {
         // Restoration happens automatically or manually
         vi.useRealTimers()
     })
+
+    it('shows warning dialog when trying to leave with incomplete form', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-dialog': { template: '<div v-if="modelValue"><slot /></div>', props: ['modelValue'] },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-img': true,
+                    'v-avatar': true,
+                    'v-expand-transition': true,
+                    'v-textarea': true,
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-item': true,
+                    'v-divider': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-card-title': true,
+                    'v-card-actions': true,
+                    'v-progress-circular': true,
+                    'v-alert': true,
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        // Set up incomplete form
+        wrapper.vm.step = 2
+        wrapper.vm.form.participants = [{ name: 'Test User', phone: '' }]
+
+        // Simulate navigation attempt
+        const next = vi.fn()
+        const to = { path: '/more' }
+        const from = { path: '/callout/create' }
+
+        wrapper.vm.$options.beforeRouteLeave.call(wrapper.vm, to, from, next)
+
+        // Should show dialog and block navigation
+        expect(wrapper.vm.showLeaveDialog).toBe(true)
+        expect(next).toHaveBeenCalledWith(false)
+    })
+
+    it('allows navigation when form is complete', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-img': true,
+                    'v-avatar': true,
+                    'v-expand-transition': true,
+                    'v-textarea': true,
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-item': true,
+                    'v-divider': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-progress-circular': true,
+                    'v-alert': true,
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        // Set allowLeave flag (as if user clicked "Leave Anyway")
+        wrapper.vm.allowLeave = true
+
+        // Simulate navigation attempt
+        const next = vi.fn()
+        const to = { path: '/more' }
+        const from = { path: '/callout/create' }
+
+        wrapper.vm.$options.beforeRouteLeave.call(wrapper.vm, to, from, next)
+
+        // Should allow navigation
+        expect(next).toHaveBeenCalledWith()
+        expect(wrapper.vm.allowLeave).toBe(false) // Should reset flag
+    })
+
+    it('stores pending route when showing leave dialog', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-img': true,
+                    'v-avatar': true,
+                    'v-expand-transition': true,
+                    'v-textarea': true,
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-item': true,
+                    'v-divider': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-progress-circular': true,
+                    'v-alert': true,
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        // Incomplete form
+        wrapper.vm.step = 1
+        wrapper.vm.form.participants = [{ name: 'Test' }]
+
+        // Simulate navigation to a specific route
+        const next = vi.fn()
+        const to = { path: '/trips', name: 'trips' }
+        const from = { path: '/callout/create' }
+
+        wrapper.vm.$options.beforeRouteLeave.call(wrapper.vm, to, from, next)
+
+        // Should store the destination route
+        expect(wrapper.vm.pendingRoute).toEqual(to)
+    })
 })

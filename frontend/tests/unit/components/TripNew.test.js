@@ -25,8 +25,19 @@ vi.mock('moment', () => {
     const momentObj = {
       _date: testDate,
       format: (format) => {
-        if (format === 'YYYY-MM-DD') return testDate.toISOString().split('T')[0]
-        if (format === 'HH:mm') return testDate.toTimeString().split(' ')[0].substring(0, 5)
+        if (format === 'YYYY-MM-DD') {
+          // Use UTC methods to avoid timezone conversion
+          const year = testDate.getUTCFullYear()
+          const month = String(testDate.getUTCMonth() + 1).padStart(2, '0')
+          const day = String(testDate.getUTCDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+        if (format === 'HH:mm') {
+          // Use UTC methods to avoid timezone conversion
+          const hours = String(testDate.getUTCHours()).padStart(2, '0')
+          const minutes = String(testDate.getUTCMinutes()).padStart(2, '0')
+          return `${hours}:${minutes}`
+        }
         return testDate.toISOString()
       },
       diff: (otherMoment, unit) => {
