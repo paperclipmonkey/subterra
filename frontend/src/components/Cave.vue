@@ -40,7 +40,7 @@
         <v-card class="fill-height rounded-lg" elevation="1">
           <v-tabs v-model="activeTab" color="primary">
             <v-tab value="overview">Overview</v-tab>
-            <v-tab value="trips">Trips <v-badge v-if="cave.trips?.length" :content="cave.trips.length" inline
+            <v-tab value="trips">Trips <v-badge v-if="visibleTripsCount > 0" :content="visibleTripsCount" inline
                 color="grey-lighten-1"></v-badge></v-tab>
             <v-tab value="weather">Weather</v-tab>
             <v-tab value="system">System Info</v-tab>
@@ -138,7 +138,7 @@
                   class="text-body-1 mb-4" />
 
                 <v-chip-group class="mb-4">
-                  <v-chip v-for="tag in cave.system.tags" :key="tag.tag" size="small" variant="outlined">{{ tag.tag
+                  <v-chip v-for="tag in cave.system.tags" :key="tag.tag" size="small" variant="outlined" disabled>{{ tag.tag
                   }}</v-chip>
                 </v-chip-group>
 
@@ -306,7 +306,7 @@
 
           <div class="text-caption text-grey mb-2">Tags</div>
           <v-chip-group>
-            <v-chip v-for="tag in cave.tags" :key="tag.tag" size="small" color="secondary" variant="tonal">{{ tag.tag
+            <v-chip v-for="tag in cave.tags" :key="tag.tag" size="small" color="secondary" variant="tonal" disabled>{{ tag.tag
             }}</v-chip>
           </v-chip-group>
         </v-card>
@@ -393,6 +393,14 @@ const showConfirmModal = ref(false)
 
 const hasDone = computed(() => {
   return cave.value?.trips?.some(trip => trip.participants.some(participant => participant.id === appStore.user.id))
+})
+
+// Count only visible trips (those with end_time or where current user is a participant)
+const visibleTripsCount = computed(() => {
+  if (!cave.value?.trips) return 0
+  return cave.value.trips.filter(trip =>
+    trip.end_time || trip.participants.some(participant => participant.id === appStore.user.id)
+  ).length
 })
 
 const media = computed(() => {
