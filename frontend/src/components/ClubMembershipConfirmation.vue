@@ -64,6 +64,7 @@
             </v-row>
           </v-alert>
           <v-autocomplete
+            ref="clubAutocomplete"
             v-model="selectedClub"
             :items="filteredAvailableClubs"
             item-title="name"
@@ -131,6 +132,7 @@ const selectedClub = ref([]);
 const loading = ref(false);
 const success = ref(false);
 const error = ref("");
+const clubAutocomplete = ref(null);
 
 // Pre-fill name if user prop changes
 watch(() => props.user, (newUser) => {
@@ -213,5 +215,13 @@ const submit = async () => {
 
 onMounted(() => {
   fetchAllClubs();
+});
+
+// Watch for first club selection to close the autocomplete (helps on mobile to dismiss keyboard)
+watch(selectedClub, (newValue) => {
+  if (newValue && newValue.length === 1 && clubAutocomplete.value) {
+    // Blur the autocomplete after first selection to close the dropdown and dismiss mobile keyboard
+    clubAutocomplete.value.blur();
+  }
 });
 </script>
