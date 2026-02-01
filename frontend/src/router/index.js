@@ -87,6 +87,11 @@ router.beforeEach(async (to, from, next) => {
   return next({ path: '/' })
 })
 
+// Scroll to top after each navigation
+router.afterEach(() => {
+  window.scrollTo(0, 0)
+})
+
 router.isReady().then(() => {
   localStorage.removeItem('vuetify:dynamic-reload')
 })
