@@ -249,19 +249,45 @@
         <!-- Success / Conversion Dialog -->
         <v-dialog v-model="showSuccessDialog" max-width="500">
             <v-card>
-                <v-card-title class="headline">Glad you're safe!</v-card-title>
+                <v-card-title class="headline">Callout Cancelled</v-card-title>
                 <v-card-text>
-                    Callout has been cancelled. Would you like to turn this callout into a Trip Report?
-                    We can pre-fill the details for you.
+                    You've marked yourself safe. Would you like to log this trip?
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn variant="text" @click="activeCallout = null; showSuccessDialog = false">No, thanks</v-btn>
-                    <v-btn color="primary" @click="convertToTrip">Yes, Create Trip Report</v-btn>
+                    <v-btn color="grey" method text @click="showSuccessDialog = false">Close</v-btn>
+                    <v-btn color="primary" @click="convertToTrip">Log Trip</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
 
+        <!-- Leave Confirmation Dialog -->
+        <v-dialog v-model="showLeaveDialog" max-width="500" persistent>
+            <v-card>
+                <v-card-title class="headline">
+                    <v-icon color="warning" class="mr-2">mdi-alert</v-icon>
+                    Leave Without Creating Callout?
+                </v-card-title>
+                <v-card-text>
+                    <p class="mb-4">You haven't finished creating your callout. If you leave now, your progress will be lost.</p>
+                    <v-alert v-if="step < 4" type="info" variant="tonal" density="compact" class="mb-2">
+                        <strong>Incomplete steps:</strong>
+                        <ul class="mt-2 ml-4">
+                            <li v-if="step < 1 || !form.cave_id || !form.car_registration || !form.car_parking || !form.location_data">Location & Vehicle Details</li>
+                            <li v-if="step < 2 || phoneError">Team & Contact Information</li>
+                            <li v-if="step < 3 || !form.trip_plan">Trip Plan</li>
+                            <li v-if="step < 4">Callout Time</li>
+                        </ul>
+                    </v-alert>
+                    <p class="text-body-2 text-grey-darken-1">For your safety, we recommend completing the callout before heading underground.</p>
+                </v-card-text>
+                <v-card-actions>
+                    <v-btn color="grey" variant="text" @click="showLeaveDialog = false">Stay & Complete</v-btn>
+                    <v-spacer></v-spacer>
+                    <v-btn color="warning" variant="text" @click="confirmLeave">Leave Anyway</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
@@ -310,6 +336,8 @@ export default {
             officerError: false,
             userSearchInput: '',
             searchTimeout: null,
+            showLeaveDialog: false,
+            pendingNavigation: null,
         };
     },
     computed: {
@@ -616,6 +644,28 @@ export default {
                     console.error("Search failed", e);
                 }
             }, 300);
+        },
+        confirmLeave() {
+            this.showLeaveDialog = false;
+            if (this.pendingNavigation) {
+                this.pendingNavigation();
+            }
+        }
+    },
+    beforeRouteLeave(to, from, next) {
+        // Allow navigation if they already completed the callout or have an active one
+        if (this.activeCallout || !this.form.participants.length) {
+            return next();
+        }
+
+        // If the form is incomplete, show a warning dialog
+        const isFormComplete = this.step === 4 && this.isFormValid;
+        if (!isFormComplete) {
+            this.showLeaveDialog = true;
+            this.pendingNavigation = () => next();
+            next(false); // Cancel navigation initially
+        } else {
+            next(); // Allow navigation
         }
     }
 };

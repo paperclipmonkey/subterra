@@ -193,7 +193,8 @@ export default {
                 } else {
                     // Default to 5 hours from now, snapped to 15 min boundary
                     const defaultTime = moment().add(5, 'hours');
-                    this.internalValue = this.snapTo15Minutes(defaultTime).format('YYYY-MM-DDTHH:mm');
+                    // Use ISO 8601 format to preserve timezone information
+                    this.internalValue = this.snapTo15Minutes(defaultTime).toISOString();
                     this.$emit('update:modelValue', this.internalValue);
                 }
             }
@@ -226,7 +227,8 @@ export default {
         adjustTime(minutes) {
             const newTime = this.calloutTime.clone().add(minutes, 'minutes');
             const snapped = this.snapTo15Minutes(newTime);
-            this.internalValue = snapped.format('YYYY-MM-DDTHH:mm');
+            // Use ISO 8601 format to preserve timezone information
+            this.internalValue = snapped.toISOString();
         },
         adjustHours(hours) {
             this.adjustTime(hours * 60);

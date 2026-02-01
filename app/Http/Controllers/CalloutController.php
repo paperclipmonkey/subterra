@@ -65,12 +65,16 @@ class CalloutController extends Controller
      */
     public function cancel(Request $request, $id)
     {
-        $callout = \App\Models\Callout::findOrFail($id);
+        $callout = \App\Models\Callout::with('participants')->findOrFail($id);
         
-        // If logged in, ensure it's their callout (or they are admin)
+        // If logged in, ensure user is either the creator OR a participant (or admin)
         if (Auth::check()) {
-            if (Auth::user()->id !== $callout->user_id && !Auth::user()->is_admin) {
-                abort(403, 'Unauthorized.');
+            $isCreator = Auth::user()->id === $callout->user_id;
+            $isParticipant = $callout->participants->contains('user_id', Auth::user()->id);
+            $isAdmin = Auth::user()->is_admin;
+            
+            if (!$isCreator && !$isParticipant && !$isAdmin) {
+                abort(403, 'Unauthorized. You must be a participant in this callout to cancel it.');
             }
         }
 

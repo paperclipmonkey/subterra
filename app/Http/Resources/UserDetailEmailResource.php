@@ -54,7 +54,7 @@ class UserDetailEmailResource extends JsonResource
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),
                 'duration' => $this->trips->sum('duration'),
             ],
-            'active_callout' => $this->activeCallout ? $this->activeCallout->load(['cave', 'participants', 'incident']) : null,
+            'active_callout' => $this->active_callout, // Uses getActiveCalloutAttribute() which checks both creator and participant
             'on_call' => OnCallShift::covering(now())->where('user_id', $this->id)->exists(),
             'on_call_until' => OnCallShift::covering(now())->where('user_id', $this->id)->first()?->end_at,
             'open_callouts_count' => Callout::whereIn('status', ['active', 'triggered'])->count(),

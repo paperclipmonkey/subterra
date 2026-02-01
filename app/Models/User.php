@@ -109,9 +109,34 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         return $this->hasMany(Collection::class);
     }
 
-    public function activeCallout(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function activeCallout(): ?\Illuminate\Database\Eloquent\Relations\HasOne
     {
+        // This returns the callout where the user is the CREATOR
+        // For callouts where user is a participant, we need a different approach
         return $this->hasOne(Callout::class)->whereIn('status', ['active', 'triggered']);
+    }
+
+    /**
+     * Get the user's active callout (either as creator or participant)
+     */
+    public function getActiveCalloutAttribute()
+    {
+        // First check if user created an active callout
+        $callout = $this->callouts()->whereIn('status', ['active', 'triggered'])->first();
+        
+        if ($callout) {
+            return $callout->load(['cave', 'participants', 'incident']);
+        }
+        
+        // Otherwise check if user is a participant in any active callout
+        $participantCallout = Callout::whereIn('status', ['active', 'triggered'])
+            ->whereHas('participants', function($query) {
+                $query->where('user_id', $this->id);
+            })
+            ->with(['cave', 'participants', 'incident'])
+            ->first();
+            
+        return $participantCallout;
     }
 
     public function callouts(): \Illuminate\Database\Eloquent\Relations\HasMany
