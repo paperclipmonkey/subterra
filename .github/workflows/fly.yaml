@@ -96,7 +96,6 @@ jobs:
             -var="region=${{ secrets.GCP_REGION }}" \
             -var="image_tag=${{ github.sha }}" \
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
-            -var="smtp_port=${{ secrets.SMTP_PORT }}" \
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
 
   deploy:
