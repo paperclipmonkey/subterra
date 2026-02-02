@@ -51,8 +51,62 @@ jobs:
       - name: Build frontend
         run: cd frontend && yarn run build
 
-  deploy:
+  deploy-watchdog:
     needs: [backend-tests, frontend-tests]
+    runs-on: ubuntu-latest
+    concurrency: deploy-watchdog-group
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker gcr.io
+      
+      - name: Build and push Docker image
+        run: |
+          cd gcp-watchdog
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog:${{ github.sha }} \
+                       -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog:latest .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog:${{ github.sha }}
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog:latest
+      
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+      
+      - name: Terraform Init
+        run: |
+          cd gcp-watchdog/terraform
+          terraform init
+      
+      - name: Terraform Apply
+        run: |
+          cd gcp-watchdog/terraform
+          terraform apply -auto-approve \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="region=${{ secrets.GCP_REGION }}" \
+            -var="image_tag=${{ github.sha }}" \
+            -var="textmagic_username=${{ secrets.TEXTMAGIC_USERNAME }}" \
+            -var="textmagic_api_key=${{ secrets.TEXTMAGIC_API_KEY }}" \
+            -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
+            -var="smtp_port=${{ secrets.SMTP_PORT }}" \
+            -var="smtp_username=${{ secrets.SMTP_USERNAME }}" \
+            -var="smtp_password=${{ secrets.SMTP_PASSWORD }}" \
+            -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
+
+  deploy:
+    needs: [backend-tests, frontend-tests, deploy-watchdog]
     runs-on: ubuntu-latest
     concurrency: deploy-group
     env:

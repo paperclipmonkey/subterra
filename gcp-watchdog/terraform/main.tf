@@ -7,6 +7,10 @@ terraform {
       version = "~> 5.0"
     }
   }
+  backend "gcs" {
+    bucket = "subterra-world-terraform-state"
+    prefix = "watchdog"
+  }
 }
 
 provider "google" {
