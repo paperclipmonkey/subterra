@@ -95,12 +95,8 @@ jobs:
             -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var="region=${{ secrets.GCP_REGION }}" \
             -var="image_tag=${{ github.sha }}" \
-            -var="textmagic_username=${{ secrets.TEXTMAGIC_USERNAME }}" \
-            -var="textmagic_api_key=${{ secrets.TEXTMAGIC_API_KEY }}" \
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
             -var="smtp_port=${{ secrets.SMTP_PORT }}" \
-            -var="smtp_username=${{ secrets.SMTP_USERNAME }}" \
-            -var="smtp_password=${{ secrets.SMTP_PASSWORD }}" \
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
 
   deploy:

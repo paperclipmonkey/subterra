@@ -2,6 +2,7 @@
  * TextMagic SMS client for sending emergency alerts.
  */
 import axios, { AxiosError } from 'axios';
+import { getSecret } from './secrets';
 
 export class TextMagicClient {
     private username: string;
@@ -9,8 +10,8 @@ export class TextMagicClient {
     private baseUrl = 'https://rest.textmagic.com/api/v2';
 
     constructor() {
-        this.username = process.env.TEXTMAGIC_USERNAME || '';
-        this.apiKey = process.env.TEXTMAGIC_API_KEY || '';
+        this.username = getSecret('TEXTMAGIC_USERNAME');
+        this.apiKey = getSecret('TEXTMAGIC_API_KEY');
 
         if (!this.username || !this.apiKey) {
             console.warn('TextMagic credentials not configured');

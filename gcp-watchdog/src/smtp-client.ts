@@ -4,6 +4,7 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import type { CalloutDocument } from './firestore-client';
+import { getSecret } from './secrets';
 
 export class SMTPClient {
     private transporter: Transporter;
@@ -13,8 +14,8 @@ export class SMTPClient {
     constructor() {
         const server = process.env.SMTP_SERVER || '';
         const port = parseInt(process.env.SMTP_PORT || '587');
-        const username = process.env.SMTP_USERNAME || '';
-        const password = process.env.SMTP_PASSWORD || '';
+        const username = getSecret('SMTP_USERNAME');
+        const password = getSecret('SMTP_PASSWORD');
         this.fromEmail = process.env.SMTP_FROM_EMAIL || '';
         this.fromName = process.env.SMTP_FROM_NAME || 'Subterra Watchdog';
 

@@ -59,45 +59,23 @@ resource "google_cloud_run_v2_service" "watchdog" {
         value = var.smtp_from_name
       }
 
-      # Secrets from Secret Manager
-      env {
-        name = "TEXTMAGIC_USERNAME"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.textmagic_username.secret_id
+      # Mount the consolidated secret as a volume
+      volumes {
+        name = "secrets"
+        secret {
+          secret       = google_secret_manager_secret.watchdog_config.secret_id
+          default_mode = 0444  # Read-only
+          items {
             version = "latest"
+            path    = "config.json"
+            mode    = 0444
           }
         }
       }
 
-      env {
-        name = "TEXTMAGIC_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.textmagic_api_key.secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name = "SMTP_USERNAME"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.smtp_username.secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name = "SMTP_PASSWORD"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.smtp_password.secret_id
-            version = "latest"
-          }
-        }
+      volume_mounts {
+        name       = "secrets"
+        mount_path = "/secrets"
       }
 
       resources {
@@ -116,10 +94,7 @@ resource "google_cloud_run_v2_service" "watchdog" {
   depends_on = [
     google_project_service.run,
     google_firestore_database.watchdog_db,
-    google_secret_manager_secret_version.textmagic_username,
-    google_secret_manager_secret_version.textmagic_api_key,
-    google_secret_manager_secret_version.smtp_username,
-    google_secret_manager_secret_version.smtp_password,
+    google_secret_manager_secret_version.watchdog_config,
   ]
 }
 
