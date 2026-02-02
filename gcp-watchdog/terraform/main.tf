@@ -8,7 +8,7 @@ terraform {
     }
   }
   backend "gcs" {
-    bucket = "subterra-world-terraform-state"
+    bucket = "subterra-world-tf-watchdog-state"
     prefix = "watchdog"
   }
 }
