@@ -26,6 +26,18 @@ resource "google_cloud_run_v2_service" "watchdog" {
       max_instance_count = 10
     }
 
+    # Mount the consolidated secret as a volume at template level
+    volumes {
+      name = "secrets"
+      secret {
+        secret = google_secret_manager_secret.watchdog_config.secret_id
+        items {
+          version = "latest"
+          path    = "config.json"
+        }
+      }
+    }
+
     containers {
       image = "europe-west2-docker.pkg.dev/${var.project_id}/subterra-watchdog/subterra-watchdog:${var.image_tag}"
 
@@ -59,20 +71,7 @@ resource "google_cloud_run_v2_service" "watchdog" {
         value = var.smtp_from_name
       }
 
-      # Mount the consolidated secret as a volume
-      volumes {
-        name = "secrets"
-        secret {
-          secret       = google_secret_manager_secret.watchdog_config.secret_id
-          default_mode = 0444  # Read-only
-          items {
-            version = "latest"
-            path    = "config.json"
-            mode    = 0444
-          }
-        }
-      }
-
+      # Mount the volume in the container
       volume_mounts {
         name       = "secrets"
         mount_path = "/secrets"

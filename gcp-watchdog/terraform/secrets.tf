@@ -15,7 +15,7 @@ resource "google_secret_manager_secret" "watchdog_config" {
 # Create initial empty version (to be populated out-of-band)
 resource "google_secret_manager_secret_version" "watchdog_config" {
   secret = google_secret_manager_secret.watchdog_config.id
-  
+
   # Empty JSON placeholder - populate this manually with actual credentials
   secret_data = jsonencode({
     TEXTMAGIC_USERNAME = ""
