@@ -43,11 +43,6 @@ class SendTestWatchdogAlert extends Command
                 'email' => config('services.gcp_watchdog.test_email'),
             ],
             'participants' => [],
-            'emergency_contact' => [
-                'name' => 'Test Emergency Contact',
-                'phone' => config('services.gcp_watchdog.test_phone'),
-                'email' => config('services.gcp_watchdog.test_email'),
-            ],
             'trip_plan' => 'This is a MONTHLY TEST ALERT from the Subterra watchdog system. This message confirms the emergency alert system is functioning correctly.',
             'cave_name' => '🧪 Test System Check',
         ];

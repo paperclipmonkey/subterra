@@ -16,11 +16,6 @@ export interface CalloutData {
         phone?: string;
         email?: string;
     }>;
-    emergency_contact?: {
-        name?: string;
-        phone?: string;
-        email?: string;
-    };
     trip_plan?: string;
     cave_name?: string;
 }
@@ -31,7 +26,6 @@ export interface CalloutDocument {
     callout_time: Timestamp;
     user: Record<string, any>;
     participants: Array<Record<string, any>>;
-    emergency_contact: Record<string, any>;
     trip_plan: string;
     cave_name: string;
     created_at: Timestamp;
@@ -58,7 +52,6 @@ export class FirestoreClient {
             callout_time: calloutTime,
             user: data.user || {},
             participants: data.participants || [],
-            emergency_contact: data.emergency_contact || {},
             trip_plan: data.trip_plan || '',
             cave_name: data.cave_name || '',
             created_at: Timestamp.now(),

@@ -32,10 +32,8 @@ class PurgeOldCallouts extends Command
         $calloutsToScrub = Callout::where('created_at', '<', $cutoffDate)
             ->whereIn('status', ['resolved', 'cancelled'])
             ->where(function ($query) {
-                $query->whereNotNull('emergency_contact_phone')
-                    ->orWhereNotNull('car_details')
+                $query->whereNotNull('car_details')
                     ->orWhereNotNull('team_details')
-                    ->orWhereNotNull('emergency_contact_name')
                     ->orWhereNotNull('trip_plan');
             })
             ->get();
@@ -49,8 +47,6 @@ class PurgeOldCallouts extends Command
 
         foreach ($calloutsToScrub as $callout) {
             $callout->update([
-                'emergency_contact_phone' => null,
-                'emergency_contact_name' => '[SCRUBBED]',
                 'car_details' => null,
                 'team_details' => null,
                 'trip_plan' => null,

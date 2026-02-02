@@ -75,9 +75,6 @@ class DemoDataSeeder extends Seeder
                 'car_registration' => 'AB' . ($index + 10) . ' CDE',
                 'car_parking' => 'Parked in the farmer\'s field by the gate.',
                 'team_details' => 'Party of 4. Experienced. 2 First Aiders.',
-                'emergency_contact_name' => 'Emergency Contact ' . ($index + 1),
-                'emergency_contact_phone' => '07700 90000' . $index,
-                'emergency_contact_phone' => '07700 90000' . $index,
             ]);
 
             // Add the main user as a participant
@@ -117,9 +114,6 @@ class DemoDataSeeder extends Seeder
             'car_registration' => 'XY99 ZZZ',
             'car_parking' => 'Layby on the main road.',
             'team_details' => 'Solo caver. Carrying basic emergency kit.',
-            'emergency_contact_name' => 'Sarah Victor',
-            'emergency_contact_phone' => '07700 123456',
-            'emergency_contact_phone' => '07700 123456',
         ]);
 
         // Add victim as participant

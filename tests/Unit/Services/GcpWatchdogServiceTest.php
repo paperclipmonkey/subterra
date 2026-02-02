@@ -41,8 +41,6 @@ class GcpWatchdogServiceTest extends TestCase
             'user_id' => $user->id,
             'cave_id' => $cave->id,
             'callout_time' => now()->addHours(2),
-            'emergency_contact_name' => 'Emergency Contact',
-            'emergency_contact_phone' => '+0987654321',
             'trip_plan' => 'Test trip plan',
         ]);
 
@@ -63,8 +61,7 @@ class GcpWatchdogServiceTest extends TestCase
             return $request->url() === 'https://test-watchdog.run.app/watchdog'
                 && $request['callout_id'] === $callout->id
                 && isset($request['callout_time'])
-                && isset($request['user'])
-                && isset($request['emergency_contact']);
+                && isset($request['user']);
         });
     }
 

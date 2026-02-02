@@ -95,7 +95,6 @@ app.post('/check', async (req: Request, res: Response) => {
         for (const callout of overdueCallouts) {
             const calloutId = callout.callout_id;
             const user = callout.user || {};
-            const emergencyContact = callout.emergency_contact || {};
             const participants = callout.participants || [];
 
             console.warn(`Processing overdue callout: ${calloutId}`);
@@ -103,10 +102,6 @@ app.post('/check', async (req: Request, res: Response) => {
             // Collect all phone numbers and emails to alert
             const phoneNumbers: string[] = [];
             const emails: string[] = [];
-
-            // Add emergency contact
-            if (emergencyContact.phone) phoneNumbers.push(emergencyContact.phone);
-            if (emergencyContact.email) emails.push(emergencyContact.email);
 
             // Add all participants
             for (const participant of participants) {

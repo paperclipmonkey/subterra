@@ -40,7 +40,6 @@ describe('Watchdog API', () => {
                 callout_id: 'test123',
                 callout_time: '2026-01-30T10:00:00Z',
                 user: { name: 'John Doe', phone: '+1234567890' },
-                emergency_contact: { name: 'Emergency', phone: '+0987654321' },
             };
 
             mockFirestore.createWatchdog = jest.fn().mockResolvedValue(undefined);
@@ -99,7 +98,6 @@ describe('Watchdog API', () => {
                 callout_id: 'test123',
                 callout_time: { toDate: () => new Date('2026-01-30T08:00:00Z') },
                 user: { name: 'John Doe', phone: '+1234567890', email: 'john@example.com' },
-                emergency_contact: { name: 'Emergency', phone: '+0987654321', email: 'emergency@example.com' },
                 participants: [],
                 trip_plan: 'Test trip',
                 cave_name: 'Test Cave',

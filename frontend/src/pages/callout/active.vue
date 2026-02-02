@@ -38,11 +38,6 @@
                                 <v-list-item-title>Start Time</v-list-item-title>
                                 <v-list-item-subtitle>{{ formatTime(callout.created_at) }}</v-list-item-subtitle>
                             </v-list-item>
-                            <v-list-item v-if="callout.emergency_contact_phone">
-                                <v-list-item-title>Emergency Contact</v-list-item-title>
-                                <v-list-item-subtitle>{{ callout.emergency_contact_name }} ({{
-                                    callout.emergency_contact_phone }})</v-list-item-subtitle>
-                            </v-list-item>
                             <v-list-item v-if="callout.trip_plan">
                                 <v-list-item-title>Trip Plan</v-list-item-title>
                                 <div class="text-body-2 mt-1">{{ callout.trip_plan }}</div>

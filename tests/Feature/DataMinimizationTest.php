@@ -23,8 +23,6 @@ class DataMinimizationTest extends TestCase
             'user_id' => $user->id,
             'status' => 'resolved',
             'created_at' => Carbon::now()->subDays(31),
-            'emergency_contact_phone' => '07123456789',
-            'emergency_contact_name' => 'John Doe',
             'car_details' => 'Silver Focus',
             'team_details' => 'Me and a friend',
             'trip_plan' => 'Detailed plan'
@@ -35,7 +33,6 @@ class DataMinimizationTest extends TestCase
             'user_id' => $user->id,
             'status' => 'active',
             'created_at' => Carbon::now()->subDays(31),
-            'emergency_contact_phone' => '07123456789',
             'car_details' => 'Silver Focus'
         ]);
 
@@ -44,7 +41,6 @@ class DataMinimizationTest extends TestCase
             'user_id' => $user->id,
             'status' => 'resolved',
             'created_at' => Carbon::now()->subDays(5),
-            'emergency_contact_phone' => '07123456789',
             'car_details' => 'Silver Focus'
         ]);
 
@@ -53,20 +49,16 @@ class DataMinimizationTest extends TestCase
 
         // Assert Old Resolved is scrubbed
         $oldResolved->refresh();
-        $this->assertNull($oldResolved->emergency_contact_phone);
-        $this->assertEquals('[SCRUBBED]', $oldResolved->emergency_contact_name);
         $this->assertNull($oldResolved->car_details);
         $this->assertNull($oldResolved->team_details);
         $this->assertNull($oldResolved->trip_plan);
 
         // Assert Old Active is untouched
         $oldActive->refresh();
-        $this->assertEquals('07123456789', $oldActive->emergency_contact_phone);
         $this->assertEquals('Silver Focus', $oldActive->car_details);
 
         // Assert Fresh Resolved is untouched
         $freshResolved->refresh();
-        $this->assertEquals('07123456789', $freshResolved->emergency_contact_phone);
         $this->assertEquals('Silver Focus', $freshResolved->car_details);
     }
 }

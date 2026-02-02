@@ -20,12 +20,15 @@ class CalloutServiceTest extends TestCase
     private CalloutService $service;
     private User $user;
     private MockInterface $smsServiceMock;
+    private MockInterface $watchdogServiceMock;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->smsServiceMock = Mockery::mock(SmsService::class);
-        $this->service = new CalloutService($this->smsServiceMock);
+        $this->watchdogServiceMock = Mockery::mock(\App\Services\GcpWatchdogService::class);
+        $this->watchdogServiceMock->shouldReceive('register')->andReturn(null);
+        $this->service = new CalloutService($this->smsServiceMock, $this->watchdogServiceMock);
         $this->user = User::factory()->create(['phone' => '1234567890']);
     }
 
@@ -56,8 +59,6 @@ class CalloutServiceTest extends TestCase
         $callout = $this->service->create($this->user, [
             'callout_time' => $tomorrowNoon->toDateTimeString(),
             'description' => 'Cave X, Deep Pitch, Me',
-            'emergency_contact_name' => 'Mom',
-            'emergency_contact_phone' => '123456',
             'participants' => [
                 ['name' => 'Bob', 'phone' => '999']
             ]
@@ -90,8 +91,6 @@ class CalloutServiceTest extends TestCase
         $this->service->create($this->user, [
             'callout_time' => now()->addDay()->setHour(12)->toDateTimeString(),
             'description' => 'Should Fail',
-            'emergency_contact_name' => 'Mom',
-            'emergency_contact_phone' => '123456',
         ]);
     }
 

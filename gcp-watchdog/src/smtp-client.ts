@@ -59,7 +59,6 @@ export class SMTPClient {
 
     async sendAlertEmail(to: string, callout: CalloutDocument): Promise<boolean> {
         const user = callout.user || {};
-        const emergencyContact = callout.emergency_contact || {};
         const calloutTime = callout.callout_time.toDate().toISOString();
 
         const subject = '🚨 SUBTERRA EMERGENCY: Callout Overdue';
@@ -71,8 +70,6 @@ Callout ID: ${callout.callout_id || 'Unknown'}
 User: ${user.name || 'Unknown'} (${user.phone || 'No phone'})
 Expected Return: ${calloutTime}
 Cave: ${callout.cave_name || 'Unknown'}
-
-Emergency Contact: ${emergencyContact.name || 'Unknown'} (${emergencyContact.phone || 'Unknown'})
 
 Trip Plan:
 ${callout.trip_plan || 'No trip plan provided'}
@@ -92,8 +89,6 @@ Please contact the user immediately. If unreachable, initiate emergency protocol
         <p><strong>User:</strong> ${user.name || 'Unknown'} (${user.phone || 'No phone'})</p>
         <p><strong>Expected Return:</strong> ${calloutTime}</p>
         <p><strong>Cave:</strong> ${callout.cave_name || 'Unknown'}</p>
-        <hr/>
-        <p><strong>Emergency Contact:</strong> ${emergencyContact.name || 'Unknown'} (${emergencyContact.phone || 'Unknown'})</p>
         <hr/>
         <h3>Trip Plan:</h3>
         <p>${callout.trip_plan || 'No trip plan provided'}</p>

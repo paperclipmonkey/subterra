@@ -295,8 +295,6 @@ class UserController extends Controller
                 'description' => $callout->description,
                 'status' => $callout->status,
                 'car_registration' => $callout->car_registration,
-                'emergency_contact_name' => $callout->emergency_contact_name,
-                'emergency_contact_phone' => $callout->emergency_contact_phone,
             ]),
         ];
 

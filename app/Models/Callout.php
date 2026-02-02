@@ -39,8 +39,6 @@ class Callout extends Model
         'car_registration',
         'car_parking',
         'team_details',
-        'emergency_contact_name',
-        'emergency_contact_phone',
         'status',
         'location_data',
         'request_data',

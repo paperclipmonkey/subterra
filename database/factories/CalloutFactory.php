@@ -17,8 +17,6 @@ class CalloutFactory extends Factory
             'cave_id' => \App\Models\Cave::factory(),
             'description' => $this->faker->sentence,
             'callout_time' => $this->faker->dateTimeBetween('now', '+1 week'),
-            'emergency_contact_name' => $this->faker->name,
-            'emergency_contact_phone' => $this->faker->phoneNumber,
             'status' => 'active',
         ];
     }

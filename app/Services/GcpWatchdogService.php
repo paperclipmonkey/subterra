@@ -123,10 +123,6 @@ class GcpWatchdogService
                 'phone' => $p->phone,
                 'email' => $p->email,
             ])->toArray(),
-            'emergency_contact' => [
-                'name' => $callout->emergency_contact_name,
-                'phone' => $callout->emergency_contact_phone,
-            ],
             'trip_plan' => $callout->trip_plan ?? $callout->description ?? '',
             'cave_name' => $callout->cave->name ?? 'Unknown',
         ];

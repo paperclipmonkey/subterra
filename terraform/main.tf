@@ -186,8 +186,7 @@ resource "aws_sfn_state_machine" "watchdog_flow" {
       "Resource": "${aws_lambda_function.watchdog_fn.arn}",
       "Parameters": {
         "action": "check_status",
-        "trip_id.$": "$.trip_id",
-        "emergency_contact.$": "$.emergency_contact"
+        "trip_id.$": "$.trip_id"
       },
       "End": true
     }

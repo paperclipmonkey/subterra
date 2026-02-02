@@ -77,8 +77,6 @@ class CalloutService
                 'location_data' => $data['location_data'] ?? null,
                 'request_data' => $data['request_data'] ?? null,
                 'team_details' => $data['team_details'] ?? null,
-                'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
-                'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
                 'status' => 'active',
             ]);
 

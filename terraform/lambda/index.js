@@ -57,7 +57,7 @@ async function handleApiRequest(event) {
 
 // --- Action: START ---
 async function startWatchdog(data) {
-    const { trip_id, expected_return_time, emergency_contact, user_info } = data;
+    const { trip_id, expected_return_time, user_info } = data;
 
     if (!trip_id || !expected_return_time) {
         throw new Error("Missing required fields");
@@ -74,7 +74,6 @@ async function startWatchdog(data) {
             trip_id,
             status: 'PENDING',
             expected_return_time,
-            emergency_contact,
             user_info,
             expires_at: ttl
         }
@@ -87,8 +86,7 @@ async function startWatchdog(data) {
         name: trip_id, // Ensure uniqueness
         input: JSON.stringify({
             trip_id,
-            expected_return_time,
-            emergency_contact
+            expected_return_time
         })
     };
 
@@ -156,14 +154,12 @@ async function handleCheckStatus(event) {
     // TRIGGER ALERT!
     console.log("Trip found! TRIGGERING ALERT.");
 
-    const contact = result.Item.emergency_contact || {};
     const user = result.Item.user_info || {};
 
     const message = `URGENT: Subterra Trip Overdue.
   
 Trip ID: ${trip_id}
 User: ${user.name || 'Unknown'} (${user.phone || 'No phone'})
-Emergency Contact: ${contact.name} (${contact.phone})
 Expected Return: ${result.Item.expected_return_time}
 
 This is an automated message from the Subterra Redundant Safety System.
