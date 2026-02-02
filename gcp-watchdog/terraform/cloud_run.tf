@@ -27,7 +27,7 @@ resource "google_cloud_run_v2_service" "watchdog" {
     }
 
     containers {
-      image = "gcr.io/${var.project_id}/${var.app_name}:${var.image_tag}"
+      image = "europe-west2-docker.pkg.dev/${var.project_id}/subterra-watchdog/subterra-watchdog:${var.image_tag}"
 
       env {
         name  = "GCP_PROJECT_ID"

@@ -72,3 +72,10 @@ variable "slack_webhook_url" {
   type        = string
   default     = ""
 }
+
+variable "image_tag" {
+  description = "Docker image tag to deploy (typically the git commit SHA)"
+  type        = string
+  default     = "latest"
+}
+
