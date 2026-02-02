@@ -19,16 +19,18 @@ export const useAppStore = defineStore('app', {
     async getUser() {
       try {
         this.loading = true
-        const response = await api.get('/api/users/me')
+        const response = await api.get('/api/users/me', {
+          suppressErrorNotification: true // Don't show error notification for unauthenticated users
+        })
         this.user = response.data.data
         this.loading = false
         return this.user
         // showTooltip(`Welcome back ${this.userData.name}!`)
       } catch (error) {
         this.loading = false
-        // showTooltip(error)
-        // let the form component display the error
-        return error
+        // Silently handle unauthenticated state - it's expected on public pages
+        // Return empty user object
+        return { name: '', email: '', is_admin: false, is_approved: false, clubs: [] }
       }
     },
   },

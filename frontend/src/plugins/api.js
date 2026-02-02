@@ -13,6 +13,11 @@ const instance = axios.create({
 instance.interceptors.response.use(
     (response) => response,
     (error) => {
+        // Check if the request explicitly suppressed error notifications
+        if (error.config?.suppressErrorNotification) {
+            return Promise.reject(error);
+        }
+
         const notificationStore = useNotificationStore();
 
         if (error.response) {
