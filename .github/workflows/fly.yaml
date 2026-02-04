@@ -57,6 +57,7 @@ jobs:
     concurrency: deploy-watchdog-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
+      GCP_REGION: europe-west2
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -94,7 +95,7 @@ jobs:
           cd gcp-watchdog/terraform
           terraform apply -auto-approve \
             -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
-            -var="region=${{ secrets.GCP_REGION }}" \
+            -var="region=${{ env.GCP_REGION }}" \
             -var="image_tag=${{ github.sha }}" \
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
