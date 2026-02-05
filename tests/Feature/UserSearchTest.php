@@ -139,7 +139,7 @@ class UserSearchTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_searches_case_insensitively()
     {
-        $me = User::factory()->create();
+        $me = User::factory()->create(['name' => 'Test User']);
         $target = User::factory()->create([
             'name' => 'John Smith',
             'email' => 'John.Smith@Example.COM',
