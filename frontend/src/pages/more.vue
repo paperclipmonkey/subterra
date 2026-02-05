@@ -6,7 +6,7 @@
                     <div class="text-center">
                         <v-icon size="48" color="primary" class="mb-2">mdi-home-map-marker</v-icon>
                         <div class="text-h5">Huts</div>
-                        <div class="text-body-2 text-medium-emphasis">Find club huts and amenities</div>
+                        <div class="text-body-2 text-medium-emphasis">Find club huts</div>
                     </div>
                 </v-card>
             </v-col>
