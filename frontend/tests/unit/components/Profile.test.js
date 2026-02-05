@@ -16,9 +16,10 @@ vi.mock('mande', () => ({
 }))
 
 // Mock App Store
+const mockGetUser = vi.fn()
 vi.mock('@/stores/app', () => ({
     useAppStore: () => ({
-        getUser: () => Promise.resolve({ id: 1, name: 'Test User' })
+        getUser: mockGetUser
     })
 }))
 
@@ -37,6 +38,7 @@ vi.mock('vue3-calendar-heatmap', () => ({
 describe('Profile.vue', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        mockGetUser.mockResolvedValue({ id: 1, name: 'Test User' })
     })
 
     it('displays clubs card when user has clubs', async () => {
@@ -210,8 +212,148 @@ describe('Profile.vue', () => {
 
         // Check recent trips section
         expect(wrapper.text()).toContain('Recent Trips')
-        expect(wrapper.text()).toContain('Cool Trip')
         // This is the key assertion for the fix
         expect(wrapper.text()).toContain('Mystery Cave Entrance')
+    })
+
+    it('shows medal introduction for own profile with no medals', async () => {
+        const mockProfile = {
+            id: 1,
+            name: 'Test User',
+            clubs: [],
+            medals: [],
+            stats: { caves: 0, trips: 0, duration: 0 }
+        }
+        mockGet.mockResolvedValue(mockProfile)
+        mockRecentTrips.mockResolvedValue([])
+
+        const wrapper = mount(Profile, {
+            global: {
+                directives: { tooltip: {} },
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-card-title': { template: '<div><slot /></div>' },
+                    'v-card-text': { template: '<div><slot /></div>' },
+                    'v-avatar': { template: '<div><slot /></div>' },
+                    'v-img': { template: '<div></div>' },
+                    'v-chip': { template: '<div><slot /></div>' },
+                    'v-icon': { template: '<div></div>' },
+                    'v-btn': { template: '<button><slot /></button>' },
+                    'v-spacer': true,
+                    'v-divider': true,
+                    'v-list': { template: '<div><slot /></div>' },
+                    'v-list-item': { template: '<div><slot /></div>' },
+                    'v-list-item-title': { template: '<div><slot /></div>' },
+                    'v-list-item-subtitle': { template: '<div><slot /></div>' },
+                    'v-dialog': true,
+                    'v-tooltip': true
+                }
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).toContain('Start your collection!')
+        expect(wrapper.text()).toContain('Find a cave')
+    })
+
+    it('hides medal introduction for other profile with no medals', async () => {
+        // Mock current user as ID 2, while profile is ID 1
+        mockGetUser.mockResolvedValue({ id: 2, name: 'Other User' })
+
+        const mockProfile = {
+            id: 1,
+            name: 'Test User',
+            clubs: [],
+            medals: [],
+            stats: { caves: 0, trips: 0, duration: 0 }
+        }
+        mockGet.mockResolvedValue(mockProfile)
+        mockRecentTrips.mockResolvedValue([])
+
+        const wrapper = mount(Profile, {
+            global: {
+                directives: { tooltip: {} },
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-card-title': { template: '<div><slot /></div>' },
+                    'v-card-text': { template: '<div><slot /></div>' },
+                    'v-avatar': { template: '<div><slot /></div>' },
+                    'v-img': { template: '<div></div>' },
+                    'v-chip': { template: '<div><slot /></div>' },
+                    'v-icon': { template: '<div></div>' },
+                    'v-btn': { template: '<button><slot /></button>' },
+                    'v-spacer': true,
+                    'v-divider': true,
+                    'v-list': { template: '<div><slot /></div>' },
+                    'v-list-item': { template: '<div><slot /></div>' },
+                    'v-list-item-title': { template: '<div><slot /></div>' },
+                    'v-list-item-subtitle': { template: '<div><slot /></div>' },
+                    'v-dialog': true,
+                    'v-tooltip': true
+                }
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).not.toContain('Start your collection!')
+        expect(wrapper.text()).not.toContain('Trophy Case')
+    })
+
+    it('hides medal introduction for own profile when medals are present', async () => {
+        const mockProfile = {
+            id: 1,
+            name: 'Test User',
+            clubs: [],
+            medals: [
+                { id: 1, name: 'First Trip', description: 'Awarded for completing your first trip.', image_url: 'first-trip.svg' }
+            ],
+            stats: { caves: 1, trips: 1, duration: 60 }
+        }
+        mockGet.mockResolvedValue(mockProfile)
+        mockRecentTrips.mockResolvedValue([])
+
+        const wrapper = mount(Profile, {
+            global: {
+                directives: { tooltip: {} },
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-card-title': { template: '<div><slot /></div>' },
+                    'v-card-text': { template: '<div><slot /></div>' },
+                    'v-avatar': { template: '<div><slot /></div>' },
+                    'v-img': { template: '<div></div>' },
+                    'v-chip': { template: '<div><slot /></div>' },
+                    'v-icon': { template: '<div></div>' },
+                    'v-btn': { template: '<button><slot /></button>' },
+                    'v-spacer': true,
+                    'v-divider': true,
+                    'v-list': { template: '<div><slot /></div>' },
+                    'v-list-item': { template: '<div><slot /></div>' },
+                    'v-list-item-title': { template: '<div><slot /></div>' },
+                    'v-list-item-subtitle': { template: '<div><slot /></div>' },
+                    'v-dialog': true,
+                    'v-tooltip': true
+                }
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).not.toContain('Start your collection!')
+        expect(wrapper.text()).toContain('Trophy Case')
+        expect(wrapper.text()).toContain('1') // Chip with medal count
     })
 })

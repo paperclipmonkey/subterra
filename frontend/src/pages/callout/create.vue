@@ -48,16 +48,16 @@
                                 <v-stepper-header class="elevation-0" style="box-shadow: none;">
                                     <v-stepper-item :complete="step > 1" :value="1" title="Location"></v-stepper-item>
                                     <v-divider></v-divider>
-                                    <v-stepper-item :complete="step > 2" :value="2" title="Team"></v-stepper-item>
+                                    <v-stepper-item :complete="step > 2" :value="2" title="Team" :disabled="step < 2"></v-stepper-item>
                                     <v-divider></v-divider>
-                                    <v-stepper-item :complete="step > 3" :value="3" title="Plan"></v-stepper-item>
+                                    <v-stepper-item :complete="step > 3" :value="3" title="Plan" :disabled="step < 3"></v-stepper-item>
                                     <v-divider></v-divider>
-                                    <v-stepper-item :value="4" title="Safety"></v-stepper-item>
+                                    <v-stepper-item :value="4" title="Safety" :disabled="step < 4"></v-stepper-item>
                                 </v-stepper-header>
                             </v-stepper>
 
                         <v-form ref="form" v-model="valid" @submit.prevent="submitCallout">
-                                <v-window v-model="step">
+                                <v-window v-model="step" :touch="false">
 
                                     <!-- STEP 1: LOCATION -->
                                     <v-window-item :value="1">
