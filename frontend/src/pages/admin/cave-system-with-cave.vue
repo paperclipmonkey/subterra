@@ -55,7 +55,8 @@ const system = ref({
   length: null,
   vertical_range: null,
   slug: '',
-  references: ''
+  references: '',
+  catchment_id: null
 })
 
 const cave = ref({

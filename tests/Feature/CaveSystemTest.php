@@ -107,4 +107,27 @@ class CaveSystemTest extends TestCase
         // Check Storage
         Storage::disk('media')->assertMissing("cave_system_files/{$caveSystem->id}/todelete.pdf");
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_can_update_cave_system_with_catchment()
+    {
+        $caveSystem = CaveSystem::factory()->create();
+        $catchment = \App\Models\Catchment::create([
+            'name' => 'Test Catchment',
+            'reference_id' => 'TEST1',
+            'gauges' => []
+        ]);
+
+        $data = [
+            'name' => $caveSystem->name,
+            'catchment_id' => $catchment->id
+        ];
+
+        $response = $this->putJson("/api/cave_systems/{$caveSystem->id}", $data);
+
+        $response->assertOk()
+            ->assertJsonPath('data.catchment_id', $catchment->id);
+
+        $this->assertEquals($catchment->id, $caveSystem->fresh()->catchment_id);
+    }
 }

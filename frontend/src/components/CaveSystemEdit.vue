@@ -99,6 +99,9 @@ const save = async () => {
   formData.append('vertical_range', cavesystem.value.vertical_range || '')
   formData.append('slug', cavesystem.value.slug || '')
   formData.append('references', cavesystem.value.references || '')
+  if (cavesystem.value.catchment_id) {
+    formData.append('catchment_id', cavesystem.value.catchment_id)
+  }
 
   filesToDelete.value.forEach(fileId => {
     formData.append('deleted_files[]', fileId)

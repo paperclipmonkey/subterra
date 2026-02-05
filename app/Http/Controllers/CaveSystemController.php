@@ -30,7 +30,7 @@ class CaveSystemController extends Controller
         return new CaveSystemResource($caveSystem);
     }
 
-    public function update(Request $request, CaveSystem $caveSystem): JsonResponse
+    public function update(Request $request, CaveSystem $caveSystem)
     {
         $caveSystem->update($request->except(['new_files', 'new_file_details', 'deleted_files']));
 
@@ -91,7 +91,7 @@ class CaveSystemController extends Controller
         }
 
         $caveSystem->load('files');
-        return response()->json(new CaveSystemResource($caveSystem));
+        return new CaveSystemResource($caveSystem);
     }
 
     public function __construct(
