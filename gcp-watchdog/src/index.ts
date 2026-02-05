@@ -6,6 +6,7 @@ import express, { Request, Response } from 'express';
 import { FirestoreClient, CalloutData } from './firestore-client';
 import { TextMagicClient } from './textmagic-client';
 import { SMTPClient } from './smtp-client';
+import { getSecret } from './secrets';
 
 const app = express();
 app.use(express.json());
@@ -15,13 +16,38 @@ const firestoreClient = new FirestoreClient();
 const smsClient = new TextMagicClient();
 const emailClient = new SMTPClient();
 
-// Health check endpoint
+/**
+ * Middleware to check API Key
+ */
+const checkApiKey = (req: Request, res: Response, next: () => void) => {
+    const apiKey = getSecret('WATCHDOG_API_KEY');
+
+    // If no API key is configured, allow all (for initial setup/local dev if key is missing)
+    if (!apiKey) {
+        console.warn('WATCHDOG_API_KEY not configured. Endpoints are unprotected.');
+        return next();
+    }
+
+    const providedKey = req.header('X-Watchdog-Key');
+
+    if (providedKey !== apiKey) {
+        console.warn(`Unauthorized access attempt from ${req.ip}`);
+        return res.status(401).json({ error: 'Unauthorized: Invalid or missing API Key' });
+    }
+
+    next();
+};
+
+// Health check endpoint (public)
 app.get('/health', (req: Request, res: Response) => {
     res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
     });
 });
+
+// Protected routes (Creation and Deletion)
+app.use(['/watchdog'], checkApiKey);
 
 // Register a new watchdog
 app.post('/watchdog', async (req: Request, res: Response) => {

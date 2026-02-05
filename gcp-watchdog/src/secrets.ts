@@ -6,6 +6,7 @@ interface SecretsConfig {
     TEXTMAGIC_API_KEY: string;
     SMTP_USERNAME: string;
     SMTP_PASSWORD: string;
+    WATCHDOG_API_KEY: string;
 }
 
 let cachedSecrets: SecretsConfig | null = null;
@@ -40,6 +41,7 @@ export function loadSecrets(): SecretsConfig {
         TEXTMAGIC_API_KEY: process.env.TEXTMAGIC_API_KEY || '',
         SMTP_USERNAME: process.env.SMTP_USERNAME || '',
         SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
+        WATCHDOG_API_KEY: process.env.WATCHDOG_API_KEY || '',
     };
 
     console.log('Loaded secrets from environment variables');

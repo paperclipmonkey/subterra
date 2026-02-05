@@ -59,6 +59,7 @@ class GcpWatchdogServiceTest extends TestCase
         // Verify HTTP request was made
         Http::assertSent(function ($request) use ($callout) {
             return $request->url() === 'https://test-watchdog.run.app/watchdog'
+                && $request->hasHeader('X-Watchdog-Key', 'test-key')
                 && $request['callout_id'] === $callout->id
                 && isset($request['callout_time'])
                 && isset($request['user']);
@@ -95,6 +96,7 @@ class GcpWatchdogServiceTest extends TestCase
         Http::assertSent(function ($request) {
             return $request->method() === 'DELETE'
                 && str_contains($request->url(), '/watchdog')
+                && $request->hasHeader('X-Watchdog-Key', 'test-key')
                 && isset($request['callout_id']);
         });
     }

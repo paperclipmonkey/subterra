@@ -22,6 +22,7 @@ resource "google_secret_manager_secret_version" "watchdog_config" {
     TEXTMAGIC_API_KEY  = ""
     SMTP_USERNAME      = ""
     SMTP_PASSWORD      = ""
+    WATCHDOG_API_KEY   = ""
   })
 
   lifecycle {

@@ -34,6 +34,7 @@ class GcpWatchdogService
             $payload = $this->buildPayload($callout);
 
             $response = Http::timeout(10)
+                ->withHeaders(['X-Watchdog-Key' => $this->apiKey])
                 ->post("{$this->baseUrl}/watchdog", $payload);
 
             if ($response->successful()) {
@@ -75,6 +76,7 @@ class GcpWatchdogService
             $watchdogId = $callout->id;
 
             $response = Http::timeout(10)
+                ->withHeaders(['X-Watchdog-Key' => $this->apiKey])
                 ->delete("{$this->baseUrl}/watchdog", [
                     'callout_id' => $watchdogId
                 ]);
