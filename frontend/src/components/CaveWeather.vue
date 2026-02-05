@@ -12,17 +12,17 @@
         <v-card-text class="pa-6">
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-h2 font-weight-light text-white mb-2">
+              <div class="text-h4 font-weight-light text-white mb-1">
                 {{ Math.round(weatherData.currently.temperature) }}°C
               </div>
-              <div class="text-h6 text-blue-grey-lighten-3 mb-1">
+              <div class="text-subtitle-1 text-blue-grey-lighten-3 mb-0">
                 {{ weatherData.currently.summary }}
               </div>
               <div class="text-caption text-blue-grey-lighten-2">
                 Feels like {{ Math.round(weatherData.currently.apparentTemperature) }}°C
               </div>
             </div>
-            <v-icon size="80" class="text-white opacity-80">
+            <v-icon size="64" class="text-white opacity-80">
               {{ getWeatherIcon(weatherData.currently.icon) }}
             </v-icon>
           </div>
@@ -42,31 +42,58 @@
         </v-card-text>
       </v-card>
 
-      <!-- 24-Hour Forecast -->
-      <v-card v-if="hourlyForecast.length > 0" class="rounded-lg" elevation="1">
-        <v-card-title class="text-subtitle-1 font-weight-bold">Next 24 Hours</v-card-title>
-        <v-card-text class="pa-4">
-          <div class="hourly-scroll">
-            <div class="d-flex" style="gap: 16px;">
-              <div 
-                v-for="hour in hourlyForecast" 
-                :key="hour.time"
-                class="hourly-item text-center flex-shrink-0"
-              >
-                <div class="text-caption text-grey mb-2">{{ formatHour(hour.time) }}</div>
-                <v-icon size="32" class="mb-2" :color="getWeatherColor(hour.icon)">
-                  {{ getWeatherIcon(hour.icon) }}
-                </v-icon>
-                <div class="text-body-2 font-weight-medium">{{ Math.round(hour.temperature) }}°</div>
-                <div class="text-caption text-grey mt-1" v-if="hour.precipProbability > 0.1">
-                  <v-icon size="12" color="blue">mdi-water</v-icon>
-                  {{ Math.round(hour.precipProbability * 100) }}%
-                </div>
-              </div>
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
+      <v-row>
+        <v-col cols="12">
+            <!-- Forecast Rain Chart -->
+             <v-card class="mb-4 rounded-lg" elevation="1">
+                <v-card-title class="text-subtitle-1 font-weight-bold">Predicted Precipitation (Next 48h)</v-card-title>
+                <v-card-text>
+                    <Line
+                        id="forecast-rain-chart"
+                        :options="forecastChartOptions"
+                        :data="forecastChartData"
+                    />
+                </v-card-text>
+            </v-card>
+        </v-col>
+
+        <v-col cols="12">
+            <!-- Historic Rain Chart -->
+            <v-card class="mb-4 rounded-lg" elevation="1" v-if="historicData">
+                <v-card-title class="text-subtitle-1 font-weight-bold">Historic Precipitation (Last 7 Days)</v-card-title>
+                <v-card-text>
+                   <Line
+                        id="historic-rain-chart"
+                        :options="historicChartOptions"
+                        :data="historicChartData"
+                    />
+                </v-card-text>
+            </v-card>
+            <v-skeleton-loader v-else class="mb-4 rounded-lg" type="card"></v-skeleton-loader>
+        </v-col>
+
+        <v-col cols="12">
+            <v-card class="mb-4 rounded-lg" elevation="1">
+                <v-card-title class="text-subtitle-1 font-weight-bold">External Resources</v-card-title>
+                <v-list density="compact">
+                    <v-list-item 
+                        prepend-icon="mdi-weather-windy" 
+                        title="Windy.com - Rain Accumulation"
+                        subtitle="View detailed rain accumulation maps"
+                        :href="`https://www.windy.com/-Rain-accumulation-rainAccu?rainAccu,${location.lat},${location.lng},8`"
+                        target="_blank"
+                    ></v-list-item>
+                     <v-list-item 
+                        prepend-icon="mdi-weather-cloudy-clock" 
+                        title="Met Office"
+                        subtitle="UK Weather Forecast"
+                        :href="`https://www.metoffice.gov.uk/weather/search-results?q=${caveName}`"
+                        target="_blank"
+                    ></v-list-item>
+                </v-list>
+            </v-card>
+        </v-col>
+      </v-row>
     </div>
 
     <v-alert v-else type="info" variant="tonal" class="ma-4">
@@ -75,42 +102,13 @@
   </v-container>
 </template>
 
-<style scoped>
-.hourly-scroll {
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-.hourly-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.hourly-scroll::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.hourly-scroll::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
-}
-
-.hourly-scroll::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-.hourly-item {
-  min-width: 70px;
-}
-
-.border-b:not(:last-child) {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-</style>
-
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineProps } from 'vue';
+import { Bar, Line } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js'
+import moment from 'moment';
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler)
 
 const props = defineProps({
   caveId: {
@@ -122,11 +120,127 @@ const props = defineProps({
 const loading = ref(true);
 const error = ref(null);
 const weatherData = ref(null);
+const historicData = ref(null);
+const location = ref({ lat: 0, lng: 0 });
+const caveName = ref('');
 
-const hourlyForecast = computed(() => {
-  if (!weatherData.value?.hourly?.data) return [];
-  return weatherData.value.hourly.data.slice(0, 24);
-});
+const historicChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: function (context) {
+          return context.parsed.y + ' mm';
+        }
+      }
+    }
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      title: { display: true, text: 'Precipitation (mm)' }
+    }
+  }
+}
+
+const forecastChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: true, position: 'bottom' },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+    }
+  },
+  scales: {
+    y: {
+      type: 'linear',
+      display: true,
+      position: 'left',
+      title: { display: true, text: 'Probability (%)' },
+      min: 0,
+      max: 100,
+    },
+    y1: {
+      type: 'linear',
+      display: true,
+      position: 'right',
+      title: { display: true, text: 'Intensity (mm/h)' },
+      grid: {
+        drawOnChartArea: false,
+      },
+      beginAtZero: true
+    }
+  },
+  interaction: {
+    mode: 'nearest',
+    axis: 'x',
+    intersect: false
+  }
+}
+
+const historicChartData = computed(() => {
+  if (!historicData.value) return { labels: [], datasets: [] };
+
+  // historicData is an object keyed by date string
+  // Sort keys just in case
+  const dates = Object.keys(historicData.value).sort();
+
+  // Calculate total daily rainfall from hourly data
+  const dailyRain = dates.map(date => {
+    const day = historicData.value[date];
+    if (!day.hourly) return 0;
+
+    // Sum precipIntensity (mm/hour) for each hour. 
+    // Assuming data is hourly, summing intensity gives approx total mm.
+    return day.hourly.reduce((sum, hour) => sum + (hour.precipIntensity || 0), 0);
+  });
+
+  return {
+    labels: dates.map(d => moment(d).format('ddd Do')),
+    datasets: [{
+      label: 'Precipitation (mm)',
+      borderColor: '#42A5F5',
+      backgroundColor: 'rgba(66, 165, 245, 0.2)',
+      fill: true,
+      tension: 0.4,
+      data: dailyRain
+    }]
+  }
+})
+
+const forecastChartData = computed(() => {
+  if (!weatherData.value?.hourly?.data) return { labels: [], datasets: [] };
+
+  const next48Hours = weatherData.value.hourly.data.slice(0, 48);
+
+  return {
+    labels: next48Hours.map(h => moment.unix(h.time).format('ddd HH:mm')),
+    datasets: [
+      {
+        label: 'Precip Probability (%)',
+        borderColor: '#90CAF9',
+        backgroundColor: 'rgba(144, 202, 249, 0.2)',
+        fill: true,
+        data: next48Hours.map(h => (h.precipProbability * 100)),
+        yAxisID: 'y',
+        tension: 0.4
+      },
+      {
+        label: 'Precip Intensity (mm/h)',
+        borderColor: '#1E88E5',
+        backgroundColor: 'rgba(30, 136, 229, 0.5)',
+        borderDash: [5, 5],
+        data: next48Hours.map(h => h.precipIntensity),
+        yAxisID: 'y1',
+        tension: 0.4
+      }
+    ]
+  }
+})
 
 const fetchWeatherData = async () => {
   loading.value = true;
@@ -136,18 +250,22 @@ const fetchWeatherData = async () => {
     // Fetch current and forecast
     const forecastResponse = await fetch(`/api/caves/${props.caveId}/weather/forecast`);
     if (!forecastResponse.ok) {
-      if (forecastResponse.status === 404) {
-        error.value = 'Location coordinates not available for this cave';
-      } else if (forecastResponse.status === 503) {
-        error.value = 'Weather service temporarily unavailable';
-      } else {
-        throw new Error(`Failed to fetch weather: ${forecastResponse.status}`);
-      }
-      loading.value = false;
-      return;
+      // ... error handling
+      throw new Error(`Failed to fetch weather`);
     }
-    const forecastData = await forecastResponse.json();
-    weatherData.value = forecastData.data;
+    const forecastJson = await forecastResponse.json();
+    weatherData.value = forecastJson.data;
+
+    if (weatherData.value) {
+      location.value = {
+        lat: weatherData.value.latitude,
+        lng: weatherData.value.longitude
+      }
+      caveName.value = weatherData.value.cave_name;
+    }
+
+    fetchHistoricData();
+
   } catch (err) {
     console.error('Error fetching weather:', err);
     error.value = 'Failed to load weather data';
@@ -156,10 +274,18 @@ const fetchWeatherData = async () => {
   }
 };
 
-const formatHour = (timestamp) => {
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
-};
+const fetchHistoricData = async () => {
+  try {
+    const response = await fetch(`/api/caves/${props.caveId}/weather/historic`);
+    if (response.ok) {
+      const json = await response.json();
+      historicData.value = json.data;
+    }
+  } catch (e) {
+    console.error("Failed to fetch historic weather", e);
+  }
+}
+
 
 const getWeatherIcon = (icon) => {
   const iconMap = {
@@ -179,25 +305,18 @@ const getWeatherIcon = (icon) => {
   return iconMap[icon] || 'mdi-weather-cloudy';
 };
 
-const getWeatherColor = (icon) => {
-  const colorMap = {
-    'clear-day': 'orange',
-    'clear-night': 'blue-grey',
-    'rain': 'blue',
-    'snow': 'blue-grey-lighten-2',
-    'sleet': 'blue-grey',
-    'wind': 'grey',
-    'fog': 'grey',
-    'cloudy': 'grey',
-    'partly-cloudy-day': 'amber',
-    'partly-cloudy-night': 'blue-grey',
-    'thunderstorm': 'deep-purple',
-    'tornado': 'red',
-  };
-  return colorMap[icon] || 'grey';
-};
-
 onMounted(() => {
   fetchWeatherData();
 });
 </script>
+
+<style scoped>
+/* Chart heights */
+#historic-rain-chart {
+  height: 200px;
+}
+
+#forecast-rain-chart {
+  height: 300px;
+}
+</style>
