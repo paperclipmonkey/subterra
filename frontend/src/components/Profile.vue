@@ -119,7 +119,7 @@
 
          <v-row>
             <!-- Medals -->
-            <v-col cols="12" md="4" v-if="medals.length > 0">
+            <v-col cols="12" md="4" v-if="medals.length > 0 || profile.id === user.id">
                <v-card class="rounded-xl h-100" elevation="0" border>
                   <v-card-title class="d-flex align-center py-4 px-6">
                      <v-icon icon="mdi-medal-outline" color="amber-darken-2" class="mr-2"></v-icon>
@@ -129,19 +129,29 @@
                   </v-card-title>
                   <v-divider></v-divider>
                   <v-card-text class="pa-6">
-                     <div class="medals-grid">
+                     <div v-if="medals.length > 0" class="medals-grid">
                         <div v-for="medal in medals" :key="medal.id" class="medal-item" @click="openMedalModal(medal)"
                            v-tooltip="medal.name">
                            <img v-if="medal.image_url" :src="medal.image_url" class="medal-img" />
                            <v-icon v-else icon="mdi-medal-outline" size="32" color="grey-lighten-2"></v-icon>
                         </div>
                      </div>
+                     <div v-else-if="profile.id === user.id" class="text-center py-4">
+                        <v-icon icon="mdi-medal-outline" size="48" color="grey-lighten-1" class="mb-3"></v-icon>
+                        <div class="text-subtitle-1 font-weight-bold mb-2">Start your collection!</div>
+                        <p class="text-body-2 text-medium-emphasis mb-4">
+                           You can earn medals by completing specific trips and exploring new caves.
+                        </p>
+                        <v-btn color="primary" variant="tonal" size="small" to="/caves" prepend-icon="mdi-magnify">
+                           Find a cave
+                        </v-btn>
+                     </div>
                   </v-card-text>
                </v-card>
             </v-col>
 
             <!-- Main Content -->
-            <v-col cols="12" :md="medals.length > 0 ? 8 : 12">
+            <v-col cols="12" :md="(medals.length > 0 || profile.id === user.id) ? 8 : 12">
                <!-- Heatmap -->
                <v-card class="rounded-xl mb-6" elevation="0" border>
                   <v-card-title class="py-4 px-6 d-flex align-center">
@@ -274,7 +284,7 @@
  </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { mande } from 'mande'; // Import mande
 import { CalendarHeatmap } from "vue3-calendar-heatmap";
