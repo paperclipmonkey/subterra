@@ -45,6 +45,9 @@ class DutyOfficerTest extends TestCase
 
     public function test_it_correctly_calculates_next_gap()
     {
+        // Freeze time to avoid race conditions across seconds
+        $this->travelTo(now());
+
         $user = User::factory()->create(['is_admin' => true]);
         
         // Shift 1: Now -> +1 hour
