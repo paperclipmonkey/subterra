@@ -129,9 +129,13 @@
                 </div>
               </div>
 
-              <v-select v-model="trip.visibility" label="Trip Visibility" :items="visibilityOptions" item-title="label"
+              <v-alert v-if="isClosed" type="warning" class="mb-4" density="compact" variant="tonal">
+                This cave is marked as <strong>Closed</strong>. You cannot create public trip reports for it.
+              </v-alert>
+
+              <v-select v-model="trip.visibility" label="Trip Visibility" :items="currentVisibilityOptions" item-title="label"
                 item-value="value" :error-messages="validationErrors.visibility" hint="Who can see this trip report"
-                persistent-hint variant="outlined" class="mb-4"></v-select>
+                persistent-hint variant="outlined" class="mb-4" item-props></v-select>
 
               <v-file-input prepend-icon="" prepend-inner-icon="mdi-camera" accept="image/*" label="Trip Photos"
                 v-model="trip.media" :error-messages="validationErrors.media"
@@ -263,6 +267,37 @@ const visibilityOptions = [
     description: 'Visible to members of your clubs'
   }
 ]
+
+const isClosed = computed(() => {
+  if (!trip.entrance_cave_id) return false;
+  const cave = caves.value.find(c => c.id === trip.entrance_cave_id);
+  // Check direct tags or system tags if applicable
+  const hasClosedTag = (entity) => entity?.tags?.some(t => t.tag === 'Closed');
+
+  if (hasClosedTag(cave)) return true;
+  if (cave?.system && hasClosedTag(cave.system)) return true;
+
+  return false;
+})
+
+watch(isClosed, (newVal) => {
+  if (newVal && trip.visibility === 'public') {
+    // Default to private if currently public
+    trip.visibility = 'private';
+  }
+})
+
+const currentVisibilityOptions = computed(() => {
+  if (isClosed.value) {
+    return visibilityOptions.map(opt => {
+      if (opt.value === 'public') {
+        return { ...opt, disabled: true, description: 'Not available for closed caves' }
+      }
+      return opt;
+    })
+  }
+  return visibilityOptions;
+})
 
 const rules = {
   name: [

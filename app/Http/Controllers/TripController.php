@@ -115,6 +115,9 @@ class TripController extends Controller
         if (!isset($tripData['visibility'])) {
             $tripData['visibility'] = 'public';
         }
+
+        // Validate Closed Access
+        $this->validateClosedAccess($tripData['entrance_cave_id'], $tripData['visibility']);
         
         $trip = Trip::create($tripData);
         $trip->save();
@@ -189,7 +192,13 @@ class TripController extends Controller
             $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
         }
 
-        $trip->update($request->validated());
+        // Validate Closed Access
+        $data = $request->validated();
+        $entranceCaveId = $data['entrance_cave_id'] ?? $trip->entrance_cave_id;
+        $visibility = $data['visibility'] ?? $trip->visibility;
+        $this->validateClosedAccess($entranceCaveId, $visibility);
+
+        $trip->update($data);
 
         // Add the participants to the trip
         $participants = $request->input('participants', []);
@@ -212,5 +221,22 @@ class TripController extends Controller
         return response()->json([
             'message'=> 'Trip deleted successfully'
         ]);
+    }
+
+    private function validateClosedAccess($caveId, $visibility): void
+    {
+        if ($visibility === 'public') {
+            $cave = \App\Models\Cave::with('tags', 'system.tags')->find($caveId);
+            if ($cave) {
+                $isClosed = $cave->tags->contains('tag', 'Closed') || 
+                           ($cave->system && $cave->system->tags->contains('tag', 'Closed'));
+                
+                if ($isClosed) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'visibility' => ['Closed caves cannot have public trip reports.']
+                    ]);
+                }
+            }
+        }
     }
 }

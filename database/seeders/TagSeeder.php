@@ -119,6 +119,13 @@ class TagSeeder extends Seeder
             "description"=> "A cave that requires a keycode to enter.",
         ]);
 
+        Tag::factory()->create([
+            "tag"=> "Closed",
+            "type"=> "cave",
+            "category"=> "access",
+            "description"=> "Access to this cave is currently not possible.",
+        ]);
+
         // - - - - - - - - - Tackle required
         Tag::factory()->create([
             "tag"=> "SRT",

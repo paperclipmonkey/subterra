@@ -26,5 +26,17 @@ class CaveSeeder extends Seeder
                 'description' => 'Description for Cave ' . ($i + 1),
             ]);
         }
+
+
+        // Create a Closed Cave
+        $closedTag = \App\Models\Tag::where('tag', 'Closed')->first();
+        if ($closedTag) {
+            $closedCave = Cave::factory()->create([
+                'name' => 'Closed Cave',
+                'description' => 'This cave is closed for access.',
+                'cave_system_id' => $caveSystem->id
+            ]);
+            $closedCave->tags()->attach($closedTag);
+        }
     }
 }

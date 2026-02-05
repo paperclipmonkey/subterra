@@ -516,4 +516,43 @@ class TripTest extends TestCase {
         $this->assertContains($tripB->short_id, $tripIdsB);
         $this->assertNotContains($tripA->short_id, $tripIdsB);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_prevents_public_trips_for_closed_caves()
+    {
+        $user = User::factory()->create();
+        $participant = User::factory()->create();
+        
+        // Create closed tag
+        $closedTag = \App\Models\Tag::factory()->create(['tag' => 'Closed', 'type' => 'cave', 'category' => 'access']);
+        
+        // Create cave with closed tag
+        $closedCave = Cave::factory()->create();
+        $closedCave->tags()->attach($closedTag);
+        
+        $tripData = [
+            'name' => 'Should Fail',
+            'start_time' => "2024-01-01 10:00:00",
+            'end_time' => "2024-01-02 10:00:00",
+            'cave_system_id' => $closedCave->cave_system_id,
+            'entrance_cave_id' => $closedCave->id,
+            'exit_cave_id' => $closedCave->id,
+            'description' => 'Test description',
+            'participants' => [$participant->id],
+            'visibility' => 'public',
+        ];
+
+        $this->actingAs($user);
+        
+        // Attempt public trip
+        $response = $this->postJson('/api/trips', $tripData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['visibility']);
+
+        // Attempt private trip (should succeed)
+        $tripData['visibility'] = 'private';
+        $tripData['name'] = 'Should Succeed';
+        $response = $this->postJson('/api/trips', $tripData);
+        $response->assertCreated();
+    }
 }
