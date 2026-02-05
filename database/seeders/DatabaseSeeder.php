@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             HutSeeder::class,
             PageSeeder::class,
             PrivacyPolicySeeder::class,
+            CatchmentSeeder::class,
         ]);
     }
 }

@@ -37,11 +37,22 @@
       </v-row>
       <v-text-field
         v-model="internalSystem.slug"
-        label="Slug"
-        :placeholder="'e.g. region_system-name'"
+        label="URL Slug"
+        :rules="[v => !!v || 'Slug is required']"
+        required
         :hint="'Lowercase, a-z, 0-9, _ and - only'"
         persistent-hint
       ></v-text-field>
+
+      <v-select
+        v-model="internalSystem.catchment_id"
+        :items="catchments"
+        item-title="name"
+        item-value="id"
+        label="Catchment (River Levels)"
+        clearable
+        class="mt-4"
+      ></v-select>
       <div class="text-subtitle-2 mt-4 mb-1">References</div>
       <MilkdownEditor
         v-model="internalSystem.references"
@@ -148,9 +159,24 @@ watch(() => internalSystem.value.name, (newName) => {
   }
 })
 
+// Watch slug to ensure valid format
 watch(() => internalSystem.value.slug, (newSlug) => {
   if (newSlug) {
     internalSystem.value.slug = slugify(newSlug)
+  }
+})
+
+const catchments = ref([])
+
+onMounted(async () => {
+  try {
+    const response = await fetch('/api/admin/catchments')
+    if (response.ok) {
+      const json = await response.json()
+      catchments.value = json.data
+    }
+  } catch (e) {
+    console.error('Failed to fetch catchments', e)
   }
 })
 </script>

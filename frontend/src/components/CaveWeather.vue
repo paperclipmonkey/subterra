@@ -72,6 +72,49 @@
             <v-skeleton-loader v-else class="mb-4 rounded-lg" type="card"></v-skeleton-loader>
         </v-col>
 
+        <v-col cols="12" v-if="weatherData.river_levels && weatherData.river_levels.length > 0">
+            <!-- River Level Charts (One per gauge) -->
+            <v-card class="mb-4 rounded-lg" elevation="1" v-for="(gauge, index) in weatherData.river_levels" :key="gauge.rloi_id">
+                <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
+                    <div>
+                        {{ gauge.name }}
+                        <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
+                    </div>
+                     <v-chip size="small" :color="getStateColor(gauge.state)" label>
+                        {{ gauge.state }}
+                    </v-chip>
+                </v-card-title>
+                
+                <v-card-text>
+                    <div class="d-flex align-center mb-2">
+                        <div class="text-h4 font-weight-light mr-4">
+                             {{ gauge.latest_value?.toFixed(2) }}m
+                        </div>
+                        <div class="d-flex flex-column">
+                             <span class="text-caption text-medium-emphasis">Current Level</span>
+                             <div class="d-flex align-center">
+                                <v-icon :icon="getTrendIcon(gauge.trend)" size="small" :color="getTrendColor(gauge.trend)" class="mr-1"></v-icon>
+                                <span class="text-body-2" :class="`text-${getTrendColor(gauge.trend)}`">{{ gauge.trend }}</span>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div style="height: 250px;">
+                        <Line
+                            :id="`river-level-chart-${index}`"
+                            :options="riverLevelChartOptions"
+                            :data="getRiverLevelChartData(gauge, index)"
+                        />
+                    </div>
+                </v-card-text>
+                <v-card-actions>
+                     <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.rloi_id}`" target="_blank" prepend-icon="mdi-open-in-new">
+                        View Official Gauge Data
+                     </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-col>
+
         <v-col cols="12">
             <v-card class="mb-4 rounded-lg" elevation="1">
                 <v-card-title class="text-subtitle-1 font-weight-bold">External Resources</v-card-title>
@@ -105,10 +148,11 @@
 <script setup>
 import { ref, onMounted, computed, defineProps } from 'vue';
 import { Bar, Line } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js'
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale } from 'chart.js'
+import 'chartjs-adapter-moment';
 import moment from 'moment';
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler)
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale)
 
 const props = defineProps({
   caveId: {
@@ -242,6 +286,109 @@ const forecastChartData = computed(() => {
   }
 })
 
+const riverLevelChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false }, // Hide legend as title serves this purpose
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+    }
+  },
+  scales: {
+    x: {
+      type: 'time',
+      time: {
+        unit: 'hour',
+        displayFormats: {
+          hour: 'HH:mm'
+        }
+      },
+      title: {
+        display: false,
+      }
+    },
+    y: {
+      beginAtZero: false,
+      title: { display: true, text: 'Level (m)' }
+    }
+  },
+  interaction: {
+    mode: 'nearest',
+    axis: 'x',
+    intersect: false
+  }
+}
+
+const getRiverLevelChartData = (gauge, index) => {
+  const sortedReadings = [...gauge.reading].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+  const color = ['#4CAF50', '#FF9800', '#F44336'][index % 3];
+  const datasets = [];
+
+  // Main Gauge Line
+  datasets.push({
+    label: 'Level',
+    borderColor: color,
+    backgroundColor: color,
+    data: sortedReadings.map(r => ({ x: r.dateTime, y: r.value })),
+    pointRadius: 0,
+    borderWidth: 2,
+    tension: 0.1,
+    order: 1 // Draw on top
+  });
+
+  // Normal Range (if metadata exists)
+  if (gauge.metadata?.typicalRangeHigh && gauge.metadata?.typicalRangeLow) {
+    if (sortedReadings.length > 0) {
+      const start = sortedReadings[0].dateTime;
+      const end = sortedReadings[sortedReadings.length - 1].dateTime;
+
+      const rangeDataHigh = [
+        { x: start, y: gauge.metadata.typicalRangeHigh },
+        { x: end, y: gauge.metadata.typicalRangeHigh }
+      ];
+      const rangeDataLow = [
+        { x: start, y: gauge.metadata.typicalRangeLow },
+        { x: end, y: gauge.metadata.typicalRangeLow }
+      ];
+
+      // Low Line (Invisible)
+      datasets.push({
+        label: 'Normal Low',
+        data: rangeDataLow,
+        borderColor: 'transparent',
+        pointRadius: 0,
+        borderWidth: 0,
+        fill: false,
+        order: 2
+      });
+
+      // High Line (Fills to Low)
+      datasets.push({
+        label: 'Normal Range',
+        data: rangeDataHigh,
+        borderColor: color,
+        borderDash: [5, 5],
+        borderWidth: 1,
+        backgroundColor: hexToRgba(color, 0.1),
+        pointRadius: 0,
+        fill: '-1',
+        order: 3
+      });
+    }
+  }
+
+  return { datasets };
+}
+
+const hexToRgba = (hex, alpha) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 const fetchWeatherData = async () => {
   loading.value = true;
   error.value = null;
@@ -308,6 +455,30 @@ const getWeatherIcon = (icon) => {
 onMounted(() => {
   fetchWeatherData();
 });
+
+const getStateColor = (state) => {
+  switch (state) {
+    case 'Low': return 'orange';
+    case 'High': return 'red';
+    default: return 'success';
+  }
+}
+
+const getTrendIcon = (trend) => {
+  switch (trend) {
+    case 'Rising': return 'mdi-arrow-top-right';
+    case 'Falling': return 'mdi-arrow-bottom-right';
+    default: return 'mdi-minus';
+  }
+}
+
+const getTrendColor = (trend) => {
+  switch (trend) {
+    case 'Rising': return 'red';
+    case 'Falling': return 'green';
+    default: return 'grey';
+  }
+}
 </script>
 
 <style scoped>

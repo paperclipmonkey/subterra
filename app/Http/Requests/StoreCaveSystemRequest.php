@@ -25,6 +25,7 @@ class StoreCaveSystemRequest extends FormRequest
             'vertical_range' => 'nullable|integer',
             'slug' => 'nullable|string|max:255|unique:cave_systems,slug',
             'references' => 'nullable|string',
+            'catchment_id' => 'nullable|exists:catchments,id',
         ];
     }
 }

@@ -20,7 +20,13 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'vertical_range',
         'slug',
         'references',
+        'catchment_id',
     ];
+
+    public function catchment()
+    {
+        return $this->belongsTo(Catchment::class);
+    }
 
     public function caves(): HasMany
     {

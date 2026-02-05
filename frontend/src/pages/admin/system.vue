@@ -37,6 +37,11 @@
           <v-card-title><v-icon left color="warning">mdi-clipboard-check</v-icon> Tasks</v-card-title>
           <v-card-text>Approvals & Data Quality.</v-card-text>
         </v-card>
+      <v-col cols="12" md="6" lg="3">
+        <v-card to="/admin/catchments" link hover height="100%">
+          <v-card-title><v-icon left>mdi-waves</v-icon> Catchments</v-card-title>
+          <v-card-text>Manage River Gauges.</v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>

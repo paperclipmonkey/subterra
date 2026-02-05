@@ -110,6 +110,7 @@ class CaveSystemController extends Controller
             'system.description' => 'nullable|string',
             'system.slug' => 'nullable|string|max:255',
             'system.references' => 'nullable|string',
+            'system.catchment_id' => 'nullable|exists:catchments,id',
             'cave.name' => 'required|string|max:255',
             'cave.description' => 'nullable|string',
             'cave.location_name' => 'required|string|max:255',

@@ -19,16 +19,36 @@
       "type": "string"
     },
     "length": {
-      "type": ["number", "null"],
+      "type": [
+        "number",
+        "null"
+      ],
       "minimum": 0
     },
     "vertical_range": {
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "references": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "catchment_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
     }
   },
-  "required": ["id", "name", "slug", "description"],
+  "required": [
+    "id",
+    "name",
+    "slug",
+    "description"
+  ],
   "additionalProperties": false
 }

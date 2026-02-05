@@ -11,7 +11,8 @@ use Illuminate\Http\JsonResponse;
 class CaveWeatherController extends Controller
 {
     public function __construct(
-        private readonly WeatherService $weatherService
+        private readonly WeatherService $weatherService,
+        private readonly \App\Services\RiverLevelService $riverLevelService
     ) {}
 
     /**
@@ -36,6 +37,30 @@ class CaveWeatherController extends Controller
             ], 503);
         }
 
+        // Fetch River Levels if applicable
+        $riverLevels = [];
+        $cave->load('system.catchment');
+        
+        if ($cave->system && $cave->system->catchment && !empty($cave->system->catchment->gauges)) {
+            foreach ($cave->system->catchment->gauges as $gauge) {
+                if (!empty($gauge['rloi_id'])) {
+                    $enhancedData = $this->riverLevelService->getEnhancedReading($gauge['rloi_id']);
+                    if ($enhancedData) {
+                        $riverLevels[] = [
+                            'name' => $gauge['name'],
+                            'rloi_id' => $gauge['rloi_id'],
+                            'reading' => $enhancedData['reading'],
+                            'latest_value' => $enhancedData['latest_value'],
+                            'latest_time' => $enhancedData['latest_time'],
+                            'trend' => $enhancedData['trend'],
+                            'state' => $enhancedData['state'],
+                            'metadata' => $enhancedData['metadata']
+                        ];
+                    }
+                }
+            }
+        }
+
         return response()->json([
             'data' => [
                 'cave_name' => $cave->name,
@@ -44,6 +69,7 @@ class CaveWeatherController extends Controller
                 'currently' => $forecast['currently'] ?? null,
                 'hourly' => $forecast['hourly'] ?? null,
                 'daily' => $forecast['daily'] ?? null,
+                'river_levels' => $riverLevels,
             ]
         ]);
     }
