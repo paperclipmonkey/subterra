@@ -15,7 +15,7 @@
                     </div>
                 </v-alert>
 
-                <v-card class="mb-6 elevation-10" :color="callout.incident ? 'grey darken-4' : 'red darken-4'" dark>
+                <v-card class="mb-6 elevation-10" :color="cardColor" dark>
                     <v-card-text class="text-center pa-6">
                         <div class="text-h6 mb-2">{{ callout.incident ? 'RESCUE ACTIVATED' : 'RESCUE WILL BE ACTIVATED IN' }}</div>
                         <div class="text-h2 font-weight-black mb-2 white--text">
@@ -139,6 +139,18 @@ const timeRemaining = computed(() => {
     const secs = duration.seconds();
 
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+});
+
+const cardColor = computed(() => {
+    if (callout.value.incident) return 'red-darken-4';
+    if (!callout.value.callout_time) return 'primary';
+
+    const end = moment(callout.value.callout_time);
+    const diffMins = end.diff(now.value, 'minutes');
+
+    if (diffMins < 30) return 'red-darken-4';
+    if (diffMins < 60) return 'orange-darken-4';
+    return 'primary';
 });
 
 const formatTime = (t) => moment(t).format('HH:mm');
