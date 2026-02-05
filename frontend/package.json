@@ -31,7 +31,7 @@
     "vue-markdown-render": "^2.3.0",
     "vue-toastification": "^2.0.0-rc.5",
     "vue3-calendar-heatmap": "^2.0.5",
-    "vuetify": "^3.11.7"
+    "vuetify": "^3.11.8"
   },
   "devDependencies": {
     "@indoorequal/vue-maplibre-gl": "^8.4.2",
