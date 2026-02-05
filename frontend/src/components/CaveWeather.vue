@@ -87,7 +87,7 @@
                         prepend-icon="mdi-weather-cloudy-clock" 
                         title="Met Office"
                         subtitle="UK Weather Forecast"
-                        :href="`https://www.metoffice.gov.uk/weather/search-results?q=${caveName}`"
+                        :href="`https://www.metoffice.gov.uk/`"
                         target="_blank"
                     ></v-list-item>
                 </v-list>
