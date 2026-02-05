@@ -73,9 +73,9 @@
         </v-card>
 
         <!-- Help Text -->
-        <v-card variant="outlined" color="warning" class="mt-4 pa-4">
+        <v-card variant="outlined" color="info" class="mt-4 pa-4">
             <div class="d-flex align-start">
-                <v-icon color="warning" class="mr-3 mt-1">mdi-information</v-icon>
+                <v-icon color="info" class="mr-3 mt-1">mdi-information</v-icon>
                 <div>
                     <div class="text-subtitle-2 font-weight-bold mb-2">What is Callout Time?</div>
                     <div class="text-body-2 mb-3">
@@ -90,10 +90,6 @@
                         <li>Equipment issues or slower progress than planned</li>
                         <li>Weather deterioration</li>
                     </ul>
-
-                    <v-alert type="success" variant="tonal" density="compact" class="mt-2">
-                        <strong>Tip:</strong> For a 3-hour trip, most experienced cavers add 2-3 hours buffer time (so set callout for 5-6 hours).
-                    </v-alert>
                 </div>
             </div>
         </v-card>
