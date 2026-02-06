@@ -29,7 +29,7 @@
                </v-avatar>
 
                <div class="ml-sm-6 mt-4 mt-sm-0 flex-grow-1 text-center text-sm-left" style="min-width: 0;">
-                  <h1 class="text-h5 text-sm-h4 font-weight-bold text-grey-darken-4 mb-1 text-truncate">{{ profile.name }}</h1>
+                  <h1 class="text-h5 text-sm-h4 font-weight-bold text-grey-darken-4 mb-1">{{ profile.name }}</h1>
                   <div class="d-flex align-center justify-center justify-sm-start flex-wrap gap-2">
                      <v-chip v-if="profile.clubs && profile.clubs.length > 0" color="primary" variant="flat"
                         size="small" prepend-icon="mdi-account-group-outline" class="font-weight-medium">
@@ -37,7 +37,7 @@
                         <span v-if="profile.clubs.length > 1" class="ml-1 opacity-70">+{{ profile.clubs.length - 1
                            }}</span>
                      </v-chip>
-                     <div class="text-body-2 text-medium-emphasis text-truncate" v-if="profile.bio"
+                     <div class="text-body-2 text-medium-emphasis" v-if="profile.bio"
                         style="max-width: 100%;">
                         {{ profile.bio }}
                      </div>
