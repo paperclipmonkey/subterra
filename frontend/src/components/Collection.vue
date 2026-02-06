@@ -46,69 +46,37 @@
       </div>
     </v-container>
 
-    <v-tabs v-model="tab" color="primary" align-tabs="center" grow>
-      <v-tab value="list" class="font-weight-bold"><v-icon start>mdi-format-list-bulleted</v-icon> List View</v-tab>
-      <v-tab value="map" class="font-weight-bold"><v-icon start>mdi-map</v-icon> Map View</v-tab>
-    </v-tabs>
+    <!-- Desktop View: Split Layout -->
+    <v-container v-if="mdAndUp" fluid class="pa-0">
+      <v-row no-gutters>
+        <v-col cols="12" md="8">
+          <CollectionCaveList :collection="collection" :can-edit="canEdit" />
+        </v-col>
+        <v-col cols="12" md="4">
+          <div class="position-sticky" style="top: 20px;">
+             <CollectionMap :collection="collection" />
+          </div>
+        </v-col>
+      </v-row>
+    </v-container>
 
-    <v-window v-model="tab">
-      <v-window-item value="list">
-        <v-container>
-          <div v-if="collection.caves && collection.caves.length > 0">
-            <v-row>
-              <v-col v-for="cave in collection.caves" :key="cave.id" cols="12" md="6">
-                <v-card :to="`/caves/${cave.slug}`" link class="d-flex flex-row align-center rounded-lg" elevation="1"
-                  height="100%">
-                  <v-avatar rounded="0" size="100" class="h-100">
-                    <v-img :src="cave.hero_image || cave.entrance_image" cover class="h-100"></v-img>
-                  </v-avatar>
-                  <div class="pa-4 flex-grow-1" style="min-width: 0;">
-                    <div class="text-h6 font-weight-bold text-truncate">{{ cave.name }}</div>
-                    <div class="text-caption text-grey-darken-1">
-                      <v-icon size="small" start>mdi-map-marker</v-icon>{{ cave.location_name }}
-                    </div>
-                    <div v-if="cave.pivot && cave.pivot.description" class="text-body-2 mt-2 font-italic text-grey-darken-3 markdown-body">
-                      <VueMarkdown :source="cave.pivot.description" />
-                    </div>
-                  </div>
-                  <div class="pr-4 d-flex align-center">
-                    <v-icon v-if="cave.is_ticked" color="success" class="mr-2"
-                      title="Completed">mdi-check-circle</v-icon>
-                    <v-icon color="grey-lighten-1">mdi-chevron-right</v-icon>
-                  </div>
-                </v-card>
-              </v-col>
-            </v-row>
-          </div>
-          <div v-else class="text-center py-12">
-            <v-icon size="64" color="grey-lighten-2">mdi-cave</v-icon>
-            <div class="text-h6 text-grey mt-4">No caves in this collection yet.</div>
-            <div v-if="canEdit" class="text-caption text-grey">Edit the collection to add some caves!</div>
-          </div>
-        </v-container>
-      </v-window-item>
+    <!-- Mobile View: Tabs -->
+    <div v-else>
+      <v-tabs v-model="tab" color="primary" align-tabs="center" grow>
+        <v-tab value="list" class="font-weight-bold"><v-icon start>mdi-format-list-bulleted</v-icon> List View</v-tab>
+        <v-tab value="map" class="font-weight-bold"><v-icon start>mdi-map</v-icon> Map View</v-tab>
+      </v-tabs>
 
-      <v-window-item value="map">
-        <div v-if="!userStore.user.is_approved" class="d-flex justify-center align-center fill-height bg-grey-lighten-4 pa-12" style="height: 600px;">
-          <v-card variant="outlined" class="text-center pa-8 border-dashed rounded-xl" max-width="400">
-            <v-icon size="64" color="warning" class="mb-4">mdi-shield-lock</v-icon>
-            <div class="text-h6 font-weight-bold mb-2">Maps Restricted</div>
-            <div class="text-body-2 text-grey-darken-1">
-              Cave locations are only visible to approved users. Please wait for an club to verify your membership.
-            </div>
-          </v-card>
-        </div>
-        <div v-else style="height: 600px;">
-          <CaveMap :caves="collection.caves" v-if="collection.caves && collection.caves.length > 0" />
-          <div v-else class="d-flex justify-center align-center fill-height bg-grey-lighten-4">
-            <div class="text-center text-grey">
-              <v-icon size="48" class="mb-2">mdi-map-off</v-icon>
-              <div>No locations to display</div>
-            </div>
-          </div>
-        </div>
-      </v-window-item>
-    </v-window>
+      <v-window v-model="tab">
+        <v-window-item value="list">
+          <CollectionCaveList :collection="collection" :can-edit="canEdit" />
+        </v-window-item>
+
+        <v-window-item value="map">
+          <CollectionMap :collection="collection" />
+        </v-window-item>
+      </v-window>
+    </div>
   </v-card>
 
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
@@ -128,16 +96,19 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useCollectionStore } from '@/stores/collections'
 import { useAppStore } from '@/stores/app'
 import CollectionEditModal from '@/components/CollectionEditModal.vue'
-import CaveMap from '@/components/CaveMap.vue'
+import CollectionCaveList from '@/components/CollectionCaveList.vue'
+import CollectionMap from '@/components/CollectionMap.vue'
 import VueMarkdown from 'vue-markdown-render'
 import CorrectionModal from '@/components/CorrectionModal.vue'
 
 const route = useRoute()
 const collectionStore = useCollectionStore()
 const userStore = useAppStore()
+const { mdAndUp } = useDisplay()
 
 const tab = ref('list')
 
