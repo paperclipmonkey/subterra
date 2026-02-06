@@ -12,7 +12,8 @@ class CaveWeatherController extends Controller
 {
     public function __construct(
         private readonly WeatherService $weatherService,
-        private readonly \App\Services\RiverLevelService $riverLevelService
+        private readonly \App\Services\RiverLevelService $riverLevelService,
+        private readonly \App\Services\RainfallService $rainfallService
     ) {}
 
     /**
@@ -37,24 +38,44 @@ class CaveWeatherController extends Controller
             ], 503);
         }
 
-        // Fetch River Levels if applicable
+        // Fetch River Levels and Rain Gauges
         $riverLevels = [];
+        $rainGauges = [];
         $cave->load('system.catchment');
         
         if ($cave->system && $cave->system->catchment && !empty($cave->system->catchment->gauges)) {
             foreach ($cave->system->catchment->gauges as $gauge) {
-                if (!empty($gauge['rloi_id'])) {
-                    $enhancedData = $this->riverLevelService->getEnhancedReading($gauge['rloi_id']);
-                    if ($enhancedData) {
-                        $riverLevels[] = [
+                // River Gauges
+                if (empty($gauge['type']) || $gauge['type'] === 'river') {
+                    if (!empty($gauge['rloi_id'])) {
+                        $enhancedData = $this->riverLevelService->getEnhancedReading($gauge['rloi_id']);
+                        if ($enhancedData) {
+                            $riverLevels[] = [
+                                'name' => $gauge['name'],
+                                'rloi_id' => $gauge['rloi_id'],
+                                'type' => 'river',
+                                'reading' => $enhancedData['reading'],
+                                'latest_value' => $enhancedData['latest_value'],
+                                'latest_time' => $enhancedData['latest_time'],
+                                'trend' => $enhancedData['trend'],
+                                'state' => $enhancedData['state'],
+                                'metadata' => $enhancedData['metadata']
+                            ];
+                        }
+                    }
+                }
+                // Rain Gauges
+                elseif ($gauge['type'] === 'rain' && !empty($gauge['station_id'])) {
+                    $readings = $this->rainfallService->getReadings($gauge['station_id']);
+                    $metadata = $this->rainfallService->getStationMetadata($gauge['station_id']);
+                    
+                    if ($readings) {
+                        $rainGauges[] = [
                             'name' => $gauge['name'],
-                            'rloi_id' => $gauge['rloi_id'],
-                            'reading' => $enhancedData['reading'],
-                            'latest_value' => $enhancedData['latest_value'],
-                            'latest_time' => $enhancedData['latest_time'],
-                            'trend' => $enhancedData['trend'],
-                            'state' => $enhancedData['state'],
-                            'metadata' => $enhancedData['metadata']
+                            'station_id' => $gauge['station_id'],
+                            'type' => 'rain',
+                            'readings' => $readings,
+                            'metadata' => $metadata
                         ];
                     }
                 }
@@ -70,6 +91,7 @@ class CaveWeatherController extends Controller
                 'hourly' => $forecast['hourly'] ?? null,
                 'daily' => $forecast['daily'] ?? null,
                 'river_levels' => $riverLevels,
+                'rain_gauges' => $rainGauges,
             ]
         ]);
     }

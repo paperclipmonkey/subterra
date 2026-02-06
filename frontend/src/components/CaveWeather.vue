@@ -74,7 +74,7 @@
 
         <v-col cols="12" v-if="weatherData.river_levels && weatherData.river_levels.length > 0">
             <!-- River Level Charts (One per gauge) -->
-            <v-card class="mb-4 rounded-lg" elevation="1" v-for="(gauge, index) in weatherData.river_levels" :key="gauge.rloi_id">
+            <v-card class="mb-4 rounded-lg" elevation="1" v-for="(gauge, index) in weatherData.river_levels" :key="`river-${gauge.rloi_id}`">
                 <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
                     <div>
                         {{ gauge.name }}
@@ -113,6 +113,32 @@
                      </v-btn>
                 </v-card-actions>
             </v-card>
+        </v-col>
+
+        <v-col cols="12" v-if="weatherData.rain_gauges && weatherData.rain_gauges.length > 0">
+            <!-- Rain Gauge Charts (One per gauge) -->
+             <v-card class="mb-4 rounded-lg" elevation="1" v-for="(gauge, index) in weatherData.rain_gauges" :key="`rain-${gauge.station_id}`">
+                <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
+                    <div>
+                        {{ gauge.name }}
+                        <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
+                    </div>
+                </v-card-title>
+                 <v-card-text>
+                    <div style="height: 250px;">
+                        <Bar
+                            :id="`rain-gauge-chart-${index}`"
+                            :options="rainGaugeChartOptions"
+                            :data="getRainGaugeChartData(gauge, index)"
+                        />
+                    </div>
+                 </v-card-text>
+                 <v-card-actions>
+                     <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.station_id}`" target="_blank" prepend-icon="mdi-open-in-new">
+                        View Official Gauge Data
+                     </v-btn>
+                </v-card-actions>
+             </v-card>
         </v-col>
 
         <v-col cols="12">
@@ -286,6 +312,7 @@ const forecastChartData = computed(() => {
   }
 })
 
+
 const riverLevelChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -319,6 +346,56 @@ const riverLevelChartOptions = {
     axis: 'x',
     intersect: false
   }
+}
+
+const rainGaugeChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+    }
+  },
+  scales: {
+    x: {
+      type: 'time',
+      time: {
+        unit: 'hour',
+        displayFormats: {
+          hour: 'HH:mm'
+        }
+      },
+      title: {
+        display: false,
+      }
+    },
+    y: {
+      beginAtZero: true,
+      title: { display: true, text: 'Rainfall (mm)' }
+    }
+  },
+  interaction: {
+    mode: 'nearest',
+    axis: 'x',
+    intersect: false
+  }
+}
+
+const getRainGaugeChartData = (gauge, index) => {
+  const sortedReadings = [...gauge.readings].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+  const color = '#2196F3'; // Blue for rain
+
+  return {
+    datasets: [{
+      label: 'Rainfall',
+      backgroundColor: color,
+      borderColor: color,
+      borderWidth: 1,
+      data: sortedReadings.map(r => ({ x: r.dateTime, y: r.value })),
+    }]
+  };
 }
 
 const getRiverLevelChartData = (gauge, index) => {

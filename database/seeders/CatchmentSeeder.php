@@ -100,5 +100,36 @@ class CatchmentSeeder extends Seeder
             'location_name' => 'Charterhouse',
             'location_country' => 'UK'
         ]);
+
+        // 4. Catchment with Rain Gauge
+        $peakCatchment = Catchment::create([
+            'name' => 'Derbyshire (Peak District)',
+            'reference_id' => 'PEAK001',
+            'gauges' => [
+                [
+                    'name' => 'Castleton',
+                    'station_id' => '52201',
+                    'type' => 'rain'
+                ]
+            ]
+        ]);
+
+        $titan = CaveSystem::create([
+            'name' => 'Titan',
+            'slug' => 'titan',
+            'length' => 2000,
+            'vertical_range' => 140,
+            'description' => 'Deep shaft in the Peak District.',
+            'catchment_id' => $peakCatchment->id
+        ]);
+
+        Cave::factory()->create([
+            'name' => 'Titan',
+            'cave_system_id' => $titan->id,
+            'location_lat' => 53.33,
+            'location_lng' => -1.78,
+            'location_name' => 'Castleton',
+            'location_country' => 'UK'
+        ]);
     }
 }

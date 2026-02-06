@@ -28,7 +28,9 @@ class CatchmentController extends Controller
             'name' => 'required|string|max:255',
             'reference_id' => 'required|string|unique:catchments,reference_id',
             'gauges' => 'nullable|array',
-            'gauges.*.rloi_id' => 'required|string',
+            'gauges.*.type' => 'nullable|string|in:river,rain',
+            'gauges.*.rloi_id' => 'required_without:gauges.*.station_id|nullable|string',
+            'gauges.*.station_id' => 'required_without:gauges.*.rloi_id|nullable|string',
             'gauges.*.name' => 'required|string',
         ]);
 
@@ -45,7 +47,9 @@ class CatchmentController extends Controller
             'name' => 'required|string|max:255',
             'reference_id' => 'required|string|unique:catchments,reference_id,' . $catchment->id,
             'gauges' => 'nullable|array',
-            'gauges.*.rloi_id' => 'required|string',
+            'gauges.*.type' => 'nullable|string|in:river,rain',
+            'gauges.*.rloi_id' => 'required_without:gauges.*.station_id|nullable|string',
+            'gauges.*.station_id' => 'required_without:gauges.*.rloi_id|nullable|string',
             'gauges.*.name' => 'required|string',
         ]);
 
