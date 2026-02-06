@@ -56,6 +56,9 @@ Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCall
 Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'publicShow'])
     ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Page::class);
 
+Route::get('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'index']);
+Route::get('/routes/{route}', [App\Http\Controllers\RouteController::class, 'show']);
+
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
     
@@ -78,6 +81,10 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
     Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
     Route::post('/cave_systems_with_cave', [App\Http\Controllers\CaveSystemController::class, 'storeWithCave'])->middleware(ApiIsAdmin::class);
+
+    Route::post('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'store'])->middleware(ApiIsAdmin::class);
+    Route::put('/routes/{route}', [App\Http\Controllers\RouteController::class, 'update'])->middleware(ApiIsAdmin::class);
+    Route::delete('/routes/{route}', [App\Http\Controllers\RouteController::class, 'destroy'])->middleware(ApiIsAdmin::class);
 
     # Trips
     Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);

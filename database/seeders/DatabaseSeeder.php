@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             PageSeeder::class,
             PrivacyPolicySeeder::class,
             CatchmentSeeder::class,
+            RouteSeeder::class,
         ]);
     }
 }

@@ -26,7 +26,7 @@ class CaveSystemController extends Controller
 
     public function show(CaveSystem $caveSystem)
     {
-        $caveSystem->load('files'); // Eager load files
+        $caveSystem->load(['files', 'caves']); // Eager load files and caves
         return new CaveSystemResource($caveSystem);
     }
 

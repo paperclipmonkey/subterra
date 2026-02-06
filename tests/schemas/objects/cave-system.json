@@ -15,11 +15,17 @@
       "type": "string"
     },
     "length": {
-      "type": ["number", "null"],
+      "type": [
+        "number",
+        "null"
+      ],
       "minimum": 0
     },
     "vertical_range": {
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "caves": {
       "type": "array",
@@ -34,24 +40,58 @@
       }
     },
     "references": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "files": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "id": {"type": "integer"},
-          "url": {"type": "string"},
-          "original_filename": {"type": "string"},
-          "mime_type": {"type": "string"},
-          "size": {"type": "integer"},
-          "details": {"type": ["string", "null"]}
+          "id": {
+            "type": "integer"
+          },
+          "url": {
+            "type": "string"
+          },
+          "original_filename": {
+            "type": "string"
+          },
+          "mime_type": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "details": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         },
-        "required": ["id", "url", "original_filename", "mime_type", "size"]
+        "required": [
+          "id",
+          "url",
+          "original_filename",
+          "mime_type",
+          "size"
+        ]
       }
+    },
+    "routes": {
+      "type": "array"
     }
   },
-  "required": ["id", "name", "description", "caves", "tags", "files"],
+  "required": [
+    "id",
+    "name",
+    "description",
+    "caves",
+    "tags",
+    "files"
+  ],
   "additionalProperties": false
 }

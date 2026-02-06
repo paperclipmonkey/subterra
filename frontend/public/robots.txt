@@ -1,2 +1,7 @@
 User-agent: *
-Allow: /
+Disallow: /
+Allow: /$
+Allow: /assets/
+Allow: /build/
+Allow: /login-images/
+Allow: /favicon.ico

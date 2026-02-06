@@ -98,7 +98,9 @@ class CaveResource extends JsonResource
                         'size' => $file->size,
                         'details' => $file->details,
                     ];
-                }) : [],            ],
+                }) : [],
+                'routes' => $this->system->routes ?? [],
+            ],
             'trips' => TripResource::collection($this->whenLoaded('trips')),
             'previously_done' => $previoslyDoneTag->tag === 'Previously Done',
             'collections' => CollectionResource::collection($this->whenLoaded('collections')),

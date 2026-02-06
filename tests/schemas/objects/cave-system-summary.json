@@ -42,6 +42,9 @@
         "integer",
         "null"
       ]
+    },
+    "routes": {
+      "type": "array"
     }
   },
   "required": [

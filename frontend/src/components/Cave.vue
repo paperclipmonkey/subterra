@@ -45,7 +45,8 @@
             <v-tab value="weather">Weather</v-tab>
             <v-tab value="system">System Info</v-tab>
             <v-tab value="media">Media</v-tab>
-            <v-tab value="collections">Collections</v-tab>
+            <v-tab value="routes" v-if="appStore.user.is_admin || (cave.system?.routes?.length > 0)">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1"></v-badge></v-tab>
+            <v-tab value="collections" v-if="appStore.user.is_admin || (linkedCollections && linkedCollections.length > 0)">Collections</v-tab>
           </v-tabs>
           <v-divider></v-divider>
 
@@ -235,6 +236,31 @@
               </v-alert>
             </v-window-item>
 
+
+            
+            <!-- Routes Tab -->
+            <v-window-item value="routes">
+                <template v-if="cave.system && cave.system.routes && cave.system.routes.length > 0">
+                    <RouteList :routes="cave.system.routes" :caveSystemId="cave.system.id" />
+                </template>
+                 <v-alert v-else-if="cave.system" type="info" variant="tonal">
+                     <div class="d-flex justify-space-between align-center">
+                        <span>No specific routes defined for this system yet.</span>
+                        <v-btn
+                            v-if="appStore.user.is_admin"
+                            color="primary"
+                            size="small"
+                            variant="text"
+                            prepend-icon="mdi-plus"
+                            :to="`/cave-systems/${cave.system.id}/routes/new`"
+                        >
+                            Add Route
+                        </v-btn>
+                     </div>
+                 </v-alert>
+                 <v-alert v-else type="warning" variant="tonal">System information not available, cannot show routes.</v-alert>
+            </v-window-item>
+
           </v-window>
         </v-card>
       </v-col>
@@ -369,6 +395,7 @@ import { markCaveAsDone } from '@/stores/markAsDone';
 import { useCollectionStore } from '@/stores/collections';
 import CorrectionModal from '@/components/CorrectionModal.vue'
 import CaveWeather from '@/components/CaveWeather.vue'
+import RouteList from '@/components/cave-systems/RouteList.vue'
 
 import {
   MglMap,
