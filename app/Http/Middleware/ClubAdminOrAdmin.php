@@ -18,9 +18,11 @@ class ClubAdminOrAdmin
         {
             return $next($request);
         }
-        // Check if the user is a club admin
+        // Check if the user is a club admin (must be approved and have admin privileges)
         if($request->route('club')->users->contains(function ($member) use ($request) {
-            return $member->id === $request->user()->id && $member->pivot->is_admin;
+            return $member->id === $request->user()->id 
+                && $member->pivot->is_admin 
+                && $member->pivot->status === 'approved';
         }))
         {
             return $next($request);
