@@ -1,5 +1,25 @@
 <template>
   <div>
+    <div class="d-flex justify-end pa-4">
+        <v-btn
+            v-if="appStore.user"
+            color="primary"
+            variant="text"
+            prepend-icon="mdi-pencil"
+            :to="`/cave-systems/${route.params.id}/edit`"
+        >
+            {{ appStore.user?.is_admin ? 'Edit Cave System' : 'Suggest Edit' }}
+        </v-btn>
+        <v-btn
+            v-else
+            color="primary"
+            variant="text"
+            prepend-icon="mdi-pencil"
+            to="/login"
+        >
+            Log in to Suggest Edit
+        </v-btn>
+    </div>
     <CaveSystem />
     
     <v-container v-if="caveSystem">
@@ -16,7 +36,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
+import { useAppStore } from '@/stores/app'
 
+const appStore = useAppStore()
 const route = useRoute()
 const caveSystem = ref(null)
 

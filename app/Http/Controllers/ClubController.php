@@ -246,13 +246,13 @@ class ClubController extends Controller
         }));
     }
 
-    public function approveMember(Club $club, User $user): JsonResponse
+    public function approveMember(Club $club, User $user): \App\Http\Resources\UserDetailEmailResource
     {
         // Only approve if currently pending
         $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
         // Dispatch event for notification
         event(new ClubAccessResponded($club, $user, 'approved'));
-        return response()->json(['message' => 'Member approved.']);
+        return new \App\Http\Resources\UserDetailEmailResource($user->fresh());
     }
 
     public function rejectMember(Club $club, User $user): JsonResponse

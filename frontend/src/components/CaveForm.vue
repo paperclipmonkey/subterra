@@ -124,6 +124,14 @@
             </v-chip-group>
           </template>
         </template>
+        <v-alert
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mt-4 text-caption"
+        >
+          By submitting this data, you confirm that you have the right to share this information and media, and that it does not infringe on any third-party rights.
+        </v-alert>
       </v-card-text>
     </v-card>
   </div>

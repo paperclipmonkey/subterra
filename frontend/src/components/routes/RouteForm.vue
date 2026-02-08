@@ -180,9 +180,20 @@
           </div>
       </div>
 
+      <v-alert
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mb-4 text-caption"
+      >
+        By submitting this data, you confirm that you have the right to share this information and media, and that it does not infringe on any third-party rights.
+      </v-alert>
+
       <v-divider class="my-4"></v-divider>
       
-      <v-btn type="submit" color="primary" block :loading="loading">Save Route</v-btn>
+      <v-btn type="submit" color="primary" block :loading="loading">
+        {{ appStore.user?.is_admin ? 'Save Route' : 'Suggest Changes' }}
+      </v-btn>
     </v-form>
   </v-container>
 </template>
@@ -191,6 +202,11 @@
 import { ref, onMounted } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
+import { useAppStore } from '@/stores/app'
+import { useToast } from "vue-toastification"
+
+const toast = useToast()
+const appStore = useAppStore()
 
 const props = defineProps({
     initialRoute: {
@@ -208,10 +224,14 @@ const props = defineProps({
     caveSystemId: {
         type: [String, Number],
         required: true
+    },
+    preventSubmit: {
+        type: Boolean,
+        default: false
     }
 })
 
-const emit = defineEmits(['saved'])
+const emit = defineEmits(['saved', 'submit'])
 
 const form = ref(null)
 const loading = ref(false)
@@ -293,31 +313,61 @@ const save = async () => {
 
     loading.value = true
     try {
-        const url = route.value.id
-            ? `/api/routes/${route.value.id}`
-            : `/api/cave_systems/${props.caveSystemId}/routes`
-
-        const method = route.value.id ? 'PUT' : 'POST'
-
         const payload = {
             ...route.value,
             media: newMedia.value, // Add new media to payload
             deleted_media: deletedMediaIds.value // Send deleted media IDs
         }
-        
-        const response = await fetch(url, {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        })
 
-        if (response.ok) {
-            emit('saved')
+        if (props.preventSubmit) {
+            emit('submit', payload)
+            loading.value = false
+            return
+        }
+
+        if (appStore.user?.is_admin) {
+            const url = route.value.id
+                ? `/api/routes/${route.value.id}`
+                : `/api/cave_systems/${props.caveSystemId}/routes`
+
+            const method = route.value.id ? 'PUT' : 'POST'
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+
+            if (response.ok) {
+                emit('saved')
+            } else {
+                console.error('Failed to save')
+            }
         } else {
-            console.error('Failed to save')
+            // Suggest Edit or Create
+            const response = await fetch('/api/suggested-edits', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    suggestable_type: 'route',
+                    suggestable_id: route.value.id || null, // null means creation
+                    suggested_data: { ...payload, cave_system_id: props.caveSystemId },
+                    original_data: null
+                })
+            })
+
+            if (response.ok) {
+                toast.success('Thank you! Your suggestion has been submitted for review.')
+                emit('saved')
+            } else {
+                console.error('Failed to submit suggestion')
+            }
         }
     } catch (error) {
         console.error(error)

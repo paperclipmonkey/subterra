@@ -9,7 +9,29 @@
         <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="Search collections" single-line
           hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface"></v-text-field>
       </div>
-      <CollectionEditModal v-if="userStore.user.is_admin" />
+      <CollectionEditModal v-if="userStore.canSuggest" />
+      <v-btn
+        v-else-if="userStore.user?.id"
+        color="grey"
+        variant="text"
+        disabled
+        prepend-icon="mdi-plus"
+        class="mr-2"
+      >
+        <v-tooltip activator="parent" location="top">
+            {{ !userStore.user.is_approved ? 'Your account must be approved' : 'You must join a club' }} to contribute
+        </v-tooltip>
+        Suggest New
+      </v-btn>
+      <v-btn
+        v-else
+        color="primary"
+        variant="text"
+        to="/login"
+        prepend-icon="mdi-plus"
+      >
+        Log in to Suggest
+      </v-btn>
     </v-toolbar>
 
     <div v-if="loading" class="d-flex justify-center my-12">

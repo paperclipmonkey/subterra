@@ -15,6 +15,14 @@ export const useAppStore = defineStore('app', {
     //
   }),
 
+  getters: {
+    canSuggest: (state) => {
+      if (!state.user || !state.user.id) return false
+      if (state.user.is_admin) return true
+      return !!(state.user.is_approved && state.user.clubs && state.user.clubs.length > 0)
+    }
+  },
+
   actions: {
     async getUser() {
       try {

@@ -3,75 +3,18 @@
         <template v-slot:activator="{ props }">
             <v-btn color="primary" variant="text" :prepend-icon="isNew ? 'mdi-plus' : 'mdi-pencil'" v-bind="props"
                 v-if="canEdit">
-                {{ isNew ? 'New Collection' : 'Edit Collection' }}
+                {{ activatorText }}
             </v-btn>
         </template>
 
         <v-card>
             <v-card-title>
-                <span class="text-h5">{{ isNew ? 'New Collection' : 'Edit Collection' }}</span>
+                <span class="text-h5">{{ activatorText }}</span>
             </v-card-title>
 
             <v-card-text>
                 <v-container>
-                    <v-form ref="form" v-model="valid">
-                        <v-row>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedCollection.name" label="Name" required></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <div class="text-subtitle-2 mb-1">Description</div>
-                                <MilkdownEditor v-model="editedCollection.description" placeholder="About this collection..." />
-                            </v-col>
-                            <v-col cols="12">
-                                <v-file-input v-model="photoFile" label="Photo" accept="image/*" prepend-icon="mdi-camera"
-                                    show-size></v-file-input>
-                                <div v-if="editedCollection.photo_path && !photoFile" class="text-caption">
-                                    Current photo: {{ editedCollection.photo_path }}
-                                </div>
-                            </v-col>
-                        </v-row>
-
-                        <v-divider class="my-4"></v-divider>
-                        <div class="text-h6 mb-2">Manage Caves</div>
-
-                        <v-autocomplete v-model="selectedCaveToAdd" :items="allCaves" item-title="name" item-value="id"
-                            label="Add a Cave" placeholder="Search for a cave..." return-object hide-details
-                            class="mb-4" @update:model-value="addCave"></v-autocomplete>
-
-                        <v-list density="compact" class="bg-grey-lighten-4 rounded">
-                            <template v-for="(cave, index) in editedCollection.caves" :key="cave.id">
-                                <v-list-item>
-                                    <template v-slot:prepend>
-                                        <div class="d-flex flex-column">
-                                            <v-btn icon="mdi-chevron-up" variant="text" size="x-small"
-                                                :disabled="index === 0" @click="moveCave(index, -1)"></v-btn>
-                                            <v-btn icon="mdi-chevron-down" variant="text" size="x-small"
-                                                :disabled="index === editedCollection.caves.length - 1"
-                                                @click="moveCave(index, 1)"></v-btn>
-                                        </div>
-                                    </template>
-                                    
-                                    <v-list-item-title class="font-weight-bold">{{ cave.name }}</v-list-item-title>
-                                    <v-list-item-subtitle>{{ cave.location_name }}</v-list-item-subtitle>
-                                    
-                                    <div class="text-subtitle-2 mt-4 mb-1">Note</div>
-                                    <MilkdownEditor v-model="cave.playlist_description" 
-                                        placeholder="Add a note about this cave in the collection..." />
-
-                                    <template v-slot:append>
-                                        <v-btn icon="mdi-delete" size="small" color="error" variant="text"
-                                            @click="removeCave(index)"></v-btn>
-                                    </template>
-                                </v-list-item>
-                                <v-divider v-if="index < editedCollection.caves.length - 1"></v-divider>
-                            </template>
-                            
-                            <v-list-item v-if="!editedCollection.caves || editedCollection.caves.length === 0">
-                                <div class="text-center w-100 text-grey font-italic">No caves in this collection</div>
-                            </v-list-item>
-                        </v-list>
-                    </v-form>
+                    <CollectionForm ref="form" v-model="editedCollection" />
                 </v-container>
             </v-card-text>
 
@@ -81,7 +24,7 @@
                     Cancel
                 </v-btn>
                 <v-btn color="blue-darken-1" variant="text" @click="save" :loading="saving">
-                    Save
+                    {{ saveButtonText }}
                 </v-btn>
             </v-card-actions>
         </v-card>
@@ -92,8 +35,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'
-import { useCaveStore } from '@/stores/caves'
-import MilkdownEditor from '@/components/MilkdownEditor.vue';
+import CollectionForm from '@/components/CollectionForm.vue'
 import { useToast } from "vue-toastification";
 
 const toast = useToast();
@@ -108,10 +50,9 @@ const props = defineProps({
 
 const userStore = useAppStore()
 const collectionStore = useCollectionStore()
-const caveStore = useCaveStore()
 
 const dialog = ref(false)
-const valid = ref(false)
+const form = ref(null)
 const saving = ref(false)
 
 // Initialize with defaults if creating new
@@ -122,41 +63,35 @@ const defaultCollection = {
     caves: []
 }
 const editedCollection = ref({ ...defaultCollection })
-const photoFile = ref(null)
-const selectedCaveToAdd = ref(null)
 
 const isNew = computed(() => !props.collection)
 
 const canEdit = computed(() => {
-    if (isNew.value) return userStore.user.is_admin;
-    return userStore.user.is_admin || userStore.user.id === props.collection.user_id
+    // Everyone can suggest edits/creations now
+    if (isNew.value) return true;
+    return true;
 })
 
-// Fetch all caves for autocomplete
-const allCaves = computed(() => caveStore.caves)
-
-onMounted(() => {
-    if (caveStore.caves.length === 0) {
-        caveStore.getList()
+const activatorText = computed(() => {
+    if (isNew.value) {
+        return userStore.user?.is_admin ? 'New Collection' : 'Suggest New Collection';
     }
+    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Edit Collection' : 'Suggest Edit';
+})
+
+const saveButtonText = computed(() => {
+    if (isNew.value) {
+        return userStore.user?.is_admin ? 'Create Collection' : 'Suggest New Collection';
+    }
+    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Save Changes' : 'Suggest Changes';
 })
 
 const initForm = (newVal) => {
     if (newVal) {
         editedCollection.value = JSON.parse(JSON.stringify(newVal))
-        // Map pivot description to editable property if exists, or use existing pivot data
-        if (editedCollection.value.caves) {
-            editedCollection.value.caves.forEach(c => {
-                // If pivot exists, use it. Backend creates pivot structure.
-                if (c.pivot) {
-                    c.playlist_description = c.pivot.description;
-                }
-            });
-        }
     } else {
         editedCollection.value = { ...defaultCollection }
     }
-    photoFile.value = null;
 }
 
 watch(() => props.collection, (newVal) => {
@@ -169,30 +104,61 @@ const close = () => {
 }
 
 const save = async () => {
+    const { valid } = await form.value.validate()
+    if (!valid) return
+
     saving.value = true;
     try {
-        // Prepare payload
-        const payload = {
-            ...editedCollection.value,
-            caves: editedCollection.value.caves.map(c => ({
+        // Prepare payload - CollectionForm handles internal state, we just need to send it
+        const payload = { ...editedCollection.value };
+
+        if (payload.photo_data) {
+            payload.photo_path = payload.photo_data;
+            delete payload.photo_data;
+        }
+
+        // Ensure caves map correctly if needed, though form should produce correct structure
+        if (payload.caves) {
+            payload.caves = payload.caves.map(c => ({
                 id: c.id,
                 description: c.playlist_description
             }))
-        };
-
-        // Add photo file if exists
-        if (photoFile.value) {
-            payload.photo = photoFile.value;
         }
 
-        if (isNew.value) {
-            await collectionStore.createCollection(payload);
+        // Handle photo upload separately if needed, or if form emits a file object
+        // CollectionForm stores file in internal state? No, it relies on parent extracting or model binding?
+        // Let's check CollectionForm again. It stores photo_data in model. Perfect.
+
+        if (userStore.user?.is_admin || (props.collection && userStore.user?.id === props.collection.user_id)) {
+            if (isNew.value) {
+                await collectionStore.createCollection(payload);
+            } else {
+                await collectionStore.updateCollection(payload);
+            }
+            toast.success(isNew.value ? 'Collection created successfully' : 'Collection updated successfully');
         } else {
-            await collectionStore.updateCollection(payload);
-        }
+            // Suggest Edit or Create
+            const response = await fetch('/api/suggested-edits', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    suggestable_type: 'collection',
+                    suggestable_id: props.collection?.id || null,
+                    suggested_data: payload,
+                    original_data: null
+                }),
+            });
 
-        dialog.value = false
-        toast.success(isNew.value ? 'Collection created successfully' : 'Collection updated successfully');
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to submit suggestion');
+            }
+            toast.success('Suggestion submitted for review');
+            dialog.value = false;
+        }
     } catch (e) {
         let errorMessage = 'Failed to save collection';
         // Check for backend validation errors
@@ -207,40 +173,9 @@ const save = async () => {
             errorMessage = e.message;
         }
         console.error(e)
-        // alert('Failed to save: ' + e.message)
         toast.error(errorMessage);
     } finally {
         saving.value = false;
-    }
-}
-
-const addCave = (cave) => {
-    if (!cave) return
-    // Check if already in list
-    if (editedCollection.value.caves && editedCollection.value.caves.find(c => c.id === cave.id)) {
-        selectedCaveToAdd.value = null; // reset
-        return;
-    }
-
-    if (!editedCollection.value.caves) editedCollection.value.caves = [];
-
-    // Add to UI list with empty description
-    // Clone to avoid reference issues
-    const newCave = { ...cave, playlist_description: '' };
-    editedCollection.value.caves.push(newCave);
-
-    selectedCaveToAdd.value = null;
-}
-
-const removeCave = (index) => {
-    editedCollection.value.caves.splice(index, 1);
-}
-
-const moveCave = (index, direction) => {
-    const newIndex = index + direction;
-    if (newIndex >= 0 && newIndex < editedCollection.value.caves.length) {
-        const item = editedCollection.value.caves.splice(index, 1)[0];
-        editedCollection.value.caves.splice(newIndex, 0, item);
     }
 }
 </script>

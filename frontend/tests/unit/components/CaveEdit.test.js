@@ -20,6 +20,19 @@ vi.mock('@indoorequal/vue-maplibre-gl', () => ({
 // Mock fetch
 global.fetch = vi.fn()
 
+vi.mock('@/stores/app', () => ({
+    useAppStore: vi.fn(() => ({
+        user: { is_admin: true }
+    }))
+}))
+
+vi.mock('vue-toastification', () => ({
+    useToast: vi.fn(() => ({
+        success: vi.fn(),
+        error: vi.fn()
+    }))
+}))
+
 const router = createRouter({
     history: createWebHistory(),
     routes: [{ path: '/caves/:id/edit', component: CaveEdit }]
@@ -46,7 +59,8 @@ describe('CaveEdit.vue', () => {
                             location_lat: 0,
                             location_lng: 0,
                             hero_image: null,
-                            entrance_image: null
+                            entrance_image: null,
+                            slug: 'test-cave'
                         }
                     })
                 })

@@ -15,6 +15,15 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
     use HasFactory, Auditable;
 
+    protected static function booted()
+    {
+        static::creating(function ($cave) {
+            if (empty($cave->slug)) {
+                $cave->slug = \Illuminate\Support\Str::slug($cave->name);
+            }
+        });
+    }
+
     public $timestamps = false;
     protected $appends = ['caving_region'];
 

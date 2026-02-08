@@ -63,6 +63,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
     
     Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
+    Route::post('/suggested-edits', [App\Http\Controllers\SuggestedEditController::class, 'store']);
 
 
     # Users
@@ -119,8 +120,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/admin/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.pending.index');
     Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
     Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
-    Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
-    Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
+
 
     # Huts
     Route::apiResource('huts', HutController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
@@ -168,6 +168,10 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     Route::post('/communications/send', [App\Http\Controllers\Admin\CommunicationController::class, 'send'])->name('admin.communications.send');
 
     Route::apiResource('catchments', App\Http\Controllers\CatchmentController::class);
+
+    Route::apiResource('suggested-edits', App\Http\Controllers\Admin\SuggestedEditController::class)->only(['index', 'show']);
+    Route::post('/suggested-edits/{suggested_edit}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approve']);
+    Route::post('/suggested-edits/{suggested_edit}/reject', [App\Http\Controllers\Admin\SuggestedEditController::class, 'reject']);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {

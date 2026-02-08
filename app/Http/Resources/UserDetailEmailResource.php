@@ -32,6 +32,7 @@ class UserDetailEmailResource extends JsonResource
             // Eager load approvedClubs if not already done in controller
             'clubs' => $this->clubs->map(function ($club) {
                 return [
+                    'id' => $club->id,
                     'name' => $club->name,
                     'slug' => $club->slug,
                     'is_admin' => $club->pivot->is_admin,

@@ -533,7 +533,9 @@ class ClubTest extends TestCase
         $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
 
         $response->assertStatus(200)
-                 ->assertJson(['message' => 'Member approved.']);
+                 ->assertJsonPath('data.id', $pendingUser->id)
+                 ->assertJsonPath('data.clubs.0.status', 'approved');
+        
         $this->assertDatabaseHas('club_user', [
             'club_id' => $club->id,
             'user_id' => $pendingUser->id,
@@ -595,7 +597,7 @@ class ClubTest extends TestCase
         $response = $this->actingAs($this->regularUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$pendingUser->id}/approve");
 
         $response->assertStatus(200)
-                 ->assertJson(['message' => 'Member approved.']);
+                 ->assertJsonPath('data.id', $pendingUser->id);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

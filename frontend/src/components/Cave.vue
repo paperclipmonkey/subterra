@@ -5,10 +5,41 @@
       <v-col cols="12" class="d-flex align-center">
         <v-btn icon="mdi-arrow-left" variant="text" @click="$router.push('/caves')" class="mr-2"></v-btn>
         <v-spacer></v-spacer>
-        <CorrectionModal v-if="cave" entity-type="cave" :entity-id="cave.id" :entity-name="cave.name" class="mr-2" />
-        <v-btn v-if="appStore.user.is_admin" variant="text" append-icon="mdi-pencil"
-          @click="$router.push('/caves/' + route.params.id + '/edit')">
-          Edit Cave
+        <v-btn
+          v-if="appStore.user && appStore.canSuggest"
+          variant="text"
+          color="primary"
+          @click="$router.push('/caves/' + route.params.id + '/edit')"
+          prepend-icon="mdi-pencil"
+          class="text-none mr-2"
+          size="small"
+        >
+          {{ appStore.user?.is_admin ? 'Edit Cave' : 'Suggest Edit' }}
+        </v-btn>
+        <v-btn
+            v-else-if="appStore.user"
+            variant="text"
+            color="grey"
+            disabled
+            prepend-icon="mdi-pencil-off"
+            class="text-none mr-2"
+            size="small"
+        >
+            <v-tooltip activator="parent" location="top">
+                {{ !appStore.user.is_approved ? 'Your account must be approved' : 'You must join a club' }} to suggest edits
+            </v-tooltip>
+            Suggest Edit
+        </v-btn>
+        <v-btn
+            v-else
+            variant="text"
+            color="primary"
+            to="/login"
+            prepend-icon="mdi-pencil"
+            class="text-none mr-2"
+            size="small"
+        >
+            Log in to Suggest Edit
         </v-btn>
       </v-col>
     </v-row>

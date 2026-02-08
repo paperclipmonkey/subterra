@@ -18,6 +18,12 @@ class AuditLogTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Illuminate\Support\Facades\Config::set('audit.enabled', true);
+    }
+
     public function testCaveAuditLog(): void
     {
         $cave = Cave::factory()->create();
@@ -27,7 +33,7 @@ class AuditLogTest extends TestCase
         // Add a check for the audits table
         $this->assertTrue(Schema::hasTable('audits'), 'Audits table does not exist.');
 
-        $audit = Audit::where('auditable_type', Cave::class)
+        $audit = Audit::where('auditable_type', $cave->getMorphClass())
                       ->where('auditable_id', $cave->id)
                       ->where('event', 'updated') // Filter for updated event
                       ->latest()
@@ -42,7 +48,7 @@ class AuditLogTest extends TestCase
         $trip = Trip::factory()->create();
         $trip->update(['name' => 'Updated Trip Name']);
 
-        $audit = Audit::where('auditable_type', Trip::class)
+        $audit = Audit::where('auditable_type', $trip->getMorphClass())
                       ->where('auditable_id', $trip->id)
                       ->where('event', 'updated') // Filter for updated event
                       ->latest()
@@ -62,7 +68,7 @@ class AuditLogTest extends TestCase
         // Add a check for the audits table
         $this->assertTrue(Schema::hasTable('audits'), 'Audits table does not exist.');
 
-        $audit = Audit::where('auditable_type', TripMedia::class)
+        $audit = Audit::where('auditable_type', $tripMedia->getMorphClass())
                       ->where('auditable_id', $tripMedia->id)
                       ->where('event', 'updated') // Filter for updated event
                       ->latest()
@@ -77,7 +83,7 @@ class AuditLogTest extends TestCase
         $club = Club::factory()->create();
         $club->update(['name' => 'Updated Club Name']);
 
-        $audit = Audit::where('auditable_type', Club::class)
+        $audit = Audit::where('auditable_type', $club->getMorphClass())
                       ->where('auditable_id', $club->id)
                       ->where('event', 'updated') // Filter for updated event
                       ->latest()
@@ -92,7 +98,7 @@ class AuditLogTest extends TestCase
         $user = User::factory()->create();
         $user->update(['name' => 'Updated User Name']);
 
-        $audit = Audit::where('auditable_type', User::class)
+        $audit = Audit::where('auditable_type', $user->getMorphClass())
                       ->where('auditable_id', $user->id)
                       ->where('event', 'updated') // Filter for updated event
                       ->latest()
@@ -107,7 +113,7 @@ class AuditLogTest extends TestCase
         $caveSystem = CaveSystem::factory()->create();
         $caveSystem->update(['name' => 'Updated Cave System Name']);
 
-        $audit = Audit::where('auditable_type', CaveSystem::class)
+        $audit = Audit::where('auditable_type', $caveSystem->getMorphClass())
                       ->where('auditable_id', $caveSystem->id)
                       ->where('event', 'updated') // Filter for updated event
                       ->latest()
@@ -133,7 +139,7 @@ class AuditLogTest extends TestCase
         $newTrip = Trip::factory()->create(); // Create another trip for update
         $tripUser->update(['trip_id' => $newTrip->id]);
 
-        $audit = Audit::where('auditable_type', TripUser::class)
+        $audit = Audit::where('auditable_type', $tripUser->getMorphClass())
                       ->where('auditable_id', $tripUser->id)
                       ->where('event', 'updated') // Filter for updated event
                       ->latest()

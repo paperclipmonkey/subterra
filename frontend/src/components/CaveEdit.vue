@@ -38,7 +38,9 @@
       <v-row>
         <v-col>
           <v-card-text>
-            <v-btn type="submit" color="primary" block size="large" :loading="loading">Save</v-btn>
+            <v-btn type="submit" color="primary" block size="large" :loading="loading">
+              {{ appStore.user?.is_admin ? 'Save' : 'Suggest Changes' }}
+            </v-btn>
           </v-card-text>
         </v-col>
       </v-row>
@@ -58,6 +60,11 @@ import { ref, onMounted, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import VueMarkdown from 'vue-markdown-render'
 import CaveForm from '@/components/CaveForm.vue'
+import { useAppStore } from '@/stores/app'
+import { useToast } from "vue-toastification"
+
+const toast = useToast()
+const appStore = useAppStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -107,21 +114,48 @@ const saveCave = async () => {
 
   loading.value = true
   try {
-    const response = await fetch(`/api/caves/${route.params.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(cave.value),
-    })
+    if (appStore.user?.is_admin) {
+      const response = await fetch(`/api/caves/${route.params.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(cave.value),
+      })
 
-    if (response.ok) {
-      router.push('/caves/' + cave.value.slug)
+      if (response.ok) {
+        router.push('/caves/' + cave.value.slug)
+      } else {
+        const data = await response.json()
+        errorMessage.value = data.message || 'Failed to save cave'
+        errorSnackbar.value = true
+      }
     } else {
-      const data = await response.json()
-      errorMessage.value = data.message || 'Failed to save cave'
-      errorSnackbar.value = true
+      // Suggest Edit
+      const response = await fetch('/api/suggested-edits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          suggestable_type: 'cave',
+          suggestable_id: cave.value.id,
+          suggested_data: cave.value,
+          original_data: null // Optional: could fetch again to compare
+        }),
+      })
+
+      if (response.ok) {
+        // Stay on the original cave page when suggesting edits
+        toast.success('Thank you! Your suggestion has been submitted for review.')
+        router.push('/caves/' + route.params.id)
+      } else {
+        const data = await response.json()
+        errorMessage.value = data.message || 'Failed to submit suggestion'
+        errorSnackbar.value = true
+      }
     }
   } catch (error) {
     errorMessage.value = 'An unexpected error occurred'

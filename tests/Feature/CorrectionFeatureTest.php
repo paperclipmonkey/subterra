@@ -18,6 +18,7 @@ class CorrectionFeatureTest extends TestCase
         SlackAlert::fake();
 
         $user = User::factory()->create();
+        $user->clubs()->attach(\App\Models\Club::factory()->create());
 
         $response = $this->actingAs($user)->postJson('/api/corrections', [
             'correction' => 'This is a test correction with sufficient length.',

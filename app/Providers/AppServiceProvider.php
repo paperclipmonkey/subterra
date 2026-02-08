@@ -38,6 +38,13 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Incident::observe(\App\Observers\IncidentObserver::class);
         \App\Models\IncidentNote::observe(\App\Observers\IncidentNoteObserver::class);
 
+        \Illuminate\Database\Eloquent\Relations\Relation::morphMap([
+            'cave' => \App\Models\Cave::class,
+            'cave_system' => \App\Models\CaveSystem::class,
+            'route' => \App\Models\Route::class,
+            'collection' => \App\Models\Collection::class,
+        ]);
+
         // Add your custom route binding here
         Route::bind('user_without_scopes', function($id) {
             // Use the correct namespace for your User model

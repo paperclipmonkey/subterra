@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PrivacyPolicySeeder::class,
             CatchmentSeeder::class,
             RouteSeeder::class,
+            SuggestedEditSeeder::class,
         ]);
     }
 }

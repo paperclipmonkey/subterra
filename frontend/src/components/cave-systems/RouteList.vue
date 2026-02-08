@@ -2,15 +2,41 @@
   <div>
     <div class="d-flex justify-space-between align-center mb-4">
         <h3 class="text-h6">Routes</h3>
-        <v-btn
-            v-if="appStore.user.is_admin"
-            color="primary"
-            size="small"
-            prepend-icon="mdi-plus"
-            :to="`/cave-systems/${caveSystemId}/routes/new`"
-        >
-            Add Route
-        </v-btn>
+        <div class="d-flex gap-2">
+            <v-btn
+                v-if="appStore.user && appStore.canSuggest"
+                color="primary"
+                size="small"
+                :variant="appStore.user?.is_admin ? 'flat' : 'text'"
+                prepend-icon="mdi-plus"
+                :to="`/cave-systems/${caveSystemId}/routes/new`"
+            >
+                {{ appStore.user?.is_admin ? 'Add Route' : 'Suggest New Route' }}
+            </v-btn>
+            <v-btn
+                v-else-if="appStore.user"
+                color="grey"
+                size="small"
+                variant="text"
+                disabled
+                prepend-icon="mdi-plus"
+            >
+                <v-tooltip activator="parent" location="top">
+                    {{ !appStore.user.is_approved ? 'Your account must be approved' : 'You must join a club' }} to contribute
+                </v-tooltip>
+                Suggest New Route
+            </v-btn>
+            <v-btn
+                v-else
+                color="primary"
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                to="/login"
+            >
+                Log in to Suggest Route
+            </v-btn>
+        </div>
     </div>
 
     <div v-if="routes && routes.length > 0">
@@ -103,20 +129,20 @@ import { useAppStore } from '@/stores/app'
 const appStore = useAppStore()
 
 defineProps({
-  routes: {
-    type: Array,
-    default: () => []
-  },
-  caveSystemId: {
-    type: [String, Number],
-    required: false
-  }
+    routes: {
+        type: Array,
+        default: () => []
+    },
+    caveSystemId: {
+        type: [String, Number],
+        required: false
+    }
 })
 const truncateDescription = (text) => {
     if (!text) return 'No description available.'
     // Strip markdown chars broadly if needed, but simple text substring is usually fine for preview
     // Simplistic markdown strip:
-    const plain = text.replace(/[#*`_]/g, '') 
+    const plain = text.replace(/[#*`_]/g, '')
     return plain.length > 200 ? plain.substring(0, 200) + '...' : plain
 }
 

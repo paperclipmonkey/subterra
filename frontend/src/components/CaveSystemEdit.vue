@@ -23,7 +23,9 @@
       <v-row>
         <v-col>
           <v-card-text>
-            <v-btn type="submit" color="primary" block size="large" :loading="loading">Save</v-btn>
+            <v-btn type="submit" color="primary" block size="large" :loading="loading">
+                {{ appStore.user?.is_admin ? 'Save' : 'Suggest Changes' }}
+            </v-btn>
           </v-card-text>
         </v-col>
       </v-row>
@@ -49,6 +51,12 @@
 import { ref, watch, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import CaveSystemForm from '@/components/CaveSystemForm.vue'
+import { useAppStore } from '@/stores/app'
+import { convertFileToBase64 } from '@/utilities.js'
+import { useToast } from "vue-toastification"
+
+const toast = useToast()
+const appStore = useAppStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -90,52 +98,105 @@ const save = async () => {
   if (!valid) return
 
   loading.value = true
-  const formData = new FormData()
 
-  formData.append('_method', 'PUT')
-  formData.append('name', cavesystem.value.name || '')
-  formData.append('description', cavesystem.value.description || '')
-  formData.append('length', cavesystem.value.length || '')
-  formData.append('vertical_range', cavesystem.value.vertical_range || '')
-  formData.append('slug', cavesystem.value.slug || '')
-  formData.append('references', cavesystem.value.references || '')
-  if (cavesystem.value.catchment_id) {
-    formData.append('catchment_id', cavesystem.value.catchment_id)
-  }
+  if (appStore.user?.is_admin) {
+    const formData = new FormData()
 
-  filesToDelete.value.forEach(fileId => {
-    formData.append('deleted_files[]', fileId)
-  })
+    formData.append('_method', 'PUT')
+    formData.append('name', cavesystem.value.name || '')
+    formData.append('description', cavesystem.value.description || '')
+    formData.append('length', cavesystem.value.length || '')
+    formData.append('vertical_range', cavesystem.value.vertical_range || '')
+    formData.append('slug', cavesystem.value.slug || '')
+    formData.append('references', cavesystem.value.references || '')
+    if (cavesystem.value.catchment_id) {
+      formData.append('catchment_id', cavesystem.value.catchment_id)
+    }
 
-  newFiles.value.forEach((file) => {
-    formData.append('new_files[]', file)
-  })
-
-  try {
-    const response = await fetch(`/api/cave_systems/${route.params.id}`, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Accept': 'application/json',
-      }
+    filesToDelete.value.forEach(fileId => {
+      formData.append('deleted_files[]', fileId)
     })
 
-    if (response.ok) {
-      router.go(-1)
-    } else {
-      const data = await response.json()
-      errorMessage.value = data.message || 'Save failed'
+    newFiles.value.forEach((file) => {
+      formData.append('new_files[]', file)
+    })
+
+    try {
+      const response = await fetch(`/api/cave_systems/${route.params.id}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+        }
+      })
+
+      if (response.ok) {
+        router.push('/cave-systems/' + cavesystem.value.slug)
+      } else {
+        const data = await response.json()
+        errorMessage.value = data.message || 'Save failed'
+        errorSnackbar.value = true
+      }
+    } catch (error) {
+      errorMessage.value = error.message
       errorSnackbar.value = true
+    } finally {
+      loading.value = false
     }
-  } catch (error) {
-    errorMessage.value = error.message
-    errorSnackbar.value = true
-  } finally {
-    loading.value = false
+  } else {
+    // Suggest Edit
+    try {
+      const processedNewFiles = await Promise.all(
+        newFiles.value.map(async (file) => {
+          return await convertFileToBase64(file)
+        })
+      )
+
+      const response = await fetch('/api/suggested-edits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          suggestable_type: 'cave_system',
+          suggestable_id: cavesystem.value.id,
+          suggested_data: {
+            ...cavesystem.value,
+            media: processedNewFiles, // Use 'media' key to be picked up by MediaSuggestionService
+            deleted_files: filesToDelete.value
+          },
+          original_data: null
+        }),
+      })
+
+      if (response.ok) {
+        // Redirect back to the original cave system page
+        toast.success('Thank you! Your suggestion has been submitted for review.')
+        router.push('/cave-systems/' + route.params.id)
+      } else {
+        const data = await response.json()
+        errorMessage.value = data.message || 'Failed to submit suggestion'
+        errorSnackbar.value = true
+      }
+    } catch (error) {
+      errorMessage.value = error.message
+      errorSnackbar.value = true
+    } finally {
+      loading.value = false
+    }
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  if (appStore.user && !appStore.canSuggest && !appStore.user.is_admin) {
+    errorMessage.value = 'You do not have permission to suggest edits.'
+    errorSnackbar.value = true
+    setTimeout(() => router.push('/'), 3000)
+    return
+  }
+  load()
+})
 
 watch(
   () => route.fullPath,

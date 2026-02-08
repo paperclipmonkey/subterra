@@ -12,7 +12,7 @@
           class="backdrop-blur"></v-btn>
       </div>
 
-      <div class="position-absolute top-0 right-0 pa-4" style="z-index: 1;">
+      <div class="position-absolute top-0 right-0 pa-4 d-flex align-center" style="z-index: 1;">
         <CollectionEditModal :collection="collection" />
       </div>
 

@@ -2,6 +2,7 @@
   <v-dialog v-model="dialog" max-width="600">
     <template v-slot:activator="{ props }">
       <v-btn
+        v-if="userStore.canSuggest"
         variant="text"
         color="warning"
         prepend-icon="mdi-flag"
@@ -9,6 +10,20 @@
         class="text-none"
         size="small"
       >
+        Report Issue
+      </v-btn>
+      <v-btn
+        v-else
+        variant="text"
+        color="grey"
+        disabled
+        prepend-icon="mdi-flag-off"
+        class="text-none"
+        size="small"
+      >
+        <v-tooltip activator="parent" location="top">
+            {{ userStore.user?.id ? (!userStore.user.is_approved ? 'Account must be approved' : 'You must join a club') : 'Log in' }} to report issues
+        </v-tooltip>
         Report Issue
       </v-btn>
     </template>
@@ -48,18 +63,18 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-    
-    <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
-      {{ snackbarText }}
-    </v-snackbar>
   </v-dialog>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAppStore } from '@/stores/app';
+import { useToast } from "vue-toastification";
 
+const toast = useToast();
 const route = useRoute();
+const userStore = useAppStore();
 const form = ref(null);
 
 const props = defineProps({
@@ -81,9 +96,6 @@ const dialog = ref(false);
 const correction = ref('');
 const loading = ref(false);
 const valid = ref(false);
-const snackbar = ref(false);
-const snackbarText = ref('');
-const snackbarColor = ref('success');
 
 const submit = async () => {
   if (!valid.value) return;
@@ -111,9 +123,7 @@ const submit = async () => {
       throw new Error('Failed to submit correction');
     }
 
-    snackbarText.value = 'Thank you! Your correction has been submitted.';
-    snackbarColor.value = 'success';
-    snackbar.value = true;
+    toast.success('Thank you! Your suggestion has been submitted for review.');
 
     // Reset form and validation state
     if (form.value) {
@@ -123,13 +133,11 @@ const submit = async () => {
 
     setTimeout(() => {
       dialog.value = false;
-    }, 1500);
+    }, 500);
 
   } catch (error) {
     console.error(error);
-    snackbarText.value = 'Error submitting report. Please try again.';
-    snackbarColor.value = 'error';
-    snackbar.value = true;
+    toast.error('Error submitting report. Please try again.');
   } finally {
     loading.value = false;
   }

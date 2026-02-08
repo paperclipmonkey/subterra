@@ -178,6 +178,8 @@ class UserController extends Controller
         $user->is_admin = false;
         $user->save();
 
+        event(new \App\Events\UserCreated($user));
+
         return new UserDetailEmailResource($user);
     }
 

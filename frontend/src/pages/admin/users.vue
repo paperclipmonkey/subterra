@@ -30,8 +30,13 @@
                 :key="club.id"
                 :color="club.status === 'approved' ? 'green' : 'orange'"
                 size="small"
+                @click.stop="club.status === 'pending' ? approveMembership(item, club) : null"
+                :style="club.status === 'pending' ? 'cursor: pointer' : ''"
               >
                 {{ club.name }}
+                <v-tooltip activator="parent" location="top" v-if="club.status === 'pending'">
+                  Click to approve membership
+                </v-tooltip>
               </v-chip>
             </div>
           </template>
@@ -224,6 +229,19 @@ const toggleAdmin = async (user) => {
   } finally {
     // Ensure loading state is always reset
     if (user) user.loadingAdmin = false;
+  }
+};
+
+const approveMembership = async (user, club) => {
+  loading.value = true;
+  try {
+    const approveApi = mande(`/api/admin/clubs/${club.slug}/members/${user.id}/approve`);
+    const updatedUser = await approveApi.put();
+    updateUserInList(updatedUser.data || updatedUser);
+  } catch (error) {
+    console.error(`Error approving membership for user ${user.id} in club ${club.slug}:`, error);
+  } finally {
+    loading.value = false;
   }
 };
 

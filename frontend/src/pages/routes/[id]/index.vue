@@ -8,12 +8,24 @@
         </v-btn>
         
         <v-btn
-            v-if="appStore.user.is_admin"
+            v-if="appStore.user"
             color="primary"
+            variant="text"
             prepend-icon="mdi-pencil"
             :to="`/routes/${route.params.id}/edit`"
+            class="mr-2"
         >
-            Edit Route
+            {{ appStore.user?.is_admin ? 'Edit Route' : 'Suggest Edit' }}
+        </v-btn>
+         <v-btn
+            v-else
+            color="primary"
+            variant="text"
+            prepend-icon="mdi-pencil"
+            to="/login"
+            class="mr-2"
+        >
+            Log in to Suggest Edit
         </v-btn>
       </v-col>
     </v-row>
