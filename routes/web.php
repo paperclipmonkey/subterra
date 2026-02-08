@@ -9,6 +9,8 @@ Route::get('/api/google/callback', [App\Http\Controllers\GoogleLoginController::
 // Magic link callback route (web route to handle the email link)
 Route::get('/auth/magic-link', [MagicLinkController::class, 'handleWebCallback'])->name('magic-link.callback');
 
+Route::get('/newsletter/unsubscribe/{user}', [App\Http\Controllers\NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
+
 // Vue Spa routing
 Route::fallback(function () {
     $indexPath = public_path('index.html');
