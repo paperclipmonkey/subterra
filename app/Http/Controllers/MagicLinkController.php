@@ -46,6 +46,8 @@ class MagicLinkController extends Controller
                 $user->is_active = true; // Enable the user since they're requesting access
                 $user->is_approved = false; // Still needs admin approval
                 $user->save();
+
+                event(new \App\Events\UserCreated($user));
             } else {
                 // If user exists but is inactive, reactivate them
                 if (!$user->is_active) {
