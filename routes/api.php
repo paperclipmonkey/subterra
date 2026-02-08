@@ -165,6 +165,8 @@ Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
     Route::apiResource('pages', App\Http\Controllers\PageController::class);
     Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
     
+    Route::post('/communications/send', [App\Http\Controllers\Admin\CommunicationController::class, 'send'])->name('admin.communications.send');
+
     Route::apiResource('catchments', App\Http\Controllers\CatchmentController::class);
 });
 

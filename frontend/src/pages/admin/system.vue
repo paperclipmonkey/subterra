@@ -44,6 +44,12 @@
           <v-card-text>Manage River Gauges.</v-card-text>
         </v-card>
       </v-col>
+      <v-col cols="12" md="6" lg="3">
+        <v-card to="/admin/communications" link hover height="100%">
+          <v-card-title><v-icon left>mdi-email-multiple-outline</v-icon> Mass Comms</v-card-title>
+          <v-card-text>Send Platform News.</v-card-text>
+        </v-card>
+      </v-col>
     </v-row>
   </v-container>
 </template>

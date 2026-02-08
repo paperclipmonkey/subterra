@@ -38,6 +38,13 @@
                     v-model="body" 
                     placeholder="Write your update here... Use markdown for formatting."
                 />
+                <div class="text-caption text-grey mt-1" v-pre>
+                    Available variables: 
+                    <code class="text-primary">{{ firstname }}</code>, 
+                    <code class="text-primary">{{ fullname }}</code>, 
+                    <code class="text-primary">{{ club }}</code>, 
+                    <code class="text-primary">{{ id }}</code>
+                </div>
             </div>
         </v-form>
       </v-card-text>
@@ -90,10 +97,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
-
-const api = mande('/api/admin/communications/send')
 
 const loading = ref(false)
 const error = ref(null)
@@ -105,40 +110,40 @@ const subject = ref('')
 const body = ref('')
 
 const confirmSend = () => {
-    confirmDialog.value = true
+  confirmDialog.value = true
 }
 
 const doSend = () => {
-    confirmDialog.value = false
-    send(false)
+  confirmDialog.value = false
+  send(false)
 }
 
 const send = async (testMode) => {
-    loading.value = true
-    error.value = null
-    successMessage.value = null
+  loading.value = true
+  error.value = null
+  successMessage.value = null
 
-    try {
-        const response = await api.post({
-            subject: subject.value,
-            body: body.value,
-            test_mode: testMode
-        })
+  try {
+    const response = await api.post('/api/admin/communications/send', {
+      subject: subject.value,
+      body: body.value,
+      test_mode: testMode
+    })
 
-        successMessage.value = response.message || 'Email sent successfully'
+    successMessage.value = response.data.message || 'Email sent successfully'
 
-        if (!testMode) {
-            // clear form only on real send
-            subject.value = ''
-            body.value = ''
-        } else {
-            // For test mode, maybe keep the form filled so they can tweak it?
-        }
-    } catch (err) {
-        error.value = err.body?.message || err.message || 'Failed to send email'
-        console.error('Error sending email:', err)
-    } finally {
-        loading.value = false
+    if (!testMode) {
+      // clear form only on real send
+      subject.value = ''
+      body.value = ''
+    } else {
+      // For test mode, maybe keep the form filled so they can tweak it?
     }
+  } catch (err) {
+    error.value = err.response?.data?.message || err.message || 'Failed to send email'
+    console.error('Error sending email:', err)
+  } finally {
+    loading.value = false
+  }
 }
 </script>

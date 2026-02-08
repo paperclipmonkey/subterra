@@ -26,8 +26,25 @@ class PlatformNews extends Mailable implements ShouldQueue
         string $body,
         public User $user
     ) {
-        $this->body = $body;
+        $this->body = $this->replacePlaceholders($body, $user);
+        $this->subjectLine = $this->replacePlaceholders($subjectLine, $user);
         $this->unsubscribeUrl = URL::signedRoute('newsletter.unsubscribe', ['user' => $user->id]);
+    }
+
+    protected function replacePlaceholders(string $content, User $user): string
+    {
+        $firstName = explode(' ', trim($user->name))[0];
+
+        $placeholders = [
+            '{{ name }}' => $user->name,
+            '{{ fullname }}' => $user->name,
+            '{{ firstname }}' => $firstName,
+            '{{ id }}' => $user->id,
+            '{{ email }}' => $user->email,
+            '{{ club }}' => $user->clubs->first()?->name ?? 'Subterra',
+        ];
+
+        return str_replace(array_keys($placeholders), array_values($placeholders), $content);
     }
 
     /**

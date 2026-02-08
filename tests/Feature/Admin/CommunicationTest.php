@@ -90,4 +90,32 @@ class CommunicationTest extends TestCase
         $response->assertStatus(403);
         $this->assertTrue($user->fresh()->email_platform_news);
     }
+
+    public function test_placeholders_are_replaced_correctly()
+    {
+        Mail::fake();
+
+        $user = User::factory()->create([
+            'is_admin' => true,
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'email_platform_news' => true
+        ]);
+        
+        $response = $this->actingAs($user)
+            ->postJson('/api/admin/communications/send', [
+                'subject' => 'Hello {{ firstname }}',
+                'body' => 'Your full name is {{ fullname }}. ID: {{ id }}',
+                'test_mode' => true,
+            ]);
+
+        $response->assertStatus(200);
+
+        Mail::assertQueued(PlatformNews::class, function ($mail) use ($user) {
+            // Since replacement happens in constructor, properties should be updated immediately
+            return $mail->subjectLine === 'Hello Test' &&
+                   str_contains($mail->body, "Your full name is Test User") &&
+                   str_contains($mail->body, "ID: {$user->id}");
+        });
+    }
 }
