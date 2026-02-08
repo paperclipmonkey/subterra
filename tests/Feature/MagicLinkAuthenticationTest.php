@@ -180,7 +180,7 @@ class MagicLinkAuthenticationTest extends TestCase
         $email = 'unique-' . time() . '@example.com';
         
         // Clear magic links before test to avoid interference
-        \DB::table('magic_links')->truncate();
+        \MagicLink\MagicLink::truncate();
         
         // Send first magic link
         $response1 = $this->postJson('/api/auth/magic-link', [
@@ -194,7 +194,7 @@ class MagicLinkAuthenticationTest extends TestCase
         $this->assertNotNull($user);
 
         // Count magic links for this specific user after first request
-        $totalLinks = \DB::table('magic_links')->count();
+        $totalLinks = \MagicLink\MagicLink::count();
         $this->assertGreaterThan(0, $totalLinks, 'Should have at least one magic link in database');
         
         $linksForUser = $this->countMagicLinksForUser($user->id);
@@ -221,32 +221,27 @@ class MagicLinkAuthenticationTest extends TestCase
 
     private function countMagicLinksForUser($userId): int
     {
-        $links = \DB::table('magic_links')->get();
+        $links = \MagicLink\MagicLink::all();
         $count = 0;
         
-        foreach ($links as $link) {
+        foreach ($links as $magicLink) {
             try {
-                // Try direct unserialize first (for test environment)
-                $action = unserialize($link->action);
-            } catch (\Exception $e) {
-                try {
-                    // If that fails, try base64 decode first (for production environment)
-                    $action = unserialize(base64_decode($link->action));
-                } catch (\Exception $e2) {
-                    // Skip invalid serialized data
-                    continue;
-                }
-            }
-            
-            if ($action instanceof \MagicLink\Actions\LoginAction) {
-                $reflection = new \ReflectionClass($action);
-                $authIdentifierProperty = $reflection->getProperty('authIdentifier');
-                $authIdentifierProperty->setAccessible(true);
-                $actionUserId = $authIdentifierProperty->getValue($action);
+                // Use the model's accessor which handles both new and legacy formats
+                $action = $magicLink->action;
                 
-                if ($actionUserId == $userId) {
-                    $count++;
+                if ($action instanceof \MagicLink\Actions\LoginAction) {
+                    $reflection = new \ReflectionClass($action);
+                    $authIdentifierProperty = $reflection->getProperty('authIdentifier');
+                    $authIdentifierProperty->setAccessible(true);
+                    $actionUserId = $authIdentifierProperty->getValue($action);
+                    
+                    if ($actionUserId == $userId) {
+                        $count++;
+                    }
                 }
+            } catch (\Exception $e) {
+                // Skip invalid serialized data
+                continue;
             }
         }
         
