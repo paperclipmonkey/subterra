@@ -27,16 +27,41 @@ class TestDataSeeder extends Seeder
              ]);
         }
 
-        // Create a test trip
-        $trip = Trip::factory()->create([
-            'name' => 'Test Trip',
-            'description' => 'A test trip for seeding data.',
+        // Create a specific test cave
+        $cave = \App\Models\Cave::factory()->create([
+            'name' => 'Media Test Cave',
+            'description' => 'A specific cave created for testing media and trips.',
         ]);
+
+        // Create a test trip linked to this cave
+        $trip = Trip::factory()->create([
+            'name' => 'Media Test Trip',
+            'description' => 'A test trip for seeding data.',
+            'entrance_cave_id' => $cave->id,
+            'exit_cave_id' => $cave->id,
+            'cave_system_id' => $cave->cave_system_id,
+            'visibility' => 'public',
+        ]);
+        
+        $trip->participants()->attach($user->id);
 
         // Create a test trip media
         TripMedia::factory()->create([
             'trip_id' => $trip->id,
             'filename' => 'test_image.jpg',
+            'title' => 'Entrance Passage',
+            'copyright' => 'Subterra Club',
+            'photographer' => 'Test User',
+            'taken_at' => now()->subDays(2),
+        ]);
+
+        TripMedia::factory()->create([
+            'trip_id' => $trip->id,
+            'filename' => 'test_image_2.jpg',
+            'title' => 'Main Chamber',
+            'copyright' => 'Subterra Club',
+            'photographer' => 'Test User',
+            'taken_at' => now()->subDays(2)->addHours(2),
         ]);
 
         // --- Huts Seeding ---
@@ -79,7 +104,7 @@ class TestDataSeeder extends Seeder
         );
 
         if ($caves->count() > 0) {
-            $collection->caves()->attach($caves->pluck('id'));
+            $collection->caves()->syncWithoutDetaching($caves->pluck('id'));
         }
 
         $collection2 = \App\Models\Collection::firstOrCreate(
@@ -92,7 +117,7 @@ class TestDataSeeder extends Seeder
         );
         
         if ($caves->count() > 2) {
-            $collection2->caves()->attach($caves->random(2)->pluck('id'));
+            $collection2->caves()->syncWithoutDetaching($caves->random(2)->pluck('id'));
         }
     }
 }

@@ -76,7 +76,7 @@
                            <v-hover v-slot="{ isHovering, props }">
                               <v-card v-bind="props" flat
                                  class="rounded-lg border cursor-pointer overflow-hidden transition-swing"
-                                 @click="openMedia(media.url)" :elevation="isHovering ? 4 : 0">
+                                 @click="openMedia(media)" :elevation="isHovering ? 4 : 0">
                                  <v-img :src="media.url" aspect-ratio="1" cover
                                     class="bg-grey-lighten-2 transition-transform" :class="{ 'scale-110': isHovering }">
                                     <template v-slot:placeholder>
@@ -207,6 +207,8 @@
             </v-card-actions>
          </v-card>
       </v-dialog>
+
+      <MediaViewModal v-model="showMediaModal" :media="selectedMedia" />
    </div>
 
    <!-- Loading State -->
@@ -226,6 +228,7 @@
 </template>
 
 <script setup>
+import MediaViewModal from '@/components/MediaViewModal.vue'
 import moment from 'moment'
 import VueMarkdown from 'vue-markdown-render'
 import { useRouter, useRoute } from 'vue-router'
@@ -242,6 +245,9 @@ const trip = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const showDeleteConfirmDialog = ref(false);
+
+const showMediaModal = ref(false)
+const selectedMedia = ref({})
 
 const currentUserWasOnTrip = computed(() => {
    if (!trip.value) return false;
@@ -297,8 +303,14 @@ const confirmDelete = async () => {
    }
 }
 
-const openMedia = (url) => {
-   if (url) window.open(url, '_blank');
+const openMedia = (item) => {
+   selectedMedia.value = {
+      ...item,
+      trip_id: trip.value.id,
+      trip_name: trip.value.name,
+      photographer: item.photographer || (item.user_id ? trip.value.participants.find(p => p.id === item.user_id)?.name : null)
+   }
+   showMediaModal.value = true
 }
 
 onMounted(async () => {

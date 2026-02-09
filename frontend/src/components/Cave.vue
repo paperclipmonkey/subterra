@@ -230,10 +230,12 @@
                 </v-col>
                 <v-col v-for="item in media" :key="item.url" cols="6" sm="4" md="3">
                   <v-img :src="item.url" aspect-ratio="1" cover class="rounded cursor-pointer"
-                    @click="openImage(item.url)"></v-img>
+                    @click="openImage(item)"></v-img>
                 </v-col>
               </v-row>
-              <v-alert v-else type="info" variant="text">No photos available.</v-alert>
+              <v-alert v-else type="info" variant="text">No photos photos available.</v-alert>
+              
+              <MediaViewModal v-model="showMediaModal" :media="selectedMedia" />
             </v-window-item>
 
             <!-- Collections Tab -->
@@ -426,18 +428,7 @@ import { markCaveAsDone } from '@/stores/markAsDone';
 import { useCollectionStore } from '@/stores/collections';
 import CorrectionModal from '@/components/CorrectionModal.vue'
 import CaveWeather from '@/components/CaveWeather.vue'
-import RouteList from '@/components/cave-systems/RouteList.vue'
-
-import {
-  MglMap,
-  MglNavigationControl,
-  MglMarker,
-  MglGeolocateControl,
-  MglFullscreenControl,
-} from '@indoorequal/vue-maplibre-gl';
-
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
-const zoom = 11;
+import MediaViewModal from '@/components/MediaViewModal.vue'
 
 const appStore = useAppStore()
 const collectionStore = useCollectionStore()
@@ -448,6 +439,10 @@ const loading = ref(true)
 const error = ref(null)
 const activeTab = ref('overview')
 const showConfirmModal = ref(false)
+
+// Media Modal State
+const showMediaModal = ref(false)
+const selectedMedia = ref({})
 
 const hasDone = computed(() => {
   return cave.value?.trips?.some(trip => trip.participants.some(participant => participant.id === appStore.user.id))
@@ -463,11 +458,17 @@ const visibleTripsCount = computed(() => {
 
 const media = computed(() => {
   if (!cave.value?.trips) return []
-  return cave.value.trips.reduce((acc, item) => {
-    if (item.media) {
-      acc.push(...item.media)
-      return acc
+  return cave.value.trips.reduce((acc, trip) => {
+    if (trip.media && trip.media.length > 0) {
+      const enrichedMedia = trip.media.map(m => ({
+        ...m,
+        trip_id: trip.id,
+        trip_name: trip.name, // Assuming trip has a name
+        photographer: m.photographer || (m.user_id ? trip.participants.find(p => p.id === m.user_id)?.name : null) // Attempt to find photographer name
+      }))
+      acc.push(...enrichedMedia)
     }
+    return acc
   }, [])
 })
 
@@ -563,10 +564,18 @@ const getFileIcon = (mimeType) => {
   return 'mdi-file-outline';
 };
 
-const openImage = (url) => {
-  if (url) {
-    window.open(url, '_blank');
+const openImage = (item) => {
+  // If it's just a URL string (hero/entrance image), wrap it
+  if (typeof item === 'string') {
+    selectedMedia.value = {
+      url: item,
+      filename: 'Image',
+      taken_at: null
+    }
+  } else {
+    selectedMedia.value = item
   }
+  showMediaModal.value = true
 };
 
 onMounted(() => {

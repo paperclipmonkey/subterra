@@ -155,6 +155,7 @@ class TripController extends Controller
             $filePath = $this->imageProcessingService->processAndStoreImage($file, 'trip');
             $mediaData = [
                 'filename' => $filePath,
+                'title' => $file['title'] ?? null,
                 'taken_at' => $file['taken_at'] ?? null,
                 'photographer' => $file['photographer'] ?? null,
                 'copyright' => $file['copyright'] ?? null,

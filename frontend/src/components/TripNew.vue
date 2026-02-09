@@ -137,11 +137,45 @@
                 item-value="value" :error-messages="validationErrors.visibility" hint="Who can see this trip report"
                 persistent-hint variant="outlined" class="mb-4" item-props></v-select>
 
-              <v-file-input prepend-icon="" prepend-inner-icon="mdi-camera" accept="image/*" label="Trip Photos"
-                v-model="trip.media" :error-messages="validationErrors.media"
-                @update:modelValue="delete validationErrors.media" chips multiple
+              <v-file-input prepend-icon="" prepend-inner-icon="mdi-camera" accept="image/*" label="Add Photos"
+                :model-value="[]"
+                @update:modelValue="handleFileSelect"
+                :error-messages="validationErrors.media"
+                @update:error="delete validationErrors.media"
+                chips multiple
                 hint="Upload photos from the trip. You can add multiple images." persistent-hint
                 variant="outlined"></v-file-input>
+
+              <template v-if="pendingMedia.length > 0">
+                <div class="text-subtitle-2 mt-4 mb-2">New Uploads:</div>
+                <v-card v-for="(item, i) in pendingMedia" :key="i" class="mb-3 border" flat>
+                  <v-row no-gutters>
+                    <v-col cols="4" sm="3">
+                      <v-img :src="item.preview" aspect-ratio="1" cover class="h-100 bg-grey-lighten-2"></v-img>
+                    </v-col>
+                    <v-col cols="8" sm="9" class="pa-2">
+                      <v-row dense>
+                        <v-col cols="12">
+                          <div class="d-flex justify-space-between align-center">
+                            <span class="text-caption text-truncate">{{ item.file.name }}</span>
+                            <v-btn icon="mdi-close" size="x-small" variant="text" color="error" @click="removePendingMedia(i)"></v-btn>
+                          </div>
+                        </v-col>
+                        <v-col cols="12">
+                          <v-text-field v-model="item.title" label="Title" density="compact" variant="underlined" hide-details></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-text-field v-model="item.copyright" label="Copyright" density="compact" variant="underlined" hide-details></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-text-field v-model="item.photographer" label="Photographer" density="compact" variant="underlined" hide-details></v-text-field>
+                        </v-col>
+
+                      </v-row>
+                    </v-col>
+                  </v-row>
+                </v-card>
+              </template>
 
               <template v-if="trip.existing_media && trip.existing_media.length">
                 <div class="text-subtitle-2 mt-4 mb-2">Existing media:</div>
@@ -527,6 +561,30 @@ const end_time = computed(() => {
   return exit
 })
 
+const pendingMedia = ref([])
+
+const handleFileSelect = async (files) => {
+  if (!files || files.length === 0) return
+
+  for (const file of files) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      pendingMedia.value.push({
+        file: file,
+        preview: e.target.result,
+        title: '',
+        copyright: '',
+        photographer: '', // Could default to current user name if available
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const removePendingMedia = (index) => {
+  pendingMedia.value.splice(index, 1)
+}
+
 const submitForm = async () => {
   validationErrors.value = {} // Clear previous errors
   isSaving.value = true // Start loading state
@@ -542,14 +600,22 @@ const submitForm = async () => {
       trip.description = markdownOutput.value // Copy the markdown output to the description field
     }
 
-    // Convert only new files to base64
-    const newMediaFiles = trip.media.filter(file => file instanceof File);
-    const base64Media = await Promise.all(newMediaFiles.map(file => convertFileToBase64(file)));
+    // Process pending media
+    const mediaPayload = await Promise.all(pendingMedia.value.map(async (item) => {
+      const base64Data = await convertFileToBase64(item.file);
+      return {
+        data: base64Data.data, // convertFileToBase64 returns { data, filename }
+        filename: base64Data.filename,
+        title: item.title,
+        copyright: item.copyright,
+        photographer: item.photographer
+      };
+    }));
 
     // Prepare payload, separating existing media IDs if needed by the backend
     const payload = {
       ...trip,
-      media: base64Media,
+      media: mediaPayload,
       // If your backend needs existing media IDs separately, adjust here
       // existing_media_ids: trip.existing_media?.map(m => m.id) || []
     };

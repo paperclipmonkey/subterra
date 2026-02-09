@@ -232,18 +232,27 @@ class UserController extends Controller
     {
         $oneYearAgo = Carbon::now()->subYear();
 
-        $activity = Trip::select(DB::raw('DATE(start_time) as date'), DB::raw('count(*) as count'))
-            ->whereHas('participants', function ($query) use ($user) {
+        $activity = Trip::whereHas('participants', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
             ->where('start_time', '>=', $oneYearAgo)
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
+            ->whereNotNull('end_time') // Ensure we have an end time
             ->get()
-            ->map(function ($item) {
-                // Format for vue3-calendar-heatmap: { 'YYYY-MM-DD': count }
-                return ['date' => $item->date, 'count' => $item->count];
-            });
+            ->groupBy(function ($trip) {
+                return $trip->start_time->format('Y-m-d');
+            })
+            ->map(function ($tripsOnDate, $date) {
+                $totalMinutes = $tripsOnDate->sum(function ($trip) {
+                    return $trip->start_time->diffInMinutes($trip->end_time);
+                });
+                
+                return [
+                    'date' => $date,
+                    'count' => round($totalMinutes / 60, 1)
+                ];
+            })
+            ->sortBy('date')
+            ->values();
 
         return response()->json($activity);
     }
