@@ -76,7 +76,7 @@
             <v-tab value="weather">Weather</v-tab>
             <v-tab value="system">System Info</v-tab>
             <v-tab value="media">Media</v-tab>
-            <v-tab value="routes" v-if="appStore.user.is_admin || (cave.system?.routes?.length > 0)">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1"></v-badge></v-tab>
+            <v-tab value="routes">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1"></v-badge></v-tab>
             <v-tab value="collections" v-if="appStore.user.is_admin || (linkedCollections && linkedCollections.length > 0)">Collections</v-tab>
           </v-tabs>
           <v-divider></v-divider>
