@@ -429,6 +429,15 @@ import { useCollectionStore } from '@/stores/collections';
 import CorrectionModal from '@/components/CorrectionModal.vue'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
+import {
+  MglMap,
+  MglNavigationControl,
+  MglMarker,
+  MglFullscreenControl,
+} from '@indoorequal/vue-maplibre-gl';
+
+const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
+const zoom = 14;
 
 const appStore = useAppStore()
 const collectionStore = useCollectionStore()
