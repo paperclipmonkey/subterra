@@ -15,6 +15,8 @@
         :headers="headers"
         :items="catchments"
         :loading="loading"
+        :hide-default-footer="true"
+        :items-per-page="-1"
         class="elevation-1"
       >
         <template v-slot:item.gauges="{ item }">
