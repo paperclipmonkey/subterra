@@ -166,6 +166,20 @@
                   <v-btn v-if="appStore.user.is_admin" size="small" variant="text" icon="mdi-pencil"
                     @click="$router.push('/cave-systems/' + cave.system.id + '/edit')"></v-btn>
                 </div>
+
+                <div v-if="cave.system.catchment_name" class="mb-4">
+                  <div class="text-subtitle-2 text-grey mb-1">Catchment</div>
+                  <v-btn
+                    variant="tonal"
+                    color="primary"
+                    size="small"
+                    :to="{ path: '/caves', query: { catchment: cave.system.catchment_id } }"
+                    prepend-icon="mdi-water"
+                  >
+                    {{ cave.system.catchment_name }}
+                  </v-btn>
+                </div>
+
                 <vue-markdown v-if="cave.system.description" :source="cave.system.description"
                   class="text-body-1 mb-4" />
 

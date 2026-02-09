@@ -33,6 +33,12 @@
         "null"
       ]
     },
+    "catchment_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "caves": {
       "type": "array",
       "items": {

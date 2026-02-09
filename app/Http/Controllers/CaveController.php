@@ -34,7 +34,7 @@ class CaveController extends Controller
 
     public function show($id)
     {
-        $query = Cave::with(['system', 'system.caves', 'system.files', 'system.routes', 'trips.participants', 'trips.media', 'tags', 'collections']);
+        $query = Cave::with(['system', 'system.catchment', 'system.caves', 'system.files', 'system.routes', 'trips.participants', 'trips.media', 'tags', 'collections']);
 
         if (is_numeric($id)) {
             $cave = $query->where('id', $id)->first();

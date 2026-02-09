@@ -85,6 +85,7 @@ class CaveResource extends JsonResource
                 'name' => $this->system->name,
                 'description' => $this->system->description ?? '',
                 'catchment_id' => $this->system->catchment_id,
+                'catchment_name' => $this->system->catchment?->name,
                 'length' => $this->system->length,
                 'vertical_range' => $this->system->vertical_range,
                 'caves' => $this->system->caves,
