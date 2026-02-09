@@ -79,6 +79,17 @@ class HutController extends Controller
 
     public function update(Request $request, Hut $hut)
     {
+        $user = $request->user();
+        if (!$user) {
+            abort(401);
+        }
+
+        $isClubAdmin = $hut->club_id && $user->clubs()->where('club_id', $hut->club_id)->wherePivot('is_admin', true)->exists();
+        
+        if (!$user->is_admin && !$isClubAdmin) {
+            abort(403, 'You do not have permission to edit this hut.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',

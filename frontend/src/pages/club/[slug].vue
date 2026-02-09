@@ -86,7 +86,7 @@
           </v-card>
         </v-col>
 
-        <!-- Members List -->
+      <!-- Members List -->
         <v-col cols="12" md="6">
           <v-card>
             <v-card-title>Members</v-card-title>
@@ -103,6 +103,19 @@
             </v-list>
             <v-card-text v-else>No members found.</v-card-text>
           </v-card>
+        </v-col>
+
+        <!-- Huts List -->
+        <v-col cols="12" md="6">
+            <v-card>
+                <v-card-title>Huts</v-card-title>
+                <v-list v-if="club && club.huts && club.huts.length > 0">
+                    <v-list-item v-for="hut in club.huts" :key="hut.id" :to="`/huts/${hut.id}`" :title="hut.name"
+                        prepend-icon="mdi-home-group">
+                    </v-list-item>
+                </v-list>
+                <v-card-text v-else>No huts listed.</v-card-text>
+            </v-card>
         </v-col>
       </v-row>
 

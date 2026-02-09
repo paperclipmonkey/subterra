@@ -149,7 +149,7 @@ class HutFeatureTest extends TestCase
 
     public function test_can_update_hut(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['is_admin' => true]);
         $club = Club::factory()->create();
         $hut = Hut::factory()->create([
             'club_id' => $club->id,
@@ -178,7 +178,7 @@ class HutFeatureTest extends TestCase
 
     public function test_can_update_hut_with_image(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['is_admin' => true]);
         $club = Club::factory()->create();
         $hut = Hut::factory()->create([
             'club_id' => $club->id,
@@ -224,7 +224,7 @@ class HutFeatureTest extends TestCase
 
     public function test_can_manage_reciprocal_clubs(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['is_admin' => true]);
         $club = Club::factory()->create();
         $reciprocalClub1 = Club::factory()->create();
         $reciprocalClub2 = Club::factory()->create();

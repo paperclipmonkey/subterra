@@ -61,6 +61,8 @@ class ClubController extends Controller
             }
         }
 
+        $club->load('huts');
+
         return response()->json(new ClubDetailResource($club));
     }
 

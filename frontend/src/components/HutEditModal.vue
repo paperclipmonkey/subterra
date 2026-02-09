@@ -25,7 +25,8 @@
                             </v-col>
                             <v-col cols="12">
                                 <v-autocomplete v-model="editedHut.reciprocal_clubs" :items="clubs" item-title="name"
-                                    item-value="id" label="Reciprocal Clubs" multiple chips closable-chips :loading="loadingClubs"></v-autocomplete>
+                                    item-value="id" label="Reciprocal Clubs" multiple chips closable-chips :loading="loadingClubs"
+                                    autocomplete="off"></v-autocomplete>
                             </v-col>
                             <v-col cols="12">
                                 <div class="text-subtitle-2 mb-2">Description</div>
@@ -124,7 +125,20 @@ const editedHut = ref({ ...defaultHut })
 const isNew = computed(() => !props.hut)
 
 const canEdit = computed(() => {
-    return userStore.user.is_admin
+    if (!userStore.user) return false;
+    if (userStore.user.is_admin) return true;
+
+    // For new huts, allow if user is admin of any club
+    if (isNew.value) {
+        return userStore.user.clubs && userStore.user.clubs.some(c => c.is_admin);
+    }
+
+    // For existing huts, allow if user is admin of the owning club
+    if (props.hut && props.hut.club_id && userStore.user.clubs) {
+        return userStore.user.clubs.some(c => c.id === props.hut.club_id && c.is_admin);
+    }
+
+    return false;
 })
 
 onMounted(async () => {

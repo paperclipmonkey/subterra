@@ -11,13 +11,17 @@
                     class="backdrop-blur mr-2"></v-btn>
             </div>
             <div class="position-absolute top-0 right-0 pa-4" style="z-index: 1;">
-                <HutEditModal :hut="hut" v-if="userStore.user.is_admin" class="backdrop-blur" />
+                <HutEditModal :hut="hut" v-if="canEdit" class="backdrop-blur" />
             </div>
             <div class="d-flex fill-height align-end">
                 <div class="bg-black-transparent pa-4 w-100">
                     <h1 class="text-h4 text-white font-weight-bold">{{ hut.name }}</h1>
                     <div class="text-subtitle-1 text-white">
-                        <v-icon color="white" start>mdi-home-group</v-icon> {{ hut.club?.name }}
+                        <v-icon color="white" start>mdi-home-group</v-icon> 
+                        <router-link v-if="hut.club" :to="`/club/${hut.club.slug}`" class="text-white text-decoration-none hover-underline">
+                            {{ hut.club.name }}
+                        </router-link>
+                        <span v-else>{{ hut.club?.name }}</span>
                     </div>
                 </div>
             </div>
@@ -47,7 +51,7 @@
                             <strong>Amenities:</strong>
                             <div class="d-flex flex-wrap gap-2 mt-2">
                                 <v-chip v-for="amenity in hut.amenities" :key="amenity" size="small" color="primary"
-                                    variant="outlined">
+                                    variant="outlined" class="mr-2 mb-2">
                                     {{ amenity }}
                                 </v-chip>
                             </div>
@@ -70,26 +74,14 @@
                         <div v-if="hut.reciprocal_clubs && hut.reciprocal_clubs.length">
                             <v-list density="compact">
                                 <v-list-item v-for="club in hut.reciprocal_clubs" :key="club.id" :title="club.name"
-                                    :to="`/clubs/${club.slug}`" link prepend-icon="mdi-shield-account"></v-list-item>
+                                    :to="`/club/${club.slug}`" link prepend-icon="mdi-shield-account"></v-list-item>
                             </v-list>
                         </div>
                         <div v-else class="text-grey font-italic">No reciprocal clubs listed.</div>
                     </v-card-text>
                 </v-card>
 
-                <v-card class="mb-4">
-                    <v-card-title>Nearby Caves</v-card-title>
-                    <v-card-text>
-                        <div v-if="hut.nearby_caves && hut.nearby_caves.length">
-                            <v-list density="compact">
-                                <v-list-item v-for="cave in hut.nearby_caves" :key="cave.id" :title="cave.name"
-                                    :subtitle="`${parseFloat(cave.distance).toFixed(1)} km - ${cave.location_name}`"
-                                    :to="`/caves/${cave.slug}`" link prepend-icon="mdi-image-filter-hdr"></v-list-item>
-                            </v-list>
-                        </div>
-                        <div v-else class="text-grey font-italic">No nearby caves found within 10km.</div>
-                    </v-card-text>
-                </v-card>
+
 
                 <v-card>
                     <v-card-title>Location</v-card-title>
@@ -164,6 +156,16 @@ onMounted(() => {
 const hut = computed(() => hutStore.currentHut)
 const loading = computed(() => hutStore.loading)
 const error = computed(() => hutStore.error)
+
+const canEdit = computed(() => {
+    if (!userStore.user) return false;
+    if (userStore.user.is_admin) return true;
+    if (hut.value && hut.value.club_id && userStore.user.clubs) {
+        return userStore.user.clubs.some(c => c.id === hut.value.club_id && c.is_admin);
+    }
+    return false;
+});
+
 
 // Map Setup
 import {

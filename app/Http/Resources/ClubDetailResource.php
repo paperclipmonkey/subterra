@@ -28,6 +28,7 @@ class ClubDetailResource extends JsonResource
             // 'member_count' => $this->member_count, // Or directly use accessor
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
+            'huts' => $this->whenLoaded('huts'),
             // Example: Load members only for detail view if needed
             // 'members' => UserResource::collection($this->whenLoaded('users')),
         ];
