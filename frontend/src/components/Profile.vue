@@ -79,7 +79,7 @@
             <v-col cols="12" md="4">
                <v-card class="py-4 px-6 rounded-xl h-100 d-flex align-center" elevation="0" border>
                   <v-avatar color="blue-lighten-5" size="56" class="mr-4">
-                     <v-icon color="blue" icon="mdi-mountain" size="32"></v-icon>
+                     <v-icon color="blue" icon="mdi-flashlight" size="32"></v-icon>
                   </v-avatar>
                   <div>
                      <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatNumber(profile.stats.caves) }}
