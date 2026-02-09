@@ -27,6 +27,12 @@
         "null"
       ]
     },
+    "catchment_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
     "caves": {
       "type": "array",
       "items": {

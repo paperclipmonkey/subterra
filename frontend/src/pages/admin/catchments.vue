@@ -24,9 +24,11 @@
         </template>
         
         <template v-slot:item.cave_systems_count="{ item }">
-          <v-chip size="small" :color="item.cave_systems_count > 0 ? 'info' : 'default'">
-            {{ item.cave_systems_count }}
-          </v-chip>
+          <router-link :to="`/caves?catchment=${item.id}`" class="text-decoration-none">
+            <v-chip size="small" :color="item.cave_systems_count > 0 ? 'info' : 'default'" class="cursor-pointer">
+              {{ item.cave_systems_count }}
+            </v-chip>
+          </router-link>
         </template>
 
         <template v-slot:item.actions="{ item }">

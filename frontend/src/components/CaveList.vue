@@ -64,6 +64,7 @@ const router = useRouter();
 
 // Initialize search from query parameter
 const search = ref(route.query.search || '');
+const catchmentId = ref(route.query.catchment || null);
 
 const showFilterByTagModal = ref(false)
 
@@ -71,14 +72,14 @@ let cachedTags = ref([]);
 
 const applyFilter = (tags) => {
   cachedTags = tags
-  caveStore.applyFilters(tags, search.value)
+  caveStore.applyFilters(tags, search.value, catchmentId.value)
   // Update URL with tags as a comma-separated string
   router.replace({ query: { ...route.query, tags: tags.join(',') } });
   showFilterByTagModal.value = false
 }
 
 watch(search, (newSearch) => {
-  caveStore.applyFilters(cachedTags, newSearch)
+  caveStore.applyFilters(cachedTags, newSearch, catchmentId.value)
   // Update URL with current search
   router.replace({ query: { ...route.query, search: newSearch } });
 })
@@ -90,13 +91,23 @@ watch(tab, (newTab) => {
   router.replace({ query: { ...route.query, view: newTab } });
 })
 
+// Watch for route query changes for catchment (deep linking support)
+watch(() => route.query.catchment, (newCatchment) => {
+  catchmentId.value = newCatchment;
+  caveStore.applyFilters(cachedTags, search.value, newCatchment);
+})
+
 onMounted(async () => {
   // Ensure search and view parameters are applied on reload
   search.value = route.query.search || '';
   tab.value = route.query.view || 'list';
   const tags = route.query.tags ? route.query.tags.split(',') : [];
-  caveStore.applyFilters(tags, search.value);
+  catchmentId.value = route.query.catchment || null;
+
   cachedTags.value = tags;
   await caveStore.getList();
+
+  // Apply filters after list is loaded
+  caveStore.applyFilters(tags, search.value, catchmentId.value);
 })
 </script>
