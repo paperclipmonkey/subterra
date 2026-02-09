@@ -162,7 +162,7 @@
                   <div class="pa-4 pt-6 overflow-x-auto">
                      <div class="calendar-wrapper">
                         <calendar-heatmap :values="heatmapData" :end-date="endDate"
-                           :range-color='["#f3f4f6", "#d1fae5", "#34d399", "#10b981", "#059669"]' tooltip-unit="trips"
+                           :range-color='["#f3f4f6", "#d1fae5", "#34d399", "#10b981", "#059669"]' tooltip-unit="hours"
                            class="heatmap-scale" />
                      </div>
                   </div>
