@@ -28,9 +28,14 @@ class AdminTaskTest extends TestCase
             'details' => 'Test file'
         ]);
 
-        // 1. Cave with missing photo
-        Cave::factory()->create(['hero_image' => null, 'description' => 'Desc', 'name' => 'No Photo Cave', 'cave_system_id' => $goodSystem->id]);
-        Cave::factory()->create(['hero_image' => 'photo.jpg', 'description' => 'Desc', 'name' => 'Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        // 1. Cave with missing photos (both hero and entrance)
+        Cave::factory()->create(['hero_image' => null, 'entrance_image' => null, 'description' => 'Desc', 'name' => 'No Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        // Cave with hero image but no entrance image - should NOT appear in missing photos
+        Cave::factory()->create(['hero_image' => 'photo.jpg', 'entrance_image' => null, 'description' => 'Desc', 'name' => 'Hero Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        // Cave with entrance image but no hero image - should NOT appear in missing photos
+        Cave::factory()->create(['hero_image' => null, 'entrance_image' => 'entrance.jpg', 'description' => 'Desc', 'name' => 'Entrance Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        // Cave with both photos - should NOT appear in missing photos
+        Cave::factory()->create(['hero_image' => 'photo.jpg', 'entrance_image' => 'entrance.jpg', 'description' => 'Desc', 'name' => 'Both Photos Cave', 'cave_system_id' => $goodSystem->id]);
 
         // 2. Cave with missing description
         Cave::factory()->create(['description' => null, 'hero_image' => 'img.jpg', 'name' => 'No Desc Cave', 'cave_system_id' => $goodSystem->id]);

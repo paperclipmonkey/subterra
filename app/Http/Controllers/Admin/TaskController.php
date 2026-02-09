@@ -16,6 +16,7 @@ class TaskController extends Controller
     {
         // 1. Caves without Photos
         $cavesNoPhoto = Cave::whereNull('hero_image')
+            ->whereNull('entrance_image')
             ->select('id', 'name', 'slug', 'location_name')
             ->orderBy('name')
             ->get();

@@ -108,7 +108,7 @@
               <template v-slot:prepend>
                 <v-icon color="warning">mdi-clipboard-check</v-icon>
               </template>
-              <v-card-subtitle>Approvals & validation</v-card-subtitle>
+              <v-card-subtitle>Missing data & validation</v-card-subtitle>
             </v-card-item>
           </v-card>
         </v-col>
