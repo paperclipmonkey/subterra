@@ -79,7 +79,14 @@ class DashboardController extends Controller
         ->filter() // Remove null entries
         ->values();
 
+        // Generate labels for the last 30 days
+        $labels = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $labels[] = now()->subDays($i)->format('Y-m-d');
+        }
+
         return response()->json([
+            'labels' => $labels,
             'data' => $popularRecords,
         ]);
     }
