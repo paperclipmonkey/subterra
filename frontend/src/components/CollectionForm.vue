@@ -77,7 +77,7 @@ const emit = defineEmits(['update:modelValue'])
 const caveStore = useCaveStore()
 const form = ref(null)
 const valid = ref(false)
-const internalCollection = ref({ ...props.modelValue })
+const internalCollection = ref(JSON.parse(JSON.stringify(props.modelValue)))
 const photoFile = ref(null)
 const selectedCaveToAdd = ref(null)
 
@@ -90,24 +90,30 @@ onMounted(() => {
     }
 })
 
+// Helper to ensure data structure is correct
+const ensureDataStructure = (collection) => {
+    if (!collection.caves) {
+        collection.caves = []
+    }
+
+    // Map pivot description if needed
+    collection.caves.forEach(c => {
+        if (c.pivot && !c.playlist_description) {
+            c.playlist_description = c.pivot.description;
+        }
+    });
+    return collection;
+}
+
+// Initialize immediately
+ensureDataStructure(internalCollection.value)
+
 // Deep watch for two-way binding
 watch(() => props.modelValue, (newVal) => {
     if (JSON.stringify(newVal) !== JSON.stringify(internalCollection.value)) {
-        internalCollection.value = JSON.parse(JSON.stringify(newVal))
-
-        // Ensure caves array exists
-        if (!internalCollection.value.caves) {
-            internalCollection.value.caves = []
-        }
-
-        // Map pivot description if needed (though parent should ideally handle this)
-        internalCollection.value.caves.forEach(c => {
-            if (c.pivot && !c.playlist_description) {
-                c.playlist_description = c.pivot.description;
-            }
-        });
+        internalCollection.value = ensureDataStructure(JSON.parse(JSON.stringify(newVal)))
     }
-}, { deep: true, immediate: true })
+}, { deep: true })
 
 watch(internalCollection, (newVal) => {
     emit('update:modelValue', newVal)

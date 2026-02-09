@@ -3,7 +3,7 @@
     <v-skeleton-loader type="article, image"></v-skeleton-loader>
   </v-container>
 
-  <v-card v-else-if="collection" class="mx-auto my-4 rounded-xl overflow-hidden" elevation="4">
+  <v-sheet v-else-if="collection" class="position-relative">
     <v-img
       :src="collection.photo_path || 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
       height="350" cover class="align-end" gradient="to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 60%">
@@ -17,9 +17,6 @@
       </div>
 
       <v-container class="pb-6">
-        <div class="d-flex align-center mb-2">
-          <v-chip variant="outlined" color="white" class="backdrop-blur">{{ collection.caves_count }} Caves</v-chip>
-        </div>
         <h1 class="text-h3 text-white font-weight-bold mb-2">{{ collection.name }}</h1>
       </v-container>
     </v-img>
@@ -47,8 +44,8 @@
     </v-container>
 
     <!-- Desktop View: Split Layout -->
-    <v-container v-if="mdAndUp" fluid class="pa-0">
-      <v-row no-gutters>
+    <v-container v-if="mdAndUp">
+      <v-row>
         <v-col cols="12" md="8">
           <CollectionCaveList :collection="collection" :can-edit="canEdit" />
         </v-col>
@@ -77,7 +74,7 @@
         </v-window-item>
       </v-window>
     </div>
-  </v-card>
+  </v-sheet>
 
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
     <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>

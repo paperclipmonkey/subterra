@@ -127,4 +127,39 @@ class CollectionFeatureTest extends TestCase
              ->assertJsonStructure(['data' => ['id', 'name', 'slug', 'caves' => [['pivot' => ['description']]]]])
              ->assertJsonPath('data.caves.0.pivot.description', 'Initial Note');
     }
+
+    public function test_update_preserves_cave_notes()
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        $collection = Collection::factory()->create(['user_id' => $user->id]);
+        $cave = Cave::factory()->create();
+        $collection->caves()->attach($cave, ['description' => 'Original Note', 'sort_order' => 0]);
+
+        $data = [
+            'name' => 'Updated Collection',
+            'caves' => [
+                ['id' => $cave->id, 'description' => 'Original Note'],
+            ]
+        ];
+
+        $response = $this->actingAs($user)->putJson("/api/collections/{$collection->slug}", $data);
+        $response->assertStatus(200);
+        
+        $this->assertDatabaseHas('cave_collection', [
+            'collection_id' => $collection->id,
+            'cave_id' => $cave->id,
+            'description' => 'Original Note'
+        ]);
+        
+        // Now test updating the note
+        $data['caves'][0]['description'] = 'New Note';
+        $response = $this->actingAs($user)->putJson("/api/collections/{$collection->slug}", $data);
+        $response->assertStatus(200);
+        
+        $this->assertDatabaseHas('cave_collection', [
+            'collection_id' => $collection->id,
+            'cave_id' => $cave->id,
+            'description' => 'New Note'
+        ]);
+    }
 }
