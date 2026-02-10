@@ -75,6 +75,7 @@
                 color="grey-lighten-1"></v-badge></v-tab>
             <v-tab value="weather">Weather</v-tab>
             <v-tab value="system">System Info</v-tab>
+            <v-tab v-if="smAndDown" value="map">Map</v-tab>
             <v-tab value="media">Media</v-tab>
             <v-tab value="routes">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1"></v-badge></v-tab>
             <v-tab value="collections" v-if="appStore.user.is_admin || (linkedCollections && linkedCollections.length > 0)">Collections</v-tab>
@@ -158,6 +159,51 @@
               <CaveWeather :cave-id="cave.slug || cave.id" />
             </v-window-item>
 
+            <!-- Map Tab (Mobile only) -->
+            <v-window-item v-if="smAndDown" value="map">
+               <v-card class="mb-4 rounded-lg" elevation="0" variant="flat">
+                <template v-if="appStore.user.is_approved">
+                    <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px">
+                    <mgl-marker :coordinates="lnglat" color="#cc0000" />
+                    <mgl-navigation-control />
+                    <mgl-fullscreen-control />
+                    </mgl-map>
+                </template>
+                <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
+                    <div class="text-center pa-4">
+                    <v-icon size="48" color="grey" class="mb-2">mdi-map-lock</v-icon>
+                    <div class="text-h6 text-grey-darken-1">Location Locked</div>
+                    <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
+                    </div>
+                </div>
+                <v-card-text>
+                    <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <div class="text-caption text-grey">Coordinates</div>
+                        <div v-if="appStore.user.is_approved && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                        cave.location_lng.toFixed(5) }}</div>
+                        <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
+                    </div>
+                    <div class="d-flex" v-if="appStore.user.is_approved">
+                        <v-tooltip text="Copy Coordinates" location="top">
+                        <template v-slot:activator="{ props }">
+                            <v-btn icon="mdi-content-copy" size="small" variant="text" v-bind="props"
+                            @click="copyLatLng"></v-btn>
+                        </template>
+                        </v-tooltip>
+                        <v-tooltip text="Open in Google Maps" location="top">
+                        <template v-slot:activator="{ props }">
+                            <v-btn icon="mdi-google-maps" size="small" variant="text" v-bind="props"
+                            :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
+                            target="_blank"></v-btn>
+                        </template>
+                        </v-tooltip>
+                    </div>
+                    </div>
+                </v-card-text>
+                </v-card>
+            </v-window-item>
+
             <!-- System Tab -->
             <v-window-item value="system">
               <template v-if="cave.system">
@@ -226,6 +272,34 @@
                     <div class="text-caption text-grey-darken-1 mb-4">
                         References, surveys, and technical documents are available to approved club members.
                     </div>
+                </div>
+
+                <!-- Statistics (Mobile only) -->
+                <div v-if="smAndDown" class="mt-6">
+                    <v-divider class="mb-6"></v-divider>
+                    <h3 class="text-h6 mb-4">Statistics</h3>
+                    <v-row dense>
+                        <v-col cols="6">
+                        <div class="d-flex flex-column">
+                            <span class="text-caption text-grey">Length</span>
+                            <span class="text-h6">{{ cave.system?.length ? Math.round(cave.system.length) + ' m' : '-' }}</span>
+                        </div>
+                        </v-col>
+                        <v-col cols="6">
+                        <div class="d-flex flex-column">
+                            <span class="text-caption text-grey">Vertical</span>
+                            <span class="text-h6">{{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}</span>
+                        </div>
+                        </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <div class="text-caption text-grey mb-2">Tags</div>
+                    <v-chip-group>
+                        <v-chip v-for="tag in cave.tags" :key="tag.tag" size="small" color="secondary" variant="tonal" disabled>{{ tag.tag
+                        }}</v-chip>
+                    </v-chip-group>
                 </div>
               </template>
               <v-alert v-else type="warning" variant="tonal">No system information available.</v-alert>
@@ -313,7 +387,7 @@
       </v-col>
 
       <!-- Sidebar Column -->
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="4" v-if="!smAndDown">
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg" elevation="1">
           <template v-if="appStore.user.is_approved">
@@ -358,7 +432,7 @@
         </v-card>
 
         <!-- Stats Card -->
-        <v-card class="mb-4 rounded-lg pa-4" elevation="1">
+        <v-card class="mb-4 rounded-lg pa-4" elevation="1" v-if="!smAndDown">
           <h3 class="text-h6 mb-4">Statistics</h3>
           <v-row dense>
             <v-col cols="6">
@@ -436,6 +510,7 @@
 
 <script setup>
 import { useAppStore } from '@/stores/app';
+import { useDisplay } from 'vuetify'
 import MarkAsDone from './MarkAsDone.vue'
 import VueMarkdown from 'vue-markdown-render'
 import { markCaveAsDone } from '@/stores/markAsDone';
@@ -454,6 +529,7 @@ const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&ke
 const zoom = 14;
 
 const appStore = useAppStore()
+const { smAndDown } = useDisplay()
 const collectionStore = useCollectionStore()
 
 const route = useRoute()
