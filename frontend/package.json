@@ -18,7 +18,7 @@
     "@milkdown/kit": "^7.18.0",
     "@milkdown/plugin-listener": "^7.18.0",
     "@milkdown/vue": "^7.18.0",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "chart.js": "^4.5.1",
     "chartjs-adapter-moment": "^1.0.1",
     "core-js": "^3.48.0",
