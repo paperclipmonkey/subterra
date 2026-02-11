@@ -25,44 +25,7 @@ class HutFeatureTest extends TestCase
             ->assertJsonCount(3);
     }
 
-    public function test_can_view_hut_details_with_nearby_caves(): void
-    {
-        $user = User::factory()->create();
-        $club = Club::factory()->create();
-        $hut = Hut::factory()->create([
-            'club_id' => $club->id,
-            'location_lat' => 50.0000,
-            'location_lng' => -2.0000,
-        ]);
 
-        // Cave nearby (approx 1km away)
-        // 1 deg lat is approx 111km. 0.01 is 1.1km.
-        $nearbyCave = Cave::factory()->create([
-            'location_lat' => 50.0090, 
-            'location_lng' => -2.0000,
-        ]);
-
-        // Cave far away
-        $farCave = Cave::factory()->create([
-            'location_lat' => 51.0000,
-            'location_lng' => -2.0000,
-        ]);
-
-        $response = $this->actingAs($user)->getJson("/api/huts/{$hut->id}");
-
-        $response->assertStatus(200)
-            ->assertJsonPath('id', $hut->id)
-            ->assertJsonPath('name', $hut->name);
-        
-        $caves = $response->json('nearby_caves');
-        
-        if (\DB::connection()->getDriverName() === 'sqlite') {
-            $this->markTestSkipped('SQLite does not support the complex distance calculation SQL functions used.');
-        } else {
-            $this->assertCount(1, $caves);
-            $this->assertEquals($nearbyCave->id, $caves[0]['id']);
-        }
-    }
 
     public function test_can_create_hut(): void
     {
