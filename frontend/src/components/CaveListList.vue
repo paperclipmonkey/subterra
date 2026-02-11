@@ -16,7 +16,7 @@
       <v-row v-else class="px-2">
         <v-col v-for="cave in caveStore.caves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
           <v-card hover elevation="2" class="fill-height d-flex flex-column cave-card"
-            @click="$router.push({ path: '/caves/' + cave.slug })">
+            :to="'/caves/' + cave.slug">
             <v-img :src="cave.hero_image || cave.entrance_image || '/placeholder-cave.jpg'" height="160" cover
               class="bg-grey-lighten-2">
               <template v-slot:placeholder>
