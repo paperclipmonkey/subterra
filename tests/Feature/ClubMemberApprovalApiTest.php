@@ -45,4 +45,40 @@ class ClubMemberApprovalApiTest extends TestCase
         $this->assertEquals($club->id, $response->json('data.clubs.0.id'));
         $this->assertEquals('approved', $response->json('data.clubs.0.status'));
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_allows_club_admin_to_approve_member()
+    {
+        $club = Club::factory()->create();
+        $clubAdmin = User::factory()->create(['is_admin' => false]);
+        $club->users()->attach($clubAdmin->id, ['is_admin' => true, 'status' => 'approved']);
+
+        $user = User::factory()->create(['is_approved' => false]);
+        $club->users()->attach($user->id, ['status' => 'pending']);
+
+        $this->actingAs($clubAdmin, 'sanctum');
+
+        $response = $this->putJson("/api/admin/clubs/{$club->slug}/members/{$user->id}/approve");
+
+        $response->assertStatus(200);
+        $this->assertEquals('approved', $response->json('data.clubs.0.status'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_forbids_non_club_admin_from_approving_member()
+    {
+        $club = Club::factory()->create();
+        $otherUser = User::factory()->create(['is_admin' => false]);
+        // Other user is just a member, not admin
+        $club->users()->attach($otherUser->id, ['is_admin' => false, 'status' => 'approved']);
+
+        $user = User::factory()->create(['is_approved' => false]);
+        $club->users()->attach($user->id, ['status' => 'pending']);
+
+        $this->actingAs($otherUser, 'sanctum');
+
+        $response = $this->putJson("/api/admin/clubs/{$club->slug}/members/{$user->id}/approve");
+
+        $response->assertStatus(403);
+    }
 }

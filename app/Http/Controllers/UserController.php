@@ -185,7 +185,10 @@ class UserController extends Controller
 
     public function show($id): UserDetailResource
     {
-        $user = User::withoutGlobalScopes()->findOrFail($id);
+        $user = User::withoutGlobalScopes()
+            ->with(['trips.system', 'clubs', 'medals'])
+            ->findOrFail($id);
+
         return new UserDetailResource($user);
     }
 
