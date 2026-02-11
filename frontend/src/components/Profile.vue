@@ -343,14 +343,28 @@ onMounted(async () => {
       medals.value = (profile.value.medals || []);
 
       // Fetch recent trips and heatmap data
-      const [recentTripsResp, heatmapResp] = await Promise.all([
+      // Use Promise.allSettled to ensure one failure doesn't break the whole page
+      const [recentTripsResult, heatmapResult] = await Promise.allSettled([
          mande(`/api/users/${route.params.id}/recent-trips`).get(),
          mande(`/api/users/${route.params.id}/activity-heatmap`).get()
       ]);
-      recentTrips.value = recentTripsResp.data || recentTripsResp;
-      heatmapData.value = heatmapResp || [];
+
+      if (recentTripsResult.status === 'fulfilled') {
+         recentTrips.value = recentTripsResult.value.data || recentTripsResult.value;
+      } else {
+         console.warn(`Failed to load recent trips for user ${route.params.id}:`, recentTripsResult.reason);
+         recentTrips.value = [];
+      }
+
+      if (heatmapResult.status === 'fulfilled') {
+         heatmapData.value = heatmapResult.value || [];
+      } else {
+         console.warn(`Failed to load heatmap for user ${route.params.id}:`, heatmapResult.reason);
+         heatmapData.value = [];
+      }
+
    } catch (err) {
-      console.error(`Error fetching profile or activity for user ${route.params.id}:`, err);
+      console.error(`Error fetching profile for user ${route.params.id}:`, err);
       if (err.response && err.response.status === 404) {
          error.value = "User not found. It may have been deleted or you may have the wrong link."
       } else {

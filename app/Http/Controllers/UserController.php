@@ -214,8 +214,10 @@ class UserController extends Controller
     /**
      * Get the 10 most recent trips for a user.
      */
-    public function recentTrips(User $user): ResourceCollection
+    public function recentTrips($id): ResourceCollection
     {
+        $user = User::withoutGlobalScopes()->findOrFail($id);
+
         $trips = Trip::whereHas('participants', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
@@ -231,8 +233,13 @@ class UserController extends Controller
     /**
      * Get activity heatmap data for a user (trips per day in the last year).
      */
-    public function activityHeatmap(User $user): JsonResponse
+    /**
+     * Get activity heatmap data for a user (trips per day in the last year).
+     */
+    public function activityHeatmap($id): JsonResponse
     {
+        $user = User::withoutGlobalScopes()->findOrFail($id);
+        
         $oneYearAgo = Carbon::now()->subYear();
 
         $activity = Trip::whereHas('participants', function ($query) use ($user) {
