@@ -40,15 +40,15 @@ class OnCallController extends Controller
             'end_at' => 'required|date|after:start_at',
         ]);
 
-        // Simple overlap check
-        $exists = OnCallShift::where('user_id', $data['user_id'])
-            ->where(function ($query) use ($data) {
-                $query->whereBetween('start_at', [$data['start_at'], $data['end_at']])
-                      ->orWhereBetween('end_at', [$data['start_at'], $data['end_at']]);
-            })->exists();
+        // Strict global overlap check
+        // Finds any shift where:
+        // Existing Start < New End  AND  Existing End > New Start
+        $exists = OnCallShift::where('start_at', '<', $data['end_at'])
+            ->where('end_at', '>', $data['start_at'])
+            ->exists();
 
         if ($exists) {
-            return response()->json(['message' => 'User already has a shift in this range'], 409);
+            return response()->json(['message' => 'This shift overlaps with an existing shift.'], 409);
         }
 
         $shift = OnCallShift::create($data);
@@ -74,16 +74,14 @@ class OnCallController extends Controller
             'end_at' => 'required|date|after:start_at',
         ]);
 
-        // Check for overlaps with other shifts for the same user (excluding this shift)
-        $exists = OnCallShift::where('user_id', $data['user_id'])
-            ->where('id', '!=', $id)
-            ->where(function ($query) use ($data) {
-                $query->whereBetween('start_at', [$data['start_at'], $data['end_at']])
-                      ->orWhereBetween('end_at', [$data['start_at'], $data['end_at']]);
-            })->exists();
+        // Check for overlaps with ANY other shift (global check)
+        $exists = OnCallShift::where('id', '!=', $id)
+            ->where('start_at', '<', $data['end_at'])
+            ->where('end_at', '>', $data['start_at'])
+            ->exists();
 
         if ($exists) {
-            return response()->json(['message' => 'User already has a shift in this range'], 409);
+            return response()->json(['message' => 'This shift overlaps with an existing shift.'], 409);
         }
 
         // Check for orphaned callouts if the shift is shortened or person changed
