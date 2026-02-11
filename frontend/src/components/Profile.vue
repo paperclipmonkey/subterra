@@ -284,7 +284,7 @@
  </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { mande } from 'mande'; // Import mande
 import { CalendarHeatmap } from "vue3-calendar-heatmap";
@@ -333,11 +333,11 @@ const confirmDownload = () => {
    isDownloadDialogOpen.value = false;
 }
 
-onMounted(async () => {
+const loadProfile = async (id) => {
    loading.value = true
    error.value = null
    try {
-      const userApi = mande(`/api/users/${route.params.id}`);
+      const userApi = mande(`/api/users/${id}`);
       const response = await userApi.get();
       user.value = await useAppStore().getUser() || {} // Ensure valid object
       profile.value = response.data || response;
@@ -349,26 +349,26 @@ onMounted(async () => {
       // Fetch recent trips and heatmap data
       // Use Promise.allSettled to ensure one failure doesn't break the whole page
       const [recentTripsResult, heatmapResult] = await Promise.allSettled([
-         mande(`/api/users/${route.params.id}/recent-trips`).get(),
-         mande(`/api/users/${route.params.id}/activity-heatmap`).get()
+         mande(`/api/users/${id}/recent-trips`).get(),
+         mande(`/api/users/${id}/activity-heatmap`).get()
       ]);
 
       if (recentTripsResult.status === 'fulfilled') {
          recentTrips.value = recentTripsResult.value.data || recentTripsResult.value;
       } else {
-         console.warn(`Failed to load recent trips for user ${route.params.id}:`, recentTripsResult.reason);
+         console.warn(`Failed to load recent trips for user ${id}:`, recentTripsResult.reason);
          recentTrips.value = [];
       }
 
       if (heatmapResult.status === 'fulfilled') {
          heatmapData.value = heatmapResult.value || [];
       } else {
-         console.warn(`Failed to load heatmap for user ${route.params.id}:`, heatmapResult.reason);
+         console.warn(`Failed to load heatmap for user ${id}:`, heatmapResult.reason);
          heatmapData.value = [];
       }
 
    } catch (err) {
-      console.error(`Error fetching profile for user ${route.params.id}:`, err);
+      console.error(`Error fetching profile for user ${id}:`, err);
       if (err.response && err.response.status === 404) {
          error.value = "User not found. It may have been deleted or you may have the wrong link."
       } else {
@@ -376,6 +376,16 @@ onMounted(async () => {
       }
    } finally {
       loading.value = false
+   }
+}
+
+onMounted(() => {
+   loadProfile(route.params.id)
+})
+
+watch(() => route.params.id, (newId) => {
+   if (newId) {
+      loadProfile(newId)
    }
 })
 
