@@ -184,9 +184,9 @@ export default {
         ]);
         this.loading = false;
 
-        // Default new shift to 9am today/tomorrow
-        this.newShift.start_at = moment().set({ hour: 9, minute: 0 }).format('YYYY-MM-DDTHH:mm');
-        this.newShift.end_at = moment().add(1, 'day').set({ hour: 9, minute: 0 }).format('YYYY-MM-DDTHH:mm');
+        // Default new shift to 07:30 - 11:31 today
+        this.newShift.start_at = moment().set({ hour: 7, minute: 30 }).format('YYYY-MM-DDTHH:mm');
+        this.newShift.end_at = moment().set({ hour: 23, minute: 31 }).format('YYYY-MM-DDTHH:mm');
     },
     methods: {
         async fetchUsers() {
