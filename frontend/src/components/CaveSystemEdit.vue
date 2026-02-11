@@ -131,7 +131,13 @@ const save = async () => {
       })
 
       if (response.ok) {
-        router.push('/cave-systems/' + cavesystem.value.slug)
+        // Go back to previous page (likely the cave page)
+        // Check if we have history to go back to, otherwise fallback to system page
+        if (window.history.state && window.history.state.back) {
+          router.go(-1)
+        } else {
+          router.push('/cave-systems/' + cavesystem.value.slug)
+        }
       } else {
         const data = await response.json()
         errorMessage.value = data.message || 'Save failed'
@@ -173,7 +179,11 @@ const save = async () => {
       if (response.ok) {
         // Redirect back to the original cave system page
         toast.success('Thank you! Your suggestion has been submitted for review.')
-        router.push('/cave-systems/' + route.params.id)
+        if (window.history.state && window.history.state.back) {
+          router.go(-1)
+        } else {
+          router.push('/cave-systems/' + route.params.id)
+        }
       } else {
         const data = await response.json()
         errorMessage.value = data.message || 'Failed to submit suggestion'
