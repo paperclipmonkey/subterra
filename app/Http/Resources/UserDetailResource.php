@@ -19,7 +19,7 @@ class UserDetailResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'photo' => $this->photo,
+            'photo' => $this->photo ? (str_starts_with($this->photo, 'http') ? $this->photo : Storage::disk('public')->url($this->photo)) : null,
             'bio' => $this->bio,
             'visibility_addable' => $this->visibility_addable,
             // Eager load approvedClubs if not already done in controller
