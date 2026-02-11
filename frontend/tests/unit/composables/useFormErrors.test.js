@@ -49,8 +49,40 @@ describe('useFormErrors', () => {
         expect(errors.value).toEqual({});
     });
 
-    it('handles non-422 errors by clearing errors', () => {
-        const { setErrors, errors } = useFormErrors();
+    it('sets general error from a 422 API error with message', () => {
+        const { setErrors, generalError } = useFormErrors();
+        const apiError = {
+            response: {
+                status: 422,
+                data: {
+                    message: 'General validation error'
+                }
+            }
+        };
+
+        setErrors(apiError);
+
+        expect(generalError.value).toEqual('General validation error');
+    });
+
+    it('clears general error', () => {
+        const { setErrors, clearErrors, generalError } = useFormErrors();
+        const apiError = {
+            response: {
+                status: 422,
+                data: { message: 'Error' }
+            }
+        };
+
+        setErrors(apiError);
+        expect(generalError.value).not.toBeNull();
+
+        clearErrors();
+        expect(generalError.value).toBeNull();
+    });
+
+    it('handles non-422 errors by setting general error', () => {
+        const { setErrors, generalError } = useFormErrors();
         const apiError = {
             response: {
                 status: 500,
@@ -59,6 +91,16 @@ describe('useFormErrors', () => {
         };
 
         setErrors(apiError);
-        expect(errors.value).toEqual({});
+        expect(generalError.value).toEqual('Server Error');
+    });
+
+    it('handles network errors by setting general error', () => {
+        const { setErrors, generalError } = useFormErrors();
+        const apiError = {
+            message: 'Network Error'
+        };
+
+        setErrors(apiError);
+        expect(generalError.value).toEqual('Network Error');
     });
 });

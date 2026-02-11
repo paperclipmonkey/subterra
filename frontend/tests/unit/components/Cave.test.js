@@ -9,6 +9,12 @@ vi.mock('vue-router', () => ({
     useRoute: () => ({ params: { id: '1' } })
 }))
 
+vi.mock('vuetify', () => ({
+    useDisplay: () => ({
+        smAndDown: { value: false }
+    })
+}))
+
 // Mock Stores
 const user = { id: 1, is_admin: false }
 vi.mock('@/stores/app', () => ({

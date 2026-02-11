@@ -393,4 +393,66 @@ describe('Callout Wizard', () => {
         // Should store the destination route
         expect(wrapper.vm.pendingRoute).toEqual(to)
     })
+
+    it('shows general error alert when API returns 422 with message', async () => {
+        const axios = await import('axios')
+        axios.default.post.mockImplementationOnce(() =>
+            Promise.reject({
+                response: {
+                    status: 422,
+                    data: {
+                        message: 'Cannot create callout: No administrator is on-call'
+                    }
+                }
+            })
+        )
+
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-toolbar': { template: '<div><slot /></div>' },
+                    'v-toolbar-title': { template: '<div><slot /></div>' },
+                    'v-card-text': { template: '<div><slot /></div>' },
+                    'v-btn': { template: '<button @click="$emit(\'click\')"><slot /></button>' },
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-item': true,
+                    'v-divider': true,
+                    'v-form': { template: '<form @submit.prevent><slot /></form>' },
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-progress-circular': true,
+                    'v-avatar': true,
+                    'v-img': true,
+                    'v-icon': true,
+                }
+            }
+        })
+
+        await flushPromises()
+
+        // Ensure form is valid so it doesn't bail early
+        wrapper.vm.form.participants[0].phone = '07123456789'
+        wrapper.vm.form.cave_id = 1
+        wrapper.vm.form.car_registration = 'AB12 CDE'
+        wrapper.vm.form.car_parking = 'Bull Pot Farm'
+        wrapper.vm.form.trip_plan = 'Plan'
+
+        // Trigger submission
+        await wrapper.vm.submitCallout()
+        await wrapper.vm.$nextTick()
+
+        // Expect general error alert to be visible
+        expect(wrapper.vm.generalError).toBe('Cannot create callout: No administrator is on-call')
+
+        // Find the alert in the DOM - there might be multiple alerts, check them all
+        const alerts = wrapper.findAll('.v-alert')
+        const alertTexts = alerts.map(a => a.text())
+        expect(alertTexts).toContain('Cannot create callout: No administrator is on-call')
+    })
 })

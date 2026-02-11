@@ -36,7 +36,11 @@
                             <div>There is currently no one monitoring callouts. Please leave your callout with a trusted friend.</div>
                         </v-alert>
 
-                        <div v-if="!isApproved" class="mb-6 pa-4 bg-grey-lighten-4 rounded border text-center">
+                        <v-alert v-if="generalError" type="error" border="start" variant="tonal" class="mb-4" closable @click:close="clearErrors">
+                            {{ generalError }}
+                        </v-alert>
+
+                        <div v-else-if="!isApproved" class="mb-6 pa-4 bg-grey-lighten-4 rounded border text-center">
                             <v-icon size="48" color="grey" class="mb-2">mdi-shield-lock</v-icon>
                             <h3 class="text-h6 mb-2">Member Access Only</h3>
                             <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
@@ -304,8 +308,8 @@ export default {
         CalloutTimePicker
     },
     setup() {
-        const { setErrors, clearErrors, errorMessages } = useFormErrors();
-        return { setErrors, clearErrors, errorMessages };
+        const { setErrors, clearErrors, errorMessages, generalError } = useFormErrors();
+        return { setErrors, clearErrors, errorMessages, generalError };
     },
     data() {
         return {
@@ -593,10 +597,6 @@ export default {
             } catch (e) {
                 console.error('Callout Error:', e);
                 this.setErrors(e);
-                if (e.response?.status !== 422) {
-                    const errorMsg = e.response?.data?.message || e.message || 'Failed to open callout.';
-                    this.$toast.error(errorMsg);
-                }
             } finally {
                 this.processing = false;
             }
