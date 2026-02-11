@@ -4,9 +4,10 @@ import Cave from '@/components/Cave.vue'
 
 // Mock dependencies
 const pushMock = vi.fn()
+const replaceMock = vi.fn()
 vi.mock('vue-router', () => ({
-    useRouter: () => ({ push: pushMock }),
-    useRoute: () => ({ params: { id: '1' } })
+    useRouter: () => ({ push: pushMock, replace: replaceMock }),
+    useRoute: () => ({ params: { id: '1' }, query: {} })
 }))
 
 vi.mock('vuetify', () => ({
