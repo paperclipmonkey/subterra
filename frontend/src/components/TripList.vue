@@ -1,5 +1,5 @@
   <template>
-    <v-container class="pa-0 d-flex flex-column" style="height: 100dvh; max-height: 100dvh; overflow: hidden;">
+    <v-container class="pa-0 d-flex flex-column">
       <!-- Sticky Header Area -->
       <div class="sticky-header bg-background pt-2 pb-2 px-2 z-index-10 flex-shrink-0">
         <div class="d-flex align-center justify-space-between mb-2">
@@ -40,7 +40,7 @@
           </div>
         </div>
 
-        <div v-else class="px-3 pb-16 overflow-y-auto flex-grow-1" style="min-height: 0;">
+        <div v-else class="px-3 pb-16 flex-grow-1">
           <v-row>
             <v-col v-for="trip in filteredTrips" :key="trip.id" cols="12" sm="6" md="4">
               <v-card :to="`/trips/${trip.id}`" elevation="2" class="fill-height d-flex flex-column trip-card" hover>
@@ -90,7 +90,8 @@
 
 <style scoped>
 .sticky-header {
-  /* No longer sticky needed if we scroll the sibling div, but keep z-index in case */
+  position: sticky;
+  top: 0;
   z-index: 10;
   background-color: rgb(var(--v-theme-background));
 }
