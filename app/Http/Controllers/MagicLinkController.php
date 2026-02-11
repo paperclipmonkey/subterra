@@ -53,6 +53,7 @@ class MagicLinkController extends Controller
                 if (!$user->is_active) {
                     $user->is_active = true;
                     $user->save();
+                    event(new \App\Events\UserCreated($user));
                 }
             }
 

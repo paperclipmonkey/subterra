@@ -9,7 +9,7 @@ describe('AddParticipantManual', () => {
         isActive: true
       }
     })
-    
+
     expect(wrapper.exists()).toBe(true)
   })
 
@@ -19,19 +19,19 @@ describe('AddParticipantManual', () => {
         isActive: true
       }
     })
-    
+
     // Access the component's email validation rules
     const component = wrapper.vm
     const emailRules = component.emailRules
-    
+
     // Test valid email
     expect(emailRules[1]('test@example.com')).toBe(true)
-    
+
     // Test invalid email
     expect(emailRules[1]('invalid-email')).toBe('E-mail must be valid.')
-    
+
     // Test empty email
-    expect(emailRules[0]('')).toBe('E-mail is requred.')
+    expect(emailRules[0]('')).toBe('E-mail is required.')
     expect(emailRules[0]('test@example.com')).toBe(true)
   })
 
@@ -41,7 +41,7 @@ describe('AddParticipantManual', () => {
         isActive: true
       }
     })
-    
+
     expect(wrapper.vm.name).toBe('')
     expect(wrapper.vm.email).toBe('')
     expect(Array.isArray(wrapper.vm.emailRules)).toBe(true)
@@ -54,7 +54,7 @@ describe('AddParticipantManual', () => {
         isActive: false
       }
     })
-    
+
     expect(wrapper.props('isActive')).toBe(false)
   })
 })

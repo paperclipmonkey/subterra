@@ -21,6 +21,10 @@ class SendNewUserSignupEmailToAdmins implements ShouldQueue
      */
     public function handle(UserCreated $event): void
     {
+        if (!$event->user->is_active) {
+            return;
+        }
+
         $admins = User::where('is_admin', true)->get();
 
         foreach ($admins as $admin) {

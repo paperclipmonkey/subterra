@@ -209,7 +209,13 @@
         </v-col>
       </v-row>
     </v-form>
-    <AddParticipantManual @close="closeAddParticipant" @add="addParticipant" :isActive="showAddParticipant" />
+    <AddParticipantManual
+      @close="closeAddParticipant"
+      @add="addParticipant"
+      :isActive="showAddParticipant"
+      :loading="isAddingParticipant"
+      :error="addParticipantError"
+    />
   </v-container>
 </template>
 
@@ -230,6 +236,8 @@ const markdownOutput = ref('')
 
 const showAddParticipant = ref(false)
 const isSaving = ref(false)
+const isAddingParticipant = ref(false)
+const addParticipantError = ref(null)
 
 let trip = reactive({
   id: -1,
@@ -489,6 +497,8 @@ onMounted(async () => {
 
 const closeAddParticipant = () => {
   showAddParticipant.value = false
+  addParticipantError.value = null
+  isAddingParticipant.value = false
 }
 
 const updatedDescription = (event) => {
@@ -503,17 +513,23 @@ const removeExistingMedia = (media) => {
 }
 
 const addParticipant = (participant) => {
+  isAddingParticipant.value = true
+  addParticipantError.value = null
+
   // Add the user using an api endpoint
   fetch('/api/users', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
     body: JSON.stringify(participant),
   })
     .then(response => {
       if (!response.ok) {
-        throw new Error('Failed to add participant');
+        return response.json().then(data => {
+          throw new Error(data.message || 'Failed to add participant');
+        });
       }
       return response.json();
     })
@@ -524,9 +540,14 @@ const addParticipant = (participant) => {
       trip.participants.push(newUser.id);
       console.log('Participant added successfully:', newUser);
       showAddParticipant.value = false;
+      notificationStore.showSuccess('Participant added successfully');
     })
     .catch(error => {
       console.error('Error adding participant:', error);
+      addParticipantError.value = error.message;
+    })
+    .finally(() => {
+      isAddingParticipant.value = false
     });
 }
 

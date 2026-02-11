@@ -51,11 +51,7 @@ class UserSignupSlackNotificationTest extends TestCase
         $response->assertStatus(201);
         $this->assertDatabaseHas('users', ['email' => $email]);
 
-        SlackAlert::expectMessagesSent(function ($message) use ($email) {
-            return ($message['webhookUrl'] ?? '') === 'https://hooks.slack.com/services/test/signups' &&
-                   str_contains($message['text'] ?? '', 'A new user has signed up') &&
-                   str_contains($message['text'] ?? '', 'API Created User') &&
-                   str_contains($message['text'] ?? '', $email);
-        });
+        // No Slack notification should be sent for inactive users created via the API
+        SlackAlert::expectNoMessagesSent();
     }
 }

@@ -21,10 +21,21 @@
             Add the trip participant
           </div>
 
+          <v-alert
+            v-if="props.error"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+            closable
+          >
+            {{ props.error }}
+          </v-alert>
+
           <v-text-field
             label="Name"
             type="text"
             v-model="name"
+            :rules="nameRules"
           ></v-text-field>
 
           <v-text-field
@@ -43,6 +54,7 @@
             rounded="xl"
             text="Cancel"
             @click="$emit('close')"
+            :disabled="props.loading"
           ></v-btn>
 
           <v-btn
@@ -51,7 +63,9 @@
             rounded="xl"
             text="Add"
             variant="flat"
-            @click="$emit('add', {name, email,}); email = ''; name = '';"
+            @click="$emit('add', {name, email,})"
+            :loading="props.loading"
+            :disabled="!isValid"
           ></v-btn>
         </v-card-actions>
       </v-card>
@@ -60,20 +74,47 @@
 </template>
 
 <script setup>
-const props = defineProps(['isActive'])
+import { ref, computed, watch } from 'vue'
+
+const props = defineProps(['isActive', 'loading', 'error'])
 const name = ref('')
 const email = ref('')
 
-const emailRules = [
+// Reset fields when dialog opens
+watch(() => props.isActive, (newVal) => {
+  if (newVal) {
+    name.value = ''
+    email.value = ''
+  }
+})
+
+const nameRules = [
   value => {
     if (value) return true
+    return 'Name is required.'
+  }
+]
 
-    return 'E-mail is requred.'
+const emailRules = [
+  value => {
+    // Email is optional for manual participants unless we want to enforce it? 
+    // The prompt says "if I don't add an email address. If I do...".
+    // Let's make it optional but valid if present, OR required if that's the desired behavior.
+    // The user said: "The form submits but resets if I don't add an email address."
+    // implying they might expect it to work without one, or maybe they want it to fail gracefully.
+    // Let's assume name is required, email is optional but must be valid if provided.
+    // Actually, backend `create` method requires email: 'email' => 'required|string|email...'.
+    // So we MUST require email.
+    if (value) return true
+    return 'E-mail is required.'
   },
   value => {
     if (/.+@.+\..+/.test(value)) return true
-
     return 'E-mail must be valid.'
   },
 ]
+
+const isValid = computed(() => {
+  return name.value && email.value && /.+@.+\..+/.test(email.value)
+})
 </script>

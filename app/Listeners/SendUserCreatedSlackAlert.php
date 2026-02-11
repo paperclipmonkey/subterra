@@ -10,6 +10,10 @@ class SendUserCreatedSlackAlert
 {
     public function handle(UserCreated $event)
     {
+        if (!$event->user->is_active) {
+            return;
+        }
+
         $user = $event->user;
         try {
             SlackAlert::to('signups')->message("A new user has signed up: {$user->name} <https://subterra.world/admin/users|View User> with email: {$user->email}");

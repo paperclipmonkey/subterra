@@ -128,7 +128,8 @@ class UserController extends Controller
     public function adminIndex(): ResourceCollection
     {
         // Need withoutGlobalScopes here as withoutScopedBindings() doesn't affect this query
-        return UserDetailEmailResource::collection(User::withoutGlobalScopes()->get());
+        // Only show active users (actual signups)
+        return UserDetailEmailResource::collection(User::withoutGlobalScopes()->where('is_active', true)->get());
     }
 
     /**
