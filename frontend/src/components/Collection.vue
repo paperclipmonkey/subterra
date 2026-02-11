@@ -122,6 +122,9 @@ const collection = computed(() => collectionStore.currentCollection)
 const loading = computed(() => collectionStore.loading)
 const error = computed(() => collectionStore.error)
 
+const pageTitle = computed(() => collection.value?.name);
+usePageTitle(pageTitle);
+
 const tickedCount = computed(() => {
   if (!collection.value || !collection.value.caves) return 0;
   return collection.value.caves.filter(c => c.is_ticked).length;

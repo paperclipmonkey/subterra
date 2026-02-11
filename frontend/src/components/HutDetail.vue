@@ -144,6 +144,7 @@ import { useHutStore } from '@/stores/huts'
 import { useAppStore } from '@/stores/app'
 import HutEditModal from '@/components/HutEditModal.vue'
 import CorrectionModal from '@/components/CorrectionModal.vue'
+import { usePageTitle } from '@/composables/usePageTitle'
 
 const route = useRoute()
 const hutStore = useHutStore()
@@ -165,6 +166,9 @@ const canEdit = computed(() => {
     }
     return false;
 });
+
+const pageTitle = computed(() => hut.value?.name);
+usePageTitle(pageTitle);
 
 
 // Map Setup

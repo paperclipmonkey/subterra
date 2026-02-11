@@ -89,6 +89,7 @@ router.beforeEach(async (to, from, next) => {
 
 // Scroll to top after each navigation
 router.afterEach(() => {
+  document.title = 'subterra.world'
   window.scrollTo(0, 0)
 })
 

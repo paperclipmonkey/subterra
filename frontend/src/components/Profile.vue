@@ -290,6 +290,7 @@ import { mande } from 'mande'; // Import mande
 import { CalendarHeatmap } from "vue3-calendar-heatmap";
 import moment from 'moment';
 import { useAppStore } from '@/stores/app'
+import { usePageTitle } from '@/composables/usePageTitle'
 
 const route = useRoute()
 
@@ -301,6 +302,9 @@ const profile = ref({
    "bio": "",
    "clubs": [],
 })
+
+const pageTitle = computed(() => profile.value?.name);
+usePageTitle(pageTitle);
 
 const loading = ref(true)
 const error = ref(null)

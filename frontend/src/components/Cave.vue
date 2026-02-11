@@ -519,6 +519,7 @@ import { useCollectionStore } from '@/stores/collections';
 import CorrectionModal from '@/components/CorrectionModal.vue'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
+import { usePageTitle } from '@/composables/usePageTitle'
 import {
   MglMap,
   MglNavigationControl,
@@ -539,6 +540,9 @@ const cave = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeTab = ref(route.query.tab || 'overview')
+
+const pageTitle = computed(() => cave.value?.name);
+usePageTitle(pageTitle);
 
 // Sync tab changes to URL without adding history
 watch(activeTab, (newTab) => {

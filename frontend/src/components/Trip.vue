@@ -235,6 +235,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app';
 import { ref, computed, onMounted } from 'vue';
 import { useToast } from "vue-toastification";
+import { usePageTitle } from '@/composables/usePageTitle'
 
 const appStore = useAppStore()
 const router = useRouter()
@@ -245,6 +246,9 @@ const trip = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const showDeleteConfirmDialog = ref(false);
+
+const pageTitle = computed(() => trip.value?.name);
+usePageTitle(pageTitle);
 
 const showMediaModal = ref(false)
 const selectedMedia = ref({})
