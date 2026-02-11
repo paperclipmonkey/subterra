@@ -513,6 +513,7 @@ import { useAppStore } from '@/stores/app';
 import { useDisplay } from 'vuetify'
 import MarkAsDone from './MarkAsDone.vue'
 import VueMarkdown from 'vue-markdown-render'
+import { useRoute, useRouter } from 'vue-router'
 import { markCaveAsDone } from '@/stores/markAsDone';
 import { useCollectionStore } from '@/stores/collections';
 import CorrectionModal from '@/components/CorrectionModal.vue'
@@ -533,10 +534,23 @@ const { smAndDown } = useDisplay()
 const collectionStore = useCollectionStore()
 
 const route = useRoute()
+const router = useRouter()
 const cave = ref(null)
 const loading = ref(true)
 const error = ref(null)
-const activeTab = ref('overview')
+const activeTab = ref(route.query.tab || 'overview')
+
+// Sync tab changes to URL without adding history
+watch(activeTab, (newTab) => {
+  router.replace({ query: { ...route.query, tab: newTab } })
+})
+
+// Sync URL changes to tab (e.g. back/forward navigation or direct link)
+watch(() => route.query.tab, (newTab) => {
+  if (newTab && newTab !== activeTab.value) {
+    activeTab.value = newTab
+  }
+})
 const showConfirmModal = ref(false)
 
 // Media Modal State
