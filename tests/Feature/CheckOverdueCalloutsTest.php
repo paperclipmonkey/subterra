@@ -31,7 +31,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Carbon::setTestNow('2025-01-01 12:00:00');
 
         // user is the DO
-        $do = User::factory()->admin()->create(['name' => 'Duty Officer']);
+        $do = User::factory()->dutyOfficer()->create(['name' => 'Duty Officer']);
 
         // Setup shift covering now+15m
         // Shift is 09:00 to 17:00
@@ -79,7 +79,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:00:00');
 
-        $do = User::factory()->admin()->create();
+        $do = User::factory()->dutyOfficer()->create();
         OnCallShift::create([
             'user_id' => $do->id,
             'start_at' => now()->startOfDay(),
@@ -104,13 +104,13 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::assertNothingSent();
     }
 
-    public function test_warns_all_admins_if_imminent_and_no_shift_coverage()
+    public function test_warns_all_duty_officers_if_imminent_and_no_shift_coverage()
     {
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:00:00');
 
-        $admin1 = User::factory()->admin()->create(['is_active' => true]);
-        $admin2 = User::factory()->admin()->create(['is_active' => true]);
+        $do1 = User::factory()->dutyOfficer()->create(['is_active' => true]);
+        $do2 = User::factory()->dutyOfficer()->create(['is_active' => true]);
         $user = User::factory()->create();
 
         // NO SHIFT CREATED
@@ -123,7 +123,7 @@ class CheckOverdueCalloutsTest extends TestCase
         $this->artisan('callouts:check-overdue');
 
         Notification::assertSentTo(
-            [$admin1, $admin2],
+            [$do1, $do2],
             CalloutImminentNotification::class
         );
 
@@ -133,12 +133,40 @@ class CheckOverdueCalloutsTest extends TestCase
         );
     }
 
+    public function test_platform_admins_do_not_receive_alerts()
+    {
+        Notification::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $admin = User::factory()->admin()->create(['is_active' => true]); // Platform Admin only
+        $do = User::factory()->dutyOfficer()->create(['is_active' => true]);
+
+        // NO SHIFT CREATED so it should fall back to all DOs
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->addMinutes(15),
+            'status' => 'active',
+        ]);
+
+        $this->artisan('callouts:check-overdue');
+
+        Notification::assertSentTo(
+            [$do],
+            CalloutImminentNotification::class
+        );
+
+        Notification::assertNotSentTo(
+            [$admin],
+            CalloutImminentNotification::class
+        );
+    }
+
     public function test_escalates_incident_if_unclaimed_for_15_minutes()
     {
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->admin()->create(['is_active' => true]);
+        $do = User::factory()->dutyOfficer()->create(['is_active' => true]);
 
         // Incident triggered at 12:00 (30 mins ago), so > 15m.
         // No controller.
@@ -155,7 +183,7 @@ class CheckOverdueCalloutsTest extends TestCase
         $this->artisan('callouts:check-overdue');
 
         Notification::assertSentTo(
-            [$admin],
+            [$do],
             \App\Notifications\UnmanagedIncidentNotification::class
         );
 
@@ -172,7 +200,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->admin()->create();
+        $do = User::factory()->dutyOfficer()->create();
         $controller = User::factory()->create();
 
         $callout = Callout::factory()->create(['status' => 'triggered']);
@@ -185,7 +213,7 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $this->artisan('callouts:check-overdue');
 
-        Notification::assertNotSentTo([$admin], \App\Notifications\UnmanagedIncidentNotification::class);
+        Notification::assertNotSentTo([$do], \App\Notifications\UnmanagedIncidentNotification::class);
     }
 
     public function test_does_not_escalate_if_incident_is_fresh()
@@ -193,7 +221,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->admin()->create();
+        $do = User::factory()->dutyOfficer()->create();
 
         $callout = Callout::factory()->create(['status' => 'triggered']);
         $incident = Incident::create([
@@ -204,7 +232,7 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $this->artisan('callouts:check-overdue');
 
-        Notification::assertNotSentTo([$admin], \App\Notifications\UnmanagedIncidentNotification::class);
+        Notification::assertNotSentTo([$do], \App\Notifications\UnmanagedIncidentNotification::class);
     }
 
     public function test_does_not_duplicate_escalation_if_already_escalated()
@@ -212,7 +240,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->admin()->create();
+        $do = User::factory()->dutyOfficer()->create();
 
         $callout = Callout::factory()->create(['status' => 'triggered']);
         $incident = Incident::create([
@@ -229,16 +257,16 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $this->artisan('callouts:check-overdue');
 
-        Notification::assertNotSentTo([$admin], \App\Notifications\UnmanagedIncidentNotification::class);
+        Notification::assertNotSentTo([$do], \App\Notifications\UnmanagedIncidentNotification::class);
     }
 
-    public function test_triggers_overdue_callouts_and_notifies_admins()
+    public function test_triggers_overdue_callouts_and_notifies_duty_officers()
     {
         // Regression test for the original functionality
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:00:00');
 
-        $admin = User::factory()->admin()->create(['is_active' => true]);
+        $do = User::factory()->dutyOfficer()->create(['is_active' => true]);
 
         $callout = Callout::factory()->create([
             'callout_time' => now()->subMinute(), // Due 1 min ago
@@ -251,7 +279,7 @@ class CheckOverdueCalloutsTest extends TestCase
         $this->assertDatabaseHas('incidents', ['callout_id' => $callout->id, 'status' => 'open']);
 
         Notification::assertSentTo(
-            [$admin],
+            [$do],
             OverdueCalloutNotification::class
         );
     }

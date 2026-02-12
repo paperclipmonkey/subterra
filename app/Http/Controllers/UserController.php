@@ -153,6 +153,14 @@ class UserController extends Controller
 
         $roleModel = Role::where('slug', $role)->firstOrFail();
 
+        if ($role === 'duty_officer' && !$user->hasRole('duty_officer')) {
+            if (empty($user->phone)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'phone' => ['User must have a phone number to be a Duty Officer.'],
+                ]);
+            }
+        }
+
         if ($user->hasRole($role)) {
             $user->removeRole($role);
         } else {
@@ -212,6 +220,13 @@ class UserController extends Controller
             'email_platform_news' => ['nullable', 'boolean'],
             'visibility_addable' => ['nullable', 'string', 'in:public,club'],
         ]);
+
+        // If user is a Duty Officer, they cannot remove their phone number
+        if ($user->hasRole('duty_officer') && array_key_exists('phone', $validatedData) && empty($validatedData['phone'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'phone' => ['Duty Officers must have a phone number.'],
+            ]);
+        }
 
         $user->update($validatedData);
 

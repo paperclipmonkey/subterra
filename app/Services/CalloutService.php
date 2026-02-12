@@ -98,37 +98,6 @@ class CalloutService
                 // Don't fail the callout creation if watchdog registration fails
             }
 
-            try {
-                // Notify User
-                if ($user->phone) {
-                    $this->smsService->sendMessage(
-                        $user->phone,
-                        "Subterra: Callout ACTIVE for {$calloutTime->format('H:i')}. Reply OUT SAFE to cancel."
-                    );
-                }
-
-                // Notify Participants
-                if (!empty($data['participants'])) {
-                    foreach ($data['participants'] as $p) {
-                        // Ensure we have a phone number either from user or input
-                        $phone = $p['phone'] ?? null;
-
-                        // Avoid sending a "participant" SMS to the creator if they already got the "creator" SMS above
-                        if ($phone && $phone !== $user->phone) {
-                            $this->smsService->sendMessage(
-                                $phone,
-                                "Subterra: You are listed on a callout for {$user->name}. Returns: {$calloutTime->format('H:i')}."
-                            );
-                        }
-                    }
-                }
-            } catch (Exception $e) {
-                // Log the real error
-                Log::error('SMS Failure creating callout: '.$e->getMessage());
-
-                // Throw user-friendly error (Transaction will rollback)
-                throw new Exception('Something went wrong and we were unable to save your callout with Subterra. Please use alternative arrangements.');
-            }
 
             try {
                 // Collect all emails

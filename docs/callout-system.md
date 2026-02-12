@@ -46,10 +46,6 @@ sequenceDiagram
     par Register backup watchdog
         API->>Watchdog: Register callout<br/>(callout ID, time, contacts)
         Note over Watchdog: Stores independently<br/>in Google Firestore
-    and Send SMS confirmations
-        API->>SMS: "Callout ACTIVE for HH:MM.<br/>Reply SAFE to cancel."
-        SMS-->>User: SMS to your phone
-        API->>SMS: Notify each participant
     and Send email confirmations
         API->>Email: Callout Started email<br/>to all participants
     and Alert Slack
@@ -108,7 +104,7 @@ timeline
     section Active Period
         Callout Created : Callout saved to database
             : GCP Watchdog registered
-            : SMS + Email sent to all participants
+            : Email sent to all participants
             : Slack notification posted
     section 15 Minutes Before Due
         Warning Alerts : Duty Officer gets SMS + Email warning
@@ -117,12 +113,12 @@ timeline
     section Return Time Reached
         Callout Triggered : Status changed to TRIGGERED
             : Incident record created
-            : ALL Duty Officers + Platform Admins alerted via SMS + Email
+            : Duty Officer on-call alerted via SMS + Email
             : Slack @channel alert posted
             : GCP Watchdog also sends independent alerts
     section 15 Minutes After Trigger
         Escalation : If no Duty Officer has taken control
-            : ALL Duty Officers + Platform Admins re-alerted
+            : ALL Duty Officers re-alerted
             : "CRITICAL — Unmanaged Incident" SMS + Email
 ```
 
@@ -156,7 +152,7 @@ flowchart TD
     Trigger --> Incident["Create Incident record<br/>(status: open)"]
 
     Incident --> NotifyDO["📱 Alert on-call Duty Officer<br/>SMS + Email"]
-    Incident --> NotifyAll["📱 Alert ALL Duty Officers<br/>+ Platform Admins<br/>SMS + Email"]
+    Incident --> NotifyAll["📱 Alert ALL Duty Officers<br/>SMS + Email (Fallback)"]
     Incident --> NotifyParticipants["📱 Alert all participants<br/>SMS + Email"]
     Incident --> SlackAlert["🔴 Slack @channel alert<br/>#callouts-overdue"]
 
@@ -217,13 +213,12 @@ The system is designed to **fail safe** — meaning if anything goes wrong, it e
 | Scenario | What happens |
 |---|---|
 | GCP Watchdog registration fails | Callout **still created** — Subterra server monitors it independently |
-| SMS fails to send | Callout creation **rolls back** — you're told to use alternative arrangements, because no confirmed contact means the safety net has a hole |
 | Email fails to send | Callout **still created** — email is secondary to SMS |
 | Slack fails | Callout **still created** — Slack is informational only |
 | Subterra server goes down | GCP Watchdog **independently** monitors and alerts via TextMagic SMS + SMTP email |
 | Watchdog cancellation fails (when you mark safe) | Watchdog may still fire — a false alarm is better than a missed emergency |
 
-> **The one exception:** If SMS fails during callout creation, the entire callout rolls back. This is deliberate — if we can't confirm contact with you, the safety chain is broken and you must use alternative arrangements (phone a friend, leave details with someone directly).
+
 
 ### 2. Two Independent Monitoring Systems
 
@@ -264,7 +259,7 @@ Both must independently fail for an alert to be missed.
 
 A callout can only be created if there is a Duty Officer on-call at the expected return time. This is checked at creation time — if nobody is covering that time slot, the system refuses to create the callout and tells you why.
 
-Duty Officers are real people who have agreed to be available. When an alert fires, they receive automated SMS and emails. During an active incident, the system expects a Duty Officer to "take control" of the incident within 15 minutes. If nobody does, every Duty Officer and Platform Admin gets an escalation alert.
+Duty Officers are real people who have agreed to be available. When an alert fires, they receive automated SMS and emails. During an active incident, the system expects a Duty Officer to "take control" of the incident within 15 minutes. If nobody does, every Duty Officer gets an escalation alert.
 
 ### 4. Contact During an Incident
 
@@ -274,8 +269,8 @@ Communication during an incident works in layers:
 flowchart TD
     Trigger["🚨 Incident Created"] --> Auto["Automated Contact"]
     Auto --> SMS1["📱 SMS to on-call DO"]
-    Auto --> SMS2["📱 SMS to ALL DOs + Admins"]
-    Auto --> Email1["📧 Email to all DOs + Admins"]
+    Auto --> SMS2["📱 SMS to ALL DOs"]
+    Auto --> Email1["📧 Email to all DOs"]
     Auto --> Slack1["💬 Slack @channel alert"]
 
     Trigger --> Manual["Manual Contact<br/>(by Duty Officer)"]
@@ -383,9 +378,9 @@ flowchart TB
 
 | Feature | How it works |
 |---|---|
-| **Callout creation** | Submit via app → confirmed via SMS + Email |
+| **Callout creation** | Submit via app → confirmed via Email |
 | **15-min warning** | Automated SMS + Email to you AND the Duty Officer |
-| **Overdue trigger** | Automated alert to ALL Duty Officers + Slack |
+| **Overdue trigger** | Automated alert to On-Call Duty Officer + Slack |
 | **Backup monitoring** | Independent GCP Watchdog with its own SMS + Email |
 | **Escalation** | 15 min after trigger with no response → re-alert everyone |
 | **Cancellation** | Mark safe in-app → watchdog cancelled → trip record created |

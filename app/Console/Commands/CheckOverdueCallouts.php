@@ -173,7 +173,7 @@ class CheckOverdueCallouts extends Command
     }
 
     /**
-     * Get the on-call duty officer, or fall back to all DOs and platform admins.
+     * Get the on-call duty officer, or fall back to all DOs.
      */
     private function getNotifiableDutyOfficers(): \Illuminate\Support\Collection
     {
@@ -189,12 +189,12 @@ class CheckOverdueCallouts extends Command
     }
 
     /**
-     * Get all active duty officers and platform admins.
+     * Get all active duty officers.
      */
     private function getAllDutyOfficers(): \Illuminate\Support\Collection
     {
         return User::whereHas('roles', function ($query) {
-            $query->whereIn('slug', ['duty_officer', 'platform_admin']);
+            $query->whereIn('slug', ['duty_officer']);
         })->where('is_active', true)->get();
     }
 }
