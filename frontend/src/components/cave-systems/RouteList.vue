@@ -125,7 +125,8 @@ defineProps({
     },
     caveSystemId: {
         type: [String, Number],
-        required: false
+        required: false,
+        default: null
     }
 })
 const truncateDescription = (text) => {

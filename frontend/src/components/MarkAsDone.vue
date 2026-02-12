@@ -24,7 +24,7 @@ import { markCaveAsDone } from '@/stores/markAsDone'
 
 const props = defineProps({
   cave: { type: Object, required: true },
-  onDone: { type: Function, required: false },
+  onDone: { type: Function, required: false, default: null },
 })
 
 const showConfirmModal = ref(false)

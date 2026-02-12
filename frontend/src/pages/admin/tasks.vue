@@ -71,7 +71,7 @@
         <v-card height="100%" class="d-flex flex-column">
           <v-card-title class="purple--text">
             <v-icon left color="purple">mdi-tag-outline</v-icon>
-            Low Tags (< 3) <v-chip small class="ml-2">{{ tasks.caves_low_tags.length }}</v-chip>
+            Low Tags (&lt; 3) <v-chip small class="ml-2">{{ tasks.caves_low_tags.length }}</v-chip>
           </v-card-title>
           <v-divider />
           <v-list v-if="tasks.caves_low_tags.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">

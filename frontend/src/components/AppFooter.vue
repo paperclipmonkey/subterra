@@ -5,7 +5,7 @@
         <v-btn v-for="item in items" :key="item.title" :to="item.href" :title="item.title" icon>
           <v-icon :icon="item.icon" />
           <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ attrs }">
               <span v-bind="attrs" :v-on="attrs">{{ item.title }}</span>
             </template>
           </v-tooltip>

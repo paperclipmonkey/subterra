@@ -2,7 +2,7 @@
   <v-card class="map-container">
     <v-card-text class="map-holder">
       <mgl-map ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
-        <mgl-marker v-for="(cave, index) in caves" :key="cave.id"
+        <mgl-marker v-for="cave in caves" :key="cave.id"
                     :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card>

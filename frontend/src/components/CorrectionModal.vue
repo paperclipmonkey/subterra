@@ -1,12 +1,12 @@
 <template>
   <v-dialog v-model="dialog" max-width="600">
-    <template #activator="{ props }">
+    <template #activator="{ props: activatorProps }">
       <v-btn
         v-if="userStore.canSuggest"
         variant="text"
         color="warning"
         prepend-icon="mdi-flag"
-        v-bind="props"
+        v-bind="activatorProps"
         class="text-none"
         size="small"
       >

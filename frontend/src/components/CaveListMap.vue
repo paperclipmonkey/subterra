@@ -10,7 +10,7 @@
         <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
       </div>
       <mgl-map v-else ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
-        <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id"
+        <mgl-marker v-for="cave in caveStore.caves" :key="cave.id"
                     :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card>

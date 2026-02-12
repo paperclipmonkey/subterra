@@ -77,8 +77,8 @@
             autocomplete="off"
             name="random_unique_club_confirm_field"
           >
-            <template #item="{ props, item }">
-              <v-list-item v-bind="props" :title="item.raw.name" />
+            <template #item="{ props: slotProps, item }">
+              <v-list-item v-bind="slotProps" :title="item.raw.name" />
             </template>
             <template #no-data>
               <v-list-item>

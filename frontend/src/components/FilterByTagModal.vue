@@ -1,6 +1,6 @@
 <template>
-  <v-dialog v-model="props.isActive" max-width="500">
-    <template #default="{ isActive }">
+  <v-dialog :model-value="props.isActive" max-width="500" @update:model-value="$emit('close')">
+    <template #default>
       <v-card rounded="lg">
         <v-card-title class="d-flex justify-space-between align-center">
           <div class="text-h5 text-medium-emphasis ps-2">
@@ -16,7 +16,7 @@
         <v-divider class="mb-4" />
 
         <v-card-text>
-          <template v-for="(groupItems, groupName) in tagsAvailable">
+          <template v-for="(groupItems, groupName) in tagsAvailable" :key="groupName">
 
             <h2 class="text-h6 mb-2 tagGroupTitle">{{ groupName }}</h2>
 
@@ -27,6 +27,7 @@
             >
               <v-chip
                 v-for="tag in groupItems"
+                :key="tag.tag"
                 :text="tag.tag"
                 variant="outlined"
                 :value="tag.tag"
@@ -89,7 +90,10 @@ const emitFilters = () => {
   emit('filter', filters);
 }
 
-const props = defineProps(['isActive', 'loadedFilters'])
+const props = defineProps({
+  isActive: Boolean,
+  loadedFilters: { type: Array, default: () => [] }
+})
 const loadedFilters = ref(props.loadedFilters)
 </script>
 

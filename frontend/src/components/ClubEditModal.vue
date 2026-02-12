@@ -59,8 +59,8 @@
                     clearable
                     @update:model-value="addUserToClub"
                   >
-                    <template #item="{ props, item }">
-                      <v-list-item v-bind="props" :subtitle="item.raw.email" />
+                    <template #item="{ props: slotProps, item }">
+                      <v-list-item v-bind="slotProps" :subtitle="item.raw.email" />
                     </template>
                   </v-autocomplete>
                   <v-list v-if="clubMembers.length > 0" lines="one">
@@ -145,7 +145,7 @@ import { useRouter } from 'vue-router';
 import MilkdownEditor from '@/components/MilkdownEditor.vue';
 import { useToast } from "vue-toastification";
 const props = defineProps({
-  clubSlug: String,
+  clubSlug: { type: String, default: '' },
   modelValue: Boolean,
   initialTab: { type: String, default: 'details' },
 });

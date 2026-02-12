@@ -76,7 +76,13 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 
-const props = defineProps(['isActive', 'loading', 'error'])
+const props = defineProps({
+  isActive: Boolean,
+  loading: Boolean,
+  error: { type: String, default: null },
+})
+
+defineEmits(['close', 'add'])
 const name = ref('')
 const email = ref('')
 

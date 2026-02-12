@@ -42,7 +42,7 @@
         <span v-if="!trip.participants || trip.participants.length === 0" class="text-caption text-grey">No
           participants</span>
         <template v-else>
-          <v-chip v-for="(participant, i) in trip.participants.slice(0, 3)" :key="participant.id"
+          <v-chip v-for="participant in trip.participants.slice(0, 3)" :key="participant.id"
                   size="x-small" variant="flat" class="bg-white" border>
             {{ participant.name }}
           </v-chip>

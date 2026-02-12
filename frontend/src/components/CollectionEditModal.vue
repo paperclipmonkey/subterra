@@ -1,8 +1,8 @@
 <template>
   <v-dialog v-model="dialog" max-width="800px">
-    <template #activator="{ props }">
+    <template #activator="{ props: activatorProps }">
       <v-btn v-if="canEdit" color="primary" variant="text" :prepend-icon="isNew ? 'mdi-plus' : 'mdi-pencil'"
-             v-bind="props">
+             v-bind="activatorProps">
         {{ activatorText }}
       </v-btn>
     </template>
