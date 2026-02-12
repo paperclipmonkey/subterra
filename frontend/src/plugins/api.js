@@ -25,11 +25,8 @@ instance.interceptors.response.use(
 
             if (status === 422) {
                 // Laravel validation error
-                // We let the component handle this, but we could also show a generic toast if needed
             } else if (status === 401) {
                 notificationStore.showError('Session expired. Please log in again.');
-                // Optional: redirect to login
-                // window.location.href = '/login';
             } else if (status === 403) {
                 notificationStore.showError('You do not have permission to perform this action.');
             } else if (status >= 500) {

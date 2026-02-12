@@ -45,10 +45,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'; // Added watch
-import { mande } from 'mande'; // Ensure mande is imported
+import { ref, onMounted, computed, watch } from 'vue';
+import { mande } from 'mande';
 import { useRouter } from 'vue-router';
-import CreateClubDialog from '@/components/admin/CreateClubDialog.vue'; // Import the dialog component
+import CreateClubDialog from '@/components/admin/CreateClubDialog.vue';
 
 // --- API Setup ---
 const clubsApi = mande('/api/admin/clubs');

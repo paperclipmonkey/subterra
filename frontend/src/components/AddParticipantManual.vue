@@ -97,14 +97,6 @@ const nameRules = [
 
 const emailRules = [
   value => {
-    // Email is optional for manual participants unless we want to enforce it? 
-    // The prompt says "if I don't add an email address. If I do...".
-    // Let's make it optional but valid if present, OR required if that's the desired behavior.
-    // The user said: "The form submits but resets if I don't add an email address."
-    // implying they might expect it to work without one, or maybe they want it to fail gracefully.
-    // Let's assume name is required, email is optional but must be valid if provided.
-    // Actually, backend `create` method requires email: 'email' => 'required|string|email...'.
-    // So we MUST require email.
     if (value) return true
     return 'E-mail is required.'
   },

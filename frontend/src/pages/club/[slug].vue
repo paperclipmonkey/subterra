@@ -187,7 +187,6 @@ async function fetchClubData() {
   error.value = null;
   memberDataLoading.value = true;
   isApprovedMember.value = false;
-  // club.value = null; // Don't clear club data to avoid destroying child components like modals
   recentTrips.value = [];
   members.value = [];
   heatmapData.value = [];
@@ -246,7 +245,6 @@ onMounted(async () => {
 }
 </style>
 <style>
-/* Global styles for heatmap tooltips if needed, or scope them */
 .vch__tooltip {
   /* Example: Customize tooltip appearance */
   background-color: #333;
@@ -255,6 +253,5 @@ onMounted(async () => {
   border-radius: 4px;
   font-size: 0.8rem;
   z-index: 1000;
-  /* Ensure tooltip is above other elements */
 }
 </style>

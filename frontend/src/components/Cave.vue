@@ -615,11 +615,10 @@ const copyLatLng = async () => {
     const textToCopy = `${cave.value.location_lat}, ${cave.value.location_lng}`;
     try {
       await navigator.clipboard.writeText(textToCopy);
-      // Optional: Add user feedback like a snackbar message
+      // TODO: Add user feedback like a snackbar message
       console.log('Coordinates copied to clipboard:', textToCopy);
     } catch (err) {
       console.error('Failed to copy coordinates: ', err);
-      // Optional: Add error feedback
     }
   }
 };

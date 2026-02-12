@@ -32,16 +32,11 @@ const items = [
     icon: 'mdi-earth',
     href: '/caves',
   },
-  // {
-  //   title: 'Collections',
-  //   icon: `mdi-bookmark-box-multiple-outline`,
-  //   href: '/collections',
-  // },
   {
     title: 'Callout',
     icon: `mdi-alert-octagram`,
     href: '/callout',
-    class: 'v-btn--active-warning' // Optional styling if needed, or just standard
+    class: 'v-btn--active-warning'
   },
   {
     title: 'Profile',
@@ -74,7 +69,6 @@ const items = [
   justify-content: flex-start !important;
   flex-wrap: nowrap;
 
-  /* Optional: Hide scrollbar for cleaner look, or keep it */
   &::-webkit-scrollbar {
     display: none;
   }

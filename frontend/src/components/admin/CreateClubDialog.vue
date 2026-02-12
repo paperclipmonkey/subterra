@@ -36,7 +36,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { mande } from 'mande'; // Import mande
+import { mande } from 'mande';
 import MilkdownEditor from '@/components/MilkdownEditor.vue';
 
 const props = defineProps({
@@ -48,7 +48,7 @@ const emit = defineEmits(['update:modelValue', 'clubCreated']);
 const dialog = ref(false);
 const clubName = ref('');
 const clubSlug = ref('');
-const clubDescription = ref(''); // Added ref for clubDescription
+const clubDescription = ref('');
 const loading = ref(false);
 
 // API instance for clubs
@@ -60,7 +60,7 @@ watch(() => props.modelValue, (newValue) => {
     // Reset form when dialog opens
     clubName.value = '';
     clubSlug.value = '';
-    clubDescription.value = ''; // Reset clubDescription
+    clubDescription.value = '';
   }
 });
 

@@ -44,31 +44,31 @@ const loading = ref(true)
 const routeData = ref(null)
 
 const load = async () => {
-    loading.value = true
-    try {
-        const response = await fetch(`/api/routes/${route.params.id}`)
-        if (response.ok) {
-            routeData.value = await response.json()
-        } else {
-            // Handle error, maybe redirect
-        }
-    } catch (e) {
-        console.error(e)
-    } finally {
-        loading.value = false
+  loading.value = true
+  try {
+    const response = await fetch(`/api/routes/${route.params.id}`)
+    if (response.ok) {
+      routeData.value = await response.json()
+    } else {
+      // TODO Handle error, maybe redirect
     }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
 }
 
 const onSaved = () => {
-    router.push(`/routes/${route.params.id}`)
+  router.push(`/routes/${route.params.id}`)
 }
 
 onMounted(async () => {
-    await load()
+  await load()
 
-    // Simple client-side check, backend enforces properly
-    if (!appStore.user.is_admin) {
-        // router.push('/') // Or handle as needed
-    }
+  // Simple client-side check, backend enforces properly
+  if (!appStore.user.is_admin) {
+    // TODO router.push('/') // Or handle as needed
+  }
 })
 </script>

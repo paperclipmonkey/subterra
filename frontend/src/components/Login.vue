@@ -322,7 +322,6 @@ onUnmounted(() => {
   opacity: 0;
   transition: opacity 1.5s ease-in-out, transform 10s linear;
   /* Smooth reset */
-  /* Optional: Add a subtle zoom effect */
   transform: scale(1.05);
   will-change: opacity, transform;
   backface-visibility: hidden;

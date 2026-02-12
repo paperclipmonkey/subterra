@@ -199,7 +199,7 @@
 
 <script setup>
 import router from '@/router';
-import { ref, onMounted, computed } from 'vue' // Import computed
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useToast } from "vue-toastification"
 import { api } from '@/plugins/api'
@@ -215,8 +215,8 @@ const profile = ref({
   "id": 0,
   "photo": "",
   "stats": {},
-  "clubs": [], // Expect clubs data here from API
-  "bio": "", // Added bio to initial structure
+  "clubs": [],
+  "bio": "",
   "phone": "",
   "email_trophies": true,
   "email_tagged": true,
@@ -359,11 +359,9 @@ const deleteAccount = async () => {
   try {
     await api.delete(`/api/users/me`);
     toast.success('Your account has been deleted successfully')
-    // Optionally show a goodbye message or redirect to login/home
     router.push({ name: '/' });
   } catch (error) {
     console.error('Error deleting account:', error);
-    // Global interceptor handles the toast
   } finally {
     deletingAccount.value = false;
     closeDeleteModal();

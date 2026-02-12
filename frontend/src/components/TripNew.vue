@@ -429,7 +429,7 @@ onMounted(async () => {
           // Pre-fill plan/description
           trip.description = `**Originally a Callout:**\n\n${calloutData.trip_plan}`;
           if (calloutData.trip_plan) {
-            markdownOutput.value = trip.description; // Ensure tiptap sees it if needed
+            markdownOutput.value = trip.description;
           }
 
           // Pre-fill participants
@@ -734,15 +734,6 @@ const saveTrip = async (tripPayload) => {
 </script>
 
 <style>
-.vuetify-pro-tiptap-editor__content+.v-toolbar {
-  display: none;
-}
-
-/* TODO tidy this hack */
-.vuetify-pro-tiptap-editor {
-  margin-bottom: 20px;
-}
-
 .existing_media {
   max-width: 200px;
 }

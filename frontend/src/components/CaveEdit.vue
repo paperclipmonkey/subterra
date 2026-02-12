@@ -143,7 +143,7 @@ const saveCave = async () => {
           suggestable_type: 'cave',
           suggestable_id: cave.value.id,
           suggested_data: cave.value,
-          original_data: null // Optional: could fetch again to compare
+          original_data: null
         }),
       })
 

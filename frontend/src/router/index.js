@@ -52,12 +52,7 @@ router.beforeEach(async (to, from, next) => {
     return next()
   }
 
-  // The following block of code was provided in the instruction, but it appears to be a misplaced route definition
-  // within the beforeEach hook. Given that `vue-router/auto` is used, routes are automatically generated
-  // from files in `src/pages`. If `src/pages/callout.vue` exists, the route `/callout` will be
-  // automatically mapped. To avoid syntax errors and maintain the intended functionality of `vue-router/auto`,
-  // this block is commented out. If manual route definition is intended, it should be done in the `createRouter`
-  // configuration, typically by extending the auto-generated routes.
+
 
 
   if (to.name === '/') {

@@ -286,7 +286,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { mande } from 'mande'; // Import mande
+import { mande } from 'mande';
 import { CalendarHeatmap } from "vue3-calendar-heatmap";
 import moment from 'moment';
 import { useAppStore } from '@/stores/app'
