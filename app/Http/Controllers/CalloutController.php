@@ -21,8 +21,8 @@ class CalloutController extends Controller
      */
     public function store(Request $request)
     {
-        if (!$request->user()->is_approved) {
-            abort(403, 'You must be an approved member to open callouts.');
+        if (!$request->user()->hasApprovedClub()) {
+            abort(403, 'You must be an approved club member to open callouts.');
         }
 
         $data = $request->validate([

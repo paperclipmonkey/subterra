@@ -76,8 +76,8 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/caves/{cave}/weather/forecast', [App\Http\Controllers\CaveWeatherController::class, 'forecast']);
     Route::get('/caves/{cave}/weather/historic', [App\Http\Controllers\CaveWeatherController::class, 'historic']);
     
-    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class);
-    Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class);
+    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class . ':data_admin');
+    Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class . ':data_admin');
 
     Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
     Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
@@ -136,42 +136,54 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
 
 
 // --- Admin Routes ---
-Route::prefix('admin')->middleware(ApiIsAdmin::class)->group(function () {
-    Route::get('/dashboard/popular-records', [App\Http\Controllers\Admin\DashboardController::class, 'popularRecords'])->name('admin.dashboard.popular-records');
+Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     
-    Route::get('/users', [UserController::class, 'adminIndex'])->name('admin.users.index');
-    Route::put('/users/{user_without_scopes}/toggle-approval', [UserController::class, 'toggleApproval'])
-        ->withoutScopedBindings()
-        ->name('admin.users.toggle-approval');
-    Route::put('/users/{user_without_scopes}/toggle-admin', [UserController::class, 'toggleAdmin'])
-        ->withoutScopedBindings()
-        ->name('admin.users.toggle-admin');
+    // Platform Admin — users, clubs, pages, comms, tasks, dashboard, suggested edits
+    Route::middleware(ApiIsAdmin::class . ':platform_admin')->group(function () {
+        Route::get('/users', [UserController::class, 'adminIndex'])->name('admin.users.index');
+        Route::put('/users/{user_without_scopes}/toggle-admin', [UserController::class, 'toggleAdmin'])
+            ->withoutScopedBindings()
+            ->name('admin.users.toggle-admin');
+        Route::put('/users/{user_without_scopes}/toggle-role/{role}', [UserController::class, 'toggleRole'])
+            ->withoutScopedBindings()
+            ->name('admin.users.toggle-role');
 
-    // --- Admin Club Endpoints ---
-    Route::get('/callouts', [App\Http\Controllers\Admin\CalloutController::class, 'index'])->name('admin.callouts.index');
+        Route::get('/clubs', [ClubController::class, 'adminIndex'])->name('admin.clubs.index');
+        Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');
+        Route::put('/clubs/{club}', [ClubController::class, 'update'])->name('admin.clubs.update');
+        Route::delete('/clubs/{club}', [ClubController::class, 'destroy'])->name('admin.clubs.destroy');
+        Route::put('/clubs/{club}/toggle-active', [ClubController::class, 'toggleActive'])->name('admin.clubs.toggle-active');
+        Route::get('/clubs/{club}/members', [ClubController::class, 'getApprovedMembers'])->name('admin.clubs.members.index');
+        Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
+        Route::post('/communications/send', [App\Http\Controllers\Admin\CommunicationController::class, 'send'])->name('admin.communications.send');
+        Route::get('/dashboard/popular-records', [App\Http\Controllers\Admin\DashboardController::class, 'popularRecords'])->name('admin.dashboard.popular-records');
+    });
 
-    Route::get('/clubs', [ClubController::class, 'adminIndex'])->name('admin.clubs.index');
-    Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');
-    Route::put('/clubs/{club}', [ClubController::class, 'update'])->name('admin.clubs.update');
-    Route::delete('/clubs/{club}', [ClubController::class, 'destroy'])->name('admin.clubs.destroy');
-    Route::put('/clubs/{club}/toggle-active', [ClubController::class, 'toggleActive'])->name('admin.clubs.toggle-active');
+    // Content & Data shared (Platform Admin OR Data Admin)
+    Route::middleware(ApiIsAdmin::class . ':platform_admin,data_admin')->group(function () {
+        Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
+        Route::apiResource('pages', App\Http\Controllers\PageController::class);
+        Route::apiResource('suggested-edits', App\Http\Controllers\Admin\SuggestedEditController::class)->only(['index', 'show']);
+        Route::post('/suggested-edits/{suggested_edit}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approve']);
+        Route::post('/suggested-edits/{suggested_edit}/reject', [App\Http\Controllers\Admin\SuggestedEditController::class, 'reject']);
+        Route::apiResource('catchments', App\Http\Controllers\CatchmentController::class);
+    });
 
-    // --- Admin Club Member Management Endpoints ---
-    // This now gets *approved* members for the main admin list
-    Route::get('/clubs/{club}/members', [ClubController::class, 'getApprovedMembers'])->name('admin.clubs.members.index');
-    // This syncs *approved* members and their admin status
-    Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
+    // Duty Officer — callouts, shifts, incidents
+    Route::middleware(ApiIsAdmin::class . ':duty_officer,platform_admin')->group(function () {
+        Route::get('/duty-officers', [App\Http\Controllers\DutyOfficerController::class, 'index'])->name('admin.duty-officers.index');
+        Route::get('/callouts', [App\Http\Controllers\Admin\CalloutController::class, 'index'])->name('admin.callouts.index');
+        Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
+        Route::post('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'store']);
+        Route::put('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'update']);
+        Route::delete('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'destroy']);
 
-    Route::apiResource('pages', App\Http\Controllers\PageController::class);
-    Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
-    
-    Route::post('/communications/send', [App\Http\Controllers\Admin\CommunicationController::class, 'send'])->name('admin.communications.send');
-
-    Route::apiResource('catchments', App\Http\Controllers\CatchmentController::class);
-
-    Route::apiResource('suggested-edits', App\Http\Controllers\Admin\SuggestedEditController::class)->only(['index', 'show']);
-    Route::post('/suggested-edits/{suggested_edit}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approve']);
-    Route::post('/suggested-edits/{suggested_edit}/reject', [App\Http\Controllers\Admin\SuggestedEditController::class, 'reject']);
+        Route::get('/incidents', [App\Http\Controllers\Admin\IncidentController::class, 'index']);
+        Route::get('/incidents/{id}', [App\Http\Controllers\Admin\IncidentController::class, 'show']);
+        Route::post('/incidents/{id}/acknowledge', [App\Http\Controllers\Admin\IncidentController::class, 'acknowledge']);
+        Route::post('/incidents/{id}/notes', [App\Http\Controllers\Admin\IncidentController::class, 'addNote']);
+        Route::post('/incidents/{id}/resolve', [App\Http\Controllers\Admin\IncidentController::class, 'resolve']);
+    });
 });
 
 Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
@@ -188,19 +200,6 @@ Route::get('logout', function (Request $request) {
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{id}', [App\Http\Controllers\NewsController::class, 'show'])->name('news.show');
 
-// --- Admin ---
-Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
-    Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
-    Route::post('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'store']);
-    Route::put('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'update']);
-    Route::delete('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'destroy']);
-
-    Route::get('/incidents', [App\Http\Controllers\Admin\IncidentController::class, 'index']);
-    Route::get('/incidents/{id}', [App\Http\Controllers\Admin\IncidentController::class, 'show']);
-    Route::post('/incidents/{id}/acknowledge', [App\Http\Controllers\Admin\IncidentController::class, 'acknowledge']);
-    Route::post('/incidents/{id}/notes', [App\Http\Controllers\Admin\IncidentController::class, 'addNote']);
-    Route::post('/incidents/{id}/resolve', [App\Http\Controllers\Admin\IncidentController::class, 'resolve']);
-});
 
 Route::get('/livez', function(Request $request) {
     try {

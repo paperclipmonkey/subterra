@@ -129,27 +129,45 @@ class UserController extends Controller
     {
         // Need withoutGlobalScopes here as withoutScopedBindings() doesn't affect this query
         // Only show active users (actual signups)
-        return UserDetailEmailResource::collection(User::withoutGlobalScopes()->where('is_active', true)->get());
+        return UserDetailEmailResource::collection(User::withoutGlobalScopes()->where('is_active', true)->with('roles')->get());
     }
 
-    /**
-     * Toggle the approval status of a user.
-     */
-    public function toggleApproval(User $user): UserDetailEmailResource
-    {
-        // Route model binding handles fetching the user without scopes via withoutScopedBindings()
-        $user->is_approved = !$user->is_approved;
-        $user->save();
-        return new UserDetailEmailResource($user);
-    }
 
     /**
      * Toggle the admin status of a user.
      */
     public function toggleAdmin(User $user): UserDetailEmailResource
     {
-        $user->is_admin = !$user->is_admin;
-        $user->save();
+        if ($user->hasRole('platform_admin')) {
+            $user->removeRole('platform_admin');
+        } else {
+            $user->assignRole('platform_admin');
+        }
+        
+        return new UserDetailEmailResource($user);
+    }
+
+    /**
+     * Toggle a specific role for a user.
+     */
+    public function toggleRole(User $user, string $role): UserDetailEmailResource
+    {
+        // Prevent users from editing their own roles
+        if ($user->id === auth()->id()) {
+            abort(403, 'You cannot modify your own roles.');
+        }
+
+        // Validate the role slug exists
+        $roleModel = \App\Models\Role::where('slug', $role)->firstOrFail();
+
+        if ($user->hasRole($role)) {
+            $user->removeRole($role);
+        } else {
+            $user->assignRole($role);
+        }
+        
+        // Reload roles relationship
+        $user->load('roles');
         return new UserDetailEmailResource($user);
     }
 
@@ -165,18 +183,16 @@ class UserController extends Controller
         ]);
 
         // Determine default photo path correctly based on storage setup
-        $defaultPhotoPath = 'profile/default.webp'; // Adjust if needed
+        // $defaultPhotoPath = 'profile/default.webp'; // Adjust if needed
 
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
-            'photo' => $defaultPhotoPath, 
+            'photo' => null, 
         ]);
         
         // Explicitly set guarded fields (not mass assignable)
         $user->is_active = false;
-        $user->is_approved = false;
-        $user->is_admin = false;
         $user->save();
 
         event(new \App\Events\UserCreated($user));
@@ -290,7 +306,7 @@ class UserController extends Controller
                 'email' => $user->email,
                 'bio' => $user->bio,
                 'is_active' => $user->is_active,
-                'is_approved' => $user->is_approved,
+                'is_active' => $user->is_active,
                 'tos_agreed_at' => $user->tos_agreed_at,
                 'created_at' => $user->created_at,
             ],
@@ -340,7 +356,10 @@ class UserController extends Controller
         }
 
         // 1. Delete user photo if it's not the default
-        if ($user->photo && $user->photo !== 'profile/default.webp' && $user->photo !== 'profile/default.png') {
+        if ($user->photo && 
+            !str_contains($user->photo, 'default.webp') && 
+            !str_contains($user->photo, 'default.png')
+        ) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($user->photo);
         }
 

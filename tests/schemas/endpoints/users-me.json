@@ -132,8 +132,28 @@
             "null"
           ]
         },
-        "is_approved": {
-          "type": "boolean"
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "slug"
+            ],
+            "additionalProperties": false
+          }
         },
         "stats": {
           "type": "object",
@@ -232,7 +252,6 @@
         "email",
         "clubs",
         "medals",
-        "is_approved",
         "stats",
         "tos_agreed_at",
         "privacy_policy_agreed_at",

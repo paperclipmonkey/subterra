@@ -40,35 +40,26 @@
               </v-chip>
             </div>
           </template>
-          <template v-slot:item.is_approved="{ item }">
-            <v-btn 
-              icon 
-              variant="text" 
-              size="small" 
-              @click.stop="toggleApproval(item)" 
-              :loading="item.loadingApproval"
-              :color="item.is_approved ? 'green' : 'red'"
-            >
-              <v-icon>
-                {{ item.is_approved ? 'mdi-check-circle' : 'mdi-close-circle' }}
-              </v-icon>
-              <v-tooltip activator="parent" location="top">{{ item.is_approved ? 'Revoke Approval' : 'Approve User' }}</v-tooltip>
-            </v-btn>
-          </template>
-          <template v-slot:item.is_admin="{ item }">
-             <v-btn 
-              icon 
-              variant="text" 
-              size="small" 
-              @click.stop="toggleAdmin(item)" 
-              :loading="item.loadingAdmin"
-              :color="item.is_admin ? 'green' : 'red'"
-             >
-              <v-icon>
-                {{ item.is_admin ? 'mdi-check-circle' : 'mdi-close-circle' }}
-              </v-icon>
-               <v-tooltip activator="parent" location="top">{{ item.is_admin ? 'Revoke Admin' : 'Make Admin' }}</v-tooltip>
-            </v-btn>
+          <template v-slot:item.roles="{ item }">
+            <div class="d-flex ga-1 flex-wrap py-1" @click.stop>
+              <v-chip
+                v-for="role in allRoles"
+                :key="role.slug"
+                :color="hasRole(item, role.slug) ? role.color : 'grey-lighten-2'"
+                :variant="hasRole(item, role.slug) ? 'flat' : 'outlined'"
+                size="small"
+                @click.stop="isSelf(item) ? null : toggleRole(item, role.slug)"
+                :loading="item.loadingRole === role.slug"
+                :style="isSelf(item) ? 'opacity: 0.5; cursor: not-allowed' : 'cursor: pointer'"
+                :disabled="isSelf(item)"
+              >
+                <v-icon start size="x-small">{{ role.icon }}</v-icon>
+                {{ role.label }}
+                <v-tooltip activator="parent" location="top">
+                  {{ isSelf(item) ? 'Cannot modify your own roles' : (hasRole(item, role.slug) ? `Remove ${role.label}` : `Assign ${role.label}`) }}
+                </v-tooltip>
+              </v-chip>
+            </div>
           </template>
            <template v-slot:item.created_at="{ item }">
             {{ moment(item.created_at).format('DD/MM/YYYY') }}
@@ -109,6 +100,7 @@
       </v-card>
     </v-dialog>
   </v-container>
+
 </template>
 
 <script setup>
@@ -116,37 +108,49 @@ import moment from 'moment';
 import { ref, onMounted } from 'vue';
 import { mande } from 'mande';
 import { useRouter } from 'vue-router';
+import { useAppStore } from '@/stores/app';
 
 const usersApi = mande('/api/admin/users');
 const users = ref([]);
 const loading = ref(false);
-const search = ref(''); // Added search ref
+const search = ref('');
 const router = useRouter();
+const appStore = useAppStore();
+
+const allRoles = [
+  { slug: 'platform_admin', label: 'Platform Admin', color: 'purple', icon: 'mdi-shield-crown' },
+  { slug: 'duty_officer', label: 'Duty Officer', color: 'blue', icon: 'mdi-phone-in-talk' },
+  { slug: 'data_admin', label: 'Data Admin', color: 'teal', icon: 'mdi-database-edit' },
+];
 
 const headers = [
   { title: 'Name', key: 'name', sortable: true },
   { title: 'Email', key: 'email', sortable: true },
-  { title: 'Approved', key: 'is_approved', sortable: true, align: 'center' }, // Centered icons
-  { title: 'Admin', key: 'is_admin', sortable: true, align: 'center' }, // Centered icons
+  { title: 'Roles', key: 'roles', sortable: false, align: 'start' },
   { title: 'Clubs', key: 'clubs', sortable: true },
-  { title: 'Joined', key: 'created_at', sortable: true }, // Added created_at header
+  { title: 'Joined', key: 'created_at', sortable: true },
   { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
 ];
+
+const isSelf = (user) => {
+  return appStore.user?.id === user.id;
+};
+
+const hasRole = (user, slug) => {
+  return user.roles && user.roles.some(r => r.slug === slug);
+};
 
 const fetchUsers = async () => {
   loading.value = true;
   try {
     const response = await usersApi.get();
-    // Add loading flags to each user object
     users.value = (response.data || response).map(user => ({
       ...user,
-      loadingApproval: false,
-      loadingAdmin: false,
+      loadingRole: null,
       loadingDelete: false,
     }));
   } catch (error) {
     console.error('Error fetching users:', error);
-    // Handle error display if needed (e.g., snackbar)
   } finally {
     loading.value = false;
   }
@@ -176,7 +180,6 @@ const executeDelete = async () => {
   try {
     const deleteApi = mande(`/api/users/${user.id}`);
     await deleteApi.delete();
-    // Remove from local list
     users.value = users.value.filter(u => u.id !== user.id);
   } catch (error) {
     console.error(`Error deleting user ${user.id}:`, error);
@@ -186,49 +189,27 @@ const executeDelete = async () => {
   }
 };
 
-// Function to update user in the local array
 const updateUserInList = (updatedUser) => {
   const index = users.value.findIndex(u => u.id === updatedUser.id);
   if (index !== -1) {
-    // Preserve loading state if needed, or reset it
     users.value[index] = {
       ...updatedUser,
-      loadingApproval: false, // Reset loading flags
-      loadingAdmin: false,
+      loadingRole: null,
       loadingDelete: false
     };
   }
 };
 
-const toggleApproval = async (user) => {
-  user.loadingApproval = true;
+const toggleRole = async (user, roleSlug) => {
+  if (isSelf(user)) return;
+  user.loadingRole = roleSlug;
   try {
-    const toggleApi = mande(`/api/admin/users/${user.id}/toggle-approval`);
+    const toggleApi = mande(`/api/admin/users/${user.id}/toggle-role/${roleSlug}`);
     const updatedUser = await toggleApi.put();
     updateUserInList(updatedUser.data || updatedUser);
   } catch (error) {
-    console.error(`Error toggling approval for user ${user.id}:`, error);
-    // Handle error display
-    user.loadingApproval = false; // Reset loading on error
-  } finally {
-    // Ensure loading state is always reset
-    if (user) user.loadingApproval = false;
-  }
-};
-
-const toggleAdmin = async (user) => {
-  user.loadingAdmin = true;
-  try {
-    const toggleApi = mande(`/api/admin/users/${user.id}/toggle-admin`);
-    const updatedUser = await toggleApi.put();
-    updateUserInList(updatedUser.data || updatedUser);
-  } catch (error) {
-    console.error(`Error toggling admin for user ${user.id}:`, error);
-    // Handle error display
-    user.loadingAdmin = false; // Reset loading on error
-  } finally {
-    // Ensure loading state is always reset
-    if (user) user.loadingAdmin = false;
+    console.error(`Error toggling role ${roleSlug} for user ${user.id}:`, error);
+    user.loadingRole = null;
   }
 };
 
@@ -247,15 +228,12 @@ const approveMembership = async (user, club) => {
 
 
 const handleRowClick = (event, { item }) => {
-  // Check if the click target is one of the action buttons to prevent navigation
-  // Ensure item is reactive if passed directly, otherwise use item.value if it's a ref
-  const targetUser = item; // Assuming item is the raw user object from the array
+  const targetUser = item;
 
-  // More robust check to ensure we don't navigate when clicking buttons/icons within the row
   let target = event.target;
   while (target && target !== event.currentTarget) {
-    if (target.tagName === 'BUTTON' || target.classList.contains('v-icon')) {
-      return; // Click was on a button or icon, do nothing
+    if (target.tagName === 'BUTTON' || target.classList.contains('v-icon') || target.classList.contains('v-chip')) {
+      return;
     }
     target = target.parentNode;
   }
@@ -271,11 +249,5 @@ onMounted(() => {
 <style scoped>
 .v-data-table :deep(tbody tr) {
   cursor: pointer;
-}
-
-/* Optional: Add specific styling for the action buttons if needed */
-.v-data-table :deep(td .v-btn) {
-  /* Example: Adjust margin if needed */
-  /* margin: -8px 0; */
 }
 </style>

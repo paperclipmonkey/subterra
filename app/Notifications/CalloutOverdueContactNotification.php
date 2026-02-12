@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CalloutImminentContactNotification extends Notification implements ShouldQueue
+class CalloutOverdueContactNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -39,16 +39,17 @@ class CalloutImminentContactNotification extends Notification implements ShouldQ
     public function toMail(object $notifiable): MailMessage
     {
         $url = url('/'); // Link to safe check-in or app home?
+        $caveName = $this->callout->cave?->name ?? 'Unknown Location';
 
         return (new MailMessage)
-                    ->subject('ACTION REQUIRED: Callout Due Soon - ' . ($this->callout->cave?->name ?? 'Unknown Location'))
-                    ->greeting('Hello')
-                    ->line('Your registered callout is due in approximately 15 minutes.')
-                    ->line('**Cave:** ' . ($this->callout->cave?->name ?? 'Unknown Location'))
+                    ->subject('URGENT: Callout OVERDUE - ' . $caveName)
+                    ->greeting('URGENT ACTION REQUIRED')
+                    ->line('Your registered callout is now OVERDUE.')
+                    ->line('**Cave:** ' . $caveName)
                     ->line('**Due Time:** ' . $this->callout->callout_time->format('H:i'))
-                    ->line('If you are safe out of the cave, please check in IMMEDIATELY to prevent a rescue callout from being initiated.')
+                    ->line('Rescue procedures are being initiated. if you are safe out of the cave, please check in IMMEDIATELY to prevent a false alarm.')
                     ->action('Open App to Check In', $url)
-                    ->line('If you are overdue, a rescue will be initiated shortly.');
+                    ->line('Please reply "OUT SAFE" to the SMS if you cannot access the app.');
     }
 
     /**
@@ -56,7 +57,7 @@ class CalloutImminentContactNotification extends Notification implements ShouldQ
      */
     public function toClickSend(object $notifiable): string
     {
-        //return "WARNING: Callout at {$this->callout->cave->name} due in 15 mins. Check in immediately to avoid rescue. Reply 'OUT SAFE' to cancel.";
-        return "Your callout is close. Please mark yourself safe or reply \"OUT SAFE\"";
+        $caveName = $this->callout->cave?->name ?? 'Unknown';
+        return "URGENT: Callout OVERDUE! Cave: {$caveName}. Please reply 'OUT SAFE' immediately or rescue will be launched.";
     }
 }

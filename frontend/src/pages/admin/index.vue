@@ -6,13 +6,13 @@
     </div>
 
     <!-- Operations & Safety -->
-    <section class="mb-10">
+    <section class="mb-10" v-if="isDutyOfficer || isPlatformAdmin">
       <div class="d-flex align-center mb-4">
         <v-icon color="error" class="mr-3" size="32">mdi-shield-alert</v-icon>
         <h3 class="text-h5 font-weight-bold">Operations & Safety</h3>
       </div>
       <v-row>
-        <v-col cols="12" sm="6" md="4" lg="3">
+        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDutyOfficer">
           <v-card to="/admin/callout" link hover class="admin-card">
             <v-card-item title="Callout Admin">
               <template v-slot:prepend>
@@ -22,7 +22,7 @@
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3">
+        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDutyOfficer">
           <v-card to="/admin/rota" link hover class="admin-card">
             <v-card-item title="Duty Rota">
               <template v-slot:prepend>
@@ -36,7 +36,7 @@
     </section>
 
     <!-- User Management -->
-    <section class="mb-10">
+    <section class="mb-10" v-if="isPlatformAdmin">
       <div class="d-flex align-center mb-4">
         <v-icon color="primary" class="mr-3" size="32">mdi-account-cog</v-icon>
         <h3 class="text-h5 font-weight-bold">User Management</h3>
@@ -76,13 +76,13 @@
     </section>
 
     <!-- Content & Data -->
-    <section class="mb-10">
+    <section class="mb-10" v-if="isPlatformAdmin || isDataAdmin">
       <div class="d-flex align-center mb-4">
         <v-icon color="success" class="mr-3" size="32">mdi-database-edit</v-icon>
         <h3 class="text-h5 font-weight-bold">Content & Data</h3>
       </div>
       <v-row>
-        <v-col cols="12" sm="6" md="4" lg="3">
+        <v-col cols="12" sm="6" md="4" lg="3" v-if="isPlatformAdmin || isDataAdmin">
           <v-card to="/admin/pages" link hover class="admin-card">
             <v-card-item title="Pages">
               <template v-slot:prepend>
@@ -92,7 +92,7 @@
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3">
+        <v-col cols="12" sm="6" md="4" lg="3" v-if="isPlatformAdmin || isDataAdmin">
           <v-card to="/admin/suggested-edits" link hover class="admin-card">
             <v-card-item title="Suggestions">
               <template v-slot:prepend>
@@ -102,7 +102,7 @@
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3">
+        <v-col cols="12" sm="6" md="4" lg="3" v-if="isPlatformAdmin || isDataAdmin">
           <v-card to="/admin/tasks" link hover class="admin-card">
             <v-card-item title="Data Quality">
               <template v-slot:prepend>
@@ -112,7 +112,7 @@
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3">
+        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDataAdmin">
           <v-card to="/admin/cave-system-with-cave" link hover class="admin-card">
             <v-card-item title="Add Cave">
               <template v-slot:prepend>
@@ -122,7 +122,7 @@
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3">
+        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDataAdmin">
           <v-card to="/admin/catchments" link hover class="admin-card">
             <v-card-item title="Catchments">
               <template v-slot:prepend>
@@ -136,7 +136,7 @@
     </section>
 
     <!-- Analytics -->
-    <section class="mb-10">
+    <section class="mb-10" v-if="isPlatformAdmin">
       <div class="d-flex align-center mb-4">
         <v-icon color="grey-darken-2" class="mr-3" size="32">mdi-chart-bar</v-icon>
         <h3 class="text-h5 font-weight-bold">Analytics</h3>
@@ -158,9 +158,22 @@
 </template>
 
 <script setup>
+import { useAppStore } from '@/stores/app'
+import { computed } from 'vue'
+
 defineOptions({
   name: 'AdminDashboard'
 })
+
+const appStore = useAppStore()
+
+const hasRole = (role) => {
+  return appStore.user?.roles?.some(r => r.slug === role)
+}
+
+const isPlatformAdmin = computed(() => hasRole('platform_admin'))
+const isDutyOfficer = computed(() => hasRole('duty_officer')) // Duty Officers see their specific tools
+const isDataAdmin = computed(() => hasRole('data_admin'))
 </script>
 
 <style scoped>

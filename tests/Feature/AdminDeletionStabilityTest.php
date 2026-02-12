@@ -13,7 +13,7 @@ class AdminDeletionStabilityTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function an_admin_can_delete_an_inactive_user()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         
         // Users are created inactive by default when certain flags are set or via direct creation
         // The IsActiveScope filters where is_active is true.
@@ -41,7 +41,7 @@ class AdminDeletionStabilityTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function an_admin_can_delete_an_active_user()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $activeUser = User::factory()->create(['is_active' => true]);
 
         $this->actingAs($admin, 'sanctum');
@@ -54,7 +54,7 @@ class AdminDeletionStabilityTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function a_non_admin_cannot_delete_another_inactive_user()
     {
-        $user = User::factory()->create(['is_admin' => false]);
+        $user = User::factory()->create();
         $inactiveUser = User::factory()->create(['is_active' => false]);
 
         $this->actingAs($user, 'sanctum');

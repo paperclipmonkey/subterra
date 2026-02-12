@@ -193,7 +193,7 @@ class TripTest extends TestCase {
             'existing_media' => [],
         ];
 
-        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $this->actingAs(User::factory()->admin()->create());
         $response = $this->putJson('/api/trips/' . $trip->short_id, $updateData);
         $response->assertOk();
         $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);

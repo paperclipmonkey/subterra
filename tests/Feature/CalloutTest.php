@@ -30,11 +30,11 @@ class CalloutTest extends TestCase
     public function test_user_can_create_callout_when_admin_on_call()
     {
         Mail::fake();
-        $user = User::factory()->create();
+        $user = User::factory()->withApprovedClub()->create();
         $cave = Cave::factory()->create();
 
         // Create On-Call Shift coverage
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         OnCallShift::create([
             'user_id' => $admin->id,
             'start_at' => Carbon::now()->subHour(),
@@ -81,7 +81,7 @@ class CalloutTest extends TestCase
 
     public function test_create_callout_fails_if_no_admin_coverage()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withApprovedClub()->create();
         
         // NO OnCallShift created
 
@@ -206,11 +206,11 @@ class CalloutTest extends TestCase
     public function test_creator_does_not_receive_redundant_sms_when_in_participants()
     {
         Mail::fake();
-        $user = User::factory()->create(['phone' => '07123456789']);
+        $user = User::factory()->withApprovedClub()->create(['phone' => '07123456789']);
         $cave = Cave::factory()->create();
 
         // Create On-Call Shift coverage
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         OnCallShift::create([
             'user_id' => $admin->id,
             'start_at' => Carbon::now()->subHour(),
@@ -250,7 +250,7 @@ class CalloutTest extends TestCase
     public function test_cannot_create_concurrent_callouts_for_same_participant()
     {
         // 1. Setup Admin & Coverage
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         OnCallShift::create([
             'user_id' => $admin->id,
             'start_at' => Carbon::now()->subHour(),
@@ -275,7 +275,7 @@ class CalloutTest extends TestCase
         ]);
 
         // 3. Attempt to create NEW callout with "Bob"
-        $user2 = User::factory()->create();
+        $user2 = User::factory()->withApprovedClub()->create();
         
         $payload = [
             'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),

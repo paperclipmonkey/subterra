@@ -44,7 +44,6 @@ class MagicLinkController extends Controller
                 
                 // Explicitly set guarded fields
                 $user->is_active = true; // Enable the user since they're requesting access
-                $user->is_approved = false; // Still needs admin approval
                 $user->save();
 
                 event(new \App\Events\UserCreated($user));
@@ -223,7 +222,7 @@ class MagicLinkController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'is_approved' => $user->is_approved,
+
                 ],
                 'needs_profile' => $needsProfile
             ]);

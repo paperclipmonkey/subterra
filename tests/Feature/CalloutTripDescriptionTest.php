@@ -19,8 +19,8 @@ class CalloutTripDescriptionTest extends TestCase
     public function test_trip_description_is_populated_from_callout_trip_plan()
     {
         // 1. Setup On-Call Coverage and Location Data
-        $user = User::factory()->create(['is_approved' => true]);
-        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->withApprovedClub()->create();
+        $admin = User::factory()->admin()->create();
         OnCallShift::create([
             'user_id' => $admin->id,
             'start_at' => now()->subDay(),

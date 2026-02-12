@@ -18,7 +18,7 @@ class CatchmentTest extends TestCase
 
     public function test_admin_can_create_catchment()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->dataAdmin()->create();
 
         $response = $this->actingAs($admin)->postJson('/api/admin/catchments', [
             'name' => 'Test Catchment',

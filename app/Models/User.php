@@ -44,8 +44,6 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      * @var array<int, string>
      */
     protected $guarded = [
-        'is_admin',
-        'is_approved',
         'is_active',
     ];
 
@@ -58,6 +56,10 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'remember_token',
     ];
 
+    protected $appends = [
+        'is_admin',
+    ];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -67,8 +69,6 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         return [
             'email_verified_at' => 'datetime',
-            'is_approved' => 'boolean',
-            'is_admin' => 'boolean',
             'is_active' => 'boolean',
             'tos_agreed_at' => 'datetime',
             'privacy_policy_agreed_at' => 'datetime',
@@ -142,5 +142,60 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     public function callouts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Callout::class);
+    }
+
+    /**
+     * The roles that belong to the user.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    /**
+     * Check if the user has a specific role.
+     */
+    public function hasRole(string|array $role): bool
+    {
+        if (is_array($role)) {
+            return $this->roles()->whereIn('slug', $role)->exists();
+        }
+
+        return $this->roles()->where('slug', $role)->exists();
+    }
+
+    /**
+     * Assign a role to the user.
+     */
+    public function assignRole(string $role): void
+    {
+        $roleModel = Role::where('slug', $role)->firstOrFail();
+        $this->roles()->syncWithoutDetaching([$roleModel->id]);
+    }
+
+    /**
+     * Remove a role from the user.
+     */
+    public function removeRole(string $role): void
+    {
+        $roleModel = Role::where('slug', $role)->firstOrFail();
+        $this->roles()->detach($roleModel->id);
+    }
+
+    /**
+     * Returns true if the user has any admin role.
+     * Used to gate access to the admin panel.
+     */
+    public function getIsAdminAttribute(): bool
+    {
+        return $this->roles()->exists();
+    }
+
+    /**
+     * Check if the user has any approved club membership.
+     */
+    public function hasApprovedClub(): bool
+    {
+        return $this->clubs()->wherePivot('status', 'approved')->exists();
     }
 }

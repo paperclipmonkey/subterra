@@ -22,9 +22,9 @@ class ClubTest extends TestCase
     {
         parent::setUp();
         // Create an admin user
-        $this->adminUser = User::factory()->create(['is_admin' => true]);
+        $this->adminUser = User::factory()->admin()->create();
         // Create a regular user
-        $this->regularUser = User::factory()->create(['is_admin' => false]);
+        $this->regularUser = User::factory()->create();
     }
 
     // --- Index Tests (Public) ---

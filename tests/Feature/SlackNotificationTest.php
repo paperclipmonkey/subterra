@@ -28,7 +28,7 @@ class SlackNotificationTest extends TestCase
         // Mock Env
         config()->set('slack-alerts.webhook_urls.callouts-open', 'https://hooks.slack.com/services/test/open');
         
-        $user = User::factory()->create();
+        $user = User::factory()->withApprovedClub()->create();
         $cave = Cave::first();
         
         // Setup Shift
@@ -70,7 +70,7 @@ class SlackNotificationTest extends TestCase
         SlackAlert::fake();
         config()->set('slack-alerts.webhook_urls.callouts-open', 'https://hooks.slack.com/services/test/open');
         
-        $user = User::factory()->create();
+        $user = User::factory()->withApprovedClub()->create();
         $cave = Cave::first();
         
         // Setup Shift
@@ -107,7 +107,7 @@ class SlackNotificationTest extends TestCase
         SlackAlert::fake();
         config()->set('slack-alerts.webhook_urls.callouts-open', 'https://hooks.slack.com/services/test/open');
         
-        $user = User::factory()->create();
+        $user = User::factory()->withApprovedClub()->create();
         $cave = Cave::first();
         
         // Setup Shift
@@ -146,7 +146,7 @@ class SlackNotificationTest extends TestCase
         config()->set('slack-alerts.webhook_urls.callouts-overdue', 'https://hooks.slack.com/services/test/overdue');
         Carbon::setTestNow('2025-01-01 12:00:00');
 
-        $user = User::factory()->create(['is_admin' => true, 'is_active' => true]);
+        $user = User::factory()->admin()->create(['is_active' => true]);
         $cave = Cave::first(); 
         
         $callout = Callout::factory()->create([
@@ -172,7 +172,7 @@ class SlackNotificationTest extends TestCase
         SlackAlert::fake();
         config()->set('slack-alerts.webhook_urls.callouts-overdue', 'https://hooks.slack.com/services/test/overdue');
 
-        $user = User::factory()->create(['is_admin' => true, 'is_active' => true]);
+        $user = User::factory()->admin()->create(['is_active' => true]);
         
         $callout = Callout::factory()->create(['status' => 'triggered']);
         $incident = Incident::create([
@@ -195,7 +195,7 @@ class SlackNotificationTest extends TestCase
         SlackAlert::fake();
         config()->set('slack-alerts.webhook_urls.callouts-overdue', 'https://hooks.slack.com/services/test/overdue');
 
-        $user = User::factory()->create(['is_admin' => true, 'name' => 'Admin User']);
+        $user = User::factory()->admin()->create(['name' => 'Admin User']);
         $callout = Callout::factory()->create(['status' => 'triggered']);
         $incident = Incident::create([
             'callout_id' => $callout->id,

@@ -19,7 +19,7 @@ class SuggestedEditTest extends TestCase
 
     private function createApprovedUser()
     {
-        $user = User::factory()->create(['is_approved' => true]);
+        $user = User::factory()->withApprovedClub()->create();
         $club = Club::factory()->create();
         $user->clubs()->attach($club, ['status' => 'approved']);
         return $user;
@@ -54,7 +54,7 @@ class SuggestedEditTest extends TestCase
     public function test_admin_can_approve_suggestion()
     {
         $user = User::factory()->create();
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $cave = Cave::factory()->create(['description' => 'Original Description']);
 
         $suggestion = SuggestedEdit::create([
@@ -88,7 +88,7 @@ class SuggestedEditTest extends TestCase
     public function test_admin_can_reject_suggestion()
     {
         $user = User::factory()->create();
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $cave = Cave::factory()->create(['description' => 'Original Description']);
 
         $suggestion = SuggestedEdit::create([
@@ -145,7 +145,7 @@ class SuggestedEditTest extends TestCase
     public function test_admin_can_approve_creation_suggestion()
     {
         $user = User::factory()->create();
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $system = \App\Models\CaveSystem::factory()->create(); // Ensure we have a system
 
         $suggestion = SuggestedEdit::create([
@@ -184,7 +184,7 @@ class SuggestedEditTest extends TestCase
 
     public function test_unapproved_user_cannot_submit_suggestion()
     {
-        $user = User::factory()->create(['is_approved' => false]);
+        $user = User::factory()->create();
 
         $response = $this->actingAs($user)
             ->postJson('/api/suggested-edits', [
@@ -198,7 +198,7 @@ class SuggestedEditTest extends TestCase
 
     public function test_user_without_club_cannot_submit_suggestion()
     {
-        $user = User::factory()->create(['is_approved' => true]);
+        $user = User::factory()->create();
         // No clubs assigned
 
         $response = $this->actingAs($user)
@@ -213,7 +213,7 @@ class SuggestedEditTest extends TestCase
 
     public function test_approved_user_in_club_can_submit_suggestion()
     {
-        $user = User::factory()->create(['is_approved' => true]);
+        $user = User::factory()->withApprovedClub()->create();
         $club = Club::factory()->create();
         $user->clubs()->attach($club, ['status' => 'approved']);
 
@@ -233,7 +233,7 @@ class SuggestedEditTest extends TestCase
     {
         Storage::fake('media');
         $user = $this->createApprovedUser();
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $cave = Cave::factory()->create();
 
         // 1. Submit suggestion with Base64 image

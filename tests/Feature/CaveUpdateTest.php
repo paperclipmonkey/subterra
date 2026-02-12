@@ -17,7 +17,7 @@ class CaveUpdateTest extends TestCase
         \App\Models\Tag::create(['tag' => 'Previously Done', 'category' => 'Status', 'assignable' => false, 'type' => 'trip']);
         \App\Models\Tag::create(['tag' => 'Not Done Yet', 'category' => 'Status', 'assignable' => false, 'type' => 'trip']);
         
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create();
 
         $response = $this->actingAs($user)

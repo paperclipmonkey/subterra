@@ -75,7 +75,7 @@ class MagicLinkAuthenticationTest extends TestCase
             'email' => 'newuser@example.com',
             'name' => null,
             'is_active' => true, // Changed to true as new users are now active
-            'is_approved' => false
+            'is_active' => true, // Changed to true as new users are now active
         ]);
         
         $user = User::where('email', 'newuser@example.com')->first();

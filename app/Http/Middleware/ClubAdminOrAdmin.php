@@ -14,7 +14,7 @@ class ClubAdminOrAdmin
         {
             return response()->json(['error' => 'User is not authenticated to perform that action'], 401);
         }
-        if($request->user()->is_admin)
+        if($request->user()->hasRole('platform_admin'))
         {
             return $next($request);
         }

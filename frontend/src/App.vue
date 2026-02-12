@@ -27,7 +27,7 @@
       <v-icon class="ml-2">mdi-chevron-right</v-icon>
     </v-system-bar>
  
-    <v-system-bar v-else-if="appStore.user.id && !appStore.user.is_approved" color="warning"
+    <v-system-bar v-else-if="appStore.user.id && !appStore.canSuggest" color="warning"
       class="text-white px-4" height="40" style="z-index: 9999;" window>
       <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? 'mdi-account-clock' : 'mdi-account-plus' }}</v-icon>
       <span class="font-weight-bold">{{ hasPendingApprovals ? 'PENDING APPROVAL' : 'ACTION REQUIRED' }}</span>

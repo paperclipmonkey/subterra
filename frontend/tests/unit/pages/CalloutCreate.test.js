@@ -11,7 +11,7 @@ vi.mock('vue-router', () => ({
 // Mock Axios
 const mockCaves = [{ id: 1, name: 'Alum Pot', location_name: 'Yorkshire', system: { id: 10 } }]
 const mockUsers = [{ id: 2, name: 'Alice' }, { id: 3, name: 'Bob' }]
-const mockUserMe = { id: 1, name: 'Test User', email: 'test@example.com', is_approved: true }
+const mockUserMe = { id: 1, name: 'Test User', email: 'test@example.com', clubs: [{ status: 'approved' }] }
 
 vi.mock('axios', () => {
     const mock = {

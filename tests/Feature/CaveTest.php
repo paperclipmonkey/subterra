@@ -23,7 +23,7 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_the_list_of_caves()
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->withApprovedClub()->create());
         Cave::factory()->count(3)->create();
 
         $response = $this->get('/api/caves');
@@ -35,7 +35,7 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_a_single_cave_by_slug()
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->withApprovedClub()->create());
 
         $cave = Cave::factory()->create([
             'slug' => 'test-cave'
@@ -50,7 +50,7 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_view_a_cave_by_slug_with_non_numeric_slug()
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->withApprovedClub()->create());
         
         $cave = Cave::factory()->create([
             'slug' => 'qui-a-repellat-numquam'
@@ -65,7 +65,7 @@ class CaveTest extends TestCase
 
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_updates_a_cave_and_syncs_tags() {
-        $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
+        $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         $cave = Cave::factory()->create();
         $tag = Tag::factory()->create(['category' => 'test', 'tag' => 'tag', 'assignable' => true]);
 
@@ -89,7 +89,7 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_updates_hero_and_entrance_images()
     {
-        $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
+        $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         Storage::fake('media');
         $cave = Cave::factory()->create();
 
@@ -115,7 +115,7 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_removes_images_when_null_is_passed()
     {
-        $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
+        $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         Storage::fake('media');
         $cave = Cave::factory()->create([
             'hero_image' => 'caves/old_hero.webp',
@@ -139,7 +139,7 @@ class CaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_preserves_images_when_string_url_is_passed()
     {
-        $this->actingAs(\App\Models\User::factory()->create(['is_admin' => true]));
+        $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         $cave = Cave::factory()->create([
             'hero_image' => 'caves/existing_hero.webp',
             'entrance_image' => 'caves/existing_entrance.webp',

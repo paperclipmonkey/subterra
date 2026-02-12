@@ -20,7 +20,7 @@ class CaveAltitudeTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_update_cave_altitude()
     {
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create([
             'location_alt' => 100.5
         ]);
@@ -42,7 +42,7 @@ class CaveAltitudeTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_set_altitude_to_null()
     {
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create([
             'location_alt' => 100.5
         ]);
@@ -64,7 +64,7 @@ class CaveAltitudeTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_validates_altitude_is_numeric()
     {
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create();
 
         $response = $this->actingAs($user)
@@ -80,7 +80,7 @@ class CaveAltitudeTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_create_cave_with_altitude()
     {
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->dataAdmin()->create();
         
         // Mocking required fields for creation
         $caveData = Cave::factory()->make([

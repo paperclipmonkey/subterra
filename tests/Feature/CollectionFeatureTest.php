@@ -97,7 +97,7 @@ class CollectionFeatureTest extends TestCase
     
     public function test_admin_can_manage_collections()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $user = User::factory()->create();
         $collection = Collection::factory()->create(['user_id' => $user->id]);
         
@@ -130,7 +130,7 @@ class CollectionFeatureTest extends TestCase
 
     public function test_update_preserves_cave_notes()
     {
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->admin()->create();
         $collection = Collection::factory()->create(['user_id' => $user->id]);
         $cave = Cave::factory()->create();
         $collection->caves()->attach($cave, ['description' => 'Original Note', 'sort_order' => 0]);

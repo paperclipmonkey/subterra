@@ -17,7 +17,7 @@ class OnCallShiftConstraintTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['is_admin' => true, 'is_approved' => true]);
+        $this->admin = User::factory()->dutyOfficer()->create();
     }
 
     public function test_cannot_delete_shift_covering_active_callout()

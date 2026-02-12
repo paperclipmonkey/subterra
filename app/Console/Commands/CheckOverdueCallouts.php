@@ -112,8 +112,10 @@ class CheckOverdueCallouts extends Command
         if ($shift) {
             $notifiables->push($shift->user);
         } else {
-            // Fallback: Notify all admins if no shift coverage
-            $notifiables = User::where('is_admin', true)->where('is_active', true)->get();
+            // Fallback: Notify all duty officers and super admins if no shift coverage
+            $notifiables = User::whereHas('roles', function($query) {
+                $query->whereIn('slug', ['duty_officer', 'platform_admin']);
+            })->where('is_active', true)->get();
         }
 
         if ($notifiables->isNotEmpty()) {
@@ -135,8 +137,10 @@ class CheckOverdueCallouts extends Command
         DB::transaction(function () use ($incident) {
             $this->info("Escalating Incident ID: {$incident->id}");
 
-            // 1. Notify ALL Duty Officers (Admins)
-            $admins = User::where('is_admin', true)->where('is_active', true)->get();
+            // 1. Notify ALL Duty Officers and Super Admins
+            $admins = User::whereHas('roles', function($query) {
+                $query->whereIn('slug', ['duty_officer', 'platform_admin']);
+            })->where('is_active', true)->get();
             
             if ($admins->isNotEmpty()) {
                 Notification::send($admins, new \App\Notifications\UnmanagedIncidentNotification($incident));
@@ -174,29 +178,31 @@ class CheckOverdueCallouts extends Command
 
             $notifiables = collect();
             if ($shift) {
+                // If we have a shift coverage, ONLY notify the on-call officer
                 $notifiables->push($shift->user);
-            }
-            
-            $admins = User::where('is_admin', true)->where('is_active', true)->get();
-            
-            if ($admins->isEmpty()) {
-                Log::emergency("Callout triggered (ID: {$callout->id}) but NO ADMINS FOUND to notify!");
+                $this->info("Notifying On-Call DO: {$shift->user->name}");
             } else {
-                Notification::send($admins, new OverdueCalloutNotification($callout));
-                $this->info("Sent notifications to " . $admins->count() . " admins.");
+                // Fallback: Notify all duty officers and super admins if NO shift coverage
+                $notifiables = User::whereHas('roles', function($query) {
+                    $query->whereIn('slug', ['duty_officer', 'platform_admin']);
+                })->where('is_active', true)->get();
+                
+                if ($notifiables->isEmpty()) {
+                    Log::emergency("Callout triggered (ID: {$callout->id}) but NO ADMINS FOUND to notify!");
+                } else {
+                    $this->info("No On-Call DO found. Notifying " . $notifiables->count() . " admins as fallback.");
+                }
+            }
+
+            if ($notifiables->isNotEmpty()) {
+                Notification::send($notifiables, new OverdueCalloutNotification($callout));
             }
 
             // 3b. Notify Participants
             $participants = $callout->participants;
             if ($participants->isNotEmpty()) {
-                 Notification::send($participants, new \App\Notifications\CalloutImminentContactNotification($callout)); // Re-using "Contact" notification or create a specific "Overdue" one for participants?
-                 // Requirement: "Once the callout is due send a similar message informing the participants... they're overdue."
-                 // Using a new notification might be better, but "CalloutImminentContactNotification" has valid messaging.
-                 // Actually, let's use OverdueCalloutNotification but ensuring the message is right for them?
-                 // OverdueCalloutNotification says "Check Dashboard". Participants might not have dashboard access.
-                 // Let's reuse CalloutImminentContactNotification but maybe modify it to be more urgent?
-                 // For now, I will use CalloutImminentContactNotification as it has the "Reply OUT SAFE" instruction context.
-                 Notification::send($participants, new \App\Notifications\CalloutImminentContactNotification($callout));
+                 // Use specific OVERDUE notification for participants
+                 Notification::send($participants, new \App\Notifications\CalloutOverdueContactNotification($callout));
             }
 
             // 4. Send Slack Alert

@@ -22,7 +22,7 @@
                 prepend-icon="mdi-plus"
             >
                 <v-tooltip activator="parent" location="top">
-                    {{ !appStore.user.is_approved ? 'Your account must be approved' : 'You must join a club' }} to contribute
+                    {{ !appStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
                 </v-tooltip>
                 Suggest New Route
             </v-btn>

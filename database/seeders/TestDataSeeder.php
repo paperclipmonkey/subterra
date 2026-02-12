@@ -16,7 +16,7 @@ class TestDataSeeder extends Seeder
         // Create or find a test user
         $user = User::firstOrCreate(
             ['email' => 'testuser@example.com'],
-            ['name' => 'Test User', 'is_active' => true, 'is_approved' => true]
+            ['name' => 'Test User', 'is_active' => true]
         );
 
         // Ensure user is in a club

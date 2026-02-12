@@ -17,7 +17,7 @@ class OnCallShiftOverlapTest extends TestCase
         parent::setUp();
         
         // Setup admin user
-        $this->user = User::factory()->create(['is_admin' => true]);
+        $this->user = User::factory()->dutyOfficer()->create();
         $this->actingAs($this->user);
     }
 
@@ -107,7 +107,7 @@ class OnCallShiftOverlapTest extends TestCase
         ]);
 
         // User B tries shift 11:00 - 13:00 (Overlap start)
-        $userB = User::factory()->create();
+        $userB = User::factory()->dutyOfficer()->create();
         
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $userB->id,
@@ -129,7 +129,7 @@ class OnCallShiftOverlapTest extends TestCase
         ]);
 
         // User B tries shift 12:00 - 14:00 (Abutting)
-        $userB = User::factory()->create();
+        $userB = User::factory()->dutyOfficer()->create();
         
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $userB->id,

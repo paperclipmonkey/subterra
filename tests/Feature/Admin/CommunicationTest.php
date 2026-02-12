@@ -17,7 +17,7 @@ class CommunicationTest extends TestCase
     {
         Mail::fake();
 
-        $admin = User::factory()->create(['is_admin' => true, 'email_platform_news' => true]);
+        $admin = User::factory()->admin()->create(['email_platform_news' => true]);
         
         $response = $this->actingAs($admin)
             ->postJson('/api/admin/communications/send', [
@@ -37,7 +37,7 @@ class CommunicationTest extends TestCase
     {
         Mail::fake();
 
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         
         $subscribedUsers = User::factory()->count(3)->create(['email_platform_news' => true]);
         $unsubscribedUsers = User::factory()->count(2)->create(['email_platform_news' => false]);
@@ -95,8 +95,7 @@ class CommunicationTest extends TestCase
     {
         Mail::fake();
 
-        $user = User::factory()->create([
-            'is_admin' => true,
+        $user = User::factory()->admin()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
             'email_platform_news' => true

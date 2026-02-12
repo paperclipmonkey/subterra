@@ -25,11 +25,54 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'is_active' => true,
-            'is_approved' => true,
             'email_trophies' => true,
             'email_tagged' => true,
             'email_platform_news' => true,
             'visibility_addable' => 'public',
         ];
+    }
+
+    /**
+     * State: user with platform_admin role.
+     */
+    public function admin(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('platform_admin');
+        });
+    }
+
+    /**
+     * State: user with duty_officer role.
+     */
+    public function dutyOfficer(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('duty_officer');
+        });
+    }
+
+    /**
+     * State: user with data_admin role.
+     */
+    public function dataAdmin(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('data_admin');
+        });
+    }
+
+    /**
+     * State: user with an approved club membership.
+     */
+    public function withApprovedClub(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $club = \App\Models\Club::firstOrCreate(
+                ['slug' => 'test-club'],
+                ['name' => 'Test Club', 'is_active' => true]
+            );
+            $user->clubs()->syncWithoutDetaching([$club->id => ['status' => 'approved']]);
+        });
     }
 }

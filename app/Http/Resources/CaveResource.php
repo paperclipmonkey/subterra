@@ -76,10 +76,10 @@ class CaveResource extends JsonResource
             'caving_region' => $this->caving_region,
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,
-            'location_lat' => $request->user()?->is_approved ? $this->location_lat : null,
-            'location_lng' => $request->user()?->is_approved ? $this->location_lng : null,
-            'location_alt' => $request->user()?->is_approved ? $this->location_alt : null,
-            'access_info' => $request->user()?->is_approved ? ($this->access_info ?? '') : null,
+            'location_lat' => $request->user()?->hasApprovedClub() ? $this->location_lat : null,
+            'location_lng' => $request->user()?->hasApprovedClub() ? $this->location_lng : null,
+            'location_alt' => $request->user()?->hasApprovedClub() ? $this->location_alt : null,
+            'access_info' => $request->user()?->hasApprovedClub() ? ($this->access_info ?? '') : null,
             'system' => [
                 'id' => $this->system->id,
                 'name' => $this->system->name,
@@ -90,8 +90,8 @@ class CaveResource extends JsonResource
                 'vertical_range' => $this->system->vertical_range,
                 'caves' => $this->system->caves,
                 'tags' => TagResource::collection($this->system->tags->merge($systemLengthTags)),
-                'references' => $request->user()?->is_approved ? $this->system->references : [],
-                'files' => $request->user()?->is_approved && $this->system->files ? $this->system->files->map(function ($file) {
+                'references' => $request->user()?->hasApprovedClub() ? $this->system->references : [],
+                'files' => $request->user()?->hasApprovedClub() && $this->system->files ? $this->system->files->map(function ($file) {
                     return [
                         'id' => $file->id,
                         'url' => Storage::disk('media')->url('cave_system_files/' . $file->cave_system_id . '/' . $file->filename),

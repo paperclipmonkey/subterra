@@ -54,7 +54,7 @@ class UserSignupNotificationTest extends TestCase
         Mail::fake();
         
         // Create an admin to receive the email
-        User::factory()->create(['is_admin' => true, 'email' => 'admin@subterra.world']);
+        User::factory()->admin()->create(['email' => 'admin@subterra.world']);
 
         // Create an active user (simulating magic link signup)
         $user = User::withoutGlobalScopes()->forceCreate([
@@ -82,7 +82,7 @@ class UserSignupNotificationTest extends TestCase
 
     public function test_admin_index_filters_inactive_users()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $this->actingAs($admin);
 
         $activeUser = User::factory()->create(['is_active' => true, 'name' => 'Active User']);
@@ -123,7 +123,7 @@ class UserSignupNotificationTest extends TestCase
         event(new UserCreated($user));
 
         // Create an admin to receive the email
-        User::factory()->create(['is_admin' => true, 'email' => 'admin@subterra.world']);
+        User::factory()->admin()->create(['email' => 'admin@subterra.world']);
 
         // Check listener handles it because is_active is now true
         $emailListener = new SendNewUserSignupEmailToAdmins();

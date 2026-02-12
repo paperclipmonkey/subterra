@@ -21,16 +21,16 @@ class CavePolicy
 
     public function create(User $user): bool
     {
-        return $user->is_admin;
+        return $user->hasRole('data_admin');
     }
 
     public function update(User $user, Cave $cave): bool
     {
-        return $user->is_admin;
+        return $user->hasRole('data_admin');
     }
 
     public function delete(User $user, Cave $cave): bool
     {
-        return $user->is_admin;
+        return $user->hasRole('data_admin');
     }
 }

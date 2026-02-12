@@ -12,21 +12,32 @@
       "minLength": 1
     },
     "description": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "system": {
       "$ref": "cave-system-summary.json"
     },
     "entrance": {
       "anyOf": [
-        {"$ref": "cave-summary.json"},
-        {"type": "null"}
+        {
+          "$ref": "cave-summary.json"
+        },
+        {
+          "type": "null"
+        }
       ]
     },
     "exit": {
       "anyOf": [
-        {"$ref": "cave-summary.json"},
-        {"type": "null"}
+        {
+          "$ref": "cave-summary.json"
+        },
+        {
+          "type": "null"
+        }
       ]
     },
     "start_time": {
@@ -34,7 +45,10 @@
       "format": "date-time"
     },
     "end_time": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "format": "date-time"
     },
     "participants": {
@@ -48,13 +62,46 @@
       "items": {
         "$ref": "media.json"
       }
-    }
-    ,
+    },
     "visibility": {
       "type": "string",
-      "enum": ["public", "private", "club"]
+      "enum": [
+        "public",
+        "private",
+        "club"
+      ]
+    },
+    "duration": {
+      "type": [
+        "integer",
+        "number",
+        "null"
+      ]
+    },
+    "entrance_hero_image": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "entrance_entrance_image": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
-  "required": ["id", "name", "description", "system", "entrance", "exit", "start_time", "participants", "media", "visibility"],
+  "required": [
+    "id",
+    "name",
+    "description",
+    "system",
+    "entrance",
+    "exit",
+    "start_time",
+    "participants",
+    "media",
+    "visibility"
+  ],
   "additionalProperties": false
 }

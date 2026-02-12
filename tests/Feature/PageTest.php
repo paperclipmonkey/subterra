@@ -14,7 +14,7 @@ class PageTest extends TestCase
 
     public function test_admin_can_view_pages_index()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         Page::factory()->create(['title' => 'Page 1']);
         Page::factory()->create(['title' => 'Page 2']);
 
@@ -27,7 +27,7 @@ class PageTest extends TestCase
 
     public function test_admin_can_create_page()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
 
         $payload = [
             'title' => 'Test Page',
@@ -46,7 +46,7 @@ class PageTest extends TestCase
 
     public function test_admin_can_update_page()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $page = Page::factory()->create();
 
         $payload = [
@@ -66,7 +66,7 @@ class PageTest extends TestCase
 
     public function test_admin_can_delete_page()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $page = Page::factory()->create();
 
         $response = $this->actingAs($admin)
@@ -79,7 +79,7 @@ class PageTest extends TestCase
 
     public function test_non_admin_cannot_manage_pages()
     {
-        $user = User::factory()->create(['is_admin' => false]);
+        $user = User::factory()->create();
         
         $response = $this->actingAs($user)
             ->getJson('/api/admin/pages');

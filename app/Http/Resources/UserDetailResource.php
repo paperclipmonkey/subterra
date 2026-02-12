@@ -41,7 +41,6 @@ class UserDetailResource extends JsonResource
                 ];
             }),
             'is_admin' => $this->is_admin,
-            'is_approved' => $this->is_approved,
             'stats'=> [
                 'trips' => $this->trips->count(),
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),

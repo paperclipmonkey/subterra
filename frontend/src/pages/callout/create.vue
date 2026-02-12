@@ -415,8 +415,8 @@ export default {
         isApproved() {
             // Check store first then local user object
             const appStore = useAppStore();
-            if (appStore.user && appStore.user.is_approved) return true;
-            if (this.currentUser && this.currentUser.is_approved) return true;
+            if (appStore.canSuggest) return true;
+            if (this.currentUser && this.currentUser.clubs && this.currentUser.clubs.some(c => c.status === 'approved')) return true;
             return false;
         }
     },

@@ -70,7 +70,7 @@
 
             <div class="pa-2 d-flex justify-end">
               <v-btn v-if="!cave.previously_done" variant="text" color="primary" size="small"
-                @click.stop="showConfirmModal = true; caveToMark = cave">
+                @click.stop.prevent="showConfirmModal = true; caveToMark = cave">
                 Mark as Done
               </v-btn>
               <v-btn variant="text" size="small" color="grey-darken-1" :to="'/caves/' + cave.slug">

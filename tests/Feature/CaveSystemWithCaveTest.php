@@ -13,7 +13,7 @@ class CaveSystemWithCaveTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::factory()->create(['is_admin' => true]);
+        $this->user = User::factory()->admin()->create();
         $this->actingAs($this->user);
         $this->seed(\Database\Seeders\TagSeeder::class);
     }
@@ -77,7 +77,7 @@ class CaveSystemWithCaveTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_prevents_non_admin_users_from_creating_a_cave_system_and_cave()
     {
-        $this->user = User::factory()->create(['is_admin' => false]);
+        $this->user = User::factory()->create();
         $this->actingAs($this->user);
 
         $response = $this->postJson('/api/cave_systems_with_cave', []);

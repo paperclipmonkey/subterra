@@ -13,7 +13,7 @@ class PageSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::first() ?? User::factory()->create(['is_admin' => true]);
+        $admin = User::first() ?? User::factory()->admin()->create();
 
         $tosContent = <<<EOT
 # Terms of Service

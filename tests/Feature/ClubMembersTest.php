@@ -23,7 +23,7 @@ class ClubMembersTest extends TestCase
         parent::setUp();
 
         $this->club = Club::factory()->create();
-        $this->adminUser = User::factory()->create(['is_admin' => true]);
+        $this->adminUser = User::factory()->admin()->create();
         $this->approvedMember1 = User::factory()->create();
         $this->approvedMember2 = User::factory()->create();
         $this->pendingMember = User::factory()->create();

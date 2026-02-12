@@ -41,10 +41,10 @@ class CalloutImminentNotification extends Notification implements ShouldQueue
         $url = url('/admin/callouts/' . $this->callout->id); // Link to callout admin view?
 
         return (new MailMessage)
-                    ->subject('ALERT: Incoming Callout Due Soon - ' . $this->callout->cave->name)
+                    ->subject('ALERT: Incoming Callout Due Soon - ' . ($this->callout->cave?->name ?? 'Unknown Location'))
                     ->greeting('Heads Up')
                     ->line('A callout is due in approximately 15 minutes.')
-                    ->line('**Cave:** ' . $this->callout->cave->name)
+                    ->line('**Cave:** ' . ($this->callout->cave?->name ?? 'Unknown Location'))
                     ->line('**Due Time:** ' . $this->callout->callout_time->format('H:i'))
                     ->line('Please stand by and ensure you are ready to respond if it becomes overdue.')
                     ->action('View Callout', $url);
@@ -55,6 +55,6 @@ class CalloutImminentNotification extends Notification implements ShouldQueue
      */
     public function toClickSend(object $notifiable): string
     {
-        return "ALERT: Callout at {$this->callout->cave->name} due in 15 mins ({$this->callout->callout_time->format('H:i')}). Please stand by. Subterra.";
+        return "ALERT: Callout at " . ($this->callout->cave?->name ?? 'Unknown Location') . " due in 15 mins ({$this->callout->callout_time->format('H:i')}). Please stand by. Subterra.";
     }
 }

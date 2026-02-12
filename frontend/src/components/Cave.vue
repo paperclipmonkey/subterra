@@ -26,7 +26,7 @@
             size="small"
         >
             <v-tooltip activator="parent" location="top">
-                {{ !appStore.user.is_approved ? 'Your account must be approved' : 'You must join a club' }} to suggest edits
+                {{ !appStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to suggest edits
             </v-tooltip>
             Suggest Edit
         </v-btn>
@@ -91,7 +91,7 @@
               <v-divider class="mb-6"></v-divider>
 
               <div class="text-h6 mb-3 font-weight-bold">Access Information</div>
-              <div v-if="!appStore.user.is_approved">
+              <div v-if="!appStore.canSuggest">
                 <v-alert icon="mdi-lock" border="start" border-color="grey" elevation="0" color="grey-lighten-3"
                   class="mb-4">
                   <v-icon color="grey-darken-2" size="40" class="mr-4">mdi-lock</v-icon>
@@ -162,7 +162,7 @@
             <!-- Map Tab (Mobile only) -->
             <v-window-item v-if="smAndDown" value="map">
                <v-card class="mb-4 rounded-lg" elevation="0" variant="flat">
-                <template v-if="appStore.user.is_approved">
+                <template v-if="appStore.canSuggest">
                     <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px">
                     <mgl-marker :coordinates="lnglat" color="#cc0000" />
                     <mgl-navigation-control />
@@ -180,11 +180,11 @@
                     <div class="d-flex justify-space-between align-center">
                     <div>
                         <div class="text-caption text-grey">Coordinates</div>
-                        <div v-if="appStore.user.is_approved && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                        <div v-if="appStore.canSuggest && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
                         cave.location_lng.toFixed(5) }}</div>
                         <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
                     </div>
-                    <div class="d-flex" v-if="appStore.user.is_approved">
+                    <div class="d-flex" v-if="appStore.canSuggest">
                         <v-tooltip text="Copy Coordinates" location="top">
                         <template v-slot:activator="{ props }">
                             <v-btn icon="mdi-content-copy" size="small" variant="text" v-bind="props"
@@ -237,7 +237,7 @@
                 <v-divider class="mb-4"></v-divider>
 
                 <!-- References -->
-                <div class="mb-6" v-if="appStore.user.is_approved && cave.system.references">
+                <div class="mb-6" v-if="appStore.canSuggest && cave.system.references">
                   <div class="text-subtitle-1 font-weight-bold mb-2">References</div>
                   <v-card variant="tonal" class="pa-4 bg-grey-lighten-5">
                     <vue-markdown :source="cave.system.references" class="text-body-2" />
@@ -245,7 +245,7 @@
                 </div>
 
                 <!-- Files -->
-                <div class="mb-6" v-if="appStore.user.is_approved && cave.system.files && cave.system.files.length > 0">
+                <div class="mb-6" v-if="appStore.canSuggest && cave.system.files && cave.system.files.length > 0">
                   <div class="text-subtitle-1 font-weight-bold mb-2">Surveys & Documents</div>
                   <v-row dense>
                     <v-col v-for="file in cave.system.files" :key="file.id" cols="12" sm="6">
@@ -266,7 +266,7 @@
                 </div>
 
                 <!-- Unapproved User Placeholder -->
-                <div v-if="!appStore.user.is_approved" class="text-center pa-8 bg-grey-lighten-5 rounded-lg border border-dashed">
+                <div v-if="!appStore.canSuggest" class="text-center pa-8 bg-grey-lighten-5 rounded-lg border border-dashed">
                     <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-shield-lock-outline</v-icon>
                     <div class="text-body-1 font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
                     <div class="text-caption text-grey-darken-1 mb-4">
@@ -390,7 +390,7 @@
       <v-col cols="12" md="4" v-if="!smAndDown">
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg" elevation="1">
-          <template v-if="appStore.user.is_approved">
+          <template v-if="appStore.canSuggest">
             <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
               <mgl-marker :coordinates="lnglat" color="#cc0000" />
               <mgl-navigation-control />
@@ -408,11 +408,11 @@
             <div class="d-flex justify-space-between align-center">
               <div>
                 <div class="text-caption text-grey">Coordinates</div>
-                <div v-if="appStore.user.is_approved && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                <div v-if="appStore.canSuggest && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
                   cave.location_lng.toFixed(5) }}</div>
                 <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
               </div>
-              <div class="d-flex" v-if="appStore.user.is_approved">
+              <div class="d-flex" v-if="appStore.canSuggest">
                 <v-tooltip text="Copy Coordinates" location="top">
                   <template v-slot:activator="{ props }">
                     <v-btn icon="mdi-content-copy" size="small" variant="text" v-bind="props"

@@ -10,12 +10,12 @@ class UserPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->approved;
+        return true;
     }
 
     public function view(User $user, User $model): bool
     {
-        return $user->approved;
+        return true;
     }
 
     public function create(User $user): bool
@@ -34,11 +34,6 @@ class UserPolicy
     }
 
     public function toggleAdmin(User $user): bool
-    {
-        return $user->is_admin;
-    }
-
-    public function toggleApproval(User $user): bool
     {
         return $user->is_admin;
     }

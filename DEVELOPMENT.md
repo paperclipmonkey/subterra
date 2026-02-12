@@ -78,9 +78,9 @@ After setting up the application:
    
    # Make yourself an admin and approve your account
    $user = \App\Models\User::where('email','<YOUR_EMAIL_HERE>')->first(); 
-   $user->is_admin = true;
-   $user->is_approved = true;
-   $user->save();
+   $user = User::where('email', 'your@email.com')->first();
+   $user->assignRole('platform_admin');
+   $user->assignRole('data_admin');
    
    // Approve your club membership
    $user->clubs->first()->pivot->status = 'approved'; 
@@ -197,15 +197,38 @@ class audits {
    timestamp(0) updated_at
    bigint id
 }
-class cache {
-   text value
-   integer expiration
-   varchar(255) key
+class callout_participants {
+   bigint callout_id
+   varchar(255) name
+   varchar(255) phone
+   varchar(255) email
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
 }
-class cache_locks {
-   varchar(255) owner
-   integer expiration
-   varchar(255) key
+class callouts {
+   bigint user_id
+   bigint trip_id
+   bigint cave_id
+   bigint exit_cave_id
+   dateTime callout_time
+   text description
+   text trip_plan
+   varchar(255) car_details
+   text team_details
+   varchar(255) emergency_contact_name
+   varchar(255) emergency_contact_phone
+   enum status
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
+}
+class cave_collection {
+   bigint collection_id
+   bigint cave_id
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
 }
 class cave_system_files {
    bigint cave_system_id
@@ -244,7 +267,7 @@ class caves {
    varchar(255) location_country
    double precision location_lat
    double precision location_lng
-   double precision location_alt  /* Altitude in meters */
+   double precision location_alt
    text access_info
    varchar(255) hero_image
    varchar(255) entrance_image
@@ -270,13 +293,44 @@ class clubs {
    timestamp(0) updated_at
    bigint id
 }
-class failed_jobs {
-   varchar(255) uuid
-   text connection
-   text queue
-   text payload
-   text exception
-   timestamp(0) failed_at
+class collections {
+   bigint user_id
+   varchar(255) name
+   text description
+   varchar(255) photo_path
+   boolean is_official
+   varchar(255) slug
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
+}
+class huts {
+   bigint club_id
+   varchar(255) name
+   text description
+   float location_lat
+   float location_lng
+   json amenities
+   varchar(255) external_url
+   text booking_info
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
+}
+class incident_notes {
+   bigint incident_id
+   bigint user_id
+   text content
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
+}
+class incidents {
+   bigint callout_id
+   enum status
+   dateTime resolved_at
+   timestamp(0) created_at
+   timestamp(0) updated_at
    bigint id
 }
 class job_batches {
@@ -316,10 +370,40 @@ class medals {
    timestamp(0) updated_at
    bigint id
 }
-class migrations {
-   varchar(255) migration
-   integer batch
-   integer id
+class on_call_shifts {
+   bigint user_id
+   dateTime start_at
+   dateTime end_at
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
+}
+class role_user {
+   bigint role_id
+   bigint user_id
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
+}
+class roles {
+   varchar(255) name
+   varchar(255) slug
+   text description
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
+}
+class suggested_edits {
+   bigint user_id
+   varchar(255) suggestable_type
+   bigint suggestable_id
+   json original_data
+   json suggested_data
+   varchar(255) status
+   text admin_comment
+   timestamp(0) created_at
+   timestamp(0) updated_at
+   bigint id
 }
 class tag_groups {
    timestamp(0) created_at
@@ -345,6 +429,7 @@ class tags {
 class trip_media {
    bigint trip_id
    varchar(255) filename
+   varchar(255) title
    bigint id
 }
 class trip_user {
@@ -365,12 +450,14 @@ class users {
    varchar(255) name
    varchar(255) email
    varchar(255) photo
+   varchar(255) phone
+   text bio
    boolean is_active
-   boolean is_approved
+   json preferences
+   timestamp(0) tos_agreed_at
+   timestamp(0) privacy_policy_agreed_at
    timestamp(0) created_at
    timestamp(0) updated_at
-   boolean is_admin
-   text bio
    bigint id
 }
 
@@ -393,5 +480,21 @@ trips  -->  cave_systems : cave_system_id.id
 trips  -->  caves : entrance_cave_id.id
 trips  -->  caves : exit_cave_id.id
 audits  -->  users : user_id.id
+role_user --> roles : role_id.id
+role_user --> users : user_id.id
+huts --> clubs : club_id.id
+cave_collection --> collections : collection_id.id
+cave_collection --> caves : cave_id.id
+collections --> users : user_id.id
+callouts --> users : user_id.id
+callouts --> trips : trip_id.id
+callouts --> caves : cave_id.id
+callouts --> caves : exit_cave_id.id
+callout_participants --> callouts : callout_id.id
+incidents --> callouts : callout_id.id
+incident_notes --> incidents : incident_id.id
+incident_notes --> users : user_id.id
+on_call_shifts --> users : user_id.id
+suggested_edits --> users : user_id.id
 
 ```

@@ -13,8 +13,7 @@ class DutyOfficerTest extends TestCase
 
     public function test_it_returns_the_correct_duty_officer_when_one_is_scheduled()
     {
-        $user = User::factory()->create([
-            'is_admin' => true,
+        $user = User::factory()->admin()->create([
             'name' => 'Scheduled Officer',
         ]);
 
@@ -25,8 +24,7 @@ class DutyOfficerTest extends TestCase
         ]);
 
         // Create another admin who is NOT on call
-        User::factory()->create([
-            'is_admin' => true,
+        User::factory()->admin()->create([
             'name' => 'Other Admin',
         ]);
 
@@ -48,7 +46,7 @@ class DutyOfficerTest extends TestCase
         // Freeze time to avoid race conditions across seconds
         $this->travelTo(now());
 
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->admin()->create();
         
         // Shift 1: Now -> +1 hour
         OnCallShift::create([
@@ -101,7 +99,7 @@ class DutyOfficerTest extends TestCase
 
     public function test_deleting_shift_returns_affected_callouts_info()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         
         // Create a shift
         $shift = OnCallShift::create([
@@ -145,7 +143,7 @@ class DutyOfficerTest extends TestCase
 
     public function test_deleting_shift_with_no_callouts_returns_empty_array()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         
         $shift = OnCallShift::create([
             'user_id' => $admin->id,

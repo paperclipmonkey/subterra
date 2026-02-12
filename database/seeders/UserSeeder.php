@@ -22,8 +22,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'is_active' => true,
-                'is_approved' => true,
-                'is_admin' => true,
+                'is_active' => true,
                 'bio' => 'Platform administrator with full access.',
                 'phone' => '+44 7700 900001',
                 'email_trophies' => true,
@@ -32,6 +31,7 @@ class UserSeeder extends Seeder
                 'visibility_addable' => 'public',
             ]
         );
+        $admin->assignRole('platform_admin');
 
         if ($activeClub) {
             $admin->clubs()->syncWithoutDetaching([
@@ -45,8 +45,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Club Admin',
                 'is_active' => true,
-                'is_approved' => true,
-                'is_admin' => false,
+                'is_active' => true,
                 'bio' => 'Administrator of the Active Club.',
                 'phone' => '+44 7700 900002',
                 'email_trophies' => true,
@@ -68,8 +67,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Regular Member',
                 'is_active' => true,
-                'is_approved' => true,
-                'is_admin' => false,
+                'is_active' => true,
                 'bio' => 'Active caver and club member.',
                 'phone' => '+44 7700 900003',
                 'email_trophies' => true,
@@ -91,8 +89,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Pending Member',
                 'is_active' => true,
-                'is_approved' => false,
-                'is_admin' => false,
+                'is_active' => true,
                 'bio' => 'New user waiting for club approval.',
                 'phone' => '+44 7700 900004',
                 'email_trophies' => true,
@@ -114,8 +111,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Private User',
                 'is_active' => true,
-                'is_approved' => true,
-                'is_admin' => false,
+                'is_active' => true,
                 'bio' => 'Prefers to keep profile private.',
                 'phone' => '+44 7700 900005',
                 'email_trophies' => false,
@@ -137,8 +133,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Multi Club Member',
                 'is_active' => true,
-                'is_approved' => true,
-                'is_admin' => false,
+                'is_active' => true,
                 'bio' => 'Member of multiple clubs.',
                 'phone' => '+44 7700 900006',
                 'email_trophies' => true,
@@ -166,8 +161,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Inactive User',
                 'is_active' => false,
-                'is_approved' => true,
-                'is_admin' => false,
+                'is_active' => false,
                 'bio' => 'This account has been deactivated.',
                 'phone' => '+44 7700 900007',
                 'email_trophies' => false,
@@ -189,8 +183,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'No Club Member',
                 'is_active' => true,
-                'is_approved' => true,
-                'is_admin' => false,
+                'is_active' => true,
                 'bio' => 'User without club membership.',
                 'phone' => '+44 7700 900008',
                 'email_trophies' => true,

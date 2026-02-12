@@ -14,7 +14,7 @@ class SuggestedEditSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('is_admin', false)->first() ?: User::factory()->create();
+        $user = User::factory()->create();
         $cave = Cave::first();
         $system = CaveSystem::first();
         $route = CavingRoute::first();

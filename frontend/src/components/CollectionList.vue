@@ -19,7 +19,7 @@
         class="mr-2"
       >
         <v-tooltip activator="parent" location="top">
-            {{ !userStore.user.is_approved ? 'Your account must be approved' : 'You must join a club' }} to contribute
+            {{ !userStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
         </v-tooltip>
         Suggest New
       </v-btn>

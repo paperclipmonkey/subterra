@@ -296,7 +296,7 @@ class UserTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_delete_any_user_account()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $user = User::factory()->create();
         $this->actingAs($admin, 'sanctum');
         $response = $this->deleteJson("/api/users/{$user->id}");
@@ -394,7 +394,7 @@ class UserTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function admin_deletion_clears_incident_controller_role()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $callout = \App\Models\Callout::factory()->create();
         $incident = \App\Models\Incident::factory()->create([
             'callout_id' => $callout->id,
@@ -417,7 +417,7 @@ class UserTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_includes_on_call_information_in_user_resource()
     {
-        $user = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->admin()->create();
         
         // 1. Create an on-call shift for this user
         \App\Models\OnCallShift::create([

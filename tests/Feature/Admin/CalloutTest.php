@@ -14,7 +14,7 @@ class CalloutTest extends TestCase
 
     public function test_admin_can_view_live_operations_dashboard()
     {
-        $admin = User::factory()->create(['is_admin' => true, 'is_approved' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         
         // Create callouts with different times
         $c1 = Callout::factory()->create([
@@ -45,7 +45,7 @@ class CalloutTest extends TestCase
 
     public function test_non_admin_cannot_view_live_operations()
     {
-        $user = User::factory()->create(['is_admin' => false]);
+        $user = User::factory()->create();
         
         $response = $this->actingAs($user)
             ->getJson('/api/admin/callouts');

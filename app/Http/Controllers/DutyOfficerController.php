@@ -68,4 +68,16 @@ class DutyOfficerController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Get a list of potential duty officers (users with duty_officer or platform_admin role).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $officers = User::whereHas('roles', function($q) {
+            $q->whereIn('slug', ['duty_officer', 'platform_admin']);
+        })->get(['id', 'name']);
+
+        return response()->json(['data' => $officers]);
+    }
 }

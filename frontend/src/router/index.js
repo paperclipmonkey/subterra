@@ -45,7 +45,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   let user = await useAppStore().getUser()
-  // console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_approved: user?.is_approved, is_admin: user?.is_admin })
+  // console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_admin: user?.is_admin })
 
   // Exception for magic link login page and CMS pages
   if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/') || to.path === '/callout/active') {
@@ -75,7 +75,49 @@ router.beforeEach(async (to, from, next) => {
     if (!user.is_admin) {
       // Redirect non-admins away from admin pages
       // console.log('[Debug] User not admin, redirecting to /trips')
-      return next({ path: '/trips' }); // Or wherever you want to redirect them
+      return next({ path: '/trips' });
+    }
+
+    // Role-based guarding for specific sub-routes
+    const hasRole = (role) => user.roles && user.roles.some(r => r.slug === role)
+
+    // Platform Admin Routes (Exclusive)
+    if (
+      (to.path.startsWith('/admin/users') ||
+        to.path.startsWith('/admin/clubs') ||
+        to.path.startsWith('/admin/communications') ||
+        to.path.startsWith('/admin/dashboard')) &&
+      !hasRole('platform_admin')
+    ) {
+      return next({ path: '/admin' })
+    }
+
+    // Duty Officer Routes (Exclusive)
+    if (
+      (to.path.startsWith('/admin/callout') ||
+        to.path.startsWith('/admin/rota')) &&
+      !hasRole('duty_officer')
+    ) {
+      return next({ path: '/admin' })
+    }
+
+    // Data Admin Routes (Exclusive)
+    if (
+      (to.path.startsWith('/admin/catchments') ||
+        to.path.startsWith('/admin/cave-system-with-cave')) &&
+      !hasRole('data_admin')
+    ) {
+      return next({ path: '/admin' })
+    }
+
+    // Shared Routes (Platform Admin OR Data Admin)
+    if (
+      (to.path.startsWith('/admin/pages') ||
+        to.path.startsWith('/admin/suggested-edits') ||
+        to.path.startsWith('/admin/tasks')) &&
+      (!hasRole('platform_admin') && !hasRole('data_admin'))
+    ) {
+      return next({ path: '/admin' })
     }
   }
 

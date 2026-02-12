@@ -106,7 +106,7 @@ class CalloutService
                 if ($user->phone) {
                     $this->smsService->sendMessage(
                         $user->phone, 
-                        "Subterra: Callout ACTIVE for {$calloutTime->format('H:i')}. Reply SAFE to cancel."
+                        "Subterra: Callout ACTIVE for {$calloutTime->format('H:i')}. Reply OUT SAFE to cancel."
                     );
                 }
 

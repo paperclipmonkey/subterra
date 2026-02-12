@@ -13,7 +13,7 @@ class OnCallShiftFactory extends Factory
     public function definition()
     {
         return [
-            'user_id' => User::factory(),
+            'user_id' => User::factory()->dutyOfficer(),
             'start_at' => now(),
             'end_at' => now()->addHours(8),
         ];

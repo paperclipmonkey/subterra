@@ -17,7 +17,7 @@ class CaveSystemTest extends TestCase
     {
         parent::setUp();
         // Optionally, create an admin user and authenticate if needed
-        $this->user = User::factory()->create(['is_admin' => true]);
+        $this->user = User::factory()->admin()->create();
         $this->actingAs($this->user);
     }
 
@@ -62,7 +62,7 @@ class CaveSystemTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_prevents_non_admins_from_updating_a_cave_system()
     {
-        $nonAdminUser = User::factory()->create(['is_admin' => false]);
+        $nonAdminUser = User::factory()->create();
         $this->actingAs($nonAdminUser);
 
         $caveSystem = CaveSystem::factory()->create();

@@ -17,7 +17,7 @@ class IncidentUniqueTest extends TestCase
 
     public function test_incident_api_returns_region()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         
         $cave = Cave::factory()->create();
         // Manual tag creation

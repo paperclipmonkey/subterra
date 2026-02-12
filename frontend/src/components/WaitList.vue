@@ -31,8 +31,8 @@ const fetchPendingClubs = async () => {
     pendingClubs.value = (userData.clubs || []).filter(c => c.status === 'pending');
     let approvedClubs = (userData.clubs || []).filter(c => c.status === 'approved');
 
-    if (userData.is_approved) {
-      // If we've been approved, redirect to /caves
+    if (approvedClubs.length > 0) {
+      // If we have an approved club, redirect to /trips
       router.push('/trips');
     }
 

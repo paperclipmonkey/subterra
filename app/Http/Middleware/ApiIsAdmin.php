@@ -8,16 +8,22 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ApiIsAdmin
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if(! $request->user())
         {
             return response()->json(['error' => 'User is not authenticated to perform that action'], 401);
         }
-        if(! $request->user()->is_admin)
+
+        if (empty($roles)) {
+            $roles = ['platform_admin'];
+        }
+
+        if(! $request->user()->hasRole($roles))
         {
             return response()->json(['error' => 'User is not authorised to perform that action'], 403);
         }
+        
         return $next($request);
     }
 }

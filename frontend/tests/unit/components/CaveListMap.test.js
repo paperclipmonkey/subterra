@@ -61,7 +61,8 @@ describe('CaveListMap', () => {
     it('renders map for approved users', () => {
         // Mock Approved User
         mockUseAppStore.mockReturnValue({
-            user: { id: 1, is_approved: true }
+            user: { id: 1, clubs: [{ status: 'approved' }] },
+            canSuggest: true
         })
 
         const wrapper = mount(CaveListMap, {
@@ -76,7 +77,8 @@ describe('CaveListMap', () => {
     it('renders locked state for unapproved users', () => {
         // Mock Unapproved User
         mockUseAppStore.mockReturnValue({
-            user: { id: 1, is_approved: false }
+            user: { id: 1, clubs: [] },
+            canSuggest: false
         })
 
         const wrapper = mount(CaveListMap, {

@@ -116,6 +116,21 @@ describe('TripList', () => {
     expect(formattedDate).toBe('~')
   })
 
+  it('has formatDuration method that works correctly', () => {
+    const wrapper = mount(TripList, {
+      global: {
+        plugins: [createPinia()],
+        stubs: { 'v-menu': true, 'v-icon': true }
+      }
+    })
+
+    expect(wrapper.vm.formatDuration(30)).toBe('30m')
+    expect(wrapper.vm.formatDuration(60)).toBe('1h')
+    expect(wrapper.vm.formatDuration(90)).toBe('1h 30m')
+    expect(wrapper.vm.formatDuration(0)).toBe('')
+    expect(wrapper.vm.formatDuration(null)).toBe('')
+  })
+
   it('renders component without errors', () => {
     const wrapper = mount(TripList, {
       global: {
@@ -222,6 +237,42 @@ describe('TripList', () => {
 
       wrapper.vm.search = '   '
       expect(wrapper.vm.filteredTrips).toHaveLength(3)
+    })
+  })
+
+  describe('stubbed vs detailed trips', () => {
+    it('correctly identifies stubbed trips', () => {
+      const wrapper = mount(TripList, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { 'v-menu': true, 'v-icon': true }
+        }
+      })
+
+      // Add a stubbed trip to the mock data
+      const stubbedTrip = {
+        id: 4,
+        name: 'Marked as Done',
+        entrance: { name: 'Stubbed Entrance' },
+        participants: [],
+        start_time: '2024-01-20T10:00:00Z'
+      }
+
+      // We need to modify the tripStore mock or data directly if possible, 
+      // but since we mocked tripStore to return a static array, we should probably update the mock for this test
+      // However, we can also test the computed property logic by updating the store state if the component uses it reactively.
+      // But here we mocked useTripStore to return a static object.
+      // Let's rely on the fact that we can push to the array if it's the same reference, or re-mount with different mock if needed.
+      // Actually, since `filteredTrips` depends on `tripStore.trips`, and `tripStore` is mocked globally...
+
+      // Let's just test the computed logic with a new local mount if we could, 
+      // but with the current setup, let's look at `wrapper.vm.tripStore.trips`.
+
+      wrapper.vm.tripStore.trips.push(stubbedTrip)
+
+      expect(wrapper.vm.stubbedFilteredTrips).toHaveLength(1)
+      expect(wrapper.vm.stubbedFilteredTrips[0].id).toBe(4)
+      expect(wrapper.vm.detailedFilteredTrips).toHaveLength(3) // Original 3 are detailed
     })
   })
 })

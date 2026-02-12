@@ -24,7 +24,7 @@ class ClubActivityHeatmapTest extends TestCase
         parent::setUp();
 
         $this->club = Club::factory()->create();
-        $this->adminUser = User::factory()->create(['is_admin' => true]);
+        $this->adminUser = User::factory()->admin()->create();
         $this->approvedMember = User::factory()->create();
         $this->pendingMember = User::factory()->create();
         $this->nonMember = User::factory()->create();

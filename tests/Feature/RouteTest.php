@@ -42,7 +42,7 @@ class RouteTest extends TestCase
 
     public function test_admin_can_create_route()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
         $entrance = Cave::factory()->create(['cave_system_id' => $system->id]);
 
@@ -71,7 +71,7 @@ class RouteTest extends TestCase
 
     public function test_admin_can_update_route()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $route = Route::factory()->create();
 
         $data = [
@@ -87,7 +87,7 @@ class RouteTest extends TestCase
 
     public function test_admin_can_delete_route()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $route = Route::factory()->create();
 
         $response = $this->actingAs($admin)->deleteJson("/api/routes/{$route->id}");
@@ -98,7 +98,7 @@ class RouteTest extends TestCase
 
     public function test_non_admin_cannot_create_route()
     {
-        $user = User::factory()->create(['is_admin' => false]);
+        $user = User::factory()->create();
         $system = CaveSystem::factory()->create();
 
         $data = ['name' => 'Test Route'];
@@ -110,7 +110,7 @@ class RouteTest extends TestCase
 
     public function test_admin_can_create_route_with_specific_tackle_types()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
         $entrance = Cave::factory()->create(['cave_system_id' => $system->id]);
 
@@ -136,7 +136,7 @@ class RouteTest extends TestCase
 
     public function test_admin_can_upload_hero_image_for_route()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
         
         // Mock a base64 image
@@ -158,7 +158,7 @@ class RouteTest extends TestCase
 
     public function test_admin_can_upload_media_for_route()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
         
         $image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -183,7 +183,7 @@ class RouteTest extends TestCase
 
     public function test_admin_can_delete_media_from_route()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $route = Route::factory()->create();
         
         // Create initial media

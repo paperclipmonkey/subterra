@@ -36,7 +36,7 @@ class CalloutServiceTest extends TestCase
     {
         // Arrange: Create a shift covering tomorrow noon
         $tomorrowNoon = now()->addDay()->setHour(12)->setMinute(0);
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         
         OnCallShift::create([
             'user_id' => $admin->id,

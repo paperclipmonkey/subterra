@@ -15,7 +15,7 @@ class UserProfileLoadingTest extends TestCase
     public function admin_can_see_inactive_user_profile_but_sub_resources_fail_initially(): void
     {
         // 1. Create an admin user
-        $admin = User::factory()->create(['is_admin' => true, 'is_active' => true]);
+        $admin = User::factory()->admin()->create(['is_active' => true]);
 
         // 2. Create an inactive user (filtered by Global Scope)
         $inactiveUser = User::factory()->create(['is_active' => false]);

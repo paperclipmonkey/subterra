@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class TripResource extends JsonResource
 {
@@ -27,6 +28,13 @@ class TripResource extends JsonResource
             'visibility' => $this->visibility,
             'participants' => UserResource::collection($this->participants),
             'media' => MediaResource::collection($this->media),
+            'duration' => $this->duration,
+            'entrance_hero_image' => $this->entrance?->hero_image
+                ? Storage::disk('media')->url($this->entrance->hero_image)
+                : null,
+            'entrance_entrance_image' => $this->entrance?->entrance_image
+                ? Storage::disk('media')->url($this->entrance->entrance_image)
+                : null,
         ];
     }
 }

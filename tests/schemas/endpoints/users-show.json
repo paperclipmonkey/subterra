@@ -113,9 +113,6 @@
             "null"
           ]
         },
-        "is_approved": {
-          "type": "boolean"
-        },
         "stats": {
           "type": "object",
           "properties": {
@@ -153,7 +150,6 @@
         "name",
         "clubs",
         "medals",
-        "is_approved",
         "stats",
         "visibility_addable",
         "created_at",

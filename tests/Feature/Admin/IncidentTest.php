@@ -15,7 +15,7 @@ class IncidentTest extends TestCase
     public function test_admin_can_view_incidents_dashboard_without_sql_error()
     {
         // Arrange
-        $admin = User::factory()->create(['is_admin' => true, 'is_approved' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         
         // Create incidents with various statuses to exercise the ordering logic
         $u = User::factory()->create();
@@ -41,7 +41,7 @@ class IncidentTest extends TestCase
     public function test_admin_can_acknowledge_incident()
     {
         // Arrange
-        $admin = User::factory()->create(['is_admin' => true, 'is_approved' => true]);
+        $admin = User::factory()->dutyOfficer()->create();
         $callout = Callout::factory()->create();
         $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
 

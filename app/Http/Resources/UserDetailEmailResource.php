@@ -29,6 +29,7 @@ class UserDetailEmailResource extends JsonResource
             'email_tagged' => $this->email_tagged,
             'email_platform_news' => $this->email_platform_news,
             'visibility_addable' => $this->visibility_addable,
+            'is_admin' => $this->is_admin,
             // Eager load approvedClubs if not already done in controller
             'clubs' => $this->clubs->map(function ($club) {
                 return [
@@ -48,8 +49,11 @@ class UserDetailEmailResource extends JsonResource
                     'awarded_at' => $medal->pivot->awarded_at ?? null,
                 ];
             }),
-            'is_admin' => $this->is_admin,
-            'is_approved' => $this->is_approved,
+            'roles' => $this->roles->map(fn($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+                'slug' => $role->slug,
+            ]),
             'stats'=> [
                 'trips' => $this->trips->count(),
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),

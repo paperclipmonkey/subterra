@@ -33,7 +33,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Carbon::setTestNow('2025-01-01 12:00:00');
 
         // user is the DO
-        $do = User::factory()->create(['is_admin' => true, 'name' => 'Duty Officer']);
+        $do = User::factory()->admin()->create(['name' => 'Duty Officer']);
         
         // Setup shift covering now+15m
         // Shift is 09:00 to 17:00
@@ -81,7 +81,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:00:00');
 
-        $do = User::factory()->create(['is_admin' => true]);
+        $do = User::factory()->admin()->create();
         OnCallShift::create([
             'user_id' => $do->id,
             'start_at' => now()->startOfDay(),
@@ -111,9 +111,9 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:00:00');
 
-        $admin1 = User::factory()->create(['is_admin' => true, 'is_active' => true]);
-        $admin2 = User::factory()->create(['is_admin' => true, 'is_active' => true]);
-        $user = User::factory()->create(['is_admin' => false]);
+        $admin1 = User::factory()->admin()->create(['is_active' => true]);
+        $admin2 = User::factory()->admin()->create(['is_active' => true]);
+        $user = User::factory()->create();
 
         // NO SHIFT CREATED
 
@@ -140,7 +140,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->create(['is_admin' => true, 'is_active' => true]);
+        $admin = User::factory()->admin()->create(['is_active' => true]);
 
         // Incident triggered at 12:00 (30 mins ago), so > 15m.
         // No controller.
@@ -174,7 +174,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $controller = User::factory()->create();
 
         $callout = Callout::factory()->create(['status' => 'triggered']);
@@ -195,7 +195,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
 
         $callout = Callout::factory()->create(['status' => 'triggered']);
         $incident = Incident::create([
@@ -214,7 +214,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:30:00');
 
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
 
         $callout = Callout::factory()->create(['status' => 'triggered']);
         $incident = Incident::create([
@@ -240,7 +240,7 @@ class CheckOverdueCalloutsTest extends TestCase
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:00:00');
 
-        $admin = User::factory()->create(['is_admin' => true, 'is_active' => true]);
+        $admin = User::factory()->admin()->create(['is_active' => true]);
         
         $callout = Callout::factory()->create([
             'callout_time' => now()->subMinute(), // Due 1 min ago

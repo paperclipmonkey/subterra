@@ -20,15 +20,13 @@ class DemoDataSeeder extends Seeder
     {
         // 1. Seed 2 Duty Officers with upcoming shifts
         // Create 2 officers if they don't exist
-        $officer1 = User::withoutGlobalScopes()->updateOrCreate(
-            ['email' => 'alpha@example.com'],
-            ['name' => 'Officer Alpha', 'is_approved' => true, 'is_admin' => true, 'is_active' => true]
+            ['name' => 'Officer Alpha', 'is_active' => true]
         );
+        $officer1->assignRole(['platform_admin', 'duty_officer']);
 
-        $officer2 = User::withoutGlobalScopes()->updateOrCreate(
-            ['email' => 'bravo@example.com'],
-            ['name' => 'Officer Bravo', 'is_approved' => true, 'is_admin' => true, 'is_active' => true]
+            ['name' => 'Officer Bravo', 'is_active' => true]
         );
+        $officer2->assignRole(['platform_admin', 'duty_officer']);
 
         // Shift 0: Starts today at 9 AM (or now) for 24 hours
         OnCallShift::factory()->create([
@@ -61,7 +59,7 @@ class DemoDataSeeder extends Seeder
         }
 
         // Create some users for the callouts
-        $users = User::factory()->count(3)->create(['is_approved' => true]);
+        $users = User::factory()->count(3)->create();
 
         foreach ($users as $index => $user) {
             $callout = Callout::factory()->create([
@@ -100,7 +98,7 @@ class DemoDataSeeder extends Seeder
         // An active incident requires an overdue callout
         $victim = User::withoutGlobalScopes()->updateOrCreate(
             ['email' => 'victim@example.com'],
-            ['name' => 'Victim Victor', 'is_approved' => true, 'is_active' => true]
+            ['name' => 'Victim Victor', 'is_active' => true]
         );
 
         $incidentCallout = Callout::factory()->create([

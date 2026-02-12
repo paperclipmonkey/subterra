@@ -22,7 +22,7 @@
         size="small"
       >
         <v-tooltip activator="parent" location="top">
-            {{ userStore.user?.id ? (!userStore.user.is_approved ? 'Account must be approved' : 'You must join a club') : 'Log in' }} to report issues
+            {{ userStore.user?.id ? (!userStore.canSuggest ? 'Account must be approved' : 'You must join a club') : 'Log in' }} to report issues
         </v-tooltip>
         Report Issue
       </v-btn>

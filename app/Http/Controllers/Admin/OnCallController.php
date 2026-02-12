@@ -35,7 +35,16 @@ class OnCallController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = \App\Models\User::find($value);
+                    if ($user && !$user->hasRole(['duty_officer', 'platform_admin'])) {
+                        $fail('The selected user must have the Duty Officer role.');
+                    }
+                },
+            ],
             'start_at' => 'required|date',
             'end_at' => 'required|date|after:start_at',
         ]);
@@ -69,7 +78,16 @@ class OnCallController extends Controller
         $shift = OnCallShift::findOrFail($id);
 
         $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = \App\Models\User::find($value);
+                    if ($user && !$user->hasRole(['duty_officer', 'platform_admin'])) {
+                        $fail('The selected user must have the Duty Officer role.');
+                    }
+                },
+            ],
             'start_at' => 'required|date',
             'end_at' => 'required|date|after:start_at',
         ]);

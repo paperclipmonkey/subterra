@@ -8,8 +8,8 @@ export const useAppStore = defineStore('app', {
       name: '',
       email: '',
       is_admin: false,
-      is_approved: false,
       clubs: [],
+      roles: [],
     },
     loading: false,
     //
@@ -19,7 +19,7 @@ export const useAppStore = defineStore('app', {
     canSuggest: (state) => {
       if (!state.user || !state.user.id) return false
       if (state.user.is_admin) return true
-      return !!(state.user.is_approved && state.user.clubs && state.user.clubs.length > 0)
+      return !!(state.user.clubs && state.user.clubs.some(c => c.status === 'approved'))
     }
   },
 
@@ -38,7 +38,7 @@ export const useAppStore = defineStore('app', {
         this.loading = false
         // Silently handle unauthenticated state - it's expected on public pages
         // Return empty user object
-        return { name: '', email: '', is_admin: false, is_approved: false, clubs: [] }
+        return { name: '', email: '', is_admin: false, clubs: [] }
       }
     },
   },

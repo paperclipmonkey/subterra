@@ -93,7 +93,7 @@ class ApiInteractionTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_does_not_track_non_get_requests()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $cave = Cave::factory()->create();
 
         $this->actingAs($admin);
@@ -123,7 +123,7 @@ class ApiInteractionTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_get_popular_records()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $user = User::factory()->create();
         
         $cave1 = Cave::factory()->create(['name' => 'Popular Cave']);

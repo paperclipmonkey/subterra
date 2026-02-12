@@ -18,7 +18,7 @@ class DashboardTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_popular_records_with_identifiers()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         
         $system = CaveSystem::create([
             'name' => 'Test System',
@@ -87,7 +87,7 @@ class DashboardTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_tracks_page_interactions()
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->admin()->create();
         $page = \App\Models\Page::create([
             'title' => 'Tracking Test Page',
             'slug' => 'tracking-test-page',

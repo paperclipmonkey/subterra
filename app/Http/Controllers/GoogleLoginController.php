@@ -22,7 +22,7 @@ class GoogleLoginController extends Controller
         $user = User::where('email', $googleUser->email)->first();
         
         if(!$user || !$user->has_signed_up) {
-            $photoPath = 'profile/default.webp';
+            $photoUrl = null;
             
             try {
                 // SECURITY: Validate avatar URL to prevent SSRF attacks
@@ -56,6 +56,7 @@ class GoogleLoginController extends Controller
                             $filename = 'user_' . uniqid() . '.jpg';
                             $photoPath = 'profile/' . $filename;
                             Storage::disk('media')->put($photoPath, $photoContents);
+                            $photoUrl = Storage::disk('media')->url($photoPath);
                         }
                     }
                 }
@@ -65,13 +66,9 @@ class GoogleLoginController extends Controller
                     'url' => $googleUser->avatar ?? 'null',
                     'error' => $e->getMessage()
                 ]);
-                // Use default photo on any error
-                $photoPath = 'profile/default.webp';
+                // Keep photoUrl as null
             }
             
-            // Get the URL for the photo
-            $photoUrl = Storage::disk('media')->url($photoPath);
-
             if(!$user) {
                 $user = User::create([
                     'name' => $googleUser->name, 
@@ -89,9 +86,18 @@ class GoogleLoginController extends Controller
                     'name' => $googleUser->name,
                     'photo' => $photoUrl,
                 ]);
-                // Explicitly set is_active since it's guarded
-                $user->is_active = true;
-                $user->save();
+                
+                // If the user was previously inactive (e.g. created via trip participation),
+                // we should fire the created event now that they are signing up proper.
+                if (!$user->is_active) {
+                     $user->is_active = true;
+                     $user->save();
+                     event(new UserCreated($user));
+                } else {
+                    // Just ensure they remain active
+                     $user->is_active = true;
+                     $user->save();
+                }
             }
         }
 

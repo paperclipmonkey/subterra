@@ -15,7 +15,7 @@ class AdminTaskTest extends TestCase
 
     public function test_admin_can_fetch_tasks()
     {
-        $admin = User::factory()->create(['is_admin' => true, 'is_active' => true]);
+        $admin = User::factory()->admin()->create(['is_active' => true]);
 
         // Create a "Good" system for the unrelated caves to belong to, so they don't pollute system lists
         $goodSystem = CaveSystem::factory()->create(['references' => 'Valid Refs', 'name' => 'Good System']);

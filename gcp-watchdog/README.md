@@ -59,7 +59,6 @@ Register a new watchdog for a callout.
   "callout_id": "unique-id",
   "callout_time": "2026-01-30T10:00:00Z",
   "user": {"name": "John Doe", "phone": "+1234567890", "email": "john@example.com"},
-  "emergency_contact": {"name": "Emergency", "phone": "+1111111111", "email": "emergency@example.com"},
   "participants": [{"name": "Jane", "phone": "+0987654321"}],
   "trip_plan": "Exploring cave X",
   "cave_name": "Cave X"

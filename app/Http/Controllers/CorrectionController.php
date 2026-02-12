@@ -14,12 +14,8 @@ class CorrectionController extends Controller
         $user = $request->user();
 
         if (!$user->is_admin) {
-            if (!$user->is_approved) {
-                abort(403, 'Your account must be approved before you can report issues.');
-            }
-
-            if ($user->clubs()->count() === 0) {
-                abort(403, 'You must be a member of at least one club to report issues.');
+            if (!$user->hasApprovedClub()) {
+                abort(403, 'You must be an approved club member to report issues.');
             }
         }
         $user = $request->user();

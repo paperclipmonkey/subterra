@@ -38,7 +38,7 @@ class UserSignupSlackNotificationTest extends TestCase
         SlackAlert::fake();
         config()->set('slack-alerts.webhook_urls.signups', 'https://hooks.slack.com/services/test/signups');
 
-        $admin = User::factory()->create(['is_admin' => true, 'is_active' => true]);
+        $admin = User::factory()->admin()->create(['is_active' => true]);
         
         $email = 'api_created@example.com';
 

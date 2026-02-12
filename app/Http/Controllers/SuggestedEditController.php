@@ -27,12 +27,8 @@ class SuggestedEditController extends Controller
         $user = Auth::user();
 
         if (!$user->is_admin) {
-            if (!$user->is_approved) {
-                abort(403, 'Your account must be approved before you can suggest edits.');
-            }
-
-            if ($user->clubs()->count() === 0) {
-                abort(403, 'You must be a member of at least one club to suggest edits.');
+            if (!$user->hasApprovedClub()) {
+                abort(403, 'You must be an approved club member to suggest edits.');
             }
         }
 
