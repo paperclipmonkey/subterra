@@ -435,6 +435,23 @@ onMounted(async () => {
           // Pre-fill participants
           // calloutData.participants -> array of objects with user_id or manual name
           if (calloutData.participants && Array.isArray(calloutData.participants)) {
+            // Fetch full user data for callout participants so autocomplete can display names
+            const userIdsToFetch = calloutData.participants
+              .filter(p => p.user_id && !users.value.some(u => u.id === p.user_id))
+              .map(p => p.user_id);
+            if (userIdsToFetch.length > 0) {
+              try {
+                const userResponse = await fetch(`/api/users?ids=${userIdsToFetch.join(',')}`);
+                const fetchedUsers = (await userResponse.json()).data;
+                fetchedUsers.forEach(u => {
+                  if (!users.value.some(existing => existing.id === u.id)) {
+                    users.value.push(u);
+                  }
+                });
+              } catch (e) {
+                console.error('Error fetching callout participant details', e);
+              }
+            }
             calloutData.participants.forEach(p => {
               if (p.user_id) {
                 // Add existing user ID if not already there
@@ -463,6 +480,12 @@ onMounted(async () => {
       loadedTrip.existing_media = loadedTrip.media
       loadedTrip.media = []
 
+      // Add participant objects to users array so autocomplete can display names/photos
+      loadedTrip.participants.forEach(participant => {
+        if (!users.value.some(u => u.id === participant.id)) {
+          users.value.push(participant)
+        }
+      })
       loadedTrip.participants = loadedTrip.participants.map(participant => participant.id)
 
       loadedTrip.entrance_cave_id = loadedTrip.entrance.id

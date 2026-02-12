@@ -82,10 +82,42 @@ vi.mock('vue-router', () => ({
 // Mock fetch globally
 global.fetch = vi.fn()
 
+const defaultStubs = {
+  'v-container': { template: '<div><slot /></div>' },
+  'v-card': { template: '<div><slot /></div>' },
+  'v-progress-circular': { template: '<div>Loading...</div>' },
+  'v-form': { template: '<div><slot /></div>' },
+  'v-stepper': { template: '<div><slot /></div>' },
+  'v-autocomplete': { template: '<div></div>' },
+  'v-checkbox': { template: '<div></div>' },
+  'v-text-field': { template: '<div></div>' },
+  'v-select': { template: '<div></div>' },
+  'v-file-input': { template: '<div></div>' },
+  'v-btn': { template: '<div><slot /></div>' },
+  'v-row': { template: '<div><slot /></div>' },
+  'v-col': { template: '<div><slot /></div>' },
+  'MilkdownEditor': { template: '<div></div>' },
+  'AddParticipantManual': { template: '<div></div>' },
+  'v-expand-transition': true,
+  'v-img': true,
+  'v-spacer': true,
+  'v-icon': true,
+  'v-alert': true,
+  'v-divider': true,
+  'v-card-text': { template: '<div><slot /></div>' },
+  'v-card-actions': { template: '<div><slot /></div>' },
+  'v-list-item': true,
+  'v-list-item-title': true,
+  'v-chip': true,
+}
+
 describe('TripNew - Duration Loading', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+
+    mockRoute.params = { id: '123' }
+    mockRoute.query = {}
 
     // Mock successful API responses
     fetch.mockImplementation((url) => {
@@ -145,31 +177,7 @@ describe('TripNew - Duration Loading', () => {
     const wrapper = mount(TripNew, {
       global: {
         plugins: [createPinia()],
-        stubs: {
-          'v-container': { template: '<div><slot /></div>' },
-          'v-card': { template: '<div><slot /></div>' },
-          'v-progress-circular': { template: '<div>Loading...</div>' },
-          'v-form': { template: '<div><slot /></div>' },
-          'v-stepper': { template: '<div><slot /></div>' },
-          'v-autocomplete': { template: '<div></div>' },
-          'v-checkbox': { template: '<div></div>' },
-          'v-text-field': { template: '<div></div>' },
-          'v-select': { template: '<div></div>' },
-          'v-file-input': { template: '<div></div>' },
-          'v-btn': { template: '<div><slot /></div>' },
-          'v-row': { template: '<div><slot /></div>' },
-          'v-col': { template: '<div><slot /></div>' },
-          'MilkdownEditor': { template: '<div></div>' },
-          'AddParticipantManual': { template: '<div></div>' },
-          'v-expand-transition': true,
-          'v-img': true,
-          'v-spacer': true,
-          'v-icon': true,
-          'v-expand-transition': true,
-          'v-img': true,
-          'v-spacer': true,
-          'v-icon': true
-        }
+        stubs: defaultStubs
       }
     })
 
@@ -199,27 +207,7 @@ describe('TripNew - Duration Loading', () => {
     const wrapper = mount(TripNew, {
       global: {
         plugins: [createPinia()],
-        stubs: {
-          'v-container': { template: '<div><slot /></div>' },
-          'v-card': { template: '<div><slot /></div>' },
-          'v-progress-circular': { template: '<div>Loading...</div>' },
-          'v-form': { template: '<div><slot /></div>' },
-          'v-stepper': { template: '<div><slot /></div>' },
-          'v-autocomplete': { template: '<div></div>' },
-          'v-checkbox': { template: '<div></div>' },
-          'v-text-field': { template: '<div></div>' },
-          'v-select': { template: '<div></div>' },
-          'v-file-input': { template: '<div></div>' },
-          'v-btn': { template: '<div><slot /></div>' },
-          'v-row': { template: '<div><slot /></div>' },
-          'v-col': { template: '<div><slot /></div>' },
-          'MilkdownEditor': { template: '<div></div>' },
-          'AddParticipantManual': { template: '<div></div>' },
-          'v-expand-transition': true,
-          'v-img': true,
-          'v-spacer': true,
-          'v-icon': true
-        }
+        stubs: defaultStubs
       }
     })
 
@@ -233,5 +221,77 @@ describe('TripNew - Duration Loading', () => {
     // Check that default duration values are used for new trips
     expect(wrapper.vm.tripDurationHours).toBe(4)
     expect(wrapper.vm.tripDurationMinutes).toBe(0)
+  })
+
+  it('populates users array with all participants when editing a trip', async () => {
+    // Override fetch to return a trip with multiple participants including ones not in the initial users list
+    fetch.mockImplementation((url) => {
+      if (url === '/api/caves') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            data: [
+              { id: 1, name: 'Test Cave', system: { id: 1 }, location_name: 'Test Location', location_country: 'Test Country' }
+            ]
+          })
+        })
+      }
+
+      if (url === '/api/users/me') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            data: { id: 1, name: 'Current User', photo: null, clubs: [] }
+          })
+        })
+      }
+
+      if (url === '/api/trips/123') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            data: {
+              id: 123,
+              name: 'Test Trip',
+              description: 'Test Description',
+              start_time: '2024-01-15T10:00:00Z',
+              end_time: '2024-01-15T11:30:00Z',
+              entrance: { id: 1, name: 'Test Entrance' },
+              exit: { id: 1, name: 'Test Exit' },
+              system: { id: 1, name: 'Test System' },
+              participants: [
+                { id: 1, name: 'Current User', photo: null, clubs: [] },
+                { id: 12, name: 'New User', photo: null, clubs: [] }
+              ],
+              media: [],
+              visibility: 'public'
+            }
+          })
+        })
+      }
+
+      return Promise.reject(new Error('Unknown URL'))
+    })
+
+    const wrapper = mount(TripNew, {
+      global: {
+        plugins: [createPinia()],
+        stubs: defaultStubs
+      }
+    })
+
+    // Wait for the component to finish loading
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(wrapper.vm.loading).toBe(false)
+
+    // Verify both participants are in the users array so autocomplete can display their names
+    expect(wrapper.vm.users).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 1, name: 'Current User' }),
+        expect.objectContaining({ id: 12, name: 'New User' })
+      ])
+    )
+
+    // Verify participants array contains just the IDs
+    expect(wrapper.vm.trip.participants).toEqual([1, 12])
   })
 })
