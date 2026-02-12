@@ -47,8 +47,8 @@ router.beforeEach(async (to, from, next) => {
   let user = await useAppStore().getUser()
   // console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_admin: user?.is_admin })
 
-  // Exception for magic link login page and CMS pages
-  if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/') || to.path === '/callout/active') {
+  // Exception for magic link login page, CMS pages, and public trip reports
+  if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/') || to.path === '/callout/active' || (to.path.startsWith('/trips/') && to.params.id && to.params.id.length >= 8)) {
     return next()
   }
 

@@ -88,8 +88,6 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     // Trips
     Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
     Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
-    Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
-        ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
     Route::put('/trips/{trip}', [App\Http\Controllers\TripController::class, 'update']);
     Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
 
@@ -130,6 +128,10 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('collections/{collection}/caves', [CollectionController::class, 'addCave']);
     Route::delete('collections/{collection}/caves/{cave}', [CollectionController::class, 'removeCave']);
 });
+
+// Public Trip Access
+Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
+    ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
 
 // --- Admin Routes ---
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {

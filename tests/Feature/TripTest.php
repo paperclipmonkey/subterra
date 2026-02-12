@@ -320,6 +320,15 @@ class TripTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_shows_public_trip_to_unauthenticated_user()
+    {
+        $trip = Trip::factory()->create(['visibility' => 'public']);
+
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
+        $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_shows_private_trip_to_participant()
     {
         $user = User::factory()->create();

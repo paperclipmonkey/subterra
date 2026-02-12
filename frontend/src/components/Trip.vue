@@ -254,101 +254,101 @@ const showMediaModal = ref(false)
 const selectedMedia = ref({})
 
 const currentUserWasOnTrip = computed(() => {
-   if (!trip.value) return false;
-   return trip.value.participants.some((participant) => participant.id === appStore.user.id)
+  if (!trip.value || !appStore.user?.id) return false;
+  return trip.value.participants.some((participant) => participant.id === appStore.user.id)
 })
 
 const heroImage = computed(() => {
-   if (trip.value?.media && trip.value.media.length > 0) {
-      return trip.value.media[0].url
-   }
-   // Fallback placeholder or gradient logic handled by v-img's src being empty/null vs css class
-   // Ideally return a nice placeholder image URL or handle empty string in template
-   return ''
+  if (trip.value?.media && trip.value.media.length > 0) {
+    return trip.value.media[0].url
+  }
+  // Fallback placeholder or gradient logic handled by v-img's src being empty/null vs css class
+  // Ideally return a nice placeholder image URL or handle empty string in template
+  return ''
 })
 
 const formatDate = (date) => {
-   const parsed = moment(date)
-   return parsed.isValid() ? parsed.format('ddd, D MMM YYYY') : '-'
+  const parsed = moment(date)
+  return parsed.isValid() ? parsed.format('ddd, D MMM YYYY') : '-'
 }
 const formatTime = (date) => {
-   const parsed = moment(date)
-   return parsed.isValid() ? parsed.format('HH:mm') : '-'
+  const parsed = moment(date)
+  return parsed.isValid() ? parsed.format('HH:mm') : '-'
 }
 const formatDuration = (start, end) => {
-   if (!end) return '-'
-   const duration = moment.duration(moment(end).diff(moment(start)));
-   const hours = Math.floor(duration.asHours());
-   const minutes = duration.minutes();
-   return `${hours}h ${minutes}m`;
+  if (!end) return '-'
+  const duration = moment.duration(moment(end).diff(moment(start)));
+  const hours = Math.floor(duration.asHours());
+  const minutes = duration.minutes();
+  return `${hours}h ${minutes}m`;
 }
 
 const getVisibilityColor = (vis) => {
-   return vis === 'public' ? 'success' : vis === 'club' ? 'primary' : 'grey'
+  return vis === 'public' ? 'success' : vis === 'club' ? 'primary' : 'grey'
 }
 
 const getVisibilityIcon = (vis) => {
-   return vis === 'public' ? 'mdi-earth' : vis === 'club' ? 'mdi-account-group' : 'mdi-lock'
+  return vis === 'public' ? 'mdi-earth' : vis === 'club' ? 'mdi-account-group' : 'mdi-lock'
 }
 
 const confirmDelete = async () => {
-   showDeleteConfirmDialog.value = false;
-   try {
-      const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE', headers: { 'Accept': 'application/json' } })
-      if (response.ok) {
-         toast.success('Trip deleted successfully')
-         router.push('/trips')
-      } else {
-         toast.error('Failed to delete trip')
-      }
-   } catch (e) {
-      console.error("Failed to delete trip", e)
-      toast.error('Failed to delete trip: ' + (e.message || 'Unknown error'))
-   }
+  showDeleteConfirmDialog.value = false;
+  try {
+    const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE', headers: { 'Accept': 'application/json' } })
+    if (response.ok) {
+      toast.success('Trip deleted successfully')
+      router.push('/trips')
+    } else {
+      toast.error('Failed to delete trip')
+    }
+  } catch (e) {
+    console.error("Failed to delete trip", e)
+    toast.error('Failed to delete trip: ' + (e.message || 'Unknown error'))
+  }
 }
 
 const openMedia = (item) => {
-   selectedMedia.value = {
-      ...item,
-      trip_id: trip.value.id,
-      trip_name: trip.value.name,
-      photographer: item.photographer || (item.user_id ? trip.value.participants.find(p => p.id === item.user_id)?.name : null)
-   }
-   showMediaModal.value = true
+  selectedMedia.value = {
+    ...item,
+    trip_id: trip.value.id,
+    trip_name: trip.value.name,
+    photographer: item.photographer || (item.user_id ? trip.value.participants.find(p => p.id === item.user_id)?.name : null)
+  }
+  showMediaModal.value = true
 }
 
 onMounted(async () => {
-   loading.value = true
-   try {
-      const response = await fetch(`/api/trips/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
-      if (response.status === 404) {
-         error.value = "Trip not found. It may have been deleted or you may have the wrong link."
-      } else if (!response.ok) {
-         error.value = "Failed to load trip. Please try again later."
-      } else {
-         const json = await response.json()
-         trip.value = json.data
-      }
-   } catch (e) {
-      console.error("Failed to fetch trip", e)
-      error.value = "An unexpected error occurred."
-   } finally {
-      loading.value = false
-   }
+  loading.value = true
+  try {
+    const response = await fetch(`/api/trips/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
+    if (response.status === 404) {
+      error.value = "Trip not found. It may have been deleted or you may have the wrong link."
+    } else if (!response.ok) {
+      error.value = "Failed to load trip. Please try again later."
+    } else {
+      const json = await response.json()
+      trip.value = json.data
+    }
+  } catch (e) {
+    console.error("Failed to fetch trip", e)
+    error.value = "An unexpected error occurred."
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
 <style scoped>
 .backdrop-blur {
-   backdrop-filter: blur(4px);
-   background-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(4px);
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .scale-110 {
-   transform: scale(1.1);
+  transform: scale(1.1);
 }
 
 .transition-transform {
-   transition: transform 0.3s ease-out;
+  transition: transform 0.3s ease-out;
 }
 </style>

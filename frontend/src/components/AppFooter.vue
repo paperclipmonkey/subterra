@@ -13,6 +13,15 @@
 
       </v-bottom-navigation>
     </v-footer>
+
+    <v-footer v-else app>
+      <v-bottom-navigation bg-color="primary" elevation="4">
+        <v-btn to="/" block class="text-none">
+          <v-icon start icon="mdi-login" />
+          Login or Join to see more
+        </v-btn>
+      </v-bottom-navigation>
+    </v-footer>
   </div>
 </template>
 
