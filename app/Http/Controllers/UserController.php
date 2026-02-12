@@ -57,10 +57,16 @@ class UserController extends Controller
             }
         }
 
-        // LIKE is case-insensitive in MySQL by default
+        // Use unaccent() and ILIKE for case-insensitive and liberal matching in PostgreSQL
         $users = User::where(function ($query) use ($search) {
-            $query->where('name', 'LIKE', '%'.$search.'%')
-                  ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+            if (config('database.default') === 'pgsql') {
+                $query->whereRaw('unaccent(name) ILIKE unaccent(?)', ['%'.$search.'%'])
+                      ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+            } else {
+                // Fallback for SQLite/others where unaccent isn't available
+                $query->where('name', 'LIKE', '%'.$search.'%')
+                      ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+            }
         })
             ->get()
         ->filter(function ($user) use ($currentUser, $clubUserIds, $tripUserCounts, $search) {
