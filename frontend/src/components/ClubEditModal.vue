@@ -50,6 +50,7 @@
                 <v-col>
                   <p class="mb-2">Manage approved club members and designate administrators.</p>
                   <v-autocomplete
+                    v-if="appStore.user?.is_admin"
                     v-model="selectedUserToAdd"
                     :items="availableUsers"
                     item-title="name"
@@ -144,6 +145,9 @@ import { mande } from 'mande';
 import { useRouter } from 'vue-router';
 import MilkdownEditor from '@/components/MilkdownEditor.vue';
 import { useToast } from "vue-toastification";
+import { useAppStore } from '@/stores/app';
+
+const appStore = useAppStore();
 const props = defineProps({
   clubSlug: { type: String, default: '' },
   modelValue: Boolean,
@@ -185,15 +189,32 @@ const fetchClub = async () => {
   editedClub.value = clubResponse.data || clubResponse;
 };
 const fetchAvailableUsers = async () => {
-  const usersApi = mande('/api/admin/users');
-  const response = await usersApi.get();
-  availableUsers.value = response.data || response;
+  try {
+    const usersApi = mande('/api/admin/users');
+    const response = await usersApi.get();
+    availableUsers.value = response.data || response;
+  } catch (e) {
+    // If not super-admin, this might fail, but we shouldn't block the modal
+    console.warn('Could not fetch all users (likely not platform admin)');
+    availableUsers.value = [];
+  }
 };
 const fetchClubMembers = async () => {
   if (!props.clubSlug) return;
-  const membersApi = mande(`/api/admin/clubs/${props.clubSlug}/members`);
+  // Use the public (but auth-guarded) endpoint which now includes is_club_admin info
+  // This allows Club Admins to see members without needing full platform admin rights
+  const membersApi = mande(`/api/clubs/${props.clubSlug}/members`);
   const response = await membersApi.get();
-  clubMembers.value = response.data || response;
+
+  // Map the response to the format expected by the template
+  const members = response.data || response;
+  clubMembers.value = members.map(m => ({
+    id: m.id,
+    name: m.name,
+    email: m.email,
+    is_club_admin: m.is_club_admin || false
+  }));
+
   memberDataChanged.value = false;
 };
 const fetchPendingMembers = async () => {
@@ -275,7 +296,9 @@ const closeDialog = () => { dialogVisible.value = false; };
 
 onMounted(async () => {
   await fetchClub();
-  await fetchAvailableUsers();
+  if (appStore.user?.is_admin) {
+    await fetchAvailableUsers();
+  }
   await fetchClubMembers();
   await fetchPendingMembers();
   if (props.initialTab) tab.value = props.initialTab;

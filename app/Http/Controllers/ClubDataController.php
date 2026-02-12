@@ -34,13 +34,17 @@ class ClubDataController extends Controller
      */
     public function members(Club $club): ResourceCollection
     {
-        $members = $club->users()->wherePivot('status', 'approved')->get();
+        $members = $club->users()->wherePivot('status', 'approved')->orderBy('name')->get();
 
-        return UserResource::collection($members);
+        // Used by ClubEditModal for club admins who can't access the full admin endpoint
+        return UserResource::collection($members->map(function ($user) {
+            $user->is_club_admin = (bool) $user->pivot->is_admin;
+            return $user;
+        }));
     }
 
     /**
-     * Get activity heatmap data for a club (trips per day in the last year).
+     * Get activity heatmap data for a club (hours underground per day in the last year).
      */
     public function activityHeatmap(Club $club): JsonResponse
     {

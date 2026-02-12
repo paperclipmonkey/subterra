@@ -27,6 +27,9 @@ class UserResource extends JsonResource
                     'slug' => $club->slug,
                 ];
             })->values(),
+            'is_club_admin' => $this->when(isset($this->is_club_admin), function () {
+                return $this->is_club_admin;
+            }),
         ];
     }
 }
