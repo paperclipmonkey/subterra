@@ -65,16 +65,34 @@
         <!-- Activity Heatmap -->
         <v-col cols="12">
           <v-card>
-            <v-card-title>Logged Trips Heatmap</v-card-title>
+            <v-card-title>Hours Underground Heatmap</v-card-title>
             <v-card-text>
               <calendar-heatmap dark-mode :values="heatmapData" :end-date="endDate"
-                                :range-color="[&quot;#ebedf0&quot;, &quot;#9be9a8&quot;, &quot;#40c463&quot;, &quot;#30a14e&quot;, &quot;#216e39&quot;]" tooltip-unit="trips" :max="10" />
+                                :range-color="['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39']" tooltip-unit="hours" />
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- Recent Trips -->
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="8">
+          <v-card v-if="club && club.huts && club.huts.length > 0" class="mb-4">
+            <v-card-title>Club Huts</v-card-title>
+            <v-list density="compact">
+              <v-list-item
+                v-for="hut in club.huts"
+                :key="hut.id"
+                :to="`/huts/${hut.id}`"
+                :title="hut.name"
+              >
+                <template #prepend>
+                  <v-avatar size="small" rounded="0">
+                    <v-img :src="hut.image_url || '/default-hut.jpg'" cover />
+                  </v-avatar>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card>
+
           <v-card>
             <v-card-title>Recent Trips</v-card-title>
             <v-list v-if="recentTrips.length > 0">
@@ -86,7 +104,7 @@
         </v-col>
 
         <!-- Members List -->
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="4">
           <v-card>
             <v-card-title>Members</v-card-title>
             <v-list v-if="members.length > 0">
@@ -104,17 +122,6 @@
           </v-card>
         </v-col>
 
-        <!-- Huts List -->
-        <v-col cols="12" md="6">
-          <v-card>
-            <v-card-title>Huts</v-card-title>
-            <v-list v-if="club && club.huts && club.huts.length > 0">
-              <v-list-item v-for="hut in club.huts" :key="hut.id" :to="`/huts/${hut.id}`" :title="hut.name"
-                           prepend-icon="mdi-home-group" />
-            </v-list>
-            <v-card-text v-else>No huts listed.</v-card-text>
-          </v-card>
-        </v-col>
       </v-row>
 
       <!-- Not a Member Message -->
