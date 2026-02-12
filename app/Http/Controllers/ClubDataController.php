@@ -45,18 +45,48 @@ class ClubDataController extends Controller
     public function activityHeatmap(Club $club): JsonResponse
     {
         $oneYearAgo = Carbon::now()->subYear();
+        $approvedMemberIds = $club->approvedUsers()->pluck('users.id')->flip();
 
-        $activity = Trip::select(DB::raw('DATE(start_time) as date'), DB::raw('count(*) as count'))
-            ->whereHas('participants', function ($query) use ($club) {
-                $query->whereIn('user_id', $club->users()->wherePivot('status', 'approved')->pluck('users.id'));
-            })
+        $trips = Trip::with('participants')
             ->where('start_time', '>=', $oneYearAgo)
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->map(function ($item) {
-                return ['date' => $item->date, 'count' => $item->count];
-            });
+            ->whereHas('participants', function ($query) use ($club) {
+                $query->whereIn('users.id', $club->approvedUsers()->pluck('users.id'));
+            })
+            ->get();
+
+        $dailyHours = [];
+
+        foreach ($trips as $trip) {
+            // Skip invalid dates or times
+            if (!$trip->start_time || !$trip->end_time) {
+                continue;
+            }
+
+            $date = $trip->start_time->toDateString();
+            $durationHours = $trip->start_time->diffInMinutes($trip->end_time) / 60;
+
+            $memberCount = 0;
+            foreach ($trip->participants as $participant) {
+                if ($approvedMemberIds->has($participant->id)) {
+                    $memberCount++;
+                }
+            }
+
+            if ($memberCount > 0) {
+                if (!isset($dailyHours[$date])) {
+                    $dailyHours[$date] = 0;
+                }
+                $dailyHours[$date] += ($durationHours * $memberCount);
+            }
+        }
+
+        // Transform into array of objects and sort by date
+        $activity = collect($dailyHours)
+            ->sortKeys()
+            ->map(function ($count, $date) {
+                return ['date' => $date, 'count' => round($count, 1)];
+            })
+            ->values();
 
         return response()->json($activity);
     }

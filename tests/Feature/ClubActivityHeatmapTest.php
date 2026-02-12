@@ -33,26 +33,33 @@ class ClubActivityHeatmapTest extends TestCase
         $this->club->users()->attach($this->pendingMember, ['status' => 'pending']);
 
         // Create trips for the approved member to generate heatmap data
-        // One trip today
+        // One trip today - 1 hour
+        $now = Carbon::now();
         Trip::factory()->create([
-            'start_time' => Carbon::now(),
+            'start_time' => $now->clone(),
+            'end_time' => $now->clone()->addHour(),
         ])->participants()->attach($this->approvedMember->id);
 
-        // Two trips yesterday
+        // Two trips yesterday - 1 hour each
+        $yesterday = Carbon::yesterday();
         Trip::factory()->count(2)->create([
-            'start_time' => Carbon::yesterday(),
+            'start_time' => $yesterday->clone(),
+            'end_time' => $yesterday->clone()->addHour(),
         ])->each(function ($trip) {
             $trip->participants()->attach($this->approvedMember->id);
         });
 
-        // One trip 10 days ago
+        // One trip 10 days ago - 1 hour
+        $tenDaysAgo = Carbon::now()->subDays(10);
         Trip::factory()->create([
-            'start_time' => Carbon::now()->subDays(10),
+            'start_time' => $tenDaysAgo->clone(),
+            'end_time' => $tenDaysAgo->clone()->addHour(),
         ])->participants()->attach($this->approvedMember->id);
 
         // One trip more than a year ago (should not be included)
         Trip::factory()->create([
             'start_time' => Carbon::now()->subYear()->subDay(),
+            'end_time' => Carbon::now()->subYear()->subDay()->addHour(),
         ])->participants()->attach($this->approvedMember->id);
     }
 
