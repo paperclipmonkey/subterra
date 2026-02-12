@@ -1,138 +1,138 @@
 <template>
-    <v-container v-if="loading">
-        <v-skeleton-loader type="article, image"></v-skeleton-loader>
-    </v-container>
-    <v-container v-else-if="hut">
-        <v-img height="300"
-            :src="hut.image_url"
-            cover class="mb-4 rounded">
-            <div class="position-absolute top-0 left-0 pa-4 d-flex" style="z-index: 1;">
-                <v-btn icon="mdi-arrow-left" variant="tonal" color="white" @click="$router.push('/huts')"
-                    class="backdrop-blur mr-2"></v-btn>
+  <v-container v-if="loading">
+    <v-skeleton-loader type="article, image" />
+  </v-container>
+  <v-container v-else-if="hut">
+    <v-img height="300"
+           :src="hut.image_url"
+           cover class="mb-4 rounded">
+      <div class="position-absolute top-0 left-0 pa-4 d-flex" style="z-index: 1;">
+        <v-btn icon="mdi-arrow-left" variant="tonal" color="white" class="backdrop-blur mr-2"
+               @click="$router.push('/huts')" />
+      </div>
+      <div class="position-absolute top-0 right-0 pa-4" style="z-index: 1;">
+        <HutEditModal v-if="canEdit" :hut="hut" class="backdrop-blur" />
+      </div>
+      <div class="d-flex fill-height align-end">
+        <div class="bg-black-transparent pa-4 w-100">
+          <h1 class="text-h4 text-white font-weight-bold">{{ hut.name }}</h1>
+          <div class="text-subtitle-1 text-white">
+            <v-icon color="white" start>mdi-home-group</v-icon> 
+            <router-link v-if="hut.club" :to="`/club/${hut.club.slug}`" class="text-white text-decoration-none hover-underline">
+              {{ hut.club.name }}
+            </router-link>
+            <span v-else>{{ hut.club?.name }}</span>
+          </div>
+        </div>
+      </div>
+    </v-img>
+
+    <v-row>
+      <v-col cols="12" md="8">
+        <v-card class="mb-4">
+          <v-card-title class="d-flex justify-space-between align-center">
+            About
+            <CorrectionModal entity-type="hut" :entity-id="hut.id" :entity-name="hut.name" />
+          </v-card-title>
+          <v-card-text>
+            <div v-if="hut.description" class="vue-markdown">
+              <VueMarkdownRender :source="hut.description" />
             </div>
-            <div class="position-absolute top-0 right-0 pa-4" style="z-index: 1;">
-                <HutEditModal :hut="hut" v-if="canEdit" class="backdrop-blur" />
+            <p v-else class="text-grey font-italic">No description available.</p>
+
+            <v-divider class="my-3" />
+
+            <div v-if="hut.external_url" class="d-flex align-center mb-2">
+              <v-icon start color="primary">mdi-web</v-icon>
+              <a :href="hut.external_url" target="_blank">{{ hut.external_url }}</a>
             </div>
-            <div class="d-flex fill-height align-end">
-                <div class="bg-black-transparent pa-4 w-100">
-                    <h1 class="text-h4 text-white font-weight-bold">{{ hut.name }}</h1>
-                    <div class="text-subtitle-1 text-white">
-                        <v-icon color="white" start>mdi-home-group</v-icon> 
-                        <router-link v-if="hut.club" :to="`/club/${hut.club.slug}`" class="text-white text-decoration-none hover-underline">
-                            {{ hut.club.name }}
-                        </router-link>
-                        <span v-else>{{ hut.club?.name }}</span>
+
+            <div v-if="hut.amenities && hut.amenities.length" class="mt-4">
+              <strong>Amenities:</strong>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                <v-chip v-for="amenity in hut.amenities" :key="amenity" size="small" color="primary"
+                        variant="outlined" class="mr-2 mb-2">
+                  {{ amenity }}
+                </v-chip>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <v-card>
+          <v-card-title>Booking Info</v-card-title>
+          <v-card-text>
+            {{ hut.booking_info || 'Please contact the club for booking information.' }}
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="4">
+        <v-card class="mb-4">
+          <v-card-title>Reciprocal Clubs</v-card-title>
+          <v-card-text>
+            <div v-if="hut.reciprocal_clubs && hut.reciprocal_clubs.length">
+              <v-list density="compact">
+                <v-list-item v-for="club in hut.reciprocal_clubs" :key="club.id" :title="club.name"
+                             :to="`/club/${club.slug}`" link prepend-icon="mdi-shield-account" />
+              </v-list>
+            </div>
+            <div v-else class="text-grey font-italic">No reciprocal clubs listed.</div>
+          </v-card-text>
+        </v-card>
+
+
+
+        <v-card>
+          <v-card-title>Location</v-card-title>
+          <v-card-text>
+            <div v-if="hut.location_lat && hut.location_lng">
+              <v-card class="mb-4 rounded-lg" elevation="1">
+                <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
+                  <mgl-marker :coordinates="lnglat" color="#cc0000" />
+                  <mgl-navigation-control />
+                  <mgl-fullscreen-control />
+                </mgl-map>
+                <v-card-text>
+                  <div class="d-flex justify-space-between align-center">
+                    <div>
+                      <div class="text-caption text-grey">Coordinates</div>
+                      <div class="font-weight-medium text-body-2">{{
+                        hut.location_lat.toFixed(5) }}, {{
+                        hut.location_lng.toFixed(5) }}</div>
                     </div>
-                </div>
+                    <div class="d-flex">
+                      <v-tooltip text="Open in Google Maps" location="top">
+                        <template #activator="{ props }">
+                          <v-btn icon="mdi-google-maps" size="small" variant="text"
+                                 v-bind="props"
+                                 :href="`https://www.google.com/maps?q=${hut.location_lat},${hut.location_lng}`"
+                                 target="_blank" />
+                        </template>
+                      </v-tooltip>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
             </div>
-        </v-img>
+            <div v-else>Location not available</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+  <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
+    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+    <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
+    <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+    <v-btn color="primary" variant="flat" to="/huts" prepend-icon="mdi-arrow-left">
+      Back to Huts
+    </v-btn>
+  </v-container>
 
-        <v-row>
-            <v-col cols="12" md="8">
-<v-card class="mb-4">
-                    <v-card-title class="d-flex justify-space-between align-center">
-                        About
-                        <CorrectionModal entity-type="hut" :entity-id="hut.id" :entity-name="hut.name" />
-                    </v-card-title>
-                    <v-card-text>
-                        <div class="vue-markdown" v-if="hut.description">
-                             <VueMarkdownRender :source="hut.description" />
-                        </div>
-                        <p v-else class="text-grey font-italic">No description available.</p>
-
-                        <v-divider class="my-3"></v-divider>
-
-                        <div class="d-flex align-center mb-2" v-if="hut.external_url">
-                            <v-icon start color="primary">mdi-web</v-icon>
-                            <a :href="hut.external_url" target="_blank">{{ hut.external_url }}</a>
-                        </div>
-
-                        <div v-if="hut.amenities && hut.amenities.length" class="mt-4">
-                            <strong>Amenities:</strong>
-                            <div class="d-flex flex-wrap gap-2 mt-2">
-                                <v-chip v-for="amenity in hut.amenities" :key="amenity" size="small" color="primary"
-                                    variant="outlined" class="mr-2 mb-2">
-                                    {{ amenity }}
-                                </v-chip>
-                            </div>
-                        </div>
-                    </v-card-text>
-                </v-card>
-
-                <v-card>
-                    <v-card-title>Booking Info</v-card-title>
-                    <v-card-text>
-                        {{ hut.booking_info || 'Please contact the club for booking information.' }}
-                    </v-card-text>
-                </v-card>
-            </v-col>
-
-            <v-col cols="12" md="4">
-                <v-card class="mb-4">
-                    <v-card-title>Reciprocal Clubs</v-card-title>
-                    <v-card-text>
-                        <div v-if="hut.reciprocal_clubs && hut.reciprocal_clubs.length">
-                            <v-list density="compact">
-                                <v-list-item v-for="club in hut.reciprocal_clubs" :key="club.id" :title="club.name"
-                                    :to="`/club/${club.slug}`" link prepend-icon="mdi-shield-account"></v-list-item>
-                            </v-list>
-                        </div>
-                        <div v-else class="text-grey font-italic">No reciprocal clubs listed.</div>
-                    </v-card-text>
-                </v-card>
-
-
-
-                <v-card>
-                    <v-card-title>Location</v-card-title>
-                    <v-card-text>
-                        <div v-if="hut.location_lat && hut.location_lng">
-                            <v-card class="mb-4 rounded-lg" elevation="1">
-                                <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
-                                    <mgl-marker :coordinates="lnglat" color="#cc0000" />
-                                    <mgl-navigation-control />
-                                    <mgl-fullscreen-control />
-                                </mgl-map>
-                                <v-card-text>
-                                    <div class="d-flex justify-space-between align-center">
-                                        <div>
-                                            <div class="text-caption text-grey">Coordinates</div>
-                                            <div class="font-weight-medium text-body-2">{{
-                                                hut.location_lat.toFixed(5) }}, {{
-                                                    hut.location_lng.toFixed(5) }}</div>
-                                        </div>
-                                        <div class="d-flex">
-                                            <v-tooltip text="Open in Google Maps" location="top">
-                                                <template v-slot:activator="{ props }">
-                                                    <v-btn icon="mdi-google-maps" size="small" variant="text"
-                                                        v-bind="props"
-                                                        :href="`https://www.google.com/maps?q=${hut.location_lat},${hut.location_lng}`"
-                                                        target="_blank"></v-btn>
-                                                </template>
-                                            </v-tooltip>
-                                        </div>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                        </div>
-                        <div v-else>Location not available</div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
-    </v-container>
-    <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
-        <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
-        <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-        <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-        <v-btn color="primary" variant="flat" to="/huts" prepend-icon="mdi-arrow-left">
-            Back to Huts
-        </v-btn>
-    </v-container>
-
-    <v-container v-else>
-        <v-alert type="error">Hut not found</v-alert>
-    </v-container>
+  <v-container v-else>
+    <v-alert type="error">Hut not found</v-alert>
+  </v-container>
 </template>
 
 <script setup>

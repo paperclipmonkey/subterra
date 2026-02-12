@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="dialog" max-width="600">
-    <template v-slot:activator="{ props }">
+    <template #activator="{ props }">
       <v-btn
         v-if="userStore.canSuggest"
         variant="text"
@@ -22,7 +22,7 @@
         size="small"
       >
         <v-tooltip activator="parent" location="top">
-            {{ userStore.user?.id ? (!userStore.canSuggest ? 'Account must be approved' : 'You must join a club') : 'Log in' }} to report issues
+          {{ userStore.user?.id ? (!userStore.canSuggest ? 'Account must be approved' : 'You must join a club') : 'Log in' }} to report issues
         </v-tooltip>
         Report Issue
       </v-btn>
@@ -46,18 +46,18 @@
             :rules="[v => !!v || 'Correction details are required', v => v.length > 10 || 'Please provide more detail']"
             required
             variant="outlined"
-          ></v-textarea>
+          />
         </v-form>
       </v-card-text>
       <v-card-actions class="pa-4">
-        <v-spacer></v-spacer>
-        <v-btn variant="text" @click="dialog = false" :disabled="loading">Cancel</v-btn>
+        <v-spacer />
+        <v-btn variant="text" :disabled="loading" @click="dialog = false">Cancel</v-btn>
         <v-btn
           color="primary"
           variant="flat"
-          @click="submit"
           :loading="loading"
           :disabled="!valid"
+          @click="submit"
         >
           Submit Report
         </v-btn>

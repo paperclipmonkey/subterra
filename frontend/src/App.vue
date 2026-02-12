@@ -2,11 +2,11 @@
   <v-app>
     <!-- Content moves down if banner is present? v-system-bar app fixes to top -->
     <v-system-bar v-if="appStore.user && appStore.user.active_callout" color="red darken-2"
-      class="text-white cursor-pointer px-4" height="40" @click="router.push('/callout/active')"
-      style="cursor: pointer; z-index: 9999;" window>
+                  class="text-white cursor-pointer px-4" height="40" style="cursor: pointer; z-index: 9999;"
+                  window @click="router.push('/callout/active')">
       <v-icon color="white" class="mr-2">mdi-alert-circle</v-icon>
       <span class="font-weight-bold">OPEN CALLOUT IN PROGRESS</span>
-      <v-spacer></v-spacer>
+      <v-spacer />
       <span class="d-none d-sm-flex">
         EXPECTED: {{ formatTime(appStore.user.active_callout.callout_time) }}
       </span>
@@ -14,11 +14,11 @@
     </v-system-bar>
 
     <v-system-bar v-else-if="appStore.user.on_call" color="deep-purple-darken-2" class="text-white cursor-pointer px-4"
-      height="40" @click="router.push('/admin/callout')" style="cursor: pointer; z-index: 9999;" window>
+                  height="40" style="cursor: pointer; z-index: 9999;" window @click="router.push('/admin/callout')">
       <v-icon color="white" class="mr-2">mdi-shield-check</v-icon>
       <span class="font-weight-bold">ON-CALL DUTY OFFICER</span>
-      <v-spacer></v-spacer>
-      <span class="d-none d-sm-flex mr-4" v-if="appStore.user.on_call_until">
+      <v-spacer />
+      <span v-if="appStore.user.on_call_until" class="d-none d-sm-flex mr-4">
         REMAINING: {{ formatRemainingTime(appStore.user.on_call_until) }}
       </span>
       <span class="font-weight-bold">
@@ -28,10 +28,10 @@
     </v-system-bar>
  
     <v-system-bar v-else-if="appStore.user.id && !appStore.canSuggest" color="warning"
-      class="text-white px-4" height="40" style="z-index: 9999;" window>
+                  class="text-white px-4" height="40" style="z-index: 9999;" window>
       <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? 'mdi-account-clock' : 'mdi-account-plus' }}</v-icon>
       <span class="font-weight-bold">{{ hasPendingApprovals ? 'PENDING APPROVAL' : 'ACTION REQUIRED' }}</span>
-      <v-spacer></v-spacer>
+      <v-spacer />
       <span>Join a club to unlock full access</span>
       <v-btn variant="text" size="small" class="ml-4" to="/waitlist" color="white" border>
         {{ hasPendingApprovals ? 'Track Progress' : 'Join Club' }}
@@ -44,12 +44,12 @@
 
     <!-- Global notification snackbar -->
     <v-snackbar v-model="notificationStore.show" :color="notificationColor" :timeout="notificationStore.timeout"
-      location="top" @update:modelValue="(value) => !value && notificationStore.hideNotification()">
-      <v-icon :icon="notificationIcon" class="mr-2"></v-icon>
+                location="top" @update:model-value="(value) => !value && notificationStore.hideNotification()">
+      <v-icon :icon="notificationIcon" class="mr-2" />
       {{ notificationStore.message }}
 
-      <template v-slot:actions>
-        <v-btn icon="mdi-close" variant="text" @click="notificationStore.hideNotification()"></v-btn>
+      <template #actions>
+        <v-btn icon="mdi-close" variant="text" @click="notificationStore.hideNotification()" />
       </template>
     </v-snackbar>
 

@@ -20,12 +20,12 @@ class AdminTaskTest extends TestCase
         // Create a "Good" system for the unrelated caves to belong to, so they don't pollute system lists
         $goodSystem = CaveSystem::factory()->create(['references' => 'Valid Refs', 'name' => 'Good System']);
         \App\Models\CaveSystemFile::create([
-            'cave_system_id' => $goodSystem->id, 
+            'cave_system_id' => $goodSystem->id,
             'filename' => 'file.pdf',
             'original_filename' => 'file.pdf',
             'mime_type' => 'application/pdf',
             'size' => 1024,
-            'details' => 'Test file'
+            'details' => 'Test file',
         ]);
 
         // 1. Cave with missing photos (both hero and entrance)
@@ -54,28 +54,26 @@ class AdminTaskTest extends TestCase
         // 4. System with missing references
         $noRefSys = CaveSystem::factory()->create(['references' => null, 'name' => 'No Ref System']);
         \App\Models\CaveSystemFile::create([
-            'cave_system_id' => $noRefSys->id, 
+            'cave_system_id' => $noRefSys->id,
             'filename' => 'file.pdf',
             'original_filename' => 'file.pdf',
             'mime_type' => 'application/pdf',
             'size' => 1024,
-            'details' => 'Test file'
+            'details' => 'Test file',
         ]); // Has file, but no refs
 
         $refSys = CaveSystem::factory()->create(['references' => 'Book A', 'name' => 'Ref System']);
         \App\Models\CaveSystemFile::create([
-            'cave_system_id' => $refSys->id, 
+            'cave_system_id' => $refSys->id,
             'filename' => 'file.pdf',
             'original_filename' => 'file.pdf',
             'mime_type' => 'application/pdf',
             'size' => 1024,
-            'details' => 'Test file'
+            'details' => 'Test file',
         ]); // Has file and refs
 
         // 5. System with missing files
         CaveSystem::factory()->create(['name' => 'No File System', 'references' => 'Refs']); // Has refs, but no file
-
-
 
         $response = $this->actingAs($admin)->getJson('/api/admin/tasks');
 

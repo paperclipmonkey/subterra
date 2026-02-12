@@ -1,34 +1,34 @@
 <template>
-    <v-dialog v-model="dialog" max-width="800px">
-        <template v-slot:activator="{ props }">
-            <v-btn color="primary" variant="text" :prepend-icon="isNew ? 'mdi-plus' : 'mdi-pencil'" v-bind="props"
-                v-if="canEdit">
-                {{ activatorText }}
-            </v-btn>
-        </template>
+  <v-dialog v-model="dialog" max-width="800px">
+    <template #activator="{ props }">
+      <v-btn v-if="canEdit" color="primary" variant="text" :prepend-icon="isNew ? 'mdi-plus' : 'mdi-pencil'"
+             v-bind="props">
+        {{ activatorText }}
+      </v-btn>
+    </template>
 
-        <v-card>
-            <v-card-title>
-                <span class="text-h5">{{ activatorText }}</span>
-            </v-card-title>
+    <v-card>
+      <v-card-title>
+        <span class="text-h5">{{ activatorText }}</span>
+      </v-card-title>
 
-            <v-card-text>
-                <v-container>
-                    <CollectionForm ref="form" v-model="editedCollection" />
-                </v-container>
-            </v-card-text>
+      <v-card-text>
+        <v-container>
+          <CollectionForm ref="form" v-model="editedCollection" />
+        </v-container>
+      </v-card-text>
 
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="blue-darken-1" variant="text" @click="close">
-                    Cancel
-                </v-btn>
-                <v-btn color="blue-darken-1" variant="text" @click="save" :loading="saving">
-                    {{ saveButtonText }}
-                </v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-dialog>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="blue-darken-1" variant="text" @click="close">
+          Cancel
+        </v-btn>
+        <v-btn color="blue-darken-1" variant="text" :loading="saving" @click="save">
+          {{ saveButtonText }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>

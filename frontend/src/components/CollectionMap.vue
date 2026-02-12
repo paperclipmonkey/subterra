@@ -9,7 +9,7 @@
     </v-card>
   </div>
   <div v-else style="height: 600px;">
-    <CaveMap :caves="collection.caves" v-if="collection.caves && collection.caves.length > 0" />
+    <CaveMap v-if="collection.caves && collection.caves.length > 0" :caves="collection.caves" />
     <div v-else class="d-flex justify-center align-center fill-height bg-grey-lighten-4">
       <div class="text-center text-grey">
         <v-icon size="48" class="mb-2">mdi-map-off</v-icon>

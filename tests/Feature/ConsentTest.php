@@ -15,7 +15,7 @@ class ConsentTest extends TestCase
     {
         $payload = [
             'email' => 'newuser@example.com',
-            'agreed_to_tos' => true
+            'agreed_to_tos' => true,
         ];
 
         $response = $this->postJson('/api/auth/magic-link', $payload);
@@ -31,7 +31,7 @@ class ConsentTest extends TestCase
     public function current_user_returns_consent_timestamp()
     {
         $user = User::factory()->create([
-            'privacy_policy_agreed_at' => now()->subDays(1)
+            'privacy_policy_agreed_at' => now()->subDays(1),
         ]);
 
         $this->actingAs($user, 'sanctum');

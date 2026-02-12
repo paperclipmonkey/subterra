@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Factories;
 
 use App\Models\Club;
@@ -22,6 +23,7 @@ class ClubFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->unique()->company();
+
         return [
             'name' => $name,
             'slug' => Str::slug($name),
@@ -60,6 +62,3 @@ class ClubFactory extends Factory
         });
     }
 }
-
-
-

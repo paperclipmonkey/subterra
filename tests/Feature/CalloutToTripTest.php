@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Callout;
 use App\Models\Cave;
-use App\Models\User;
 use App\Models\Trip;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -43,7 +43,7 @@ class CalloutToTripTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonStructure(['trip_id']);
-        
+
         $tripId = $response->json('trip_id');
         $this->assertNotNull($tripId);
 
@@ -56,7 +56,7 @@ class CalloutToTripTest extends TestCase
         ]);
 
         $trip = Trip::where('short_id', $tripId)->first();
-        
+
         // Verify participants: Creator + Friend (Guest is ignored as Trip only supports User participants)
         $this->assertCount(2, $trip->participants);
         $this->assertTrue($trip->participants->contains($user->id));
@@ -65,7 +65,7 @@ class CalloutToTripTest extends TestCase
         // Verify callout status is changed to cancelled
         $this->assertDatabaseHas('callouts', [
             'id' => $callout->id,
-            'status' => 'cancelled'
+            'status' => 'cancelled',
         ]);
     }
 }

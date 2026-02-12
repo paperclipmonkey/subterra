@@ -10,9 +10,9 @@ use App\Services\SmsService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use Tests\TestCase;
 use Mockery;
 use Mockery\MockInterface;
+use Tests\TestCase;
 
 class CalloutTest extends TestCase
 {
@@ -52,21 +52,23 @@ class CalloutTest extends TestCase
             'team_details' => 'Alice, Bob',
             'participants' => [
                 ['name' => 'Alice', 'email' => 'alice@test.com', 'phone' => '+111'],
-                ['name' => 'Bob', 'email' => 'bob@test.com']
-            ]
+                ['name' => 'Bob', 'email' => 'bob@test.com'],
+            ],
         ];
 
         $response = $this->actingAs($user)
             ->postJson('/api/callouts', $payload);
 
-        if($response->status()!==201){dump($response->json());}$response->assertStatus(201);
-        
+        if ($response->status() !== 201) {
+            dump($response->json());
+        }$response->assertStatus(201);
+
         $this->assertDatabaseHas('callouts', [
             'user_id' => $user->id,
             'cave_id' => $cave->id,
             'status' => 'active',
             'car_registration' => 'AB12 CDE',
-            'car_parking' => 'Bull Pot Farm'
+            'car_parking' => 'Bull Pot Farm',
         ]);
 
         $callout = Callout::where('user_id', $user->id)->first();
@@ -82,7 +84,7 @@ class CalloutTest extends TestCase
     public function test_create_callout_fails_if_no_admin_coverage()
     {
         $user = User::factory()->withApprovedClub()->create();
-        
+
         // NO OnCallShift created
 
         $payload = [
@@ -92,15 +94,15 @@ class CalloutTest extends TestCase
             'car_registration' => 'AB12 CDE',
             'car_parking' => 'Bull Pot Farm',
             'participants' => [
-                ['name' => 'Test User', 'phone' => '+111']
-            ]
+                ['name' => 'Test User', 'phone' => '+111'],
+            ],
         ];
 
         $response = $this->actingAs($user)
             ->postJson('/api/callouts', $payload);
 
         // Controller catches Exception and returns 422
-        $response->assertStatus(422); 
+        $response->assertStatus(422);
     }
 
     public function test_user_can_cancel_own_callout()
@@ -113,11 +115,11 @@ class CalloutTest extends TestCase
             ->postJson("/api/callouts/{$callout->id}/cancel");
 
         $response->assertStatus(200);
-        
+
         // Callout status should be 'cancelled' (not missing)
         $this->assertDatabaseHas('callouts', [
             'id' => $callout->id,
-            'status' => 'cancelled'
+            'status' => 'cancelled',
         ]);
     }
 
@@ -140,14 +142,14 @@ class CalloutTest extends TestCase
         $callout = Callout::factory()->create(['user_id' => $user->id, 'status' => 'active']);
 
         $response = $this->postJson("/api/callouts/{$callout->id}/cancel", [
-            'location' => 'Somewhere'
+            'location' => 'Somewhere',
         ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('callouts', [
             'id' => $callout->id,
             'status' => 'cancelled',
-            'cancelled_location' => 'Somewhere'
+            'cancelled_location' => 'Somewhere',
         ]);
         $this->assertNotNull($callout->fresh()->cancelled_ip);
     }
@@ -168,14 +170,14 @@ class CalloutTest extends TestCase
         Mail::fake();
         $user = User::factory()->create();
         $callout = Callout::factory()->create([
-            'user_id' => $user->id, 
-            'status' => 'triggered'
+            'user_id' => $user->id,
+            'status' => 'triggered',
         ]);
-        
+
         // Create an incident for this callout (simulating rescue initiated)
         $incident = \App\Models\Incident::create([
             'callout_id' => $callout->id,
-            'status' => 'open'
+            'status' => 'open',
         ]);
 
         // User cancels their callout
@@ -183,17 +185,17 @@ class CalloutTest extends TestCase
             ->postJson("/api/callouts/{$callout->id}/cancel");
 
         $response->assertStatus(200);
-        
+
         // Callout should NOT be deleted, but status should be 'cancelled'
         $this->assertDatabaseHas('callouts', [
             'id' => $callout->id,
-            'status' => 'cancelled'
+            'status' => 'cancelled',
         ]);
 
         // Incident should remain OPEN
         $this->assertDatabaseHas('incidents', [
             'id' => $incident->id,
-            'status' => 'open'
+            'status' => 'open',
         ]);
 
         // Should have a system note
@@ -226,13 +228,13 @@ class CalloutTest extends TestCase
             'car_parking' => 'Bull Pot Farm',
             'participants' => [
                 ['name' => $user->name, 'user_id' => $user->id, 'phone' => $user->phone], // Creator is here
-                ['name' => 'Friend', 'phone' => '07987654321']
-            ]
+                ['name' => 'Friend', 'phone' => '07987654321'],
+            ],
         ];
 
         // Mock SmsService to count calls
         $smsMock = Mockery::mock(SmsService::class);
-        
+
         // Should be called 2 times: once for creator registration, once for Friend (participant)
         // Explicitly NOT called for creator as participant.
         $smsMock->shouldReceive('sendMessage')
@@ -260,23 +262,23 @@ class CalloutTest extends TestCase
         // 2. Setup Existing Callout with Participant "Bob"
         $user1 = User::factory()->create();
         $cave = Cave::factory()->create();
-        
-        // Use service directly or just create models? 
+
+        // Use service directly or just create models?
         // Better to use models to check validation against them.
         $bobPhone = '+447999123456';
-        
+
         $activeCallout = Callout::factory()->create([
             'status' => 'active',
-            'callout_time' => Carbon::now()->addHours(2)
+            'callout_time' => Carbon::now()->addHours(2),
         ]);
         $activeCallout->participants()->create([
             'name' => 'Bob',
-            'phone' => $bobPhone
+            'phone' => $bobPhone,
         ]);
 
         // 3. Attempt to create NEW callout with "Bob"
         $user2 = User::factory()->withApprovedClub()->create();
-        
+
         $payload = [
             'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
             'cave_id' => $cave->id,
@@ -285,8 +287,8 @@ class CalloutTest extends TestCase
             'car_registration' => 'AB12 CDE',
             'car_parking' => 'Parking',
             'participants' => [
-                ['name' => 'Should Fail', 'phone' => $bobPhone] 
-            ]
+                ['name' => 'Should Fail', 'phone' => $bobPhone],
+            ],
         ];
 
         $response = $this->actingAs($user2)
@@ -294,7 +296,7 @@ class CalloutTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJson([
-             'message' => "One or more participants (or you) are already in an active callout. Please resolve the existing callout first."
+             'message' => 'One or more participants (or you) are already in an active callout. Please resolve the existing callout first.',
         ]);
     }
 }

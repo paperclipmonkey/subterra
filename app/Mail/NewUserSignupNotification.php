@@ -12,7 +12,8 @@ use Illuminate\Queue\SerializesModels;
 
 class NewUserSignupNotification extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     public User $newUser;
 
@@ -53,7 +54,7 @@ class NewUserSignupNotification extends Mailable implements ShouldQueue
                 'userEmail' => $this->newUser->email,
                 // Generate a URL to an admin page where the user can be approved
                 // The 'user_without_scopes' binding might be useful here if approval bypasses scopes
-                'approvalUrl' => config('app.url') . '/admin/users?search=' . $this->newUser->email, // Adjust route name as needed
+                'approvalUrl' => config('app.url').'/admin/users?search='.$this->newUser->email, // Adjust route name as needed
             ],
         );
     }

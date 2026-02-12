@@ -75,6 +75,7 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->get()
                     ->pluck('entrance.name')
                     ->unique();
+
                 return $caveNames->contains('Hunters\' Hole') && $caveNames->contains('Hunters\' Lodge Inn Sink');
 
             case 'Hard Caver':
@@ -86,6 +87,7 @@ class CheckAndAwardMedals implements ShouldQueue
                         return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
                     })
                     ->unique();
+
                 return $regions->contains('Yorkshire') && $regions->contains('Mendip') && $regions->contains('Wales');
 
             case 'History Buff':
@@ -99,6 +101,7 @@ class CheckAndAwardMedals implements ShouldQueue
                             ->pluck('tag')
                             ->contains('Mine');
                     });
+
                 return $mineTrips->count() >= 5;
 
             case 'Sport Climber':
@@ -139,6 +142,7 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->filter(function ($trip) {
                         return optional($trip->entrance)->tags->where('tag', 'Leader')->pluck('tag')->isNotEmpty();
                     });
+
                 return $leaderTrips->count() >= 5;
 
             case 'Mucky Pup':
@@ -149,6 +153,7 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->filter(function ($trip) {
                         return optional($trip->entrance->system)->tags->where('tag', 'Muddy')->isNotEmpty();
                     });
+
                 return $muddyTrips->count() >= 3;
 
             case 'Faff Now Cave Later':
@@ -157,9 +162,11 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->with('entrance')
                     ->get()
                     ->filter(function ($trip) {
-                        $swccCaveNames = ['Ogof Ffynnon Ddu 1', 'Ogof Ffynnon Ddu 2', 'Cwm Dwr',];
+                        $swccCaveNames = ['Ogof Ffynnon Ddu 1', 'Ogof Ffynnon Ddu 2', 'Cwm Dwr'];
+
                         return in_array(optional($trip->entrance)->name, $swccCaveNames);
                     });
+
                 return $swccTrips->count() >= 5;
 
             case 'String Dangler':
@@ -170,6 +177,7 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->filter(function ($trip) {
                         return optional($trip->entrance)->tags->where('tag', 'SRT')->isNotEmpty();
                     });
+
                 return $srtTrips->count() >= 10;
             default:
                 return false;

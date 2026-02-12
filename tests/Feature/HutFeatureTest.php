@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Club;
+use App\Models\Hut;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\Hut;
-use App\Models\Club;
-use App\Models\Cave;
 
 class HutFeatureTest extends TestCase
 {
@@ -25,8 +24,6 @@ class HutFeatureTest extends TestCase
             ->assertJsonCount(3);
     }
 
-
-
     public function test_can_create_hut(): void
     {
         $user = User::factory()->create();
@@ -40,7 +37,7 @@ class HutFeatureTest extends TestCase
             'location_lat' => 51.251708,
             'location_lng' => -2.657503,
             'club_id' => $club->id,
-            'amenities' => ["Showers, two bunk rooms, kitchen, log fire"]
+            'amenities' => ['Showers, two bunk rooms, kitchen, log fire'],
         ];
 
         $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
@@ -48,7 +45,7 @@ class HutFeatureTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonPath('name', 'The Belfy')
             ->assertJsonPath('club_id', $club->id)
-            ->assertJsonPath('amenities', ["Showers, two bunk rooms, kitchen, log fire"]);
+            ->assertJsonPath('amenities', ['Showers, two bunk rooms, kitchen, log fire']);
 
         $this->assertDatabaseHas('huts', [
             'name' => 'The Belfy',
@@ -88,14 +85,14 @@ class HutFeatureTest extends TestCase
 
         // Create a simple base64 encoded 1x1 pixel PNG
         $imageData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-        
+
         $hutData = [
             'name' => 'Test Hut',
             'description' => 'A test hut with image',
             'club_id' => $club->id,
             'image' => [
-                'data' => 'data:image/png;base64,' . $imageData,
-            ]
+                'data' => 'data:image/png;base64,'.$imageData,
+            ],
         ];
 
         $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
@@ -149,13 +146,13 @@ class HutFeatureTest extends TestCase
 
         // Create a simple base64 encoded 1x1 pixel PNG
         $imageData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-        
+
         $updateData = [
             'name' => $hut->name,
             'club_id' => $club->id,
             'image' => [
-                'data' => 'data:image/png;base64,' . $imageData,
-            ]
+                'data' => 'data:image/png;base64,'.$imageData,
+            ],
         ];
 
         $response = $this->actingAs($user)->putJson("/api/huts/{$hut->id}", $updateData);
@@ -202,7 +199,7 @@ class HutFeatureTest extends TestCase
         $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
 
         $response->assertStatus(201);
-        
+
         $hut = Hut::where('name', 'Reciprocal Hut')->first();
         $this->assertCount(2, $hut->reciprocalClubs);
         $this->assertTrue($hut->reciprocalClubs->contains($reciprocalClub1));

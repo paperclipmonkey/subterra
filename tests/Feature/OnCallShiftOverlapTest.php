@@ -15,7 +15,7 @@ class OnCallShiftOverlapTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Setup admin user
         $this->user = User::factory()->dutyOfficer()->create();
         $this->actingAs($this->user);
@@ -108,13 +108,13 @@ class OnCallShiftOverlapTest extends TestCase
 
         // User B tries shift 11:00 - 13:00 (Overlap start)
         $userB = User::factory()->dutyOfficer()->create();
-        
+
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $userB->id,
             'start_at' => '2025-01-01 11:00:00',
             'end_at' => '2025-01-01 13:00:00',
         ]);
-        
+
         // This should fail now as we want NO overlapping shifts at all
         $response->assertStatus(409);
     }
@@ -130,7 +130,7 @@ class OnCallShiftOverlapTest extends TestCase
 
         // User B tries shift 12:00 - 14:00 (Abutting)
         $userB = User::factory()->dutyOfficer()->create();
-        
+
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $userB->id,
             'start_at' => '2025-01-01 12:00:00',

@@ -2,24 +2,25 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use Tests\Support\JsonSchemaValidator;
 use App\Models\Cave;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\JsonSchemaValidator;
+use Tests\TestCase;
 
 class CaveTest extends TestCase
 {
-    use RefreshDatabase, JsonSchemaValidator;
+    use RefreshDatabase;
+    use JsonSchemaValidator;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(\Database\Seeders\TagSeeder::class);
     }
-    
+
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_get_the_list_of_caves()
     {
@@ -38,10 +39,10 @@ class CaveTest extends TestCase
         $this->actingAs(User::factory()->withApprovedClub()->create());
 
         $cave = Cave::factory()->create([
-            'slug' => 'test-cave'
+            'slug' => 'test-cave',
         ]);
 
-        $response = $this->get('/api/caves/' . $cave->slug);
+        $response = $this->get('/api/caves/'.$cave->slug);
 
         $response->assertStatus(200);
         $this->assertResponseMatchesSchema($response, 'endpoints/caves-show');
@@ -51,9 +52,9 @@ class CaveTest extends TestCase
     public function it_can_view_a_cave_by_slug_with_non_numeric_slug()
     {
         $this->actingAs(User::factory()->withApprovedClub()->create());
-        
+
         $cave = Cave::factory()->create([
-            'slug' => 'qui-a-repellat-numquam'
+            'slug' => 'qui-a-repellat-numquam',
         ]);
 
         // This triggers the TrackApiInteraction middleware
@@ -64,7 +65,8 @@ class CaveTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_updates_a_cave_and_syncs_tags() {
+    public function it_updates_a_cave_and_syncs_tags()
+    {
         $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         $cave = Cave::factory()->create();
         $tag = Tag::factory()->create(['category' => 'test', 'tag' => 'tag', 'assignable' => true]);
@@ -75,11 +77,11 @@ class CaveTest extends TestCase
                 [
                     'category' => $tag->category,
                     'tag' => $tag->tag,
-                ]
-            ]
+                ],
+            ],
         ];
 
-        $response = $this->putJson('/api/caves/' . $cave->slug, $data);
+        $response = $this->putJson('/api/caves/'.$cave->slug, $data);
 
         $response->assertOk();
         $this->assertDatabaseHas('caves', ['id' => $cave->id, 'name' => 'Updated Cave']);
@@ -93,7 +95,7 @@ class CaveTest extends TestCase
         Storage::fake('media');
         $cave = Cave::factory()->create();
 
-        $base64Image = 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png'));
+        $base64Image = 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png'));
 
         $data = [
             'hero_image' => [
@@ -104,7 +106,7 @@ class CaveTest extends TestCase
             ],
         ];
 
-        $response = $this->putJson('/api/caves/' . $cave->slug, $data);
+        $response = $this->putJson('/api/caves/'.$cave->slug, $data);
 
         $response->assertOk();
         $cave = $cave->fresh();
@@ -129,13 +131,14 @@ class CaveTest extends TestCase
             'entrance_image' => null,
         ];
 
-        $response = $this->putJson('/api/caves/' . $cave->slug, $data);
+        $response = $this->putJson('/api/caves/'.$cave->slug, $data);
 
         $response->assertOk();
         $cave = $cave->fresh();
         $this->assertNull($cave->hero_image);
         $this->assertNull($cave->entrance_image);
     }
+
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_preserves_images_when_string_url_is_passed()
     {
@@ -151,7 +154,7 @@ class CaveTest extends TestCase
             'entrance_image' => 'https://example.com/caves/existing_entrance.webp',
         ];
 
-        $response = $this->putJson('/api/caves/' . $cave->slug, $data);
+        $response = $this->putJson('/api/caves/'.$cave->slug, $data);
 
         $response->assertOk();
         $cave = $cave->fresh();

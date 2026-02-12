@@ -10,7 +10,7 @@
           single-line
           hide-details
           class="mb-4"
-        ></v-text-field>
+        />
         <v-data-table
           :headers="headers"
           :items="users"
@@ -23,24 +23,24 @@
           item-value="id"
           @click:row="handleRowClick"
         >
-          <template v-slot:item.clubs="{ item }">
+          <template #item.clubs="{ item }">
             <div class="d-flex ga-2 mt-2">
               <v-chip
                 v-for="club in item.clubs"
                 :key="club.id"
                 :color="club.status === 'approved' ? 'green' : 'orange'"
                 size="small"
-                @click.stop="club.status === 'pending' ? approveMembership(item, club) : null"
                 :style="club.status === 'pending' ? 'cursor: pointer' : ''"
+                @click.stop="club.status === 'pending' ? approveMembership(item, club) : null"
               >
                 {{ club.name }}
-                <v-tooltip activator="parent" location="top" v-if="club.status === 'pending'">
+                <v-tooltip v-if="club.status === 'pending'" activator="parent" location="top">
                   Click to approve membership
                 </v-tooltip>
               </v-chip>
             </div>
           </template>
-          <template v-slot:item.roles="{ item }">
+          <template #item.roles="{ item }">
             <div class="d-flex ga-1 flex-wrap py-1" @click.stop>
               <v-chip
                 v-for="role in allRoles"
@@ -48,10 +48,10 @@
                 :color="hasRole(item, role.slug) ? role.color : 'grey-lighten-2'"
                 :variant="hasRole(item, role.slug) ? 'flat' : 'outlined'"
                 size="small"
-                @click.stop="isSelf(item) ? null : toggleRole(item, role.slug)"
                 :loading="item.loadingRole === role.slug"
                 :style="isSelf(item) ? 'opacity: 0.5; cursor: not-allowed' : 'cursor: pointer'"
                 :disabled="isSelf(item)"
+                @click.stop="isSelf(item) ? null : toggleRole(item, role.slug)"
               >
                 <v-icon start size="x-small">{{ role.icon }}</v-icon>
                 {{ role.label }}
@@ -61,17 +61,17 @@
               </v-chip>
             </div>
           </template>
-           <template v-slot:item.created_at="{ item }">
+          <template #item.created_at="{ item }">
             {{ moment(item.created_at).format('DD/MM/YYYY') }}
           </template>
-          <template v-slot:item.actions="{ item }">
+          <template #item.actions="{ item }">
             <v-btn
               icon
               variant="text"
               size="small"
               color="error"
-              @click.stop="confirmDelete(item)"
               :loading="item.loadingDelete"
+              @click.stop="confirmDelete(item)"
             >
               <v-icon>mdi-delete</v-icon>
               <v-tooltip activator="parent" location="top">Delete User</v-tooltip>
@@ -93,7 +93,7 @@
           This will permanently remove their profile, trips, and sensitive safety data. This action cannot be undone.
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn variant="text" @click="cancelDelete">Cancel</v-btn>
           <v-btn color="error" variant="flat" @click="executeDelete">Delete Permanently</v-btn>
         </v-card-actions>

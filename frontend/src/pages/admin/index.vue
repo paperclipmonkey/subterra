@@ -6,26 +6,26 @@
     </div>
 
     <!-- Operations & Safety -->
-    <section class="mb-10" v-if="isDutyOfficer || isPlatformAdmin">
+    <section v-if="isDutyOfficer || isPlatformAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="error" class="mr-3" size="32">mdi-shield-alert</v-icon>
         <h3 class="text-h5 font-weight-bold">Operations & Safety</h3>
       </div>
       <v-row>
-        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDutyOfficer">
+        <v-col v-if="isDutyOfficer" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/callout" link hover class="admin-card">
             <v-card-item title="Callout Admin">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="error">mdi-monitor-dashboard</v-icon>
               </template>
               <v-card-subtitle>Live dashboard & incidents</v-card-subtitle>
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDutyOfficer">
+        <v-col v-if="isDutyOfficer" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/rota" link hover class="admin-card">
             <v-card-item title="Duty Rota">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="deep-purple">mdi-calendar-clock</v-icon>
               </template>
               <v-card-subtitle>Manage on-call shifts</v-card-subtitle>
@@ -36,7 +36,7 @@
     </section>
 
     <!-- User Management -->
-    <section class="mb-10" v-if="isPlatformAdmin">
+    <section v-if="isPlatformAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="primary" class="mr-3" size="32">mdi-account-cog</v-icon>
         <h3 class="text-h5 font-weight-bold">User Management</h3>
@@ -45,7 +45,7 @@
         <v-col cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/users" link hover class="admin-card">
             <v-card-item title="Users">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="primary">mdi-account-group</v-icon>
               </template>
               <v-card-subtitle>Manage accounts & roles</v-card-subtitle>
@@ -55,7 +55,7 @@
         <v-col cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/clubs" link hover class="admin-card">
             <v-card-item title="Clubs">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="secondary">mdi-shield-home</v-icon>
               </template>
               <v-card-subtitle>Club details & members</v-card-subtitle>
@@ -65,7 +65,7 @@
         <v-col cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/communications" link hover class="admin-card">
             <v-card-item title="Mass Comms">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="info">mdi-email-multiple</v-icon>
               </template>
               <v-card-subtitle>Send platform announcements</v-card-subtitle>
@@ -76,56 +76,56 @@
     </section>
 
     <!-- Content & Data -->
-    <section class="mb-10" v-if="isPlatformAdmin || isDataAdmin">
+    <section v-if="isPlatformAdmin || isDataAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="success" class="mr-3" size="32">mdi-database-edit</v-icon>
         <h3 class="text-h5 font-weight-bold">Content & Data</h3>
       </div>
       <v-row>
-        <v-col cols="12" sm="6" md="4" lg="3" v-if="isPlatformAdmin || isDataAdmin">
+        <v-col v-if="isPlatformAdmin || isDataAdmin" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/pages" link hover class="admin-card">
             <v-card-item title="Pages">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="success">mdi-file-edit</v-icon>
               </template>
               <v-card-subtitle>Manage CMS content</v-card-subtitle>
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3" v-if="isPlatformAdmin || isDataAdmin">
+        <v-col v-if="isPlatformAdmin || isDataAdmin" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/suggested-edits" link hover class="admin-card">
             <v-card-item title="Suggestions">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="orange">mdi-file-compare</v-icon>
               </template>
               <v-card-subtitle>Review community edits</v-card-subtitle>
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3" v-if="isPlatformAdmin || isDataAdmin">
+        <v-col v-if="isPlatformAdmin || isDataAdmin" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/tasks" link hover class="admin-card">
             <v-card-item title="Data Quality">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="warning">mdi-clipboard-check</v-icon>
               </template>
               <v-card-subtitle>Missing data & validation</v-card-subtitle>
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDataAdmin">
+        <v-col v-if="isDataAdmin" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/cave-system-with-cave" link hover class="admin-card">
             <v-card-item title="Add Cave">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="teal">mdi-map-marker-plus</v-icon>
               </template>
               <v-card-subtitle>System & entrance wizard</v-card-subtitle>
             </v-card-item>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3" v-if="isDataAdmin">
+        <v-col v-if="isDataAdmin" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/catchments" link hover class="admin-card">
             <v-card-item title="Catchments">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="blue">mdi-waves</v-icon>
               </template>
               <v-card-subtitle>River gauge monitoring</v-card-subtitle>
@@ -136,7 +136,7 @@
     </section>
 
     <!-- Analytics -->
-    <section class="mb-10" v-if="isPlatformAdmin">
+    <section v-if="isPlatformAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="grey-darken-2" class="mr-3" size="32">mdi-chart-bar</v-icon>
         <h3 class="text-h5 font-weight-bold">Analytics</h3>
@@ -145,7 +145,7 @@
         <v-col cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/dashboard" link hover class="admin-card">
             <v-card-item title="Traffic Dashboard">
-              <template v-slot:prepend>
+              <template #prepend>
                 <v-icon color="grey-darken-2">mdi-chart-line</v-icon>
               </template>
               <v-card-subtitle>API trends & popular records</v-card-subtitle>

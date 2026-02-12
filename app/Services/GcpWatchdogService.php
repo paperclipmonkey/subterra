@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Callout;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -40,19 +41,20 @@ class GcpWatchdogService
             if ($response->successful()) {
                 $data = $response->json();
                 Log::info("GCP Watchdog registered: {$callout->id}", $data);
+
                 return $callout->id; // Use callout ID as watchdog ID
             }
 
             Log::error("Failed to register GCP watchdog: {$response->status()}", [
                 'callout_id' => $callout->id,
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error("Exception registering GCP watchdog: {$e->getMessage()}", [
                 'callout_id' => $callout->id,
-                'exception' => $e
+                'exception' => $e,
             ]);
 
             return null;
@@ -78,24 +80,25 @@ class GcpWatchdogService
             $response = Http::timeout(10)
                 ->withHeaders(['X-Watchdog-Key' => $this->apiKey])
                 ->delete("{$this->baseUrl}/watchdog", [
-                    'callout_id' => $watchdogId
+                    'callout_id' => $watchdogId,
                 ]);
 
             if ($response->successful()) {
                 Log::info("GCP Watchdog cancelled: {$watchdogId}");
+
                 return true;
             }
 
             Log::error("Failed to cancel GCP watchdog: {$response->status()}", [
                 'watchdog_id' => $watchdogId,
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
 
             return false;
         } catch (\Exception $e) {
             Log::error("Exception cancelling GCP watchdog: {$e->getMessage()}", [
                 'callout_id' => $callout->id,
-                'exception' => $e
+                'exception' => $e,
             ]);
 
             return false;
@@ -120,7 +123,7 @@ class GcpWatchdogService
                 'phone' => $callout->user->phone,
                 'email' => $callout->user->email,
             ],
-            'participants' => $callout->participants->map(fn($p) => [
+            'participants' => $callout->participants->map(fn ($p) => [
                 'name' => $p->name,
                 'phone' => $p->phone,
                 'email' => $p->email,

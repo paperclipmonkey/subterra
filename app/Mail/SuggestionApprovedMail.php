@@ -4,13 +4,14 @@ namespace App\Mail;
 
 use App\Models\SuggestedEdit;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SuggestionApprovedMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     public $suggestedEdit;
 
@@ -22,7 +23,7 @@ class SuggestionApprovedMail extends Mailable implements ShouldQueue
     public function build()
     {
         $type = str_replace('_', ' ', strtolower(class_basename($this->suggestedEdit->suggestable_type)));
-        
+
         $base = config('app.url');
         $id = $this->suggestedEdit->suggestable_id;
         $slug = $this->suggestedEdit->suggestable->slug ?? null;
@@ -44,8 +45,8 @@ class SuggestionApprovedMail extends Mailable implements ShouldQueue
                 break;
         }
 
-        $itemUrl = $path ? rtrim($base, '/') . $path : null;
-        
+        $itemUrl = $path ? rtrim($base, '/').$path : null;
+
         return $this->subject('Your suggestion was approved!')
             ->view('emails.suggestion_approved')
             ->with([

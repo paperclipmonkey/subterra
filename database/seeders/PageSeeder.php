@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Page;
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class PageSeeder extends Seeder
 {
@@ -15,7 +15,7 @@ class PageSeeder extends Seeder
     {
         $admin = User::first() ?? User::factory()->admin()->create();
 
-        $tosContent = <<<EOT
+        $tosContent = <<<'EOT'
 # Terms of Service
 
 Welcome to Subterra. By using our platform, you agree to the following terms. Please read them carefully.

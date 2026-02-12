@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // 1. On-Call Shifts
@@ -24,12 +23,12 @@ return new class extends Migration
         Schema::create('callouts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            
+
             // Location
             $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
             $table->foreignId('cave_id')->nullable()->constrained('caves')->nullOnDelete();
             $table->foreignId('exit_cave_id')->nullable()->constrained('caves')->nullOnDelete();
-            
+
             // Timing
             $table->dateTime('callout_time');
 
@@ -42,10 +41,10 @@ return new class extends Migration
             // Emergency Contact (Now Optional/Legacy)
             $table->string('emergency_contact_name')->nullable();
             $table->string('emergency_contact_phone')->nullable();
-            
+
             $table->enum('status', ['active', 'resolved', 'triggered'])->default('active');
-            $table->string('aws_watchdog_id')->nullable(); 
-            
+            $table->string('aws_watchdog_id')->nullable();
+
             $table->timestamps();
         });
 

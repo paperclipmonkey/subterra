@@ -37,9 +37,9 @@ class Collection extends Model
                 $collection->slug = \Illuminate\Support\Str::slug($collection->name);
             }
         });
-        
+
         static::updating(function ($collection) {
-             if (empty($collection->slug)) {
+            if (empty($collection->slug)) {
                 $collection->slug = \Illuminate\Support\Str::slug($collection->name);
             }
         });

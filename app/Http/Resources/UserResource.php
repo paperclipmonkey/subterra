@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Storage;
 
 class UserResource extends JsonResource
 {
-
     /**
      * Transform the resource into an array.
      *

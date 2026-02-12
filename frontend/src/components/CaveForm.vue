@@ -7,7 +7,7 @@
           label="Cave Name"
           :rules="[v => !!v || 'Name is required']"
           required
-        ></v-text-field>
+        />
       </v-card-title>
       <v-card-text>
         <sub>Entrance information. E.g. Where to find it, where to park. Information about access.</sub>
@@ -28,13 +28,13 @@
           label="Location Name"
           :rules="[v => !!v || 'Location name is required']"
           required
-        ></v-text-field>
+        />
         <v-text-field
           v-model="internalCave.location_country"
           label="Country"
           :rules="[v => !!v || 'Country is required']"
           required
-        ></v-text-field>
+        />
 
         <mgl-map
           :map-style="style"
@@ -44,8 +44,8 @@
           @load="onMapLoad"
         >
           <mgl-marker
-            :draggable="true"
             v-model:coordinates="coordinates"
+            :draggable="true"
             color="#cc0000"
           />
           <mgl-navigation-control />
@@ -60,7 +60,7 @@
               type="number"
               :rules="[v => v !== null && v !== undefined || 'Latitude is required']"
               required
-            ></v-text-field>
+            />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field
@@ -69,14 +69,14 @@
               type="number"
               :rules="[v => v !== null && v !== undefined || 'Longitude is required']"
               required
-            ></v-text-field>
+            />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field
               v-model.number="internalCave.location_alt"
               label="Altitude (m)"
               type="number"
-            ></v-text-field>
+            />
           </v-col>
         </v-row>
 
@@ -86,22 +86,22 @@
           :placeholder="'e.g. region_cave-name'"
           :hint="'Lowercase, a-z, 0-9, _ and - only'"
           persistent-hint
-        ></v-text-field>
+        />
 
         <v-file-input
+          v-model="heroImageFile"
           prepend-icon="mdi-camera"
           accept="image/*"
           label="Hero Image"
-          v-model="heroImageFile"
           chips
-        ></v-file-input>
+        />
         <v-file-input
+          v-model="entranceImageFile"
           prepend-icon="mdi-camera"
           accept="image/*"
           label="Entrance Image"
-          v-model="entranceImageFile"
           chips
-        ></v-file-input>
+        />
       </v-card-text>
     </v-card>
 
@@ -119,7 +119,7 @@
                   variant="outlined"
                   :value="tag.tag"
                   filter
-                ></v-chip>
+                />
               </template>
             </v-chip-group>
           </template>

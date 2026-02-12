@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Storage;
 
 class UserDetailEmailResource extends JsonResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -21,7 +20,7 @@ class UserDetailEmailResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email'=> $this->email,
+            'email' => $this->email,
             'photo' => $this->photo,
             'bio' => $this->bio,
             'phone' => $this->phone,
@@ -49,12 +48,12 @@ class UserDetailEmailResource extends JsonResource
                     'awarded_at' => $medal->pivot->awarded_at ?? null,
                 ];
             }),
-            'roles' => $this->roles->map(fn($role) => [
+            'roles' => $this->roles->map(fn ($role) => [
                 'id' => $role->id,
                 'name' => $role->name,
                 'slug' => $role->slug,
             ]),
-            'stats'=> [
+            'stats' => [
                 'trips' => $this->trips->count(),
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),
                 'duration' => $this->trips->sum('duration'),

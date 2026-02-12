@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <div v-if="loading" class="d-flex justify-center mt-12">
-       <v-progress-circular indeterminate></v-progress-circular>
+      <v-progress-circular indeterminate />
     </div>
     <div v-else-if="page">
       <h1 class="text-h3 mb-6">{{ page.title }}</h1>
@@ -10,15 +10,15 @@
       </div>
       <v-sheet class="pa-6" rounded border>
         <div class="vue-markdown">
-            <VueMarkdownRender :source="page.content" />
+          <VueMarkdownRender :source="page.content" />
         </div>
       </v-sheet>
     </div>
     <div v-else-if="error" class="text-center mt-12">
-        <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
-        <h2 class="text-h4 mb-2">Page not found</h2>
-        <p class="text-body-1 text-grey mb-4">{{ error }}</p>
-        <v-btn to="/" color="primary" variant="flat">Go Home</v-btn>
+      <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+      <h2 class="text-h4 mb-2">Page not found</h2>
+      <p class="text-body-1 text-grey mb-4">{{ error }}</p>
+      <v-btn to="/" color="primary" variant="flat">Go Home</v-btn>
     </div>
   </v-container>
 </template>

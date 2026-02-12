@@ -70,8 +70,8 @@ class ClubMembersTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'name', 'photo']
-            ]
+                '*' => ['id', 'name', 'photo'],
+            ],
         ]);
         // The controller should only return approved members.
         $response->assertJsonCount(2, 'data');
@@ -88,8 +88,8 @@ class ClubMembersTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'name', 'photo']
-            ]
+                '*' => ['id', 'name', 'photo'],
+            ],
         ]);
         $response->assertJsonCount(2, 'data');
     }

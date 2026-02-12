@@ -35,7 +35,7 @@ class UserSeeder extends Seeder
 
         if ($activeClub) {
             $admin->clubs()->syncWithoutDetaching([
-                $activeClub->id => ['is_admin' => true, 'status' => 'approved']
+                $activeClub->id => ['is_admin' => true, 'status' => 'approved'],
             ]);
         }
 
@@ -57,7 +57,7 @@ class UserSeeder extends Seeder
 
         if ($activeClub) {
             $clubAdmin->clubs()->syncWithoutDetaching([
-                $activeClub->id => ['is_admin' => true, 'status' => 'approved']
+                $activeClub->id => ['is_admin' => true, 'status' => 'approved'],
             ]);
         }
 
@@ -79,7 +79,7 @@ class UserSeeder extends Seeder
 
         if ($activeClub) {
             $member->clubs()->syncWithoutDetaching([
-                $activeClub->id => ['is_admin' => false, 'status' => 'approved']
+                $activeClub->id => ['is_admin' => false, 'status' => 'approved'],
             ]);
         }
 
@@ -101,7 +101,7 @@ class UserSeeder extends Seeder
 
         if ($activeClub) {
             $pending->clubs()->syncWithoutDetaching([
-                $activeClub->id => ['is_admin' => false, 'status' => 'pending']
+                $activeClub->id => ['is_admin' => false, 'status' => 'pending'],
             ]);
         }
 
@@ -123,7 +123,7 @@ class UserSeeder extends Seeder
 
         if ($activeClub) {
             $privateUser->clubs()->syncWithoutDetaching([
-                $activeClub->id => ['is_admin' => false, 'status' => 'approved']
+                $activeClub->id => ['is_admin' => false, 'status' => 'approved'],
             ]);
         }
 
@@ -145,13 +145,13 @@ class UserSeeder extends Seeder
 
         if ($activeClub) {
             $multiClub->clubs()->syncWithoutDetaching([
-                $activeClub->id => ['is_admin' => false, 'status' => 'approved']
+                $activeClub->id => ['is_admin' => false, 'status' => 'approved'],
             ]);
         }
 
         if ($disabledClub) {
             $multiClub->clubs()->syncWithoutDetaching([
-                $disabledClub->id => ['is_admin' => false, 'status' => 'approved']
+                $disabledClub->id => ['is_admin' => false, 'status' => 'approved'],
             ]);
         }
 
@@ -173,7 +173,7 @@ class UserSeeder extends Seeder
 
         if ($activeClub) {
             $inactive->clubs()->syncWithoutDetaching([
-                $activeClub->id => ['is_admin' => false, 'status' => 'approved']
+                $activeClub->id => ['is_admin' => false, 'status' => 'approved'],
             ]);
         }
 

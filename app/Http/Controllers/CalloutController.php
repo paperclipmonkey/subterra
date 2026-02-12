@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Callout;
 use App\Services\CalloutService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Exception;
 
 class CalloutController extends Controller
 {
@@ -51,9 +52,10 @@ class CalloutController extends Controller
 
         try {
             $callout = $this->calloutService->create($request->user(), $data);
+
             return response()->json([
                 'message' => 'Callout activated successfully.',
-                'callout' => $callout
+                'callout' => $callout,
             ], 201);
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
@@ -65,14 +67,14 @@ class CalloutController extends Controller
      */
     public function cancel(Request $request, $id)
     {
-        $callout = \App\Models\Callout::with('participants')->findOrFail($id);
-        
+        $callout = Callout::with('participants')->findOrFail($id);
+
         // If logged in, ensure user is either the creator OR a participant (or admin)
         if (Auth::check()) {
             $isCreator = Auth::user()->id === $callout->user_id;
             $isParticipant = $callout->participants->contains('user_id', Auth::user()->id);
             $isAdmin = Auth::user()->is_admin;
-            
+
             if (!$isCreator && !$isParticipant && !$isAdmin) {
                 abort(403, 'Unauthorized. You must be a participant in this callout to cancel it.');
             }
@@ -85,23 +87,23 @@ class CalloutController extends Controller
             'cancelled_user_agent' => $request->userAgent(),
             'cancelled_location' => $request->input('location'), // Optional location from frontend
         ]);
-        
+
         $trip = $this->calloutService->cancel($callout);
 
         return response()->json([
             'message' => 'Callout cancelled successfully.',
-            'trip_id' => $trip ? $trip->short_id : null
+            'trip_id' => $trip ? $trip->short_id : null,
         ]);
     }
 
     public function show($id)
     {
-        $callout = \App\Models\Callout::with('participants')->findOrFail($id);
-        
-        // If logged in, we might want to check permissions, but the requirement says 
+        $callout = Callout::with('participants')->findOrFail($id);
+
+        // If logged in, we might want to check permissions, but the requirement says
         // "make it possible to load the callout details page without being logged in"
         // which implies if you have the ID (random string), you can see it.
-        
+
         return response()->json(['data' => $callout]);
     }
 
@@ -110,7 +112,7 @@ class CalloutController extends Controller
      */
     public function active()
     {
-        $callouts = \App\Models\Callout::query()
+        $callouts = Callout::query()
             ->whereIn('status', ['active', 'triggered'])
             ->with(['cave:id,name,location_lat,location_lng,location_name', 'participants'])
             ->get()

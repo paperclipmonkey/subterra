@@ -1,18 +1,20 @@
 <?php
+
 namespace Tests\Feature;
 
+use App\Models\Cave;
 use App\Models\Trip;
 use App\Models\User;
-use App\Models\Cave;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Event;
-use Tests\TestCase;
+use Illuminate\Support\Facades\Storage;
 use Tests\Support\JsonSchemaValidator;
+use Tests\TestCase;
 
-
-class TripTest extends TestCase {
-    use RefreshDatabase, JsonSchemaValidator;
+class TripTest extends TestCase
+{
+    use RefreshDatabase;
+    use JsonSchemaValidator;
 
     protected function setUp(): void
     {
@@ -25,16 +27,16 @@ class TripTest extends TestCase {
     {
         $user = User::factory()->create();
         $this->actingAs($user);
-        
+
         // Create public trip (should be visible)
         $publicTrip = Trip::factory()->create(['visibility' => 'public']);
-        
+
         // Create private trip where user is not participant (should not be visible)
         $privateTrip = Trip::factory()->create(['visibility' => 'private']);
-        
+
         $response = $this->getJson('/api/trips');
         $response->assertOk()->assertJsonStructure(['data']);
-        
+
         // Only public trip should be returned
         $tripIds = collect($response->json('data'))->pluck('id')->toArray();
         $this->assertContains($publicTrip->short_id, $tripIds);
@@ -58,7 +60,7 @@ class TripTest extends TestCase {
     public function it_downloads_my_trips_csv()
     {
         $user = User::factory()->create();
-    $trip = Trip::factory()->create(['visibility' => 'public']);
+        $trip = Trip::factory()->create(['visibility' => 'public']);
         $trip->participants()->attach($user);
 
         $this->actingAs($user);
@@ -78,8 +80,8 @@ class TripTest extends TestCase {
         Event::fake([\App\Events\TripCreated::class]);
         $tripData = [
             'name' => 'Test Trip',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -87,9 +89,9 @@ class TripTest extends TestCase {
             'participants' => [$participant->id],
             'media' => [
                 [
-                    'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png'))
-                ]
-            ]
+                    'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
+                ],
+            ],
         ];
 
         $this->actingAs($user);
@@ -110,7 +112,7 @@ class TripTest extends TestCase {
     {
         $this->actingAs(User::factory()->create());
         $trip = Trip::factory()->create(['visibility' => 'public']); // Ensure visibility is public
-        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
         $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
         $this->assertResponseMatchesSchema($response, 'endpoints/trips-show');
     }
@@ -126,14 +128,14 @@ class TripTest extends TestCase {
 
         $media = [
             [
-                'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png'))
-            ]
+                'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
+            ],
         ];
 
         $updateData = [
             'name' => 'Updated Trip',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -145,7 +147,7 @@ class TripTest extends TestCase {
         ];
 
         $this->actingAs($user);
-        $response = $this->putJson('/api/trips/' . $trip->short_id, $updateData);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
         $response->assertOk();
         $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
@@ -160,7 +162,7 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $trip = Trip::factory()->create();
         $this->actingAs($user);
-        $response = $this->putJson('/api/trips/' . $trip->short_id, ['name' => 'Updated Trip']);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, ['name' => 'Updated Trip']);
         $response->assertStatus(403)->assertJsonFragment(['message' => 'This action is unauthorized.']);
     }
 
@@ -175,14 +177,14 @@ class TripTest extends TestCase {
 
         $media = [
             [
-                'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png'))
-            ]
+                'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
+            ],
         ];
 
         $updateData = [
             'name' => 'Updated Trip',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -194,7 +196,7 @@ class TripTest extends TestCase {
         ];
 
         $this->actingAs(User::factory()->admin()->create());
-        $response = $this->putJson('/api/trips/' . $trip->short_id, $updateData);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
         $response->assertOk();
         $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
@@ -210,7 +212,7 @@ class TripTest extends TestCase {
         $trip = Trip::factory()->create();
         $trip->participants()->attach($user);
         $this->actingAs($user);
-        $response = $this->deleteJson('/api/trips/' . $trip->short_id);
+        $response = $this->deleteJson('/api/trips/'.$trip->short_id);
         $response->assertOk()->assertJsonFragment(['message' => 'Trip deleted successfully']);
         $this->assertDatabaseMissing('trips', ['id' => $trip->id]);
     }
@@ -221,7 +223,7 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $trip = Trip::factory()->create();
         $this->actingAs($user);
-        $response = $this->deleteJson('/api/trips/' . $trip->short_id);
+        $response = $this->deleteJson('/api/trips/'.$trip->short_id);
         $response->assertStatus(403)->assertJsonFragment(['message' => 'This action is unauthorized.']);
     }
 
@@ -232,11 +234,11 @@ class TripTest extends TestCase {
         $participant = User::factory()->create();
         $entrance = Cave::factory()->create();
         Event::fake([\App\Events\TripCreated::class]);
-        
+
         $tripData = [
             'name' => 'Test Trip',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -248,7 +250,7 @@ class TripTest extends TestCase {
         $this->actingAs($user);
         $response = $this->postJson('/api/trips', $tripData);
         $response->assertCreated();
-        
+
         $trip = Trip::where('name', 'Test Trip')->first();
         $this->assertEquals('public', $trip->visibility);
     }
@@ -260,11 +262,11 @@ class TripTest extends TestCase {
         $participant = User::factory()->create();
         $entrance = Cave::factory()->create();
         Event::fake([\App\Events\TripCreated::class]);
-        
+
         $tripData = [
             'name' => 'Private Trip',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -276,7 +278,7 @@ class TripTest extends TestCase {
         $this->actingAs($user);
         $response = $this->postJson('/api/trips', $tripData);
         $response->assertCreated();
-        
+
         $trip = Trip::where('name', 'Private Trip')->first();
         $this->assertEquals('private', $trip->visibility);
     }
@@ -287,11 +289,11 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $participant = User::factory()->create();
         $entrance = Cave::factory()->create();
-        
+
         $tripData = [
             'name' => 'Test Trip',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -311,9 +313,9 @@ class TripTest extends TestCase {
     {
         $user = User::factory()->create();
         $trip = Trip::factory()->create(['visibility' => 'public']);
-        
+
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
         $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
     }
 
@@ -323,9 +325,9 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $trip = Trip::factory()->create(['visibility' => 'private']);
         $trip->participants()->attach($user);
-        
+
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
         $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
     }
 
@@ -334,9 +336,9 @@ class TripTest extends TestCase {
     {
         $user = User::factory()->create();
         $trip = Trip::factory()->create(['visibility' => 'private']);
-        
+
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
         $response->assertStatus(404);
     }
 
@@ -346,16 +348,16 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $participant = User::factory()->create();
         $club = \App\Models\Club::factory()->create();
-        
+
         // Add both users to the same club
         $user->clubs()->attach($club, ['status' => 'approved']);
         $participant->clubs()->attach($club, ['status' => 'approved']);
-        
+
         $trip = Trip::factory()->create(['visibility' => 'club']);
         $trip->participants()->attach($participant);
-        
+
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
         $response->assertOk()->assertJsonFragment(['id' => $trip->short_id]);
     }
 
@@ -365,15 +367,15 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $participant = User::factory()->create();
         $club = \App\Models\Club::factory()->create();
-        
+
         // Only participant is in the club, not the viewing user
         $participant->clubs()->attach($club, ['status' => 'approved']);
-        
+
         $trip = Trip::factory()->create(['visibility' => 'club']);
         $trip->participants()->attach($participant);
-        
+
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
         $response->assertStatus(404);
     }
 
@@ -383,33 +385,33 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $participant = User::factory()->create();
         $club = \App\Models\Club::factory()->create();
-        
+
         $user->clubs()->attach($club, ['status' => 'approved']);
         $participant->clubs()->attach($club, ['status' => 'approved']);
-        
+
         // Create trips with different visibility levels
         $publicTrip = Trip::factory()->create(['visibility' => 'public']);
-        
+
         $privateTrip = Trip::factory()->create(['visibility' => 'private']);
         $privateTrip->participants()->attach($user);
-        
+
         $clubTrip = Trip::factory()->create(['visibility' => 'club']);
         $clubTrip->participants()->attach($participant);
-        
+
         $hiddenPrivateTrip = Trip::factory()->create(['visibility' => 'private']);
         $hiddenClubTrip = Trip::factory()->create(['visibility' => 'club']);
-        
+
         $this->actingAs($user);
         $response = $this->getJson('/api/trips');
         $response->assertOk();
-        
+
         $tripIds = collect($response->json('data'))->pluck('id')->toArray();
-        
+
         // Should see public, private (participant), and club trips
         $this->assertContains($publicTrip->short_id, $tripIds);
         $this->assertContains($privateTrip->short_id, $tripIds);
         $this->assertContains($clubTrip->short_id, $tripIds);
-        
+
         // Should not see private trip where not participant or club trip where not club member
         $this->assertNotContains($hiddenPrivateTrip->short_id, $tripIds);
         $this->assertNotContains($hiddenClubTrip->short_id, $tripIds);
@@ -422,16 +424,16 @@ class TripTest extends TestCase {
         $participant = User::factory()->create();
         $entrance = Cave::factory()->create();
         Event::fake([\App\Events\TripCreated::class]);
-        
+
         // Use a mock HEIC data URI with PNG content (to test the decoder logic)
         // The key is testing that the ImageProcessingService can handle HEIC mime types
-        $pngContent = file_get_contents(__DIR__ . '/../../Fixtures/test.png');
-        $heicData = 'data:image/heic;base64,' . base64_encode($pngContent);
-        
+        $pngContent = file_get_contents(__DIR__.'/../../Fixtures/test.png');
+        $heicData = 'data:image/heic;base64,'.base64_encode($pngContent);
+
         $tripData = [
             'name' => 'Test Trip with HEIC',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $entrance->cave_system_id,
             'entrance_cave_id' => $entrance->id,
             'exit_cave_id' => $entrance->id,
@@ -440,12 +442,12 @@ class TripTest extends TestCase {
             'visibility' => 'public',
             'media' => [
                 [
-                    'data' => 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/../../Fixtures/test.png')),
+                    'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
                     'taken_at' => '2024-01-01 12:00:00',
                     'photographer' => 'John Doe',
-                    'copyright' => '© 2024 John Doe'
-                ]
-            ]
+                    'copyright' => '© 2024 John Doe',
+                ],
+            ],
         ];
 
         $this->actingAs($user);
@@ -467,20 +469,18 @@ class TripTest extends TestCase {
         $user = User::factory()->create();
         $trip = Trip::factory()->create(['visibility' => 'public']);
         $trip->participants()->attach($user);
-        
+
         // Create media with metadata
         $trip->media()->create([
             'filename' => 'test.webp',
             'taken_at' => '2024-01-01 12:00:00',
             'photographer' => 'Jane Smith',
-            'copyright' => '© 2024 Jane Smith'
+            'copyright' => '© 2024 Jane Smith',
         ]);
 
         $this->actingAs($user);
-        $response = $this->getJson('/api/trips/' . $trip->short_id);
+        $response = $this->getJson('/api/trips/'.$trip->short_id);
 
-        
-        
         $response->assertOk()
             ->assertJsonPath('data.media.0.taken_at', '2024-01-01T12:00:00.000000Z')
             ->assertJsonPath('data.media.0.photographer', 'Jane Smith')
@@ -501,7 +501,7 @@ class TripTest extends TestCase {
         $tripB->participants()->attach($userB);
 
         $this->actingAs($viewer);
-        
+
         // Filter by User A
         $responseA = $this->getJson("/api/trips?user_id={$userA->id}");
         $responseA->assertOk();
@@ -522,18 +522,18 @@ class TripTest extends TestCase {
     {
         $user = User::factory()->create();
         $participant = User::factory()->create();
-        
+
         // Create closed tag
         $closedTag = \App\Models\Tag::factory()->create(['tag' => 'Closed', 'type' => 'cave', 'category' => 'access']);
-        
+
         // Create cave with closed tag
         $closedCave = Cave::factory()->create();
         $closedCave->tags()->attach($closedTag);
-        
+
         $tripData = [
             'name' => 'Should Fail',
-            'start_time' => "2024-01-01 10:00:00",
-            'end_time' => "2024-01-02 10:00:00",
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
             'cave_system_id' => $closedCave->cave_system_id,
             'entrance_cave_id' => $closedCave->id,
             'exit_cave_id' => $closedCave->id,
@@ -543,7 +543,7 @@ class TripTest extends TestCase {
         ];
 
         $this->actingAs($user);
-        
+
         // Attempt public trip
         $response = $this->postJson('/api/trips', $tripData);
         $response->assertStatus(422);

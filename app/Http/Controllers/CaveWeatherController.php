@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Cave;
+use App\Services\RainfallService;
+use App\Services\RiverLevelService;
 use App\Services\WeatherService;
 use Illuminate\Http\JsonResponse;
 
@@ -12,18 +14,19 @@ class CaveWeatherController extends Controller
 {
     public function __construct(
         private readonly WeatherService $weatherService,
-        private readonly \App\Services\RiverLevelService $riverLevelService,
-        private readonly \App\Services\RainfallService $rainfallService
-    ) {}
+        private readonly RiverLevelService $riverLevelService,
+        private readonly RainfallService $rainfallService
+    ) {
+    }
 
     /**
-     * Get current weather forecast for a cave
+     * Get current weather forecast for a cave.
      */
     public function forecast(Cave $cave): JsonResponse
     {
         if (!$cave->location_lat || !$cave->location_lng) {
             return response()->json([
-                'error' => 'Cave location coordinates not available'
+                'error' => 'Cave location coordinates not available',
             ], 404);
         }
 
@@ -34,7 +37,7 @@ class CaveWeatherController extends Controller
 
         if (!$forecast) {
             return response()->json([
-                'error' => 'Unable to fetch weather data'
+                'error' => 'Unable to fetch weather data',
             ], 503);
         }
 
@@ -42,7 +45,7 @@ class CaveWeatherController extends Controller
         $riverLevels = [];
         $rainGauges = [];
         $cave->load('system.catchment');
-        
+
         if ($cave->system && $cave->system->catchment && !empty($cave->system->catchment->gauges)) {
             foreach ($cave->system->catchment->gauges as $gauge) {
                 // River Gauges
@@ -59,7 +62,7 @@ class CaveWeatherController extends Controller
                                 'latest_time' => $enhancedData['latest_time'],
                                 'trend' => $enhancedData['trend'],
                                 'state' => $enhancedData['state'],
-                                'metadata' => $enhancedData['metadata']
+                                'metadata' => $enhancedData['metadata'],
                             ];
                         }
                     }
@@ -68,14 +71,14 @@ class CaveWeatherController extends Controller
                 elseif ($gauge['type'] === 'rain' && !empty($gauge['station_id'])) {
                     $readings = $this->rainfallService->getReadings($gauge['station_id']);
                     $metadata = $this->rainfallService->getStationMetadata($gauge['station_id']);
-                    
+
                     if ($readings) {
                         $rainGauges[] = [
                             'name' => $gauge['name'],
                             'station_id' => $gauge['station_id'],
                             'type' => 'rain',
                             'readings' => $readings,
-                            'metadata' => $metadata
+                            'metadata' => $metadata,
                         ];
                     }
                 }
@@ -92,20 +95,18 @@ class CaveWeatherController extends Controller
                 'daily' => $forecast['daily'] ?? null,
                 'river_levels' => $riverLevels,
                 'rain_gauges' => $rainGauges,
-            ]
+            ],
         ]);
     }
 
-
-
     /**
-     * Get historic rain data for a cave (last 7 days)
+     * Get historic rain data for a cave (last 7 days).
      */
     public function historic(Cave $cave): JsonResponse
     {
         if (!$cave->location_lat || !$cave->location_lng) {
             return response()->json([
-                'error' => 'Cave location coordinates not available'
+                'error' => 'Cave location coordinates not available',
             ], 404);
         }
 
@@ -116,13 +117,12 @@ class CaveWeatherController extends Controller
 
         if (!$historicData) {
             return response()->json([
-                'error' => 'Unable to fetch historic weather data'
+                'error' => 'Unable to fetch historic weather data',
             ], 503);
         }
 
         return response()->json([
-            'data' => $historicData
+            'data' => $historicData,
         ]);
     }
-
 }

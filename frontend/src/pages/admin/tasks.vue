@@ -13,20 +13,20 @@
             <v-icon left color="primary">mdi-image-off</v-icon>
             Missing Photos <v-chip small class="ml-2">{{ tasks.caves_no_photo.length }}</v-chip>
           </v-card-title>
-          <v-divider></v-divider>
+          <v-divider />
           <v-list v-if="tasks.caves_no_photo.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
-             <template v-for="(cave, i) in tasks.caves_no_photo" :key="cave.id">
+            <template v-for="(cave, i) in tasks.caves_no_photo" :key="cave.id">
               <v-list-item :to="`/caves/${cave.slug}`" link>
-                <template v-slot:prepend>
+                <template #prepend>
                   <v-icon color="grey">mdi-cave</v-icon>
                 </template>
                 <v-list-item-title>{{ cave.name }}</v-list-item-title>
                 <v-list-item-subtitle>{{ cave.location_name || 'Unknown Location' }}</v-list-item-subtitle>
-                <template v-slot:append>
+                <template #append>
                   <v-icon small>mdi-open-in-new</v-icon>
                 </template>
               </v-list-item>
-              <v-divider v-if="i < tasks.caves_no_photo.length - 1"></v-divider>
+              <v-divider v-if="i < tasks.caves_no_photo.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
@@ -43,20 +43,20 @@
             <v-icon left color="info">mdi-text-box-missing</v-icon>
             Missing Descriptions <v-chip small class="ml-2">{{ tasks.caves_no_description.length }}</v-chip>
           </v-card-title>
-          <v-divider></v-divider>
-           <v-list v-if="tasks.caves_no_description.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
-             <template v-for="(cave, i) in tasks.caves_no_description" :key="cave.id">
+          <v-divider />
+          <v-list v-if="tasks.caves_no_description.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
+            <template v-for="(cave, i) in tasks.caves_no_description" :key="cave.id">
               <v-list-item :to="`/caves/${cave.slug}`" link>
-                <template v-slot:prepend>
+                <template #prepend>
                   <v-icon color="grey">mdi-cave</v-icon>
                 </template>
                 <v-list-item-title>{{ cave.name }}</v-list-item-title>
                 <v-list-item-subtitle>{{ cave.location_name || 'Unknown Location' }}</v-list-item-subtitle>
-                <template v-slot:append>
-                   <v-icon small>mdi-open-in-new</v-icon>
+                <template #append>
+                  <v-icon small>mdi-open-in-new</v-icon>
                 </template>
               </v-list-item>
-              <v-divider v-if="i < tasks.caves_no_description.length - 1"></v-divider>
+              <v-divider v-if="i < tasks.caves_no_description.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
@@ -73,20 +73,20 @@
             <v-icon left color="purple">mdi-tag-outline</v-icon>
             Low Tags (< 3) <v-chip small class="ml-2">{{ tasks.caves_low_tags.length }}</v-chip>
           </v-card-title>
-          <v-divider></v-divider>
-           <v-list v-if="tasks.caves_low_tags.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
-             <template v-for="(cave, i) in tasks.caves_low_tags" :key="cave.id">
+          <v-divider />
+          <v-list v-if="tasks.caves_low_tags.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
+            <template v-for="(cave, i) in tasks.caves_low_tags" :key="cave.id">
               <v-list-item :to="`/caves/${cave.slug}`" link>
-                <template v-slot:prepend>
+                <template #prepend>
                   <v-icon color="grey">mdi-cave</v-icon>
                 </template>
                 <v-list-item-title>{{ cave.name }}</v-list-item-title>
                 <v-list-item-subtitle>Has {{ cave.tags_count }} tags</v-list-item-subtitle>
-                <template v-slot:append>
-                   <v-icon small>mdi-open-in-new</v-icon>
+                <template #append>
+                  <v-icon small>mdi-open-in-new</v-icon>
                 </template>
               </v-list-item>
-              <v-divider v-if="i < tasks.caves_low_tags.length - 1"></v-divider>
+              <v-divider v-if="i < tasks.caves_low_tags.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
@@ -103,19 +103,19 @@
             <v-icon left color="orange darken-2">mdi-book-open-page-variant</v-icon>
             Systems No References <v-chip small class="ml-2">{{ tasks.systems_no_references.length }}</v-chip>
           </v-card-title>
-          <v-divider></v-divider>
-           <v-list v-if="tasks.systems_no_references.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
-             <template v-for="(system, i) in tasks.systems_no_references" :key="system.id">
+          <v-divider />
+          <v-list v-if="tasks.systems_no_references.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
+            <template v-for="(system, i) in tasks.systems_no_references" :key="system.id">
               <v-list-item :to="`/cave-systems/${system.id}/edit`" link>
-                <template v-slot:prepend>
+                <template #prepend>
                   <v-icon color="grey">mdi-family-tree</v-icon>
                 </template>
                 <v-list-item-title>{{ system.name }}</v-list-item-title>
-                <template v-slot:append>
-                   <v-icon small>mdi-open-in-new</v-icon>
+                <template #append>
+                  <v-icon small>mdi-open-in-new</v-icon>
                 </template>
               </v-list-item>
-              <v-divider v-if="i < tasks.systems_no_references.length - 1"></v-divider>
+              <v-divider v-if="i < tasks.systems_no_references.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
@@ -132,19 +132,19 @@
             <v-icon left color="teal">mdi-file-find</v-icon>
             Systems No Surveys <v-chip small class="ml-2">{{ tasks.systems_no_files.length }}</v-chip>
           </v-card-title>
-          <v-divider></v-divider>
-           <v-list v-if="tasks.systems_no_files.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
-             <template v-for="(system, i) in tasks.systems_no_files" :key="system.id">
+          <v-divider />
+          <v-list v-if="tasks.systems_no_files.length > 0" class="flex-grow-1 overflow-y-auto" style="max-height: 400px">
+            <template v-for="(system, i) in tasks.systems_no_files" :key="system.id">
               <v-list-item :to="`/cave-systems/${system.id}/edit`" link>
-                <template v-slot:prepend>
+                <template #prepend>
                   <v-icon color="grey">mdi-family-tree</v-icon>
                 </template>
                 <v-list-item-title>{{ system.name }}</v-list-item-title>
-                <template v-slot:append>
-                   <v-icon small>mdi-open-in-new</v-icon>
+                <template #append>
+                  <v-icon small>mdi-open-in-new</v-icon>
                 </template>
               </v-list-item>
-              <v-divider v-if="i < tasks.systems_no_files.length - 1"></v-divider>
+              <v-divider v-if="i < tasks.systems_no_files.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
@@ -157,7 +157,7 @@
     
     <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
       {{ snackbarText }}
-      <template v-slot:actions>
+      <template #actions>
         <v-btn text @click="snackbar = false">Close</v-btn>
       </template>
     </v-snackbar>

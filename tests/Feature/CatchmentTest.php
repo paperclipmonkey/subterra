@@ -8,7 +8,6 @@ use App\Models\CaveSystem;
 use App\Models\User;
 use App\Services\RiverLevelService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -24,8 +23,8 @@ class CatchmentTest extends TestCase
             'name' => 'Test Catchment',
             'reference_id' => 'REF123',
             'gauges' => [
-                ['name' => 'Test Gauge', 'rloi_id' => '3059']
-            ]
+                ['name' => 'Test Gauge', 'rloi_id' => '3059'],
+            ],
         ]);
 
         $response->assertStatus(201)
@@ -42,8 +41,8 @@ class CatchmentTest extends TestCase
             'name' => 'Mendip Catchment',
             'reference_id' => 'MENDIP1',
             'gauges' => [
-                ['name' => 'Wookey', 'rloi_id' => '3059']
-            ]
+                ['name' => 'Wookey', 'rloi_id' => '3059'],
+            ],
         ]);
 
         $system = CaveSystem::create([
@@ -51,13 +50,13 @@ class CatchmentTest extends TestCase
             'slug' => 'swildons-hole',
             'length' => 1000,
             'vertical_range' => 100,
-            'catchment_id' => $catchment->id
+            'catchment_id' => $catchment->id,
         ]);
 
         $cave = Cave::factory()->create([
             'cave_system_id' => $system->id,
             'location_lat' => 51.24,
-            'location_lng' => -2.67
+            'location_lng' => -2.67,
         ]);
 
         // 2. Mock river level service internal HTTP calls or mock the service entireley.
@@ -74,8 +73,8 @@ class CatchmentTest extends TestCase
                 'state' => 'High',
                 'metadata' => [
                     'typicalRangeLow' => 0.5,
-                    'typicalRangeHigh' => 1.2
-                ]
+                    'typicalRangeHigh' => 1.2,
+                ],
             ]);
 
         // We also need to mock WeatherService as CaveWeatherController uses it

@@ -2,18 +2,19 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use Tests\Support\JsonSchemaValidator;
-use App\Models\User;
-use App\Models\Club;
-use Illuminate\Support\Facades\Event;
 use App\Events\ClubAccessRequested;
 use App\Events\ClubAccessResponded;
+use App\Models\Club;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+use Tests\Support\JsonSchemaValidator;
+use Tests\TestCase;
 
 class ClubTest extends TestCase
 {
-    use RefreshDatabase, JsonSchemaValidator;
+    use RefreshDatabase;
+    use JsonSchemaValidator;
 
     protected $adminUser;
     protected $regularUser;
@@ -188,7 +189,7 @@ class ClubTest extends TestCase
     {
         $response = $this->actingAs($this->adminUser, 'sanctum')->postJson('/api/admin/clubs', []);
         $response->assertStatus(422)
-                 ->assertJson(['name' => ["The name field is required."], 'slug' => ["The slug field is required."]]);
+                 ->assertJson(['name' => ['The name field is required.'], 'slug' => ['The slug field is required.']]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -202,7 +203,7 @@ class ClubTest extends TestCase
 
         $response = $this->actingAs($this->adminUser, 'sanctum')->postJson('/api/admin/clubs', $clubData);
         $response->assertStatus(422)
-        ->assertJson(['name' => ["The name has already been taken."], 'slug' => ["The slug has already been taken."]]);
+        ->assertJson(['name' => ['The name has already been taken.'], 'slug' => ['The slug has already been taken.']]);
     }
 
     // --- Update Tests ---
@@ -247,7 +248,7 @@ class ClubTest extends TestCase
 
         $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club2->slug}", $updateData);
         $response->assertStatus(422)
-                 ->assertJson(['name' => ["The name has already been taken."]]);
+                 ->assertJson(['name' => ['The name has already been taken.']]);
 
         // Should be able to update club1 with its own name
         $updateDataSelf = ['name' => $club1->name];
@@ -332,7 +333,7 @@ class ClubTest extends TestCase
         $this->assertDatabaseHas('club_user', [
             'club_id' => $club->id,
             'user_id' => $this->regularUser->id,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
         Event::assertDispatched(ClubAccessRequested::class, function ($event) use ($club) {
             return $event->club->id === $club->id;
@@ -420,7 +421,7 @@ class ClubTest extends TestCase
                 ['id' => $user1->id, 'is_admin' => true],  // Update user1 to admin
                 ['id' => $user2->id, 'is_admin' => false], // Add user2 as non-admin
                 ['id' => $user4->id, 'is_admin' => false], // Add user4 as non-admin
-            ]
+            ],
         ];
 
         $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members", $syncData);
@@ -472,7 +473,7 @@ class ClubTest extends TestCase
 
     // --- Get Pending Members Tests ---
 
-        #[\PHPUnit\Framework\Attributes\Test]
+    #[\PHPUnit\Framework\Attributes\Test]
     public function club_admin_can_get_pending_members()
     {
         $club = Club::factory()->create();
@@ -535,11 +536,11 @@ class ClubTest extends TestCase
         $response->assertStatus(200)
                  ->assertJsonPath('data.id', $pendingUser->id)
                  ->assertJsonPath('data.clubs.0.status', 'approved');
-        
+
         $this->assertDatabaseHas('club_user', [
             'club_id' => $club->id,
             'user_id' => $pendingUser->id,
-            'status' => 'approved'
+            'status' => 'approved',
         ]);
         Event::assertDispatched(ClubAccessResponded::class, function ($event) use ($club, $pendingUser) {
             return $event->club->id === $club->id && $event->user->id === $pendingUser->id && $event->status === 'approved';
@@ -585,7 +586,7 @@ class ClubTest extends TestCase
         });
     }
 
-        #[\PHPUnit\Framework\Attributes\Test]
+    #[\PHPUnit\Framework\Attributes\Test]
     public function club_admin_can_approve_a_member()
     {
         Event::fake();

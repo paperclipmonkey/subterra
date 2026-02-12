@@ -1,5 +1,5 @@
 <template>
-    <CollectionList />
+  <CollectionList />
 </template>
 
 <script setup>

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -127,7 +126,7 @@ class RoleBasedAccessTest extends TestCase
     public function test_is_admin_attribute_returns_true_for_any_role()
     {
         $user = User::factory()->create();
-        
+
         $this->assertFalse($user->is_admin);
 
         $user->assignRole('platform_admin');

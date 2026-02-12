@@ -2,7 +2,7 @@
   <v-container class="pa-4">
     <template v-if="loading">
       <v-card class="pa-8 text-center">
-        <v-progress-circular indeterminate size="64" color="primary" class="mb-4"></v-progress-circular>
+        <v-progress-circular indeterminate size="64" color="primary" class="mb-4" />
         <h3 class="text-h6 mb-2">Loading trip data...</h3>
         <p class="text-body-2 text-medium-emphasis">Please wait while we load caves, users, and trip information.</p>
       </v-card>
@@ -12,27 +12,27 @@
         <v-col cols="12" md="6">
           <v-card title="Where" class="mb-4">
             <v-card-text>
-              <v-autocomplete label="Location" :items="caves" item-title="name" :rules="rules.location" item-value="id"
-                v-model="trip.entrance_cave_id" :error-messages="validationErrors.entrance_cave_id"
-                hint="Select the cave entrance where the trip started." persistent-hint variant="outlined"
-                autocomplete="off" name="random_unique_cave_search_field">
-                <template v-slot:item="{ props, item }">
+              <v-autocomplete v-model="trip.entrance_cave_id" label="Location" :items="caves" item-title="name" :rules="rules.location"
+                              item-value="id" :error-messages="validationErrors.entrance_cave_id"
+                              hint="Select the cave entrance where the trip started." persistent-hint variant="outlined"
+                              autocomplete="off" name="random_unique_cave_search_field">
+                <template #item="{ props, item }">
                   <v-list-item v-bind="props" :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
-                    :title="item.raw.name"></v-list-item>
+                               :title="item.raw.name" />
                 </template>
               </v-autocomplete>
               <template v-if="system_entrances_count > 1">
                 <v-checkbox v-model="throughTrip" label="Through trip"
-                  hint="Tick if you exited from a different entrance." persistent-hint class="mt-2"></v-checkbox>
+                            hint="Tick if you exited from a different entrance." persistent-hint class="mt-2" />
                 <v-expand-transition>
                   <div v-if="throughTrip">
-                    <v-autocomplete label="Exit"
-                      :items="caves.filter(cave => cave.system.id === cave_system_id && cave.id !== trip.entrance_cave_id)"
-                      item-title="name" item-value="id" v-model="trip.exit_cave_id"
-                      :error-messages="validationErrors.exit_cave_id"
-                      hint="Select the cave entrance where the trip ended." persistent-hint variant="outlined"
-                      autocomplete="off" name="random_unique_exit_search_field"
-                      class="mt-2"></v-autocomplete>
+                    <v-autocomplete v-model="trip.exit_cave_id"
+                                    label="Exit"
+                                    :items="caves.filter(cave => cave.system.id === cave_system_id && cave.id !== trip.entrance_cave_id)" item-title="name" item-value="id"
+                                    :error-messages="validationErrors.exit_cave_id"
+                                    hint="Select the cave entrance where the trip ended." persistent-hint variant="outlined"
+                                    autocomplete="off" name="random_unique_exit_search_field"
+                                    class="mt-2" />
                   </div>
                 </v-expand-transition>
               </template>
@@ -44,29 +44,29 @@
               <v-row>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripStartDate" label="Date" type="date"
-                    :error-messages="validationErrors.start_time || validationErrors.end_time"
-                    @update:modelValue="() => { delete validationErrors.start_time; delete validationErrors.end_time }"
-                    required hint="The date the trip started." persistent-hint variant="outlined"></v-text-field>
+                                :error-messages="validationErrors.start_time || validationErrors.end_time"
+                                required
+                                hint="The date the trip started." persistent-hint variant="outlined" @update:model-value="() => { delete validationErrors.start_time; delete validationErrors.end_time }" />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripStartTime" label="Entry time" type="time"
-                    :error-messages="validationErrors.start_time || validationErrors.end_time"
-                    @update:modelValue="() => { delete validationErrors.start_time; delete validationErrors.end_time }"
-                    required hint="The time you entered the cave." persistent-hint variant="outlined"></v-text-field>
+                                :error-messages="validationErrors.start_time || validationErrors.end_time"
+                                required
+                                hint="The time you entered the cave." persistent-hint variant="outlined" @update:model-value="() => { delete validationErrors.start_time; delete validationErrors.end_time }" />
                 </v-col>
               </v-row>
               <v-row>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripDurationHours" label="Duration (hours)" type="number" min="0"
-                    :rules="rules.duration" :error-messages="validationErrors.end_time"
-                    @update:modelValue="delete validationErrors.end_time" required
-                    hint="How many hours the trip lasted." persistent-hint variant="outlined"></v-text-field>
+                                :rules="rules.duration" :error-messages="validationErrors.end_time"
+                                required hint="How many hours the trip lasted."
+                                persistent-hint variant="outlined" @update:model-value="delete validationErrors.end_time" />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripDurationMinutes" label="Duration (minutes)" type="number" min="0" max="59"
-                    :rules="rules.duration" :error-messages="validationErrors.end_time"
-                    @update:modelValue="delete validationErrors.end_time" required
-                    hint="How many minutes the trip lasted." persistent-hint variant="outlined"></v-text-field>
+                                :rules="rules.duration" :error-messages="validationErrors.end_time"
+                                required hint="How many minutes the trip lasted."
+                                persistent-hint variant="outlined" @update:model-value="delete validationErrors.end_time" />
                 </v-col>
               </v-row>
             </v-card-text>
@@ -74,28 +74,28 @@
 
           <v-card title="Who" class="mb-4">
             <v-card-text>
-              <v-autocomplete label="Participants" :items="users" item-title="name" item-value="id" multiple chips
-                closable-chips v-model="trip.participants" :rules="rules.participants"
-                :error-messages="validationErrors.participants"
-                hint="Type 3+ characters to search for users. All participants can edit this report." persistent-hint
-                autocomplete="off" name="random_unique_user_search_field"
-                v-model:search="userSearch"
-                @update:search="onUserSearch"
-                variant="outlined">
-                <template v-slot:chip="{ props, item }">
-                  <v-chip v-bind="props" :prepend-avatar="item.raw.photo" :text="item.raw.name"></v-chip>
+              <v-autocomplete v-model="trip.participants" v-model:search="userSearch" label="Participants" :items="users" item-title="name" item-value="id"
+                              multiple chips closable-chips
+                              :rules="rules.participants"
+                              :error-messages="validationErrors.participants" hint="Type 3+ characters to search for users. All participants can edit this report."
+                              persistent-hint autocomplete="off"
+                              name="random_unique_user_search_field"
+                              variant="outlined"
+                              @update:search="onUserSearch">
+                <template #chip="{ props, item }">
+                  <v-chip v-bind="props" :prepend-avatar="item.raw.photo" :text="item.raw.name" />
                 </template>
-                <template v-slot:item="{ props, item }">
+                <template #item="{ props, item }">
                   <v-list-item v-bind="props" :prepend-avatar="item.raw.photo" :subtitle="item.raw.club"
-                    :title="item.raw.name"></v-list-item>
+                               :title="item.raw.name" />
                 </template>
-                <template v-slot:no-data>
+                <template #no-data>
                   <v-list-item>
                     <v-list-item-title>
                       User not found
                     </v-list-item-title>
-                    <template v-slot:append>
-                      <v-btn @click="showAddParticipant = true" color="primary" variant="text">
+                    <template #append>
+                      <v-btn color="primary" variant="text" @click="showAddParticipant = true">
                         Add manually
                       </v-btn>
                     </template>
@@ -114,13 +114,13 @@
               </v-alert>
 
               <v-text-field v-model="trip.name" label="Trip Name" :rules="rules.name"
-                :error-messages="validationErrors.name" required
-                hint="A short, descriptive name for your trip (e.g. 'Main Chamber Survey')" persistent-hint
-                variant="outlined" class="mb-4"></v-text-field>
+                            :error-messages="validationErrors.name" required
+                            hint="A short, descriptive name for your trip (e.g. 'Main Chamber Survey')" persistent-hint
+                            variant="outlined" class="mb-4" />
 
               <div class="text-caption mb-2 text-medium-emphasis">Description</div>
-              <MilkdownEditor v-model="trip.description" @change="updatedDescription"
-                placeholder="Describe your adventure..." class="mb-4" />
+              <MilkdownEditor v-model="trip.description" placeholder="Describe your adventure..."
+                              class="mb-4" @change="updatedDescription" />
 
               <div class="v-messages mb-4">
                 <div class="v-messages__wrapper">
@@ -134,41 +134,41 @@
               </v-alert>
 
               <v-select v-model="trip.visibility" label="Trip Visibility" :items="currentVisibilityOptions" item-title="label"
-                item-value="value" :error-messages="validationErrors.visibility" hint="Who can see this trip report"
-                persistent-hint variant="outlined" class="mb-4" item-props></v-select>
+                        item-value="value" :error-messages="validationErrors.visibility" hint="Who can see this trip report"
+                        persistent-hint variant="outlined" class="mb-4" item-props />
 
               <v-file-input prepend-icon="" prepend-inner-icon="mdi-camera" accept="image/*" label="Add Photos"
-                :model-value="[]"
-                @update:modelValue="handleFileSelect"
-                :error-messages="validationErrors.media"
-                @update:error="delete validationErrors.media"
-                chips multiple
-                hint="Upload photos from the trip. You can add multiple images." persistent-hint
-                variant="outlined"></v-file-input>
+                            :model-value="[]"
+                            :error-messages="validationErrors.media"
+                            chips
+                            multiple
+                            hint="Upload photos from the trip. You can add multiple images." persistent-hint
+                            variant="outlined" @update:model-value="handleFileSelect"
+                            @update:error="delete validationErrors.media" />
 
               <template v-if="pendingMedia.length > 0">
                 <div class="text-subtitle-2 mt-4 mb-2">New Uploads:</div>
                 <v-card v-for="(item, i) in pendingMedia" :key="i" class="mb-3 border" flat>
                   <v-row no-gutters>
                     <v-col cols="4" sm="3">
-                      <v-img :src="item.preview" aspect-ratio="1" cover class="h-100 bg-grey-lighten-2"></v-img>
+                      <v-img :src="item.preview" aspect-ratio="1" cover class="h-100 bg-grey-lighten-2" />
                     </v-col>
                     <v-col cols="8" sm="9" class="pa-2">
                       <v-row dense>
                         <v-col cols="12">
                           <div class="d-flex justify-space-between align-center">
                             <span class="text-caption text-truncate">{{ item.file.name }}</span>
-                            <v-btn icon="mdi-close" size="x-small" variant="text" color="error" @click="removePendingMedia(i)"></v-btn>
+                            <v-btn icon="mdi-close" size="x-small" variant="text" color="error" @click="removePendingMedia(i)" />
                           </div>
                         </v-col>
                         <v-col cols="12">
-                          <v-text-field v-model="item.title" label="Title" density="compact" variant="underlined" hide-details></v-text-field>
+                          <v-text-field v-model="item.title" label="Title" density="compact" variant="underlined" hide-details />
                         </v-col>
                         <v-col cols="12" sm="6">
-                          <v-text-field v-model="item.copyright" label="Copyright" density="compact" variant="underlined" hide-details></v-text-field>
+                          <v-text-field v-model="item.copyright" label="Copyright" density="compact" variant="underlined" hide-details />
                         </v-col>
                         <v-col cols="12" sm="6">
-                          <v-text-field v-model="item.photographer" label="Photographer" density="compact" variant="underlined" hide-details></v-text-field>
+                          <v-text-field v-model="item.photographer" label="Photographer" density="compact" variant="underlined" hide-details />
                         </v-col>
 
                       </v-row>
@@ -182,20 +182,20 @@
                 <v-row>
                   <v-col v-for="(media, i) in trip.existing_media" :key="i" cols="4" sm="3">
                     <v-img cover aspect-ratio="1" class="rounded bg-grey-lighten-2" :src="media.url"
-                      :alt="media.file_name">
+                           :alt="media.file_name">
                       <v-btn icon="mdi-delete" size="x-small" color="error" class="position-absolute top-0 right-0 ma-1"
-                        @click="removeExistingMedia(media)"></v-btn>
+                             @click="removeExistingMedia(media)" />
                     </v-img>
                   </v-col>
                 </v-row>
               </template>
             </v-card-text>
-            <v-divider></v-divider>
+            <v-divider />
             <v-card-actions class="pa-4">
-              <v-spacer></v-spacer>
-              <v-btn text="Cancel" variant="text" @click="router.back()"></v-btn>
-              <v-btn @click="submitForm" color="primary" size="large" elevation="2" :loading="isSaving"
-                :disabled="isSaving" min-width="150">
+              <v-spacer />
+              <v-btn text="Cancel" variant="text" @click="router.back()" />
+              <v-btn color="primary" size="large" elevation="2" :loading="isSaving" :disabled="isSaving"
+                     min-width="150" @click="submitForm">
                 <template v-if="!isSaving">
                   <v-icon start>mdi-content-save</v-icon>
                   Save Trip
@@ -210,11 +210,11 @@
       </v-row>
     </v-form>
     <AddParticipantManual
-      @close="closeAddParticipant"
-      @add="addParticipant"
-      :isActive="showAddParticipant"
+      :is-active="showAddParticipant"
       :loading="isAddingParticipant"
       :error="addParticipantError"
+      @close="closeAddParticipant"
+      @add="addParticipant"
     />
   </v-container>
 </template>

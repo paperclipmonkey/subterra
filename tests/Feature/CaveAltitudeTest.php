@@ -22,20 +22,20 @@ class CaveAltitudeTest extends TestCase
     {
         $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create([
-            'location_alt' => 100.5
+            'location_alt' => 100.5,
         ]);
 
         $response = $this->actingAs($user)
-            ->putJson('/api/caves/' . $cave->slug, [
+            ->putJson('/api/caves/'.$cave->slug, [
                 'name' => 'Updated Cave Name', // valid required field
-                'location_alt' => 250.75
+                'location_alt' => 250.75,
             ]);
 
         $response->assertStatus(200);
-        
+
         $this->assertDatabaseHas('caves', [
             'id' => $cave->id,
-            'location_alt' => 250.75
+            'location_alt' => 250.75,
         ]);
     }
 
@@ -44,20 +44,20 @@ class CaveAltitudeTest extends TestCase
     {
         $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create([
-            'location_alt' => 100.5
+            'location_alt' => 100.5,
         ]);
 
         $response = $this->actingAs($user)
-            ->putJson('/api/caves/' . $cave->slug, [
+            ->putJson('/api/caves/'.$cave->slug, [
                 'name' => 'Updated Cave Name',
-                'location_alt' => null
+                'location_alt' => null,
             ]);
 
         $response->assertStatus(200);
-        
+
         $this->assertDatabaseHas('caves', [
             'id' => $cave->id,
-            'location_alt' => null
+            'location_alt' => null,
         ]);
     }
 
@@ -68,9 +68,9 @@ class CaveAltitudeTest extends TestCase
         $cave = Cave::factory()->create();
 
         $response = $this->actingAs($user)
-            ->putJson('/api/caves/' . $cave->slug, [
+            ->putJson('/api/caves/'.$cave->slug, [
                 'name' => 'Updated Cave Name',
-                'location_alt' => 'not-a-number'
+                'location_alt' => 'not-a-number',
             ]);
 
         $response->assertStatus(422)
@@ -81,7 +81,7 @@ class CaveAltitudeTest extends TestCase
     public function it_can_create_cave_with_altitude()
     {
         $user = User::factory()->dataAdmin()->create();
-        
+
         // Mocking required fields for creation
         $caveData = Cave::factory()->make([
             'location_alt' => 300.25,
@@ -109,10 +109,10 @@ class CaveAltitudeTest extends TestCase
             ->postJson('/api/caves', $data);
 
         $response->assertStatus(201);
-        
+
         $this->assertDatabaseHas('caves', [
             'name' => 'New Cave with Altitude',
-            'location_alt' => 300.25
+            'location_alt' => 300.25,
         ]);
     }
 }

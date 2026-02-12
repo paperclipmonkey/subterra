@@ -5,8 +5,6 @@ namespace App\Http\Resources;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\TripResource;
-use App\Http\Resources\CollectionResource;
 use Illuminate\Support\Facades\Storage;
 
 class CaveResource extends JsonResource
@@ -22,17 +20,17 @@ class CaveResource extends JsonResource
         $hasDone = false;
 
         if ($this->relationLoaded('trips')) {
-             $hasDone = $this->trips->contains(function ($trip) use ($user) {
-                 return $trip->participants->contains('id', $user->id);
-             });
+            $hasDone = $this->trips->contains(function ($trip) use ($user) {
+                return $trip->participants->contains('id', $user->id);
+            });
         } elseif ($user) {
-             $hasDone = $this->trips()->whereHas('participants', function($q) use($user) {
-                 $q->where('users.id', $user->id);
-             })->exists();
+            $hasDone = $this->trips()->whereHas('participants', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })->exists();
         }
 
         $previoslyDoneTag = $hasDone ? Tag::where('tag', 'Previously Done')->first() : Tag::where('tag', 'Not Done Yet')->first();
-        
+
         $systemLengthTags = collect([]);
         if ($this->system) {
             $length = $this->system->length;
@@ -52,11 +50,11 @@ class CaveResource extends JsonResource
         }
 
         // Remove nulls from systemLengthTags to avoid merge errors
-        $systemLengthTags = $systemLengthTags->filter(function($tag) { return $tag instanceof Tag; });
+        $systemLengthTags = $systemLengthTags->filter(function ($tag) { return $tag instanceof Tag; });
 
         // Ensure $this->tags is always a collection of Tag models
         $tags = $this->tags instanceof \Illuminate\Support\Collection ? $this->tags : collect($this->tags);
-        $tags = $tags->filter(function($tag) { return $tag instanceof Tag; });
+        $tags = $tags->filter(function ($tag) { return $tag instanceof Tag; });
         if ($previoslyDoneTag instanceof Tag) {
             $tags = $tags->merge([$previoslyDoneTag]);
         }
@@ -72,7 +70,7 @@ class CaveResource extends JsonResource
             'access_info' => $this->access_info ?? '',
             'hero_image' => $this->hero_image ? Storage::disk('media')->url($this->hero_image) : null,
             'entrance_image' => $this->entrance_image ? Storage::disk('media')->url($this->entrance_image) : null,
-            'tags' => TagResource::collection($tags->filter(function($tag) { return $tag instanceof Tag; })),
+            'tags' => TagResource::collection($tags->filter(function ($tag) { return $tag instanceof Tag; })),
             'caving_region' => $this->caving_region,
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,
@@ -94,7 +92,7 @@ class CaveResource extends JsonResource
                 'files' => $request->user()?->hasApprovedClub() && $this->system->files ? $this->system->files->map(function ($file) {
                     return [
                         'id' => $file->id,
-                        'url' => Storage::disk('media')->url('cave_system_files/' . $file->cave_system_id . '/' . $file->filename),
+                        'url' => Storage::disk('media')->url('cave_system_files/'.$file->cave_system_id.'/'.$file->filename),
                         'original_filename' => $file->original_filename,
                         'mime_type' => $file->mime_type,
                         'size' => $file->size,

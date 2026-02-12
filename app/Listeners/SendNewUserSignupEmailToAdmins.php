@@ -25,7 +25,7 @@ class SendNewUserSignupEmailToAdmins implements ShouldQueue
             return;
         }
 
-        $admins = User::whereHas('roles', function($query) {
+        $admins = User::whereHas('roles', function ($query) {
             $query->where('slug', 'platform_admin');
         })->get();
 

@@ -7,9 +7,9 @@ use App\Models\Cave;
 use App\Models\Incident;
 use App\Models\Tag;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class IncidentUniqueTest extends TestCase
 {
@@ -18,7 +18,7 @@ class IncidentUniqueTest extends TestCase
     public function test_incident_api_returns_region()
     {
         $admin = User::factory()->dutyOfficer()->create();
-        
+
         $cave = Cave::factory()->create();
         // Manual tag creation
         $tag = Tag::factory()->create(['tag' => 'Mendip', 'category' => 'region']);
@@ -37,11 +37,11 @@ class IncidentUniqueTest extends TestCase
 
         $incident = Incident::create([
             'callout_id' => $callout->id,
-            'status' => 'open'
+            'status' => 'open',
         ]);
 
         $response = $this->actingAs($admin)->getJson("/api/admin/incidents/{$incident->id}");
-        
+
         $response->assertOk();
         $response->assertJsonPath('data.callout.cave.caving_region', 'Mendip');
     }

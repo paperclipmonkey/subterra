@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Storage;
 
 class MediaResource extends JsonResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -17,13 +16,13 @@ class MediaResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id"=> $this->id,
-            "filename"=> $this->filename,
-            "title" => $this->title,
-            "url"=> Storage::disk('media')->url($this->filename),
-            "taken_at"=> $this->taken_at,
-            "photographer"=> $this->photographer,
-            "copyright"=> $this->copyright,
+            'id' => $this->id,
+            'filename' => $this->filename,
+            'title' => $this->title,
+            'url' => Storage::disk('media')->url($this->filename),
+            'taken_at' => $this->taken_at,
+            'photographer' => $this->photographer,
+            'copyright' => $this->copyright,
         ];
     }
 }

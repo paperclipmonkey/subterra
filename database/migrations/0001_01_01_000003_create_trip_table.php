@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -25,8 +24,8 @@ return new class extends Migration
         Schema::create('trip_user', function (Blueprint $table) {
             $table->bigInteger('trip_id');
             $table->bigInteger('user_id');
-            $table->index(columns: ['trip_id','user_id'], name: 'trip_user_trip_id_user_id_index');
-            $table->index(columns: ['user_id','trip_id'], name: 'trip_user_user_id_trip_id_index');
+            $table->index(columns: ['trip_id', 'user_id'], name: 'trip_user_trip_id_user_id_index');
+            $table->index(columns: ['user_id', 'trip_id'], name: 'trip_user_user_id_trip_id_index');
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');

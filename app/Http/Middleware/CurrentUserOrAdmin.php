@@ -10,20 +10,18 @@ class CurrentUserOrAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if(! $request->user())
-        {
+        if (!$request->user()) {
             return response()->json(['error' => 'User is not authenticated to perform that action'], 401);
         }
-        if($request->user()->is_admin)
-        {
+        if ($request->user()->is_admin) {
             return $next($request);
         }
         $targetUser = $request->route('user') ?? $request->route('user_without_scopes');
 
-        if($targetUser instanceof \App\Models\User && $targetUser->id === $request->user()->id)
-        {
+        if ($targetUser instanceof \App\Models\User && $targetUser->id === $request->user()->id) {
             return $next($request);
         }
+
         return response()->json(['error' => 'User is not authorised to perform that action'], 403);
     }
 }

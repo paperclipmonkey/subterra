@@ -18,60 +18,60 @@
       
       <v-card-text>
         <p class="mb-4 text-body-2">
-            Send emails to all users who have opted in to "Platform News". 
-            Use the "Send Test" button to send a preview to yourself first.
+          Send emails to all users who have opted in to "Platform News". 
+          Use the "Send Test" button to send a preview to yourself first.
         </p>
 
         <v-form ref="form" v-model="valid">
-            <v-text-field
-                v-model="subject"
-                label="Subject Line"
-                required
-                :rules="[v => !!v || 'Subject is required']"
-                variant="outlined"
-                class="mb-2"
-            ></v-text-field>
+          <v-text-field
+            v-model="subject"
+            label="Subject Line"
+            required
+            :rules="[v => !!v || 'Subject is required']"
+            variant="outlined"
+            class="mb-2"
+          />
 
-            <div class="mb-2">
-                <label class="v-label mb-2 d-block">Message Body (Markdown)</label>
-                <MilkdownEditor 
-                    v-model="body" 
-                    placeholder="Write your update here... Use markdown for formatting."
-                />
-                <div class="text-caption text-grey mt-1" v-pre>
-                    Available variables: 
-                    <code class="text-primary">{{ firstname }}</code>, 
-                    <code class="text-primary">{{ fullname }}</code>, 
-                    <code class="text-primary">{{ club }}</code>, 
-                    <code class="text-primary">{{ id }}</code>
-                </div>
+          <div class="mb-2">
+            <label class="v-label mb-2 d-block">Message Body (Markdown)</label>
+            <MilkdownEditor 
+              v-model="body" 
+              placeholder="Write your update here... Use markdown for formatting."
+            />
+            <div v-pre class="text-caption text-grey mt-1">
+              Available variables: 
+              <code class="text-primary">{{ firstname }}</code>, 
+              <code class="text-primary">{{ fullname }}</code>, 
+              <code class="text-primary">{{ club }}</code>, 
+              <code class="text-primary">{{ id }}</code>
             </div>
+          </div>
         </v-form>
       </v-card-text>
       
       <v-card-actions>
-        <v-spacer></v-spacer>
+        <v-spacer />
         
         <v-btn
-            color="secondary"
-            variant="text"
-            :loading="loading"
-            :disabled="!valid || !subject || !body"
-            @click="send(true)"
+          color="secondary"
+          variant="text"
+          :loading="loading"
+          :disabled="!valid || !subject || !body"
+          @click="send(true)"
         >
-            <v-icon start>mdi-test-tube</v-icon>
-            Send Test to Me
+          <v-icon start>mdi-test-tube</v-icon>
+          Send Test to Me
         </v-btn>
 
         <v-btn
-            color="primary"
-            variant="elevated"
-            :loading="loading"
-            :disabled="!valid || !subject || !body"
-            @click="confirmSend"
+          color="primary"
+          variant="elevated"
+          :loading="loading"
+          :disabled="!valid || !subject || !body"
+          @click="confirmSend"
         >
-            <v-icon start>mdi-send</v-icon>
-            Send to All Subscribers
+          <v-icon start>mdi-send</v-icon>
+          Send to All Subscribers
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -85,7 +85,7 @@
           This action cannot be undone.
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn color="grey-darken-1" variant="text" @click="confirmDialog = false">Cancel</v-btn>
           <v-btn color="red-darken-1" variant="text" @click="doSend">Yes, Send It</v-btn>
         </v-card-actions>

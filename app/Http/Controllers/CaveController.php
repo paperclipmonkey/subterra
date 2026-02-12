@@ -8,14 +8,17 @@ use App\Http\Requests\StoreCaveRequest;
 use App\Http\Requests\UpdateCaveRequest;
 use App\Http\Resources\CaveResource;
 use App\Models\Cave;
+use App\Models\Tag;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Str;
 
 class CaveController extends Controller
 {
     public function __construct(
         private readonly ImageProcessingService $imageProcessingService
-    ) {}
+    ) {
+    }
 
     public function index(): AnonymousResourceCollection
     {
@@ -25,8 +28,8 @@ class CaveController extends Controller
     public function store(StoreCaveRequest $request): CaveResource
     {
         $validData = $request->validated();
-        $validData['slug'] = \Illuminate\Support\Str::slug($validData['name']);
-        
+        $validData['slug'] = Str::slug($validData['name']);
+
         $cave = Cave::create($validData);
 
         return new CaveResource($cave);
@@ -55,10 +58,10 @@ class CaveController extends Controller
 
         // Update tags
         $tags = collect($request->input('tags', []))->map(function ($tag) {
-            return \App\Models\Tag::where([
+            return Tag::where([
                 'category' => $tag['category'],
                 'tag' => $tag['tag'],
-                'assignable' => true
+                'assignable' => true,
             ])->first()?->id;
         })->filter();
         $cave->tags()->sync($tags);

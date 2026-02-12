@@ -12,21 +12,21 @@
                 v-model="page.title"
                 label="Title"
                 required
-                @update:modelValue="generateSlug"
-              ></v-text-field>
+                @update:model-value="generateSlug"
+              />
               <v-text-field
                 v-model="page.slug"
                 label="Slug"
                 required
                 hint="Unique URL identifier (e.g., my-page)"
                 persistent-hint
-              ></v-text-field>
+              />
 
               <div class="text-subtitle-1 mt-4 mb-2">Content</div>
               <MilkdownEditor 
                 v-model="page.content" 
-                @change="updateContent"
-                placeholder="Write your page content here..." 
+                placeholder="Write your page content here..."
+                @change="updateContent" 
               />
 
               <div class="d-flex justify-end mt-4 ga-2">

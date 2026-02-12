@@ -1,23 +1,22 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ClubController;
 use App\Http\Controllers\ClubDataController;
+use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\HutController;
+use App\Http\Controllers\MagicLinkController;
+use App\Http\Controllers\TripController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\WebhookController;
+use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ClubAdminOrAdmin;
-use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Middleware\CurrentUserOrAdmin;
 use App\Http\Resources\UserDetailEmailResource;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\TripController;
-use App\Http\Controllers\ClubController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\MagicLinkController;
-use App\Http\Controllers\HutController;
-use App\Http\Controllers\CollectionController;
-
-use App\Http\Controllers\WebhookController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -37,7 +36,7 @@ Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::cl
     ->middleware('throttle:10,1'); // Max 10 attempts per minute to prevent abuse
 
 Route::get('/users/me', function (Request $request) {
-    if($request->user()) {
+    if ($request->user()) {
         return new UserDetailEmailResource($request->user());
     } else {
         return abort(400, 'No user logged in');
@@ -54,30 +53,29 @@ Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCall
 
 // Public CMS Pages
 Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'publicShow'])
-    ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Page::class);
+    ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Page::class);
 
 Route::get('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'index']);
 Route::get('/routes/{route}', [App\Http\Controllers\RouteController::class, 'show']);
 
 Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
-    
+
     Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
     Route::post('/suggested-edits', [App\Http\Controllers\SuggestedEditController::class, 'store']);
 
-
-    # Users
+    // Users
     Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
     Route::get('/duty-officers/current', [App\Http\Controllers\DutyOfficerController::class, 'current']);
 
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
     Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show'])
-        ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Cave::class);
+        ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Cave::class);
     Route::get('/caves/{cave}/weather/forecast', [App\Http\Controllers\CaveWeatherController::class, 'forecast']);
     Route::get('/caves/{cave}/weather/historic', [App\Http\Controllers\CaveWeatherController::class, 'historic']);
-    
-    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class . ':data_admin');
-    Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class . ':data_admin');
+
+    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class.':data_admin');
+    Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class.':data_admin');
 
     Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
     Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
@@ -87,19 +85,19 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::put('/routes/{route}', [App\Http\Controllers\RouteController::class, 'update'])->middleware(ApiIsAdmin::class);
     Route::delete('/routes/{route}', [App\Http\Controllers\RouteController::class, 'destroy'])->middleware(ApiIsAdmin::class);
 
-    # Trips
+    // Trips
     Route::get('/trips', [App\Http\Controllers\TripController::class, 'index']);
     Route::post('/trips', [App\Http\Controllers\TripController::class, 'store']);
     Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
-        ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Trip::class);
+        ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
     Route::put('/trips/{trip}', [App\Http\Controllers\TripController::class, 'update']);
     Route::delete('/trips/{trip}', [App\Http\Controllers\TripController::class, 'destroy']);
 
-    # My Trips
+    // My Trips
     Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe']);
     Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv']);
 
-    # Clubs
+    // Clubs
     Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
     Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
 
@@ -121,25 +119,22 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
     Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
 
-
-    # Huts
+    // Huts
     Route::apiResource('huts', HutController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 
-    # Collections
+    // Collections
     Route::apiResource('collections', CollectionController::class)->except(['show']);
     Route::get('collections/{collection}', [CollectionController::class, 'show'])
-        ->middleware(\App\Http\Middleware\TrackApiInteraction::class . ':' . \App\Models\Collection::class)
+        ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Collection::class)
         ->name('collections.show');
     Route::post('collections/{collection}/caves', [CollectionController::class, 'addCave']);
     Route::delete('collections/{collection}/caves/{cave}', [CollectionController::class, 'removeCave']);
 });
 
-
 // --- Admin Routes ---
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
-    
     // Platform Admin — users, clubs, pages, comms, tasks, dashboard, suggested edits
-    Route::middleware(ApiIsAdmin::class . ':platform_admin')->group(function () {
+    Route::middleware(ApiIsAdmin::class.':platform_admin')->group(function () {
         Route::get('/users', [UserController::class, 'adminIndex'])->name('admin.users.index');
         Route::put('/users/{user_without_scopes}/toggle-admin', [UserController::class, 'toggleAdmin'])
             ->withoutScopedBindings()
@@ -160,7 +155,7 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     });
 
     // Content & Data shared (Platform Admin OR Data Admin)
-    Route::middleware(ApiIsAdmin::class . ':platform_admin,data_admin')->group(function () {
+    Route::middleware(ApiIsAdmin::class.':platform_admin,data_admin')->group(function () {
         Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
         Route::apiResource('pages', App\Http\Controllers\PageController::class);
         Route::apiResource('suggested-edits', App\Http\Controllers\Admin\SuggestedEditController::class)->only(['index', 'show']);
@@ -170,7 +165,7 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     });
 
     // Duty Officer — callouts, shifts, incidents
-    Route::middleware(ApiIsAdmin::class . ':duty_officer,platform_admin')->group(function () {
+    Route::middleware(ApiIsAdmin::class.':duty_officer,platform_admin')->group(function () {
         Route::get('/duty-officers', [App\Http\Controllers\DutyOfficerController::class, 'index'])->name('admin.duty-officers.index');
         Route::get('/callouts', [App\Http\Controllers\Admin\CalloutController::class, 'index'])->name('admin.callouts.index');
         Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
@@ -194,24 +189,26 @@ Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
 
 Route::get('logout', function (Request $request) {
     Auth::logout();
+
     return redirect('/');
 });
 
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{id}', [App\Http\Controllers\NewsController::class, 'show'])->name('news.show');
 
-
-Route::get('/livez', function(Request $request) {
+Route::get('/livez', function (Request $request) {
     try {
         // Simple health check - just verify DB connection
         DB::select('SELECT 1');
+
         return response()->json(['status' => 'ok'], 200);
     } catch (\Exception $e) {
         // Log error details internally, but don't expose to client
         \Log::error('Health check failed', [
             'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+            'trace' => $e->getTraceAsString(),
         ]);
+
         return response()->json(['status' => 'error'], 500);
     }
 });

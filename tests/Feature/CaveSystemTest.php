@@ -26,7 +26,7 @@ class CaveSystemTest extends TestCase
     {
         $caveSystem = CaveSystem::factory()->create();
 
-        $response = $this->getJson('/api/cave_systems/' . $caveSystem->id);
+        $response = $this->getJson('/api/cave_systems/'.$caveSystem->id);
 
         $response->assertOk()
             ->assertJsonFragment(['id' => $caveSystem->id])
@@ -56,7 +56,7 @@ class CaveSystemTest extends TestCase
         // New file exists
         $caveSystem->refresh();
         $this->assertCount(1, $caveSystem->files);
-        Storage::disk('media')->assertExists("cave_system_files/{$caveSystem->id}/" . $caveSystem->files->first()->filename);
+        Storage::disk('media')->assertExists("cave_system_files/{$caveSystem->id}/".$caveSystem->files->first()->filename);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -74,12 +74,13 @@ class CaveSystemTest extends TestCase
         $response = $this->json('PUT', "/api/cave_systems/{$caveSystem->id}", $data);
         $response->assertForbidden();
     }
+
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_delete_files_from_cave_system()
     {
         Storage::fake('media');
         $caveSystem = CaveSystem::factory()->create();
-        
+
         // Create a file attached to the system
         $file = \App\Models\CaveSystemFile::create([
             'cave_system_id' => $caveSystem->id,
@@ -115,12 +116,12 @@ class CaveSystemTest extends TestCase
         $catchment = \App\Models\Catchment::create([
             'name' => 'Test Catchment',
             'reference_id' => 'TEST1',
-            'gauges' => []
+            'gauges' => [],
         ]);
 
         $data = [
             'name' => $caveSystem->name,
-            'catchment_id' => $catchment->id
+            'catchment_id' => $catchment->id,
         ];
 
         $response = $this->putJson("/api/cave_systems/{$caveSystem->id}", $data);

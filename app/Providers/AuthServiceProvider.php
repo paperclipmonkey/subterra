@@ -15,5 +15,4 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Club::class => ClubPolicy::class, // Register the ClubPolicy
     ];
-
 }

@@ -8,7 +8,7 @@
       }}</v-list-item-subtitle>
       <v-list-item-subtitle>{{ trip.description }}</v-list-item-subtitle>
       <v-list-item-subtitle>Duration: {{ moment(trip.end_time).isValid() ? moment(trip.end_time).diff(trip.start_time,
-        'hours') : '~' }} hours</v-list-item-subtitle>
+                                                                                                      'hours') : '~' }} hours</v-list-item-subtitle>
       <v-list-item-subtitle>
         <v-chip v-for="participant in trip.participants" :key="participant.id" class="ma-1">
           {{ participant.name }}

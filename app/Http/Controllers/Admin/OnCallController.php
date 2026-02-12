@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Callout;
 use App\Models\OnCallShift;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class OnCallController extends Controller
 {
     /**
-     * Get shifts for a date range (e.g. month view)
+     * Get shifts for a date range (e.g. month view).
      */
     public function index(Request $request)
     {
@@ -25,12 +26,12 @@ class OnCallController extends Controller
             ->get();
 
         return response()->json([
-            'data' => $shifts
+            'data' => $shifts,
         ]);
     }
 
     /**
-     * Add a shift
+     * Add a shift.
      */
     public function store(Request $request)
     {
@@ -39,7 +40,7 @@ class OnCallController extends Controller
                 'required',
                 'exists:users,id',
                 function ($attribute, $value, $fail) {
-                    $user = \App\Models\User::find($value);
+                    $user = User::find($value);
                     if ($user && !$user->hasRole(['duty_officer', 'platform_admin'])) {
                         $fail('The selected user must have the Duty Officer role.');
                     }
@@ -66,12 +67,12 @@ class OnCallController extends Controller
 
         return response()->json([
             'message' => 'Shift created',
-            'data' => $shift->load('user')
+            'data' => $shift->load('user'),
         ]);
     }
 
     /**
-     * Update a shift
+     * Update a shift.
      */
     public function update(Request $request, $id)
     {
@@ -82,7 +83,7 @@ class OnCallController extends Controller
                 'required',
                 'exists:users,id',
                 function ($attribute, $value, $fail) {
-                    $user = \App\Models\User::find($value);
+                    $user = User::find($value);
                     if ($user && !$user->hasRole(['duty_officer', 'platform_admin'])) {
                         $fail('The selected user must have the Duty Officer role.');
                     }
@@ -107,8 +108,8 @@ class OnCallController extends Controller
 
         if ($uncoveredCallouts->isNotEmpty()) {
             return response()->json([
-                'message' => 'Cannot modify shift: would leave ' . $uncoveredCallouts->count() . ' callout(s) unmonitored.',
-                'affected_callouts' => $uncoveredCallouts
+                'message' => 'Cannot modify shift: would leave '.$uncoveredCallouts->count().' callout(s) unmonitored.',
+                'affected_callouts' => $uncoveredCallouts,
             ], 422);
         }
 
@@ -116,41 +117,41 @@ class OnCallController extends Controller
 
         return response()->json([
             'message' => 'Shift updated',
-            'data' => $shift->load('user')
+            'data' => $shift->load('user'),
         ]);
     }
 
     /**
-     * Remove a shift
+     * Remove a shift.
      */
     public function destroy($id)
     {
         $shift = OnCallShift::findOrFail($id);
-        
+
         // Check if deleting this shift leaves callouts uncovered
         $uncoveredCallouts = $this->getUncoveredCalloutsAfterModification($shift, null, null, null, true);
 
         if ($uncoveredCallouts->isNotEmpty()) {
             return response()->json([
-                'message' => 'Cannot remove shift: would leave ' . $uncoveredCallouts->count() . ' callout(s) unmonitored.',
-                'affected_callouts' => $uncoveredCallouts
+                'message' => 'Cannot remove shift: would leave '.$uncoveredCallouts->count().' callout(s) unmonitored.',
+                'affected_callouts' => $uncoveredCallouts,
             ], 422);
         }
-        
+
         $shift->delete();
 
         return response()->json([
-            'message' => 'Shift removed'
+            'message' => 'Shift removed',
         ]);
     }
 
     /**
-     * Helper to find callouts that would become unmonitored
+     * Helper to find callouts that would become unmonitored.
      */
     private function getUncoveredCalloutsAfterModification($shift, $newStart = null, $newEnd = null, $newUser = null, $isDelete = false)
     {
         // 1. Find callouts that were covered by the original shift
-        $callouts = \App\Models\Callout::whereIn('status', ['active', 'triggered'])
+        $callouts = Callout::whereIn('status', ['active', 'triggered'])
             ->where('callout_time', '>=', $shift->start_at)
             ->where('callout_time', '<=', $shift->end_at)
             ->get();

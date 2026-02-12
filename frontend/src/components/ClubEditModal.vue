@@ -10,7 +10,7 @@
           <v-tab value="members" :disabled="!editMode">Members</v-tab>
           <v-tab value="pending" :disabled="!editMode">
             Pending Requests
-            <v-badge color="info" :content="pendingMembers.length" inline v-if="pendingMembers.length > 0"></v-badge>
+            <v-badge v-if="pendingMembers.length > 0" color="info" :content="pendingMembers.length" inline />
           </v-tab>
         </v-tabs>
         <v-window v-model="tab">
@@ -18,7 +18,7 @@
             <v-container>
               <v-row>
                 <v-col cols="12">
-                  <v-text-field v-model="editedClub.name" label="Club Name*" required :rules="[rules.required]"></v-text-field>
+                  <v-text-field v-model="editedClub.name" label="Club Name*" required :rules="[rules.required]" />
                 </v-col>
                 <v-col cols="12">
                   <v-text-field
@@ -27,17 +27,17 @@
                     required
                     :rules="[rules.required, rules.slug]"
                     :disabled="editMode"
-                  ></v-text-field>
+                  />
                 </v-col>
                 <v-col cols="12">
                   <div class="text-subtitle-2 mb-1">Description (Markdown supported)</div>
                   <MilkdownEditor v-model="editedClub.description" placeholder="Write about your club..." />
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="editedClub.website" label="Website URL" :rules="[rules.url]"></v-text-field>
+                  <v-text-field v-model="editedClub.website" label="Website URL" :rules="[rules.url]" />
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="editedClub.location" label="Location"></v-text-field>
+                  <v-text-field v-model="editedClub.location" label="Location" />
                 </v-col>
               </v-row>
             </v-container>
@@ -57,20 +57,20 @@
                     label="Add Member"
                     return-object
                     clearable
-                    @update:modelValue="addUserToClub"
+                    @update:model-value="addUserToClub"
                   >
-                    <template v-slot:item="{ props, item }">
-                      <v-list-item v-bind="props" :subtitle="item.raw.email"></v-list-item>
+                    <template #item="{ props, item }">
+                      <v-list-item v-bind="props" :subtitle="item.raw.email" />
                     </template>
                   </v-autocomplete>
-                  <v-list lines="one" v-if="clubMembers.length > 0">
+                  <v-list v-if="clubMembers.length > 0" lines="one">
                     <v-list-item
                       v-for="member in clubMembers"
                       :key="member.id"
                       :title="member.name"
                       :subtitle="member.email"
                     >
-                      <template v-slot:append>
+                      <template #append>
                         <v-switch
                           v-model="member.is_club_admin"
                           label="Admin"
@@ -78,8 +78,8 @@
                           hide-details
                           inset
                           @change="markMemberDataChanged"
-                        ></v-switch>
-                        <v-btn icon="mdi-delete" variant="text" color="red" @click="removeUserFromClub(member)" size="small"></v-btn>
+                        />
+                        <v-btn icon="mdi-delete" variant="text" color="red" size="small" @click="removeUserFromClub(member)" />
                       </template>
                     </v-list-item>
                   </v-list>
@@ -94,30 +94,30 @@
               <v-row>
                 <v-col>
                   <p class="mb-2">Review requests from users wanting to join the club.</p>
-                  <v-list lines="one" v-if="pendingMembers.length > 0">
+                  <v-list v-if="pendingMembers.length > 0" lines="one">
                     <v-list-item
                       v-for="pending in pendingMembers"
                       :key="pending.id"
                       :title="pending.name"
                       :subtitle="pending.email"
                     >
-                      <template v-slot:append>
+                      <template #append>
                         <v-btn
                           color="green"
                           variant="text"
                           icon="mdi-check"
-                          @click="approveMemberRequest(pending)"
                           :loading="pending.loading"
                           :disabled="pending.loading"
-                        ></v-btn>
+                          @click="approveMemberRequest(pending)"
+                        />
                         <v-btn
                           color="red"
                           variant="text"
                           icon="mdi-close"
-                          @click="rejectMemberRequest(pending)"
                           :loading="pending.loading"
                           :disabled="pending.loading"
-                        ></v-btn>
+                          @click="rejectMemberRequest(pending)"
+                        />
                       </template>
                     </v-list-item>
                   </v-list>
@@ -129,9 +129,9 @@
         </v-window>
       </v-card-text>
       <v-card-actions>
-        <v-spacer></v-spacer>
+        <v-spacer />
         <v-btn color="blue darken-1" text @click="closeDialog">Cancel</v-btn>
-        <v-btn color="blue darken-1" text @click="saveClubAndMembers" :loading="saving">Save</v-btn>
+        <v-btn color="blue darken-1" text :loading="saving" @click="saveClubAndMembers">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

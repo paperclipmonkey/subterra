@@ -3,17 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\SuggestedEdit;
+use App\Services\MediaSuggestionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Services\MediaSuggestionService;
-use Spatie\SlackAlerts\Facades\SlackAlert;
 use Illuminate\Support\Facades\Log;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class SuggestedEditController extends Controller
 {
     public function __construct(
         private readonly MediaSuggestionService $mediaSuggestionService
-    ) {}
+    ) {
+    }
 
     public function store(Request $request)
     {
@@ -40,11 +41,11 @@ class SuggestedEditController extends Controller
             'route' => \App\Models\Route::class,
             'collection' => \App\Models\Collection::class,
         ];
-        
+
         $modelClass = $typeMap[$validated['suggestable_type']] ?? $validated['suggestable_type'];
 
         $suggestedData = $this->mediaSuggestionService->savePendingMedia(
-            $validated['suggested_data'], 
+            $validated['suggested_data'],
             $validated['suggestable_type']
         );
 
@@ -61,23 +62,23 @@ class SuggestedEditController extends Controller
         $entityName = $suggestedData['name'] ?? $suggestedData['title'] ?? 'Unknown';
         $typeLabel = ucfirst(str_replace('_', ' ', $validated['suggestable_type']));
         $isNew = !isset($validated['suggestable_id']) || $validated['suggestable_id'] === null;
-        
-        $message = "📝 *New Suggested Edit Submitted*\n\n" .
-            "*User:* {$user->name} ({$user->email})\n" .
-            "*Type:* {$typeLabel} " . ($isNew ? "(New Item Proposal)" : "(Edit Post)") . "\n" .
-            "*Entity:* {$entityName}\n\n" .
-            "*Preview:*\n" .
-            "> " . (isset($suggestedData['description']) ? substr(strip_tags($suggestedData['description']), 0, 150) . '...' : 'No description provided');
+
+        $message = "📝 *New Suggested Edit Submitted*\n\n".
+            "*User:* {$user->name} ({$user->email})\n".
+            "*Type:* {$typeLabel} ".($isNew ? '(New Item Proposal)' : '(Edit Post)')."\n".
+            "*Entity:* {$entityName}\n\n".
+            "*Preview:*\n".
+            '> '.(isset($suggestedData['description']) ? substr(strip_tags($suggestedData['description']), 0, 150).'...' : 'No description provided');
 
         try {
             SlackAlert::to('corrections')->message($message);
         } catch (\Exception $e) {
-            Log::error('Failed to send SuggestedEdit Slack alert: ' . $e->getMessage());
+            Log::error('Failed to send SuggestedEdit Slack alert: '.$e->getMessage());
         }
 
         return response()->json([
             'message' => 'Suggestion submitted successfully.',
-            'data' => $suggestion
+            'data' => $suggestion,
         ], 201);
     }
 }

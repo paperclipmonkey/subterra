@@ -1,12 +1,12 @@
 <?php
-Namespace Tests\Feature;
+
+namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class NewsTest extends TestCase
 {
-
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_empty_array_when_no_news_files_exist()
     {

@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Club;
-use App\Models\User;
-use Illuminate\Http\Request;
-use App\Http\Resources\ClubResource;
-use App\Http\Resources\ClubDetailResource;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Auth;
 use App\Events\ClubAccessRequested;
 use App\Events\ClubAccessResponded;
+use App\Http\Resources\ClubDetailResource;
+use App\Http\Resources\ClubResource;
+use App\Http\Resources\UserDetailEmailResource;
+use App\Models\Club;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Js;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ClubController extends Controller
 {
@@ -27,6 +27,7 @@ class ClubController extends Controller
                      ->where('is_active', true)
                      ->orderBy('name')
                      ->get();
+
         return ClubResource::collection($clubs);
     }
 
@@ -39,6 +40,7 @@ class ClubController extends Controller
         $clubs = Club::withCount('users')
                      ->orderBy('name')
                      ->get();
+
         return ClubResource::collection($clubs);
     }
 
@@ -48,9 +50,8 @@ class ClubController extends Controller
     public function show(Club $club): JsonResponse
     {
         if (!$club->is_active && !(auth()->check() && auth()->user()->is_admin)) {
-             return response()->json(['message' => 'Club not found or access denied.'], 404);
+            return response()->json(['message' => 'Club not found or access denied.'], 404);
         }
-        // Load count for detail view
         $club->loadCount('users');
 
         if (auth()->check()) {
@@ -85,16 +86,15 @@ class ClubController extends Controller
         }
 
         $validatedData = $validator->validated();
-        // Set default enabled status if not provided
         $validatedData['is_active'] = $request->input('is_active', true);
 
         $club = Club::create($validatedData);
-        $club->loadCount('users'); // Load count for the response
+        $club->loadCount('users');
 
         return response()->json(new ClubDetailResource($club), 201);
     }
 
-     /**
+    /**
      * Update the specified club (Admin).
      */
     public function update(Request $request, Club $club): JsonResponse
@@ -118,7 +118,7 @@ class ClubController extends Controller
         }
 
         $club->update($validator->validated());
-        $club->loadCount('users');
+
         return response()->json(new ClubDetailResource($club->fresh()->loadCount('users')));
     }
 
@@ -127,15 +127,11 @@ class ClubController extends Controller
      */
     public function destroy(Club $club): JsonResponse
     {
-        // Check if the club is associated with any users
-        // If so, consider implications of deleting this club
-        // For now, we will just delete it.
-
         try {
             $club->delete();
-            return response()->json(null, 204); // No Content
+
+            return response()->json(null, 204);
         } catch (\Exception $e) {
-            // Log error $e->getMessage()
             return response()->json(['message' => 'Error deleting club.'], 500);
         }
     }
@@ -147,6 +143,7 @@ class ClubController extends Controller
     {
         $club->is_active = !$club->is_active;
         $club->save();
+
         return response()->json(new ClubDetailResource($club->fresh()->loadCount('users')));
     }
 
@@ -158,22 +155,17 @@ class ClubController extends Controller
     {
         $user = Auth::user();
 
-        // Check if already a member or pending
         $existing = $club->users()->where('user_id', $user->id)->first();
 
         if ($existing) {
-            return response()->json(['message' => 'You are already a member or your request is pending.'], 409); // Conflict
+            return response()->json(['message' => 'You are already a member or your request is pending.'], 409);
         }
 
-        // Attach user with pending status
         $club->users()->attach($user->id, ['status' => 'pending']);
-
-        // Dispatch event for notification
         event(new ClubAccessRequested($club, $user));
 
         return response()->json(['message' => 'Join request sent successfully.'], 201);
     }
-
 
     /**
      * Get the *approved* members of a specific club (Admin).
@@ -210,25 +202,17 @@ class ClubController extends Controller
         $membersData = $request->input('members');
         $syncData = [];
         foreach ($membersData as $member) {
-            // Prepare data for sync, ensuring status is 'approved'
             $syncData[$member['id']] = [
                 'is_admin' => $member['is_admin'],
-                'status' => 'approved' // Explicitly set status for synced members
+                'status' => 'approved',
             ];
         }
 
         try {
-            // Sync only approved members. This will detach any users not in the list.
-            // Be careful if you want to preserve pending/rejected statuses - this might remove them.
-            // A more nuanced approach might be needed if preserving non-approved statuses during sync is required.
-            // For now, this assumes the sync list represents the desired *approved* members.
-            $club->approvedUsers()->sync($syncData); // Sync against the approvedUsers relationship
+            $club->approvedUsers()->sync($syncData);
 
-            // Return the updated list of approved members
             return $this->getApprovedMembers($club);
-
         } catch (\Exception $e) {
-            // Log error $e->getMessage()
             return response()->json(['message' => 'Error updating club members.'], 500);
         }
     }
@@ -239,6 +223,7 @@ class ClubController extends Controller
     public function getPendingMembers(Club $club): JsonResponse
     {
         $pending = $club->users()->wherePivot('status', 'pending')->get();
+
         return response()->json($pending->map(function ($user) {
             return [
                 'id' => $user->id,
@@ -248,21 +233,19 @@ class ClubController extends Controller
         }));
     }
 
-    public function approveMember(Club $club, User $user): \App\Http\Resources\UserDetailEmailResource
+    public function approveMember(Club $club, User $user): UserDetailEmailResource
     {
-        // Only approve if currently pending
         $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
-        // Dispatch event for notification
         event(new ClubAccessResponded($club, $user, 'approved'));
-        return new \App\Http\Resources\UserDetailEmailResource($user->fresh());
+
+        return new UserDetailEmailResource($user->fresh());
     }
 
     public function rejectMember(Club $club, User $user): JsonResponse
     {
-        // Remove the pending membership
         $club->users()->detach($user->id);
-        // Dispatch event for notification
         event(new ClubAccessResponded($club, $user, 'rejected'));
+
         return response()->json(['message' => 'Member rejected.']);
     }
 }

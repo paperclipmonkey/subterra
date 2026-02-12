@@ -1,11 +1,11 @@
 <template>
   <div class="footer">
-    <v-footer app v-if="userStore.user.id">
+    <v-footer v-if="userStore.user.id" app>
       <v-bottom-navigation bg-color="surface" elevation="4">
         <v-btn v-for="item in items" :key="item.title" :to="item.href" :title="item.title" icon>
           <v-icon :icon="item.icon" />
           <v-tooltip bottom>
-            <template v-slot:activator="{ on, attrs }">
+            <template #activator="{ on, attrs }">
               <span v-bind="attrs" :v-on="attrs">{{ item.title }}</span>
             </template>
           </v-tooltip>

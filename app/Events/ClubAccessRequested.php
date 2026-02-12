@@ -10,7 +10,9 @@ use Illuminate\Queue\SerializesModels;
 
 class ClubAccessRequested
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public $club;
     public $user;

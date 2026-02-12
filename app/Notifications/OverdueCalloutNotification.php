@@ -38,15 +38,15 @@ class OverdueCalloutNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $url = url('/admin/incidents/' . $this->callout->incident->id);
+        $url = url('/admin/incidents/'.$this->callout->incident->id);
 
-        return (new MailMessage)
-                    ->subject('URGENT: Overdue Callout - ' . ($this->callout->cave?->name ?? 'Unknown Location'))
+        return (new MailMessage())
+                    ->subject('URGENT: Overdue Callout - '.($this->callout->cave?->name ?? 'Unknown Location'))
                     ->greeting('Urgent Attention Required')
                     ->line('A callout has exceeded its expected return time.')
-                    ->line('**Cave:** ' . ($this->callout->cave?->name ?? 'Unknown Location'))
-                    ->line('**Callout Time:** ' . $this->callout->callout_time->format('d/m/Y H:i'))
-                    ->line('**Overdue By:** ' . $this->callout->callout_time->diffForHumans())
+                    ->line('**Cave:** '.($this->callout->cave?->name ?? 'Unknown Location'))
+                    ->line('**Callout Time:** '.$this->callout->callout_time->format('d/m/Y H:i'))
+                    ->line('**Overdue By:** '.$this->callout->callout_time->diffForHumans())
                     ->action('View Incident', $url)
                     ->line('This requires immediate attention. Please follow the standard operating procedure.');
     }
@@ -58,6 +58,7 @@ class OverdueCalloutNotification extends Notification implements ShouldQueue
     {
         // SMS length limit is usually 160 chars.
         $caveName = $this->callout->cave?->name ?? 'Unknown Location';
+
         return "URGENT: Callout Overdue! Cave: {$caveName}. Due: {$this->callout->callout_time->format('H:i')}. Check Dashboard immediately.";
     }
 
@@ -70,7 +71,7 @@ class OverdueCalloutNotification extends Notification implements ShouldQueue
     {
         return [
             'callout_id' => $this->callout->id,
-            'message' => 'Callout Overdue: ' . ($this->callout->cave?->name ?? 'Unknown Location'),
+            'message' => 'Callout Overdue: '.($this->callout->cave?->name ?? 'Unknown Location'),
         ];
     }
 }

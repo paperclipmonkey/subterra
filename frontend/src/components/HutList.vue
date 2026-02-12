@@ -1,36 +1,35 @@
 <template>
-    <v-card flat class="h-100 d-flex flex-column">
-        <template v-slot:text>
-            <div class="d-flex align-center">
-                <v-text-field v-model="search" label="Search" prepend-inner-icon="mdi-magnify" variant="outlined"
-                    hide-details single-line density="compact" class="flex-grow-1 mr-4">
-                </v-text-field>
-                <HutEditModal v-if="userStore.user.is_admin" />
-            </div>
-        </template>
+  <v-card flat class="h-100 d-flex flex-column">
+    <template #text>
+      <div class="d-flex align-center">
+        <v-text-field v-model="search" label="Search" prepend-inner-icon="mdi-magnify" variant="outlined"
+                      hide-details single-line density="compact" class="flex-grow-1 mr-4" />
+        <HutEditModal v-if="userStore.user.is_admin" />
+      </div>
+    </template>
 
-        <v-tabs v-model="tab" align-tabs="center" density="compact">
-            <v-tab value="map">Map</v-tab>
-            <v-tab value="list">List</v-tab>
-        </v-tabs>
+    <v-tabs v-model="tab" align-tabs="center" density="compact">
+      <v-tab value="map">Map</v-tab>
+      <v-tab value="list">List</v-tab>
+    </v-tabs>
 
-        <v-divider></v-divider>
+    <v-divider />
 
-        <v-tabs-window v-model="tab" class="flex-grow-1">
-            <v-tabs-window-item value="map" class="h-100">
-                <HutListMap :huts="huts" />
-            </v-tabs-window-item>
+    <v-tabs-window v-model="tab" class="flex-grow-1">
+      <v-tabs-window-item value="map" class="h-100">
+        <HutListMap :huts="huts" />
+      </v-tabs-window-item>
 
-            <v-tabs-window-item value="list" class="h-100 overflow-y-auto">
-                <v-container>
-                    <div v-if="loading" class="d-flex justify-center my-4">
-                        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                    </div>
-                    <HutListList v-else :huts="huts" />
-                </v-container>
-            </v-tabs-window-item>
-        </v-tabs-window>
-    </v-card>
+      <v-tabs-window-item value="list" class="h-100 overflow-y-auto">
+        <v-container>
+          <div v-if="loading" class="d-flex justify-center my-4">
+            <v-progress-circular indeterminate color="primary" />
+          </div>
+          <HutListList v-else :huts="huts" />
+        </v-container>
+      </v-tabs-window-item>
+    </v-tabs-window>
+  </v-card>
 </template>
 
 <script setup>

@@ -3,10 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -22,29 +20,29 @@ return new class extends Migration
         Schema::create('callouts', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            
+
             // Location
             $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
             $table->foreignId('cave_id')->nullable()->constrained('caves')->nullOnDelete();
             $table->foreignId('exit_cave_id')->nullable()->constrained('caves')->nullOnDelete();
-            
+
             // Timing
             $table->dateTime('callout_time');
 
             // Details
-            $table->text('description'); 
+            $table->text('description');
             $table->text('trip_plan')->nullable();
             $table->string('car_details')->nullable();
             $table->string('car_registration')->nullable();
             $table->string('car_parking')->nullable();
-            $table->text('team_details')->nullable(); 
+            $table->text('team_details')->nullable();
 
             // Emergency Contact
             $table->string('emergency_contact_name')->nullable();
             $table->string('emergency_contact_phone')->nullable();
-            
+
             $table->enum('status', ['active', 'resolved', 'triggered', 'cancelled'])->default('active');
-            $table->string('aws_watchdog_id')->nullable(); 
+            $table->string('aws_watchdog_id')->nullable();
 
             // Snapshots & Metadata
             $table->json('location_data')->nullable();
@@ -52,7 +50,7 @@ return new class extends Migration
             $table->string('cancelled_ip')->nullable();
             $table->text('cancelled_user_agent')->nullable();
             $table->string('cancelled_location')->nullable();
-            
+
             $table->timestamps();
         });
 

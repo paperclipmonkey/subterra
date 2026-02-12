@@ -3,9 +3,9 @@
     <v-row>
       <v-col>
         <ClubMembershipConfirmation
-          :pendingClubs="pendingClubs"
+          :pending-clubs="pendingClubs"
           :user="user"
-          @membershipConfirmed="fetchPendingClubs"
+          @membership-confirmed="fetchPendingClubs"
         />
       </v-col>
     </v-row>

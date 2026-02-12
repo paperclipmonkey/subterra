@@ -11,16 +11,16 @@
     </v-row>
 
     <v-row>
-        <v-col cols="12">
-            <v-card>
-                <v-card-text>
-                    <RouteForm 
-                        :caveSystemId="route.params.id" 
-                        @saved="onSaved"
-                    />
-                </v-card-text>
-            </v-card>
-        </v-col>
+      <v-col cols="12">
+        <v-card>
+          <v-card-text>
+            <RouteForm 
+              :cave-system-id="route.params.id" 
+              @saved="onSaved"
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
     </v-row>
   </v-container>
 </template>

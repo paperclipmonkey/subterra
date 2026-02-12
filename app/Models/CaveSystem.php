@@ -9,7 +9,8 @@ use OwenIt\Auditing\Auditable;
 
 class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory, Auditable;
+    use HasFactory;
+    use Auditable;
 
     public $timestamps = false;
 
@@ -33,7 +34,7 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->hasMany(Cave::class);
     }
 
-    public function tags () 
+    public function tags()
     {
         return $this->belongsToMany(Tag::class);
     }

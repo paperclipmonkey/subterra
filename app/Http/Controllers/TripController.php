@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Events\TripCreated;
+use App\Events\TripParticipantTagged;
 use App\Http\Requests\DeleteTripRequest;
 use App\Http\Requests\StoreTripRequest;
 use App\Http\Requests\UpdateTripRequest;
@@ -13,13 +15,15 @@ use App\Models\User;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TripController extends Controller
 {
     public function __construct(
         private readonly ImageProcessingService $imageProcessingService
-    ) {}
+    ) {
+    }
 
     public function index(): ResourceCollection
     {
@@ -34,6 +38,7 @@ class TripController extends Controller
         });
 
         $trips = $query->with(['participants.clubs', 'entrance', 'media'])->orderBy('start_time', 'desc')->get();
+
         return TripResource::collection($trips);
     }
 
@@ -43,7 +48,7 @@ class TripController extends Controller
         $userId = $user->id;
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with('entrance')->visibleTo($user)->with('entrance')->orderBy('start_time', 'desc')->get();
+        })->with('entrance')->visibleTo($user)->orderBy('start_time', 'desc')->get();
 
         return TripResource::collection($trips);
     }
@@ -52,7 +57,7 @@ class TripController extends Controller
     {
         $user = auth()->user();
         $userId = $user->id;
-        $filename = "my_trips.csv";
+        $filename = 'my_trips.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -65,7 +70,6 @@ class TripController extends Controller
         $callback = function () use ($user, $userId) {
             $handle = fopen('php://output', 'w');
 
-            // Add CSV Header
             fputcsv($handle, [
                 'Trip ID',
                 'Trip Name',
@@ -74,29 +78,25 @@ class TripController extends Controller
                 'Cave Name',
                 'Entrance Name',
                 'Description',
-                'Participants'
-                // Add more columns if needed
+                'Participants',
             ]);
 
-            // Using chunking for potentially large datasets
             Trip::whereHas('participants', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
             ->visibleTo($user)
-            ->with('entrance') // Eager load relationships
-            // ->orderBy('date', 'desc') // Revert orderBy back to 'date'
+            ->with('entrance')
             ->chunk(200, function ($trips) use ($handle) {
                 foreach ($trips as $trip) {
                     fputcsv($handle, [
                         $trip->short_id,
                         $trip->name,
-                        $trip->start_time?->format('Y-m-d') ?? 'N/A', // Format date as needed
-                        $trip->end_time?->format('Y-m-d') ?? 'N/A', // Format date as needed
-                        $trip->entrance?->cave?->name ?? 'N/A', // Safely access nested relationship
-                        $trip->entrance?->name ?? 'N/A', // Safely access relationship
+                        $trip->start_time?->format('Y-m-d') ?? 'N/A',
+                        $trip->end_time?->format('Y-m-d') ?? 'N/A',
+                        $trip->entrance?->cave?->name ?? 'N/A',
+                        $trip->entrance?->name ?? 'N/A',
                         $trip->description,
-                        implode(', ', $trip->participants->pluck('name')->toArray())
-                        // Add corresponding data for more columns
+                        implode(', ', $trip->participants->pluck('name')->toArray()),
                     ]);
                 }
             });
@@ -110,25 +110,21 @@ class TripController extends Controller
     public function store(StoreTripRequest $request): TripResource
     {
         $tripData = $request->all();
-        
-        // Set default visibility to 'public' if not provided
+
         if (!isset($tripData['visibility'])) {
             $tripData['visibility'] = 'public';
         }
 
-        // Validate Closed Access
         $this->validateClosedAccess($tripData['entrance_cave_id'], $tripData['visibility']);
-        
+
         $trip = Trip::create($tripData);
         $trip->save();
 
-        // Add the participants to the trip
         $participants = $request->input('participants', []);
         $participantIds = array_map(function ($id) {
             return User::withoutGlobalScopes()->where('id', $id)->first()->id;
         }, $participants);
 
-        // Sync participants with the trip
         $trip->participants()->sync($participantIds);
 
         // Fire TripParticipantTagged event for each participant including the creator
@@ -136,7 +132,7 @@ class TripController extends Controller
         foreach ($participantIds as $participantId) {
             $participant = User::withoutGlobalScopes()->find($participantId);
             if ($participant) {
-                event(new \App\Events\TripParticipantTagged($trip, $participant, $creator));
+                event(new TripParticipantTagged($trip, $participant, $creator));
             }
         }
 
@@ -144,7 +140,7 @@ class TripController extends Controller
         $this->storeMedia($media, $trip);
 
         // Dispatch event instead of calling SlackAlert directly
-        event(new \App\Events\TripCreated($trip, $creator));
+        event(new TripCreated($trip, $creator));
 
         return new TripResource($trip);
     }
@@ -160,7 +156,7 @@ class TripController extends Controller
                 'photographer' => $file['photographer'] ?? null,
                 'copyright' => $file['copyright'] ?? null,
             ];
-            
+
             $trip->media()->create($mediaData);
         }
     }
@@ -168,17 +164,14 @@ class TripController extends Controller
     public function show(Trip $trip): TripResource
     {
         $user = auth()->user();
-        
-        // Check if the trip is visible to the current user
         $visibleTrips = Trip::visibleTo($user)->where('id', $trip->id);
-        
+
         if (!$visibleTrips->exists()) {
             abort(404, 'Trip not found');
         }
-        
-        // Load relationships for the resource
+
         $trip->load(['system', 'entrance', 'exit', 'participants', 'media']);
-        
+
         return new TripResource($trip);
     }
 
@@ -201,13 +194,11 @@ class TripController extends Controller
 
         $trip->update($data);
 
-        // Add the participants to the trip
         $participants = $request->input('participants', []);
         $participantIds = array_map(function ($id) {
             return User::withoutGlobalScopes()->where('id', $id)->first()->id;
         }, $participants);
 
-        // Sync participants with the trip
         $trip->participants()->sync($participantIds);
 
         $media = $request->input('media', []);
@@ -219,8 +210,9 @@ class TripController extends Controller
     public function destroy(DeleteTripRequest $request, Trip $trip): JsonResponse
     {
         $trip->delete();
+
         return response()->json([
-            'message'=> 'Trip deleted successfully'
+            'message' => 'Trip deleted successfully',
         ]);
     }
 
@@ -229,12 +221,12 @@ class TripController extends Controller
         if ($visibility === 'public') {
             $cave = \App\Models\Cave::with('tags', 'system.tags')->find($caveId);
             if ($cave) {
-                $isClosed = $cave->tags->contains('tag', 'Closed') || 
+                $isClosed = $cave->tags->contains('tag', 'Closed') ||
                            ($cave->system && $cave->system->tags->contains('tag', 'Closed'));
-                
+
                 if ($isClosed) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'visibility' => ['Closed caves cannot have public trip reports.']
+                    throw ValidationException::withMessages([
+                        'visibility' => ['Closed caves cannot have public trip reports.'],
                     ]);
                 }
             }

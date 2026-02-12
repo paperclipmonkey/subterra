@@ -17,13 +17,13 @@ class UserPhoneConstraintTest extends TestCase
 
         $response = $this->actingAs($user)
             ->putJson("/api/users/{$user->id}", [
-                'phone' => $phone
+                'phone' => $phone,
             ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
-            'phone' => $phone
+            'phone' => $phone,
         ]);
     }
 
@@ -34,7 +34,7 @@ class UserPhoneConstraintTest extends TestCase
 
         $response = $this->actingAs($newUser)
             ->putJson("/api/users/{$newUser->id}", [
-                'phone' => '+447999888777' // Same as existingUser
+                'phone' => '+447999888777', // Same as existingUser
             ]);
 
         $response->assertStatus(422);
@@ -48,13 +48,13 @@ class UserPhoneConstraintTest extends TestCase
         $response = $this->actingAs($user)
             ->putJson("/api/users/{$user->id}", [
                 'phone' => '+447111222333',
-                'bio' => 'Updated bio'
+                'bio' => 'Updated bio',
             ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
-            'bio' => 'Updated bio'
+            'bio' => 'Updated bio',
         ]);
     }
 }

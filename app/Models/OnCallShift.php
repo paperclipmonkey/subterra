@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class OnCallShift extends Model
 {
@@ -27,7 +27,7 @@ class OnCallShift extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * Scope a query to only include shifts that cover the given datetime.
      */

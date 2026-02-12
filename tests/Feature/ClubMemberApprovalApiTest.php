@@ -25,7 +25,7 @@ class ClubMemberApprovalApiTest extends TestCase
         $response = $this->putJson("/api/admin/clubs/{$club->slug}/members/{$user->id}/approve");
 
         $response->assertStatus(200);
-        
+
         // Use the structure from UserDetailEmailResource
         $response->assertJsonStructure([
             'data' => [
@@ -33,14 +33,14 @@ class ClubMemberApprovalApiTest extends TestCase
                 'name',
                 'email',
                 'clubs' => [
-                    '*' => ['id', 'name', 'slug', 'is_admin', 'status']
+                    '*' => ['id', 'name', 'slug', 'is_admin', 'status'],
                 ],
-            ]
+            ],
         ]);
 
         // Check club status
         $this->assertEquals('approved', $user->fresh()->clubs->first()->pivot->status);
-        
+
         // Verify club ID is present in the response
         $this->assertEquals($club->id, $response->json('data.clubs.0.id'));
         $this->assertEquals('approved', $response->json('data.clubs.0.status'));

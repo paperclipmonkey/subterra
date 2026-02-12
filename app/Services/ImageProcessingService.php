@@ -6,6 +6,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\Laravel\Facades\Image;
 
 class ImageProcessingService
@@ -13,13 +14,13 @@ class ImageProcessingService
     public function processAndStoreImage(array $imageData, string $directory, string $suffix = ''): string
     {
         $fileData = explode(',', $imageData['data']);
-        $image = Image::read($fileData[1])->scaleDown(1500, 1500)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 60));
+        $image = Image::read($fileData[1])->scaleDown(1500, 1500)->encode(new WebpEncoder(quality: 60));
 
         $filename = Str::uuid();
         if ($suffix) {
-            $filename .= '_' . $suffix;
+            $filename .= '_'.$suffix;
         }
-        $filePath = $directory . '/' . $filename . '.webp';
+        $filePath = $directory.'/'.$filename.'.webp';
 
         Storage::disk('media')->put($filePath, (string) $image);
 

@@ -8,13 +8,13 @@ use App\Http\Resources\TripResource;
 use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Resources\UserDetailResource;
 use App\Http\Resources\UserResource;
+use App\Models\Role;
 use App\Models\Trip;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -37,14 +37,14 @@ class UserController extends Controller
             ->pluck('users')
             ->flatten()
             ->pluck('id')
-            ->unique() // Unique is sufficient, no need to filter distinct
-            ->filter(fn($id) => $id !== $currentUser->id); // Remove self if present
+            ->unique()
+            ->filter(fn ($id) => $id !== $currentUser->id);
         }
 
         // Count how many trips each user has shared with the current user
         $trips = \App\Models\Trip::whereHas('participants', function ($q) use ($currentUser) {
-                $q->where('user_id', $currentUser->id);
-            })
+            $q->where('user_id', $currentUser->id);
+        })
             ->with('participants:id')
             ->get();
 
@@ -56,15 +56,12 @@ class UserController extends Controller
                 }
             }
         }
-        
-        
-        // Find users matching search term (Name or Email)
+
         // LIKE is case-insensitive in MySQL by default
-        // But email exact match needs case-insensitive comparison with LOWER
-        $users = User::where(function($query) use ($search) {
-                $query->where('name', 'LIKE', '%' . $search . '%')
-                      ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
-            })
+        $users = User::where(function ($query) use ($search) {
+            $query->where('name', 'LIKE', '%'.$search.'%')
+                  ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+        })
             ->get()
         ->filter(function ($user) use ($currentUser, $clubUserIds, $tripUserCounts, $search) {
             // Always allow self
@@ -74,7 +71,7 @@ class UserController extends Controller
 
             // Allow exact email match regardless of other rules (if they know the email, they can add)
             if (strcasecmp($user->email, $search) === 0) {
-                 return true;
+                return true;
             }
 
             // Public users are visible
@@ -89,31 +86,31 @@ class UserController extends Controller
 
             // Users with shared trip history are visible
             if (isset($tripUserCounts[$user->id])) {
-                return true; 
+                return true;
             }
 
             // If none of the above, hide them
-            return false; 
-
+            return false;
         })->map(function ($user) use ($clubUserIds, $tripUserCounts) {
             $score = 0;
             // Priority 1 (High): Previous Trips
             if (isset($tripUserCounts[$user->id])) {
                 // Give a high score for trips, potentially weighted by count
-                $score += 10 + ($tripUserCounts[$user->id]); 
+                $score += 10 + ($tripUserCounts[$user->id]);
             }
-            
+
             // Priority 2: Clubs in common
             if ($clubUserIds->contains($user->id)) {
                 $score += 5;
             }
-            
+
             // Priority 3: Public (Base visibility)
             if ($user->visibility_addable === 'public') {
                 $score += 1;
             }
 
             $user->proximity_score = $score;
+
             return $user;
         })
         ->sortByDesc('proximity_score')
@@ -127,11 +124,8 @@ class UserController extends Controller
      */
     public function adminIndex(): ResourceCollection
     {
-        // Need withoutGlobalScopes here as withoutScopedBindings() doesn't affect this query
-        // Only show active users (actual signups)
         return UserDetailEmailResource::collection(User::withoutGlobalScopes()->where('is_active', true)->with('roles')->get());
     }
-
 
     /**
      * Toggle the admin status of a user.
@@ -143,7 +137,7 @@ class UserController extends Controller
         } else {
             $user->assignRole('platform_admin');
         }
-        
+
         return new UserDetailEmailResource($user);
     }
 
@@ -157,17 +151,16 @@ class UserController extends Controller
             abort(403, 'You cannot modify your own roles.');
         }
 
-        // Validate the role slug exists
-        $roleModel = \App\Models\Role::where('slug', $role)->firstOrFail();
+        $roleModel = Role::where('slug', $role)->firstOrFail();
 
         if ($user->hasRole($role)) {
             $user->removeRole($role);
         } else {
             $user->assignRole($role);
         }
-        
-        // Reload roles relationship
+
         $user->load('roles');
+
         return new UserDetailEmailResource($user);
     }
 
@@ -182,16 +175,12 @@ class UserController extends Controller
             // Add other fields as necessary
         ]);
 
-        // Determine default photo path correctly based on storage setup
-        // $defaultPhotoPath = 'profile/default.webp'; // Adjust if needed
-
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
-            'photo' => null, 
+            'photo' => null,
         ]);
-        
-        // Explicitly set guarded fields (not mass assignable)
+
         $user->is_active = false;
         $user->save();
 
@@ -217,7 +206,7 @@ class UserController extends Controller
         $validatedData = $request->validate([
             'bio' => ['nullable', 'string'],
             'name' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'regex:/^(07[0-9]{9}|\+44[0-9]{10})$/', 'unique:users,phone,' . $user->id],
+            'phone' => ['nullable', 'string', 'regex:/^(07[0-9]{9}|\+44[0-9]{10})$/', 'unique:users,phone,'.$user->id],
             'email_trophies' => ['nullable', 'boolean'],
             'email_tagged' => ['nullable', 'boolean'],
             'email_platform_news' => ['nullable', 'boolean'],
@@ -225,6 +214,7 @@ class UserController extends Controller
         ]);
 
         $user->update($validatedData);
+
         return new UserDetailEmailResource($user);
     }
 
@@ -236,8 +226,8 @@ class UserController extends Controller
         $user = User::withoutGlobalScopes()->findOrFail($id);
 
         $trips = Trip::whereHas('participants', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
+            $query->where('user_id', $user->id);
+        })
             ->where('start_time', '>=', Carbon::now()->subYear())
             ->with('entrance', 'participants')
             ->orderBy('start_time', 'desc')
@@ -248,20 +238,17 @@ class UserController extends Controller
     }
 
     /**
-     * Get activity heatmap data for a user (trips per day in the last year).
-     */
-    /**
-     * Get activity heatmap data for a user (trips per day in the last year).
+     * Get activity heatmap data for a user (hours per day in the last year).
      */
     public function activityHeatmap($id): JsonResponse
     {
         $user = User::withoutGlobalScopes()->findOrFail($id);
-        
+
         $oneYearAgo = Carbon::now()->subYear();
 
         $activity = Trip::whereHas('participants', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
+            $query->where('user_id', $user->id);
+        })
             ->where('start_time', '>=', $oneYearAgo)
             ->whereNotNull('end_time') // Ensure we have an end time
             ->get()
@@ -272,10 +259,10 @@ class UserController extends Controller
                 $totalMinutes = $tripsOnDate->sum(function ($trip) {
                     return $trip->start_time->diffInMinutes($trip->end_time);
                 });
-                
+
                 return [
                     'date' => $date,
-                    'count' => round($totalMinutes / 60, 1)
+                    'count' => round($totalMinutes / 60, 1),
                 ];
             })
             ->sortBy('date')
@@ -290,9 +277,10 @@ class UserController extends Controller
     public function medals(User $user): JsonResponse
     {
         $medals = $user->medals()->get();
+
         return response()->json([
             'user_id' => $user->id,
-            'medals' => $medals
+            'medals' => $medals,
         ]);
     }
 
@@ -306,28 +294,27 @@ class UserController extends Controller
                 'email' => $user->email,
                 'bio' => $user->bio,
                 'is_active' => $user->is_active,
-                'is_active' => $user->is_active,
                 'tos_agreed_at' => $user->tos_agreed_at,
                 'created_at' => $user->created_at,
             ],
-            'clubs' => $user->clubs->map(fn($club) => [
+            'clubs' => $user->clubs->map(fn ($club) => [
                 'name' => $club->name,
                 'status' => $club->pivot->status,
                 'is_admin' => $club->pivot->is_admin,
             ]),
-            'medals' => $user->medals->map(fn($medal) => [
+            'medals' => $user->medals->map(fn ($medal) => [
                 'name' => $medal->name,
                 'description' => $medal->description,
                 'awarded_at' => $medal->pivot->awarded_at,
             ]),
-            'trips' => $user->trips->map(fn($trip) => [
+            'trips' => $user->trips->map(fn ($trip) => [
                 'id' => $trip->id,
                 'start_time' => $trip->start_time,
                 'end_time' => $trip->end_time,
                 'description' => $trip->description,
                 'visibility' => $trip->visibility,
             ]),
-            'callouts' => $user->callouts->map(fn($callout) => [
+            'callouts' => $user->callouts->map(fn ($callout) => [
                 'id' => $callout->id,
                 'callout_time' => $callout->callout_time,
                 'description' => $callout->description,
@@ -336,10 +323,10 @@ class UserController extends Controller
             ]),
         ];
 
-        $filename = 'subterra_data_export_' . now()->format('Y-m-d') . '.json';
+        $filename = 'subterra_data_export_'.now()->format('Y-m-d').'.json';
 
         return response()->json($data, 200, [
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
@@ -356,8 +343,8 @@ class UserController extends Controller
         }
 
         // 1. Delete user photo if it's not the default
-        if ($user->photo && 
-            !str_contains($user->photo, 'default.webp') && 
+        if ($user->photo &&
+            !str_contains($user->photo, 'default.webp') &&
             !str_contains($user->photo, 'default.png')
         ) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($user->photo);
@@ -382,7 +369,7 @@ class UserController extends Controller
         $user->medals()->detach();
 
         // 4. Delete the user
-        // related callouts, incidents, onto_call_shifts, and collections 
+        // related callouts, incidents, onto_call_shifts, and collections
         // will be deleted via database cascades.
         // incident_notes will be set to null via database cascade (set null).
         $user->delete();
@@ -393,12 +380,14 @@ class UserController extends Controller
     public function updateMe(Request $request): UserDetailEmailResource
     {
         $user = $request->user();
+
         return $this->store($user, $request);
     }
 
     public function destroyMe(Request $request): JsonResponse
     {
         $user = $request->user();
+
         return $this->destroy($request, $user);
     }
 }

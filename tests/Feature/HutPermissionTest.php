@@ -17,7 +17,7 @@ class HutPermissionTest extends TestCase
         $club = Club::factory()->create();
         $hut = Hut::factory()->create(['club_id' => $club->id]);
         $user = User::factory()->create();
-        
+
         // Attach user as club admin
         $club->users()->attach($user->id, ['is_admin' => true, 'status' => 'approved']);
 
@@ -34,7 +34,7 @@ class HutPermissionTest extends TestCase
         $club = Club::factory()->create();
         $hut = Hut::factory()->create(['club_id' => $club->id]);
         $user = User::factory()->create();
-        
+
         // Attach user as regular member
         $club->users()->attach($user->id, ['is_admin' => false, 'status' => 'approved']);
 

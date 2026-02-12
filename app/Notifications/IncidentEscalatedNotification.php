@@ -38,14 +38,14 @@ class IncidentEscalatedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $url = url('/admin/incidents/' . $this->incident->id);
+        $url = url('/admin/incidents/'.$this->incident->id);
 
-        return (new MailMessage)
-                    ->subject('URGENT: Unclaimed Incident - ' . ($this->incident->callout->cave->name ?? 'Unknown'))
+        return (new MailMessage())
+                    ->subject('URGENT: Unclaimed Incident - '.($this->incident->callout->cave->name ?? 'Unknown'))
                     ->greeting('Urgent Assistance Required')
                     ->line('An active incident has been open for 15 minutes without a Controller assigned.')
-                    ->line('**Incident ID:** #' . $this->incident->id)
-                    ->line('**Location:** ' . ($this->incident->callout->cave->name ?? 'Unknown'))
+                    ->line('**Incident ID:** #'.$this->incident->id)
+                    ->line('**Location:** '.($this->incident->callout->cave->name ?? 'Unknown'))
                     ->action('Take Control', $url)
                     ->line('All Duty Officers are being notified. Please log in immediately.');
     }

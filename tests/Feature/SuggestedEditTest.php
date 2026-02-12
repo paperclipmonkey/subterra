@@ -2,15 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Mail\SuggestionApprovedMail;
 use App\Models\Cave;
 use App\Models\Club;
 use App\Models\SuggestedEdit;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use App\Mail\SuggestionApprovedMail;
 use Tests\TestCase;
 
 class SuggestedEditTest extends TestCase
@@ -22,6 +21,7 @@ class SuggestedEditTest extends TestCase
         $user = User::factory()->withApprovedClub()->create();
         $club = Club::factory()->create();
         $user->clubs()->attach($club, ['status' => 'approved']);
+
         return $user;
     }
 
@@ -39,14 +39,14 @@ class SuggestedEditTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        
+
         $this->assertDatabaseHas('suggested_edits', [
             'user_id' => $user->id,
             'suggestable_id' => $cave->id,
             'suggestable_type' => Cave::class, // The controller maps 'cave' to the class
             'status' => 'pending',
         ]);
-        
+
         $suggestion = SuggestedEdit::first();
         $this->assertEquals('New Description', $suggestion->suggested_data['description']);
     }
@@ -133,7 +133,7 @@ class SuggestedEditTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        
+
         $this->assertDatabaseHas('suggested_edits', [
             'user_id' => $user->id,
             'suggestable_type' => Cave::class, // Controller maps 'cave' to class
@@ -169,7 +169,7 @@ class SuggestedEditTest extends TestCase
         $response = $this->actingAs($admin)->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve");
 
         $response->assertStatus(200);
-        
+
         $this->assertDatabaseHas('caves', [
             'name' => 'Brand New Cave',
         ]);
@@ -238,13 +238,13 @@ class SuggestedEditTest extends TestCase
 
         // 1. Submit suggestion with Base64 image
         $base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-        
+
         $response = $this->actingAs($user)->postJson('/api/suggested-edits', [
             'suggestable_type' => 'cave',
             'suggestable_id' => $cave->id,
             'suggested_data' => [
                 'hero_image' => $base64Image,
-                'name' => 'Updated Cave Name'
+                'name' => 'Updated Cave Name',
             ],
         ]);
 
@@ -257,10 +257,10 @@ class SuggestedEditTest extends TestCase
 
         // 2. Approve suggestion -> verify file moved
         $this->actingAs($admin)->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve");
-        
+
         $cave->refresh();
         $finalPath = $cave->hero_image;
-        
+
         $this->assertStringContainsString('caves/', $finalPath);
         Storage::disk('media')->assertExists($finalPath);
         Storage::disk('media')->assertMissing($pendingPath);
@@ -272,14 +272,14 @@ class SuggestedEditTest extends TestCase
             'suggestable_id' => $cave->id,
             'suggested_data' => [
                 'hero_image' => 'pending_edits/cave/another_test_image.webp',
-                'name' => 'Another Name'
+                'name' => 'Another Name',
             ],
             'status' => 'pending',
         ]);
         Storage::disk('media')->put('pending_edits/cave/another_test_image.webp', 'fake image data');
 
         $this->actingAs($admin)->postJson("/api/admin/suggested-edits/{$suggestion2->id}/reject", [
-            'admin_comment' => 'Rejected'
+            'admin_comment' => 'Rejected',
         ]);
 
         Storage::disk('media')->assertMissing('pending_edits/cave/another_test_image.webp');

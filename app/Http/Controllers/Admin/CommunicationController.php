@@ -35,7 +35,7 @@ class CommunicationController extends Controller
             ->chunk(100, function ($users) use ($subject, $body, &$count) {
                 foreach ($users as $user) {
                     Mail::to($user)->queue(new PlatformNews($subject, $body, $user));
-                    $count++;
+                    ++$count;
                 }
             });
 

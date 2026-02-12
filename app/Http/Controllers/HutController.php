@@ -3,16 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Hut;
-use App\Models\Cave;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class HutController extends Controller
 {
     public function __construct(
         private readonly ImageProcessingService $imageProcessingService
-    ) {}
+    ) {
+    }
 
     public function index()
     {
@@ -61,7 +60,7 @@ class HutController extends Controller
         }
 
         $isClubAdmin = $hut->club_id && $user->clubs()->where('club_id', $hut->club_id)->wherePivot('is_admin', true)->exists();
-        
+
         if (!$user->is_admin && !$isClubAdmin) {
             abort(403, 'You do not have permission to edit this hut.');
         }
@@ -108,6 +107,7 @@ class HutController extends Controller
     public function destroy(Hut $hut)
     {
         $hut->delete();
+
         return response()->json(null, 204);
     }
 }

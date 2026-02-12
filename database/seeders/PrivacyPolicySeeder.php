@@ -10,7 +10,7 @@ class PrivacyPolicySeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::whereHas('roles', function($q) { $q->where('slug', 'platform_admin'); })->first();
+        $admin = User::whereHas('roles', function ($q) { $q->where('slug', 'platform_admin'); })->first();
         $adminId = $admin ? $admin->id : null;
 
         $content = <<<'MARKDOWN'

@@ -20,7 +20,7 @@ class UserSignupSlackNotificationTest extends TestCase
 
         $response = $this->postJson('/api/auth/magic-link', [
             'email' => $email,
-            'agreed_to_tos' => true
+            'agreed_to_tos' => true,
         ]);
 
         $response->assertStatus(200);
@@ -39,13 +39,13 @@ class UserSignupSlackNotificationTest extends TestCase
         config()->set('slack-alerts.webhook_urls.signups', 'https://hooks.slack.com/services/test/signups');
 
         $admin = User::factory()->admin()->create(['is_active' => true]);
-        
+
         $email = 'api_created@example.com';
 
         // Note: The route in api.php is Route::post('/users', ...) inside ApiIsAuthenticated group
         $response = $this->actingAs($admin)->postJson('/api/users', [
             'name' => 'API Created User',
-            'email' => $email
+            'email' => $email,
         ]);
 
         $response->assertStatus(201);

@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Callout;
-use Illuminate\Console\Command;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class PurgeOldCallouts extends Command
 {
@@ -42,6 +42,7 @@ class PurgeOldCallouts extends Command
 
         if ($count === 0) {
             $this->info('No old callouts require scrubbing.');
+
             return;
         }
 

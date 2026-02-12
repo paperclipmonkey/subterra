@@ -10,7 +10,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
 use Spatie\SlackAlerts\Facades\SlackAlert;
 use Tests\TestCase;
 
@@ -44,7 +43,7 @@ class UserSignupNotificationTest extends TestCase
         // Test Slack Listener
         // Mock the facade
         SlackAlert::shouldReceive('to')->never();
-        
+
         $slackListener = new SendUserCreatedSlackAlert();
         $slackListener->handle($event);
     }
@@ -52,7 +51,7 @@ class UserSignupNotificationTest extends TestCase
     public function test_active_user_triggers_notifications()
     {
         Mail::fake();
-        
+
         // Create an admin to receive the email
         User::factory()->admin()->create(['email' => 'admin@subterra.world']);
 
@@ -68,7 +67,7 @@ class UserSignupNotificationTest extends TestCase
         // Test Email Listener
         $emailListener = new SendNewUserSignupEmailToAdmins();
         $emailListener->handle($event);
-        
+
         Mail::assertQueued(NewUserSignupNotification::class);
 
         // Test Slack Listener is a bit harder to mock perfectly without potentially interfering with other tests if not careful,
@@ -95,10 +94,10 @@ class UserSignupNotificationTest extends TestCase
         $response = $this->getJson('/api/admin/users');
 
         $response->assertStatus(200);
-        
+
         $data = $response->json('data');
         $this->assertNotEmpty($data);
-        
+
         // ID check
         $ids = array_column($data, 'id');
         $this->assertContains($activeUser->id, $ids);
@@ -118,7 +117,7 @@ class UserSignupNotificationTest extends TestCase
         // Simulate activation login logic (manually specificing the transition we added to controllers)
         $user->is_active = true;
         $user->save();
-        
+
         // Fire the event manually as the Controller would
         event(new UserCreated($user));
 

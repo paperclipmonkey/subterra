@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 class Incident extends Model
 {
@@ -52,7 +52,7 @@ class Incident extends Model
     {
         return $this->hasMany(IncidentNote::class);
     }
-    
+
     public function scopeOpen(Builder $query): Builder
     {
         return $query->where('status', 'open');
@@ -62,14 +62,14 @@ class Incident extends Model
     {
         return $query->whereNull('incident_controller_id');
     }
-    
+
     public function resolve(): void
     {
         $this->update([
             'status' => 'resolved',
             'resolved_at' => now(),
         ]);
-        
+
         $this->callout->update(['status' => 'resolved']);
     }
 }

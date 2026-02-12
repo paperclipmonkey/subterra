@@ -17,7 +17,7 @@ class CaveCatchmentApiTest extends TestCase
     {
         \App\Models\Tag::factory()->create(['tag' => 'Previously Done', 'category' => 'status']);
         \App\Models\Tag::factory()->create(['tag' => 'Not Done Yet', 'category' => 'status']);
-        
+
         $user = User::factory()->withApprovedClub()->create();
         $catchment = Catchment::factory()->create(['name' => 'Test Catchment']);
         $system = CaveSystem::factory()->create(['catchment_id' => $catchment->id]);

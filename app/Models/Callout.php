@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Builder;
 
 class Callout extends Model
 {
@@ -57,7 +57,7 @@ class Callout extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     public function cave(): BelongsTo
     {
         return $this->belongsTo(Cave::class, 'cave_id');
@@ -87,7 +87,7 @@ class Callout extends Model
     {
         return $query->where('status', 'active');
     }
-    
+
     public function scopeTriggered(Builder $query): Builder
     {
         return $query->where('status', 'triggered');

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Config;
 use Spatie\SlackAlerts\Facades\SlackAlert;
 use Tests\TestCase;
 
@@ -31,11 +30,12 @@ class CorrectionFeatureTest extends TestCase
                  ->assertJson(['message' => 'Correction submitted successfully']);
 
         SlackAlert::expectMessagesSent(function ($message) use ($user) {
-            // Note: Spatie Fake doesn't easily expose the 'to' channel in the message array 
+            // Note: Spatie Fake doesn't easily expose the 'to' channel in the message array
             // depending on version, but we can check the text.
             // If needed we can check $message['webhookUrlName'] if available.
-            
+
             $text = $message['text'] ?? '';
+
             return str_contains($text, 'Factual Correction Submitted') &&
                    str_contains($text, $user->name) &&
                    str_contains($text, 'Test Cave') &&

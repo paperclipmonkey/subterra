@@ -11,21 +11,21 @@
     </v-row>
 
     <div v-if="loading" class="d-flex justify-center align-center py-12">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+      <v-progress-circular indeterminate color="primary" />
     </div>
 
     <v-row v-else-if="routeData">
-        <v-col cols="12">
-            <v-card>
-                <v-card-text>
-                    <RouteForm 
-                        :caveSystemId="routeData.cave_system_id" 
-                        :initialRoute="routeData"
-                        @saved="onSaved"
-                    />
-                </v-card-text>
-            </v-card>
-        </v-col>
+      <v-col cols="12">
+        <v-card>
+          <v-card-text>
+            <RouteForm 
+              :cave-system-id="routeData.cave_system_id" 
+              :initial-route="routeData"
+              @saved="onSaved"
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
     </v-row>
   </v-container>
 </template>

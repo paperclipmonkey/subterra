@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CalloutService;
 use App\Models\Callout;
+use App\Services\CalloutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -26,7 +26,7 @@ class WebhookController extends Controller
 
         // Validate payload structure (The SMS Works typically calls this 'content' and 'sender')
         // Example: {"sender": "447777777777", "content": "SAFE", "destination": "44712345678"}
-        
+
         $sender = $request->input('sender');
         $content = trim(strtoupper($request->input('content', '')));
 
@@ -55,10 +55,12 @@ class WebhookController extends Controller
         if ($callout) {
             Log::info("Processing SAFE reply for Callout ID: {$callout->id}");
             $this->calloutService->cancel($callout);
+
             return response()->json(['message' => 'Callout cancelled'], 200);
         }
 
         Log::warning("Received SAFE reply from {$phone} but no open callout found.");
+
         return response()->json(['message' => 'No open callout found'], 404);
     }
 }

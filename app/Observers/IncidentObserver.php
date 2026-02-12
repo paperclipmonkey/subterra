@@ -14,7 +14,7 @@ class IncidentObserver
     {
         // Check if Status Changed
         if ($incident->wasChanged('status')) {
-            $msg = "📢 *Incident #{$incident->id} Update*\nStatus: *{$incident->status}*\n<" . url('/admin/incidents/' . $incident->id) . "|View Incident>";
+            $msg = "📢 *Incident #{$incident->id} Update*\nStatus: *{$incident->status}*\n<".url('/admin/incidents/'.$incident->id).'|View Incident>';
             $this->sendToOverdueChannel($msg);
         }
     }

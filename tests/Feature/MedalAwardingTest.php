@@ -7,11 +7,10 @@ use App\Listeners\CheckAndAwardMedals;
 use App\Models\Medal;
 use App\Models\Trip;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class MedalAwardingTest extends TestCase
 {
@@ -44,7 +43,7 @@ class MedalAwardingTest extends TestCase
         $user = User::factory()->create();
         $medal = Medal::create(['name' => 'Explorer', 'description' => 'Visit 5 different caves']);
         $caveIds = [];
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $cave = \App\Models\Cave::factory()->create();
             $caveIds[] = $cave->id;
             $trip = Trip::factory()->create(['entrance_cave_id' => $cave->id]);
@@ -61,7 +60,7 @@ class MedalAwardingTest extends TestCase
     {
         $user = User::factory()->create();
         $medal = Medal::create(['name' => 'Veteran', 'description' => 'Participate in 20 trips']);
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < 20; ++$i) {
             $trip = Trip::factory()->create();
             $trip->participants()->attach($user);
         }
@@ -157,7 +156,7 @@ class MedalAwardingTest extends TestCase
             'description' => 'Awarded for doing 5 mines',
         ]);
         $mineTag = \App\Models\Tag::factory()->create(['tag' => 'Mine', 'category' => 'type', 'type' => 'cave']);
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $cave = \App\Models\Cave::factory()->create();
             $cave->tags()->attach($mineTag);
             $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
@@ -235,7 +234,7 @@ class MedalAwardingTest extends TestCase
             'description' => 'Awarded for going on 5 trips to leader systems',
         ]);
         $leaderTag = \App\Models\Tag::factory()->create(['tag' => 'Leader', 'category' => 'type', 'type' => 'cave']);
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $cave = \App\Models\Cave::factory()->create();
             $cave->tags()->attach($leaderTag);
             $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
@@ -256,7 +255,7 @@ class MedalAwardingTest extends TestCase
             'description' => 'Awarded for going to 3 muddy caves',
         ]);
         $muddyTag = \App\Models\Tag::factory()->create(['tag' => 'Muddy', 'category' => 'conditions', 'type' => 'cave_system']);
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 3; ++$i) {
             $cave = \App\Models\Cave::factory()->create();
             $cave->system->tags()->attach($muddyTag);
             $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
@@ -303,7 +302,7 @@ class MedalAwardingTest extends TestCase
             'description' => 'Awarded for going on 10 trips to entrances with the tag SRT',
         ]);
         $srtTag = \App\Models\Tag::factory()->create(['tag' => 'SRT', 'category' => 'type', 'type' => 'cave']);
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 10; ++$i) {
             $cave = \App\Models\Cave::factory()->create();
             $cave->tags()->attach($srtTag);
             $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);

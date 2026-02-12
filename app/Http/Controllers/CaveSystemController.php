@@ -3,16 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCaveSystemRequest;
-use App\Http\Requests\UpdateCaveSystemRequest;
+use App\Http\Resources\CaveResource;
 use App\Http\Resources\CaveSystemResource;
 use App\Models\Cave;
 use App\Models\CaveSystem;
+use App\Models\Tag;
+use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class CaveSystemController extends Controller
 {
+    public function __construct(
+        private readonly ImageProcessingService $imageProcessingService
+    ) {
+    }
+
     public function index()
     {
         return CaveSystemResource::collection(CaveSystem::orderBy('name')->get());
@@ -21,12 +28,13 @@ class CaveSystemController extends Controller
     public function store(StoreCaveSystemRequest $request)
     {
         $validated = $request->validated();
-        CaveSystem::create($validated)->save();
+        CaveSystem::create($validated);
     }
 
     public function show(CaveSystem $caveSystem)
     {
-        $caveSystem->load(['files', 'caves']); // Eager load files and caves
+        $caveSystem->load(['files', 'caves']);
+
         return new CaveSystemResource($caveSystem);
     }
 
@@ -53,23 +61,23 @@ class CaveSystemController extends Controller
                 'image/gif',
                 'image/webp',
             ];
-            
+
             $details = $request->input('new_file_details', []);
 
             foreach ($request->file('new_files') as $index => $file) {
                 if ($file->isValid()) {
                     // SERVER-SIDE MIME validation (don't trust client)
                     $mimeType = $file->getMimeType();
-                    
+
                     if (!in_array($mimeType, $allowedMimes)) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'new_files.' . $index => 'File type not allowed. Only PDF and image files are permitted.'
+                        throw ValidationException::withMessages([
+                            'new_files.'.$index => 'File type not allowed. Only PDF and image files are permitted.',
                         ]);
                     }
-                    
+
                     // Use hash-based naming to prevent path traversal and collisions
                     $extension = $file->extension();
-                    $filename = hash('sha256', $file->getClientOriginalName() . time() . $index) . '.' . $extension;
+                    $filename = hash('sha256', $file->getClientOriginalName().time().$index).'.'.$extension;
                     $path = "cave_system_files/{$caveSystem->id}";
 
                     // Save the file to the 'media' disk
@@ -80,23 +88,20 @@ class CaveSystemController extends Controller
 
                     // Create database record with server-detected MIME type
                     $caveSystem->files()->create([
-                        'filename'          => $filename,
-                        'details'           => $fileDetails,
+                        'filename' => $filename,
+                        'details' => $fileDetails,
                         'original_filename' => $file->getClientOriginalName(),
-                        'mime_type'         => $mimeType,  // Use server-detected, not client
-                        'size'              => $file->getSize(),
+                        'mime_type' => $mimeType,  // Use server-detected, not client
+                        'size' => $file->getSize(),
                     ]);
                 }
             }
         }
 
         $caveSystem->load('files');
+
         return new CaveSystemResource($caveSystem);
     }
-
-    public function __construct(
-        private readonly \App\Services\ImageProcessingService $imageProcessingService
-    ) {}
 
     /**
      * Create a new cave system and its first cave in one request.
@@ -123,21 +128,20 @@ class CaveSystemController extends Controller
         ]);
 
         $systemData = $request->input('system');
-        $caveSystem = \App\Models\CaveSystem::create($systemData);
+        $caveSystem = CaveSystem::create($systemData);
 
         $caveData = $request->input('cave');
         $caveData['cave_system_id'] = $caveSystem->id;
-        
-        // Remove non-column fields
+
         $imageData = [
             'hero_image' => $caveData['hero_image'] ?? null,
             'entrance_image' => $caveData['entrance_image'] ?? null,
         ];
         $tagsData = $caveData['tags'] ?? [];
-        
+
         unset($caveData['hero_image'], $caveData['entrance_image'], $caveData['tags']);
 
-        $cave = \App\Models\Cave::create($caveData);
+        $cave = Cave::create($caveData);
 
         // Process Images
         foreach (['hero_image', 'entrance_image'] as $field) {
@@ -148,27 +152,25 @@ class CaveSystemController extends Controller
             }
         }
 
-        // Process Tags
         if (!empty($tagsData)) {
             $tags = collect($tagsData)->map(function ($tag) {
-                return \App\Models\Tag::where([
+                return Tag::where([
                     'category' => $tag['category'],
                     'tag' => $tag['tag'],
-                    'assignable' => true
+                    'assignable' => true,
                 ])->first()?->id;
             })->filter();
             $cave->tags()->sync($tags);
         }
 
         $caveSystem->load('caves');
-        
-        // Refresh cave to get images and tags
+
         $cave->refresh();
         $cave->load('tags');
-        
+
         return response()->json([
-            'system' => new \App\Http\Resources\CaveSystemResource($caveSystem),
-            'cave' => new \App\Http\Resources\CaveResource($cave),
+            'system' => new CaveSystemResource($caveSystem),
+            'cave' => new CaveResource($cave),
         ], 201);
     }
 }

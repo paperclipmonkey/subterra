@@ -138,7 +138,7 @@ CSV;
                 $club = Club::where('slug', $slug)->first();
 
                 if (!$club) {
-                   $club = Club::firstOrCreate(
+                    $club = Club::firstOrCreate(
                         ['name' => $clubName],
                         [
                             'slug' => $slug,
@@ -149,12 +149,12 @@ CSV;
             }
 
             // Map fields
-            $hutName = !empty($data['hutname']) ? $data['hutname'] : $clubName . ' Hut'; 
+            $hutName = !empty($data['hutname']) ? $data['hutname'] : $clubName.' Hut';
             $website = $data['website'];
 
             // Ensure website has https:// prefix
-            if (!empty($website) && !preg_match("~^(?:f|ht)tps?://~i", $website)) {
-                $website = "https://" . $website;
+            if (!empty($website) && !preg_match('~^(?:f|ht)tps?://~i', $website)) {
+                $website = 'https://'.$website;
             }
 
             $guestBunks = $data['guestbunks'];
@@ -162,8 +162,8 @@ CSV;
             $dryingRoom = $data['dryingroom'] === 'TRUE' ? 'Yes' : 'No';
             $gridRef = $data['gridref'];
             $location = $data['location'];
-            $lat = is_numeric($data['lat']) ? (float)$data['lat'] : null;
-            $lng = is_numeric($data['lng']) ? (float)$data['lng'] : null;
+            $lat = is_numeric($data['lat']) ? (float) $data['lat'] : null;
+            $lng = is_numeric($data['lng']) ? (float) $data['lng'] : null;
             $caveClub = $data['caveclub'] === 'TRUE' ? 'Yes' : 'No';
 
             // Build MarkDown Description
@@ -191,7 +191,7 @@ CSV;
 
             // Create Hut - updateOrCreate to be idempotent
             Hut::updateOrCreate(
-                ['name' => $hutName], 
+                ['name' => $hutName],
                 [
                     'club_id' => $club ? $club->id : null,
                     'description' => $descriptionString,

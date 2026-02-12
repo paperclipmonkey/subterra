@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="pa-0">
-    <v-progress-circular v-if="loading" indeterminate color="primary" class="ma-4"></v-progress-circular>
+    <v-progress-circular v-if="loading" indeterminate color="primary" class="ma-4" />
     
     <v-alert v-else-if="error" type="error" variant="tonal" class="ma-4">
       {{ error }}
@@ -28,7 +28,7 @@
           </div>
           
           <!-- Additional Details -->
-          <v-divider class="my-4 border-opacity-25"></v-divider>
+          <v-divider class="my-4 border-opacity-25" />
           <v-row dense class="text-blue-grey-lighten-3">
             <v-col cols="6">
               <div class="text-caption">Wind</div>
@@ -44,123 +44,123 @@
 
       <v-row>
         <v-col cols="12">
-            <!-- Forecast Rain Chart -->
-             <v-card class="mb-4 rounded-lg" elevation="1">
-                <v-card-title class="text-subtitle-1 font-weight-bold">Predicted Precipitation (Next 48h)</v-card-title>
-                <v-card-text>
-                    <Line
-                        id="forecast-rain-chart"
-                        :options="forecastChartOptions"
-                        :data="forecastChartData"
-                    />
-                </v-card-text>
-            </v-card>
+          <!-- Forecast Rain Chart -->
+          <v-card class="mb-4 rounded-lg" elevation="1">
+            <v-card-title class="text-subtitle-1 font-weight-bold">Predicted Precipitation (Next 48h)</v-card-title>
+            <v-card-text>
+              <Line
+                id="forecast-rain-chart"
+                :options="forecastChartOptions"
+                :data="forecastChartData"
+              />
+            </v-card-text>
+          </v-card>
         </v-col>
 
         <v-col cols="12">
-            <!-- Historic Rain Chart -->
-            <v-card class="mb-4 rounded-lg" elevation="1" v-if="historicData">
-                <v-card-title class="text-subtitle-1 font-weight-bold">Historic Precipitation (Last 7 Days)</v-card-title>
-                <v-card-text>
-                   <Line
-                        id="historic-rain-chart"
-                        :options="historicChartOptions"
-                        :data="historicChartData"
-                    />
-                </v-card-text>
-            </v-card>
-            <v-skeleton-loader v-else class="mb-4 rounded-lg" type="card"></v-skeleton-loader>
+          <!-- Historic Rain Chart -->
+          <v-card v-if="historicData" class="mb-4 rounded-lg" elevation="1">
+            <v-card-title class="text-subtitle-1 font-weight-bold">Historic Precipitation (Last 7 Days)</v-card-title>
+            <v-card-text>
+              <Line
+                id="historic-rain-chart"
+                :options="historicChartOptions"
+                :data="historicChartData"
+              />
+            </v-card-text>
+          </v-card>
+          <v-skeleton-loader v-else class="mb-4 rounded-lg" type="card" />
         </v-col>
 
-        <v-col cols="12" v-if="weatherData.river_levels && weatherData.river_levels.length > 0">
-            <!-- River Level Charts (One per gauge) -->
-            <v-card class="mb-4 rounded-lg" elevation="1" v-for="(gauge, index) in weatherData.river_levels" :key="`river-${gauge.rloi_id}`">
-                <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
-                    <div>
-                        {{ gauge.name }}
-                        <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
-                    </div>
-                     <v-chip size="small" :color="getStateColor(gauge.state)" label>
-                        {{ gauge.state }}
-                    </v-chip>
-                </v-card-title>
+        <v-col v-if="weatherData.river_levels && weatherData.river_levels.length > 0" cols="12">
+          <!-- River Level Charts (One per gauge) -->
+          <v-card v-for="(gauge, index) in weatherData.river_levels" :key="`river-${gauge.rloi_id}`" class="mb-4 rounded-lg" elevation="1">
+            <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
+              <div>
+                {{ gauge.name }}
+                <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
+              </div>
+              <v-chip size="small" :color="getStateColor(gauge.state)" label>
+                {{ gauge.state }}
+              </v-chip>
+            </v-card-title>
                 
-                <v-card-text>
-                    <div class="d-flex align-center mb-2">
-                        <div class="text-h4 font-weight-light mr-4">
-                             {{ gauge.latest_value?.toFixed(2) }}m
-                        </div>
-                        <div class="d-flex flex-column">
-                             <span class="text-caption text-medium-emphasis">Current Level</span>
-                             <div class="d-flex align-center">
-                                <v-icon :icon="getTrendIcon(gauge.trend)" size="small" :color="getTrendColor(gauge.trend)" class="mr-1"></v-icon>
-                                <span class="text-body-2" :class="`text-${getTrendColor(gauge.trend)}`">{{ gauge.trend }}</span>
-                             </div>
-                        </div>
-                    </div>
+            <v-card-text>
+              <div class="d-flex align-center mb-2">
+                <div class="text-h4 font-weight-light mr-4">
+                  {{ gauge.latest_value?.toFixed(2) }}m
+                </div>
+                <div class="d-flex flex-column">
+                  <span class="text-caption text-medium-emphasis">Current Level</span>
+                  <div class="d-flex align-center">
+                    <v-icon :icon="getTrendIcon(gauge.trend)" size="small" :color="getTrendColor(gauge.trend)" class="mr-1" />
+                    <span class="text-body-2" :class="`text-${getTrendColor(gauge.trend)}`">{{ gauge.trend }}</span>
+                  </div>
+                </div>
+              </div>
 
-                    <div style="height: 250px;">
-                        <Line
-                            :id="`river-level-chart-${index}`"
-                            :options="riverLevelChartOptions"
-                            :data="getRiverLevelChartData(gauge, index)"
-                        />
-                    </div>
-                </v-card-text>
-                <v-card-actions>
-                     <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.rloi_id}`" target="_blank" prepend-icon="mdi-open-in-new">
-                        View Official Gauge Data
-                     </v-btn>
-                </v-card-actions>
-            </v-card>
+              <div style="height: 250px;">
+                <Line
+                  :id="`river-level-chart-${index}`"
+                  :options="riverLevelChartOptions"
+                  :data="getRiverLevelChartData(gauge, index)"
+                />
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.rloi_id}`" target="_blank" prepend-icon="mdi-open-in-new">
+                View Official Gauge Data
+              </v-btn>
+            </v-card-actions>
+          </v-card>
         </v-col>
 
-        <v-col cols="12" v-if="weatherData.rain_gauges && weatherData.rain_gauges.length > 0">
-            <!-- Rain Gauge Charts (One per gauge) -->
-             <v-card class="mb-4 rounded-lg" elevation="1" v-for="(gauge, index) in weatherData.rain_gauges" :key="`rain-${gauge.station_id}`">
-                <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
-                    <div>
-                        {{ gauge.name }}
-                        <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
-                    </div>
-                </v-card-title>
-                 <v-card-text>
-                    <div style="height: 250px;">
-                        <Bar
-                            :id="`rain-gauge-chart-${index}`"
-                            :options="rainGaugeChartOptions"
-                            :data="getRainGaugeChartData(gauge, index)"
-                        />
-                    </div>
-                 </v-card-text>
-                 <v-card-actions>
-                     <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.station_id}`" target="_blank" prepend-icon="mdi-open-in-new">
-                        View Official Gauge Data
-                     </v-btn>
-                </v-card-actions>
-             </v-card>
+        <v-col v-if="weatherData.rain_gauges && weatherData.rain_gauges.length > 0" cols="12">
+          <!-- Rain Gauge Charts (One per gauge) -->
+          <v-card v-for="(gauge, index) in weatherData.rain_gauges" :key="`rain-${gauge.station_id}`" class="mb-4 rounded-lg" elevation="1">
+            <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
+              <div>
+                {{ gauge.name }}
+                <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
+              </div>
+            </v-card-title>
+            <v-card-text>
+              <div style="height: 250px;">
+                <Bar
+                  :id="`rain-gauge-chart-${index}`"
+                  :options="rainGaugeChartOptions"
+                  :data="getRainGaugeChartData(gauge, index)"
+                />
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.station_id}`" target="_blank" prepend-icon="mdi-open-in-new">
+                View Official Gauge Data
+              </v-btn>
+            </v-card-actions>
+          </v-card>
         </v-col>
 
         <v-col cols="12">
-            <v-card class="mb-4 rounded-lg" elevation="1">
-                <v-card-title class="text-subtitle-1 font-weight-bold">External Resources</v-card-title>
-                <v-list density="compact">
-                    <v-list-item 
-                        prepend-icon="mdi-weather-windy" 
-                        title="Windy.com - Rain Accumulation"
-                        subtitle="View detailed rain accumulation maps"
-                        :href="`https://www.windy.com/-Rain-accumulation-rainAccu?rainAccu,${location.lat},${location.lng},8`"
-                        target="_blank"
-                    ></v-list-item>
-                     <v-list-item 
-                        prepend-icon="mdi-weather-cloudy-clock" 
-                        title="Met Office"
-                        subtitle="UK Weather Forecast"
-                        :href="`https://www.metoffice.gov.uk/`"
-                        target="_blank"
-                    ></v-list-item>
-                </v-list>
-            </v-card>
+          <v-card class="mb-4 rounded-lg" elevation="1">
+            <v-card-title class="text-subtitle-1 font-weight-bold">External Resources</v-card-title>
+            <v-list density="compact">
+              <v-list-item 
+                prepend-icon="mdi-weather-windy" 
+                title="Windy.com - Rain Accumulation"
+                subtitle="View detailed rain accumulation maps"
+                :href="`https://www.windy.com/-Rain-accumulation-rainAccu?rainAccu,${location.lat},${location.lng},8`"
+                target="_blank"
+              />
+              <v-list-item 
+                prepend-icon="mdi-weather-cloudy-clock" 
+                title="Met Office"
+                subtitle="UK Weather Forecast"
+                :href="`https://www.metoffice.gov.uk/`"
+                target="_blank"
+              />
+            </v-list>
+          </v-card>
         </v-col>
       </v-row>
     </div>

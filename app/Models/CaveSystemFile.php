@@ -27,7 +27,6 @@ class CaveSystemFile extends Model
      */
     protected $appends = ['url'];
 
-
     /**
      * Get the cave system that owns the file.
      */
@@ -46,6 +45,7 @@ class CaveSystemFile extends Model
         if ($this->filename) {
             return Storage::disk('media')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}");
         }
+
         return null;
     }
 }

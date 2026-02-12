@@ -1,109 +1,109 @@
 <template>
-    <v-container>
-        <v-row v-if="loading" justify="center" class="pa-10">
-            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-        </v-row>
-        <v-row v-else justify="center">
-            <v-col cols="12" md="8" lg="6">
-                <!-- Rescue Active Banner -->
-                <v-alert v-if="callout.incident" type="error" prominent class="mb-6 elevation-5"
-                    icon="mdi-alert-octagram">
-                    <div class="text-h6 font-weight-bold">RESCUE IN PROGRESS</div>
-                    <div>
-                        Incident #{{ callout.incident.id }} has been opened. Emergency services may have been contacted.
-                        If you are safe, please click "I AM SAFE" immediately to inform the rescue team.
-                    </div>
-                </v-alert>
+  <v-container>
+    <v-row v-if="loading" justify="center" class="pa-10">
+      <v-progress-circular indeterminate color="primary" />
+    </v-row>
+    <v-row v-else justify="center">
+      <v-col cols="12" md="8" lg="6">
+        <!-- Rescue Active Banner -->
+        <v-alert v-if="callout.incident" type="error" prominent class="mb-6 elevation-5"
+                 icon="mdi-alert-octagram">
+          <div class="text-h6 font-weight-bold">RESCUE IN PROGRESS</div>
+          <div>
+            Incident #{{ callout.incident.id }} has been opened. Emergency services may have been contacted.
+            If you are safe, please click "I AM SAFE" immediately to inform the rescue team.
+          </div>
+        </v-alert>
 
-                <v-card class="mb-6 elevation-10" :color="cardColor" dark>
-                    <v-card-text class="text-center pa-6">
-                        <div class="text-h6 mb-2">{{ callout.incident ? 'RESCUE ACTIVATED' : 'RESCUE WILL BE ACTIVATED IN' }}</div>
-                        <div class="text-h2 font-weight-black mb-2 white--text">
-                            {{ callout.incident ? 'OVERDUE' : timeRemaining }}
-                        </div>
-                        <div class="subtitle-1">
-                            {{ formatTime(callout.callout_time) }} - {{ formatDate(callout.callout_time) }}
-                        </div>
-                    </v-card-text>
-                </v-card>
+        <v-card class="mb-6 elevation-10" :color="cardColor" dark>
+          <v-card-text class="text-center pa-6">
+            <div class="text-h6 mb-2">{{ callout.incident ? 'RESCUE ACTIVATED' : 'RESCUE WILL BE ACTIVATED IN' }}</div>
+            <div class="text-h2 font-weight-black mb-2 white--text">
+              {{ callout.incident ? 'OVERDUE' : timeRemaining }}
+            </div>
+            <div class="subtitle-1">
+              {{ formatTime(callout.callout_time) }} - {{ formatDate(callout.callout_time) }}
+            </div>
+          </v-card-text>
+        </v-card>
 
-                <v-card class="mb-6">
-                    <v-card-title class="headline">
-                        <v-icon left color="primary">mdi-map-marker</v-icon>
-                        {{ callout.cave ? callout.cave.name : callout.description }}
-                    </v-card-title>
-                    <v-card-text>
-                        <v-list dense>
-                            <v-list-item>
-                                <v-list-item-title>Start Time</v-list-item-title>
-                                <v-list-item-subtitle>{{ formatTime(callout.created_at) }}</v-list-item-subtitle>
-                            </v-list-item>
-                            <v-list-item v-if="callout.trip_plan">
-                                <v-list-item-title>Trip Plan</v-list-item-title>
-                                <div class="text-body-2 mt-1">{{ callout.trip_plan }}</div>
-                            </v-list-item>
-                            <v-list-item v-if="callout.car_details">
-                                <v-list-item-title>Vehicle</v-list-item-title>
-                                <v-list-item-subtitle>{{ callout.car_details }}</v-list-item-subtitle>
-                            </v-list-item>
-                            <v-list-item v-if="callout.team_details">
-                                <v-list-item-title>Additional Team Details</v-list-item-title>
-                                <div class="text-body-2 mt-1">{{ callout.team_details }}</div>
-                            </v-list-item>
-                            <v-list-item v-if="callout.participants && callout.participants.length > 0">
-                                <v-list-item-title>The Team</v-list-item-title>
-                                <div class="d-flex flex-wrap gap-2 mt-1">
-                                    <v-chip v-for="participant in callout.participants" :key="participant.id"
-                                        size="small" class="mr-1 mb-1">
-                                        {{ participant.name }}
-                                    </v-chip>
-                                </div>
-                            </v-list-item>
-                        </v-list>
-                    </v-card-text>
-                </v-card>
+        <v-card class="mb-6">
+          <v-card-title class="headline">
+            <v-icon left color="primary">mdi-map-marker</v-icon>
+            {{ callout.cave ? callout.cave.name : callout.description }}
+          </v-card-title>
+          <v-card-text>
+            <v-list dense>
+              <v-list-item>
+                <v-list-item-title>Start Time</v-list-item-title>
+                <v-list-item-subtitle>{{ formatTime(callout.created_at) }}</v-list-item-subtitle>
+              </v-list-item>
+              <v-list-item v-if="callout.trip_plan">
+                <v-list-item-title>Trip Plan</v-list-item-title>
+                <div class="text-body-2 mt-1">{{ callout.trip_plan }}</div>
+              </v-list-item>
+              <v-list-item v-if="callout.car_details">
+                <v-list-item-title>Vehicle</v-list-item-title>
+                <v-list-item-subtitle>{{ callout.car_details }}</v-list-item-subtitle>
+              </v-list-item>
+              <v-list-item v-if="callout.team_details">
+                <v-list-item-title>Additional Team Details</v-list-item-title>
+                <div class="text-body-2 mt-1">{{ callout.team_details }}</div>
+              </v-list-item>
+              <v-list-item v-if="callout.participants && callout.participants.length > 0">
+                <v-list-item-title>The Team</v-list-item-title>
+                <div class="d-flex flex-wrap gap-2 mt-1">
+                  <v-chip v-for="participant in callout.participants" :key="participant.id"
+                          size="small" class="mr-1 mb-1">
+                    {{ participant.name }}
+                  </v-chip>
+                </div>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
 
-                <v-btn block x-large color="success" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
-                    @click="confirmSafe = true">
-                    <v-icon left size="large">mdi-check-circle</v-icon>
-                    I AM SAFE
-                </v-btn>
-            </v-col>
-        </v-row>
+        <v-btn block x-large color="success" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
+               @click="confirmSafe = true">
+          <v-icon left size="large">mdi-check-circle</v-icon>
+          I AM SAFE
+        </v-btn>
+      </v-col>
+    </v-row>
 
-        <!-- Confirmation Dialog -->
-        <v-dialog v-model="confirmSafe" max-width="400">
-            <v-card>
-                <v-card-title class="headline">Verify Safety</v-card-title>
-                <v-card-text>
-                    Are you out of the cave and safe? This will cancel the callout for all participants.
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="grey darken-1" text @click="confirmSafe = false">Cancel</v-btn>
-                    <v-btn color="green darken-1" text @click="cancelCallout">Yes, I'm Safe</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+    <!-- Confirmation Dialog -->
+    <v-dialog v-model="confirmSafe" max-width="400">
+      <v-card>
+        <v-card-title class="headline">Verify Safety</v-card-title>
+        <v-card-text>
+          Are you out of the cave and safe? This will cancel the callout for all participants.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey darken-1" text @click="confirmSafe = false">Cancel</v-btn>
+          <v-btn color="green darken-1" text @click="cancelCallout">Yes, I'm Safe</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-        <!-- Convert to Trip Dialog -->
-        <v-dialog v-model="convertToTrip" persistent max-width="500">
-            <v-card>
-                <v-card-title class="headline text-center pt-6">Glad you're safe!</v-card-title>
-                <v-card-text class="text-center pb-6">
-                    <v-icon size="64" color="green" class="mb-4">mdi-party-popper</v-icon>
-                    <p class="text-h6 mb-2">We've logged a private trip report for you.</p>
-                    <p class="text-body-2">Would you like to edit the details or publish it for others to see?</p>
-                </v-card-text>
-                <v-card-actions class="pb-6 px-6">
-                    <v-btn color="grey" variant="text" @click="finish">Close</v-btn>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary" @click="editTrip" elevation="2">Edit / Publish Trip Report</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+    <!-- Convert to Trip Dialog -->
+    <v-dialog v-model="convertToTrip" persistent max-width="500">
+      <v-card>
+        <v-card-title class="headline text-center pt-6">Glad you're safe!</v-card-title>
+        <v-card-text class="text-center pb-6">
+          <v-icon size="64" color="green" class="mb-4">mdi-party-popper</v-icon>
+          <p class="text-h6 mb-2">We've logged a private trip report for you.</p>
+          <p class="text-body-2">Would you like to edit the details or publish it for others to see?</p>
+        </v-card-text>
+        <v-card-actions class="pb-6 px-6">
+          <v-btn color="grey" variant="text" @click="finish">Close</v-btn>
+          <v-spacer />
+          <v-btn color="primary" elevation="2" @click="editTrip">Edit / Publish Trip Report</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-    </v-container>
+  </v-container>
 </template>
 
 <script setup>

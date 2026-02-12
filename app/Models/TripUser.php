@@ -9,7 +9,8 @@ use OwenIt\Auditing\Auditable;
 
 class TripUser extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory, Auditable;
+    use HasFactory;
+    use Auditable;
 
     /**
      * The table associated with the model.

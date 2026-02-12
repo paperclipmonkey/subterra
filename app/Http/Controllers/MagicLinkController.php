@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Mail\MagicLinkMail;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,23 +16,23 @@ use MagicLink\MagicLink;
 class MagicLinkController extends Controller
 {
     /**
-     * Send a magic link to the provided email address
+     * Send a magic link to the provided email address.
      */
     public function sendMagicLink(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email'
+            'email' => 'required|email',
         ]);
 
         $email = $request->input('email');
-        
+
         try {
             // Find existing user or create new one
             // Use withoutGlobalScope to bypass IsActiveScope and find any user with this email
             $user = User::withoutGlobalScope(\App\Models\Scopes\IsActiveScope::class)
                         ->where('email', $email)
                         ->first();
-            
+
             if (!$user) {
                 // Create new user with minimal required fields
                 $user = User::create([
@@ -41,7 +41,7 @@ class MagicLinkController extends Controller
                     'tos_agreed_at' => $request->boolean('agreed_to_tos') ? now() : null,
                     'privacy_policy_agreed_at' => $request->boolean('agreed_to_tos') ? now() : null,
                 ]);
-                
+
                 // Explicitly set guarded fields
                 $user->is_active = true; // Enable the user since they're requesting access
                 $user->save();
@@ -60,7 +60,7 @@ class MagicLinkController extends Controller
             // and checking which ones are for LoginAction with this user
             $existingLinks = DB::table('magic_links')->get();
             $deletedCount = 0;
-            
+
             foreach ($existingLinks as $link) {
                 try {
                     // Try direct unserialize first (for test environment)
@@ -74,17 +74,17 @@ class MagicLinkController extends Controller
                         continue;
                     }
                 }
-                
+
                 if ($action instanceof \MagicLink\Actions\LoginAction) {
                     // Use reflection to get the user ID from the LoginAction
                     $reflection = new \ReflectionClass($action);
                     $authIdentifierProperty = $reflection->getProperty('authIdentifier');
                     $authIdentifierProperty->setAccessible(true);
                     $actionUserId = $authIdentifierProperty->getValue($action);
-                    
+
                     if ($actionUserId == $user->id) {
                         DB::table('magic_links')->where('id', $link->id)->delete();
-                        $deletedCount++;
+                        ++$deletedCount;
                     }
                 }
             }
@@ -96,43 +96,42 @@ class MagicLinkController extends Controller
             Mail::to($email)->send(new MagicLinkMail($magiclink->url));
 
             Log::info('Magic link sent', [
-                'email' => $email, 
-                'user_id' => $user->id, 
-                'invalidated_links_count' => $deletedCount
+                'email' => $email,
+                'user_id' => $user->id,
+                'invalidated_links_count' => $deletedCount,
             ]);
 
             return response()->json([
                 'message' => 'Magic link sent! Check your email.',
-                'success' => true
+                'success' => true,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to send magic link', [
                 'email' => $email,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'message' => 'Failed to send magic link',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Handle magic link callback and authenticate user via API
+     * Handle magic link callback and authenticate user via API.
      */
     public function handleCallback(Request $request): JsonResponse
     {
         try {
             $token = $request->query('token');
-            
+
             if (!$token) {
                 return response()->json([
-                    'error' => 'Token is required'
+                    'error' => 'Token is required',
                 ], 400);
             }
-            
+
             if (strpos($token, ':') !== false) {
                 $token = explode(':', $token, 2)[1];
             }
@@ -144,7 +143,7 @@ class MagicLinkController extends Controller
 
             if (!$magicLinkData) {
                 return response()->json([
-                    'error' => 'Invalid or expired magic link'
+                    'error' => 'Invalid or expired magic link',
                 ], 401);
             }
 
@@ -152,7 +151,7 @@ class MagicLinkController extends Controller
             // available_at is the expiration time for magic links
             if ($magicLinkData->available_at && now() > $magicLinkData->available_at) {
                 return response()->json([
-                    'error' => 'Magic link has expired'
+                    'error' => 'Magic link has expired',
                 ], 401);
             }
 
@@ -160,7 +159,7 @@ class MagicLinkController extends Controller
             $maxVisits = $magicLinkData->max_visits ?? 1;
             if ($magicLinkData->num_visits >= $maxVisits) {
                 return response()->json([
-                    'error' => 'Magic link has been used too many times'
+                    'error' => 'Magic link has been used too many times',
                 ], 401);
             }
 
@@ -173,49 +172,49 @@ class MagicLinkController extends Controller
                     $action = unserialize(base64_decode($magicLinkData->action));
                 } catch (\Exception $e2) {
                     return response()->json([
-                        'error' => 'Invalid magic link action (unserialize failed)'
+                        'error' => 'Invalid magic link action (unserialize failed)',
                     ], 400);
                 }
             }
-            
+
             if (!$action instanceof LoginAction) {
                 return response()->json([
-                    'error' => 'Invalid magic link action'
+                    'error' => 'Invalid magic link action',
                 ], 400);
             }
-            
+
             // Get the user ID from the LoginAction
             $reflection = new \ReflectionClass($action);
             $authIdentifierProperty = $reflection->getProperty('authIdentifier');
             $authIdentifierProperty->setAccessible(true);
             $userId = $authIdentifierProperty->getValue($action);
-            
+
             $user = User::find($userId);
-            
+
             if (!$user) {
                 return response()->json([
-                    'error' => 'User not found'
+                    'error' => 'User not found',
                 ], 404);
             }
 
             // Authenticate the user using Laravel's session-based auth
             Auth::login($user);
-            
+
             // Increment the visits counter
             DB::table('magic_links')
                 ->where('id', $magicLinkData->id)
                 ->increment('num_visits');
-            
+
             // Delete the magic link if it has reached max visits
             if (($magicLinkData->num_visits + 1) >= $maxVisits) {
                 DB::table('magic_links')->where('id', $magicLinkData->id)->delete();
             }
 
             Log::info('User authenticated via magic link', ['user_id' => $user->id]);
-            
+
             // Check if user needs to complete their profile
             $needsProfile = empty($user->name);
-            
+
             return response()->json([
                 'message' => 'Authentication successful',
                 'user' => [
@@ -224,24 +223,23 @@ class MagicLinkController extends Controller
                     'email' => $user->email,
 
                 ],
-                'needs_profile' => $needsProfile
+                'needs_profile' => $needsProfile,
             ]);
-            
         } catch (\Exception $e) {
             Log::error('Magic link callback error', [
                 'error' => $e->getMessage(),
-                'request' => $request->all()
+                'request' => $request->all(),
             ]);
-            
+
             return response()->json([
-                'error' => 'Authentication failed: ' . $e->getMessage()
+                'error' => 'Authentication failed: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Handle magic link web callback (from email link)
-     * This redirects to the frontend with authentication
+     * This redirects to the frontend with authentication.
      */
     public function handleWebCallback(Request $request)
     {
@@ -249,19 +247,19 @@ class MagicLinkController extends Controller
             // The magic link middleware will handle authentication
             // We just need to redirect to the frontend callback page
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-            $callbackUrl = $frontendUrl . '/auth/magic-link-callback?' . http_build_query($request->query());
-            
+            $callbackUrl = $frontendUrl.'/auth/magic-link-callback?'.http_build_query($request->query());
+
             return redirect($callbackUrl);
-            
         } catch (\Exception $e) {
             Log::error('Magic link web callback error', [
                 'error' => $e->getMessage(),
-                'request' => $request->all()
+                'request' => $request->all(),
             ]);
-            
+
             // Redirect to frontend with error
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-            return redirect($frontendUrl . '/?error=magic_link_failed');
+
+            return redirect($frontendUrl.'/?error=magic_link_failed');
         }
     }
 }

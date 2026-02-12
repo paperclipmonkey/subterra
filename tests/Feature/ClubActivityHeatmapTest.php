@@ -3,11 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Club;
-use App\Models\User;
 use App\Models\Trip;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class ClubActivityHeatmapTest extends TestCase
 {
@@ -91,7 +91,7 @@ class ClubActivityHeatmapTest extends TestCase
         $response = $this->getJson($this->getEndpointUrl());
         $response->assertOk();
         $response->assertJsonStructure([
-            '*' => ['date', 'count']
+            '*' => ['date', 'count'],
         ]);
 
         // Expect 3 data points: today, yesterday, 10 days ago
@@ -109,7 +109,7 @@ class ClubActivityHeatmapTest extends TestCase
         $response = $this->getJson($this->getEndpointUrl());
         $response->assertOk();
         $response->assertJsonStructure([
-            '*' => ['date', 'count']
+            '*' => ['date', 'count'],
         ]);
         $response->assertJsonCount(3);
     }

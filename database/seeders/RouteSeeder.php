@@ -15,7 +15,7 @@ class RouteSeeder extends Seeder
     {
         // Get some existing cave systems, or create if none
         $systems = CaveSystem::all();
-        
+
         if ($systems->isEmpty()) {
             $systems = CaveSystem::factory(5)->create();
         }

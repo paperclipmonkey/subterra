@@ -13,7 +13,7 @@
 
           <!-- BCA Requirement Notice -->
           <v-alert color="amber darken-4" variant="tonal" icon="mdi-shield-account" class="mb-8" border="start"
-            density="comfortable">
+                   density="comfortable">
             <div class="text-body-2 font-weight-medium">
               Member Access Only
             </div>
@@ -26,7 +26,7 @@
           <!-- Login Methods -->
           <div class="mb-6">
             <v-checkbox v-model="agreedToToS" color="primary" hide-details class="mb-4">
-              <template v-slot:label>
+              <template #label>
                 <div class="text-body-2">
                   I agree to the 
                   <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold" @click.stop>
@@ -41,30 +41,30 @@
             </v-checkbox>
 
             <v-btn href="/api/google/redirect" block size="large" color="white" class="google-btn text-none mb-6"
-              elevation="2" :disabled="!agreedToToS">
-              <img src="/google-signin.svg" height="24" class="mr-3" />
+                   elevation="2" :disabled="!agreedToToS">
+              <img src="/google-signin.svg" height="24" class="mr-3">
               Sign in with Google
             </v-btn>
 
             <div class="d-flex align-center mb-6">
-              <v-divider></v-divider>
+              <v-divider />
               <span class="mx-4 text-caption grey--text">OR</span>
-              <v-divider></v-divider>
+              <v-divider />
             </div>
 
             <!-- Email Login -->
             <v-card v-if="!emailSent" elevation="0" class="transparent">
               <v-alert v-if="showError" type="error" variant="tonal" class="mb-4" closable density="compact"
-                @click:close="showError = false">
+                       @click:close="showError = false">
                 {{ errorMessage }}
               </v-alert>
 
-              <v-form @submit.prevent="sendMagicLink" ref="emailForm">
+              <v-form ref="emailForm" @submit.prevent="sendMagicLink">
                 <v-text-field v-model="email" label="Email Address" type="email" :rules="emailRules" variant="outlined"
-                  density="comfortable" prepend-inner-icon="mdi-email-outline" class="mb-2"
-                  hide-details="auto"></v-text-field>
+                              density="comfortable" prepend-inner-icon="mdi-email-outline" class="mb-2"
+                              hide-details="auto" />
                 <v-btn type="submit" color="primary" block size="large" :loading="sendingEmail"
-                  :disabled="!email || sendingEmail || !agreedToToS" class="mt-4 text-none font-weight-bold" elevation="0">
+                       :disabled="!email || sendingEmail || !agreedToToS" class="mt-4 text-none font-weight-bold" elevation="0">
                   Send Verification Link
                 </v-btn>
               </v-form>
@@ -97,7 +97,7 @@
             </div>
             <div class="text-caption grey--text text--lighten-1">
               Subterra is <a href="https://github.com/paperclipmonkey/subterra"
-                class="text-decoration-none primary--text">Open Source</a>. Only go underground with a plan.
+                             class="text-decoration-none primary--text">Open Source</a>. Only go underground with a plan.
             </div>
           </div>
         </div>
@@ -108,11 +108,11 @@
         <!-- Background Slideshow -->
         <div class="hero-slideshow">
           <div v-for="(image, index) in heroImages" :key="index" class="hero-slide"
-            :style="{ backgroundImage: `url(${image})` }" :class="{ active: currentHeroIndex === index }"></div>
+               :style="{ backgroundImage: `url(${image})` }" :class="{ active: currentHeroIndex === index }" />
         </div>
 
         <!-- Background Overlay -->
-        <div class="hero-overlay"></div>
+        <div class="hero-overlay" />
 
         <!-- Hero Content -->
         <div class="hero-content position-relative z-index-2 text-white mw-600">

@@ -1,99 +1,99 @@
 <template>
-    <div class="callout-time-picker">
-        <v-card variant="outlined" class="pa-4">
-            <div class="text-caption text-grey mb-2">Current Time</div>
-            <div class="text-h6 mb-4">{{ currentTimeDisplay }}</div>
+  <div class="callout-time-picker">
+    <v-card variant="outlined" class="pa-4">
+      <div class="text-caption text-grey mb-2">Current Time</div>
+      <div class="text-h6 mb-4">{{ currentTimeDisplay }}</div>
 
-            <v-divider class="my-4"></v-divider>
+      <v-divider class="my-4" />
 
-            <div class="text-subtitle-1 font-weight-bold mb-4">Callout Alarm Time</div>
+      <div class="text-subtitle-1 font-weight-bold mb-4">Callout Alarm Time</div>
 
-            <!-- Clock Time Display -->
-            <div class="time-display-card mb-4">
-                <div class="d-flex align-center justify-center">
-                    <v-btn icon variant="text" size="large" @click="adjustTime(-15)" :disabled="!canDecrease">
-                        <v-icon size="32">mdi-minus-circle</v-icon>
-                    </v-btn>
-                    <div class="mx-6 text-center">
-                        <div class="text-h3 font-weight-bold">{{ calloutTimeDisplay }}</div>
-                        <div class="text-caption text-grey">{{ calloutDateDisplay }}</div>
-                    </div>
-                    <v-btn icon variant="text" size="large" @click="adjustTime(15)">
-                        <v-icon size="32">mdi-plus-circle</v-icon>
-                    </v-btn>
-                </div>
-            </div>
+      <!-- Clock Time Display -->
+      <div class="time-display-card mb-4">
+        <div class="d-flex align-center justify-center">
+          <v-btn icon variant="text" size="large" :disabled="!canDecrease" @click="adjustTime(-15)">
+            <v-icon size="32">mdi-minus-circle</v-icon>
+          </v-btn>
+          <div class="mx-6 text-center">
+            <div class="text-h3 font-weight-bold">{{ calloutTimeDisplay }}</div>
+            <div class="text-caption text-grey">{{ calloutDateDisplay }}</div>
+          </div>
+          <v-btn icon variant="text" size="large" @click="adjustTime(15)">
+            <v-icon size="32">mdi-plus-circle</v-icon>
+          </v-btn>
+        </div>
+      </div>
 
-            <!-- Duration Display -->
-            <v-alert type="info" variant="tonal" density="compact" class="mb-4">
-                <div class="text-center">
-                    <div class="text-body-1 font-weight-medium">{{ durationDisplay }}</div>
-                </div>
-            </v-alert>
+      <!-- Duration Display -->
+      <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+        <div class="text-center">
+          <div class="text-body-1 font-weight-medium">{{ durationDisplay }}</div>
+        </div>
+      </v-alert>
 
-            <!-- Alternative: Hours and Minutes Adjustment -->
-            <v-divider class="my-4"></v-divider>
-            <div class="text-caption text-grey mb-3">Or adjust by duration:</div>
+      <!-- Alternative: Hours and Minutes Adjustment -->
+      <v-divider class="my-4" />
+      <div class="text-caption text-grey mb-3">Or adjust by duration:</div>
             
-            <v-row dense>
-                <v-col cols="6">
-                    <div class="duration-adjuster">
-                        <div class="text-caption text-grey mb-1">Hours</div>
-                        <div class="d-flex align-center justify-center">
-                            <v-btn icon size="small" variant="text" @click="adjustHours(-1)" :disabled="!canDecrease">
-                                <v-icon>mdi-minus</v-icon>
-                            </v-btn>
-                            <div class="mx-3 text-h5 font-weight-medium">{{ hoursFromNow }}</div>
-                            <v-btn icon size="small" variant="text" @click="adjustHours(1)">
-                                <v-icon>mdi-plus</v-icon>
-                            </v-btn>
-                        </div>
-                    </div>
-                </v-col>
-                <v-col cols="6">
-                    <div class="duration-adjuster">
-                        <div class="text-caption text-grey mb-1">Minutes</div>
-                        <div class="d-flex align-center justify-center">
-                            <v-btn icon size="small" variant="text" @click="adjustMinutes(-15)" :disabled="!canDecrease">
-                                <v-icon>mdi-minus</v-icon>
-                            </v-btn>
-                            <div class="mx-3 text-h5 font-weight-medium">{{ minutesFromNow }}</div>
-                            <v-btn icon size="small" variant="text" @click="adjustMinutes(15)">
-                                <v-icon>mdi-plus</v-icon>
-                            </v-btn>
-                        </div>
-                    </div>
-                </v-col>
-            </v-row>
-
-            <!-- Warning if time is in the past -->
-            <v-alert v-if="isPastTime" type="error" density="compact" class="mt-4">
-                This time is in the past! Please select a future time.
-            </v-alert>
-        </v-card>
-
-        <!-- Help Text -->
-        <v-card variant="outlined" color="info" class="mt-4 pa-4">
-            <div class="d-flex align-start">
-                <v-icon color="info" class="mr-3 mt-1">mdi-information</v-icon>
-                <div>
-                    <div class="text-subtitle-2 font-weight-bold mb-2">What is Callout Time?</div>
-                    <div class="text-body-2 mb-3">
-                        This is when we'll call 999 if you haven't checked in. <strong>Always add extra time as a safety buffer</strong> 
-                        – it's better to check in early than have emergency services called unnecessarily.
-                    </div>
-                    
-                    <div class="text-subtitle-2 font-weight-bold mb-2">Consider adding time for:</div>
-                    <ul class="text-body-2 mb-3">
-                        <li>Unexpected delays or route changes</li>
-                        <li>Getting lost or taking wrong turns</li>
-                        <li>Equipment issues or slower progress than planned</li>
-                        <li>Weather deterioration</li>
-                    </ul>
-                </div>
+      <v-row dense>
+        <v-col cols="6">
+          <div class="duration-adjuster">
+            <div class="text-caption text-grey mb-1">Hours</div>
+            <div class="d-flex align-center justify-center">
+              <v-btn icon size="small" variant="text" :disabled="!canDecrease" @click="adjustHours(-1)">
+                <v-icon>mdi-minus</v-icon>
+              </v-btn>
+              <div class="mx-3 text-h5 font-weight-medium">{{ hoursFromNow }}</div>
+              <v-btn icon size="small" variant="text" @click="adjustHours(1)">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
             </div>
-        </v-card>
-    </div>
+          </div>
+        </v-col>
+        <v-col cols="6">
+          <div class="duration-adjuster">
+            <div class="text-caption text-grey mb-1">Minutes</div>
+            <div class="d-flex align-center justify-center">
+              <v-btn icon size="small" variant="text" :disabled="!canDecrease" @click="adjustMinutes(-15)">
+                <v-icon>mdi-minus</v-icon>
+              </v-btn>
+              <div class="mx-3 text-h5 font-weight-medium">{{ minutesFromNow }}</div>
+              <v-btn icon size="small" variant="text" @click="adjustMinutes(15)">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+
+      <!-- Warning if time is in the past -->
+      <v-alert v-if="isPastTime" type="error" density="compact" class="mt-4">
+        This time is in the past! Please select a future time.
+      </v-alert>
+    </v-card>
+
+    <!-- Help Text -->
+    <v-card variant="outlined" color="info" class="mt-4 pa-4">
+      <div class="d-flex align-start">
+        <v-icon color="info" class="mr-3 mt-1">mdi-information</v-icon>
+        <div>
+          <div class="text-subtitle-2 font-weight-bold mb-2">What is Callout Time?</div>
+          <div class="text-body-2 mb-3">
+            This is when we'll call 999 if you haven't checked in. <strong>Always add extra time as a safety buffer</strong> 
+            – it's better to check in early than have emergency services called unnecessarily.
+          </div>
+                    
+          <div class="text-subtitle-2 font-weight-bold mb-2">Consider adding time for:</div>
+          <ul class="text-body-2 mb-3">
+            <li>Unexpected delays or route changes</li>
+            <li>Getting lost or taking wrong turns</li>
+            <li>Equipment issues or slower progress than planned</li>
+            <li>Weather deterioration</li>
+          </ul>
+        </div>
+      </div>
+    </v-card>
+  </div>
 </template>
 
 <script>

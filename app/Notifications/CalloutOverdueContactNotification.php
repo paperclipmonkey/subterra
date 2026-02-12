@@ -41,12 +41,12 @@ class CalloutOverdueContactNotification extends Notification implements ShouldQu
         $url = url('/'); // Link to safe check-in or app home?
         $caveName = $this->callout->cave?->name ?? 'Unknown Location';
 
-        return (new MailMessage)
-                    ->subject('URGENT: Callout OVERDUE - ' . $caveName)
+        return (new MailMessage())
+                    ->subject('URGENT: Callout OVERDUE - '.$caveName)
                     ->greeting('URGENT ACTION REQUIRED')
                     ->line('Your registered callout is now OVERDUE.')
-                    ->line('**Cave:** ' . $caveName)
-                    ->line('**Due Time:** ' . $this->callout->callout_time->format('H:i'))
+                    ->line('**Cave:** '.$caveName)
+                    ->line('**Due Time:** '.$this->callout->callout_time->format('H:i'))
                     ->line('Rescue procedures are being initiated. if you are safe out of the cave, please check in IMMEDIATELY to prevent a false alarm.')
                     ->action('Open App to Check In', $url)
                     ->line('Please reply "OUT SAFE" to the SMS if you cannot access the app.');
@@ -58,6 +58,7 @@ class CalloutOverdueContactNotification extends Notification implements ShouldQu
     public function toClickSend(object $notifiable): string
     {
         $caveName = $this->callout->cave?->name ?? 'Unknown';
+
         return "URGENT: Callout OVERDUE! Cave: {$caveName}. Please reply 'OUT SAFE' immediately or rescue will be launched.";
     }
 }

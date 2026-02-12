@@ -45,8 +45,8 @@
         <v-btn 
           v-if="!loading && !success" 
           color="primary" 
-          @click="$router.push('/')"
           class="mt-4"
+          @click="$router.push('/')"
         >
           Return to Login
         </v-btn>

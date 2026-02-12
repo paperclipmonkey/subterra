@@ -1,6 +1,6 @@
 <template>
-  <v-dialog :model-value="props.isActive" @update:model-value="$emit('close')" max-width="500">
-    <template v-slot:default>
+  <v-dialog :model-value="props.isActive" max-width="500" @update:model-value="$emit('close')">
+    <template #default>
       <v-card rounded="lg">
         <v-card-title class="d-flex justify-space-between align-center">
           <div class="text-h5 text-medium-emphasis ps-2">
@@ -11,10 +11,10 @@
             icon="mdi-close"
             variant="text"
             @click="$emit('close')"
-          ></v-btn>
+          />
         </v-card-title>
 
-        <v-divider class="mb-4"></v-divider>
+        <v-divider class="mb-4" />
 
         <v-card-text>
           <div class="text-medium-emphasis mb-4">
@@ -32,30 +32,30 @@
           </v-alert>
 
           <v-text-field
+            v-model="name"
             label="Name"
             type="text"
-            v-model="name"
             :rules="nameRules"
-          ></v-text-field>
+          />
 
           <v-text-field
+            v-model="email"
             label="Email address"
             type="email"
             :rules="emailRules"
-            v-model="email"
-          ></v-text-field>
+          />
         </v-card-text>
 
-        <v-divider class="mt-2"></v-divider>
+        <v-divider class="mt-2" />
 
         <v-card-actions class="my-2 d-flex justify-end">
           <v-btn
             class="text-none"
             rounded="xl"
             text="Cancel"
-            @click="$emit('close')"
             :disabled="props.loading"
-          ></v-btn>
+            @click="$emit('close')"
+          />
 
           <v-btn
             class="text-none"
@@ -63,10 +63,10 @@
             rounded="xl"
             text="Add"
             variant="flat"
-            @click="$emit('add', {name, email,})"
             :loading="props.loading"
             :disabled="!isValid"
-          ></v-btn>
+            @click="$emit('add', {name, email,})"
+          />
         </v-card-actions>
       </v-card>
     </template>

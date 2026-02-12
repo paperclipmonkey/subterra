@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 
 class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory, Auditable;
+    use HasFactory;
+    use Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -48,7 +50,7 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
 
     /**
      * Get the count of *approved* members (users) in the club.
-     * Access via $club->member_count
+     * Access via $club->member_count.
      *
      * @return int
      */
@@ -58,8 +60,9 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
         // This ensures withCount('users') in controller counts correctly if not overridden.
         // However, direct access $club->member_count will use this accessor.
         if ($this->relationLoaded('approvedUsers')) {
-             return $this->approvedUsers->count();
+            return $this->approvedUsers->count();
         }
+
         // Query count on the approvedUsers relationship
         return $this->approvedUsers()->count();
     }
@@ -72,7 +75,7 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->users()->wherePivot('status', 'approved');
     }
 
-     /**
+    /**
      * Get only pending users relationship.
      */
     public function pendingUsers(): BelongsToMany
@@ -80,7 +83,7 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->users()->wherePivot('status', 'pending');
     }
 
-    public function huts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function huts(): HasMany
     {
         return $this->hasMany(Hut::class);
     }

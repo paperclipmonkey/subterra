@@ -11,10 +11,10 @@ class CalloutController extends Controller
     public function index()
     {
         $callouts = Callout::with('cave', 'exitCave', 'participants')
-            ->whereIn('status', ['active', 'triggered']) // Fetch both so we can show complete picture, or just active? 
+            ->whereIn('status', ['active', 'triggered']) // Fetch both so we can show complete picture, or just active?
             // User request: "Open callouts ... as well as flagging those that have turned into active incidents"
             // If I fetch triggered here, they duplicate what IncidentController fetches.
-            // But it might be cleaner to have a "Live Operations" view here. 
+            // But it might be cleaner to have a "Live Operations" view here.
             // Let's fetch 'active' and 'triggered'.
             ->orderBy('callout_time', 'asc')
             ->get();

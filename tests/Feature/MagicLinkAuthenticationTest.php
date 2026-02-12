@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
+use Tests\TestCase;
 
 class MagicLinkAuthenticationTest extends TestCase
 {
@@ -19,17 +18,17 @@ class MagicLinkAuthenticationTest extends TestCase
 
         $user = User::factory()->create([
             'email' => 'test@example.com',
-            'name' => 'Test User'
+            'name' => 'Test User',
         ]);
 
         $response = $this->postJson('/api/auth/magic-link', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         $response->assertStatus(200)
                  ->assertJson([
                      'message' => 'Magic link sent! Check your email.',
-                     'success' => true
+                     'success' => true,
                  ]);
 
         Mail::assertSent(\App\Mail\MagicLinkMail::class, function ($mail) {
@@ -51,7 +50,7 @@ class MagicLinkAuthenticationTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'newuser_no_tos@example.com',
-            'tos_agreed_at' => null
+            'tos_agreed_at' => null,
         ]);
     }
 
@@ -62,13 +61,13 @@ class MagicLinkAuthenticationTest extends TestCase
 
         $response = $this->postJson('/api/auth/magic-link', [
             'email' => 'newuser@example.com',
-            'agreed_to_tos' => true
+            'agreed_to_tos' => true,
         ]);
 
         $response->assertStatus(200)
                  ->assertJson([
                      'message' => 'Magic link sent! Check your email.',
-                     'success' => true
+                     'success' => true,
                  ]);
 
         $this->assertDatabaseHas('users', [
@@ -77,7 +76,7 @@ class MagicLinkAuthenticationTest extends TestCase
             'is_active' => true, // Changed to true as new users are now active
             'is_active' => true, // Changed to true as new users are now active
         ]);
-        
+
         $user = User::where('email', 'newuser@example.com')->first();
         $this->assertNotNull($user->tos_agreed_at);
 
@@ -90,7 +89,7 @@ class MagicLinkAuthenticationTest extends TestCase
     public function it_validates_email_format()
     {
         $response = $this->postJson('/api/auth/magic-link', [
-            'email' => 'invalid-email'
+            'email' => 'invalid-email',
         ]);
 
         $response->assertStatus(422)
@@ -111,7 +110,7 @@ class MagicLinkAuthenticationTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'test@example.com',
-            'name' => 'Test User'
+            'name' => 'Test User',
         ]);
 
         // Create a magic link for the user using LoginAction
@@ -120,16 +119,16 @@ class MagicLinkAuthenticationTest extends TestCase
             3600 // 1 hour
         );
 
-        $response = $this->getJson('/api/auth/magic-link-callback?token=' . $magicLink->token);
+        $response = $this->getJson('/api/auth/magic-link-callback?token='.$magicLink->token);
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
                      'user' => [
                          'id',
                          'name',
-                         'email'
+                         'email',
                      ],
-                     'needs_profile'
+                     'needs_profile',
                  ]);
 
         // Verify the user is now authenticated
@@ -143,7 +142,7 @@ class MagicLinkAuthenticationTest extends TestCase
 
         $response->assertStatus(401)
                  ->assertJson([
-                     'error' => 'Invalid or expired magic link'
+                     'error' => 'Invalid or expired magic link',
                  ]);
     }
 
@@ -152,14 +151,14 @@ class MagicLinkAuthenticationTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'test@example.com',
-            'name' => null
+            'name' => null,
         ]);
 
         $this->actingAs($user);
 
         $response = $this->putJson("/api/users/{$user->id}", [
             'name' => 'Updated Name',
-            'bio' => 'Updated bio'
+            'bio' => 'Updated bio',
         ]);
 
         $response->assertStatus(200);
@@ -167,7 +166,7 @@ class MagicLinkAuthenticationTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'name' => 'Updated Name',
-            'bio' => 'Updated bio'
+            'bio' => 'Updated bio',
         ]);
     }
 
@@ -177,14 +176,14 @@ class MagicLinkAuthenticationTest extends TestCase
         Mail::fake();
 
         // Use a unique email to avoid conflicts with other tests
-        $email = 'unique-' . time() . '@example.com';
-        
+        $email = 'unique-'.time().'@example.com';
+
         // Clear magic links before test to avoid interference
         \DB::table('magic_links')->truncate();
-        
+
         // Send first magic link
         $response1 = $this->postJson('/api/auth/magic-link', [
-            'email' => $email
+            'email' => $email,
         ]);
 
         $response1->assertStatus(200);
@@ -196,19 +195,19 @@ class MagicLinkAuthenticationTest extends TestCase
         // Count magic links for this specific user after first request
         $totalLinks = \DB::table('magic_links')->count();
         $this->assertGreaterThan(0, $totalLinks, 'Should have at least one magic link in database');
-        
+
         $linksForUser = $this->countMagicLinksForUser($user->id);
         $this->assertEquals(1, $linksForUser, 'Should have exactly 1 magic link after first request');
 
         // Send second magic link for the same user
         $response2 = $this->postJson('/api/auth/magic-link', [
-            'email' => $email
+            'email' => $email,
         ]);
 
         $response2->assertStatus(200)
                  ->assertJson([
                      'message' => 'Magic link sent! Check your email.',
-                     'success' => true
+                     'success' => true,
                  ]);
 
         // Verify that 2 emails were sent
@@ -223,7 +222,7 @@ class MagicLinkAuthenticationTest extends TestCase
     {
         $links = \DB::table('magic_links')->get();
         $count = 0;
-        
+
         foreach ($links as $link) {
             try {
                 // Try direct unserialize first (for test environment)
@@ -237,19 +236,19 @@ class MagicLinkAuthenticationTest extends TestCase
                     continue;
                 }
             }
-            
+
             if ($action instanceof \MagicLink\Actions\LoginAction) {
                 $reflection = new \ReflectionClass($action);
                 $authIdentifierProperty = $reflection->getProperty('authIdentifier');
                 $authIdentifierProperty->setAccessible(true);
                 $actionUserId = $authIdentifierProperty->getValue($action);
-                
+
                 if ($actionUserId == $userId) {
-                    $count++;
+                    ++$count;
                 }
             }
         }
-        
+
         return $count;
     }
 
@@ -262,29 +261,29 @@ class MagicLinkAuthenticationTest extends TestCase
         $user = User::factory()->create([
             'email' => 'inactive@example.com',
             'name' => 'Inactive User',
-            'is_active' => false
+            'is_active' => false,
         ]);
 
         // Verify user is inactive before the request
         $this->assertDatabaseHas('users', [
             'email' => 'inactive@example.com',
-            'is_active' => false
+            'is_active' => false,
         ]);
 
         $response = $this->postJson('/api/auth/magic-link', [
-            'email' => 'inactive@example.com'
+            'email' => 'inactive@example.com',
         ]);
 
         $response->assertStatus(200)
                  ->assertJson([
                      'message' => 'Magic link sent! Check your email.',
-                     'success' => true
+                     'success' => true,
                  ]);
 
         // Verify user is reactivated after the request
         $this->assertDatabaseHas('users', [
             'email' => 'inactive@example.com',
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         Mail::assertSent(\App\Mail\MagicLinkMail::class, function ($mail) {
@@ -301,7 +300,7 @@ class MagicLinkAuthenticationTest extends TestCase
         $user = User::factory()->create([
             'email' => 'inactive@example.com',
             'name' => 'Inactive User',
-            'is_active' => false
+            'is_active' => false,
         ]);
 
         // Get the user count before the request
@@ -309,7 +308,7 @@ class MagicLinkAuthenticationTest extends TestCase
         $this->assertEquals(1, $userCountBefore);
 
         $response = $this->postJson('/api/auth/magic-link', [
-            'email' => 'inactive@example.com'
+            'email' => 'inactive@example.com',
         ]);
 
         $response->assertStatus(200);
@@ -321,7 +320,7 @@ class MagicLinkAuthenticationTest extends TestCase
         // Verify the existing user was reactivated
         $this->assertDatabaseHas('users', [
             'email' => 'inactive@example.com',
-            'is_active' => true
+            'is_active' => true,
         ]);
     }
 }

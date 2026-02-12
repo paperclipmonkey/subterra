@@ -26,6 +26,7 @@ class ClickSendChannel
     {
         if (!method_exists($notification, 'toClickSend')) {
             Log::warning('Notification does not have toClickSend method.');
+
             return;
         }
 
@@ -40,8 +41,9 @@ class ClickSendChannel
         }
 
         if (empty($to)) {
-             Log::warning('ClickSend Channel: No phone number found for notifiable.', ['id' => $notifiable->getKey()]);
-             return;
+            Log::warning('ClickSend Channel: No phone number found for notifiable.', ['id' => $notifiable->getKey()]);
+
+            return;
         }
 
         $this->clickSendService->sendSms($to, $message);

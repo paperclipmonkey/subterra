@@ -14,7 +14,7 @@
           single-line
           hide-details
           class="mb-4"
-        ></v-text-field>
+        />
 
         <v-data-table
           :headers="headers"
@@ -23,10 +23,10 @@
           :search="search"
           class="elevation-1"
         >
-          <template v-slot:item.actions="{ item }">
-            <v-btn icon="mdi-pencil" variant="text" size="small" :to="'/admin/pages/edit?id=' + item.id"></v-btn>
-            <v-btn icon="mdi-open-in-new" variant="text" size="small" :to="'/pages/' + item.slug" target="_blank"></v-btn>
-            <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click="deletePage(item)"></v-btn>
+          <template #item.actions="{ item }">
+            <v-btn icon="mdi-pencil" variant="text" size="small" :to="'/admin/pages/edit?id=' + item.id" />
+            <v-btn icon="mdi-open-in-new" variant="text" size="small" :to="'/pages/' + item.slug" target="_blank" />
+            <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click="deletePage(item)" />
           </template>
         </v-data-table>
       </v-col>

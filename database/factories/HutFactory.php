@@ -18,7 +18,7 @@ class HutFactory extends Factory
     {
         return [
             'club_id' => \App\Models\Club::factory(),
-            'name' => $this->faker->words(3, true) . ' Hut',
+            'name' => $this->faker->words(3, true).' Hut',
             'description' => $this->faker->paragraph(),
             'location_lat' => $this->faker->latitude(),
             'location_lng' => $this->faker->longitude(),

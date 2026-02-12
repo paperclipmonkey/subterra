@@ -23,11 +23,11 @@
               </v-chip>
               <!-- Edit Club Button (Club Admins Only) -->
               <v-btn v-if="isClubAdmin" class="ml-2" color="primary" variant="outlined"
-                @click="openEditClubModal('details')" size="small">
+                     size="small" @click="openEditClubModal('details')">
                 <v-icon start>mdi-pencil</v-icon> Edit Club
               </v-btn>
               <v-btn v-if="isClubAdmin" class="ml-2" color="info" variant="outlined"
-                @click="openEditClubModal('pending')" size="small">
+                     size="small" @click="openEditClubModal('pending')">
                 <v-icon start>mdi-account-clock</v-icon> Pending Requests <span
                   v-if="club.pending_users_count > 0">({{ club.pending_users_count }})</span>
               </v-btn>
@@ -35,18 +35,18 @@
           </v-card-text>
         </v-card>
         <!-- Club Edit Modal -->
-        <ClubEditModal v-if="club" v-model="showEditClubModal" :clubSlug="club.slug" :initialTab="editClubTab"
-          @saved="onClubEditSaved" />
+        <ClubEditModal v-if="club" v-model="showEditClubModal" :club-slug="club.slug" :initial-tab="editClubTab"
+                       @saved="onClubEditSaved" />
         <!-- Loading/Error State for Club Info -->
         <v-container v-else-if="error" class="text-center mt-6">
-          <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+          <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
           <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
           <p class="text-body-1 text-grey mb-6">{{ error }}</p>
           <v-btn color="primary" variant="flat" to="/" prepend-icon="mdi-arrow-left">
             Back to Home
           </v-btn>
         </v-container>
-        <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
+        <v-progress-circular v-else indeterminate color="primary" />
       </v-col>
     </v-row>
 
@@ -55,7 +55,7 @@
       <!-- Loading State for Member Data -->
       <v-row v-if="memberDataLoading">
         <v-col cols="12" class="text-center py-5">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+          <v-progress-circular indeterminate color="primary" size="64" />
           <p class="mt-3">Loading club activity...</p>
         </v-col>
       </v-row>
@@ -68,7 +68,7 @@
             <v-card-title>Logged Trips Heatmap</v-card-title>
             <v-card-text>
               <calendar-heatmap dark-mode :values="heatmapData" :end-date="endDate"
-                :range-color='["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]' tooltip-unit="trips" :max="10" />
+                                :range-color="[&quot;#ebedf0&quot;, &quot;#9be9a8&quot;, &quot;#40c463&quot;, &quot;#30a14e&quot;, &quot;#216e39&quot;]" tooltip-unit="trips" :max="10" />
             </v-card-text>
           </v-card>
         </v-col>
@@ -79,24 +79,23 @@
             <v-card-title>Recent Trips</v-card-title>
             <v-list v-if="recentTrips.length > 0">
               <v-list-item v-for="trip in recentTrips" :key="trip.id" :to="`/trips/${trip.id}`"
-                :title="trip.name || 'Untitled Trip'" :subtitle="`On ${formatTripDate(trip.start_time)}`">
-              </v-list-item>
+                           :title="trip.name || 'Untitled Trip'" :subtitle="`On ${formatTripDate(trip.start_time)}`" />
             </v-list>
             <v-card-text v-else>No recent trips found.</v-card-text>
           </v-card>
         </v-col>
 
-      <!-- Members List -->
+        <!-- Members List -->
         <v-col cols="12" md="6">
           <v-card>
             <v-card-title>Members</v-card-title>
             <v-list v-if="members.length > 0">
               <v-list-item v-for="member in members" :key="member.id" :to="`/profile/${member.id}`"
-                :title="member.name">
-                <template v-slot:prepend>
+                           :title="member.name">
+                <template #prepend>
                   <v-avatar size="small" class="mr-2">
                     <!-- TODO: Add a default avatar image to public folder -->
-                    <v-img :src="member.photo || '/default-avatar.png'" :alt="member.name"></v-img>
+                    <v-img :src="member.photo || '/default-avatar.png'" :alt="member.name" />
                   </v-avatar>
                 </template>
               </v-list-item>
@@ -107,15 +106,14 @@
 
         <!-- Huts List -->
         <v-col cols="12" md="6">
-            <v-card>
-                <v-card-title>Huts</v-card-title>
-                <v-list v-if="club && club.huts && club.huts.length > 0">
-                    <v-list-item v-for="hut in club.huts" :key="hut.id" :to="`/huts/${hut.id}`" :title="hut.name"
-                        prepend-icon="mdi-home-group">
-                    </v-list-item>
-                </v-list>
-                <v-card-text v-else>No huts listed.</v-card-text>
-            </v-card>
+          <v-card>
+            <v-card-title>Huts</v-card-title>
+            <v-list v-if="club && club.huts && club.huts.length > 0">
+              <v-list-item v-for="hut in club.huts" :key="hut.id" :to="`/huts/${hut.id}`" :title="hut.name"
+                           prepend-icon="mdi-home-group" />
+            </v-list>
+            <v-card-text v-else>No huts listed.</v-card-text>
+          </v-card>
         </v-col>
       </v-row>
 

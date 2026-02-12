@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\Trip;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -28,10 +27,10 @@ class UserProfileLoadingTest extends TestCase
         $response->assertOk();
 
         // 5. Admin tries to view sub-resources - SHOULD SUCCEED NOW
-        
+
         // Recent Trips
         $responseTrips = $this->getJson("/api/users/{$inactiveUser->id}/recent-trips");
-        $responseTrips->assertOk(); 
+        $responseTrips->assertOk();
 
         // Activity Heatmap
         $responseHeatmap = $this->getJson("/api/users/{$inactiveUser->id}/activity-heatmap");

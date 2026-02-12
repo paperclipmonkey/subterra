@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -14,7 +13,7 @@ return new class extends Migration
         Schema::table('incidents', function (Blueprint $table) {
             // Drop old foreign key
             $table->dropForeign(['incident_controller_id']);
-            
+
             // Re-add with onDelete('set null')
             $table->foreign('incident_controller_id')
                   ->references('id')
@@ -30,7 +29,7 @@ return new class extends Migration
     {
         Schema::table('incidents', function (Blueprint $table) {
             $table->dropForeign(['incident_controller_id']);
-            
+
             $table->foreign('incident_controller_id')
                   ->references('id')
                   ->on('users');

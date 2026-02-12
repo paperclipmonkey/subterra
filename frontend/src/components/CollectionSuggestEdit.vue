@@ -14,7 +14,7 @@
           <v-alert type="info" class="mb-4">
             Thank you for helping improve our data! Your suggestions will be reviewed by an admin.
           </v-alert>
-          <CollectionForm v-model="collection" ref="collectionForm" />
+          <CollectionForm ref="collectionForm" v-model="collection" />
         </v-col>
       </v-row>
 

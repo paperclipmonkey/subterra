@@ -13,9 +13,9 @@
         <v-col cols="12">
           <CaveSystemForm
             v-model="cavesystem"
-            :showFiles="true"
-            v-model:filesToDelete="filesToDelete"
-            v-model:newFiles="newFiles"
+            v-model:files-to-delete="filesToDelete"
+            v-model:new-files="newFiles"
+            :show-files="true"
           />
         </v-col>
       </v-row>
@@ -24,7 +24,7 @@
         <v-col>
           <v-card-text>
             <v-btn type="submit" color="primary" block size="large" :loading="loading">
-                {{ appStore.user?.is_admin ? 'Save' : 'Suggest Changes' }}
+              {{ appStore.user?.is_admin ? 'Save' : 'Suggest Changes' }}
             </v-btn>
           </v-card-text>
         </v-col>
@@ -33,19 +33,12 @@
 
     <v-snackbar v-model="errorSnackbar" color="error">
       {{ errorMessage }}
-      <template v-slot:actions>
+      <template #actions>
         <v-btn variant="text" @click="errorSnackbar = false">Close</v-btn>
       </template>
     </v-snackbar>
   </v-container>
 </template>
-
-<style scoped>
-.file-marked-for-deletion {
-  opacity: 0.6;
-  text-decoration: line-through;
-}
-</style>
 
 <script setup>
 import { ref, watch, onMounted } from "vue"
@@ -217,3 +210,10 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+.file-marked-for-deletion {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+</style>

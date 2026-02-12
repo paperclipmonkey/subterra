@@ -1,35 +1,35 @@
 <template>
-    <v-container class="py-8" style="max-width: 800px;">
-        <v-btn variant="text" prepend-icon="mdi-arrow-left" to="/news" class="mb-4 text-none" color="grey-darken-1">
-            Back to News
-        </v-btn>
+  <v-container class="py-8" style="max-width: 800px;">
+    <v-btn variant="text" prepend-icon="mdi-arrow-left" to="/news" class="mb-4 text-none" color="grey-darken-1">
+      Back to News
+    </v-btn>
 
-        <div v-if="loading" class="d-flex justify-center py-12">
-            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    <div v-if="loading" class="d-flex justify-center py-12">
+      <v-progress-circular indeterminate color="primary" />
+    </div>
+
+    <div v-else-if="error" class="text-center py-12">
+      <v-icon icon="mdi-alert-circle-outline" size="48" color="error" class="mb-4" />
+      <div class="text-h6 text-medium-emphasis">Article not found</div>
+      <v-btn to="/news" color="primary" class="mt-4" variant="tonal">Return to Feed</v-btn>
+    </div>
+
+    <article v-else class="news-article">
+      <header class="mb-8">
+        <div class="text-subtitle-1 text-primary font-weight-bold mb-2">
+          {{ moment(article.date).format('MMMM Do, YYYY') }}
         </div>
+        <!-- Title is handled by markdown content usually, but if we strip it we can show it here -->
+        <!-- <h1 class="text-h3 font-weight-bold text-grey-darken-4">{{ article.id }}</h1> -->
+      </header>
 
-        <div v-else-if="error" class="text-center py-12">
-            <v-icon icon="mdi-alert-circle-outline" size="48" color="error" class="mb-4"></v-icon>
-            <div class="text-h6 text-medium-emphasis">Article not found</div>
-            <v-btn to="/news" color="primary" class="mt-4" variant="tonal">Return to Feed</v-btn>
+      <v-card class="rounded-xl pa-2 pa-sm-8" border flat>
+        <div class="article-content">
+          <vue-markdown :source="article.content" />
         </div>
-
-        <article v-else class="news-article">
-            <header class="mb-8">
-                <div class="text-subtitle-1 text-primary font-weight-bold mb-2">
-                    {{ moment(article.date).format('MMMM Do, YYYY') }}
-                </div>
-                <!-- Title is handled by markdown content usually, but if we strip it we can show it here -->
-                <!-- <h1 class="text-h3 font-weight-bold text-grey-darken-4">{{ article.id }}</h1> -->
-            </header>
-
-            <v-card class="rounded-xl pa-2 pa-sm-8" border flat>
-                <div class="article-content">
-                    <vue-markdown :source="article.content" />
-                </div>
-            </v-card>
-        </article>
-    </v-container>
+      </v-card>
+    </article>
+  </v-container>
 </template>
 
 <script setup>

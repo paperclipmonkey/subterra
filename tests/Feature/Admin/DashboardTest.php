@@ -19,12 +19,12 @@ class DashboardTest extends TestCase
     public function it_returns_popular_records_with_identifiers()
     {
         $admin = User::factory()->admin()->create();
-        
+
         $system = CaveSystem::create([
             'name' => 'Test System',
             'slug' => 'test-system',
             'length' => 100,
-            'vertical_range' => 50
+            'vertical_range' => 50,
         ]);
 
         $cave = Cave::create([
@@ -67,9 +67,9 @@ class DashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonCount(4, 'data');
-        
+
         $data = $response->json('data');
-        
+
         foreach ($data as $record) {
             if ($record['type'] === 'Cave') {
                 $this->assertEquals($cave->slug, $record['identifier']);

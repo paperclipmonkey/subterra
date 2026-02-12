@@ -6,8 +6,8 @@
         <h1 class="text-h5 font-weight-bold ml-1">{{ tripsUser ? `${tripsUser.name}'s Trips` :
           (route.query.user_id ? 'User Trips' : 'My Trips') }}</h1>
         <v-menu>
-          <template v-slot:activator="{ props }">
-            <v-btn icon="mdi-dots-vertical" variant="text" v-bind="props"></v-btn>
+          <template #activator="{ props }">
+            <v-btn icon="mdi-dots-vertical" variant="text" v-bind="props" />
           </template>
           <v-list>
             <v-list-item to="/create-trip" prepend-icon="mdi-plus">
@@ -21,7 +21,7 @@
       </div>
 
       <v-text-field v-model="search" placeholder="Search trips..." prepend-inner-icon="mdi-magnify" variant="outlined"
-        hide-details density="comfortable" bg-color="surface" class="rounded-lg mb-2"></v-text-field>
+                    hide-details density="comfortable" bg-color="surface" class="rounded-lg mb-2" />
 
       <!-- Only show tabs when viewing own trips and not searching -->
       <v-tabs v-if="isOwnTrips && !isSearching" v-model="tab" color="primary" density="compact">
@@ -32,7 +32,7 @@
 
     <template v-if="tripStore.loading">
       <div class="d-flex justify-center my-8 flex-grow-1">
-        <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+        <v-progress-circular indeterminate color="primary" size="48" />
       </div>
     </template>
 
@@ -40,7 +40,7 @@
       <!-- Unified search results (searching across both collections) -->
       <template v-if="isSearching">
         <div v-if="filteredTrips.length === 0" class="text-center py-8">
-          <v-icon size="64" color="grey lighten-10" icon="mdi-magnify" class="mb-4"></v-icon>
+          <v-icon size="64" color="grey lighten-10" icon="mdi-magnify" class="mb-4" />
           <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No results found</h3>
           <p class="text-body-2 text-grey-darken-1">Try a different search term.</p>
         </div>
@@ -57,7 +57,7 @@
       <v-window v-else v-model="tab" class="flex-grow-1">
         <v-window-item value="detailed">
           <div v-if="detailedFilteredTrips.length === 0" class="text-center py-8">
-            <v-icon size="64" color="grey lighten-10" icon="mdi-compass-outline" class="mb-4"></v-icon>
+            <v-icon size="64" color="grey lighten-10" icon="mdi-compass-outline" class="mb-4" />
             <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No trips found</h3>
             <p class="text-body-2 text-grey-darken-1 mb-6">Try adjusting your search or log a new trip.</p>
             <div class="d-flex justify-center ga-4">
@@ -82,24 +82,24 @@
           </v-alert>
 
           <div v-if="stubbedFilteredTrips.length === 0" class="text-center py-8">
-             <p class="text-body-2 text-grey">No marked caves yet.</p>
+            <p class="text-body-2 text-grey">No marked caves yet.</p>
           </div>
           <v-list v-else bg-color="transparent" class="px-2">
             <v-list-item v-for="trip in stubbedFilteredTrips" :key="trip.id" :to="`/trips/${trip.id}`" class="mb-2 rounded-lg elevation-1 bg-surface" lines="two">
-               <template v-slot:prepend>
-                  <v-avatar color="primary" variant="tonal" class="mr-2">
-                    <v-icon icon="mdi-check"></v-icon>
-                  </v-avatar>
-               </template>
-               <v-list-item-title class="font-weight-medium">
-                  {{ trip.entrance?.name || 'Unknown Entrance' }}
-               </v-list-item-title>
-               <v-list-item-subtitle>
-                  {{ formatDate(trip.start_time) }} • {{ trip.participants?.length || 0 }} participants
-               </v-list-item-subtitle>
-               <template v-slot:append>
-                 <v-icon icon="mdi-chevron-right" color="grey-lighten-1"></v-icon>
-               </template>
+              <template #prepend>
+                <v-avatar color="primary" variant="tonal" class="mr-2">
+                  <v-icon icon="mdi-check" />
+                </v-avatar>
+              </template>
+              <v-list-item-title class="font-weight-medium">
+                {{ trip.entrance?.name || 'Unknown Entrance' }}
+              </v-list-item-title>
+              <v-list-item-subtitle>
+                {{ formatDate(trip.start_time) }} • {{ trip.participants?.length || 0 }} participants
+              </v-list-item-subtitle>
+              <template #append>
+                <v-icon icon="mdi-chevron-right" color="grey-lighten-1" />
+              </template>
             </v-list-item>
           </v-list>
         </v-window-item>
@@ -107,27 +107,6 @@
     </template>
   </v-container>
 </template>
-
-<style scoped>
-.sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: rgb(var(--v-theme-background));
-}
-
-/* Fallback if variable doesn't work */
-.bg-background {
-  background-color: #f7f7f7;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
 
 <script setup>
 import { useRoute } from 'vue-router'
@@ -148,9 +127,8 @@ const isStubbed = (trip) => {
 }
 
 const isOwnTrips = computed(() => {
-  // If tripsUser is the logged-in user, it's own trips
-  if (!tripsUser.value || !store.user) return true;
-  return String(tripsUser.value.id) === String(store.user.id);
+  if (!tripsUser.value || !store.user) return true
+  return String(tripsUser.value.id) === String(store.user.id)
 })
 
 const isSearching = computed(() => {
@@ -168,21 +146,9 @@ const filteredTrips = computed(() => {
   if (search.value.trim()) {
     const query = search.value.toLowerCase().trim()
     trips = trips.filter(trip => {
-      // Search by trip name
-      if (trip.name?.toLowerCase().includes(query)) {
-        return true
-      }
-
-      // Search by entrance name
-      if (trip.entrance?.name?.toLowerCase().includes(query)) {
-        return true
-      }
-
-      // Search by participant names
-      if (trip.participants?.some(p => p.name?.toLowerCase().includes(query))) {
-        return true
-      }
-
+      if (trip.name?.toLowerCase().includes(query)) return true
+      if (trip.entrance?.name?.toLowerCase().includes(query)) return true
+      if (trip.participants?.some(p => p.name?.toLowerCase().includes(query))) return true
       return false
     })
   }
@@ -214,16 +180,9 @@ const formatDuration = (minutes) => {
 }
 
 const getGradientClass = (id) => {
-  const gradients = [
-    'gradient-0',
-    'gradient-1',
-    'gradient-2',
-    'gradient-3',
-    'gradient-4'
-  ];
-  // Use id to deterministically select a gradient
-  const index = (typeof id === 'number' ? id : 0) % gradients.length;
-  return gradients[index];
+  const gradients = ['gradient-0', 'gradient-1', 'gradient-2', 'gradient-3', 'gradient-4']
+  const index = (typeof id === 'number' ? id : 0) % gradients.length
+  return gradients[index]
 }
 
 const route = useRoute()
@@ -231,7 +190,7 @@ const tripsUser = ref(null)
 
 const loadTrips = async () => {
   tripStore.loading = true
-  await store.getUser() // Check if user is logged in
+  await store.getUser()
 
   const query = { ...route.query }
 
@@ -239,12 +198,11 @@ const loadTrips = async () => {
     try {
       const userApi = mande(`/api/users/${query.user_id}`)
       const response = await userApi.get()
-      tripsUser.value = response.data || response.data || response
+      tripsUser.value = response.data ?? response
     } catch (e) {
-      console.error("Failed to load user", e)
+      console.error('Failed to load user', e)
     }
   } else {
-    // If no user_id in query, default to current user
     query.user_id = store.user?.id
     tripsUser.value = store.user
   }
@@ -253,7 +211,26 @@ const loadTrips = async () => {
 }
 
 onMounted(loadTrips)
-
-// Re-load trips when route query changes (e.g. navigating between users)
 watch(() => route.query, loadTrips, { deep: true })
 </script>
+
+<style scoped>
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: rgb(var(--v-theme-background));
+}
+
+/* Fallback if variable doesn't work */
+.bg-background {
+  background-color: #f7f7f7;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

@@ -35,7 +35,7 @@ class SendTestWatchdogAlert extends Command
 
         // Create a minimal test callout record (not stored in DB)
         $testCalloutData = [
-            'callout_id' => 'TEST-' . now()->format('Y-m-d-His'),
+            'callout_id' => 'TEST-'.now()->format('Y-m-d-His'),
             'callout_time' => $calloutTime->toIso8601String(),
             'user' => [
                 'name' => '🧪 Monthly Test Alert',
@@ -50,24 +50,24 @@ class SendTestWatchdogAlert extends Command
         try {
             // Register directly with GCP watchdog
             $response = \Illuminate\Support\Facades\Http::timeout(10)
-                ->post(config('services.gcp_watchdog.url') . '/watchdog', $testCalloutData);
+                ->post(config('services.gcp_watchdog.url').'/watchdog', $testCalloutData);
 
             if ($response->successful()) {
-                $this->info("✅ Test watchdog registered successfully!");
+                $this->info('✅ Test watchdog registered successfully!');
                 $this->info("Callout ID: {$testCalloutData['callout_id']}");
                 $this->info("Will trigger at: {$calloutTime->toDateTimeString()}");
-                $this->info("Test alerts will be sent to: " . config('services.gcp_watchdog.test_email'));
-                
+                $this->info('Test alerts will be sent to: '.config('services.gcp_watchdog.test_email'));
+
                 return Command::SUCCESS;
             } else {
                 $this->error("❌ Failed to register test watchdog: {$response->status()}");
                 $this->error($response->body());
-                
+
                 return Command::FAILURE;
             }
         } catch (\Exception $e) {
             $this->error("❌ Exception: {$e->getMessage()}");
-            
+
             return Command::FAILURE;
         }
     }

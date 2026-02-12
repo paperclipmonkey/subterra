@@ -15,19 +15,19 @@ class CalloutTest extends TestCase
     public function test_admin_can_view_live_operations_dashboard()
     {
         $admin = User::factory()->dutyOfficer()->create();
-        
+
         // Create callouts with different times
         $c1 = Callout::factory()->create([
-            'status' => 'active', 
-            'callout_time' => Carbon::now()->addHours(1)
+            'status' => 'active',
+            'callout_time' => Carbon::now()->addHours(1),
         ]);
         $c2 = Callout::factory()->create([
             'status' => 'triggered', // Should also appear
-            'callout_time' => Carbon::now()->subHour()
+            'callout_time' => Carbon::now()->subHour(),
         ]);
         $c3 = Callout::factory()->create([
             'status' => 'resolved', // Should NOT appear
-            'callout_time' => Carbon::now()->subHours(5)
+            'callout_time' => Carbon::now()->subHours(5),
         ]);
 
         $response = $this->actingAs($admin)
@@ -46,7 +46,7 @@ class CalloutTest extends TestCase
     public function test_non_admin_cannot_view_live_operations()
     {
         $user = User::factory()->create();
-        
+
         $response = $this->actingAs($user)
             ->getJson('/api/admin/callouts');
 
@@ -56,7 +56,7 @@ class CalloutTest extends TestCase
     public function test_guest_cannot_view_live_operations()
     {
         $response = $this->getJson('/api/admin/callouts');
-        
-        $response->assertStatus(401); 
+
+        $response->assertStatus(401);
     }
 }

@@ -14,7 +14,7 @@ class SendTripTaggedEmail implements ShouldQueue
 
     public function handle(TripParticipantTagged $event)
     {
-        if($event->user->id === $event->creator->id) {
+        if ($event->user->id === $event->creator->id) {
             return;
         }
         Mail::to($event->user->email)->send(new TripTaggedMail($event->trip, $event->user, $event->creator));

@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Trip;
-use App\Models\User;
-use App\Models\TripUser;
 use App\Models\TripMedia;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class TestDataSeeder extends Seeder
 {
@@ -20,11 +19,11 @@ class TestDataSeeder extends Seeder
         );
 
         // Ensure user is in a club
-        $club = \App\Models\Club::first(); 
+        $club = \App\Models\Club::first();
         if ($club) {
-             $user->clubs()->syncWithoutDetaching([
-                 $club->id => ['is_admin' => true, 'status' => 'approved']
-             ]);
+            $user->clubs()->syncWithoutDetaching([
+                $club->id => ['is_admin' => true, 'status' => 'approved'],
+            ]);
         }
 
         // Create a specific test cave
@@ -42,7 +41,7 @@ class TestDataSeeder extends Seeder
             'cave_system_id' => $cave->cave_system_id,
             'visibility' => 'public',
         ]);
-        
+
         $trip->participants()->attach($user->id);
 
         // Create a test trip media
@@ -65,7 +64,7 @@ class TestDataSeeder extends Seeder
         ]);
 
         // --- Huts Seeding ---
-        $club = \App\Models\Club::first(); 
+        $club = \App\Models\Club::first();
         if ($club) {
             \App\Models\Hut::firstOrCreate(
                 ['name' => 'The Caving Shed', 'club_id' => $club->id],
@@ -93,7 +92,7 @@ class TestDataSeeder extends Seeder
 
         // --- Collections Seeding ---
         $caves = \App\Models\Cave::limit(5)->get();
-        
+
         $collection = \App\Models\Collection::firstOrCreate(
             ['slug' => 'top-5-beginner-caves'], // Use slug as unique identifier logic here if preferred, or keep searching by name/user
             [
@@ -115,7 +114,7 @@ class TestDataSeeder extends Seeder
                 'description' => 'Caves that require SRT skills.',
             ]
         );
-        
+
         if ($caves->count() > 2) {
             $collection2->caves()->syncWithoutDetaching($caves->random(2)->pluck('id'));
         }

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\OnCallShift;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,13 +21,13 @@ class DutyOfficerController extends Controller
         // Calculate next gap
         // 1. Get all future shifts starting from now (or the start of the current shift)
         $searchStart = $currentShift ? $currentShift->start_at : now();
-        
+
         $futureShifts = OnCallShift::where('end_at', '>', now())
             ->orderBy('start_at')
             ->get();
 
         $coveredUntil = now();
-        
+
         if ($currentShift) {
             $coveredUntil = $currentShift->end_at;
         }
@@ -39,7 +39,7 @@ class DutyOfficerController extends Controller
             if ($shift->start_at->subMinutes(1)->gt($coveredUntil)) {
                 break;
             }
-            
+
             // Extend coverage if this shift goes later
             if ($shift->end_at->gt($coveredUntil)) {
                 $coveredUntil = $shift->end_at;
@@ -54,8 +54,8 @@ class DutyOfficerController extends Controller
                     'name' => null,
                     'photo' => null,
                     'next_gap_start' => $nextGapStart,
-                    'is_covered' => false
-                ]
+                    'is_covered' => false,
+                ],
             ], 200);
         }
 
@@ -64,8 +64,8 @@ class DutyOfficerController extends Controller
                 'name' => $officer->name,
                 'photo' => $officer->photo,
                 'next_gap_start' => $nextGapStart,
-                'is_covered' => true
-            ]
+                'is_covered' => true,
+            ],
         ]);
     }
 
@@ -74,7 +74,7 @@ class DutyOfficerController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $officers = User::whereHas('roles', function($q) {
+        $officers = User::whereHas('roles', function ($q) {
             $q->whereIn('slug', ['duty_officer', 'platform_admin']);
         })->get(['id', 'name']);
 

@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Trip;
 use App\Models\Callout;
+use App\Models\Trip;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +18,7 @@ class DataExportTest extends TestCase
         $user = User::factory()->create([
             'name' => 'John Doe',
             'email' => 'john@example.com',
-            'bio' => 'Caving enthusiast'
+            'bio' => 'Caving enthusiast',
         ]);
 
         // Create some related data
@@ -27,7 +27,7 @@ class DataExportTest extends TestCase
 
         $callout = Callout::factory()->create([
             'user_id' => $user->id,
-            'description' => 'Overdue at Swildons'
+            'description' => 'Overdue at Swildons',
         ]);
 
         $this->actingAs($user, 'sanctum');
@@ -35,17 +35,17 @@ class DataExportTest extends TestCase
         $response = $this->getJson('/api/user/export');
 
         $response->assertOk();
-        $response->assertHeader('Content-Disposition', 'attachment; filename="subterra_data_export_' . now()->format('Y-m-d') . '.json"');
+        $response->assertHeader('Content-Disposition', 'attachment; filename="subterra_data_export_'.now()->format('Y-m-d').'.json"');
 
         $response->assertJsonStructure([
             'profile' => ['name', 'email', 'bio', 'created_at'],
             'clubs',
             'medals',
             'trips' => [
-                '*' => ['id', 'start_time', 'end_time', 'description']
+                '*' => ['id', 'start_time', 'end_time', 'description'],
             ],
             'callouts' => [
-                '*' => ['id', 'callout_time', 'description', 'status']
+                '*' => ['id', 'callout_time', 'description', 'status'],
             ],
         ]);
 

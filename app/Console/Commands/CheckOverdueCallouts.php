@@ -4,12 +4,18 @@ namespace App\Console\Commands;
 
 use App\Models\Callout;
 use App\Models\Incident;
+use App\Models\OnCallShift;
 use App\Models\User;
+use App\Notifications\CalloutImminentContactNotification;
+use App\Notifications\CalloutImminentNotification;
+use App\Notifications\CalloutOverdueContactNotification;
 use App\Notifications\OverdueCalloutNotification;
+use App\Notifications\UnmanagedIncidentNotification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class CheckOverdueCallouts extends Command
 {
@@ -49,10 +55,6 @@ class CheckOverdueCallouts extends Command
             ->with(['user', 'cave'])
             ->get();
 
-        if ($overdueCallouts->isEmpty()) {
-            // $this->info('No overdue callouts found.'); // Quiet
-        }
-
         foreach ($overdueCallouts as $callout) {
             $this->triggerCallout($callout);
         }
@@ -62,10 +64,10 @@ class CheckOverdueCallouts extends Command
     {
         // Check for callouts due between 14 and 16 minutes from now (fuzzy match for cron)
         // Ensure we haven't already warned (maybe add 'warned_at' column? or cache?)
-        // For simplicity in this iteration without schema changes, we rely on the 1-minute cron 
+        // For simplicity in this iteration without schema changes, we rely on the 1-minute cron
         // and a slightly wider window, but ideally we need a flag to prevent double alert.
         // Let's assume we run every minute. We check [now+15m, now+16m).
-        
+
         $startWindow = now()->addMinutes(15);
         $endWindow = now()->addMinutes(16);
 
@@ -81,9 +83,9 @@ class CheckOverdueCallouts extends Command
     private function checkEscalation(): void
     {
         // Find open incidents created > 15 mins ago with NO controller
-        // We need a way to track if we already escalated. 
+        // We need a way to track if we already escalated.
         // Ideally 'escalated_at' on Incident model. For now, we can check if an 'escalation' note exists?
-        
+
         $staleIncidents = Incident::where('status', 'open')
             ->doesntHave('controller')
             ->where('created_at', '<=', now()->subMinutes(15))
@@ -101,35 +103,17 @@ class CheckOverdueCallouts extends Command
     private function warnDutyOfficer(Callout $callout): void
     {
         $this->info("Warning DO about imminent callout ID: {$callout->id}");
-        
-        // 1. Notify Duty Officer(s)
-        $shift = \App\Models\OnCallShift::where('start_at', '<=', now())
-            ->where('end_at', '>=', now())
-            ->first();
 
-        $notifiables = collect();
-
-        if ($shift) {
-            $notifiables->push($shift->user);
-        } else {
-            // Fallback: Notify all duty officers and super admins if no shift coverage
-            $notifiables = User::whereHas('roles', function($query) {
-                $query->whereIn('slug', ['duty_officer', 'platform_admin']);
-            })->where('is_active', true)->get();
-        }
+        $notifiables = $this->getNotifiableDutyOfficers();
 
         if ($notifiables->isNotEmpty()) {
-            Notification::send($notifiables, new \App\Notifications\CalloutImminentNotification($callout));
+            Notification::send($notifiables, new CalloutImminentNotification($callout));
         }
 
-        // 2. Notify Callout Contact (User/Participants) - NEW
-        $this->info("Notifying all participants for callout {$callout->id}");
-        
         $participants = $callout->participants;
         if ($participants->isNotEmpty()) {
-             Notification::send($participants, new \App\Notifications\CalloutImminentContactNotification($callout));
+            Notification::send($participants, new CalloutImminentContactNotification($callout));
         }
-
     }
 
     private function escalateIncident(Incident $incident): void
@@ -137,19 +121,15 @@ class CheckOverdueCallouts extends Command
         DB::transaction(function () use ($incident) {
             $this->info("Escalating Incident ID: {$incident->id}");
 
-            // 1. Notify ALL Duty Officers and Super Admins
-            $admins = User::whereHas('roles', function($query) {
-                $query->whereIn('slug', ['duty_officer', 'platform_admin']);
-            })->where('is_active', true)->get();
-            
+            $admins = $this->getAllDutyOfficers();
+
             if ($admins->isNotEmpty()) {
-                Notification::send($admins, new \App\Notifications\UnmanagedIncidentNotification($incident));
+                Notification::send($admins, new UnmanagedIncidentNotification($incident));
             }
 
-            // 2. Log Note to prevent re-escalation
             $incident->notes()->create([
-                'user_id' => null, // System
-                'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.'
+                'user_id' => null,
+                'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.',
             ]);
         });
     }
@@ -159,61 +139,62 @@ class CheckOverdueCallouts extends Command
         DB::transaction(function () use ($callout) {
             $this->info("Triggering callout ID: {$callout->id}");
 
-            // 1. Update status
             $callout->update(['status' => 'triggered']);
 
-            // 2. Create Incident if not exists
             $incident = Incident::firstOrCreate(
                 ['callout_id' => $callout->id],
                 ['status' => 'open']
             );
-            
-            // Reload callout with incident relationship for notification
+
             $callout->refresh();
 
-            // 3. Notify Admins (Trigger Alert)
-             $shift = \App\Models\OnCallShift::where('start_at', '<=', now())
-                ->where('end_at', '>=', now())
-                ->first();
+            $notifiables = $this->getNotifiableDutyOfficers();
 
-            $notifiables = collect();
-            if ($shift) {
-                // If we have a shift coverage, ONLY notify the on-call officer
-                $notifiables->push($shift->user);
-                $this->info("Notifying On-Call DO: {$shift->user->name}");
+            if ($notifiables->isEmpty()) {
+                Log::emergency("Callout triggered (ID: {$callout->id}) but NO ADMINS FOUND to notify!");
             } else {
-                // Fallback: Notify all duty officers and super admins if NO shift coverage
-                $notifiables = User::whereHas('roles', function($query) {
-                    $query->whereIn('slug', ['duty_officer', 'platform_admin']);
-                })->where('is_active', true)->get();
-                
-                if ($notifiables->isEmpty()) {
-                    Log::emergency("Callout triggered (ID: {$callout->id}) but NO ADMINS FOUND to notify!");
-                } else {
-                    $this->info("No On-Call DO found. Notifying " . $notifiables->count() . " admins as fallback.");
-                }
-            }
-
-            if ($notifiables->isNotEmpty()) {
                 Notification::send($notifiables, new OverdueCalloutNotification($callout));
             }
 
-            // 3b. Notify Participants
             $participants = $callout->participants;
             if ($participants->isNotEmpty()) {
-                 // Use specific OVERDUE notification for participants
-                 Notification::send($participants, new \App\Notifications\CalloutOverdueContactNotification($callout));
+                Notification::send($participants, new CalloutOverdueContactNotification($callout));
             }
 
-            // 4. Send Slack Alert
             try {
                 $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
-                $msg = "🚨 *OVERDUE CALLOUT TRIGGERED*\nLocation: *{$caveName}*\nUser: *{$callout->user->name}*\nDue: {$callout->callout_time->format('H:i')}\n<" . url('/admin/incidents/' . $incident->id) . "|View Incident>";
-                
-                \Spatie\SlackAlerts\Facades\SlackAlert::to('callouts-overdue')->message("<!channel>\n" . $msg);
+                $msg = "🚨 *OVERDUE CALLOUT TRIGGERED*\nLocation: *{$caveName}*\nUser: *{$callout->user->name}*\nDue: {$callout->callout_time->format('H:i')}\n<".url('/admin/incidents/'.$incident->id).'|View Incident>';
+
+                SlackAlert::to('callouts-overdue')->message("<!channel>\n".$msg);
             } catch (\Exception $e) {
-                Log::error("Failed to send Overdue Slack Alert: " . $e->getMessage());
+                Log::error('Failed to send Overdue Slack Alert: '.$e->getMessage());
             }
         });
+    }
+
+    /**
+     * Get the on-call duty officer, or fall back to all DOs and platform admins.
+     */
+    private function getNotifiableDutyOfficers(): \Illuminate\Support\Collection
+    {
+        $shift = OnCallShift::where('start_at', '<=', now())
+            ->where('end_at', '>=', now())
+            ->first();
+
+        if ($shift) {
+            return collect([$shift->user]);
+        }
+
+        return $this->getAllDutyOfficers();
+    }
+
+    /**
+     * Get all active duty officers and platform admins.
+     */
+    private function getAllDutyOfficers(): \Illuminate\Support\Collection
+    {
+        return User::whereHas('roles', function ($query) {
+            $query->whereIn('slug', ['duty_officer', 'platform_admin']);
+        })->where('is_active', true)->get();
     }
 }

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Cave;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class CaveUpdateTest extends TestCase
@@ -16,27 +15,27 @@ class CaveUpdateTest extends TestCase
     {
         \App\Models\Tag::create(['tag' => 'Previously Done', 'category' => 'Status', 'assignable' => false, 'type' => 'trip']);
         \App\Models\Tag::create(['tag' => 'Not Done Yet', 'category' => 'Status', 'assignable' => false, 'type' => 'trip']);
-        
+
         $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create();
 
         $response = $this->actingAs($user)
-            ->putJson('/api/caves/' . $cave->slug, [
+            ->putJson('/api/caves/'.$cave->slug, [
                 'name' => 'Updated Name',
                 'hero_image' => [
                     'data' => 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-                    'filename' => 'test.gif'
-                ]
+                    'filename' => 'test.gif',
+                ],
             ]);
 
         $response->assertStatus(200);
-        
+
         // Verify the cave was updated
         $cave->refresh();
         $this->assertEquals('Updated Name', $cave->name);
         // Verify image was processed (path should contain 'caves/' and end with .webp, assuming service works)
         // If the service works, it saves to storage. We can just check it's not the array and not null.
         $this->assertStringContainsString('caves/', $cave->hero_image);
-        $this->assertStringEndsWith('.webp', $cave->hero_image); 
+        $this->assertStringEndsWith('.webp', $cave->hero_image);
     }
 }

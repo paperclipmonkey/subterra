@@ -1,4 +1,4 @@
-// Utilities
+
 import { defineStore } from 'pinia'
 import { api } from '@/plugins/api'
 
@@ -12,7 +12,6 @@ export const useAppStore = defineStore('app', {
       roles: [],
     },
     loading: false,
-    //
   }),
 
   getters: {
@@ -33,7 +32,6 @@ export const useAppStore = defineStore('app', {
         this.user = response.data.data
         this.loading = false
         return this.user
-        // showTooltip(`Welcome back ${this.userData.name}!`)
       } catch (error) {
         this.loading = false
         // Silently handle unauthenticated state - it's expected on public pages

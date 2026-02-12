@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Callout;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
-use Carbon\Carbon;
 use Tests\TestCase;
 
 class DataMinimizationTest extends TestCase
@@ -25,7 +25,7 @@ class DataMinimizationTest extends TestCase
             'created_at' => Carbon::now()->subDays(31),
             'car_details' => 'Silver Focus',
             'team_details' => 'Me and a friend',
-            'trip_plan' => 'Detailed plan'
+            'trip_plan' => 'Detailed plan',
         ]);
 
         // 2. Old (31 days) Active Callout - SHOULD NOT BE SCRUBBED (Safety first)
@@ -33,7 +33,7 @@ class DataMinimizationTest extends TestCase
             'user_id' => $user->id,
             'status' => 'active',
             'created_at' => Carbon::now()->subDays(31),
-            'car_details' => 'Silver Focus'
+            'car_details' => 'Silver Focus',
         ]);
 
         // 3. Fresh (5 days) Resolved Callout - SHOULD NOT BE SCRUBBED
@@ -41,7 +41,7 @@ class DataMinimizationTest extends TestCase
             'user_id' => $user->id,
             'status' => 'resolved',
             'created_at' => Carbon::now()->subDays(5),
-            'car_details' => 'Silver Focus'
+            'car_details' => 'Silver Focus',
         ]);
 
         // Run the command

@@ -26,7 +26,7 @@ class SuggestedEditSeeder extends Seeder
                 'suggestable_type' => 'cave',
                 'suggestable_id' => $cave->id,
                 'original_data' => $cave->toArray(),
-                'suggested_data' => array_merge($cave->toArray(), ['description' => ($cave->description ?? '') . "\n\nSuggested update: Added more details about the entrance."]),
+                'suggested_data' => array_merge($cave->toArray(), ['description' => ($cave->description ?? '')."\n\nSuggested update: Added more details about the entrance."]),
                 'status' => 'pending',
             ]);
         }
@@ -37,7 +37,7 @@ class SuggestedEditSeeder extends Seeder
                 'suggestable_type' => 'cave_system',
                 'suggestable_id' => $system->id,
                 'original_data' => $system->toArray(),
-                'suggested_data' => array_merge($system->toArray(), ['name' => $system->name . ' (Suggested Name Change)']),
+                'suggested_data' => array_merge($system->toArray(), ['name' => $system->name.' (Suggested Name Change)']),
                 'status' => 'pending',
             ]);
         }
@@ -56,7 +56,7 @@ class SuggestedEditSeeder extends Seeder
             ],
             'status' => 'pending',
         ]);
-        
+
         // Approved Suggestion
         if ($collection) {
             SuggestedEdit::create([

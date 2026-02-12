@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Page extends Model
 {
     use HasFactory;
+
     public function getRouteKeyName(): string
     {
         return 'slug';

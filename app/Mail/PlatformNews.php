@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\URL;
 
 class PlatformNews extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     public string $body;
     public string $unsubscribeUrl;

@@ -3,11 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Club;
-use App\Models\User;
 use App\Models\Trip;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class ClubRecentTripsTest extends TestCase
 {
@@ -82,8 +82,8 @@ class ClubRecentTripsTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'name', 'start_time'] // Assuming TripResource has these
-            ]
+                '*' => ['id', 'name', 'start_time'], // Assuming TripResource has these
+            ],
         ]);
         // Controller logic limits to 10, and within last year.
         // We created 3 recent trips.
@@ -98,8 +98,8 @@ class ClubRecentTripsTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'name', 'start_time']
-            ]
+                '*' => ['id', 'name', 'start_time'],
+            ],
         ]);
         $response->assertJsonCount(3, 'data');
     }

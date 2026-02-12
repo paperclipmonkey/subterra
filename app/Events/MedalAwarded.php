@@ -12,10 +12,13 @@ use Illuminate\Queue\SerializesModels;
 
 class MedalAwarded
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public function __construct(
         public readonly User $user,
         public readonly Medal $medal
-    ) {}
+    ) {
+    }
 }

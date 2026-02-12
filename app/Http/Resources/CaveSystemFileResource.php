@@ -27,4 +27,3 @@ class CaveSystemFileResource extends JsonResource
         ];
     }
 }
-

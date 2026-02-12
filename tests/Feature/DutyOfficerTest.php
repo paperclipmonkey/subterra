@@ -36,8 +36,8 @@ class DutyOfficerTest extends TestCase
                     'name',
                     'photo',
                     'next_gap_start',
-                    'is_covered'
-                ]
+                    'is_covered',
+                ],
             ]);
     }
 
@@ -47,7 +47,7 @@ class DutyOfficerTest extends TestCase
         $this->travelTo(now());
 
         $user = User::factory()->admin()->create();
-        
+
         // Shift 1: Now -> +1 hour
         OnCallShift::create([
             'user_id' => $user->id,
@@ -70,13 +70,13 @@ class DutyOfficerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get('/api/duty-officers/current');
-        
+
         $response->assertStatus(200);
-        
+
         // Gap should start at end of Shift 2 (+2 hours from now)
         $nextGap = $response->json('data.next_gap_start');
         $this->assertEquals(
-            now()->addHours(2)->startOfSecond()->toDateTimeString(), 
+            now()->addHours(2)->startOfSecond()->toDateTimeString(),
             \Carbon\Carbon::parse($nextGap)->startOfSecond()->toDateTimeString()
         );
     }
@@ -92,15 +92,15 @@ class DutyOfficerTest extends TestCase
                 'data' => [
                     'name' => null,
                     'photo' => null,
-                    'is_covered' => false
-                ]
+                    'is_covered' => false,
+                ],
             ]);
     }
 
     public function test_deleting_shift_returns_affected_callouts_info()
     {
         $admin = User::factory()->dutyOfficer()->create();
-        
+
         // Create a shift
         $shift = OnCallShift::create([
             'user_id' => $admin->id,
@@ -115,7 +115,7 @@ class DutyOfficerTest extends TestCase
             'callout_time' => now()->addHours(2),
             'status' => 'active',
         ]);
-        
+
         $callout2 = \App\Models\Callout::factory()->create([
             'user_id' => $user->id,
             'callout_time' => now()->addHours(2)->addMinutes(30),
@@ -135,7 +135,7 @@ class DutyOfficerTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonStructure([
                 'message',
-                'affected_callouts'
+                'affected_callouts',
             ]);
 
         $this->assertCount(2, $response->json('affected_callouts'));
@@ -144,7 +144,7 @@ class DutyOfficerTest extends TestCase
     public function test_deleting_shift_with_no_callouts_returns_empty_array()
     {
         $admin = User::factory()->dutyOfficer()->create();
-        
+
         $shift = OnCallShift::create([
             'user_id' => $admin->id,
             'start_at' => now()->addHour(),
@@ -156,7 +156,7 @@ class DutyOfficerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'message' => 'Shift removed'
+                'message' => 'Shift removed',
             ]);
 
         $this->assertEmpty($response->json('affected_callouts'));

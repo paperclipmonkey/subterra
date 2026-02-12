@@ -18,7 +18,7 @@ class CommunicationTest extends TestCase
         Mail::fake();
 
         $admin = User::factory()->admin()->create(['email_platform_news' => true]);
-        
+
         $response = $this->actingAs($admin)
             ->postJson('/api/admin/communications/send', [
                 'subject' => 'Test Subject',
@@ -38,7 +38,7 @@ class CommunicationTest extends TestCase
         Mail::fake();
 
         $admin = User::factory()->admin()->create();
-        
+
         $subscribedUsers = User::factory()->count(3)->create(['email_platform_news' => true]);
         $unsubscribedUsers = User::factory()->count(2)->create(['email_platform_news' => false]);
 
@@ -81,7 +81,7 @@ class CommunicationTest extends TestCase
         $user = User::factory()->create(['email_platform_news' => true]);
 
         $url = URL::signedRoute('newsletter.unsubscribe', ['user' => $user->id]);
-        
+
         // Tamper with signature
         $url .= 'invalid';
 
@@ -98,9 +98,9 @@ class CommunicationTest extends TestCase
         $user = User::factory()->admin()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'email_platform_news' => true
+            'email_platform_news' => true,
         ]);
-        
+
         $response = $this->actingAs($user)
             ->postJson('/api/admin/communications/send', [
                 'subject' => 'Hello {{ firstname }}',
@@ -113,7 +113,7 @@ class CommunicationTest extends TestCase
         Mail::assertQueued(PlatformNews::class, function ($mail) use ($user) {
             // Since replacement happens in constructor, properties should be updated immediately
             return $mail->subjectLine === 'Hello Test' &&
-                   str_contains($mail->body, "Your full name is Test User") &&
+                   str_contains($mail->body, 'Your full name is Test User') &&
                    str_contains($mail->body, "ID: {$user->id}");
         });
     }

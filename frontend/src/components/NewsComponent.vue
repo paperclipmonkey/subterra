@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12" v-for="(value, key) in news">
+      <v-col v-for="(value, key) in news" cols="12">
         <v-card>
           <v-card-title>{{ key }}</v-card-title>
           <v-card-text>

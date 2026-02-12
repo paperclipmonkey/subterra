@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Cave;
+use App\Models\CaveSystem;
+use App\Models\Club;
 use App\Models\Trip;
 use App\Models\TripMedia;
-use App\Models\Club;
-use App\Models\User;
-use App\Models\CaveSystem;
 use App\Models\TripUser;
-use OwenIt\Auditing\Models\Audit;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema; // Add Schema facade
+use Illuminate\Support\Facades\Schema;
+use OwenIt\Auditing\Models\Audit;
+use Tests\TestCase; // Add Schema facade
 
 class AuditLogTest extends TestCase
 {

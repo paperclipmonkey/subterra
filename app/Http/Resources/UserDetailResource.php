@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Storage;
 
 class UserDetailResource extends JsonResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -41,7 +40,7 @@ class UserDetailResource extends JsonResource
                 ];
             }),
             'is_admin' => $this->is_admin,
-            'stats'=> [
+            'stats' => [
                 'trips' => $this->trips->count(),
                 'caves' => $this->trips->pluck('system.id')->unique()->count(),
                 'duration' => $this->trips->sum('duration'),

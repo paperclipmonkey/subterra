@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\CaveSystem;
 use App\Models\Cave;
+use App\Models\CaveSystem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

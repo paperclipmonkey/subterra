@@ -4,10 +4,10 @@
       <v-toolbar-title class="text-h4 font-weight-bold pl-0">
         Collections
       </v-toolbar-title>
-      <v-spacer></v-spacer>
+      <v-spacer />
       <div style="width: 300px" class="mr-4">
         <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="Search collections" single-line
-          hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface"></v-text-field>
+                      hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface" />
       </div>
       <CollectionEditModal v-if="userStore.canSuggest" />
       <v-btn
@@ -19,7 +19,7 @@
         class="mr-2"
       >
         <v-tooltip activator="parent" location="top">
-            {{ !userStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
+          {{ !userStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
         </v-tooltip>
         Suggest New
       </v-btn>
@@ -35,7 +35,7 @@
     </v-toolbar>
 
     <div v-if="loading" class="d-flex justify-center my-12">
-      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+      <v-progress-circular indeterminate color="primary" size="64" />
     </div>
 
     <v-alert v-if="error" type="error" class="mb-4" variant="tonal">{{ error }}</v-alert>
@@ -44,7 +44,7 @@
       <v-col v-for="collection in filteredCollections" :key="collection.id" cols="12" md="6" lg="4">
         <v-hover v-slot="{ isHovering, props }">
           <v-card :to="`/collections/${collection.slug}`" link class="rounded-xl transition-swing"
-            :elevation="isHovering ? 8 : 2" v-bind="props" height="100%">
+                  :elevation="isHovering ? 8 : 2" v-bind="props" height="100%">
             <v-img
               :src="collection.photo_path || 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
               class="align-end" gradient="to top, rgba(0,0,0,0.8), rgba(0,0,0,0) 50%" height="220px" cover>

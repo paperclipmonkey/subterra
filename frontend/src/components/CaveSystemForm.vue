@@ -6,7 +6,7 @@
         label="Cave System Name"
         :rules="[v => !!v || 'Name is required']"
         required
-      ></v-text-field>
+      />
     </v-card-title>
     <v-card-text>
       <div class="text-subtitle-2 mt-4 mb-1">System description (Optional)</div>
@@ -23,7 +23,7 @@
             type="number"
             :rules="[v => !!v || 'Length is required']"
             required
-          ></v-text-field>
+          />
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field
@@ -32,7 +32,7 @@
             type="number"
             :rules="[v => v !== null && v !== undefined || 'Vertical range is required']"
             required
-          ></v-text-field>
+          />
         </v-col>
       </v-row>
       <v-text-field
@@ -42,7 +42,7 @@
         required
         :hint="'Lowercase, a-z, 0-9, _ and - only'"
         persistent-hint
-      ></v-text-field>
+      />
 
       <v-select
         v-model="internalSystem.catchment_id"
@@ -52,7 +52,7 @@
         label="Catchment (River Levels)"
         clearable
         class="mt-4"
-      ></v-select>
+      />
       <div class="text-subtitle-2 mt-4 mb-1">References</div>
       <MilkdownEditor
         v-model="internalSystem.references"
@@ -64,7 +64,7 @@
     <!-- Files Section (Optional, only show if files exist or are being added) -->
     <v-card-text v-if="showFiles">
       <h3 class="text-h6 mb-2">Files</h3>
-      <v-list lines="one" v-if="internalSystem.files && internalSystem.files.length > 0">
+      <v-list v-if="internalSystem.files && internalSystem.files.length > 0" lines="one">
         <v-list-item
           v-for="file in internalSystem.files"
           :key="file.id"
@@ -72,14 +72,14 @@
           :subtitle="`${(file.size / 1024).toFixed(2)} KB`"
           :class="{ 'file-marked-for-deletion': filesToDelete.includes(file.id) }"
         >
-          <template v-slot:append>
+          <template #append>
             <v-btn
               color="red"
               icon="mdi-delete"
               variant="text"
               size="small"
               @click="toggleFileDeletion(file.id)"
-            ></v-btn>
+            />
           </template>
         </v-list-item>
       </v-list>
@@ -91,7 +91,7 @@
         show-size
         counter
         prepend-icon="mdi-paperclip"
-      ></v-file-input>
+      />
 
       <v-alert
         type="info"

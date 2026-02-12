@@ -2,8 +2,6 @@
 
 namespace App\Models\Concerns;
 
-use Illuminate\Support\Str;
-
 trait HasShortId
 {
     /**
@@ -30,12 +28,12 @@ trait HasShortId
             // Generate a random 8-character alphanumeric string
             // Using base62 (0-9, a-z, A-Z) for URL-safe IDs
             $shortId = static::generateRandomString(8);
-            
-            $attempts++;
-            
+
+            ++$attempts;
+
             // Check if this ID already exists
             $exists = static::where(static::make()->getShortIdColumn(), $shortId)->exists();
-            
+
             if (!$exists) {
                 return $shortId;
             }
@@ -54,11 +52,11 @@ trait HasShortId
         // This gives us 62^8 = 218 trillion possible combinations for 8 chars
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $string = '';
-        
-        for ($i = 0; $i < $length; $i++) {
+
+        for ($i = 0; $i < $length; ++$i) {
             $string .= $characters[random_int(0, strlen($characters) - 1)];
         }
-        
+
         return $string;
     }
 

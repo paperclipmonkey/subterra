@@ -7,7 +7,6 @@ use App\Models\CaveSystem;
 use App\Models\Route;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class RouteTest extends TestCase
@@ -57,9 +56,9 @@ class RouteTest extends TestCase
                     'description' => 'Main pitch',
                     'type' => 'rope',
                     'length' => 30,
-                    'quantity' => 1
-                ]
-            ]
+                    'quantity' => 1,
+                ],
+            ],
         ];
 
         $response = $this->actingAs($admin)->postJson("/api/cave_systems/{$system->id}/routes", $data);
@@ -122,7 +121,7 @@ class RouteTest extends TestCase
                 ['type' => 'handline', 'description' => 'Climb', 'length' => 10, 'quantity' => 1, 'optional' => true],
                 ['type' => 'ladder', 'description' => 'Pitch', 'length' => 10, 'quantity' => 1],
                 ['type' => 'rope_protector', 'description' => 'Rub point', 'quantity' => 2],
-            ]
+            ],
         ];
 
         $response = $this->actingAs($admin)->postJson("/api/cave_systems/{$system->id}/routes", $data);
@@ -138,13 +137,13 @@ class RouteTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
-        
+
         // Mock a base64 image
         $image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
         $data = [
             'name' => 'Hero Route',
-            'hero_image' => $image
+            'hero_image' => $image,
         ];
 
         $response = $this->actingAs($admin)->postJson("/api/cave_systems/{$system->id}/routes", $data);
@@ -160,7 +159,7 @@ class RouteTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
-        
+
         $image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
         $pdf = 'data:application/pdf;base64,JVBERi0xLg0KMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+Pg0KZW5kb2JqAyAwIG9iago8PC9UeXBlL1BhZ2VzL0t'; // Truncated valid-ish header
 
@@ -169,7 +168,7 @@ class RouteTest extends TestCase
             'media' => [
                 ['data' => $image, 'caption' => 'A photo', 'type' => 'photo'],
                 ['data' => $pdf, 'caption' => 'A survey', 'type' => 'pdf'],
-            ]
+            ],
         ];
 
         $response = $this->actingAs($admin)->postJson("/api/cave_systems/{$system->id}/routes", $data);
@@ -185,13 +184,13 @@ class RouteTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $route = Route::factory()->create();
-        
+
         // Create initial media
         $media1 = $route->media()->create(['path' => 'path/to/img1.jpg', 'type' => 'photo']);
         $media2 = $route->media()->create(['path' => 'path/to/img2.jpg', 'type' => 'photo']);
 
         $data = [
-            'deleted_media' => [$media1->id]
+            'deleted_media' => [$media1->id],
         ];
 
         $response = $this->actingAs($admin)->putJson("/api/routes/{$route->id}", $data);

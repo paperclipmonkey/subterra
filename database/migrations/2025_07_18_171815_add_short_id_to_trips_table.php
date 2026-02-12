@@ -2,11 +2,10 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -52,10 +51,10 @@ return new class extends Migration
 
         do {
             $shortId = $this->generateRandomString(8);
-            $attempts++;
-            
+            ++$attempts;
+
             $exists = DB::table('trips')->where('short_id', $shortId)->exists();
-            
+
             if (!$exists) {
                 return $shortId;
             }
@@ -72,11 +71,11 @@ return new class extends Migration
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $string = '';
-        
-        for ($i = 0; $i < $length; $i++) {
+
+        for ($i = 0; $i < $length; ++$i) {
             $string .= $characters[random_int(0, strlen($characters) - 1)];
         }
-        
+
         return $string;
     }
 };

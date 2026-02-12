@@ -5,7 +5,7 @@
         
         <!-- Image Area (Left/Top) -->
         <div class="bg-black d-flex align-center justify-center flex-grow-1 overflow-hidden position-relative" style="min-height: 300px; flex-basis: 70%;">
-          <v-btn icon="mdi-close" variant="text" color="white" class="position-absolute top-0 right-0 ma-2 d-md-none" style="z-index: 10" @click="closeModal"></v-btn>
+          <v-btn icon="mdi-close" variant="text" color="white" class="position-absolute top-0 right-0 ma-2 d-md-none" style="z-index: 10" @click="closeModal" />
           
           <v-img
             :src="media.url"
@@ -15,9 +15,9 @@
             contain
             class="media-image"
           >
-            <template v-slot:placeholder>
+            <template #placeholder>
               <div class="d-flex align-center justify-center fill-height">
-                <v-progress-circular indeterminate color="grey-lighten-5"></v-progress-circular>
+                <v-progress-circular indeterminate color="grey-lighten-5" />
               </div>
             </template>
           </v-img>
@@ -26,63 +26,63 @@
         <!-- Sidebar / Details Area (Right/Bottom) -->
         <div class="d-flex flex-column bg-surface border-s" style="flex-basis: 30%; min-width: 300px; max-width: 100%; overflow-y: auto;">
             
-            <!-- Header (Desktop only close button) -->
-            <div class="d-none d-md-flex justify-space-between align-center pa-4 pb-2">
-                <div class="text-overline text-medium-emphasis">Media Details</div>
-                <v-btn icon="mdi-close" variant="text" density="comfortable" @click="closeModal"></v-btn>
-            </div>
+          <!-- Header (Desktop only close button) -->
+          <div class="d-none d-md-flex justify-space-between align-center pa-4 pb-2">
+            <div class="text-overline text-medium-emphasis">Media Details</div>
+            <v-btn icon="mdi-close" variant="text" density="comfortable" @click="closeModal" />
+          </div>
 
-            <v-divider class="d-none d-md-block mb-2"></v-divider>
+          <v-divider class="d-none d-md-block mb-2" />
 
-            <div class="pa-4">
-                <!-- Title -->
-                <h2 v-if="media.title" class="text-h5 font-weight-bold mb-4">{{ media.title }}</h2>
-                <div v-else class="text-h6 font-weight-regular text-medium-emphasis font-italic mb-4">No Title</div>
+          <div class="pa-4">
+            <!-- Title -->
+            <h2 v-if="media.title" class="text-h5 font-weight-bold mb-4">{{ media.title }}</h2>
+            <div v-else class="text-h6 font-weight-regular text-medium-emphasis font-italic mb-4">No Title</div>
 
-                <!-- Metadata Grid -->
-                <div class="d-flex flex-column gap-3">
+            <!-- Metadata Grid -->
+            <div class="d-flex flex-column gap-3">
                     
-                    <!-- Trip -->
-                    <div v-if="media.trip_name" class="mb-3">
-                        <div class="text-caption text-medium-emphasis mb-1">Trip</div>
-                        <div class="d-flex align-center">
-                            <v-icon size="small" start icon="mdi-hiking" color="primary"></v-icon>
-                            <router-link :to="`/trips/${media.trip_id}`" @click="closeModal" class="text-decoration-none text-body-1 font-weight-medium text-primary text-truncate">
-                                {{ media.trip_name }}
-                            </router-link>
-                        </div>
-                    </div>
-
-                    <!-- Photographer -->
-                    <div v-if="media.photographer" class="mb-3">
-                        <div class="text-caption text-medium-emphasis mb-1">Photographer</div>
-                        <div class="d-flex align-center">
-                            <v-icon size="small" start icon="mdi-camera" class="text-medium-emphasis"></v-icon>
-                            <span class="text-body-1">{{ media.photographer }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Taken At (Keeping hidden as requested, but structure allows easy add-back) -->
-                    
-                    <!-- Copyright -->
-                    <div v-if="media.copyright" class="mb-3">
-                        <div class="text-caption text-medium-emphasis mb-1">Copyright</div>
-                        <div class="d-flex align-center">
-                            <v-icon size="small" start icon="mdi-copyright" class="text-medium-emphasis"></v-icon>
-                            <span class="text-body-2">{{ media.copyright }}</span>
-                        </div>
-                    </div>
+              <!-- Trip -->
+              <div v-if="media.trip_name" class="mb-3">
+                <div class="text-caption text-medium-emphasis mb-1">Trip</div>
+                <div class="d-flex align-center">
+                  <v-icon size="small" start icon="mdi-hiking" color="primary" />
+                  <router-link :to="`/trips/${media.trip_id}`" class="text-decoration-none text-body-1 font-weight-medium text-primary text-truncate" @click="closeModal">
+                    {{ media.trip_name }}
+                  </router-link>
                 </div>
-            </div>
+              </div>
 
-            <v-spacer></v-spacer>
+              <!-- Photographer -->
+              <div v-if="media.photographer" class="mb-3">
+                <div class="text-caption text-medium-emphasis mb-1">Photographer</div>
+                <div class="d-flex align-center">
+                  <v-icon size="small" start icon="mdi-camera" class="text-medium-emphasis" />
+                  <span class="text-body-1">{{ media.photographer }}</span>
+                </div>
+              </div>
 
-            <!-- Actions Footer -->
-            <div class="pa-4 mt-auto">
-                <v-btn block color="primary" variant="tonal" prepend-icon="mdi-open-in-new" @click="openInNewTab">
-                    Open Original
-                </v-btn>
+              <!-- Taken At (Keeping hidden as requested, but structure allows easy add-back) -->
+                    
+              <!-- Copyright -->
+              <div v-if="media.copyright" class="mb-3">
+                <div class="text-caption text-medium-emphasis mb-1">Copyright</div>
+                <div class="d-flex align-center">
+                  <v-icon size="small" start icon="mdi-copyright" class="text-medium-emphasis" />
+                  <span class="text-body-2">{{ media.copyright }}</span>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <v-spacer />
+
+          <!-- Actions Footer -->
+          <div class="pa-4 mt-auto">
+            <v-btn block color="primary" variant="tonal" prepend-icon="mdi-open-in-new" @click="openInNewTab">
+              Open Original
+            </v-btn>
+          </div>
         </div>
 
       </div>

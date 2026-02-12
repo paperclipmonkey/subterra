@@ -1,113 +1,113 @@
 <template>
-    <v-container>
-        <v-toolbar flat>
-            <v-btn icon @click="$router.back()"><v-icon>mdi-arrow-left</v-icon></v-btn>
-            <v-toolbar-title>On-Call Rota</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn-toggle v-model="viewMode" mandatory class="mr-4">
-                <v-btn value="list" icon><v-icon>mdi-view-list</v-icon></v-btn>
-                <v-btn value="calendar" icon><v-icon>mdi-calendar</v-icon></v-btn>
-            </v-btn-toggle>
-        </v-toolbar>
+  <v-container>
+    <v-toolbar flat>
+      <v-btn icon @click="$router.back()"><v-icon>mdi-arrow-left</v-icon></v-btn>
+      <v-toolbar-title>On-Call Rota</v-toolbar-title>
+      <v-spacer />
+      <v-btn-toggle v-model="viewMode" mandatory class="mr-4">
+        <v-btn value="list" icon><v-icon>mdi-view-list</v-icon></v-btn>
+        <v-btn value="calendar" icon><v-icon>mdi-calendar</v-icon></v-btn>
+      </v-btn-toggle>
+    </v-toolbar>
 
-        <v-row>
-            <v-col cols="12" md="4">
-                <v-card class="mt-4" outlined>
-                    <v-card-title>
-                        <v-icon left>mdi-calendar-plus</v-icon> Add Shift
-                    </v-card-title>
-                    <v-card-text>
-                        <v-form @submit.prevent="addShift" ref="form" v-model="valid">
-                            <v-select v-model="newShift.user_id" :items="users" item-title="name" item-value="id"
-                                label="Officer" outlined dense :rules="[v => !!v || 'User is required']"
-                                required></v-select>
+    <v-row>
+      <v-col cols="12" md="4">
+        <v-card class="mt-4" outlined>
+          <v-card-title>
+            <v-icon left>mdi-calendar-plus</v-icon> Add Shift
+          </v-card-title>
+          <v-card-text>
+            <v-form ref="form" v-model="valid" @submit.prevent="addShift">
+              <v-select v-model="newShift.user_id" :items="users" item-title="name" item-value="id"
+                        label="Officer" outlined dense :rules="[v => !!v || 'User is required']"
+                        required />
                             
-                            <v-text-field v-model="newShift.start_at" type="datetime-local" label="Start" outlined dense
-                                :rules="[v => !!v || 'Start time is required']" required></v-text-field>
+              <v-text-field v-model="newShift.start_at" type="datetime-local" label="Start" outlined dense
+                            :rules="[v => !!v || 'Start time is required']" required />
 
-                            <v-text-field v-model="newShift.end_at" type="datetime-local" label="End" outlined dense
-                                :rules="[v => !!v || 'End time is required']" required></v-text-field>
+              <v-text-field v-model="newShift.end_at" type="datetime-local" label="End" outlined dense
+                            :rules="[v => !!v || 'End time is required']" required />
 
-                            <v-btn block color="primary" type="submit" :loading="processing"
-                                :disabled="!valid">Add Shift</v-btn>
-                        </v-form>
-                    </v-card-text>
-                </v-card>
-            </v-col>
+              <v-btn block color="primary" type="submit" :loading="processing"
+                     :disabled="!valid">Add Shift</v-btn>
+            </v-form>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-            <v-col cols="12" md="8">
-                <!-- Calendar View -->
-                <v-card v-if="viewMode === 'calendar'" class="mt-4" outlined>
-                    <v-card-title class="d-flex align-center">
-                        <v-btn icon small @click="prevMonth"><v-icon>mdi-chevron-left</v-icon></v-btn>
-                        <span class="mx-4">{{ currentMonthName }}</span>
-                        <v-btn icon small @click="nextMonth"><v-icon>mdi-chevron-right</v-icon></v-btn>
-                    </v-card-title>
-                    <v-card-text class="pa-0">
-                        <div class="calendar-grid">
-                            <div v-for="day in weekDays" :key="day" class="calendar-header-day">{{ day }}</div>
-                            <div v-for="(cell, i) in calendarCells" :key="i" class="calendar-day" 
-                                :class="{ 'not-current': !cell.current, 'today': cell.today }">
-                                <div class="day-number">{{ cell.date.date() }}</div>
-                                <div class="day-events">
-                                    <div v-for="shift in cell.shifts" :key="shift.id" 
-                                        class="shift-event" 
-                                        :style="{ background: getEventColor(shift.user_id) }"
-                                        @click="editShift(shift)">
-                                        {{ shift.user.name.split(' ')[0] }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </v-card-text>
-                </v-card>
+      <v-col cols="12" md="8">
+        <!-- Calendar View -->
+        <v-card v-if="viewMode === 'calendar'" class="mt-4" outlined>
+          <v-card-title class="d-flex align-center">
+            <v-btn icon small @click="prevMonth"><v-icon>mdi-chevron-left</v-icon></v-btn>
+            <span class="mx-4">{{ currentMonthName }}</span>
+            <v-btn icon small @click="nextMonth"><v-icon>mdi-chevron-right</v-icon></v-btn>
+          </v-card-title>
+          <v-card-text class="pa-0">
+            <div class="calendar-grid">
+              <div v-for="day in weekDays" :key="day" class="calendar-header-day">{{ day }}</div>
+              <div v-for="(cell, i) in calendarCells" :key="i" class="calendar-day" 
+                   :class="{ 'not-current': !cell.current, 'today': cell.today }">
+                <div class="day-number">{{ cell.date.date() }}</div>
+                <div class="day-events">
+                  <div v-for="shift in cell.shifts" :key="shift.id" 
+                       class="shift-event" 
+                       :style="{ background: getEventColor(shift.user_id) }"
+                       @click="editShift(shift)">
+                    {{ shift.user.name.split(' ')[0] }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
 
-                <!-- List View -->
-                <v-card v-else class="mt-4" outlined>
-                    <v-card-title>Upcoming Shifts</v-card-title>
-                    <v-data-table :headers="headers" :items="shifts" :loading="loading">
-                        <template v-slot:item.start_at="{ value }">
-                            {{ formatDateTime(value) }}
-                        </template>
-                        <template v-slot:item.end_at="{ value }">
-                            {{ formatDateTime(value) }}
-                        </template>
-                        <template v-slot:item.actions="{ item }">
-                            <v-btn icon x-small color="primary" @click="editShift(item.raw || item)" class="mr-2">
-                                <v-icon>mdi-pencil</v-icon>
-                            </v-btn>
-                            <v-btn icon x-small color="red" @click="deleteShift(item.id || item.raw?.id || item.value)">
-                                <v-icon>mdi-delete</v-icon>
-                            </v-btn>
-                        </template>
-                    </v-data-table>
-                </v-card>
-            </v-col>
-        </v-row>
+        <!-- List View -->
+        <v-card v-else class="mt-4" outlined>
+          <v-card-title>Upcoming Shifts</v-card-title>
+          <v-data-table :headers="headers" :items="shifts" :loading="loading">
+            <template #item.start_at="{ value }">
+              {{ formatDateTime(value) }}
+            </template>
+            <template #item.end_at="{ value }">
+              {{ formatDateTime(value) }}
+            </template>
+            <template #item.actions="{ item }">
+              <v-btn icon x-small color="primary" class="mr-2" @click="editShift(item.raw || item)">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn icon x-small color="red" @click="deleteShift(item.id || item.raw?.id || item.value)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
 
-        <!-- Edit Dialog -->
-        <v-dialog v-model="editDialog" max-width="500">
-            <v-card v-if="editingShift">
-                <v-card-title>Edit Shift</v-card-title>
-                <v-card-text>
-                    <v-form ref="editForm">
-                        <v-select v-model="editingShift.user_id" :items="users" item-title="name" item-value="id"
-                            label="Officer" outlined dense required></v-select>
+    <!-- Edit Dialog -->
+    <v-dialog v-model="editDialog" max-width="500">
+      <v-card v-if="editingShift">
+        <v-card-title>Edit Shift</v-card-title>
+        <v-card-text>
+          <v-form ref="editForm">
+            <v-select v-model="editingShift.user_id" :items="users" item-title="name" item-value="id"
+                      label="Officer" outlined dense required />
                         
-                        <v-text-field v-model="editingShift.start_at" type="datetime-local" label="Start" outlined dense required></v-text-field>
+            <v-text-field v-model="editingShift.start_at" type="datetime-local" label="Start" outlined dense required />
 
-                        <v-text-field v-model="editingShift.end_at" type="datetime-local" label="End" outlined dense required></v-text-field>
-                    </v-form>
-                </v-card-text>
-                <v-card-actions>
-                    <v-btn color="error" text @click="deleteShift(editingShift.id)">Delete</v-btn>
-                    <v-spacer></v-spacer>
-                    <v-btn text @click="editDialog = false">Cancel</v-btn>
-                    <v-btn color="primary" @click="saveShift" :loading="processing">Save</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-    </v-container>
+            <v-text-field v-model="editingShift.end_at" type="datetime-local" label="End" outlined dense required />
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="error" text @click="deleteShift(editingShift.id)">Delete</v-btn>
+          <v-spacer />
+          <v-btn text @click="editDialog = false">Cancel</v-btn>
+          <v-btn color="primary" :loading="processing" @click="saveShift">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script>

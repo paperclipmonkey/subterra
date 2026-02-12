@@ -1,16 +1,17 @@
 <?php
-Namespace Tests\Feature;
+
+namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use Tests\TestCase;
-use Tests\Support\JsonSchemaValidator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Tests\Support\JsonSchemaValidator;
+use Tests\TestCase;
 
 class UserTest extends TestCase
 {
-    use RefreshDatabase, JsonSchemaValidator;
+    use RefreshDatabase;
+    use JsonSchemaValidator;
 
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_current_user()
@@ -29,7 +30,7 @@ class UserTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['name' => 'Test User 1']), 'sanctum');
         $users = User::factory()->count(3)->create([
-            'name' => fake()->name() . ' Test'
+            'name' => fake()->name().' Test',
         ]);
 
         // Search for 'test' which appears in all user names
@@ -75,7 +76,7 @@ class UserTest extends TestCase
         $this->assertResponseMatchesSchema($response, 'endpoints/users-show');
     }
 
-        #[\PHPUnit\Framework\Attributes\Test]
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_doesnt_update_user_bio_if_not_user()
     {
         $user = User::factory()->create([
@@ -310,9 +311,9 @@ class UserTest extends TestCase
         Storage::fake('public');
 
         $user = User::factory()->create([
-            'photo' => 'profile/custom-photo.jpg'
+            'photo' => 'profile/custom-photo.jpg',
         ]);
-        
+
         // Ensure the file exists in our fake storage
         Storage::disk('public')->put('profile/custom-photo.jpg', 'fake-image-content');
 
@@ -322,7 +323,7 @@ class UserTest extends TestCase
         $note = \App\Models\IncidentNote::factory()->create([
             'incident_id' => $incident->id,
             'user_id' => $user->id,
-            'content' => 'This is an important safety note.'
+            'content' => 'This is an important safety note.',
         ]);
 
         $this->actingAs($user, 'sanctum');
@@ -336,7 +337,7 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('incident_notes', [
             'id' => $note->id,
             'user_id' => null,
-            'content' => 'This is an important safety note.'
+            'content' => 'This is an important safety note.',
         ]);
     }
 
@@ -347,7 +348,7 @@ class UserTest extends TestCase
 
         // Create a user with the DEFAULT photo
         $user = User::factory()->create([
-            'photo' => 'profile/default.webp'
+            'photo' => 'profile/default.webp',
         ]);
         Storage::disk('public')->put('profile/default.webp', 'shared-default-image');
 
@@ -358,7 +359,7 @@ class UserTest extends TestCase
         // 2. Check Callouts and Cascades
         $callout = \App\Models\Callout::factory()->create(['user_id' => $user->id]);
         $incident = \App\Models\Incident::factory()->create(['callout_id' => $callout->id]);
-        
+
         // 3. Check Collections Cascade
         $collection = \App\Models\Collection::factory()->create(['user_id' => $user->id]);
 
@@ -374,7 +375,7 @@ class UserTest extends TestCase
         $response->assertOk();
 
         // ASSERTIONS
-        
+
         // Account is gone
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
 
@@ -398,7 +399,7 @@ class UserTest extends TestCase
         $callout = \App\Models\Callout::factory()->create();
         $incident = \App\Models\Incident::factory()->create([
             'callout_id' => $callout->id,
-            'incident_controller_id' => $admin->id
+            'incident_controller_id' => $admin->id,
         ]);
 
         $this->actingAs($admin, 'sanctum');
@@ -406,11 +407,11 @@ class UserTest extends TestCase
 
         $response->assertOk();
         $this->assertDatabaseMissing('users', ['id' => $admin->id]);
-        
+
         // Verify incident controller is now NULL
         $this->assertDatabaseHas('incidents', [
             'id' => $incident->id,
-            'incident_controller_id' => null
+            'incident_controller_id' => null,
         ]);
     }
 
@@ -418,7 +419,7 @@ class UserTest extends TestCase
     public function it_includes_on_call_information_in_user_resource()
     {
         $user = User::factory()->admin()->create();
-        
+
         // 1. Create an on-call shift for this user
         \App\Models\OnCallShift::create([
             'user_id' => $user->id,
@@ -440,9 +441,9 @@ class UserTest extends TestCase
             'data' => [
                 'on_call' => true,
                 'open_callouts_count' => 2,
-            ]
+            ],
         ]);
-        
+
         $this->assertNotNull($response->json('data.on_call_until'));
     }
 }

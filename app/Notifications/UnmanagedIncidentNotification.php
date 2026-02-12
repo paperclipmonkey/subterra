@@ -38,14 +38,14 @@ class UnmanagedIncidentNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $url = url('/admin/incidents/' . $this->incident->id);
+        $url = url('/admin/incidents/'.$this->incident->id);
 
-        return (new MailMessage)
+        return (new MailMessage())
                     ->subject('CRITICAL: Unmanaged Incident - Overdue')
                     ->greeting('Immediate Action Required')
                     ->line('An incident has been open for 15 minutes without a managed response.')
-                    ->line('**Incident ID:** ' . $this->incident->id)
-                    ->line('**Cave:** ' . ($this->incident->callout->cave?->name ?? 'Unknown'))
+                    ->line('**Incident ID:** '.$this->incident->id)
+                    ->line('**Cave:** '.($this->incident->callout->cave?->name ?? 'Unknown'))
                     ->action('Take Control', $url)
                     ->line('Please assign yourself as controller immediately.');
     }

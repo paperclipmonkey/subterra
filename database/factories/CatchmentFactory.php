@@ -22,7 +22,7 @@ class CatchmentFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->city . ' Catchment',
+            'name' => $this->faker->city.' Catchment',
             'reference_id' => $this->faker->unique()->bothify('??####'),
             'gauges' => [],
         ];

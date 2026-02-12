@@ -1,5 +1,5 @@
 <template>
-    <Collection />
+  <Collection />
 </template>
 
 <script setup>

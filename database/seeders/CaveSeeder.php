@@ -19,14 +19,13 @@ class CaveSeeder extends Seeder
         $caveSystem = CaveSystem::factory()->create();
 
         // Create multiple caves within the cave system
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 3; ++$i) {
             Cave::factory()->create([
                 'cave_system_id' => $caveSystem->id,
-                'name' => 'Cave ' . ($i + 1),
-                'description' => 'Description for Cave ' . ($i + 1),
+                'name' => 'Cave '.($i + 1),
+                'description' => 'Description for Cave '.($i + 1),
             ]);
         }
-
 
         // Create a Closed Cave
         $closedTag = \App\Models\Tag::where('tag', 'Closed')->first();
@@ -34,7 +33,7 @@ class CaveSeeder extends Seeder
             $closedCave = Cave::factory()->create([
                 'name' => 'Closed Cave',
                 'description' => 'This cave is closed for access.',
-                'cave_system_id' => $caveSystem->id
+                'cave_system_id' => $caveSystem->id,
             ]);
             $closedCave->tags()->attach($closedTag);
         }

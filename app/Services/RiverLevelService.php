@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -16,14 +17,14 @@ class RiverLevelService
     /**
      * Get enhanced reading for a catchment gauge.
      * Includes trend, state, and normal range.
-     * 
+     *
      * @param string $rloiId The RLOI ID (e.g. 3059)
      * @return array|null The latest reading and station details
      */
     public function getEnhancedReading(string $rloiId): ?array
     {
         $stationRef = $this->resolveStationReference($rloiId);
-        
+
         if (!$stationRef) {
             return null;
         }
@@ -69,7 +70,7 @@ class RiverLevelService
             'latest_time' => $latest['dateTime'],
             'trend' => $trend,
             'state' => $state,
-            'metadata' => $metadata
+            'metadata' => $metadata,
         ];
     }
 
@@ -82,15 +83,17 @@ class RiverLevelService
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($stationRef) {
             try {
-                $url = self::BASE_URL . "/stations/{$stationRef}/readings?_limit=100&_sorted";
+                $url = self::BASE_URL."/stations/{$stationRef}/readings?_limit=100&_sorted";
                 $response = Http::timeout(5)->get($url);
 
                 if ($response->successful()) {
                     return $response->json()['items'] ?? [];
                 }
+
                 return [];
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('River Level Service readings exception', ['message' => $e->getMessage()]);
+
                 return [];
             }
         });
@@ -106,13 +109,13 @@ class RiverLevelService
 
         return Cache::remember($cacheKey, 86400, function () use ($stationRef) { // 24h cache
             try {
-                $url = self::BASE_URL . "/stations/{$stationRef}/stageScale";
+                $url = self::BASE_URL."/stations/{$stationRef}/stageScale";
                 $response = Http::timeout(5)->get($url);
 
                 if ($response->successful()) {
                     $json = $response->json();
                     $items = $json['items'] ?? [];
-                    
+
                     return [
                         'typicalRangeLow' => $items['typicalRangeLow'] ?? null,
                         'typicalRangeHigh' => $items['typicalRangeHigh'] ?? null,
@@ -120,9 +123,11 @@ class RiverLevelService
                         'maxOnRecord' => $items['maxOnRecord']['value'] ?? null,
                     ];
                 }
+
                 return [];
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('River Level Service metadata exception', ['message' => $e->getMessage()]);
+
                 return [];
             }
         });
@@ -137,21 +142,23 @@ class RiverLevelService
 
         return Cache::rememberForever($cacheKey, function () use ($rloiId) {
             try {
-                $url = self::BASE_URL . "/stations?RLOIid={$rloiId}";
+                $url = self::BASE_URL."/stations?RLOIid={$rloiId}";
                 $response = Http::timeout(5)->get($url);
 
                 if ($response->successful()) {
                     $json = $response->json();
                     $items = $json['items'] ?? [];
                     if (count($items) > 0) {
-                        return $items[0]['stationReference'] ?? null; 
+                        return $items[0]['stationReference'] ?? null;
                     }
                 }
                 Log::warning("Could not resolve RLOI ID {$rloiId} to station reference");
-                return null;
+
+                return;
             } catch (\Exception $e) {
                 Log::error('River Level Service resolution exception', ['message' => $e->getMessage()]);
-                return null;
+
+                return;
             }
         });
     }

@@ -2,28 +2,27 @@
   <v-card
     flat
   >
-    <template v-slot:text>
+    <template #text>
       <div class="d-flex align-center">
         <v-text-field
-            v-model="search"
-            label="Search"
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            hide-details
-            single-line
-            class="flex-grow-1 mr-2"
+          v-model="search"
+          label="Search"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          hide-details
+          single-line
+          class="flex-grow-1 mr-2"
         >
-            <template v-slot:append-inner>
+          <template #append-inner>
             <v-icon
-                @click="showFilterByTagModal = true"
-                icon="mdi-filter"
-                :color="cachedTags.length ? 'success' : ''"
-            >
-            </v-icon>
+              icon="mdi-filter"
+              :color="cachedTags.length ? 'success' : ''"
+              @click="showFilterByTagModal = true"
+            />
             <template v-if="cachedTags.length">
-            {{ cachedTags.length }}
+              {{ cachedTags.length }}
             </template>
-            </template>
+          </template>
         </v-text-field>
       </div>
     </template>
@@ -39,15 +38,15 @@
       <v-tabs-window-item
         :key="'list'"
         :value="'list'">
-        <CaveListList/>
-    </v-tabs-window-item>
-    <v-tabs-window-item
-      :key="'map'"
-      :value="'map'">
-        <CaveListMap/>
-    </v-tabs-window-item>
-  </v-tabs-window>
-  <FilterByTagModal @close="showFilterByTagModal=false" @filter="applyFilter" :isActive="showFilterByTagModal"/>
+        <CaveListList />
+      </v-tabs-window-item>
+      <v-tabs-window-item
+        :key="'map'"
+        :value="'map'">
+        <CaveListMap />
+      </v-tabs-window-item>
+    </v-tabs-window>
+    <FilterByTagModal :is-active="showFilterByTagModal" @close="showFilterByTagModal=false" @filter="applyFilter" />
   </v-card>
 </template>
 
@@ -71,7 +70,7 @@ const showFilterByTagModal = ref(false)
 let cachedTags = ref([]);
 
 const applyFilter = (tags) => {
-  cachedTags = tags
+  cachedTags.value = tags
   caveStore.applyFilters(tags, search.value, catchmentId.value)
   // Update URL with tags as a comma-separated string
   router.replace({ query: { ...route.query, tags: tags.join(',') } });

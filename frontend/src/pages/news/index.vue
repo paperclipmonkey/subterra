@@ -1,44 +1,44 @@
 <template>
-    <v-container class="py-8" style="max-width: 900px;">
-        <div class="mb-10 text-center">
-            <h1 class="text-h3 font-weight-black mb-2 text-grey-darken-4">Latest News</h1>
-            <p class="text-subtitle-1 text-medium-emphasis">Updates from the Subterra team</p>
+  <v-container class="py-8" style="max-width: 900px;">
+    <div class="mb-10 text-center">
+      <h1 class="text-h3 font-weight-black mb-2 text-grey-darken-4">Latest News</h1>
+      <p class="text-subtitle-1 text-medium-emphasis">Updates from the Subterra team</p>
+    </div>
+
+    <div v-if="loading" class="d-flex justify-center py-12">
+      <v-progress-circular indeterminate color="primary" />
+    </div>
+
+    <div v-else class="d-flex flex-column gap-6">
+      <v-card v-for="item in news" :key="item.id" class="news-card rounded-xl overflow-hidden" elevation="0"
+              border :to="`/news/${item.id}`" hover>
+        <div class="d-flex flex-column flex-md-row">
+          <div class="pa-6 pa-md-8 flex-grow-1">
+            <div class="d-flex align-center mb-3">
+              <v-icon icon="mdi-calendar" size="small" color="primary" class="mr-2" />
+              <span
+                class="text-caption font-weight-bold text-uppercase text-medium-emphasis letter-spacing-1">
+                {{ moment(item.date).format('MMMM D, YYYY') }}
+              </span>
+            </div>
+
+            <h2 class="text-h5 font-weight-bold mb-3 text-grey-darken-4 lh-tight">
+              {{ item.title }}
+            </h2>
+
+            <div class="text-body-1 text-grey-darken-1 mb-4 line-clamp-3">
+              <!-- Strip markdown for preview text using a simple regex or just showing truncated raw -->
+              {{ getExcerpt(item.content) }}
+            </div>
+
+            <div class="d-flex align-center text-primary font-weight-bold text-body-2">
+              Read Article <v-icon icon="mdi-arrow-right" class="ml-1" size="small" />
+            </div>
+          </div>
         </div>
-
-        <div v-if="loading" class="d-flex justify-center py-12">
-            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-        </div>
-
-        <div v-else class="d-flex flex-column gap-6">
-            <v-card v-for="item in news" :key="item.id" class="news-card rounded-xl overflow-hidden" elevation="0"
-                border :to="`/news/${item.id}`" hover>
-                <div class="d-flex flex-column flex-md-row">
-                    <div class="pa-6 pa-md-8 flex-grow-1">
-                        <div class="d-flex align-center mb-3">
-                            <v-icon icon="mdi-calendar" size="small" color="primary" class="mr-2"></v-icon>
-                            <span
-                                class="text-caption font-weight-bold text-uppercase text-medium-emphasis letter-spacing-1">
-                                {{ moment(item.date).format('MMMM D, YYYY') }}
-                            </span>
-                        </div>
-
-                        <h2 class="text-h5 font-weight-bold mb-3 text-grey-darken-4 lh-tight">
-                            {{ item.title }}
-                        </h2>
-
-                        <div class="text-body-1 text-grey-darken-1 mb-4 line-clamp-3">
-                            <!-- Strip markdown for preview text using a simple regex or just showing truncated raw -->
-                            {{ getExcerpt(item.content) }}
-                        </div>
-
-                        <div class="d-flex align-center text-primary font-weight-bold text-body-2">
-                            Read Article <v-icon icon="mdi-arrow-right" class="ml-1" size="small"></v-icon>
-                        </div>
-                    </div>
-                </div>
-            </v-card>
-        </div>
-    </v-container>
+      </v-card>
+    </div>
+  </v-container>
 </template>
 
 <script setup>

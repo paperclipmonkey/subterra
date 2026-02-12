@@ -26,18 +26,18 @@ class CaveCollectionTest extends TestCase
 
         // Create a collection
         $collection = Collection::factory()->create([
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ]);
 
         // Link cave to collection
         $collection->caves()->attach($cave->id);
 
         // Call the API using the slug
-        $response = $this->actingAs($user)->getJson('/api/caves/' . $cave->slug);
+        $response = $this->actingAs($user)->getJson('/api/caves/'.$cave->slug);
 
         // Assert response
         $response->assertStatus(200);
-        
+
         // Assert collections are present in the response
         $response->assertJsonStructure([
             'data' => [
@@ -47,16 +47,16 @@ class CaveCollectionTest extends TestCase
                     '*' => [
                         'id',
                         'name',
-                        'slug'
-                    ]
-                ]
-            ]
+                        'slug',
+                    ],
+                ],
+            ],
         ]);
 
         // Assert specific collection data
         $response->assertJsonFragment([
             'name' => $collection->name,
-            'slug' => $collection->slug
+            'slug' => $collection->slug,
         ]);
     }
 }

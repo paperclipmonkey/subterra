@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Club;
-use App\Models\Trip;
 use App\Http\Resources\TripResource;
 use App\Http\Resources\UserResource;
-use Illuminate\Support\Facades\DB;
+use App\Models\Club;
+use App\Models\Trip;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class ClubDataController extends Controller
 {
@@ -20,8 +19,8 @@ class ClubDataController extends Controller
     public function recentTrips(Club $club): ResourceCollection
     {
         $trips = Trip::whereHas('participants', function ($query) use ($club) {
-                $query->whereIn('user_id', $club->users()->wherePivot('status', 'approved')->pluck('users.id'));
-            })
+            $query->whereIn('user_id', $club->users()->wherePivot('status', 'approved')->pluck('users.id'));
+        })
             ->where('start_time', '>=', Carbon::now()->subYear())
             ->orderBy('start_time', 'desc')
             ->limit(10)
@@ -36,6 +35,7 @@ class ClubDataController extends Controller
     public function members(Club $club): ResourceCollection
     {
         $members = $club->users()->wherePivot('status', 'approved')->get();
+
         return UserResource::collection($members);
     }
 
@@ -55,7 +55,6 @@ class ClubDataController extends Controller
             ->orderBy('date', 'asc')
             ->get()
             ->map(function ($item) {
-                // Format for vue3-calendar-heatmap: { 'YYYY-MM-DD': count }
                 return ['date' => $item->date, 'count' => $item->count];
             });
 

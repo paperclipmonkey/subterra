@@ -1,6 +1,6 @@
 <template>
   <v-container v-if="loading">
-    <v-skeleton-loader type="article, image"></v-skeleton-loader>
+    <v-skeleton-loader type="article, image" />
   </v-container>
 
   <v-sheet v-else-if="collection" class="position-relative">
@@ -8,8 +8,8 @@
       :src="collection.photo_path || 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
       height="350" cover class="align-end" gradient="to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 60%">
       <div class="position-absolute top-0 left-0 pa-4" style="z-index: 1;">
-        <v-btn icon="mdi-arrow-left" variant="tonal" color="white" @click="$router.push('/collections')"
-          class="backdrop-blur"></v-btn>
+        <v-btn icon="mdi-arrow-left" variant="tonal" color="white" class="backdrop-blur"
+               @click="$router.push('/collections')" />
       </div>
 
       <div class="position-absolute top-0 right-0 pa-4 d-flex align-center" style="z-index: 1;">
@@ -29,13 +29,13 @@
             {{ tickedCount }} / {{ totalCount }} Completed ({{ progress }}%)
           </div>
         </div>
-        <v-progress-linear :model-value="progress" color="primary" height="12" rounded striped></v-progress-linear>
+        <v-progress-linear :model-value="progress" color="primary" height="12" rounded striped />
       </div>
 
       <div v-if="collection.description" class="mb-6">
         <div class="d-flex justify-space-between align-center mb-2">
-            <div class="text-h6 font-weight-bold">About this Collection</div>
-            <CorrectionModal entity-type="collection" :entity-id="collection.id" :entity-name="collection.name" />
+          <div class="text-h6 font-weight-bold">About this Collection</div>
+          <CorrectionModal entity-type="collection" :entity-id="collection.id" :entity-name="collection.name" />
         </div>
         <div class="markdown-body text-body-1 text-grey-darken-3">
           <VueMarkdown :source="collection.description" />
@@ -51,7 +51,7 @@
         </v-col>
         <v-col cols="12" md="4">
           <div class="position-sticky" style="top: 20px;">
-             <CollectionMap :collection="collection" />
+            <CollectionMap :collection="collection" />
           </div>
         </v-col>
       </v-row>
@@ -77,11 +77,11 @@
   </v-sheet>
 
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
-    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4"></v-icon>
+    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
     <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
     <p class="text-body-1 text-grey mb-6">{{ error }}</p>
     <v-btn color="primary" variant="flat" to="/collections" prepend-icon="mdi-arrow-left">
-        Back to Collections
+      Back to Collections
     </v-btn>
   </v-container>
 

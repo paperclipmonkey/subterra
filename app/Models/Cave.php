@@ -13,7 +13,8 @@ use OwenIt\Auditing\Auditable;
 
 class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory, Auditable;
+    use HasFactory;
+    use Auditable;
 
     protected static function booted()
     {

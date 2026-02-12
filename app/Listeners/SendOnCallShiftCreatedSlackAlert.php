@@ -3,9 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\OnCallShiftCreated;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Spatie\SlackAlerts\Facades\SlackAlert;
 use Illuminate\Support\Facades\Log;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class SendOnCallShiftCreatedSlackAlert
 {
@@ -32,7 +31,7 @@ class SendOnCallShiftCreatedSlackAlert
 
             SlackAlert::to('callouts')->message($msg);
         } catch (\Exception $e) {
-            Log::error('Failed to send On Call Shift Slack alert: ' . $e->getMessage());
+            Log::error('Failed to send On Call Shift Slack alert: '.$e->getMessage());
         }
     }
 }

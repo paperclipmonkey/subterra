@@ -2,20 +2,20 @@
   <v-card class="map-container">
     <v-card-text class="map-holder">
       <div v-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-4 h-100 flex-column text-center">
-            <v-icon size="64" color="grey" class="mb-4">mdi-map-lock</v-icon>
-            <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
-            <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
-              Cave locations and map features are exclusive to approved club members.
-            </p>
-            <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
+        <v-icon size="64" color="grey" class="mb-4">mdi-map-lock</v-icon>
+        <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
+        <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
+          Cave locations and map features are exclusive to approved club members.
+        </p>
+        <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
       </div>
-      <mgl-map v-else :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" ref="map">
+      <mgl-map v-else ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
         <mgl-marker v-for="(cave, index) in caveStore.caves" :key="cave.id"
-          :coordinates="[cave.location_lng, cave.location_lat]">
+                    :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card>
-              <v-img :src="cave.hero_image || cave.entrance_image" v-if="cave.hero_image || cave.entrance_image"
-                height="80" cover class="rounded-t">
+              <v-img v-if="cave.hero_image || cave.entrance_image" :src="cave.hero_image || cave.entrance_image"
+                     height="80" cover class="rounded-t">
                 <v-card-title class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
                   {{ cave.name }}
                 </v-card-title>
@@ -39,11 +39,11 @@
                   View
                 </v-btn>
                 <v-btn :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`" target="_blank"
-                  icon>
+                       icon>
                   <v-icon>mdi-google-maps</v-icon>
                 </v-btn>
                 <v-btn :href="`https://maps.apple.com/?q=${cave.location_lat},${cave.location_lng}`" target="_blank"
-                  icon>
+                       icon>
                   <v-icon>mdi-apple</v-icon>
                 </v-btn>
               </v-card-actions>
@@ -52,7 +52,7 @@
         </mgl-marker>
         <mgl-fullscreen-control />
         <mgl-navigation-control />
-        <MglGeolocateControl :track-user-location="true" :showAccuracyCircle="true" />
+        <MglGeolocateControl :track-user-location="true" :show-accuracy-circle="true" />
       </mgl-map>
     </v-card-text>
   </v-card>

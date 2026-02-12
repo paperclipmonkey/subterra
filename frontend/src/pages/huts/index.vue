@@ -1,5 +1,5 @@
 <template>
-    <HutList />
+  <HutList />
 </template>
 
 <script setup>

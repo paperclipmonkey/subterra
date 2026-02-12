@@ -2,14 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Console\Commands\CheckOverdueCallouts;
 use App\Models\Callout;
 use App\Models\Cave;
 use App\Models\Incident;
 use App\Models\OnCallShift;
 use App\Models\User;
 use App\Notifications\CalloutImminentNotification;
-use App\Notifications\IncidentEscalatedNotification;
 use App\Notifications\OverdueCalloutNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -34,7 +32,7 @@ class CheckOverdueCalloutsTest extends TestCase
 
         // user is the DO
         $do = User::factory()->admin()->create(['name' => 'Duty Officer']);
-        
+
         // Setup shift covering now+15m
         // Shift is 09:00 to 17:00
         OnCallShift::create([
@@ -47,8 +45,8 @@ class CheckOverdueCalloutsTest extends TestCase
         // Logic checks [now+15, now+16)
         // If due at 12:15:00, 15m before is 12:00:00.
         $callout = Callout::factory()->create([
-            'callout_time' => now()->addMinutes(15), 
-            'status' => 'active'
+            'callout_time' => now()->addMinutes(15),
+            'status' => 'active',
         ]);
 
         // Verify Contact also notified
@@ -58,12 +56,12 @@ class CheckOverdueCalloutsTest extends TestCase
             'name' => 'Participant 1',
             'phone' => '+447999999999',
         ]);
-        
+
         $this->artisan('callouts:check-overdue')
              ->assertExitCode(0);
 
         Notification::assertSentTo(
-            [$do], 
+            [$do],
             CalloutImminentNotification::class,
             function ($notification, $channels) use ($callout) {
                 return $notification->callout->id === $callout->id;
@@ -71,8 +69,8 @@ class CheckOverdueCalloutsTest extends TestCase
         );
 
         Notification::assertSentTo(
-             [$participant],
-             \App\Notifications\CalloutImminentContactNotification::class
+            [$participant],
+            \App\Notifications\CalloutImminentContactNotification::class
         );
     }
 
@@ -90,15 +88,15 @@ class CheckOverdueCalloutsTest extends TestCase
 
         // Callout due at 13:00 (too far)
         Callout::factory()->create([
-            'callout_time' => now()->addHour(), 
-            'status' => 'active'
+            'callout_time' => now()->addHour(),
+            'status' => 'active',
         ]);
 
         // Callout due at 12:05 (too close, likely already warned or missed)
         // Although the command only checks specific window.
         Callout::factory()->create([
-            'callout_time' => now()->addMinutes(5), 
-            'status' => 'active'
+            'callout_time' => now()->addMinutes(5),
+            'status' => 'active',
         ]);
 
         $this->artisan('callouts:check-overdue');
@@ -119,18 +117,18 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $callout = Callout::factory()->create([
             'callout_time' => now()->addMinutes(15),
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         $this->artisan('callouts:check-overdue');
 
         Notification::assertSentTo(
-            [$admin1, $admin2], 
+            [$admin1, $admin2],
             CalloutImminentNotification::class
         );
 
         Notification::assertNotSentTo(
-            [$user], 
+            [$user],
             CalloutImminentNotification::class
         );
     }
@@ -149,11 +147,11 @@ class CheckOverdueCalloutsTest extends TestCase
             'callout_id' => $callout->id,
             'status' => 'open',
         ]);
-        
+
         // Force update created_at to simulate old incident
         $incident->created_at = now()->subMinutes(30);
         $incident->save();
-        
+
         $this->artisan('callouts:check-overdue');
 
         Notification::assertSentTo(
@@ -165,7 +163,7 @@ class CheckOverdueCalloutsTest extends TestCase
         $this->assertDatabaseHas('incident_notes', [
             'incident_id' => $incident->id,
             'user_id' => null,
-            'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.'
+            'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.',
         ]);
     }
 
@@ -182,7 +180,7 @@ class CheckOverdueCalloutsTest extends TestCase
             'callout_id' => $callout->id,
             'status' => 'open',
             'created_at' => now()->subMinutes(30),
-            'incident_controller_id' => $controller->id // Has controller
+            'incident_controller_id' => $controller->id, // Has controller
         ]);
 
         $this->artisan('callouts:check-overdue');
@@ -226,7 +224,7 @@ class CheckOverdueCalloutsTest extends TestCase
         // Add the system note manually
         $incident->notes()->create([
             'user_id' => null,
-            'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.'
+            'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.',
         ]);
 
         $this->artisan('callouts:check-overdue');
@@ -241,10 +239,10 @@ class CheckOverdueCalloutsTest extends TestCase
         Carbon::setTestNow('2025-01-01 12:00:00');
 
         $admin = User::factory()->admin()->create(['is_active' => true]);
-        
+
         $callout = Callout::factory()->create([
             'callout_time' => now()->subMinute(), // Due 1 min ago
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         $this->artisan('callouts:check-overdue');

@@ -36,7 +36,7 @@ class PageController extends Controller
         $page = Page::findOrFail($id);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:pages,slug,' . $page->id,
+            'slug' => 'required|string|max:255|unique:pages,slug,'.$page->id,
             'content' => 'nullable|string',
         ]);
 
@@ -49,12 +49,14 @@ class PageController extends Controller
     {
         $page = Page::findOrFail($id);
         $page->delete();
+
         return response()->noContent();
     }
 
     public function publicShow(Page $page)
     {
         $page->increment('access_count');
+
         return new PageResource($page);
     }
 }

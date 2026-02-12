@@ -13,7 +13,7 @@ class TripMediaFactory extends Factory
     {
         return [
             'trip_id' => \App\Models\Trip::factory(), // Dynamically associate with a Trip instance
-            'filename' => $this->faker->word . '.jpg',
+            'filename' => $this->faker->word.'.jpg',
             'title' => $this->faker->optional()->sentence(3),
             'copyright' => $this->faker->optional()->name,
             'photographer' => $this->faker->optional()->name,

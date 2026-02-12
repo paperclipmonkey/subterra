@@ -19,7 +19,7 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'email'
+            'email' => 'email',
         ];
     }
 }

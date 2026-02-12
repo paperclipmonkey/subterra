@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Callout;
 use App\Models\OnCallShift;
+use App\Models\User;
 use App\Services\CalloutService;
-use App\Services\SmsService;
 use App\Services\GcpWatchdogService;
+use App\Services\SmsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use Tests\TestCase;
 
 class CalloutTripDescriptionTest extends TestCase
 {
@@ -49,8 +49,8 @@ class CalloutTripDescriptionTest extends TestCase
             'car_registration' => 'ABC 123',
             'car_parking' => 'Main lot',
             'participants' => [
-                ['name' => 'John Doe', 'phone' => '07123456789']
-            ]
+                ['name' => 'John Doe', 'phone' => '07123456789'],
+            ],
         ]);
 
         // 4. Assert Callout state

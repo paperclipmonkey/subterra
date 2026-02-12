@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="12" class="d-flex align-center">
         <h1 class="text-h4">Catchments</h1>
-        <v-spacer></v-spacer>
+        <v-spacer />
         <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
           New Catchment
         </v-btn>
@@ -19,11 +19,11 @@
         :items-per-page="-1"
         class="elevation-1"
       >
-        <template v-slot:item.gauges="{ item }">
+        <template #item.gauges="{ item }">
           {{ item.gauges ? item.gauges.length : 0 }} gauges
         </template>
         
-        <template v-slot:item.cave_systems_count="{ item }">
+        <template #item.cave_systems_count="{ item }">
           <router-link :to="`/caves?catchment=${item.id}`" class="text-decoration-none">
             <v-chip size="small" :color="item.cave_systems_count > 0 ? 'info' : 'default'" class="cursor-pointer">
               {{ item.cave_systems_count }}
@@ -31,11 +31,11 @@
           </router-link>
         </template>
 
-        <template v-slot:item.actions="{ item }">
+        <template #item.actions="{ item }">
           <v-icon size="small" class="me-2" @click="editItem(item)">
             mdi-pencil
           </v-icon>
-          <v-icon size="small" color="error" @click="deleteItem(item)" :disabled="item.cave_systems_count > 0">
+          <v-icon size="small" color="error" :disabled="item.cave_systems_count > 0" @click="deleteItem(item)">
             mdi-delete
           </v-icon>
         </template>
@@ -57,7 +57,7 @@
                   v-model="editedItem.name"
                   label="Name"
                   required
-                ></v-text-field>
+                />
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -66,55 +66,55 @@
                   hint="Unique alphanumeric ID"
                   persistent-hint
                   required
-                ></v-text-field>
+                />
               </v-col>
               
               <v-col cols="12">
                 <div class="d-flex align-center mb-2">
-                    <h3 class="text-subtitle-1">Gauges</h3>
-                    <v-spacer></v-spacer>
-                    <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="addGauge">Add Gauge</v-btn>
+                  <h3 class="text-subtitle-1">Gauges</h3>
+                  <v-spacer />
+                  <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="addGauge">Add Gauge</v-btn>
                 </div>
                 
                 <div v-for="(gauge, index) in editedItem.gauges" :key="index" class="d-flex align-center gap-4 mb-2">
-                    <v-text-field
-                        v-model="gauge.name"
-                        label="Gauge Name"
-                        density="compact"
-                        hide-details
-                        class="mr-2"
-                        style="max-width: 200px;"
-                    ></v-text-field>
-                    <v-select
-                        v-model="gauge.type"
-                        :items="['river', 'rain']"
-                        label="Type"
-                        density="compact"
-                        hide-details
-                        class="mr-2"
-                        style="max-width: 120px;"
-                    ></v-select>
-                     <v-text-field
-                        v-if="!gauge.type || gauge.type === 'river'"
-                        v-model="gauge.rloi_id"
-                        label="RLOI ID"
-                        density="compact"
-                        hide-details
-                        class="mr-2"
-                        type="number"
-                    ></v-text-field>
-                    <v-text-field
-                        v-if="gauge.type === 'rain'"
-                        v-model="gauge.station_id"
-                        label="Station ID"
-                        density="compact"
-                        hide-details
-                        class="mr-2"
-                    ></v-text-field>
-                    <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="removeGauge(index)"></v-btn>
+                  <v-text-field
+                    v-model="gauge.name"
+                    label="Gauge Name"
+                    density="compact"
+                    hide-details
+                    class="mr-2"
+                    style="max-width: 200px;"
+                  />
+                  <v-select
+                    v-model="gauge.type"
+                    :items="['river', 'rain']"
+                    label="Type"
+                    density="compact"
+                    hide-details
+                    class="mr-2"
+                    style="max-width: 120px;"
+                  />
+                  <v-text-field
+                    v-if="!gauge.type || gauge.type === 'river'"
+                    v-model="gauge.rloi_id"
+                    label="RLOI ID"
+                    density="compact"
+                    hide-details
+                    class="mr-2"
+                    type="number"
+                  />
+                  <v-text-field
+                    v-if="gauge.type === 'rain'"
+                    v-model="gauge.station_id"
+                    label="Station ID"
+                    density="compact"
+                    hide-details
+                    class="mr-2"
+                  />
+                  <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="removeGauge(index)" />
                 </div>
                 <div v-if="!editedItem.gauges || editedItem.gauges.length === 0" class="text-caption text-grey font-italic">
-                    No gauges added yet.
+                  No gauges added yet.
                 </div>
               </v-col>
             </v-row>
@@ -122,7 +122,7 @@
         </v-card-text>
 
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn color="blue-darken-1" variant="text" @click="close">Cancel</v-btn>
           <v-btn color="blue-darken-1" variant="text" @click="save">Save</v-btn>
         </v-card-actions>
@@ -131,20 +131,20 @@
     
     <!-- Delete Confirmation -->
     <v-dialog v-model="dialogDelete" max-width="500px">
-        <v-card>
-            <v-card-title class="text-h5">Delete Catchment?</v-card-title>
-             <v-card-text>Are you sure you want to delete this catchment? This action cannot be undone.</v-card-text>
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="blue-darken-1" variant="text" @click="closeDelete">Cancel</v-btn>
-                <v-btn color="error" variant="text" @click="deleteItemConfirm">OK</v-btn>
-                <v-spacer></v-spacer>
-            </v-card-actions>
-        </v-card>
+      <v-card>
+        <v-card-title class="text-h5">Delete Catchment?</v-card-title>
+        <v-card-text>Are you sure you want to delete this catchment? This action cannot be undone.</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="blue-darken-1" variant="text" @click="closeDelete">Cancel</v-btn>
+          <v-btn color="error" variant="text" @click="deleteItemConfirm">OK</v-btn>
+          <v-spacer />
+        </v-card-actions>
+      </v-card>
     </v-dialog>
     
     <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
-        {{ snackbarText }}
+      {{ snackbarText }}
     </v-snackbar>
   </v-container>
 </template>

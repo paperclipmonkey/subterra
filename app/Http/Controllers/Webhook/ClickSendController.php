@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
 use App\Models\Callout;
-use App\Models\CalloutParticipant;
 use App\Models\Incident;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +23,7 @@ class ClickSendController extends Controller
 
         $from = $request->input('from'); // Sender's phone number
         $body = $request->input('body'); // Message body
-        
+
         if (!$from || !$body) {
             return response()->json(['status' => 'error', 'message' => 'Missing from or body'], 400);
         }
@@ -33,12 +32,13 @@ class ClickSendController extends Controller
         $configuredSecret = config('services.clicksend.webhook_secret');
         if ($configuredSecret && $request->input('secret') !== $configuredSecret) {
             Log::warning('ClickSend Webhook attempt with invalid secret', ['ip' => $request->ip()]);
+
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
         // Normalize Phone Number (ClickSend usu sends E.164, assume DB is similar or we use 'like')
-        // Ideally we should sanitize/normalize. 
-        
+        // Ideally we should sanitize/normalize.
+
         // Check for specific "OUT SAFE" command
         $isOutSafe = Str::of($body)->trim()->upper()->is('OUT SAFE');
 
@@ -68,6 +68,7 @@ class ClickSendController extends Controller
 
         if ($activeCallouts->isEmpty()) {
             Log::info("Received 'OUT SAFE' from {$from} but no active callout found.");
+
             // Optional: Reply "No active callout found for you."
             return;
         }
@@ -91,7 +92,7 @@ class ClickSendController extends Controller
             ]);
             $callout->incident->update(['status' => 'resolved']);
         }
-        
+
         // Notify Duty Officer / Admins that it was cancelled safely? (Optional but good)
         // TODO: Add notification here if required.
     }
@@ -101,7 +102,7 @@ class ClickSendController extends Controller
         // Find relevant context to attach the message to
         // If triggered, attach to Incident.
         // If active, attach to Callout (maybe log it?)
-        
+
         $callouts = Callout::query()
             ->whereIn('status', ['active', 'triggered'])
             ->where(function ($query) use ($from) {
@@ -115,18 +116,18 @@ class ClickSendController extends Controller
             ->get();
 
         foreach ($callouts as $callout) {
-             if ($callout->incident) {
+            if ($callout->incident) {
                 $callout->incident->notes()->create([
                     'content' => "SMS Received from {$from}: {$body}",
                 ]);
-             } else {
-                 // No incident yet (still in 15 min window?). 
-                 // Append to team_details as requested.
-                 $newDetails = $callout->team_details . "\n\n[SMS from {$from}]: {$body}";
-                 $callout->update(['team_details' => $newDetails]);
+            } else {
+                // No incident yet (still in 15 min window?).
+                // Append to team_details as requested.
+                $newDetails = $callout->team_details."\n\n[SMS from {$from}]: {$body}";
+                $callout->update(['team_details' => $newDetails]);
 
-                 Log::info("SMS for Callout {$callout->id} from {$from}: {$body} (Appended to team_details)");
-             }
+                Log::info("SMS for Callout {$callout->id} from {$from}: {$body} (Appended to team_details)");
+            }
         }
     }
 }

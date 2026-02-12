@@ -2,10 +2,8 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Services\ImageProcessingService;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Imagick\Driver;
+use Tests\TestCase;
 
 class ImageProcessingServiceTest extends TestCase
 {

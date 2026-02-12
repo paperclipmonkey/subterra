@@ -19,11 +19,11 @@
          No, reuse is better. Refactoring RouteForm to emit data on submit if a prop is set is best.
     -->
     <RouteForm 
-        v-if="originalRoute.id" 
-        :initial-route="routeData" 
-        :caveSystemId="originalRoute.cave_system_id"
-        :prevent-submit="true"
-        @submit="handleFormSubmit"
+      v-if="originalRoute.id" 
+      :initial-route="routeData" 
+      :cave-system-id="originalRoute.cave_system_id"
+      :prevent-submit="true"
+      @submit="handleFormSubmit"
     />
 
     <v-snackbar v-model="successSnackbar" color="success">

@@ -6,7 +6,6 @@ use App\Models\Club;
 use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class UserSearchTest extends TestCase
@@ -83,15 +82,15 @@ class UserSearchTest extends TestCase
         $clubUser = User::factory()->create(['name' => 'Dave Club', 'visibility_addable' => 'club']);
         $club->users()->attach($me, ['status' => 'approved', 'is_admin' => false]);
         $club->users()->attach($clubUser, ['status' => 'approved', 'is_admin' => false]);
-     
+
         // 3. Trip partner (High priority)
         $tripUser = User::factory()->create(['name' => 'Dave Trip', 'visibility_addable' => 'private']);
         // Create cave to satisfy FK
         $cave = \App\Models\Cave::factory()->create();
         $trip = Trip::factory()->create([
-            'entrance_cave_id' => $cave->id, 
+            'entrance_cave_id' => $cave->id,
             'exit_cave_id' => $cave->id,
-            'cave_system_id' => $cave->cave_system_id
+            'cave_system_id' => $cave->cave_system_id,
         ]);
         // Note: Trip logic depends on shared trips. Need to attach participants.
         $trip->participants()->attach($me);
@@ -116,13 +115,13 @@ class UserSearchTest extends TestCase
     {
         $me = User::factory()->create();
         $club = Club::factory()->create();
-        
+
         // Create club member with PRIVATE visibility
         $privateClubMember = User::factory()->create([
             'name' => 'Private Club Member',
-            'visibility_addable' => 'private'
+            'visibility_addable' => 'private',
         ]);
-        
+
         // Add both to the same club
         $club->users()->attach($me, ['status' => 'approved', 'is_admin' => false]);
         $club->users()->attach($privateClubMember, ['status' => 'approved', 'is_admin' => false]);
@@ -143,7 +142,7 @@ class UserSearchTest extends TestCase
         $target = User::factory()->create([
             'name' => 'John Smith',
             'email' => 'John.Smith@Example.COM',
-            'visibility_addable' => 'public'
+            'visibility_addable' => 'public',
         ]);
 
         // Search by lowercase name

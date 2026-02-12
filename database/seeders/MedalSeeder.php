@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Medal;
+use Illuminate\Database\Seeder;
 
 class MedalSeeder extends Seeder
 {

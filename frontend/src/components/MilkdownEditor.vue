@@ -1,8 +1,8 @@
 <template>
   <div>
     <MilkdownProvider>
-      <MilkdownInner :modelValue="modelValue" :placeholder="placeholder" @update:modelValue="emit('update:modelValue', $event)"
-        @change="emit('change', $event)" />
+      <MilkdownInner :model-value="modelValue" :placeholder="placeholder" @update:model-value="emit('update:modelValue', $event)"
+                     @change="emit('change', $event)" />
     </MilkdownProvider>
   </div>
 </template>

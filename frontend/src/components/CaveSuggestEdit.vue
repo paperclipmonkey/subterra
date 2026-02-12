@@ -33,7 +33,7 @@
 
     <v-snackbar v-model="errorSnackbar" color="error">
       {{ errorMessage }}
-      <template v-slot:actions>
+      <template #actions>
         <v-btn variant="text" @click="errorSnackbar = false">Close</v-btn>
       </template>
     </v-snackbar>

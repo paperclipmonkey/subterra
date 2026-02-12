@@ -3,22 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Catchment;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CatchmentController extends Controller
 {
     public function index(): JsonResponse
     {
         return response()->json([
-            'data' => Catchment::withCount('caveSystems')->orderBy('name')->get()
+            'data' => Catchment::withCount('caveSystems')->orderBy('name')->get(),
         ]);
     }
 
     public function show(Catchment $catchment): JsonResponse
     {
         return response()->json([
-            'data' => $catchment->loadCount('caveSystems')
+            'data' => $catchment->loadCount('caveSystems'),
         ]);
     }
 
@@ -37,7 +37,7 @@ class CatchmentController extends Controller
         $catchment = Catchment::create($validated);
 
         return response()->json([
-            'data' => $catchment
+            'data' => $catchment,
         ], 201);
     }
 
@@ -45,7 +45,7 @@ class CatchmentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'reference_id' => 'required|string|unique:catchments,reference_id,' . $catchment->id,
+            'reference_id' => 'required|string|unique:catchments,reference_id,'.$catchment->id,
             'gauges' => 'nullable|array',
             'gauges.*.type' => 'nullable|string|in:river,rain',
             'gauges.*.rloi_id' => 'required_without:gauges.*.station_id|nullable|string',
@@ -56,7 +56,7 @@ class CatchmentController extends Controller
         $catchment->update($validated);
 
         return response()->json([
-            'data' => $catchment
+            'data' => $catchment,
         ]);
     }
 
@@ -64,7 +64,7 @@ class CatchmentController extends Controller
     {
         if ($catchment->caveSystems()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete catchment with associated cave systems'
+                'message' => 'Cannot delete catchment with associated cave systems',
             ], 422);
         }
 

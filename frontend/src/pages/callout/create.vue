@@ -1,298 +1,298 @@
 <template>
-    <v-container>
-        <v-row justify="center">
-            <v-col cols="12" md="8">
-                <v-card class="elevation-2">
-                    <v-toolbar color="warning">
-                        <v-toolbar-title>Safety Callout</v-toolbar-title>
-                    </v-toolbar>
+  <v-container>
+    <v-row justify="center">
+      <v-col cols="12" md="8">
+        <v-card class="elevation-2">
+          <v-toolbar color="warning">
+            <v-toolbar-title>Safety Callout</v-toolbar-title>
+          </v-toolbar>
 
-                    <!-- Loading State -->
-                    <v-card-text v-if="loading" class="text-center pa-5">
-                        <v-progress-circular indeterminate color="warning"></v-progress-circular>
-                        <p class="mt-3">Loading...</p>
-                    </v-card-text>
+          <!-- Loading State -->
+          <v-card-text v-if="loading" class="text-center pa-5">
+            <v-progress-circular indeterminate color="warning" />
+            <p class="mt-3">Loading...</p>
+          </v-card-text>
 
-                    <!-- Wizard Form -->
-                    <v-card-text>
-                        <!-- Duty Officer Banner -->
-                        <v-alert v-if="onCallOfficer" color="info" variant="tonal" class="mb-4" border="start"
-                            density="compact">
-                            <div class="d-flex align-center">
-                                <v-avatar color="primary" size="32" class="mr-3">
-                                    <v-img v-if="onCallOfficer.photo" :src="onCallOfficer.photo"></v-img>
-                                    <span v-else class="text-h6 white--text">{{ onCallOfficer.name.charAt(0) }}</span>
-                                </v-avatar>
-                                <div>
-                                    <div class="text-caption font-weight-bold">On Call Duty Officer</div>
-                                    <div class="text-body-2">{{ onCallOfficer.name }} is monitoring open callouts.
-                                    </div>
-                                </div>
-                            </div>
-                        </v-alert>
+          <!-- Wizard Form -->
+          <v-card-text>
+            <!-- Duty Officer Banner -->
+            <v-alert v-if="onCallOfficer" color="info" variant="tonal" class="mb-4" border="start"
+                     density="compact">
+              <div class="d-flex align-center">
+                <v-avatar color="primary" size="32" class="mr-3">
+                  <v-img v-if="onCallOfficer.photo" :src="onCallOfficer.photo" />
+                  <span v-else class="text-h6 white--text">{{ onCallOfficer.name.charAt(0) }}</span>
+                </v-avatar>
+                <div>
+                  <div class="text-caption font-weight-bold">On Call Duty Officer</div>
+                  <div class="text-body-2">{{ onCallOfficer.name }} is monitoring open callouts.
+                  </div>
+                </div>
+              </div>
+            </v-alert>
 
-                        <v-alert v-if="officerError" type="error" border="start" variant="tonal" class="mb-4">
-                            <div class="text-h6">No Duty Officer On Call</div>
-                            <div>There is currently no one monitoring callouts. Please leave your callout with a trusted friend.</div>
-                        </v-alert>
+            <v-alert v-if="officerError" type="error" border="start" variant="tonal" class="mb-4">
+              <div class="text-h6">No Duty Officer On Call</div>
+              <div>There is currently no one monitoring callouts. Please leave your callout with a trusted friend.</div>
+            </v-alert>
 
-                        <v-alert v-if="generalError" type="error" border="start" variant="tonal" class="mb-4" closable @click:close="clearErrors">
-                            {{ generalError }}
-                        </v-alert>
+            <v-alert v-if="generalError" type="error" border="start" variant="tonal" class="mb-4" closable @click:close="clearErrors">
+              {{ generalError }}
+            </v-alert>
 
-                        <div v-else-if="!isApproved" class="mb-6 pa-4 bg-grey-lighten-4 rounded border text-center">
-                            <v-icon size="48" color="grey" class="mb-2">mdi-shield-lock</v-icon>
-                            <h3 class="text-h6 mb-2">Member Access Only</h3>
-                            <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
-                            <v-btn color="primary" :to="`/profile/${currentUser?.id}`">Join a Club</v-btn>
+            <div v-else-if="!isApproved" class="mb-6 pa-4 bg-grey-lighten-4 rounded border text-center">
+              <v-icon size="48" color="grey" class="mb-2">mdi-shield-lock</v-icon>
+              <h3 class="text-h6 mb-2">Member Access Only</h3>
+              <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
+              <v-btn color="primary" :to="`/profile/${currentUser?.id}`">Join a Club</v-btn>
+            </div>
+
+            <div v-else :class="{ 'disabled-content': officerError }">
+              <v-stepper v-model="step" class="elevation-0">
+                <v-stepper-header class="elevation-0" style="box-shadow: none;">
+                  <v-stepper-item :complete="step > 1" :value="1" title="Location" />
+                  <v-divider />
+                  <v-stepper-item :complete="step > 2" :value="2" title="Team" :disabled="step < 2" />
+                  <v-divider />
+                  <v-stepper-item :complete="step > 3" :value="3" title="Plan" :disabled="step < 3" />
+                  <v-divider />
+                  <v-stepper-item :value="4" title="Safety" :disabled="step < 4" />
+                </v-stepper-header>
+              </v-stepper>
+
+              <v-form ref="form" v-model="valid" @submit.prevent="submitCallout">
+                <v-window v-model="step" :touch="false">
+
+                  <!-- STEP 1: LOCATION -->
+                  <v-window-item :value="1">
+                    <div class="pa-4">
+                      <p class="text-body-1 mb-4">Where are you going and where are you parking?</p>
+
+                      <v-autocomplete v-model="form.cave_id" label="Cave Entrance" :items="caves"
+                                      item-title="name" item-value="id" variant="outlined"
+                                      placeholder="Search for a cave..."
+                                      autocomplete="off"
+                                      :error-messages="errorMessages('cave_id')"
+                                      name="cave_search_no_autofill">
+                        <template #item="{ props, item }">
+                          <v-list-item v-bind="props" :subtitle="item.raw.location_name"
+                                       :title="item.raw.name" />
+                        </template>
+                      </v-autocomplete>
+
+                      <!-- Through Trip Logic -->
+                      <v-checkbox v-if="systemEntrancesCount > 1" v-model="isThroughTrip"
+                                  label="Through trip" class="mt-2" />
+
+                      <v-expand-transition>
+                        <div v-if="isThroughTrip">
+                          <v-autocomplete v-model="form.exit_cave_id" label="Exit Cave"
+                                          :items="systemEntrances" item-title="name" item-value="id"
+                                          variant="outlined" class="mt-2"
+                                          autocomplete="off"
+                                          name="exit_cave_search_no_autofill" />
                         </div>
-
-                        <div v-else :class="{ 'disabled-content': officerError }">
-                            <v-stepper v-model="step" class="elevation-0">
-                                <v-stepper-header class="elevation-0" style="box-shadow: none;">
-                                    <v-stepper-item :complete="step > 1" :value="1" title="Location"></v-stepper-item>
-                                    <v-divider></v-divider>
-                                    <v-stepper-item :complete="step > 2" :value="2" title="Team" :disabled="step < 2"></v-stepper-item>
-                                    <v-divider></v-divider>
-                                    <v-stepper-item :complete="step > 3" :value="3" title="Plan" :disabled="step < 3"></v-stepper-item>
-                                    <v-divider></v-divider>
-                                    <v-stepper-item :value="4" title="Safety" :disabled="step < 4"></v-stepper-item>
-                                </v-stepper-header>
-                            </v-stepper>
-
-                        <v-form ref="form" v-model="valid" @submit.prevent="submitCallout">
-                                <v-window v-model="step" :touch="false">
-
-                                    <!-- STEP 1: LOCATION -->
-                                    <v-window-item :value="1">
-                                        <div class="pa-4">
-                                            <p class="text-body-1 mb-4">Where are you going and where are you parking?</p>
-
-                                            <v-autocomplete v-model="form.cave_id" label="Cave Entrance" :items="caves"
-                                                item-title="name" item-value="id" variant="outlined"
-                                                placeholder="Search for a cave..."
-                                                autocomplete="off"
-                                                :error-messages="errorMessages('cave_id')"
-                                                name="cave_search_no_autofill">
-                                                <template v-slot:item="{ props, item }">
-                                                    <v-list-item v-bind="props" :subtitle="item.raw.location_name"
-                                                        :title="item.raw.name"></v-list-item>
-                                                </template>
-                                            </v-autocomplete>
-
-                                            <!-- Through Trip Logic -->
-                                            <v-checkbox v-if="systemEntrancesCount > 1" v-model="isThroughTrip"
-                                                label="Through trip" class="mt-2"></v-checkbox>
-
-                                            <v-expand-transition>
-                                                <div v-if="isThroughTrip">
-                                                    <v-autocomplete label="Exit Cave" :items="systemEntrances"
-                                                        item-title="name" item-value="id" v-model="form.exit_cave_id"
-                                                        variant="outlined" class="mt-2"
-                                                        autocomplete="off"
-                                                        name="exit_cave_search_no_autofill"></v-autocomplete>
-                                                </div>
-                                            </v-expand-transition>
+                      </v-expand-transition>
 
 
-                                            <v-row>
-                                                <v-col cols="12" md="6">
-                                                    <v-text-field v-model="form.car_registration" label="Car Registration"
-                                                        hint="e.g. AB12 CDE" persistent-hint variant="outlined" required
-                                                        :rules="[v => !!v || 'Registration is required']"
-                                                        :error-messages="errorMessages('car_registration')"
-                                                        autocomplete="off"></v-text-field>
-                                                </v-col>
-                                                <v-col cols="12" md="6">
-                                                    <v-text-field v-model="form.car_parking" label="Where are you parking?"
-                                                        hint="e.g. Bull Pot Farm" persistent-hint variant="outlined" required
-                                                        :rules="[v => !!v || 'Parking location is required']"
-                                                        :error-messages="errorMessages('car_parking')"
-                                                        autocomplete="off"></v-text-field>
-                                                </v-col>
-                                            </v-row>
+                      <v-row>
+                        <v-col cols="12" md="6">
+                          <v-text-field v-model="form.car_registration" label="Car Registration"
+                                        hint="e.g. AB12 CDE" persistent-hint variant="outlined" required
+                                        :rules="[v => !!v || 'Registration is required']"
+                                        :error-messages="errorMessages('car_registration')"
+                                        autocomplete="off" />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-text-field v-model="form.car_parking" label="Where are you parking?"
+                                        hint="e.g. Bull Pot Farm" persistent-hint variant="outlined" required
+                                        :rules="[v => !!v || 'Parking location is required']"
+                                        :error-messages="errorMessages('car_parking')"
+                                        autocomplete="off" />
+                        </v-col>
+                      </v-row>
 
-                                            <div class="mt-6 pa-3 grey lighten-4 rounded">
-                                                <p class="text-subtitle-2 mb-2">Location & Security</p>
-                                                <div class="test-body-2 mb-2">
-                                                    To prevent abuse and assist rescue teams, we record your IP address, browser details, and current location when submitting a callout request.
-                                                </div>
+                      <div class="mt-6 pa-3 grey lighten-4 rounded">
+                        <p class="text-subtitle-2 mb-2">Location & Security</p>
+                        <div class="test-body-2 mb-2">
+                          To prevent abuse and assist rescue teams, we record your IP address, browser details, and current location when submitting a callout request.
+                        </div>
                                                 
-                                                <v-alert v-if="!form.location_data" :type="locationStatus === 'error' ? 'warning' : 'info'" variant="text" density="compact" class="mb-0 pa-0">
-                                                    <div class="d-flex align-center">
-                                                        <v-btn size="small" color="primary" @click="getLocation" :loading="locationStatus === 'loading'" class="mr-3" prepend-icon="mdi-crosshairs-gps">
-                                                            Share Location
-                                                        </v-btn>
-                                                        <span class="text-caption red--text font-weight-bold" v-if="locationStatus === 'error'">Location access is required to proceed. Please enable it in your browser settings.</span>
-                                                        <span class="text-caption" v-else>Please allow location access if prompted. Required for safety.</span>
-                                                    </div>
-                                                </v-alert>
-                                                <v-alert v-else type="success" density="compact" variant="outlined" class="mb-0 mt-2">
-                                                    <v-icon left color="success">mdi-check</v-icon>
-                                                    Location captured (Accuracy: {{ Math.round(form.location_data.accuracy) }}m)
-                                                </v-alert>
-                                            </div>
-                                        </div>
-                                    </v-window-item>
+                        <v-alert v-if="!form.location_data" :type="locationStatus === 'error' ? 'warning' : 'info'" variant="text" density="compact" class="mb-0 pa-0">
+                          <div class="d-flex align-center">
+                            <v-btn size="small" color="primary" :loading="locationStatus === 'loading'" class="mr-3" prepend-icon="mdi-crosshairs-gps" @click="getLocation">
+                              Share Location
+                            </v-btn>
+                            <span v-if="locationStatus === 'error'" class="text-caption red--text font-weight-bold">Location access is required to proceed. Please enable it in your browser settings.</span>
+                            <span v-else class="text-caption">Please allow location access if prompted. Required for safety.</span>
+                          </div>
+                        </v-alert>
+                        <v-alert v-else type="success" density="compact" variant="outlined" class="mb-0 mt-2">
+                          <v-icon left color="success">mdi-check</v-icon>
+                          Location captured (Accuracy: {{ Math.round(form.location_data.accuracy) }}m)
+                        </v-alert>
+                      </div>
+                    </div>
+                  </v-window-item>
 
-                                    <!-- STEP 2: TEAM -->
-                                    <v-window-item :value="2">
-                                        <div class="pa-4">
-                                            <p class="text-body-1 mb-4">Who is on the trip?</p>
+                  <!-- STEP 2: TEAM -->
+                  <v-window-item :value="2">
+                    <div class="pa-4">
+                      <p class="text-body-1 mb-4">Who is on the trip?</p>
 
-                                            <!-- Add User Autocomplete -->
-                                            <v-autocomplete label="Add Subterra User" :items="availableUsers"
-                                                item-title="name" item-value="id" variant="outlined"
-                                                prepend-inner-icon="mdi-account-search"
-                                                @update:model-value="addSubterraUser" v-model="userSelect" return-object
-                                                clearable hint="Type 3+ characters to search for users..."
-                                                v-model:search="userSearchInput"
-                                                @update:search="onUserSearch"
-                                                autocomplete="off"></v-autocomplete>
-
-
-                                            <div class="mb-4">
-                                                <div v-for="(p, i) in form.participants" :key="p.local_id" class="mb-3">
-                                                    <v-row align="center" dense>
-                                                        <v-col cols="12" sm="5">
-                                                            <v-text-field v-model="p.name" label="Name" density="compact" variant="outlined"
-                                                                hide-details :readonly="p.user_id === currentUser?.id"
-                                                                :prepend-icon="p.user_id ? 'mdi-account-check' : 'mdi-account'"></v-text-field>
-                                                        </v-col>
-                                                        <v-col class="flex-grow-1" cols="auto" sm="5">
-                                                            <v-text-field :model-value="p.phone" @update:model-value="updatePhone(i, $event)" label="Phone (Mobile)" density="compact"
-                                                                variant="outlined" hide-details placeholder="07... or +44..."
-                                                                :readonly="p.locked && !!p.phone"
-                                                                :hint="p.locked && !!p.phone ? 'This number is from their profile' : ''"
-                                                                :persistent-hint="p.locked && !!p.phone"></v-text-field>
-                                                        </v-col>
-                                                        <v-col cols="auto" sm="2" class="d-flex justify-center">
-                                                            <v-btn icon color="error" size="x-small" @click="removeParticipant(i)"
-                                                                :disabled="p.user_id === currentUser?.id" style="aspect-ratio: 1;">
-                                                                <v-icon>mdi-delete</v-icon>
-                                                            </v-btn>
-                                                        </v-col>
-                                                    </v-row>
-                                                </div>
-                                            </div>
+                      <!-- Add User Autocomplete -->
+                      <v-autocomplete v-model="userSelect" v-model:search="userSearchInput"
+                                      label="Add Subterra User" :items="availableUsers" item-title="name"
+                                      item-value="id"
+                                      variant="outlined" prepend-inner-icon="mdi-account-search" return-object
+                                      clearable hint="Type 3+ characters to search for users..."
+                                      autocomplete="off"
+                                      @update:model-value="addSubterraUser"
+                                      @update:search="onUserSearch" />
 
 
-                                            <v-btn variant="text" color="primary" @click="addManualParticipant" prepend-icon="mdi-plus">
-                                                Add Manual Guest
-                                            </v-btn>
-
-                                            <v-alert v-if="phoneError" type="error" density="compact" class="mt-4">
-                                                You must provide a valid UK mobile phone number (07... or +44...).
-                                            </v-alert>
-
-                                            <v-textarea v-model="form.team_details" label="Additional Team Details"
-                                                hint="Any relevant details for the team."
-                                                persistent-hint variant="outlined" rows="2" class="mt-6"
-                                                :error-messages="errorMessages('team_details')"></v-textarea>
-                                        </div>
-                                    </v-window-item>
-
-                                    <!-- STEP 3: PLAN -->
-                                    <v-window-item :value="3">
-                                        <div class="pa-4">
-                                            <p class="text-body-1 mb-4">What is the plan?</p>
-                                            <v-textarea v-model="form.trip_plan" label="Trip Plan / Route"
-                                                hint="Describe your intended route (e.g. 'Through trip from Top to Bottom, exiting via Wretched Rabbit')"
-                                                persistent-hint variant="outlined" rows="5"
-                                                :error-messages="errorMessages('trip_plan')"></v-textarea>
-                                        </div>
-                                    </v-window-item>
-
-                                    <!-- STEP 4: SAFETY -->
-                                    <v-window-item :value="4">
-                                        <div class="pa-4">
-                                            <p class="text-body-1 mb-4">When should we call 999?</p>
-
-                                            <CalloutTimePicker v-model="form.callout_time" />
-
-                                            <!-- Third-Party Consent Notice -->
-                                            <v-alert type="warning" variant="outlined" density="compact" class="mt-6"
-                                                icon="mdi-shield-check">
-                                                <div class="text-caption">
-                                                    <strong>Third-Party Consent:</strong> By providing emergency contact details, you confirm that you have their explicit permission to share their personal data with Subterra for rescue purposes.
-                                                </div>
-                                            </v-alert>
-
-                                            <!-- Privacy Notice -->
-                                            <v-alert type="info" variant="outlined" density="compact" class="mt-4"
-                                                icon="mdi-clock-outline">
-                                                <div class="text-caption">
-                                                    <strong>Privacy Notice:</strong> Your information (including team
-                                                    details) will be securely stored and
-                                                    <strong>automatically deleted 30 days</strong> after your trip completion
-                                                    for your privacy.
-                                                </div>
-                                            </v-alert>
-                                        </div>
-                                    </v-window-item>
-                                </v-window>
-
-                                <div class="d-flex justify-space-between pa-4">
-                                    <v-btn variant="text" v-if="step > 1" @click="step--">Back</v-btn>
-                                    <v-spacer v-else></v-spacer>
-
-                                    <v-btn color="primary" v-if="step < 4" :disabled="!canProceed"
-                                        @click="step++">Next</v-btn>
-                                    <v-btn color="warning" v-if="step === 4" @click="submitCallout" :loading="processing"
-                                        :disabled="!isFormValid">
-                                        Open Callout
-                                    </v-btn>
-                                </div>
-                            </v-form>
+                      <div class="mb-4">
+                        <div v-for="(p, i) in form.participants" :key="p.local_id" class="mb-3">
+                          <v-row align="center" dense>
+                            <v-col cols="12" sm="5">
+                              <v-text-field v-model="p.name" label="Name" density="compact" variant="outlined"
+                                            hide-details :readonly="p.user_id === currentUser?.id"
+                                            :prepend-icon="p.user_id ? 'mdi-account-check' : 'mdi-account'" />
+                            </v-col>
+                            <v-col class="flex-grow-1" cols="auto" sm="5">
+                              <v-text-field :model-value="p.phone" label="Phone (Mobile)" density="compact" variant="outlined"
+                                            hide-details placeholder="07... or +44..." :readonly="p.locked && !!p.phone"
+                                            :hint="p.locked && !!p.phone ? 'This number is from their profile' : ''"
+                                            :persistent-hint="p.locked && !!p.phone"
+                                            @update:model-value="updatePhone(i, $event)" />
+                            </v-col>
+                            <v-col cols="auto" sm="2" class="d-flex justify-center">
+                              <v-btn icon color="error" size="x-small" :disabled="p.user_id === currentUser?.id"
+                                     style="aspect-ratio: 1;" @click="removeParticipant(i)">
+                                <v-icon>mdi-delete</v-icon>
+                              </v-btn>
+                            </v-col>
+                          </v-row>
                         </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
+                      </div>
 
-        <!-- Success / Conversion Dialog -->
-        <v-dialog v-model="showSuccessDialog" max-width="500">
-            <v-card>
-                <v-card-title class="headline">Callout Cancelled</v-card-title>
-                <v-card-text>
-                    You've marked yourself safe. Would you like to log this trip?
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="grey" method text @click="showSuccessDialog = false">Close</v-btn>
-                    <v-btn color="primary" @click="convertToTrip">Log Trip</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
 
-        <!-- Leave Confirmation Dialog -->
-        <v-dialog v-model="showLeaveDialog" max-width="500" persistent>
-            <v-card>
-                <v-card-title class="headline">
-                    <v-icon color="warning" class="mr-2">mdi-alert</v-icon>
-                    Leave Without Creating Callout?
-                </v-card-title>
-                <v-card-text>
-                    <p class="mb-4">You haven't finished creating your callout. If you leave now, your progress will be lost.</p>
-                    <v-alert v-if="step < 4" type="info" variant="tonal" density="compact" class="mb-2">
-                        <strong>Incomplete steps:</strong>
-                        <ul class="mt-2 ml-4">
-                            <li v-if="step < 1 || !form.cave_id || !form.car_registration || !form.car_parking || !form.location_data">Location & Vehicle Details</li>
-                            <li v-if="step < 2 || phoneError">Team & Contact Information</li>
-                            <li v-if="step < 3 || !form.trip_plan">Trip Plan</li>
-                            <li v-if="step < 4">Callout Time</li>
-                        </ul>
-                    </v-alert>
-                    <p class="text-body-2 text-grey-darken-1">For your safety, we recommend completing the callout before heading underground.</p>
-                </v-card-text>
-                <v-card-actions>
-                    <v-btn color="grey" variant="text" @click="showLeaveDialog = false">Stay & Complete</v-btn>
-                    <v-spacer></v-spacer>
-                    <v-btn color="warning" variant="text" @click="confirmLeave">Leave Anyway</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-    </v-container>
+                      <v-btn variant="text" color="primary" prepend-icon="mdi-plus" @click="addManualParticipant">
+                        Add Manual Guest
+                      </v-btn>
+
+                      <v-alert v-if="phoneError" type="error" density="compact" class="mt-4">
+                        You must provide a valid UK mobile phone number (07... or +44...).
+                      </v-alert>
+
+                      <v-textarea v-model="form.team_details" label="Additional Team Details"
+                                  hint="Any relevant details for the team."
+                                  persistent-hint variant="outlined" rows="2" class="mt-6"
+                                  :error-messages="errorMessages('team_details')" />
+                    </div>
+                  </v-window-item>
+
+                  <!-- STEP 3: PLAN -->
+                  <v-window-item :value="3">
+                    <div class="pa-4">
+                      <p class="text-body-1 mb-4">What is the plan?</p>
+                      <v-textarea v-model="form.trip_plan" label="Trip Plan / Route"
+                                  hint="Describe your intended route (e.g. 'Through trip from Top to Bottom, exiting via Wretched Rabbit')"
+                                  persistent-hint variant="outlined" rows="5"
+                                  :error-messages="errorMessages('trip_plan')" />
+                    </div>
+                  </v-window-item>
+
+                  <!-- STEP 4: SAFETY -->
+                  <v-window-item :value="4">
+                    <div class="pa-4">
+                      <p class="text-body-1 mb-4">When should we call 999?</p>
+
+                      <CalloutTimePicker v-model="form.callout_time" />
+
+                      <!-- Third-Party Consent Notice -->
+                      <v-alert type="warning" variant="outlined" density="compact" class="mt-6"
+                               icon="mdi-shield-check">
+                        <div class="text-caption">
+                          <strong>Third-Party Consent:</strong> By providing emergency contact details, you confirm that you have their explicit permission to share their personal data with Subterra for rescue purposes.
+                        </div>
+                      </v-alert>
+
+                      <!-- Privacy Notice -->
+                      <v-alert type="info" variant="outlined" density="compact" class="mt-4"
+                               icon="mdi-clock-outline">
+                        <div class="text-caption">
+                          <strong>Privacy Notice:</strong> Your information (including team
+                          details) will be securely stored and
+                          <strong>automatically deleted 30 days</strong> after your trip completion
+                          for your privacy.
+                        </div>
+                      </v-alert>
+                    </div>
+                  </v-window-item>
+                </v-window>
+
+                <div class="d-flex justify-space-between pa-4">
+                  <v-btn v-if="step > 1" variant="text" @click="step--">Back</v-btn>
+                  <v-spacer v-else />
+
+                  <v-btn v-if="step < 4" color="primary" :disabled="!canProceed"
+                         @click="step++">Next</v-btn>
+                  <v-btn v-if="step === 4" color="warning" :loading="processing" :disabled="!isFormValid"
+                         @click="submitCallout">
+                    Open Callout
+                  </v-btn>
+                </div>
+              </v-form>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Success / Conversion Dialog -->
+    <v-dialog v-model="showSuccessDialog" max-width="500">
+      <v-card>
+        <v-card-title class="headline">Callout Cancelled</v-card-title>
+        <v-card-text>
+          You've marked yourself safe. Would you like to log this trip?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey" method text @click="showSuccessDialog = false">Close</v-btn>
+          <v-btn color="primary" @click="convertToTrip">Log Trip</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Leave Confirmation Dialog -->
+    <v-dialog v-model="showLeaveDialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title class="headline">
+          <v-icon color="warning" class="mr-2">mdi-alert</v-icon>
+          Leave Without Creating Callout?
+        </v-card-title>
+        <v-card-text>
+          <p class="mb-4">You haven't finished creating your callout. If you leave now, your progress will be lost.</p>
+          <v-alert v-if="step < 4" type="info" variant="tonal" density="compact" class="mb-2">
+            <strong>Incomplete steps:</strong>
+            <ul class="mt-2 ml-4">
+              <li v-if="step < 1 || !form.cave_id || !form.car_registration || !form.car_parking || !form.location_data">Location & Vehicle Details</li>
+              <li v-if="step < 2 || phoneError">Team & Contact Information</li>
+              <li v-if="step < 3 || !form.trip_plan">Trip Plan</li>
+              <li v-if="step < 4">Callout Time</li>
+            </ul>
+          </v-alert>
+          <p class="text-body-2 text-grey-darken-1">For your safety, we recommend completing the callout before heading underground.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="grey" variant="text" @click="showLeaveDialog = false">Stay & Complete</v-btn>
+          <v-spacer />
+          <v-btn color="warning" variant="text" @click="confirmLeave">Leave Anyway</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script>
@@ -306,6 +306,28 @@ export default {
     name: 'CalloutView',
     components: {
         CalloutTimePicker
+    },
+    beforeRouteLeave(to, from, next) {
+        // Allow navigation if user clicked "Leave Anyway"
+        if (this.allowLeave) {
+            this.allowLeave = false; // Reset for future navigations
+            return next();
+        }
+
+        // Allow navigation if they already completed the callout or have an active one
+        if (this.activeCallout || !this.form.participants.length) {
+            return next();
+        }
+
+        // If the form is incomplete, show a warning dialog
+        const isFormComplete = this.step === 4 && this.isFormValid;
+        if (!isFormComplete) {
+            this.showLeaveDialog = true;
+            this.pendingRoute = to; // Store where they want to go
+            next(false); // Cancel navigation
+        } else {
+            next(); // Allow navigation
+        }
     },
     setup() {
         const { setErrors, clearErrors, errorMessages, generalError } = useFormErrors();
@@ -655,28 +677,6 @@ export default {
                 this.pendingRoute = null;
                 this.$router.push(route);
             }
-        }
-    },
-    beforeRouteLeave(to, from, next) {
-        // Allow navigation if user clicked "Leave Anyway"
-        if (this.allowLeave) {
-            this.allowLeave = false; // Reset for future navigations
-            return next();
-        }
-
-        // Allow navigation if they already completed the callout or have an active one
-        if (this.activeCallout || !this.form.participants.length) {
-            return next();
-        }
-
-        // If the form is incomplete, show a warning dialog
-        const isFormComplete = this.step === 4 && this.isFormValid;
-        if (!isFormComplete) {
-            this.showLeaveDialog = true;
-            this.pendingRoute = to; // Store where they want to go
-            next(false); // Cancel navigation
-        } else {
-            next(); // Allow navigation
         }
     }
 };

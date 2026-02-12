@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Storage;
 
 class TripResource extends JsonResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -19,7 +18,7 @@ class TripResource extends JsonResource
         return [
             'id' => $this->short_id,
             'name' => $this->name,
-            'description' => $this->description ?? "",
+            'description' => $this->description ?? '',
             'system' => $this->system,
             'entrance' => $this->entrance,
             'exit' => $this->exit,

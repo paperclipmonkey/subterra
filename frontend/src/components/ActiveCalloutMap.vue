@@ -1,9 +1,9 @@
 <template>
   <v-card class="map-container">
     <v-card-text class="map-holder">
-      <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" ref="map">
-      <mgl-marker v-for="(callout) in validCallouts" :key="callout.id"
-          :coordinates="[callout.lng, callout.lat]">
+      <mgl-map ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
+        <mgl-marker v-for="(callout) in validCallouts" :key="callout.id"
+                    :coordinates="[callout.lng, callout.lat]">
           <mgl-popup>
             <v-card width="200px">
               <v-card-title class="subtitle-2">{{ callout.cave_name || 'Unknown Location' }}</v-card-title>

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Page;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class PageTest extends TestCase
@@ -80,7 +79,7 @@ class PageTest extends TestCase
     public function test_non_admin_cannot_manage_pages()
     {
         $user = User::factory()->create();
-        
+
         $response = $this->actingAs($user)
             ->getJson('/api/admin/pages');
         $response->assertStatus(403);
@@ -103,7 +102,7 @@ class PageTest extends TestCase
 
         $this->assertDatabaseHas('pages', [
             'id' => $page->id,
-            'access_count' => 1
+            'access_count' => 1,
         ]);
     }
 }

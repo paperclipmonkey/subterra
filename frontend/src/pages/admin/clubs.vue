@@ -6,7 +6,7 @@
         <v-row justify="space-between" class="mb-4">
           <v-col cols="12" md="6">
             <v-text-field v-model="search" append-inner-icon="mdi-magnify" label="Search Clubs (Name, Location)"
-              single-line hide-details></v-text-field>
+                          single-line hide-details />
           </v-col>
           <v-col cols="12" md="auto" class="d-flex align-center justify-end">
             <v-btn color="primary" @click="openCreateDialog">
@@ -16,22 +16,22 @@
         </v-row>
 
         <v-data-table :headers="headers" :items="clubs" :loading="loading" :search="search" :items-per-page="1000"
-          :sort-by="[{ key: 'name', order: 'asc' }]" hide-default-footer class="elevation-1" item-value="id"
-          @click:row="handleRowClick">
-          <template v-slot:item.is_active="{ item }">
-            <v-btn icon variant="text" size="small" @click.stop="toggleEnabled(item)" :loading="item.loadingEnabled"
-              :color="item.is_active ? 'green' : 'red'">
+                      :sort-by="[{ key: 'name', order: 'asc' }]" hide-default-footer class="elevation-1" item-value="id"
+                      @click:row="handleRowClick">
+          <template #item.is_active="{ item }">
+            <v-btn icon variant="text" size="small" :loading="item.loadingEnabled" :color="item.is_active ? 'green' : 'red'"
+                   @click.stop="toggleEnabled(item)">
               <v-icon>
                 {{ item.is_active ? 'mdi-check-circle' : 'mdi-close-circle' }}
               </v-icon>
               <v-tooltip activator="parent" location="top">{{ item.is_active ? 'Disable Club' : 'Enable Club'
-                }}</v-tooltip>
+              }}</v-tooltip>
             </v-btn>
           </template>
-          <template v-slot:item.website="{ item }">
+          <template #item.website="{ item }">
             <a :href="item.website" target="_blank" @click.stop>{{ item.website }}</a>
           </template>
-          <template v-slot:item.description="{ item }">
+          <template #item.description="{ item }">
             <div class="text-truncate" style="max-width: 200px;" :title="item.description">{{ item.description }}</div>
           </template>
           <!-- Action column removed -->
@@ -39,7 +39,7 @@
       </v-col>
     </v-row>
 
-    <CreateClubDialog v-model="createDialogVisible" @clubCreated="handleClubCreated" />
+    <CreateClubDialog v-model="createDialogVisible" @club-created="handleClubCreated" />
 
   </v-container>
 </template>

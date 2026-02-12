@@ -21,9 +21,9 @@ class CatchmentSeeder extends Seeder
             'gauges' => [
                 [
                     'name' => 'Wookey',
-                    'rloi_id' => '3059'
-                ]
-            ]
+                    'rloi_id' => '3059',
+                ],
+            ],
         ]);
 
         // Cave System linked to 1-gauge catchment
@@ -33,18 +33,17 @@ class CatchmentSeeder extends Seeder
             'length' => 9000,
             'vertical_range' => 180,
             'description' => 'A famous wet cave system on the Mendip Hills.',
-            'catchment_id' => $mendipCatchment->id
+            'catchment_id' => $mendipCatchment->id,
         ]);
-        
+
         Cave::factory()->create([
             'name' => 'Swildons Hole',
             'cave_system_id' => $swildons->id,
             'location_lat' => 51.239,
             'location_lng' => -2.675,
             'location_name' => 'Priddy',
-            'location_country' => 'UK'
+            'location_country' => 'UK',
         ]);
-
 
         // 2. Catchment with 2 gauges
         $multiGaugeCatchment = Catchment::create([
@@ -53,13 +52,13 @@ class CatchmentSeeder extends Seeder
             'gauges' => [
                 [
                     'name' => 'Fenny Castle',
-                    'rloi_id' => '3054'
+                    'rloi_id' => '3054',
                 ],
                 [
                     'name' => 'Shepton Mallet',
-                    'rloi_id' => '9601' 
-                ]
-            ]
+                    'rloi_id' => '9601',
+                ],
+            ],
         ]);
 
         // Cave System linked to 2-gauge catchment
@@ -69,7 +68,7 @@ class CatchmentSeeder extends Seeder
             'length' => 2000,
             'vertical_range' => 30,
             'description' => 'A significant swallet cave.',
-            'catchment_id' => $multiGaugeCatchment->id
+            'catchment_id' => $multiGaugeCatchment->id,
         ]);
 
         Cave::factory()->create([
@@ -78,9 +77,8 @@ class CatchmentSeeder extends Seeder
             'location_lat' => 51.22,
             'location_lng' => -2.55,
             'location_name' => 'Stoke St Michael',
-            'location_country' => 'UK'
+            'location_country' => 'UK',
         ]);
-
 
         // 3. Cave System WITHOUT Catchment
         $gbCave = CaveSystem::create([
@@ -89,16 +87,16 @@ class CatchmentSeeder extends Seeder
             'length' => 1900,
             'vertical_range' => 135,
             'description' => 'Large system on the Mendips, no river gauge linked.',
-            'catchment_id' => null
+            'catchment_id' => null,
         ]);
 
-         Cave::factory()->create([
-            'name' => 'GB Cave',
-            'cave_system_id' => $gbCave->id,
-            'location_lat' => 51.28,
-            'location_lng' => -2.76,
-            'location_name' => 'Charterhouse',
-            'location_country' => 'UK'
+        Cave::factory()->create([
+           'name' => 'GB Cave',
+           'cave_system_id' => $gbCave->id,
+           'location_lat' => 51.28,
+           'location_lng' => -2.76,
+           'location_name' => 'Charterhouse',
+           'location_country' => 'UK',
         ]);
 
         // 4. Catchment with Rain Gauge
@@ -109,9 +107,9 @@ class CatchmentSeeder extends Seeder
                 [
                     'name' => 'Castleton',
                     'station_id' => '52201',
-                    'type' => 'rain'
-                ]
-            ]
+                    'type' => 'rain',
+                ],
+            ],
         ]);
 
         $titan = CaveSystem::create([
@@ -120,7 +118,7 @@ class CatchmentSeeder extends Seeder
             'length' => 2000,
             'vertical_range' => 140,
             'description' => 'Deep shaft in the Peak District.',
-            'catchment_id' => $peakCatchment->id
+            'catchment_id' => $peakCatchment->id,
         ]);
 
         Cave::factory()->create([
@@ -129,7 +127,7 @@ class CatchmentSeeder extends Seeder
             'location_lat' => 53.33,
             'location_lng' => -1.78,
             'location_name' => 'Castleton',
-            'location_country' => 'UK'
+            'location_country' => 'UK',
         ]);
     }
 }

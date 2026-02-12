@@ -12,13 +12,13 @@
             <v-card class="pa-4 mb-4">
               <v-card-title class="text-h6">Loading Animation</v-card-title>
               <v-btn 
-                @click="simulateLoading" 
                 color="primary" 
                 size="large" 
-                block
+                block 
                 :loading="isLoading"
                 :disabled="isLoading"
                 class="mb-2"
+                @click="simulateLoading"
               >
                 <template v-if="!isLoading">
                   <v-icon left>mdi-content-save</v-icon>
@@ -37,18 +37,18 @@
             <v-card class="pa-4 mb-4">
               <v-card-title class="text-h6">Toast Notifications</v-card-title>
               <v-btn 
-                @click="showSuccessToast" 
                 color="success" 
-                class="mb-2 mr-2"
+                class="mb-2 mr-2" 
                 size="small"
+                @click="showSuccessToast"
               >
                 <v-icon left>mdi-check-circle</v-icon>
                 Success Toast
               </v-btn>
               <v-btn 
-                @click="showErrorToast" 
                 color="error" 
-                size="small"
+                size="small" 
+                @click="showErrorToast"
               >
                 <v-icon left>mdi-alert-circle</v-icon>
                 Error Toast
@@ -61,11 +61,11 @@
         <v-card class="pa-4">
           <v-card-title class="text-h6">Complete Flow Demo</v-card-title>
           <v-btn 
-            @click="simulateSuccess" 
             color="success" 
-            class="mb-2 mr-2"
+            class="mb-2 mr-2" 
             :loading="isSimulatingSuccess"
             :disabled="isSimulatingSuccess"
+            @click="simulateSuccess"
           >
             <template v-if="!isSimulatingSuccess">
               <v-icon left>mdi-check</v-icon>
@@ -78,10 +78,10 @@
           </v-btn>
           
           <v-btn 
-            @click="simulateError" 
             color="error" 
-            :loading="isSimulatingError"
+            :loading="isSimulatingError" 
             :disabled="isSimulatingError"
+            @click="simulateError"
           >
             <template v-if="!isSimulatingError">
               <v-icon left>mdi-alert</v-icon>

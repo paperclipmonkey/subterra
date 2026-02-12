@@ -3,41 +3,41 @@
     <v-card class="profile">
       <v-card-title>
         <v-avatar size="64">
-          <img :src="profile.photo" alt="Profile Photo" />
+          <img :src="profile.photo" alt="Profile Photo">
         </v-avatar>
         <div class="profile-info">
           <h2>{{ profile.name || 'Please set your name' }}</h2>
         </div>
       </v-card-title>
-      <v-divider></v-divider>
+      <v-divider />
       
       <!-- Name editing section -->
       <div class="name-edit pa-4">
         <h3>Full Name:</h3>
         <v-text-field
-          label="Your full name"
           v-model="profile.name"
+          label="Your full name"
           outlined
           :rules="nameRules"
           :error-messages="errorMessages('name')"
           hint="This will be displayed to other cavers"
           required
-        ></v-text-field>
+        />
       </div>
-      <v-divider></v-divider>
+      <v-divider />
       
       <!-- Display User's Clubs -->
 
       <!-- Display User's Clubs -->
       <div class="clubs pa-4">
         <h3>My Clubs:</h3>
-        <v-list lines="one" v-if="profile.clubs && profile.clubs.length">
+        <v-list v-if="profile.clubs && profile.clubs.length" lines="one">
           <v-list-item
             v-for="club in profile.clubs"
             :key="club.id"
             :title="club.name"
           >
-            <template v-slot:append>
+            <template #append>
               <v-chip :color="getClubStatusColor(club.status)" size="small">
                 {{ club.status }}
               </v-chip>
@@ -45,37 +45,37 @@
           </v-list-item>
         </v-list>
         <p v-else>You are not a member of any clubs yet.</p>
-        <v-btn @click="openJoinClubModal" color="primary" class="mt-2">Request to Join Club</v-btn>
+        <v-btn color="primary" class="mt-2" @click="openJoinClubModal">Request to Join Club</v-btn>
       </div>
 
-      <v-divider></v-divider>
+      <v-divider />
       <div class="bio pa-4">
         <h3>Bio:</h3>
         <v-textarea
-          label="Bio"
           v-model="profile.bio"
+          label="Bio"
           outlined
           :error-messages="errorMessages('bio')"
           rows="4"
-        ></v-textarea>
+        />
       </div>
-      <v-divider></v-divider>
+      <v-divider />
 
       <!-- Phone Number section -->
       <div class="phone-edit pa-4">
         <h3>Phone Number:</h3>
         <v-text-field
-          label="Your mobile number"
           v-model="profile.phone"
+          label="Your mobile number"
           outlined
           :rules="phoneRules"
           :error-messages="errorMessages('phone')"
           hint="Must be exactly 11 digits (07...) or 13 characters (+44...)."
           persistent-hint
-        ></v-text-field>
+        />
         <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency.</p>
       </div>
-      <v-divider></v-divider>
+      <v-divider />
 
       <!-- Email Preferences section -->
       <div class="email-prefs pa-4">
@@ -86,23 +86,23 @@
           hint="Get notified when you earn a new medal"
           persistent-hint
           color="primary"
-        ></v-switch>
+        />
         <v-switch
           v-model="profile.email_tagged"
           label="Tagged in Trips"
           hint="Get notified when someone tags you in a trip report"
           persistent-hint
           color="primary"
-        ></v-switch>
+        />
         <v-switch
           v-model="profile.email_platform_news"
           label="Platform News"
           hint="Stay up to date with new features and announcements"
           persistent-hint
           color="primary"
-        ></v-switch>
+        />
       </div>
-      <v-divider></v-divider>
+      <v-divider />
 
       <!-- Trip & Callout Visibility section -->
       <div class="trip-visibility pa-4">
@@ -125,9 +125,9 @@
         </v-btn-toggle>
       </div>
       <v-card-actions class="pa-4">
-          <v-btn @click="openDeleteModal" color="error" variant="outlined" class="mr-auto">Delete Account</v-btn>
-          <v-spacer></v-spacer>
-          <v-btn @click="save" color="success">Save Profile</v-btn>
+        <v-btn color="error" variant="outlined" class="mr-auto" @click="openDeleteModal">Delete Account</v-btn>
+        <v-spacer />
+        <v-btn color="success" @click="save">Save Profile</v-btn>
       </v-card-actions>
 
     </v-card>
@@ -141,24 +141,24 @@
         <v-card-text>
           <p class="mb-4">Please note: You should already be an official member of the club you are requesting to join online. A club administrator will need to approve your request before you gain full access.</p>
           <v-autocomplete
+            v-model="selectedClubToJoinId"
             label="Select Club to Join"
             :items="availableClubs"
-            item-title="name"
-            item-value="id" 
-            v-model="selectedClubToJoinId"
+            item-title="name" 
+            item-value="id"
             return-object
             :loading="loadingClubs"
             clearable
             autocomplete="off"
             name="random_unique_club_search_field"
           >
-             <template v-slot:item="{ props, item }">
+            <template #item="{ props, item }">
               <v-list-item
                 v-bind="props"
                 :title="item.raw.name"
-              ></v-list-item>
+              />
             </template>
-             <template v-slot:no-data>
+            <template #no-data>
               <v-list-item>
                 <v-list-item-title>
                   No clubs available or matching your search.
@@ -168,11 +168,11 @@
           </v-autocomplete>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn color="blue-darken-1" variant="text" @click="closeJoinClubModal">
             Cancel
           </v-btn>
-          <v-btn color="blue-darken-1" variant="text" @click="requestToJoinClub" :disabled="!selectedClubToJoinId">
+          <v-btn color="blue-darken-1" variant="text" :disabled="!selectedClubToJoinId" @click="requestToJoinClub">
             Submit Request
           </v-btn>
         </v-card-actions>
@@ -187,9 +187,9 @@
           <p>Are you sure you want to delete your account? This action cannot be undone.</p>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn color="grey" variant="text" @click="closeDeleteModal">Cancel</v-btn>
-          <v-btn color="error" variant="text" @click="deleteAccount" :loading="deletingAccount">Delete</v-btn>
+          <v-btn color="error" variant="text" :loading="deletingAccount" @click="deleteAccount">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,7 +35,7 @@ class DutyOfficerApiTest extends TestCase
         $response = $this->actingAs($officer)->getJson('/api/admin/duty-officers');
 
         $response->assertStatus(200);
-        
+
         $data = $response->json('data');
         $names = collect($data)->pluck('name');
 
@@ -50,7 +49,7 @@ class DutyOfficerApiTest extends TestCase
     public function regular_user_cannot_list_officers()
     {
         $user = User::factory()->create();
-        
+
         $response = $this->actingAs($user)->getJson('/api/admin/duty-officers');
 
         $response->assertStatus(403);

@@ -1,62 +1,62 @@
 <template>
-    <v-form ref="form" v-model="valid">
-        <v-row>
-            <v-col cols="12">
-                <v-text-field v-model="internalCollection.name" label="Name" required :rules="[v => !!v || 'Name is required']"></v-text-field>
-            </v-col>
-            <v-col cols="12">
-                <div class="text-subtitle-2 mb-1">Description</div>
-                <MilkdownEditor v-model="internalCollection.description" placeholder="About this collection..." />
-            </v-col>
-            <v-col cols="12">
-                <v-file-input v-model="photoFile" label="Photo" accept="image/*" prepend-icon="mdi-camera"
-                    show-size @change="onPhotoChange"></v-file-input>
-                <div v-if="internalCollection.photo_path && !photoFile" class="text-caption">
-                    Current photo: {{ internalCollection.photo_path }}
-                </div>
-            </v-col>
-        </v-row>
+  <v-form ref="form" v-model="valid">
+    <v-row>
+      <v-col cols="12">
+        <v-text-field v-model="internalCollection.name" label="Name" required :rules="[v => !!v || 'Name is required']" />
+      </v-col>
+      <v-col cols="12">
+        <div class="text-subtitle-2 mb-1">Description</div>
+        <MilkdownEditor v-model="internalCollection.description" placeholder="About this collection..." />
+      </v-col>
+      <v-col cols="12">
+        <v-file-input v-model="photoFile" label="Photo" accept="image/*" prepend-icon="mdi-camera"
+                      show-size @change="onPhotoChange" />
+        <div v-if="internalCollection.photo_path && !photoFile" class="text-caption">
+          Current photo: {{ internalCollection.photo_path }}
+        </div>
+      </v-col>
+    </v-row>
 
-        <v-divider class="my-4"></v-divider>
-        <div class="text-h6 mb-2">Manage Caves</div>
+    <v-divider class="my-4" />
+    <div class="text-h6 mb-2">Manage Caves</div>
 
-        <v-autocomplete v-model="selectedCaveToAdd" :items="allCaves" item-title="name" item-value="id"
-            label="Add a Cave" placeholder="Search for a cave..." return-object hide-details
-            class="mb-4" @update:model-value="addCave"></v-autocomplete>
+    <v-autocomplete v-model="selectedCaveToAdd" :items="allCaves" item-title="name" item-value="id"
+                    label="Add a Cave" placeholder="Search for a cave..." return-object hide-details
+                    class="mb-4" @update:model-value="addCave" />
 
-        <v-list density="compact" class="bg-grey-lighten-4 rounded">
-            <template v-for="(cave, index) in internalCollection.caves" :key="cave.id">
-                <v-list-item>
-                    <template v-slot:prepend>
-                        <div class="d-flex flex-column">
-                            <v-btn icon="mdi-chevron-up" variant="text" size="x-small"
-                                :disabled="index === 0" @click="moveCave(index, -1)"></v-btn>
-                            <v-btn icon="mdi-chevron-down" variant="text" size="x-small"
-                                :disabled="index === internalCollection.caves.length - 1"
-                                @click="moveCave(index, 1)"></v-btn>
-                        </div>
-                    </template>
+    <v-list density="compact" class="bg-grey-lighten-4 rounded">
+      <template v-for="(cave, index) in internalCollection.caves" :key="cave.id">
+        <v-list-item>
+          <template #prepend>
+            <div class="d-flex flex-column">
+              <v-btn icon="mdi-chevron-up" variant="text" size="x-small"
+                     :disabled="index === 0" @click="moveCave(index, -1)" />
+              <v-btn icon="mdi-chevron-down" variant="text" size="x-small"
+                     :disabled="index === internalCollection.caves.length - 1"
+                     @click="moveCave(index, 1)" />
+            </div>
+          </template>
                     
-                    <v-list-item-title class="font-weight-bold">{{ cave.name }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ cave.location_name }}</v-list-item-subtitle>
+          <v-list-item-title class="font-weight-bold">{{ cave.name }}</v-list-item-title>
+          <v-list-item-subtitle>{{ cave.location_name }}</v-list-item-subtitle>
                     
-                    <div class="text-subtitle-2 mt-4 mb-1">Note</div>
-                    <MilkdownEditor v-model="cave.playlist_description" 
-                        placeholder="Add a note about this cave in the collection..." />
+          <div class="text-subtitle-2 mt-4 mb-1">Note</div>
+          <MilkdownEditor v-model="cave.playlist_description" 
+                          placeholder="Add a note about this cave in the collection..." />
 
-                    <template v-slot:append>
-                        <v-btn icon="mdi-delete" size="small" color="error" variant="text"
-                            @click="removeCave(index)"></v-btn>
-                    </template>
-                </v-list-item>
-                <v-divider v-if="index < internalCollection.caves.length - 1"></v-divider>
-            </template>
+          <template #append>
+            <v-btn icon="mdi-delete" size="small" color="error" variant="text"
+                   @click="removeCave(index)" />
+          </template>
+        </v-list-item>
+        <v-divider v-if="index < internalCollection.caves.length - 1" />
+      </template>
             
-            <v-list-item v-if="!internalCollection.caves || internalCollection.caves.length === 0">
-                <div class="text-center w-100 text-grey font-italic">No caves in this collection</div>
-            </v-list-item>
-        </v-list>
-    </v-form>
+      <v-list-item v-if="!internalCollection.caves || internalCollection.caves.length === 0">
+        <div class="text-center w-100 text-grey font-italic">No caves in this collection</div>
+      </v-list-item>
+    </v-list>
+  </v-form>
 </template>
 
 <script setup>

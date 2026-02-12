@@ -2,13 +2,13 @@
   <v-container class="pa-0">
     <template v-if="caveStore.loading">
       <div class="d-flex justify-center my-8">
-        <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+        <v-progress-circular indeterminate color="primary" size="48" />
       </div>
     </template>
 
     <template v-else>
       <div v-if="caveStore.caves.length === 0" class="text-center py-8">
-        <v-icon size="64" color="grey lighten-10" icon="mdi-map-marker-off" class="mb-4"></v-icon>
+        <v-icon size="64" color="grey lighten-10" icon="mdi-map-marker-off" class="mb-4" />
         <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found</h3>
         <p class="text-body-2 text-grey-darken-1">Try adjusting your filters or search.</p>
       </div>
@@ -16,10 +16,10 @@
       <v-row v-else class="px-2">
         <v-col v-for="cave in caveStore.caves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
           <v-card hover elevation="2" class="fill-height d-flex flex-column cave-card"
-            :to="'/caves/' + cave.slug">
+                  :to="'/caves/' + cave.slug">
             <v-img :src="cave.hero_image || cave.entrance_image || '/placeholder-cave.jpg'" height="160" cover
-              class="bg-grey-lighten-2">
-              <template v-slot:placeholder>
+                   class="bg-grey-lighten-2">
+              <template #placeholder>
                 <div class="d-flex align-center justify-center fill-height">
                   <v-icon color="grey-lighten-1" size="large">mdi-image-off-outline</v-icon>
                 </div>
@@ -33,7 +33,7 @@
               <div class="mb-2">
                 <h3 class="text-h6 font-weight-bold lh-tight mb-1 text-truncate">{{ cave.name }}</h3>
                 <div class="d-flex align-center text-caption text-grey-darken-1">
-                  <v-icon size="small" icon="mdi-map-marker" class="mr-1"></v-icon>
+                  <v-icon size="small" icon="mdi-map-marker" class="mr-1" />
                   <span class="text-truncate">{{ cave.location_name }}, {{ cave.location_country }}</span>
                 </div>
               </div>
@@ -66,11 +66,11 @@
               </div>
             </div>
 
-            <v-divider></v-divider>
+            <v-divider />
 
             <div class="pa-2 d-flex justify-end">
               <v-btn v-if="!cave.previously_done" variant="text" color="primary" size="small"
-                @click.stop.prevent="showConfirmModal = true; caveToMark = cave">
+                     @click.stop.prevent="showConfirmModal = true; caveToMark = cave">
                 Mark as Done
               </v-btn>
               <v-btn variant="text" size="small" color="grey-darken-1" :to="'/caves/' + cave.slug">
@@ -89,7 +89,7 @@
           Are you sure you want to mark <strong>{{ caveToMark?.name }}</strong> as visited?
         </v-card-text>
         <v-card-actions class="pa-4 pt-0">
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn variant="text" @click="showConfirmModal = false; caveToMark = null">Cancel</v-btn>
           <v-btn color="primary" variant="flat" @click="markAsDone(caveToMark)">Confirm</v-btn>
         </v-card-actions>
@@ -99,30 +99,25 @@
 </template>
 <script setup>
 
-import { useCaveStore } from '@/stores/caves';
-import { useAppStore } from '@/stores/app';
-import { markCaveAsDone } from '@/stores/markAsDone';
-const caveStore = useCaveStore();
-const appStore = useAppStore();
-const showConfirmModal = ref(false);
-const caveToMark = ref(null);
+import { ref } from 'vue'
+import { useCaveStore } from '@/stores/caves'
+import { useAppStore } from '@/stores/app'
+import { markCaveAsDone } from '@/stores/markAsDone'
 
-const headers = ref([
-  { title: 'Name', key: 'name' },
-  { title: 'Length', key: 'system.length' },
-  { title: 'Location', key: 'location' },
-  { title: 'Previously Done', key: 'previously_done' },
-])
+const caveStore = useCaveStore()
+const appStore = useAppStore()
+const showConfirmModal = ref(false)
+const caveToMark = ref(null)
 
 const markAsDone = async (cave) => {
-  if (!cave) return;
-  const ok = await markCaveAsDone({ cave, userId: appStore.user.id });
+  if (!cave) return
+  const ok = await markCaveAsDone({ cave, userId: appStore.user.id })
   if (ok) {
-    await caveStore.getList(); // Refresh the cave list
-    showConfirmModal.value = false;
-    caveToMark.value = null;
+    await caveStore.getList()
+    showConfirmModal.value = false
+    caveToMark.value = null
   } else {
-    console.error('failed to save trip');
+    console.error('failed to save trip')
   }
 }
 </script>

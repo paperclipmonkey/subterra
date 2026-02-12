@@ -3,8 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\TripCreated;
-use Spatie\SlackAlerts\Facades\SlackAlert;
 use Illuminate\Support\Facades\Log;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class SendTripCreatedSlackAlert
 {
@@ -15,7 +15,7 @@ class SendTripCreatedSlackAlert
         try {
             SlackAlert::to('trips')->message("A new trip has been created: <https://subterra.world/trip/{$trip->id}|{$trip->name}> to {$trip->entrance->name} by {$user->name}");
         } catch (\Exception $e) {
-            Log::error('Failed to send Slack alert: ' . $e->getMessage());
+            Log::error('Failed to send Slack alert: '.$e->getMessage());
         }
     }
 }

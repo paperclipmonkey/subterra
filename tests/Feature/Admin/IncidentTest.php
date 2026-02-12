@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\User;
-use App\Models\Incident;
 use App\Models\Callout;
+use App\Models\Incident;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,13 +16,13 @@ class IncidentTest extends TestCase
     {
         // Arrange
         $admin = User::factory()->dutyOfficer()->create();
-        
+
         // Create incidents with various statuses to exercise the ordering logic
         $u = User::factory()->create();
-        
+
         $c1 = Callout::factory()->create(['user_id' => $u->id]);
         Incident::create(['callout_id' => $c1->id, 'status' => 'open']);
-        
+
         $c2 = Callout::factory()->create(['user_id' => $u->id]);
         Incident::create(['callout_id' => $c2->id, 'status' => 'managed']);
 
@@ -51,9 +51,9 @@ class IncidentTest extends TestCase
 
         // Assert
         $response->assertStatus(200);
-        
+
         $freshIncident = $incident->fresh();
-        
+
         $this->assertEquals($admin->id, $freshIncident->incident_controller_id);
         $this->assertNotNull($freshIncident->acknowledged_at);
         $this->assertEquals('managed', $freshIncident->status);

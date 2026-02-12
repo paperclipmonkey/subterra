@@ -51,7 +51,7 @@ class TrackApiInteraction
     private function findModelInRouteParameters(Request $request, string $modelClass): ?object
     {
         $routeParameters = $request->route()->parameters();
-        
+
         foreach ($routeParameters as $parameter) {
             if (is_object($parameter)) {
                 $parameterClass = get_class($parameter);
@@ -60,7 +60,7 @@ class TrackApiInteraction
                 }
             }
         }
-        
+
         return null;
     }
 
@@ -93,7 +93,7 @@ class TrackApiInteraction
                     $routeKeyCache[$modelClass] = $instance->getRouteKeyName();
                 }
                 $routeKeyName = $routeKeyCache[$modelClass];
-                
+
                 $model = $modelClass::where(function ($query) use ($param, $routeKeyName) {
                     $query->where($routeKeyName, $param);
                     if ($routeKeyName !== 'id' && is_numeric($param)) {

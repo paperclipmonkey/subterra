@@ -2,13 +2,13 @@
 
 namespace Tests\Unit\Services;
 
-use Tests\TestCase;
-use App\Services\GcpWatchdogService;
 use App\Models\Callout;
-use App\Models\User;
 use App\Models\Cave;
-use Illuminate\Support\Facades\Http;
+use App\Models\User;
+use App\Services\GcpWatchdogService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
 
 class GcpWatchdogServiceTest extends TestCase
 {
@@ -19,10 +19,10 @@ class GcpWatchdogServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         config(['services.gcp_watchdog.url' => 'https://test-watchdog.run.app']);
         config(['services.gcp_watchdog.api_key' => 'test-key']);
-        
+
         $this->service = new GcpWatchdogService();
     }
 
@@ -46,7 +46,7 @@ class GcpWatchdogServiceTest extends TestCase
 
         // Mock HTTP response
         Http::fake([
-            '*/watchdog' => Http::response(['message' => 'Success', 'callout_id' => $callout->id], 200)
+            '*/watchdog' => Http::response(['message' => 'Success', 'callout_id' => $callout->id], 200),
         ]);
 
         // Call register
@@ -72,7 +72,7 @@ class GcpWatchdogServiceTest extends TestCase
 
         // Mock failed HTTP response
         Http::fake([
-            '*/watchdog' => Http::response(['error' => 'Server error'], 500)
+            '*/watchdog' => Http::response(['error' => 'Server error'], 500),
         ]);
 
         $result = $this->service->register($callout);
@@ -86,7 +86,7 @@ class GcpWatchdogServiceTest extends TestCase
         $callout = Callout::factory()->create();
 
         Http::fake([
-            '*/watchdog*' => Http::response(['message' => 'Cancelled'], 200)
+            '*/watchdog*' => Http::response(['message' => 'Cancelled'], 200),
         ]);
 
         $result = $this->service->cancel($callout);
@@ -106,7 +106,7 @@ class GcpWatchdogServiceTest extends TestCase
         $callout = Callout::factory()->create();
 
         Http::fake([
-            '*/watchdog*' => Http::response(['error' => 'Not found'], 404)
+            '*/watchdog*' => Http::response(['error' => 'Not found'], 404),
         ]);
 
         $result = $this->service->cancel($callout);

@@ -8,10 +8,10 @@
         <v-container>
           <v-row>
             <v-col cols="12">
-              <v-text-field label="Club Name*" v-model="clubName" required></v-text-field>
+              <v-text-field v-model="clubName" label="Club Name*" required />
             </v-col>
             <v-col cols="12">
-              <v-text-field label="Club Slug*" v-model="clubSlug" required></v-text-field>
+              <v-text-field v-model="clubSlug" label="Club Slug*" required />
             </v-col>
             <v-col cols="12">
               <div class="text-subtitle-2 mb-1">Description</div>
@@ -22,11 +22,11 @@
         <small>*indicates required field</small>
       </v-card-text>
       <v-card-actions>
-        <v-spacer></v-spacer>
+        <v-spacer />
         <v-btn color="blue darken-1" text @click="closeDialog">
           Cancel
         </v-btn>
-        <v-btn color="blue darken-1" text @click="saveClub" :loading="loading">
+        <v-btn color="blue darken-1" text :loading="loading" @click="saveClub">
           Save
         </v-btn>
       </v-card-actions>

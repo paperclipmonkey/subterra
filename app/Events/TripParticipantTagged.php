@@ -10,7 +10,9 @@ use Illuminate\Queue\SerializesModels;
 
 class TripParticipantTagged
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public $trip;
     public $user;

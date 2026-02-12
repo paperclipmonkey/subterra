@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiInteraction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -28,7 +29,7 @@ class DashboardController extends Controller
 
         // Group interactions by type for efficient querying
         $interactionsByType = $interactions->groupBy('trackable_type');
-        
+
         // Fetch all models in bulk queries
         $modelCache = [];
         foreach ($interactionsByType as $type => $typeInteractions) {
@@ -53,7 +54,7 @@ class DashboardController extends Controller
         // Map interactions to results
         $popularRecords = $interactions->map(function ($interaction) use ($modelCache, $sparklineCache) {
             $model = $modelCache[$interaction->trackable_type][$interaction->trackable_id] ?? null;
-            
+
             if (!$model) {
                 // Log missing models to help identify data integrity issues
                 \Log::warning('API interaction tracked for missing model', [
@@ -61,10 +62,11 @@ class DashboardController extends Controller
                     'trackable_id' => $interaction->trackable_id,
                     'total_interactions' => $interaction->total_interactions,
                 ]);
-                return null;
+
+                return;
             }
 
-            $cacheKey = $interaction->trackable_type . ':' . $interaction->trackable_id;
+            $cacheKey = $interaction->trackable_type.':'.$interaction->trackable_id;
             $sparklineData = $sparklineCache[$cacheKey] ?? array_fill(0, 30, 0);
 
             return [
@@ -81,7 +83,7 @@ class DashboardController extends Controller
 
         // Generate labels for the last 30 days
         $labels = [];
-        for ($i = 29; $i >= 0; $i--) {
+        for ($i = 29; $i >= 0; --$i) {
             $labels[] = now()->subDays($i)->format('Y-m-d');
         }
 
@@ -119,22 +121,22 @@ class DashboardController extends Controller
         // Organize data by type:id
         $dailyCountsByRecord = [];
         foreach ($allInteractions as $interaction) {
-            $key = $interaction->trackable_type . ':' . $interaction->trackable_id;
+            $key = $interaction->trackable_type.':'.$interaction->trackable_id;
             $dailyCountsByRecord[$key][$interaction->date] = $interaction->count;
         }
 
         // Generate sparklines with missing days filled in
         $sparklineCache = [];
         foreach ($typeIdPairs as $pair) {
-            $key = $pair['type'] . ':' . $pair['id'];
+            $key = $pair['type'].':'.$pair['id'];
             $dailyCounts = $dailyCountsByRecord[$key] ?? [];
-            
+
             $sparkline = [];
-            for ($i = 29; $i >= 0; $i--) {
+            for ($i = 29; $i >= 0; --$i) {
                 $date = now()->subDays($i)->format('Y-m-d');
                 $sparkline[] = $dailyCounts[$date] ?? 0;
             }
-            
+
             $sparklineCache[$key] = $sparkline;
         }
 
@@ -147,7 +149,7 @@ class DashboardController extends Controller
     private function getSparklineData(string $type, int $id): array
     {
         $thirtyDaysAgo = now()->subDays(30);
-        
+
         // Get daily counts for the last 30 days
         $dailyCounts = ApiInteraction::where('trackable_type', $type)
             ->where('trackable_id', $id)
@@ -164,7 +166,7 @@ class DashboardController extends Controller
 
         // Fill in missing days with 0
         $sparkline = [];
-        for ($i = 29; $i >= 0; $i--) {
+        for ($i = 29; $i >= 0; --$i) {
             $date = now()->subDays($i)->format('Y-m-d');
             $sparkline[] = $dailyCounts[$date] ?? 0;
         }

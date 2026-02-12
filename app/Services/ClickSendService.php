@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -28,6 +29,7 @@ class ClickSendService
     {
         if (empty($this->username) || empty($this->apiKey)) {
             Log::warning('ClickSend credentials not configured. SMS not sent.');
+
             return false;
         }
 
@@ -49,14 +51,17 @@ class ClickSendService
                 ]);
 
             if ($response->successful()) {
-                Log::info("ClickSend SMS sent to " . count($recipients) . " recipients.");
+                Log::info('ClickSend SMS sent to '.count($recipients).' recipients.');
+
                 return true;
             } else {
-                Log::error('ClickSend API Error: ' . $response->body());
+                Log::error('ClickSend API Error: '.$response->body());
+
                 return false;
             }
-        } catch (\Exception $e) {
-            Log::error('ClickSend Exception: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('ClickSend Exception: '.$e->getMessage());
+
             return false;
         }
     }

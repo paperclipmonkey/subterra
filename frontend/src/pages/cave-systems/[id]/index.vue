@@ -1,33 +1,33 @@
 <template>
   <div>
     <div class="d-flex justify-end pa-4">
-        <v-btn
-            v-if="appStore.user"
-            color="primary"
-            variant="text"
-            prepend-icon="mdi-pencil"
-            :to="`/cave-systems/${route.params.id}/edit`"
-        >
-            {{ appStore.user?.is_admin ? 'Edit Cave System' : 'Suggest Edit' }}
-        </v-btn>
-        <v-btn
-            v-else
-            color="primary"
-            variant="text"
-            prepend-icon="mdi-pencil"
-            to="/login"
-        >
-            Log in to Suggest Edit
-        </v-btn>
+      <v-btn
+        v-if="appStore.user"
+        color="primary"
+        variant="text"
+        prepend-icon="mdi-pencil"
+        :to="`/cave-systems/${route.params.id}/edit`"
+      >
+        {{ appStore.user?.is_admin ? 'Edit Cave System' : 'Suggest Edit' }}
+      </v-btn>
+      <v-btn
+        v-else
+        color="primary"
+        variant="text"
+        prepend-icon="mdi-pencil"
+        to="/login"
+      >
+        Log in to Suggest Edit
+      </v-btn>
     </div>
     <CaveSystem />
     
     <v-container v-if="caveSystem">
-        <v-row>
-            <v-col cols="12">
-                <RouteList :routes="caveSystem.routes" :caveSystemId="caveSystem.id" />
-            </v-col>
-        </v-row>
+      <v-row>
+        <v-col cols="12">
+          <RouteList :routes="caveSystem.routes" :cave-system-id="caveSystem.id" />
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>

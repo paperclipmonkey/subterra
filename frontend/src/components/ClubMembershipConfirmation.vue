@@ -13,12 +13,12 @@
             We operate a real-name policy to ensure accountability and safety within the community.
           </p>
           <v-text-field
-            label="Full Name"
             v-model="fullName"
+            label="Full Name"
             variant="outlined"
             :rules="[v => !!v || 'Name is required', v => v.length >= 2 || 'Name must be at least 2 characters']"
             required
-          ></v-text-field>
+          />
           <v-alert type="info" variant="tonal" class="mt-4" icon="mdi-shield-check">
             This name will be visible to club admins when you request to join.
           </v-alert>
@@ -77,10 +77,10 @@
             autocomplete="off"
             name="random_unique_club_confirm_field"
           >
-            <template v-slot:item="{ props, item }">
-              <v-list-item v-bind="props" :title="item.raw.name"></v-list-item>
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props" :title="item.raw.name" />
             </template>
-            <template v-slot:no-data>
+            <template #no-data>
               <v-list-item>
                 <v-list-item-title>No clubs available or matching your search.</v-list-item-title>
               </v-list-item>
@@ -96,7 +96,7 @@
 
       </v-card-text>
       <v-card-actions>
-        <v-spacer></v-spacer>
+        <v-spacer />
         <v-btn v-if="step === 1" color="primary" :disabled="!fullName || fullName.length < 2 || savingName" :loading="savingName" @click="saveName">
           Next
         </v-btn>

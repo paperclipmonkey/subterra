@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Route;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::except([
-            '*'
+            '*',
         ]);
 
         Event::listen(
@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         // Add your custom route binding here
-        Route::bind('user_without_scopes', function($id) {
+        Route::bind('user_without_scopes', function ($id) {
             // Use the correct namespace for your User model
             return User::withoutGlobalScopes()->findOrFail($id);
         });

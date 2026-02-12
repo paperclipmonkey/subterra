@@ -20,12 +20,13 @@ class RouteFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->words(3, true);
+
         return [
             'cave_system_id' => CaveSystem::factory(),
             'entrance_id' => Cave::factory(),
             'exit_id' => Cave::factory(),
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . Str::random(6),
+            'slug' => Str::slug($name).'-'.Str::random(6),
             'description' => $this->faker->paragraphs(3, true),
             'duration' => $this->faker->randomElement(['2 hours', '4-5 hours', 'Full day']),
             'grade' => $this->faker->numberBetween(1, 5),

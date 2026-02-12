@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Collection;
+use App\Http\Resources\CollectionResource;
 use App\Models\Cave;
+use App\Models\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-use App\Http\Resources\CollectionResource;
 
 class CollectionController extends Controller
 {
@@ -20,7 +19,7 @@ class CollectionController extends Controller
     {
         // Calculate progress for the current user
         $user = Auth::user();
-        
+
         $collection->load(['caves' => function ($query) use ($user) {
             // Check if the user has visited this cave (entrance or exit in a trip)
             $query->withExists(['entranceTrips as is_entrance' => function ($q) use ($user) {
@@ -28,17 +27,15 @@ class CollectionController extends Controller
                     $u->where('users.id', $user->id);
                 });
             }])->withExists(['exitTrips as is_exit' => function ($q) use ($user) {
-                 $q->whereHas('participants', function ($u) use ($user) {
+                $q->whereHas('participants', function ($u) use ($user) {
                     $u->where('users.id', $user->id);
                 });
             }])->orderByPivot('sort_order');
         }]);
 
         // Transform collection to standard "is_ticked"
-        $collection->caves->each(function($cave) {
+        $collection->caves->each(function ($cave) {
             $cave->is_ticked = $cave->is_entrance || $cave->is_exit;
-            // Ensure pivot data is accessible if needed, though it's on pivot property
-            // $cave->playlist_description = $cave->pivot->description; 
             unset($cave->is_entrance, $cave->is_exit);
         });
 
@@ -59,24 +56,9 @@ class CollectionController extends Controller
         $validated['user_id'] = Auth::id();
 
         if ($request->hasFile('photo')) {
-            $photo = $request->file('photo');
-            
-            // SERVER-SIDE validation
-            $mimeType = $photo->getMimeType();
-            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            
-            if (!in_array($mimeType, $allowedMimes)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'photo' => 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.'
-                ]);
-            }
-            
-            // Use hash-based filename to prevent path traversal
-            $extension = $photo->extension();
-            $filename = hash('sha256', 'collection_' . time() . Auth::id()) . '.' . $extension;
-            $validated['photo_path'] = $photo->storeAs('collections', $filename, 'media');
+            $validated['photo_path'] = $this->processPhoto($request->file('photo'));
         }
-        
+
         unset($validated['photo']);
         unset($validated['caves']);
 
@@ -88,7 +70,7 @@ class CollectionController extends Controller
 
         // Reload caves with pivot data for consistent response
         $collection->load(['caves' => function ($query) {
-             $query->orderByPivot('sort_order');
+            $query->orderByPivot('sort_order');
         }]);
 
         return new CollectionResource($collection);
@@ -111,24 +93,9 @@ class CollectionController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $photo = $request->file('photo');
-            
-            // SERVER-SIDE validation
-            $mimeType = $photo->getMimeType();
-            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            
-            if (!in_array($mimeType, $allowedMimes)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'photo' => 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.'
-                ]);
-            }
-            
-            // Use hash-based filename to prevent path traversal
-            $extension = $photo->extension();
-            $filename = hash('sha256', 'collection_' . time() . Auth::id()) . '.' . $extension;
-            $validated['photo_path'] = $photo->storeAs('collections', $filename, 'media');
+            $validated['photo_path'] = $this->processPhoto($request->file('photo'));
         }
-        
+
         unset($validated['photo']);
         unset($validated['caves']);
 
@@ -138,9 +105,8 @@ class CollectionController extends Controller
             $this->syncCaves($collection, $request->input('caves'));
         }
 
-        // Reload caves with pivot data for consistent response
         $collection->load(['caves' => function ($query) {
-             $query->orderByPivot('sort_order');
+            $query->orderByPivot('sort_order');
         }]);
 
         return new CollectionResource($collection);
@@ -148,25 +114,25 @@ class CollectionController extends Controller
 
     public function destroy(Request $request, Collection $collection)
     {
-         if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
+        if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-        
+
         $collection->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 
     public function addCave(Request $request, Collection $collection)
     {
         if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
-             return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $request->validate([
             'cave_id' => 'required|exists:caves,id',
         ]);
 
-        // Default to append?
         $count = $collection->caves()->count();
         $collection->caves()->syncWithoutDetaching([$request->cave_id => ['sort_order' => $count]]);
 
@@ -176,27 +142,43 @@ class CollectionController extends Controller
     public function removeCave(Request $request, Collection $collection, Cave $cave)
     {
         if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
-             return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $collection->caves()->detach($cave->id);
 
         return response()->json(['message' => 'Cave removed']);
     }
-    
+
     protected function syncCaves(Collection $collection, array $caves)
     {
         $syncData = [];
         foreach ($caves as $index => $caveData) {
-            // Check if caveData is array or just ID (compatibility)
             $id = is_array($caveData) ? $caveData['id'] : $caveData;
             $description = is_array($caveData) ? ($caveData['description'] ?? null) : null;
-            
+
             $syncData[$id] = [
                 'description' => $description,
                 'sort_order' => $index,
             ];
         }
         $collection->caves()->sync($syncData);
+    }
+
+    private function processPhoto(\Illuminate\Http\UploadedFile $photo): string
+    {
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $mimeType = $photo->getMimeType();
+
+        if (!in_array($mimeType, $allowedMimes)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'photo' => 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.',
+            ]);
+        }
+
+        $extension = $photo->extension();
+        $filename = hash('sha256', 'collection_'.time().Auth::id()).'.'.$extension;
+
+        return $photo->storeAs('collections', $filename, 'media');
     }
 }

@@ -2,22 +2,26 @@
 
 namespace App\Services;
 
+use App\Events\CalloutCreated;
+use App\Mail\CalloutCancelled;
+use App\Mail\CalloutStarted;
 use App\Models\Callout;
 use App\Models\OnCallShift;
+use App\Models\Trip;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class CalloutService
 {
-    private SmsService $smsService;
-    private GcpWatchdogService $watchdogService;
-
-    public function __construct(SmsService $smsService, GcpWatchdogService $watchdogService)
-    {
-        $this->smsService = $smsService;
-        $this->watchdogService = $watchdogService;
+    public function __construct(
+        private readonly SmsService $smsService,
+        private readonly GcpWatchdogService $watchdogService
+    ) {
     }
 
     /**
@@ -28,21 +32,18 @@ class CalloutService
     {
         $calloutTime = Carbon::parse($data['callout_time']);
 
-        // 1. Validate On-Call Coverage
         if (!OnCallShift::isCovered($calloutTime)) {
-            throw new Exception("Cannot create callout: No administrator is on-call at " . $calloutTime->toDateTimeString());
+            throw new Exception('Cannot create callout: No administrator is on-call at '.$calloutTime->toDateTimeString());
         }
-
-        // 1b. Validate Participants are not already in an active callout.
         // Collect all checking phones
         $phonesToCheck = collect($data['participants'] ?? [])->pluck('phone')->filter();
         if ($user->phone) {
             $phonesToCheck->push($user->phone);
         }
-        
+
         // Also fetch phones for any user_ids provided in participants if phone is missing?
         // For now, rely on provided phones or strictly enforce "One active callout per person"
-        
+
         if ($phonesToCheck->isNotEmpty()) {
             $existingCallout = Callout::query()
                 ->whereIn('status', ['active', 'triggered'])
@@ -57,19 +58,18 @@ class CalloutService
                 ->first();
 
             if ($existingCallout) {
-                 throw new Exception("One or more participants (or you) are already in an active callout. Please resolve the existing callout first.");
+                throw new Exception('One or more participants (or you) are already in an active callout. Please resolve the existing callout first.');
             }
         }
 
         return DB::transaction(function () use ($user, $data, $calloutTime) {
-            // 2. Create Callout Record
             $callout = Callout::create([
                 'user_id' => $user->id,
                 'trip_id' => $data['trip_id'] ?? null,
                 'cave_id' => $data['cave_id'] ?? null,
                 'exit_cave_id' => $data['exit_cave_id'] ?? null,
                 'callout_time' => $calloutTime,
-                'description' => $data['description'] ?? $data['trip_plan'] ?? 'Callout created via API', 
+                'description' => $data['description'] ?? $data['trip_plan'] ?? 'Callout created via API',
                 'trip_plan' => $data['trip_plan'] ?? null,
                 'car_details' => $data['car_details'] ?? null,
                 'car_registration' => $data['car_registration'] ?? null,
@@ -80,7 +80,6 @@ class CalloutService
                 'status' => 'active',
             ]);
 
-            // 3. Add Participants
             if (!empty($data['participants'])) {
                 foreach ($data['participants'] as $p) {
                     $callout->participants()->create([
@@ -91,21 +90,19 @@ class CalloutService
                     ]);
                 }
             }
-            
-            // 4. Register with GCP Watchdog
+
             try {
                 $this->watchdogService->register($callout);
             } catch (Exception $e) {
-                \Illuminate\Support\Facades\Log::error("GCP Watchdog registration failed: " . $e->getMessage());
+                Log::error('GCP Watchdog registration failed: '.$e->getMessage());
                 // Don't fail the callout creation if watchdog registration fails
             }
 
-            // 5. Send Confirmations (Phase 3 Notifications)
             try {
                 // Notify User
                 if ($user->phone) {
                     $this->smsService->sendMessage(
-                        $user->phone, 
+                        $user->phone,
                         "Subterra: Callout ACTIVE for {$calloutTime->format('H:i')}. Reply OUT SAFE to cancel."
                     );
                 }
@@ -115,7 +112,7 @@ class CalloutService
                     foreach ($data['participants'] as $p) {
                         // Ensure we have a phone number either from user or input
                         $phone = $p['phone'] ?? null;
-                        
+
                         // Avoid sending a "participant" SMS to the creator if they already got the "creator" SMS above
                         if ($phone && $phone !== $user->phone) {
                             $this->smsService->sendMessage(
@@ -127,47 +124,43 @@ class CalloutService
                 }
             } catch (Exception $e) {
                 // Log the real error
-                \Illuminate\Support\Facades\Log::error("SMS Failure creating callout: " . $e->getMessage());
-                
+                Log::error('SMS Failure creating callout: '.$e->getMessage());
+
                 // Throw user-friendly error (Transaction will rollback)
-                throw new Exception("Something went wrong and we were unable to save your callout with Subterra. Please use alternative arrangements.");
+                throw new Exception('Something went wrong and we were unable to save your callout with Subterra. Please use alternative arrangements.');
             }
 
-            // 6. Send Email Notifications (Fire and Forget or Queued ideally)
             try {
                 // Collect all emails
                 $emails = collect($data['participants'] ?? [])
                     ->pluck('email')
                     ->filter();
-                
+
                 if ($user->email) {
                     $emails->push($user->email);
                 }
 
                 $emails->unique()->each(function ($email) use ($callout) {
-                    \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\CalloutStarted($callout));
+                    Mail::to($email)->send(new CalloutStarted($callout));
                 });
-
             } catch (Exception $e) {
-                 \Illuminate\Support\Facades\Log::error("Email Failure creating callout: " . $e->getMessage());
-                 // Don't rollback transaction for email failure
+                Log::error('Email Failure creating callout: '.$e->getMessage());
+                // Don't rollback transaction for email failure
             }
-            
-            // 7. Dispatch Created Event (Slack, etc)
-            \App\Events\CalloutCreated::dispatch($callout);
 
-            // 8. Slack Notification
+            CalloutCreated::dispatch($callout);
+
             try {
                 $location = $callout->cave ? $callout->cave->name : 'Custom Location';
-                
+
                 // Calculate participants correctly:
                 // If creator is in the participants list, use the count.
                 // If creator is NOT in the participants list (unlikely based on frontend but possible via API), add 1.
                 $pCount = $callout->participants()->count();
                 $creatorIsParticipant = $callout->participants()->where('user_id', $user->id)->exists();
                 $totalParticipants = $creatorIsParticipant ? $pCount : $pCount + 1;
-                
-                \Spatie\SlackAlerts\Facades\SlackAlert::to('callouts-open')
+
+                SlackAlert::to('callouts-open')
                     ->message(":wave: New Callout: *{$location}* | Party of {$totalParticipants} | Return: {$callout->callout_time->format('H:i')}");
             } catch (\Exception $e) {
                 // Ignore Slack failures
@@ -180,21 +173,17 @@ class CalloutService
     /**
      * Cancel a callout (Mark as resolved/safe).
      */
-    public function cancel(Callout $callout): ?\App\Models\Trip
+    public function cancel(Callout $callout): ?Trip
     {
-        // 1. Create a Trip record from the callout
-        // We do this before deleting the callout to preserve its data/participants
         $trip = $this->createTripFromCallout($callout);
 
-        // 2. Cancel GCP Watchdog
         try {
             $this->watchdogService->cancel($callout);
         } catch (Exception $e) {
-            \Illuminate\Support\Facades\Log::error("GCP Watchdog cancellation failed: " . $e->getMessage());
+            Log::error('GCP Watchdog cancellation failed: '.$e->getMessage());
             // Continue with cancellation even if watchdog fails
         }
 
-        // 3. Send Cancellation Emails
         try {
             // Ensure participants are loaded
             $callout->loadMissing('participants');
@@ -203,31 +192,28 @@ class CalloutService
             $emails = collect($callout->participants ?? [])
                 ->pluck('email')
                 ->filter();
-            
+
             if ($callout->user && $callout->user->email) {
                 $emails->push($callout->user->email);
             }
 
             $emails->unique()->each(function ($email) use ($callout) {
-                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\CalloutCancelled($callout));
+                Mail::to($email)->send(new CalloutCancelled($callout));
             });
-
         } catch (Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Email Failure cancelling callout: " . $e->getMessage());
+            Log::error('Email Failure cancelling callout: '.$e->getMessage());
         }
-
-        // 4. Check for Active Incident
         if ($callout->incident()->exists()) {
-            // DO NOT DELETE if rescue is underway. 
+            // DO NOT DELETE if rescue is underway.
             // Mark user as safe but leave incident for admin to close.
             $callout->update(['status' => 'cancelled']);
-            
+
             // Add system note to incident
             $callout->incident->notes()->create([
                 'user_id' => null, // System note
-                'content' => 'USER MARKED THEMSELVES SAFE via App. Please verify and resolve incident.'
+                'content' => 'USER MARKED THEMSELVES SAFE via App. Please verify and resolve incident.',
             ]);
-            
+
             return $trip;
         }
 
@@ -240,7 +226,7 @@ class CalloutService
     /**
      * Create a Trip record from a Callout.
      */
-    private function createTripFromCallout(Callout $callout): \App\Models\Trip
+    private function createTripFromCallout(Callout $callout): Trip
     {
         $cave = $callout->cave;
         $systemId = $cave ? $cave->cave_system_id : null;
@@ -248,11 +234,11 @@ class CalloutService
         if (!$systemId) {
             // If we don't have a system, we can't create a valid trip record
             // based on the current database constraints.
-            return new \App\Models\Trip(); // Return empty model or handle differently
+            return new Trip(); // Return empty model or handle differently
         }
 
-        $trip = \App\Models\Trip::create([
-            'name' => ($cave ? $cave->name : 'Custom Location') . ' Trip',
+        $trip = Trip::create([
+            'name' => ($cave ? $cave->name : 'Custom Location').' Trip',
             'description' => $callout->trip_plan ?: $callout->description,
             'start_time' => $callout->created_at,
             'end_time' => now(), // Time of cancellation
@@ -269,7 +255,7 @@ class CalloutService
         $registeredParticipants = $callout->participants()
             ->whereNotNull('user_id')
             ->pluck('user_id');
-        
+
         $participants = $participants->concat($registeredParticipants)->unique();
 
         $trip->participants()->sync($participants);
@@ -284,10 +270,8 @@ class CalloutService
     public function trigger(Callout $callout): void
     {
         DB::transaction(function () use ($callout) {
-            // 1. Update Callout Status
             $callout->update(['status' => 'triggered']);
 
-            // 2. Create Incident
             $callout->incident()->create([
                 'status' => 'open',
             ]);

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cave;
-use App\Models\User;
+use App\Models\CaveSystem;
 use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
@@ -23,9 +23,9 @@ class TaskController extends Controller
 
         // 2. Caves without Description
         $cavesNoDesc = Cave::where(function ($query) {
-                $query->whereNull('description')
-                      ->orWhere('description', '');
-            })
+            $query->whereNull('description')
+                  ->orWhere('description', '');
+        })
             ->select('id', 'name', 'slug', 'location_name')
             ->orderBy('name')
             ->get();
@@ -38,16 +38,16 @@ class TaskController extends Controller
             ->get();
 
         // 4. Systems without References
-        $systemsNoRefs = \App\Models\CaveSystem::where(function ($query) {
-                $query->whereNull('references')
-                      ->orWhere('references', '');
-            })
+        $systemsNoRefs = CaveSystem::where(function ($query) {
+            $query->whereNull('references')
+                  ->orWhere('references', '');
+        })
             ->select('id', 'name', 'slug')
             ->orderBy('name')
             ->get();
 
         // 5. Systems without Surveys (Files)
-        $systemsNoFiles = \App\Models\CaveSystem::doesntHave('files')
+        $systemsNoFiles = CaveSystem::doesntHave('files')
             ->select('id', 'name', 'slug')
             ->orderBy('name')
             ->get();

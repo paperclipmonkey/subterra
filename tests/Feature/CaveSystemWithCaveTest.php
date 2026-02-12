@@ -40,18 +40,18 @@ class CaveSystemWithCaveTest extends TestCase
                 'location_alt' => 100,
                 'access_info' => 'Open',
                 'slug' => 'test-cave',
-            ]
+            ],
         ];
 
         $response = $this->postJson('/api/cave_systems_with_cave', $payload);
         $response->assertCreated();
         $response->assertJsonStructure([
             'system' => [
-                'id', 'name', 'slug', 'description', 'length', 'vertical_range', 'caves', 'tags', 'references', 'files', 'created_at', 'updated_at'
+                'id', 'name', 'slug', 'description', 'length', 'vertical_range', 'caves', 'tags', 'references', 'files', 'created_at', 'updated_at',
             ],
             'cave' => [
-                'id', 'slug', 'name', 'description', 'access_info', 'hero_image', 'entrance_image', 'tags', 'location_name', 'location_country', 'location_lat', 'location_lng', 'system', 'previously_done'
-            ]
+                'id', 'slug', 'name', 'description', 'access_info', 'hero_image', 'entrance_image', 'tags', 'location_name', 'location_country', 'location_lat', 'location_lng', 'system', 'previously_done',
+            ],
         ]);
         $this->assertDatabaseHas('cave_systems', ['name' => 'Test System']);
         $this->assertDatabaseHas('caves', ['name' => 'Test Cave']);

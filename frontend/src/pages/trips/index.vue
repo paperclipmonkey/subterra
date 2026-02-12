@@ -1,6 +1,6 @@
 <template>
   <TripList />
-  <v-fab color="primary" to="/create-trip" class="fab" icon="mdi-plus"></v-fab>
+  <v-fab color="primary" to="/create-trip" class="fab" icon="mdi-plus" />
 </template>
 
 <script setup>

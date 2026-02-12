@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
-use App\Models\IncidentNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class IncidentController extends Controller
 {
     /**
-     * List incidents (dashboard)
+     * List incidents (dashboard).
      */
     public function index()
     {
@@ -26,58 +25,58 @@ class IncidentController extends Controller
     }
 
     /**
-     * Show single incident (War Room)
+     * Show single incident (War Room).
      */
     public function show($id)
     {
         $incident = Incident::with([
-            'callout.cave.tags', 
-            'callout.exitCave', 
-            'callout.user', 
-            'callout.participants', 
-            'controller', 
-            'notes.user'
+            'callout.cave.tags',
+            'callout.exitCave',
+            'callout.user',
+            'callout.participants',
+            'controller',
+            'notes.user',
         ])->findOrFail($id);
 
         return response()->json(['data' => $incident]);
     }
 
     /**
-     * Acknowledge responsibility for an incident
+     * Acknowledge responsibility for an incident.
      */
     public function acknowledge($id)
     {
         $incident = Incident::findOrFail($id);
-        
+
         if ($incident->incident_controller_id) {
-            return response()->json(['message' => 'Incident already acknowledged by ' . $incident->controller->name], 409);
+            return response()->json(['message' => 'Incident already acknowledged by '.$incident->controller->name], 409);
         }
 
         $incident->update([
             'incident_controller_id' => Auth::id(),
             'acknowledged_at' => now(),
-            'status' => 'managed'
+            'status' => 'managed',
         ]);
 
         // Auto-note
         $incident->notes()->create([
             'user_id' => Auth::id(),
-            'content' => 'Acknowledged incident. Assuming Controller role.'
+            'content' => 'Acknowledged incident. Assuming Controller role.',
         ]);
 
         return response()->json(['data' => $incident->load('controller')]);
     }
 
     /**
-     * Add a note (or police log)
+     * Add a note (or police log).
      */
     public function addNote(Request $request, $id)
     {
         $incident = Incident::findOrFail($id);
-        
+
         $data = $request->validate([
             'content' => 'required|string',
-            'police_log_number' => 'nullable|string'
+            'police_log_number' => 'nullable|string',
         ]);
 
         if (isset($data['police_log_number'])) {
@@ -86,24 +85,24 @@ class IncidentController extends Controller
 
         $note = $incident->notes()->create([
             'user_id' => Auth::id(),
-            'content' => $data['content']
+            'content' => $data['content'],
         ]);
 
         return response()->json(['data' => $note]);
     }
 
     /**
-     * Resolve the incident & callout
+     * Resolve the incident & callout.
      */
     public function resolve(Request $request, $id)
     {
         $incident = Incident::findOrFail($id);
-        
+
         $incident->resolve(); // Updates incident and callout
 
         $incident->notes()->create([
             'user_id' => Auth::id(),
-            'content' => 'Incident RESOLVED. ' . $request->input('notes', '')
+            'content' => 'Incident RESOLVED. '.$request->input('notes', ''),
         ]);
 
         return response()->json(['message' => 'Incident resolved']);
