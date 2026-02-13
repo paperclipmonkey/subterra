@@ -1,24 +1,18 @@
 <template>
-  <v-card class="map-container">
-    <v-card-text class="map-holder">
-      <mgl-map ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
-        <mgl-marker v-for="(callout) in validCallouts" :key="callout.id"
-                    :coordinates="[callout.lng, callout.lat]">
-          <mgl-popup>
-            <v-card width="200px">
-              <v-card-title class="subtitle-2">{{ callout.cave_name || 'Unknown Location' }}</v-card-title>
-              <v-card-text class="caption pa-2">
-                <!-- Team Size removed as per request -->
-                <!-- Exiting time removed as per request -->
-              </v-card-text>
-            </v-card>
-          </mgl-popup>
-        </mgl-marker>
-        <mgl-fullscreen-control />
-        <mgl-navigation-control />
-      </mgl-map>
-    </v-card-text>
-  </v-card>
+  <div class="map-container">
+    <mgl-map ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
+      <mgl-marker v-for="(callout) in validCallouts" :key="callout.id"
+                  :coordinates="[callout.lng, callout.lat]">
+        <mgl-popup>
+          <v-card width="200px">
+            <v-card-title class="subtitle-2">{{ callout.cave_name || 'Unknown Location' }}</v-card-title>
+          </v-card>
+        </mgl-popup>
+      </mgl-marker>
+      <mgl-fullscreen-control />
+      <mgl-navigation-control />
+    </mgl-map>
+  </div>
 </template>
 
 <script setup>
@@ -87,12 +81,21 @@ watch(() => validCallouts.value, () => {
 .map-container {
   height: 400px;
   width: 100%;
-}
+  position: relative;
 
-.map-holder {
-  padding: 0;
-  width: 100%;
-  height: 100%;
+  &:fullscreen {
+    z-index: 9999;
+    background: white;
+  }
+
+  &:-webkit-full-screen {
+    z-index: 9999;
+    background: white;
+  }
+
+  &::backdrop {
+    background-color: white;
+  }
 }
 
 .maplibregl-popup .maplibregl-popup-content {

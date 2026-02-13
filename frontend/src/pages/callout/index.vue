@@ -12,7 +12,7 @@
         </div>
 
         <!-- Callout Stats & Map -->
-        <v-card v-if="activeCallouts.length > 0" class="mb-6 elevation-2">
+        <v-card v-if="activeCallouts.length > 0" class="mb-6 elevation-2 overflow-hidden">
           <v-alert icon="mdi-account-group" border="start" variant="tonal" color="info" density="compact" class="mb-0 rounded-b-0">
             <strong>{{ activeCallouts.length }} Open Trips</strong> currently underground.
           </v-alert>
@@ -108,85 +108,85 @@ import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue';
 import { useAppStore } from '@/stores/app';
 
 export default {
-    name: 'CalloutLanding',
-    components: {
-        ActiveCalloutMap
-    },
-    setup() {
-        const appStore = useAppStore();
-        return { appStore };
-    },
-    data() {
-        return {
-            activeCallouts: [],
-            onCallOfficer: null,
-            loading: true
-        }
-    },
-    computed: {
-        dutyOfficerColor() {
-            if (this.onCallOfficer) return 'success-lighten-5';
-            return 'red-lighten-5';
-        }
-    },
-    async mounted() {
-        await Promise.all([
-            this.fetchActiveCallouts(),
-            this.fetchDutyOfficer(),
-            this.appStore.getUser() // Ensure we have the latest user state with active_callout
-        ]);
-        this.loading = false;
-    },
-    methods: {
-        async fetchActiveCallouts() {
-            try {
-                const res = await axios.get('/api/callouts/active');
-                this.activeCallouts = res.data.data;
-            } catch (e) {
-                console.error("Failed to fetch open callouts", e);
-            }
-        },
-        async fetchDutyOfficer() {
-            try {
-                const res = await axios.get('/api/duty-officers/current');
-                const data = res.data.data;
-
-                if (data.is_covered) {
-                    this.onCallOfficer = data;
-                } else {
-                    this.onCallOfficer = null;
-                }
-            } catch (e) {
-                console.error("Failed to fetch duty officer", e);
-                this.onCallOfficer = null;
-            }
-        },
-        formatDate(d) {
-            if (!d) return '';
-            return moment(d).format('HH:mm');
-        },
-        formatFullDate(d) {
-            if (!d) return '';
-            // If it's today, show time, else show date and time
-            if (moment(d).isSame(moment(), 'day')) {
-                return 'today at ' + moment(d).format('HH:mm');
-            }
-            return moment(d).format('MMM Do, HH:mm');
-        }
+  name: 'CalloutLanding',
+  components: {
+    ActiveCalloutMap
+  },
+  setup() {
+    const appStore = useAppStore();
+    return { appStore };
+  },
+  data() {
+    return {
+      activeCallouts: [],
+      onCallOfficer: null,
+      loading: true
     }
+  },
+  computed: {
+    dutyOfficerColor() {
+      if (this.onCallOfficer) return 'success-lighten-5';
+      return 'red-lighten-5';
+    }
+  },
+  async mounted() {
+    await Promise.all([
+      this.fetchActiveCallouts(),
+      this.fetchDutyOfficer(),
+      this.appStore.getUser() // Ensure we have the latest user state with active_callout
+    ]);
+    this.loading = false;
+  },
+  methods: {
+    async fetchActiveCallouts() {
+      try {
+        const res = await axios.get('/api/callouts/active');
+        this.activeCallouts = res.data.data;
+      } catch (e) {
+        console.error("Failed to fetch open callouts", e);
+      }
+    },
+    async fetchDutyOfficer() {
+      try {
+        const res = await axios.get('/api/duty-officers/current');
+        const data = res.data.data;
+
+        if (data.is_covered) {
+          this.onCallOfficer = data;
+        } else {
+          this.onCallOfficer = null;
+        }
+      } catch (e) {
+        console.error("Failed to fetch duty officer", e);
+        this.onCallOfficer = null;
+      }
+    },
+    formatDate(d) {
+      if (!d) return '';
+      return moment(d).format('HH:mm');
+    },
+    formatFullDate(d) {
+      if (!d) return '';
+      // If it's today, show time, else show date and time
+      if (moment(d).isSame(moment(), 'day')) {
+        return 'today at ' + moment(d).format('HH:mm');
+      }
+      return moment(d).format('MMM Do, HH:mm');
+    }
+  }
 }
 </script>
 
 <style scoped>
 .success-lighten-5 {
-    background-color: #E8F5E9;
-    /* Green 50 */
-    border-color: #A5D6A7;
+  background-color: #E8F5E9;
+  /* Green 50 */
+  border-color: #A5D6A7;
 }
 
 .red-lighten-5 {
-    background-color: #FFEBEE;
-    /* Red 50 */
-    border-color: #EF9A9A;
+  background-color: #FFEBEE;
+  /* Red 50 */
+  border-color: #EF9A9A;
 }
 </style>
