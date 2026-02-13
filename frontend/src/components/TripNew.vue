@@ -79,11 +79,13 @@
               <v-autocomplete v-model="trip.participants" v-model:search="userSearch" label="Participants" :items="users" item-title="name" item-value="id"
                               multiple chips closable-chips
                               :rules="rules.participants"
-                              :error-messages="validationErrors.participants" hint="Type 3+ characters to search for users. All participants can edit this report."
+                              :loading="isSearching"
+                              :error-messages="validationErrors.participants" hint="Type to search for users. All participants can edit this report."
                               persistent-hint autocomplete="off"
                               name="random_unique_user_search_field"
                               variant="outlined"
-                              @update:search="onUserSearch">
+                              @update:search="onUserSearch"
+                              @focus="onUserSearch('')">
                 <template #chip="{ props, item }">
                   <v-chip v-bind="props" :prepend-avatar="item.raw.photo" :text="item.raw.name" />
                 </template>
@@ -239,6 +241,7 @@ const markdownOutput = ref('')
 const showAddParticipant = ref(false)
 const isSaving = ref(false)
 const isAddingParticipant = ref(false)
+const isSearching = ref(false)
 const addParticipantError = ref(null)
 
 let trip = reactive({
@@ -272,8 +275,9 @@ let searchTimeout = null
 
 const onUserSearch = (val) => {
   if (searchTimeout) clearTimeout(searchTimeout)
-  if (!val || val.length < 3) return
+  if (val === null) return;
 
+  isSearching.value = true
   searchTimeout = setTimeout(async () => {
     try {
       const response = await fetch(`/api/users?search=${encodeURIComponent(val)}`)
@@ -288,6 +292,8 @@ const onUserSearch = (val) => {
       })
     } catch (e) {
       console.error('Error searching users', e)
+    } finally {
+      isSearching.value = false
     }
   }, 300)
 }

@@ -23,11 +23,6 @@ class UserController extends Controller
         $currentUser = auth()->user();
         $search = $request->input('search');
 
-        // If no search term or too short, return empty list
-        if (!$search || strlen($search) < 3) {
-            return UserResource::collection(collect());
-        }
-
         // Get IDs of users in the same clubs
         $clubUserIds = collect();
         if ($currentUser) {
@@ -39,53 +34,58 @@ class UserController extends Controller
             ->pluck('id')
             ->unique()
             ->filter(fn ($id) => $id !== $currentUser->id);
+            // \Log::info('Club User IDs: ' . $clubUserIds->implode(','));
         }
 
         // Count how many trips each user has shared with the current user
-        $trips = \App\Models\Trip::whereHas('participants', function ($q) use ($currentUser) {
-            $q->where('user_id', $currentUser->id);
-        })
-            ->with('participants:id')
-            ->get();
-
         $tripUserCounts = collect();
-        foreach ($trips as $trip) {
-            foreach ($trip->participants as $participant) {
-                if ($participant->id !== $currentUser->id) {
-                    $tripUserCounts[$participant->id] = ($tripUserCounts[$participant->id] ?? 0) + 1;
+        if ($currentUser) {
+            $trips = \App\Models\Trip::whereHas('participants', function ($q) use ($currentUser) {
+                $q->where('user_id', $currentUser->id);
+            })
+                ->with('participants:id')
+                ->get();
+
+            foreach ($trips as $trip) {
+                foreach ($trip->participants as $participant) {
+                    if ($participant->id !== $currentUser->id) {
+                        $tripUserCounts[$participant->id] = ($tripUserCounts[$participant->id] ?? 0) + 1;
+                    }
                 }
             }
         }
 
-        // Use unaccent() and ILIKE for case-insensitive and liberal matching in PostgreSQL
-        $users = User::where(function ($query) use ($search) {
-            if (config('database.default') === 'pgsql') {
-                $query->whereRaw('unaccent(name) ILIKE unaccent(?)', ['%'.$search.'%'])
-                      ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
-            } else {
-                // Fallback for SQLite/others where unaccent isn't available
-                $query->where('name', 'LIKE', '%'.$search.'%')
-                      ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+        $query = User::query();
+
+        if ($search) {
+            // If searching, filter by name or email
+            $query->where(function ($q) use ($search) {
+                if (config('database.default') === 'pgsql') {
+                    $q->whereRaw('unaccent(name) ILIKE unaccent(?)', ['%'.$search.'%'])
+                          ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+                } else {
+                    $q->where('name', 'LIKE', '%'.$search.'%')
+                          ->orWhereRaw('LOWER(email) = ?', [strtolower($search)]);
+                }
+            });
+        } else {
+            // If no search, only show club/trip contacts as suggestions
+            // If user isn't logged in, they get nothing (no search & no contacts)
+            if (!$currentUser) {
+                return UserResource::collection(collect());
             }
-        })
-            ->get()
+
+            $query->whereIn('id', $clubUserIds->merge($tripUserCounts->keys()));
+        }
+
+        $users = $query->get()
         ->filter(function ($user) use ($currentUser, $clubUserIds, $tripUserCounts, $search) {
-            // Always allow self
-            if ($currentUser && $user->id === $currentUser->id) {
+            // Suggestions should include self, search should not necessarily unless they match
+            if (!$search && $currentUser && $user->id === $currentUser->id) {
                 return true;
             }
 
-            // Allow exact email match regardless of other rules (if they know the email, they can add)
-            if (strcasecmp($user->email, $search) === 0) {
-                return true;
-            }
-
-            // Public users are visible
-            if ($user->visibility_addable === 'public') {
-                return true;
-            }
-
-            // Users in shared clubs are visible (regardless of their visibility_addable setting)
+            // Users in shared clubs are visible
             if ($clubUserIds->contains($user->id)) {
                 return true;
             }
@@ -95,10 +95,27 @@ class UserController extends Controller
                 return true;
             }
 
+            // Allow exact email match regardless of other rules
+            if ($search && strcasecmp($user->email, $search) === 0) {
+                return true;
+            }
+
+            // Public users are visible but only for active searches
+            if ($search && $user->visibility_addable === 'public') {
+                return true;
+            }
+
             // If none of the above, hide them
             return false;
-        })->map(function ($user) use ($clubUserIds, $tripUserCounts) {
+        })
+->map(function ($user) use ($clubUserIds, $tripUserCounts, $currentUser) {
             $score = 0;
+            
+            // Current user gets a small score to be visible in suggestions but not top
+            if ($currentUser && $user->id === $currentUser->id) {
+                $score = 0;
+            }
+
             // Priority 1 (High): Previous Trips
             if (isset($tripUserCounts[$user->id])) {
                 // Give a high score for trips, potentially weighted by count
@@ -120,6 +137,7 @@ class UserController extends Controller
             return $user;
         })
         ->sortByDesc('proximity_score')
+        ->take(20) // Limit results
         ->values();
 
         return UserResource::collection($users);
