@@ -191,7 +191,6 @@ describe('Trip', () => {
     })
 
     await flushPromises()
-    console.log(wrapper.html())
     expect(wrapper.text()).toContain('Trip not found')
     // Ensure loading is false (which it is if we see text)
   })
