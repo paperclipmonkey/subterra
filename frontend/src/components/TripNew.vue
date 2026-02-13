@@ -57,15 +57,17 @@
               </v-row>
               <v-row>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="tripDurationHours" label="Duration (hours)" type="number" min="0"
+                  <v-text-field v-model="tripDurationHours" label="Duration (hours)" type="number" min="0" step="1"
                                 :rules="rules.duration" :error-messages="validationErrors.end_time"
                                 required hint="How many hours the trip lasted."
+                                @input="tripDurationHours = Math.floor(tripDurationHours)"
                                 persistent-hint variant="outlined" @update:model-value="delete validationErrors.end_time" />
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="tripDurationMinutes" label="Duration (minutes)" type="number" min="0" max="59"
+                  <v-text-field v-model="tripDurationMinutes" label="Duration (minutes)" type="number" min="0" max="59" step="1"
                                 :rules="rules.duration" :error-messages="validationErrors.end_time"
                                 required hint="How many minutes the trip lasted."
+                                @input="tripDurationMinutes = Math.floor(tripDurationMinutes)"
                                 persistent-hint variant="outlined" @update:model-value="delete validationErrors.end_time" />
                 </v-col>
               </v-row>
@@ -368,6 +370,10 @@ const rules = {
     () => {
       if (tripDurationHours.value > 0 || tripDurationMinutes.value > 0) return true
       return 'Duration must be greater than zero.'
+    },
+    () => {
+      if (Number.isInteger(Number(tripDurationHours.value)) && Number.isInteger(Number(tripDurationMinutes.value))) return true
+      return 'Duration must be a whole number.'
     }
   ],
   participants: [
