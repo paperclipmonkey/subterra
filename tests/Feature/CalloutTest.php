@@ -157,12 +157,20 @@ class CalloutTest extends TestCase
     public function test_guest_can_view_callout_details()
     {
         $user = User::factory()->create();
-        $callout = Callout::factory()->create(['user_id' => $user->id]);
+        $cave = Cave::factory()->create();
+        $exitCave = Cave::factory()->create();
+        $callout = Callout::factory()->create([
+            'user_id' => $user->id,
+            'cave_id' => $cave->id,
+            'exit_cave_id' => $exitCave->id,
+        ]);
 
         $response = $this->getJson("/api/callouts/{$callout->id}");
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.id', $callout->id);
+        $response->assertJsonPath('data.cave.id', $cave->id);
+        $response->assertJsonPath('data.exit_cave.id', $exitCave->id);
     }
 
     public function test_user_can_mark_safe_after_rescue_initiated()

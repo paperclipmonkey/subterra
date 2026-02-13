@@ -30,7 +30,11 @@
         <v-card class="mb-6">
           <v-card-title class="headline">
             <v-icon left color="primary">mdi-map-marker</v-icon>
-            {{ callout.cave ? callout.cave.name : callout.description }}
+            <router-link v-if="callout.cave" :to="'/caves/' + callout.cave.slug"
+                         class="text-decoration-none text-primary font-weight-bold">
+              {{ callout.cave.name }}
+            </router-link>
+            <span v-else>{{ callout.description }}</span>
           </v-card-title>
           <v-card-text>
             <v-list dense>
@@ -128,123 +132,123 @@ const loading = ref(true);
 let timer = null;
 
 const timeRemaining = computed(() => {
-    if (!callout.value.callout_time) return '--:--:--';
-    const end = moment(callout.value.callout_time);
-    const diff = end.diff(now.value); // ms
-    if (diff <= 0) return 'OVERDUE';
+  if (!callout.value.callout_time) return '--:--:--';
+  const end = moment(callout.value.callout_time);
+  const diff = end.diff(now.value); // ms
+  if (diff <= 0) return 'OVERDUE';
 
-    const duration = moment.duration(diff);
-    const hours = Math.floor(duration.asHours());
-    const mins = duration.minutes();
-    const secs = duration.seconds();
+  const duration = moment.duration(diff);
+  const hours = Math.floor(duration.asHours());
+  const mins = duration.minutes();
+  const secs = duration.seconds();
 
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 });
 
 const cardColor = computed(() => {
-    if (callout.value.incident) return 'red-darken-4';
-    if (!callout.value.callout_time) return 'primary';
+  if (callout.value.incident) return 'red-darken-4';
+  if (!callout.value.callout_time) return 'primary';
 
-    const end = moment(callout.value.callout_time);
-    const diffMins = end.diff(now.value, 'minutes');
+  const end = moment(callout.value.callout_time);
+  const diffMins = end.diff(now.value, 'minutes');
 
-    if (diffMins < 30) return 'red-darken-4';
-    if (diffMins < 60) return 'orange-darken-4';
-    return 'primary';
+  if (diffMins < 30) return 'red-darken-4';
+  if (diffMins < 60) return 'orange-darken-4';
+  return 'primary';
 });
 
 const formatTime = (t) => moment(t).format('HH:mm');
 const formatDate = (t) => moment(t).format('ddd Do MMM');
 
 const cancelCallout = async () => {
-    confirmSafe.value = false;
+  confirmSafe.value = false;
 
-    // Attempt to get location for cancellation snapshot
-    let locationData = null;
-    if (navigator.geolocation) {
-        try {
-            const position = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-            });
-            locationData = `${position.coords.latitude},${position.coords.longitude} (acc: ${position.coords.accuracy}m)`;
-        } catch (e) {
-            console.log("Could not get location for cancellation", e);
-        }
-    }
-
+  // Attempt to get location for cancellation snapshot
+  let locationData = null;
+  if (navigator.geolocation) {
     try {
-        const response = await axios.post(`/api/callouts/${callout.value.id}/cancel`, {
-            location: locationData
-        });
-        toast.success("Callout Cancelled");
-
-        // Store the returned trip_id for the edit action
-        newTripId.value = response.data.trip_id;
-
-        // Update user state to remove open callout if logged in
-        if (appStore.user.id) {
-            await appStore.getUser();
-        }
-
-        // Show convert dialog
-        convertToTrip.value = true;
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+      });
+      locationData = `${position.coords.latitude},${position.coords.longitude} (acc: ${position.coords.accuracy}m)`;
     } catch (e) {
-        toast.error("Failed to cancel callout: " + (e.response?.data?.message || e.message));
+      console.log("Could not get location for cancellation", e);
     }
+  }
+
+  try {
+    const response = await axios.post(`/api/callouts/${callout.value.id}/cancel`, {
+      location: locationData
+    });
+    toast.success("Callout Cancelled");
+
+    // Store the returned trip_id for the edit action
+    newTripId.value = response.data.trip_id;
+
+    // Update user state to remove open callout if logged in
+    if (appStore.user.id) {
+      await appStore.getUser();
+    }
+
+    // Show convert dialog
+    convertToTrip.value = true;
+  } catch (e) {
+    toast.error("Failed to cancel callout: " + (e.response?.data?.message || e.message));
+  }
 };
 
 const finish = () => {
-    convertToTrip.value = false;
-    router.push('/');
+  convertToTrip.value = false;
+  router.push('/');
 };
 
 const editTrip = () => {
-    if (newTripId.value) {
-        router.push(`/trips/${newTripId.value}/edit`);
-    } else {
-        router.push('/');
-    }
+  if (newTripId.value) {
+    router.push(`/trips/${newTripId.value}/edit`);
+  } else {
+    router.push('/');
+  }
 };
 
 const fetchCallout = async (id) => {
-    try {
-        const res = await axios.get(`/api/callouts/${id}`);
-        callout.value = res.data.data;
-    } catch (e) {
-        toast.error("Could not load callout details.");
-        console.error(e);
-    } finally {
-        loading.value = false;
-    }
+  try {
+    const res = await axios.get(`/api/callouts/${id}`);
+    callout.value = res.data.data;
+  } catch (e) {
+    toast.error("Could not load callout details.");
+    console.error(e);
+  } finally {
+    loading.value = false;
+  }
 };
 
 onMounted(async () => {
-    const idFromUrl = route.query.id;
+  const idFromUrl = route.query.id;
 
-    if (idFromUrl) {
-        await fetchCallout(idFromUrl);
-    } else if (appStore.user.active_callout) {
-        callout.value = appStore.user.active_callout;
-        loading.value = false;
+  if (idFromUrl) {
+    await fetchCallout(idFromUrl);
+  } else if (appStore.user.active_callout) {
+    callout.value = appStore.user.active_callout;
+    loading.value = false;
+  } else {
+    // Try to fetch user just in case
+    await appStore.getUser();
+    if (appStore.user.active_callout) {
+      callout.value = appStore.user.active_callout;
+      loading.value = false;
     } else {
-        // Try to fetch user just in case
-        await appStore.getUser();
-        if (appStore.user.active_callout) {
-            callout.value = appStore.user.active_callout;
-            loading.value = false;
-        } else {
-            loading.value = false;
-            toast.info("No active callout found.");
-            router.push('/callout');
-        }
+      loading.value = false;
+      toast.info("No active callout found.");
+      router.push('/callout');
     }
+  }
 
-    timer = setInterval(() => {
-        now.value = moment();
-    }, 1000);
+  timer = setInterval(() => {
+    now.value = moment();
+  }, 1000);
 });
 
 onUnmounted(() => {
-    if (timer) clearInterval(timer);
+  if (timer) clearInterval(timer);
 });
 </script>

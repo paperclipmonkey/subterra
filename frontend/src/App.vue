@@ -1,10 +1,10 @@
 <template>
   <v-app>
     <!-- Content moves down if banner is present? v-system-bar app fixes to top -->
-    <v-system-bar v-if="appStore.user && appStore.user.active_callout" color="red darken-2"
+    <v-system-bar v-if="showActiveCalloutBanner" :color="calloutBannerColor"
                   class="text-white cursor-pointer px-4" height="40" style="cursor: pointer; z-index: 9999;"
                   window @click="router.push('/callout/active')">
-      <v-icon color="white" class="mr-2">mdi-alert-circle</v-icon>
+      <v-icon color="white" class="mr-2">{{ calloutBannerIcon }}</v-icon>
       <span class="font-weight-bold">OPEN CALLOUT IN PROGRESS</span>
       <v-spacer />
       <span class="d-none d-sm-flex">
@@ -60,7 +60,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
 import PrivacyNotice from '@/components/PrivacyNotice.vue'
@@ -69,6 +69,23 @@ import moment from 'moment'
 const notificationStore = useNotificationStore()
 const appStore = useAppStore()
 const router = useRouter()
+const route = useRoute()
+
+const showActiveCalloutBanner = computed(() => {
+  return appStore.user && appStore.user.active_callout && route.path !== '/callout/active'
+})
+
+const calloutBannerColor = computed(() => {
+  if (!appStore.user?.active_callout) return 'red darken-2'
+  const diff = moment(appStore.user.active_callout.callout_time).diff(moment(), 'minutes')
+  return diff < 60 ? 'red darken-2' : 'warning'
+})
+
+const calloutBannerIcon = computed(() => {
+  if (!appStore.user?.active_callout) return 'mdi-alert-circle'
+  const diff = moment(appStore.user.active_callout.callout_time).diff(moment(), 'minutes')
+  return diff < 60 ? 'mdi-alert-circle' : 'mdi-alert-outline'
+})
 
 const hasPendingApprovals = computed(() => {
   return appStore.user.clubs && appStore.user.clubs.some(club => club.status === 'pending')

@@ -98,12 +98,7 @@ class CalloutController extends Controller
 
     public function show($id)
     {
-        $callout = Callout::with('participants')->findOrFail($id);
-
-        // If logged in, we might want to check permissions, but the requirement says
-        // "make it possible to load the callout details page without being logged in"
-        // which implies if you have the ID (random string), you can see it.
-
+        $callout = Callout::with(['participants', 'cave', 'exitCave'])->findOrFail($id);
         return response()->json(['data' => $callout]);
     }
 
