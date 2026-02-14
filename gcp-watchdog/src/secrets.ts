@@ -52,3 +52,7 @@ export function getSecret(key: keyof SecretsConfig): string {
     const secrets = loadSecrets();
     return secrets[key] || '';
 }
+
+export function resetSecrets(): void {
+    cachedSecrets = null;
+}

@@ -11,10 +11,38 @@ import { getSecret } from './secrets';
 const app = express();
 app.use(express.json());
 
-// Initialize clients
-const firestoreClient = new FirestoreClient();
-const smsClient = new TextMagicClient();
-const emailClient = new SMTPClient();
+// Initialize clients lazily to allow for better test mocking
+let firestoreClient: FirestoreClient;
+let smsClient: TextMagicClient;
+let emailClient: SMTPClient;
+
+const getFirestoreClient = () => {
+    if (!firestoreClient) firestoreClient = new FirestoreClient();
+    return firestoreClient;
+};
+
+const getSmsClient = () => {
+    if (!smsClient) smsClient = new TextMagicClient();
+    return smsClient;
+};
+
+const getEmailClient = () => {
+    if (!emailClient) emailClient = new SMTPClient();
+    return emailClient;
+};
+
+/**
+ * For testing purposes: inject mock clients
+ */
+export const setClients = (
+    firestore?: any,
+    sms?: any,
+    email?: any
+) => {
+    if (firestore) firestoreClient = firestore;
+    if (sms) smsClient = sms;
+    if (email) emailClient = email;
+};
 
 /**
  * Middleware to check API Key
@@ -61,7 +89,7 @@ app.post('/watchdog', async (req: Request, res: Response) => {
         }
 
         // Store in Firestore
-        await firestoreClient.createWatchdog(data.callout_id, data);
+        await getFirestoreClient().createWatchdog(data.callout_id, data);
 
         console.log(`Watchdog registered: ${data.callout_id} for ${data.callout_time}`);
 
@@ -86,7 +114,7 @@ app.delete('/watchdog', async (req: Request, res: Response) => {
         }
 
         // Delete from Firestore
-        await firestoreClient.deleteWatchdog(calloutId);
+        await getFirestoreClient().deleteWatchdog(calloutId);
 
         console.log(`Watchdog cancelled: ${calloutId}`);
 
@@ -104,7 +132,7 @@ app.delete('/watchdog', async (req: Request, res: Response) => {
 app.post('/check', async (req: Request, res: Response) => {
     try {
         // Query for overdue callouts
-        const overdueCallouts = await firestoreClient.getOverdueCallouts();
+        const overdueCallouts = await getFirestoreClient().getOverdueCallouts();
 
         if (overdueCallouts.length === 0) {
             console.log('No overdue callouts found');
@@ -150,17 +178,17 @@ Callout ID: ${calloutId}`;
             // Send SMS alerts
             const smsResults: Record<string, boolean> = {};
             for (const phone of phoneNumbers) {
-                smsResults[phone] = await smsClient.sendSms(phone, alertMessage);
+                smsResults[phone] = await getSmsClient().sendSms(phone, alertMessage);
             }
 
             // Send email alerts
             const emailResults: Record<string, boolean> = {};
             for (const email of emails) {
-                emailResults[email] = await emailClient.sendAlertEmail(email, callout);
+                emailResults[email] = await getEmailClient().sendAlertEmail(email, callout);
             }
 
             // Mark as alerted in Firestore
-            await firestoreClient.markAsAlerted(calloutId);
+            await getFirestoreClient().markAsAlerted(calloutId);
 
             alertsSent.push({
                 callout_id: calloutId,
@@ -184,10 +212,12 @@ Callout ID: ${calloutId}`;
     }
 });
 
-// Start server
-const port = parseInt(process.env.PORT || '8080');
-app.listen(port, () => {
-    console.log(`Watchdog service listening on port ${port}`);
-});
+// Start server only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+    const port = parseInt(process.env.PORT || '8080');
+    app.listen(port, () => {
+        console.log(`Watchdog service listening on port ${port}`);
+    });
+}
 
 export default app;

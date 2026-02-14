@@ -2,7 +2,7 @@
  * Unit tests for the main Express application.
  */
 import request from 'supertest';
-import app from '../src/index';
+import app, { setClients } from '../src/index';
 
 // Mock the clients
 jest.mock('../src/firestore-client');
@@ -12,6 +12,7 @@ jest.mock('../src/smtp-client');
 import { FirestoreClient } from '../src/firestore-client';
 import { TextMagicClient } from '../src/textmagic-client';
 import { SMTPClient } from '../src/smtp-client';
+import * as secrets from '../src/secrets';
 
 describe('Watchdog API', () => {
     let mockFirestore: jest.Mocked<FirestoreClient>;
@@ -22,6 +23,16 @@ describe('Watchdog API', () => {
         mockFirestore = new FirestoreClient() as jest.Mocked<FirestoreClient>;
         mockSms = new TextMagicClient() as jest.Mocked<TextMagicClient>;
         mockEmail = new SMTPClient() as jest.Mocked<SMTPClient>;
+
+        // Inject mocks
+        setClients(mockFirestore, mockSms, mockEmail);
+
+        secrets.resetSecrets();
+        jest.spyOn(secrets, 'getSecret').mockReturnValue('test-api-key');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     describe('GET /health', () => {
@@ -31,6 +42,32 @@ describe('Watchdog API', () => {
             expect(response.status).toBe(200);
             expect(response.body.status).toBe('healthy');
             expect(response.body.timestamp).toBeDefined();
+        });
+    });
+
+    describe('Authentication', () => {
+        it('should return 401 if API key is missing', async () => {
+            const response = await request(app).post('/watchdog');
+            expect(response.status).toBe(401);
+            expect(response.body.error).toContain('Unauthorized');
+        });
+
+        it('should return 401 if API key is incorrect', async () => {
+            const response = await request(app)
+                .post('/watchdog')
+                .set('X-Watchdog-Key', 'wrong-key');
+            expect(response.status).toBe(401);
+            expect(response.body.error).toContain('Unauthorized');
+        });
+
+        it('should bypass auth if WATCHDOG_API_KEY is not configured', async () => {
+            jest.spyOn(secrets, 'getSecret').mockReturnValue('');
+            const response = await request(app).post('/watchdog').send({
+                callout_id: 'test123',
+                callout_time: '2026-01-30T10:00:00Z',
+            });
+            // Should get to 200 or 400 (if body bad), but not 401
+            expect(response.status).not.toBe(401);
         });
     });
 
@@ -46,6 +83,7 @@ describe('Watchdog API', () => {
 
             const response = await request(app)
                 .post('/watchdog')
+                .set('X-Watchdog-Key', 'test-api-key')
                 .send(payload);
 
             expect(response.status).toBe(200);
@@ -56,6 +94,7 @@ describe('Watchdog API', () => {
         it('should return 400 if missing required fields', async () => {
             const response = await request(app)
                 .post('/watchdog')
+                .set('X-Watchdog-Key', 'test-api-key')
                 .send({});
 
             expect(response.status).toBe(400);
@@ -68,7 +107,8 @@ describe('Watchdog API', () => {
             mockFirestore.deleteWatchdog = jest.fn().mockResolvedValue(undefined);
 
             const response = await request(app)
-                .delete('/watchdog?callout_id=test123');
+                .delete('/watchdog?callout_id=test123')
+                .set('X-Watchdog-Key', 'test-api-key');
 
             expect(response.status).toBe(200);
             expect(response.body.message).toBe('Watchdog cancelled successfully');
@@ -76,7 +116,9 @@ describe('Watchdog API', () => {
         });
 
         it('should return 400 if missing callout_id', async () => {
-            const response = await request(app).delete('/watchdog');
+            const response = await request(app)
+                .delete('/watchdog')
+                .set('X-Watchdog-Key', 'test-api-key');
 
             expect(response.status).toBe(400);
             expect(response.body.error).toContain('Missing callout_id');
