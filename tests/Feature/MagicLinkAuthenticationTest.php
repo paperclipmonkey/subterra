@@ -207,7 +207,7 @@ class MagicLinkAuthenticationTest extends TestCase
         Mail::assertSent(\App\Mail\MagicLinkMail::class, 2);
 
         // Note: In v2.25+, old magic links are not automatically deleted.
-        // They expire based on their lifetime (30 minutes).
+        // They expire based on their configured lifetime.
         // This is acceptable because:
         // 1. Each link has a short lifetime
         // 2. Links are single-use (max_visits = 1)
