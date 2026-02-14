@@ -51,6 +51,21 @@ class CaveSystemController extends Controller
             }
         }
 
+        // Handle file updates
+        if ($request->filled('updated_files') && is_array($request->input('updated_files'))) {
+            foreach ($request->input('updated_files') as $fileData) {
+                if (isset($fileData['id'])) {
+                    $file = $caveSystem->files()->find($fileData['id']);
+                    if ($file) {
+                        $file->update([
+                            'original_filename' => $fileData['original_filename'] ?? $file->original_filename,
+                            'details' => $fileData['details'] ?? $file->details,
+                        ]);
+                    }
+                }
+            }
+        }
+
         // Handle new file uploads
         if ($request->hasFile('new_files')) {
             // Allowed MIME types for security

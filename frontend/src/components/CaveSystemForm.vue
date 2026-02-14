@@ -64,14 +64,48 @@
     <!-- Files Section (Optional, only show if files exist or are being added) -->
     <v-card-text v-if="showFiles">
       <h3 class="text-h6 mb-2">Files</h3>
-      <v-list v-if="internalSystem.files && internalSystem.files.length > 0" lines="one">
+      <v-list v-if="internalSystem.files && internalSystem.files.length > 0" lines="two">
         <v-list-item
           v-for="file in internalSystem.files"
           :key="file.id"
-          :title="file.original_filename || file.filename"
-          :subtitle="`${(file.size / 1024).toFixed(2)} KB`"
           :class="{ 'file-marked-for-deletion': filesToDelete.includes(file.id) }"
         >
+          <template #prepend>
+            <v-avatar color="grey-lighten-2" rounded>
+              <v-icon>mdi-file</v-icon>
+            </v-avatar>
+          </template>
+
+          <v-list-item-content>
+            <v-row dense>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="file.original_filename"
+                  label="Filename"
+                  density="compact"
+                  variant="underlined"
+                  hide-details
+                  :disabled="filesToDelete.includes(file.id)"
+                  @input="markFileUpdated(file)"
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="file.details"
+                  label="Description/Details"
+                  density="compact"
+                  variant="underlined"
+                  hide-details
+                  :disabled="filesToDelete.includes(file.id)"
+                  @input="markFileUpdated(file)"
+                />
+              </v-col>
+            </v-row>
+            <div class="text-caption text-grey mt-1">
+              {{ (file.size / 1024).toFixed(2) }} KB
+            </div>
+          </v-list-item-content>
+
           <template #append>
             <v-btn
               color="red"
@@ -83,14 +117,55 @@
           </template>
         </v-list-item>
       </v-list>
+      <h3 class="text-h6 mt-4 mb-2">New Files</h3>
+      <v-list v-if="pendingFiles.length > 0" lines="two">
+        <v-list-item v-for="(item, index) in pendingFiles" :key="item.id">
+          <template #prepend>
+            <v-avatar color="blue-lighten-4" rounded>
+              <v-icon>mdi-file-plus</v-icon>
+            </v-avatar>
+          </template>
+          
+          <v-list-item-content>
+            <v-row dense>
+              <v-col cols="12" sm="5">
+                <div class="text-subtitle-1 text-truncate">{{ item.file.name }}</div>
+                <div class="text-caption text-grey">{{ (item.file.size / 1024).toFixed(2) }} KB</div>
+              </v-col>
+              <v-col cols="12" sm="7">
+                <v-text-field
+                  v-model="item.details"
+                  label="Description/Details"
+                  density="compact"
+                  variant="underlined"
+                  hide-details
+                  placeholder="Enter file description"
+                />
+              </v-col>
+            </v-row>
+          </v-list-item-content>
+
+          <template #append>
+            <v-btn
+              color="red"
+              icon="mdi-close"
+              variant="text"
+              size="small"
+              @click="removePendingFile(index)"
+            />
+          </template>
+        </v-list-item>
+      </v-list>
+
       <v-file-input
-        v-model="newFiles"
+        v-model="fileInputModel"
         label="Upload New Files"
         multiple
         chips
         show-size
         counter
         prepend-icon="mdi-paperclip"
+        @update:model-value="addFiles"
       />
 
       <v-alert
@@ -120,11 +195,11 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'update:filesToDelete', 'update:newFiles'])
+const emit = defineEmits(['update:modelValue', 'update:filesToDelete', 'update:newFiles', 'update:updatedFiles'])
 
 const internalSystem = ref({ ...props.modelValue })
 const filesToDelete = ref([])
-const newFiles = ref([])
+
 
 watch(() => props.modelValue, (newVal) => {
   if (JSON.stringify(newVal) !== JSON.stringify(internalSystem.value)) {
@@ -148,9 +223,43 @@ const toggleFileDeletion = (fileId) => {
   emit('update:filesToDelete', filesToDelete.value)
 }
 
-watch(newFiles, (newVal) => {
+const updatedFiles = ref([])
+
+const markFileUpdated = (file) => {
+  if (!updatedFiles.value.find(f => f.id === file.id)) {
+    updatedFiles.value.push(file)
+  }
+  emit('update:updatedFiles', updatedFiles.value)
+}
+
+const pendingFiles = ref([])
+const fileInputModel = ref([])
+
+const addFiles = (files) => {
+  if (!files) return
+
+  Array.from(files).forEach(file => {
+    // Check if file already exists in pendingFiles to avoid duplicates
+    if (!pendingFiles.value.some(pf => pf.file.name === file.name && pf.file.size === file.size)) {
+      pendingFiles.value.push({
+        file: file,
+        details: '',
+        id: Math.random().toString(36).substring(7) // Temp ID for v-for key
+      })
+    }
+  })
+
+  // Clear the input so standard file input behavior doesn't get in the way
+  fileInputModel.value = []
+}
+
+const removePendingFile = (index) => {
+  pendingFiles.value.splice(index, 1)
+}
+
+watch(pendingFiles, (newVal) => {
   emit('update:newFiles', newVal)
-})
+}, { deep: true })
 
 const slugify = (value) => {
   if (!value) return ''

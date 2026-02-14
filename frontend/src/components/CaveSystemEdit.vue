@@ -15,6 +15,7 @@
             v-model="cavesystem"
             v-model:files-to-delete="filesToDelete"
             v-model:new-files="newFiles"
+            v-model:updated-files="updatedFiles"
             :show-files="true"
           />
         </v-col>
@@ -60,6 +61,7 @@ const errorMessage = ref('')
 
 const filesToDelete = ref([])
 const newFiles = ref([])
+const updatedFiles = ref([])
 
 const cavesystem = ref({
   name: '',
@@ -81,6 +83,7 @@ const load = async () => {
     cavesystem.value.files = cavesystem.value.files || []
     filesToDelete.value = []
     newFiles.value = []
+    updatedFiles.value = []
   } catch (error) {
     console.error("Error loading cave system data:", error)
   }
@@ -110,8 +113,18 @@ const save = async () => {
       formData.append('deleted_files[]', fileId)
     })
 
-    newFiles.value.forEach((file) => {
-      formData.append('new_files[]', file)
+    newFiles.value.forEach((fileObj, index) => {
+      formData.append('new_files[]', fileObj.file)
+      // Send details corresponding to the file index
+      if (fileObj.details) {
+        formData.append(`new_file_details[${index}]`, fileObj.details)
+      }
+    })
+
+    updatedFiles.value.forEach((file, index) => {
+      formData.append(`updated_files[${index}][id]`, file.id)
+      formData.append(`updated_files[${index}][original_filename]`, file.original_filename)
+      formData.append(`updated_files[${index}][details]`, file.details)
     })
 
     try {
@@ -146,8 +159,15 @@ const save = async () => {
     // Suggest Edit
     try {
       const processedNewFiles = await Promise.all(
-        newFiles.value.map(async (file) => {
-          return await convertFileToBase64(file)
+        newFiles.value.map(async (fileObj) => {
+          const base64 = await convertFileToBase64(fileObj.file)
+          return {
+            data: base64,
+            name: fileObj.file.name,
+            details: fileObj.details,
+            mime_type: fileObj.file.type,
+            size: fileObj.file.size
+          }
         })
       )
 
