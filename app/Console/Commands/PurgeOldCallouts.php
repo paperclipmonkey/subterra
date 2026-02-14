@@ -34,8 +34,14 @@ class PurgeOldCallouts extends Command
             ->where(function ($query) {
                 $query->whereNotNull('car_details')
                     ->orWhereNotNull('team_details')
-                    ->orWhereNotNull('trip_plan');
+                    ->orWhereNotNull('trip_plan')
+                    ->orWhereHas('participants', function ($q) {
+                        $q->whereNotNull('name')
+                            ->orWhereNotNull('phone')
+                            ->orWhereNotNull('email');
+                    });
             })
+            ->with('participants')
             ->get();
 
         $count = $calloutsToScrub->count();
@@ -52,8 +58,18 @@ class PurgeOldCallouts extends Command
                 'team_details' => null,
                 'trip_plan' => null,
             ]);
+
+            foreach ($callout->participants as $participant) {
+                // We keep user_id if present to link to internal profiles, 
+                // but scrub the ad-hoc contact details.
+                $participant->update([
+                    'name' => 'Scrubbed Participant',
+                    'phone' => null,
+                    'email' => null,
+                ]);
+            }
         }
 
-        $this->info("Successfully scrubbed sensitive data from {$count} callouts.");
+        $this->info("Successfully scrubbed sensitive data from {$count} callouts and their participants.");
     }
 }
