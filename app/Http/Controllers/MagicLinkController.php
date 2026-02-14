@@ -56,38 +56,9 @@ class MagicLinkController extends Controller
                 }
             }
 
-            // Invalidate any existing magic links for this user by finding all magic links
-            // and checking which ones are for LoginAction with this user
-            $existingLinks = DB::table('magic_links')->get();
-            $deletedCount = 0;
-
-            foreach ($existingLinks as $link) {
-                try {
-                    // Try direct unserialize first (for test environment)
-                    $action = unserialize($link->action);
-                } catch (\Exception $e) {
-                    try {
-                        // If that fails, try base64 decode first (for production environment)
-                        $action = unserialize(base64_decode($link->action));
-                    } catch (\Exception $e2) {
-                        // Skip invalid serialized data
-                        continue;
-                    }
-                }
-
-                if ($action instanceof \MagicLink\Actions\LoginAction) {
-                    // Use reflection to get the user ID from the LoginAction
-                    $reflection = new \ReflectionClass($action);
-                    $authIdentifierProperty = $reflection->getProperty('authIdentifier');
-                    $authIdentifierProperty->setAccessible(true);
-                    $actionUserId = $authIdentifierProperty->getValue($action);
-
-                    if ($actionUserId == $user->id) {
-                        DB::table('magic_links')->where('id', $link->id)->delete();
-                        ++$deletedCount;
-                    }
-                }
-            }
+            // Note: In v2.25+, actions are serialized with HMAC signing, making it
+            // impractical to query by user ID. We rely on the lifetime expiry instead.
+            // Old links will expire automatically after 30 minutes.
 
             // Create new magic link for login (30 minutes lifetime)
             $magiclink = MagicLink::create(new LoginAction($user), 30);
@@ -98,7 +69,6 @@ class MagicLinkController extends Controller
             Log::info('Magic link sent', [
                 'email' => $email,
                 'user_id' => $user->id,
-                'invalidated_links_count' => $deletedCount,
             ]);
 
             return response()->json([
@@ -132,58 +102,25 @@ class MagicLinkController extends Controller
                 ], 400);
             }
 
-            if (strpos($token, ':') !== false) {
-                $token = explode(':', $token, 2)[1];
-            }
+            // Use the MagicLink model to get and validate the token
+            $magicLink = \MagicLink\MagicLink::getValidMagicLinkByToken($token);
 
-            // Query the magic_links table directly
-            $magicLinkData = DB::table('magic_links')
-                ->where('token', $token)
-                ->first();
-
-            if (!$magicLinkData) {
+            if (!$magicLink) {
                 return response()->json([
                     'error' => 'Invalid or expired magic link',
                 ], 401);
             }
 
-            // Check if the magic link has expired
-            // available_at is the expiration time for magic links
-            if ($magicLinkData->available_at && now() > $magicLinkData->available_at) {
-                return response()->json([
-                    'error' => 'Magic link has expired',
-                ], 401);
-            }
+            // Get the action - this will automatically deserialize using the new format
+            $action = $magicLink->action;
 
-            // Check max visits (default is 1 for LoginAction)
-            $maxVisits = $magicLinkData->max_visits ?? 1;
-            if ($magicLinkData->num_visits >= $maxVisits) {
-                return response()->json([
-                    'error' => 'Magic link has been used too many times',
-                ], 401);
-            }
-
-            // Deserialize the action to get the user
-            $action = null;
-            try {
-                $action = unserialize($magicLinkData->action);
-            } catch (\Exception $e) {
-                try {
-                    $action = unserialize(base64_decode($magicLinkData->action));
-                } catch (\Exception $e2) {
-                    return response()->json([
-                        'error' => 'Invalid magic link action (unserialize failed)',
-                    ], 400);
-                }
-            }
-
-            if (!$action instanceof LoginAction) {
+            if (!$action instanceof \MagicLink\Actions\LoginAction) {
                 return response()->json([
                     'error' => 'Invalid magic link action',
                 ], 400);
             }
 
-            // Get the user ID from the LoginAction
+            // Get the user ID from the LoginAction using reflection
             $reflection = new \ReflectionClass($action);
             $authIdentifierProperty = $reflection->getProperty('authIdentifier');
             $authIdentifierProperty->setAccessible(true);
@@ -200,14 +137,12 @@ class MagicLinkController extends Controller
             // Authenticate the user using Laravel's session-based auth
             Auth::login($user);
 
-            // Increment the visits counter
-            DB::table('magic_links')
-                ->where('id', $magicLinkData->id)
-                ->increment('num_visits');
+            // Mark the magic link as visited (increments counter and may delete if max visits reached)
+            $magicLink->visited();
 
-            // Delete the magic link if it has reached max visits
-            if (($magicLinkData->num_visits + 1) >= $maxVisits) {
-                DB::table('magic_links')->where('id', $magicLinkData->id)->delete();
+            // Delete the link if it has reached max visits
+            if ($magicLink->max_visits && $magicLink->num_visits + 1 >= $magicLink->max_visits) {
+                $magicLink->delete();
             }
 
             Log::info('User authenticated via magic link', ['user_id' => $user->id]);
