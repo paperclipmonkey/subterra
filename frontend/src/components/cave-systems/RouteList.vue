@@ -45,7 +45,7 @@
         :key="route.id"
         class="mb-4 rounded-lg overflow-hidden"
         elevation="1"
-        :to="`/routes/${route.id}`"
+        :to="`/routes/${route.slug}`"
         link
       >
         <v-row no-gutters>
@@ -119,42 +119,43 @@ import { useAppStore } from '@/stores/app'
 const appStore = useAppStore()
 
 defineProps({
-    routes: {
-        type: Array,
-        default: () => []
-    },
-    caveSystemId: {
-        type: [String, Number],
-        required: false,
-        default: null
-    }
+  routes: {
+    type: Array,
+    default: () => []
+  },
+  caveSystemId: {
+    type: [String, Number],
+    required: false,
+    default: null
+  }
 })
 const truncateDescription = (text) => {
-    if (!text) return 'No description available.'
-    // Strip markdown chars broadly if needed, but simple text substring is usually fine for preview
-    // Simplistic markdown strip:
-    const plain = text.replace(/[#*`_]/g, '')
-    return plain.length > 200 ? plain.substring(0, 200) + '...' : plain
+  if (!text) return 'No description available.'
+  // Strip markdown chars broadly if needed, but simple text substring is usually fine for preview
+  // Simplistic markdown strip:
+  const plain = text.replace(/[#*`_]/g, '')
+  return plain.length > 200 ? plain.substring(0, 200) + '...' : plain
 }
 
 const getGradeDescription = (grade) => {
-    const grades = {
-        1: 'Easy walking, no tackle',
-        2: 'Easy caving, some crawling',
-        3: 'Moderate, vertical/water possible',
-        4: 'Difficult, significant vertical/water',
-        5: 'Severe, expert only'
-    }
-    return grades[grade] || 'Unknown grade'
+  const grades = {
+    1: 'Easy walking, no tackle',
+    2: 'Easy caving, some crawling',
+    3: 'Moderate, vertical/water possible',
+    4: 'Difficult, significant vertical/water',
+    5: 'Severe, expert only'
+  }
+  return grades[grade] || 'Unknown grade'
 }
 </script>
 
 <style scoped>
 .text-truncate-3-lines {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    color: rgba(0, 0, 0, 0.7);
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.7);
 }
 </style>

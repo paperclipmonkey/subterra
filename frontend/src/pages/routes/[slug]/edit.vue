@@ -2,7 +2,7 @@
   <v-container>
     <v-row>
       <v-col cols="12">
-        <v-btn variant="text" size="small" :to="`/routes/${route.params.id}`" class="mb-4">
+        <v-btn variant="text" size="small" :to="`/routes/${route.params.slug}`" class="mb-4">
           <v-icon start>mdi-arrow-left</v-icon>
           Back to Route
         </v-btn>
@@ -46,7 +46,7 @@ const routeData = ref(null)
 const load = async () => {
   loading.value = true
   try {
-    const response = await fetch(`/api/routes/${route.params.id}`)
+    const response = await fetch(`/api/routes/${route.params.slug}`)
     if (response.ok) {
       routeData.value = await response.json()
     } else {
@@ -60,7 +60,7 @@ const load = async () => {
 }
 
 const onSaved = () => {
-  router.push(`/routes/${route.params.id}`)
+  router.push(`/routes/${route.params.slug}`)
 }
 
 onMounted(async () => {

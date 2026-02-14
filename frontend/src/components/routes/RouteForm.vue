@@ -209,26 +209,26 @@ const toast = useToast()
 const appStore = useAppStore()
 
 const props = defineProps({
-    initialRoute: {
-        type: Object,
-        default: () => ({
-            name: '',
-            entrance_id: null,
-            exit_id: null,
-            grade: null,
-            duration: '',
-            description: '',
-            tackle: []
-        })
-    },
-    caveSystemId: {
-        type: [String, Number],
-        required: true
-    },
-    preventSubmit: {
-        type: Boolean,
-        default: false
-    }
+  initialRoute: {
+    type: Object,
+    default: () => ({
+      name: '',
+      entrance_id: null,
+      exit_id: null,
+      grade: null,
+      duration: '',
+      description: '',
+      tackle: []
+    })
+  },
+  caveSystemId: {
+    type: [String, Number],
+    required: true
+  },
+  preventSubmit: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const emit = defineEmits(['saved', 'submit'])
@@ -241,138 +241,138 @@ const newMedia = ref([])
 const deletedMediaIds = ref([])
 
 const handleHeroImageUpload = async (event) => {
-    const file = event.target.files[0]
-    if (file) {
-        try {
-            const result = await convertFileToBase64(file)
-            route.value.hero_image = result.data
-        } catch (error) {
-            console.error('Error converting file to base64:', error)
-        }
+  const file = event.target.files[0]
+  if (file) {
+    try {
+      const result = await convertFileToBase64(file)
+      route.value.hero_image = result.data
+    } catch (error) {
+      console.error('Error converting file to base64:', error)
     }
+  }
 }
 
 const handleMediaUpload = async (event) => {
-    const files = Array.from(event.target.files)
-    for (const file of files) {
-        try {
-            const result = await convertFileToBase64(file)
-            // simple type detection based on extension or mime if available in result (it is not, strictly)
-            // let's infer type from file.type
-            const type = file.type === 'application/pdf' ? 'pdf' : 'photo'
-            newMedia.value.push({
-                data: result.data,
-                caption: '',
-                type: type,
-                file_name: file.name
-            })
-        } catch (error) {
-            console.error('Error processing media file:', error)
-        }
+  const files = Array.from(event.target.files)
+  for (const file of files) {
+    try {
+      const result = await convertFileToBase64(file)
+      // simple type detection based on extension or mime if available in result (it is not, strictly)
+      // let's infer type from file.type
+      const type = file.type === 'application/pdf' ? 'pdf' : 'photo'
+      newMedia.value.push({
+        data: result.data,
+        caption: '',
+        type: type,
+        file_name: file.name
+      })
+    } catch (error) {
+      console.error('Error processing media file:', error)
     }
-    // Clear input to allow re-selecting same files if needed? 
-    // event.target.value = '' 
+  }
+  // Clear input to allow re-selecting same files if needed? 
+  // event.target.value = '' 
 }
 
 onMounted(async () => {
-    // ... items
-    try {
-        const response = await fetch(`/api/cave_systems/${props.caveSystemId}`)
-        if (response.ok) {
-            const system = await response.json()
-            caves.value = system.data.caves || []
-        }
-    } catch (e) {
-        console.error(e)
+  // ... items
+  try {
+    const response = await fetch(`/api/cave_systems/${props.caveSystemId}`)
+    if (response.ok) {
+      const system = await response.json()
+      caves.value = system.data.caves || []
     }
+  } catch (e) {
+    console.error(e)
+  }
 })
 
 const addTackle = () => {
-    if (!route.value.tackle) route.value.tackle = []
-    route.value.tackle.push({
-        type: 'srt_rope',
-        description: '',
-        length: null,
-        optional: false,
-        quantity: 1
-    })
+  if (!route.value.tackle) route.value.tackle = []
+  route.value.tackle.push({
+    type: 'srt_rope',
+    description: '',
+    length: null,
+    optional: false,
+    quantity: 1
+  })
 }
 
 const removeTackle = (index) => {
-    route.value.tackle.splice(index, 1)
+  route.value.tackle.splice(index, 1)
 }
 
 const markMediaForDeletion = (index, id) => {
-    route.value.media.splice(index, 1)
-    deletedMediaIds.value.push(id)
+  route.value.media.splice(index, 1)
+  deletedMediaIds.value.push(id)
 }
 
 const save = async () => {
-    const { valid } = await form.value.validate()
-    if (!valid) return
+  const { valid } = await form.value.validate()
+  if (!valid) return
 
-    loading.value = true
-    try {
-        const payload = {
-            ...route.value,
-            media: newMedia.value, // Add new media to payload
-            deleted_media: deletedMediaIds.value // Send deleted media IDs
-        }
-
-        if (props.preventSubmit) {
-            emit('submit', payload)
-            loading.value = false
-            return
-        }
-
-        if (appStore.user?.is_admin) {
-            const url = route.value.id
-                ? `/api/routes/${route.value.id}`
-                : `/api/cave_systems/${props.caveSystemId}/routes`
-
-            const method = route.value.id ? 'PUT' : 'POST'
-
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-
-            if (response.ok) {
-                emit('saved')
-            } else {
-                console.error('Failed to save')
-            }
-        } else {
-            // Suggest Edit or Create
-            const response = await fetch('/api/suggested-edits', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    suggestable_type: 'route',
-                    suggestable_id: route.value.id || null, // null means creation
-                    suggested_data: { ...payload, cave_system_id: props.caveSystemId },
-                    original_data: null
-                })
-            })
-
-            if (response.ok) {
-                toast.success('Thank you! Your suggestion has been submitted for review.')
-                emit('saved')
-            } else {
-                console.error('Failed to submit suggestion')
-            }
-        }
-    } catch (error) {
-        console.error(error)
-    } finally {
-        loading.value = false
+  loading.value = true
+  try {
+    const payload = {
+      ...route.value,
+      media: newMedia.value, // Add new media to payload
+      deleted_media: deletedMediaIds.value // Send deleted media IDs
     }
+
+    if (props.preventSubmit) {
+      emit('submit', payload)
+      loading.value = false
+      return
+    }
+
+    if (appStore.user?.is_admin) {
+      const url = route.value.id
+        ? `/api/routes/${route.value.slug}`
+        : `/api/cave_systems/${props.caveSystemId}/routes`
+
+      const method = route.value.id ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (response.ok) {
+        emit('saved')
+      } else {
+        console.error('Failed to save')
+      }
+    } else {
+      // Suggest Edit or Create
+      const response = await fetch('/api/suggested-edits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          suggestable_type: 'route',
+          suggestable_id: route.value.id || null, // null means creation
+          suggested_data: { ...payload, cave_system_id: props.caveSystemId },
+          original_data: null
+        })
+      })
+
+      if (response.ok) {
+        toast.success('Thank you! Your suggestion has been submitted for review.')
+        emit('saved')
+      } else {
+        console.error('Failed to submit suggestion')
+      }
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loading.value = false
+  }
 }
 </script>

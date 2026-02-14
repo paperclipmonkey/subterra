@@ -12,7 +12,7 @@
           color="primary"
           variant="text"
           prepend-icon="mdi-pencil"
-          :to="`/routes/${route.params.id}/edit`"
+          :to="`/routes/${route.params.slug}/edit`"
           class="mr-2"
         >
           {{ appStore.user?.is_admin ? 'Edit Route' : 'Suggest Edit' }}
@@ -181,39 +181,39 @@ const loading = ref(true)
 const routeDetail = ref(null)
 
 const load = async () => {
-    loading.value = true
-    try {
-        const response = await fetch(`/api/routes/${route.params.id}`)
-        if (response.ok) {
-            routeDetail.value = await response.json()
-        }
-    } catch (e) {
-        console.error(e)
-    } finally {
-        loading.value = false
+  loading.value = true
+  try {
+    const response = await fetch(`/api/routes/${route.params.slug}`)
+    if (response.ok) {
+      routeDetail.value = await response.json()
     }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(load)
 
 const getGradeDescription = (grade) => {
-    const grades = {
-        1: 'Easy walking, no tackle',
-        2: 'Easy caving, some crawling',
-        3: 'Moderate, vertical/water possible',
-        4: 'Difficult, significant vertical/water',
-        5: 'Severe, expert only'
-    }
-    return grades[grade] || 'Unknown grade'
+  const grades = {
+    1: 'Easy walking, no tackle',
+    2: 'Easy caving, some crawling',
+    3: 'Moderate, vertical/water possible',
+    4: 'Difficult, significant vertical/water',
+    5: 'Severe, expert only'
+  }
+  return grades[grade] || 'Unknown grade'
 }
 
 const openMedia = (media) => {
-    window.open(media.path, '_blank')
+  window.open(media.path, '_blank')
 }
 </script>
 
 <style scoped>
 .gradient-overlay {
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 60%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 60%);
 }
 </style>

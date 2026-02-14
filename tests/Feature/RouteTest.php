@@ -199,4 +199,32 @@ class RouteTest extends TestCase
         $this->assertDatabaseMissing('route_media', ['id' => $media1->id]);
         $this->assertDatabaseHas('route_media', ['id' => $media2->id]);
     }
+
+    public function test_can_resolve_route_by_slug()
+    {
+        $route = Route::factory()->create(['name' => 'Slug Route']);
+        // Ensure slug is generated/set (factory might not do it depending on definition, but Route::create in controller does)
+        // Let's manually set it to be sure for this test
+        $route->slug = 'slug-route';
+        $route->save();
+
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get('/api/routes/slug-route');
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'id' => $route->id,
+                'name' => 'Slug Route',
+            ]);
+    }
+
+    public function test_it_returns_404_for_non_numeric_non_existent_slug_without_sql_error()
+    {
+        $user = User::factory()->create();
+
+        // This would previously cause an SQL error "invalid input syntax for type bigint"
+        $response = $this->actingAs($user)->get('/api/routes/non-existent-string-slug');
+
+        $response->assertStatus(404);
+    }
 }

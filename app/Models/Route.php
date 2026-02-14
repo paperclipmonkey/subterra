@@ -12,6 +12,22 @@ class Route extends Model
 {
     use HasFactory;
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $query = $this->where('slug', $value);
+
+        if (is_numeric($value)) {
+            $query->orWhere('id', $value);
+        }
+
+        return $query->firstOrFail();
+    }
+
     protected $fillable = [
         'cave_system_id',
         'entrance_id',
