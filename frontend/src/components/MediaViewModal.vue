@@ -61,8 +61,6 @@
                   <span class="text-body-1">{{ media.photographer }}</span>
                 </div>
               </div>
-
-              <!-- Taken At (Keeping hidden as requested, but structure allows easy add-back) -->
                     
               <!-- Copyright -->
               <div v-if="media.copyright" class="mb-3">

@@ -27,7 +27,6 @@
             </h2>
 
             <div class="text-body-1 text-grey-darken-1 mb-4 line-clamp-3">
-              <!-- Strip markdown for preview text using a simple regex or just showing truncated raw -->
               {{ getExcerpt(item.content) }}
             </div>
 
@@ -49,57 +48,57 @@ const news = ref([])
 const loading = ref(true)
 
 const getExcerpt = (markdown) => {
-    // Simple strip of header # and basic formatting for preview
-    // Remove headers
-    let text = markdown.replace(/^#+\s+/gm, '')
-    // Remove images
-    text = text.replace(/!\[.*?\]\(.*?\)/g, '')
-    // Remove links but keep text
-    text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-    // Remove heavy formatting
-    text = text.replace(/(\*\*|__)(.*?)\1/g, '$2')
-    text = text.replace(/(\*|_)(.*?)\1/g, '$2')
+  // Simple strip of header # and basic formatting for preview
+  // Remove headers
+  let text = markdown.replace(/^#+\s+/gm, '')
+  // Remove images
+  text = text.replace(/!\[.*?\]\(.*?\)/g, '')
+  // Remove links but keep text
+  text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+  // Remove heavy formatting
+  text = text.replace(/(\*\*|__)(.*?)\1/g, '$2')
+  text = text.replace(/(\*|_)(.*?)\1/g, '$2')
 
-    // Truncate
-    return text.length > 200 ? text.substring(0, 200) + '...' : text
+  // Truncate
+  return text.length > 200 ? text.substring(0, 200) + '...' : text
 }
 
 onMounted(async () => {
-    try {
-        const res = await fetch('/api/news')
-        news.value = await res.json()
-    } finally {
-        loading.value = false
-    }
+  try {
+    const res = await fetch('/api/news')
+    news.value = await res.json()
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
 <style scoped>
 .gap-6 {
-    gap: 24px;
+  gap: 24px;
 }
 
 .letter-spacing-1 {
-    letter-spacing: 1px;
+  letter-spacing: 1px;
 }
 
 .lh-tight {
-    line-height: 1.3;
+  line-height: 1.3;
 }
 
 .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .news-card {
-    transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .news-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 </style>

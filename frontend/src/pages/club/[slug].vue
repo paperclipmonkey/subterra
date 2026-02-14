@@ -112,7 +112,6 @@
                            :title="member.name">
                 <template #prepend>
                   <v-avatar size="small" class="mr-2">
-                    <!-- TODO: Add a default avatar image to public folder -->
                     <v-img :src="member.photo || '/default-avatar.png'" :alt="member.name" />
                   </v-avatar>
                 </template>

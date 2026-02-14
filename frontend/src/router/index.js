@@ -18,9 +18,6 @@ const router = createRouter({
 
 // Workaround for https://github.com/vitejs/vite/issues/11804
 router.onError((err, to) => {
-  console.log('Router Error:', err)
-  console.log('Target:', to)
-  // alert('Router Error: ' + err.message + '\nTarget: ' + to.fullPath) 
   if (err?.message?.includes?.('Failed to fetch dynamically imported module')) {
     if (!localStorage.getItem('vuetify:dynamic-reload')) {
       console.log('Reloading page to fix dynamic import error', to.fullPath)
@@ -37,7 +34,6 @@ router.onError((err, to) => {
 
 // Basic cookie functionality for login check
 router.beforeEach(async (to, from, next) => {
-  // console.log('[Debug] Router beforeEach', { to: to.fullPath, from: from.fullPath })
 
   // Allow demo page without authentication
   if (to.path === '/demo') {
@@ -45,7 +41,6 @@ router.beforeEach(async (to, from, next) => {
   }
 
   let user = await useAppStore().getUser()
-  // console.log('[Debug] User loaded:', user ? 'Yes' : 'No', { is_admin: user?.is_admin })
 
   // Exception for magic link login page, CMS pages, and public trip reports
   if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/') || to.path === '/callout/active' || (to.path.startsWith('/trips/') && to.params.id && to.params.id.length >= 8)) {
@@ -57,7 +52,6 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.name === '/') {
     if (user.email) {
-      // console.log('[Debug] Redirecting / to /trips because user is logged in')
       return next({ path: '/trips' })
     }
     return next()
@@ -69,7 +63,6 @@ router.beforeEach(async (to, from, next) => {
   if (to.path.startsWith('/admin')) {
     if (!user.is_admin) {
       // Redirect non-admins away from admin pages
-      // console.log('[Debug] User not admin, redirecting to /trips')
       return next({ path: '/trips' })
     }
 
@@ -117,10 +110,8 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (user.email) {
-    // console.log('[Debug] User logged in, allowing navigation to:', to.fullPath)
     return next()
   }
-  // console.log('[Debug] User not logged in, redirecting to /')
   return next({ path: '/' })
 })
 

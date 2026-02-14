@@ -146,7 +146,6 @@
                 No trips have been recorded for this cave yet. Be the first!
               </v-alert>
 
-              <!-- Modal needs to be outside or we need to ensure it works. It was inside v-container before. -->
               <v-dialog v-model="showConfirmModal" max-width="400">
                 <v-card>
                   <v-card-title class="text-h6 pa-4">Mark Cave as Done?</v-card-title>

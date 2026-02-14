@@ -2,14 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Callout;
+use App\Models\CalloutParticipant;
+use App\Models\Cave;
 use App\Models\Incident;
 use App\Models\OnCallShift;
-
-use App\Models\Cave;
-use App\Models\CalloutParticipant;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class DemoDataSeeder extends Seeder
 {
@@ -19,11 +18,14 @@ class DemoDataSeeder extends Seeder
     public function run(): void
     {
         // 1. Seed 2 Duty Officers with upcoming shifts
-        // Create 2 officers if they don't exist
+        $officer1 = User::withoutGlobalScopes()->updateOrCreate(
+            ['email' => 'officer1@example.com'],
             ['name' => 'Officer Alpha', 'is_active' => true]
         );
         $officer1->assignRole(['platform_admin', 'duty_officer']);
 
+        $officer2 = User::withoutGlobalScopes()->updateOrCreate(
+            ['email' => 'officer2@example.com'],
             ['name' => 'Officer Bravo', 'is_active' => true]
         );
         $officer2->assignRole(['platform_admin', 'duty_officer']);
@@ -67,10 +69,10 @@ class DemoDataSeeder extends Seeder
                 'cave_id' => $cave->id,
                 'status' => 'active', // "open" callouts are loosely defined, usually 'active' means the trip is ongoing
                 'callout_time' => now()->addHours($index + 2), // Should be back in a few hours
-                'description' => "Trip description for " . $user->name,
+                'description' => 'Trip description for '.$user->name,
                 'trip_plan' => 'Visiting the main streamway and high level chambers.',
                 'car_details' => 'Silver Volvo Estate',
-                'car_registration' => 'AB' . ($index + 10) . ' CDE',
+                'car_registration' => 'AB'.($index + 10).' CDE',
                 'car_parking' => 'Parked in the farmer\'s field by the gate.',
                 'team_details' => 'Party of 4. Experienced. 2 First Aiders.',
             ]);
@@ -80,18 +82,18 @@ class DemoDataSeeder extends Seeder
                 'callout_id' => $callout->id,
                 'user_id' => $user->id,
                 'name' => $user->name,
-                'phone' => '07700 80000' . $index,
+                'phone' => '07700 80000'.$index,
                 'email' => $user->email,
             ]);
 
             // Add 1 extra participant
             CalloutParticipant::create([
                 'callout_id' => $callout->id,
-                'name' => 'Participant Part ' . $index,
-                'phone' => '07700 70000' . $index,
+                'name' => 'Participant Part '.$index,
+                'phone' => '07700 70000'.$index,
             ]);
         }
-        
+
         $this->command->info('Seeded 3 Open Callouts.');
 
         // 3. Seed 1 Active Incident
@@ -104,7 +106,7 @@ class DemoDataSeeder extends Seeder
         $incidentCallout = Callout::factory()->create([
             'user_id' => $victim->id,
             'cave_id' => $cave->id,
-            'status' => 'triggered', // Incident triggered 
+            'status' => 'triggered', // Incident triggered
             'callout_time' => now()->subHours(2), // Overdue by 2 hours
             'description' => 'Went for a quick trip, not back yet.',
             'trip_plan' => 'Through trip to the lower entrance.',
@@ -140,7 +142,7 @@ class DemoDataSeeder extends Seeder
         if (!$regionTag) {
             $regionTag = \App\Models\Tag::factory()->create([
                 'category' => 'region',
-                'tag' => 'Mendip'
+                'tag' => 'Mendip',
             ]);
         }
         $incidentCallout->cave->tags()->syncWithoutDetaching([$regionTag->id]);

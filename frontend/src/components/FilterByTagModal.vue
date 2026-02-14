@@ -36,7 +36,6 @@
               />
             </v-chip-group>
           </template>
-          <!-- -->
 
         </v-card-text>
         <v-divider class="mt-2" />
@@ -77,7 +76,7 @@ onMounted(async () => {
   tagsAvailable.value = await response.json()
   const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : []
 
-  if(pageLoadedTags.length > 0) {
+  if (pageLoadedTags.length > 0) {
     // Initialize selectedTags with the loaded filters
     for (const group in tagsAvailable.value) {
       selectedTags.value[group] = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag)
@@ -98,7 +97,7 @@ const loadedFilters = ref(props.loadedFilters)
 </script>
 
 <style scoped>
-  .tagGroupTitle {
-    text-transform: capitalize !important;
-  }
+.tagGroupTitle {
+  text-transform: capitalize !important;
+}
 </style>
