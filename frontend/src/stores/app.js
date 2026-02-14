@@ -10,6 +10,7 @@ export const useAppStore = defineStore('app', {
       is_admin: false,
       clubs: [],
       roles: [],
+      onboarding_completed_at: null,
     },
     loading: false,
   }),
