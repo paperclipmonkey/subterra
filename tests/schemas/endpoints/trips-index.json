@@ -3,7 +3,7 @@
   "type": "object",
   "definitions": {
     "trip": {
-      "$ref": "../objects/trip.json"
+      "$ref": "../objects/trip-summary.json"
     },
     "user": {
       "$ref": "../objects/user.json"
@@ -20,6 +20,8 @@
       }
     }
   },
-  "required": ["data"],
+  "required": [
+    "data"
+  ],
   "additionalProperties": false
 }
