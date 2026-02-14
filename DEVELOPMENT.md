@@ -1,6 +1,19 @@
 # Subterra - Development Guide
 
-This document explains how to set up and run the Subterra system locally for development purposes.
+This document explains how to set up and run the Subterra system locally for development purposes and outlines our contribution guidelines.
+
+## How to Contribute
+
+We welcome contributions! To maintain code quality and consistency, please follow this workflow:
+
+1. **Fork the Repository**: Create your own copy of the project.
+2. **Setup Locally**: Follow the instructions in the [Development Setup](#development-setup) section.
+3. **Create a Branch**: Use a descriptive name (e.g., `git checkout -b feature/amazing-feature` or `fix/login-bug`).
+4. **Implementation**:
+   - Follow the [Code Style and Quality](#code-style-and-quality) guidelines.
+   - Write comprehensive tests for new functionality.
+5. **Open a Pull Request**: Provide a clear description of your changes and link any relevant issues.
+
 
 ## Development Setup
 
@@ -149,22 +162,24 @@ The API uses Laravel policies for authorization:
 ## Code Style and Quality
 
 ### Code Style
-The project uses Laravel Pint for code style enforcement:
+The project uses Laravel Pint for code style enforcement. Ensure your code follows PSR-12 and Laravel best practices:
 ```bash
 docker exec -it subterra-laravel.test-1 vendor/bin/pint
 ```
 
 ### Static Analysis
-PHPStan is configured for static analysis:
+PHPStan is configured for static analysis. We aim for high-quality, strictly typed code:
 ```bash
 docker exec -it subterra-laravel.test-1 vendor/bin/phpstan analyse
 ```
 
 ### Testing
+We believe in strong test coverage. Always add PHP and frontend tests for any new feature or logic bug fix.
 Run the test suite:
 ```bash
 docker exec -it subterra-laravel.test-1 php artisan test
 ```
+
 
 ## Deployment
 

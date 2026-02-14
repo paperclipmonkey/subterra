@@ -6,11 +6,26 @@
 
 ## Functionality
 
-### Find new trips
-The system has a list of cave entrances and systems, with a number of tags added against them. This allows users to filter potential trip options and to find a trip that works for them.
+### 🗺️ Interactive Trip Planning
+- **Cave Database**: Explore a comprehensive list of cave systems and entrances.
+- **Advanced Filtering**: Find your next trip using tags for difficulty, cave type, amenities, and more.
+- **Interactive Maps**: Visualize cave locations and nearby huts or features.
+- **Weather Integration**: Real-time and historical weather data for cave sites via Pirate Weather API.
 
-### Track completed trips
-Completed trips can be added by a user to help them track their caving career. When entering a trip it's possible to add other trip participants.
+### 📝 Trip Tracking & Sharing
+- **Personal Logbook**: Record your caving trips with detailed descriptions.
+- **Participant Management**: Add fellow cavers to your trips to build a shared history.
+- **Media Support**: Upload and tag photos or files to specific caves and systems.
+- **Achievements**: Earn medals and visualize your activity with contribution heatmaps.
+
+### 🛡️ Safety & Coordination
+- **Callout System**: Set up digital callouts for upcoming trips with emergency contact notification.
+- **Duty Officer Rota**: A dedicated system for clubs to manage safety officers and handle overdue callouts.
+- **Real-time Notifications**: Integration with Slack for login alerts and safety updates.
+
+### 🤝 Community Crowdsourcing
+- **Suggested Edits**: Contribute to the database with a moderated edit system.
+- **Club Management**: Manage caving clubs, member lists, and club-owned huts.
 
 ## Get Involved
 
@@ -22,21 +37,11 @@ Subterra is an open-source project and we welcome contributions from the caving 
 - Report bugs or suggest features via GitHub Issues.
 
 ### For Developers
-If you'd like to contribute code:
-
-1. **Local Setup**: Please refer to the [Development Guide](DEVELOPMENT.md) for instructions on how to run the system locally.
-2. **Workflow**:
-   - Fork the repository.
-   - Create a feature branch (`git checkout -b feature/amazing-feature`).
-   - Make your changes following the code style guidelines.
-   - Write tests for new functionality.
-   - Open a Pull Request.
-
-### Code Standards
-- Follow PSR-12 coding standards.
-- Use strict typing where appropriate.
-- Write comprehensive tests for new features.
-- Follow Laravel and Vue.js best practices.
+If you'd like to contribute code, please refer to our **[Development Guide](DEVELOPMENT.md)** for:
+- Local environment setup (Docker, Laravel, Vue.js)
+- Contribution workflow and pull request guidelines
+- Coding standards and testing requirements
+- API documentation and database schema
 
 ## License
 
