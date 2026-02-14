@@ -4,10 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Callout;
+use App\Services\GcpWatchdogService;
 use Illuminate\Http\Request;
 
 class CalloutController extends Controller
 {
+    protected GcpWatchdogService $watchdogService;
+
+    public function __construct(GcpWatchdogService $watchdogService)
+    {
+        $this->watchdogService = $watchdogService;
+    }
+
     public function index()
     {
         $callouts = Callout::with('cave', 'exitCave', 'participants')
@@ -44,6 +52,38 @@ class CalloutController extends Controller
             ];
         });
 
-        return response()->json(['data' => $data]);
+        $watchdogCount = $this->watchdogService->getActiveWatchdogCount();
+        $systemCount = $callouts->where('status', 'active')->count();
+
+        return response()->json([
+            'data' => $data,
+            'watchdog_count' => $watchdogCount,
+            'system_count' => $systemCount,
+            'is_watchdog_out_of_sync' => $watchdogCount !== -1 && $watchdogCount !== $systemCount,
+        ]);
+    }
+
+    /**
+     * Send a test callout to the watchdog.
+     */
+    public function sendTestWatchdogCallout(Request $request)
+    {
+        $user = $request->user();
+
+        $success = $this->watchdogService->sendTestCallout([
+            'callout_id' => 'test-'.now()->timestamp,
+            'user' => [
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+            ],
+            'cave_name' => 'Test Location (Admin Panel)',
+        ]);
+
+        if ($success) {
+            return response()->json(['message' => 'Test callout sent to watchdog successfully.']);
+        }
+
+        return response()->json(['message' => 'Failed to send test callout to watchdog.'], 500);
     }
 }

@@ -74,7 +74,7 @@ app.get('/health', (req: Request, res: Response) => {
     });
 });
 
-// Protected routes (Creation and Deletion)
+// Protected routes (Creation, Deletion, Listing, Testing)
 app.use(['/watchdog'], checkApiKey);
 
 // Register a new watchdog
@@ -124,6 +124,86 @@ app.delete('/watchdog', async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error('Error cancelling watchdog:', error);
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
+// List all active watchdogs
+app.get('/watchdog', async (req: Request, res: Response) => {
+    try {
+        const activeWatchdogs = await getFirestoreClient().listActiveWatchdogs();
+        res.json({
+            count: activeWatchdogs.length,
+            data: activeWatchdogs,
+        });
+    } catch (error) {
+        console.error('Error listing watchdogs:', error);
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
+// Trigger a test watchdog alert
+app.post('/watchdog/test', async (req: Request, res: Response) => {
+    try {
+        const data: CalloutData = req.body;
+
+        if (!data.user || (!data.user.phone && !data.user.email)) {
+            return res.status(400).json({
+                error: 'Missing required fields for test: user.phone or user.email',
+            });
+        }
+
+        console.log(`Triggering TEST watchdog: ${data.callout_id || 'test-id'}`);
+
+        const alertMessage = `🚨 SUBTERRA TEST ALERT: This is a test of the Subterra Watchdog system.
+        
+User: ${data.user.name || 'Test User'}
+Cave: ${data.cave_name || 'Test Cave'}
+        
+Reply SAFE to acknowledge this test.`;
+
+        const phoneNumbers = [];
+        if (data.user.phone) phoneNumbers.push(data.user.phone);
+        if (data.participants) {
+            for (const p of data.participants) {
+                if (p.phone) phoneNumbers.push(p.phone);
+            }
+        }
+
+        const emails = [];
+        if (data.user.email) emails.push(data.user.email);
+        if (data.participants) {
+            for (const p of data.participants) {
+                if (p.email) emails.push(p.email);
+            }
+        }
+
+        const smsResults: Record<string, boolean> = {};
+        for (const phone of phoneNumbers) {
+            smsResults[phone] = await getSmsClient().sendSms(phone, alertMessage);
+        }
+
+        const emailResults: Record<string, boolean> = {};
+        const mockCalloutDoc = {
+            callout_id: data.callout_id || 'test-id',
+            callout_time: { toDate: () => new Date() },
+            user: data.user,
+            participants: data.participants || [],
+            trip_plan: data.trip_plan || 'Test trip plan',
+            cave_name: data.cave_name || 'Test Cave',
+        } as any;
+
+        for (const email of emails) {
+            emailResults[email] = await getEmailClient().sendAlertEmail(email, mockCalloutDoc);
+        }
+
+        res.json({
+            message: 'Test alerts triggered successfully',
+            sms_sent: smsResults,
+            emails_sent: emailResults,
+        });
+    } catch (error) {
+        console.error('Error triggering test watchdog:', error);
         res.status(500).json({ error: (error as Error).message });
     }
 });

@@ -94,4 +94,17 @@ export class FirestoreClient {
             alerted_at: Timestamp.now(),
         });
     }
+
+    async listActiveWatchdogs(): Promise<CalloutDocument[]> {
+        const snapshot = await this.collection
+            .where('status', '==', 'active')
+            .get();
+
+        const results: CalloutDocument[] = [];
+        snapshot.forEach(doc => {
+            results.push(doc.data() as CalloutDocument);
+        });
+
+        return results;
+    }
 }

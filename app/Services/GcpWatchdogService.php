@@ -61,12 +61,6 @@ class GcpWatchdogService
         }
     }
 
-    /**
-     * Cancel a callout watchdog.
-     *
-     * @param Callout $callout
-     * @return bool
-     */
     public function cancel(Callout $callout): bool
     {
         // Skip if watchdog is not configured (e.g., in tests)
@@ -104,6 +98,55 @@ class GcpWatchdogService
             return false;
         }
     }
+
+    /**
+     * Get the count of active watchdogs from the watchdog service.
+     */
+    public function getActiveWatchdogCount(): int
+    {
+        if (!$this->baseUrl) {
+            return -2; // Not configured
+        }
+
+        try {
+            $response = Http::timeout(5)
+                ->withHeaders(['X-Watchdog-Key' => $this->apiKey])
+                ->get("{$this->baseUrl}/watchdog");
+
+            if ($response->successful()) {
+                return $response->json('count', 0);
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to fetch watchdog count: {$e->getMessage()}");
+        }
+
+        return -1; // Indicate connection error
+    }
+
+    /**
+     * Send a test callout request to the watchdog service.
+     */
+    public function sendTestCallout(array $data): bool
+    {
+        if (!$this->baseUrl) {
+            return false;
+        }
+
+        try {
+            $response = Http::timeout(10)
+                ->withHeaders(['X-Watchdog-Key' => $this->apiKey])
+                ->post("{$this->baseUrl}/watchdog/test", $data);
+
+            return $response->successful();
+        } catch (Exception $e) {
+            Log::error("Failed to send test watchdog callout: {$e->getMessage()}");
+
+            return false;
+        }
+    }
+
+    /**
+     * Build payload for watchdog registration.
 
     /**
      * Build payload for watchdog registration.

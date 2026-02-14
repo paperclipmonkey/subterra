@@ -28,6 +28,9 @@ cp .env.example .env
 
 Edit `.env` with your actual credentials or use test mode (see below).
 
+> [!NOTE]
+> For local development, the service will attempt to load secrets from `/secrets/config.json`. If this file does not exist, it will fall back to the environment variables defined in your `.env` file (see `src/secrets.ts`).
+
 ### 3. Run with Different Modes
 
 #### Option A: Full Integration Mode (with real GCP)
@@ -116,11 +119,6 @@ curl -X POST http://localhost:8080/watchdog \
       "name": "Test User",
       "phone": "+1234567890",
       "email": "test@example.com"
-    },
-    "emergency_contact": {
-      "name": "Emergency Contact",
-      "phone": "+1111111111",
-      "email": "emergency@example.com"
     },
     "participants": [
       {

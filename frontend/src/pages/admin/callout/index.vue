@@ -192,7 +192,61 @@
             <h3 class="headline mb-1">Status: {{ systemStatus }}</h3>
             <div class="caption">{{ statusMessage }}</div>
           </v-alert>
+          
+          <!-- Watchdog Sync Status -->
+          <v-divider />
+          <div class="pa-3 bg-white">
+            <div class="d-flex justify-space-between align-center mb-2">
+              <span class="text-caption font-weight-bold grey--text">WATCHDOG SYNC</span>
+              <v-chip v-if="watchdogCount === -2" color="grey" x-small label>NOT CONFIGURED</v-chip>
+              <v-chip v-else-if="watchdogCount === -1" color="error" x-small label>ERROR</v-chip>
+              <v-chip v-else-if="isWatchdogOutOfSync" color="warning" x-small label>OUT OF SYNC</v-chip>
+              <v-chip v-else color="success" x-small label>SYNCED</v-chip>
+            </div>
+            
+            <v-row no-gutters class="text-center">
+              <v-col cols="6">
+                <div class="text-h6 font-weight-bold">{{ systemCount }}</div>
+                <div class="text-caption grey--text">System</div>
+              </v-col>
+              <v-col cols="6">
+                <div class="text-h6 font-weight-bold" :class="watchdogCount < 0 ? 'error--text' : ''">
+                  {{ watchdogCount < 0 ? '??' : watchdogCount }}
+                </div>
+                <div class="text-caption grey--text">Watchdog</div>
+              </v-col>
+            </v-row>
+
+            <v-alert v-if="watchdogCount === -1" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" icon="mdi-lan-disconnect">
+              Communication error with watchdog service.
+            </v-alert>
+            <v-alert v-else-if="watchdogCount === -2" type="info" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" icon="mdi-cog-off">
+              Watchdog service not configured.
+            </v-alert>
+            <v-alert v-else-if="isWatchdogOutOfSync" type="warning" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" icon="mdi-alert">
+              Watchdog count differs from system.
+            </v-alert>
+
+            <v-btn block small color="primary" variant="outlined" class="mt-3" @click="testWatchdogDialog = true">
+              <v-icon left small>mdi-bug-play</v-icon> Send Test Callout
+            </v-btn>
+          </div>
         </v-card>
+
+        <!-- Send Test Dialog -->
+        <v-dialog v-model="testWatchdogDialog" max-width="400">
+          <v-card>
+            <v-card-title class="headline">Send Test Callout?</v-card-title>
+            <v-card-text>
+              This will trigger a mock callout alert in the Watchdog system. You will receive an SMS and email alert if your details are correct on your profile.
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="grey darken-1" text @click="testWatchdogDialog = false">Cancel</v-btn>
+              <v-btn color="primary" rounded :loading="testingWatchdog" @click="sendTestCallout">Confirm & Send</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
         <!-- Duty Officer Status -->
         <v-card class="d-flex flex-column mb-4" :color="dutyOfficerColor" dark>
@@ -327,6 +381,11 @@ export default {
       currentOfficer: null,
       nextGapStart: null,
       now: moment(),
+      watchdogCount: 0,
+      systemCount: 0,
+      isWatchdogOutOfSync: false,
+      testWatchdogDialog: false,
+      testingWatchdog: false,
       historicHeaders: [
         { text: 'Status', value: 'status', width: '120px' },
         { text: 'Location', value: 'location' },
@@ -345,18 +404,21 @@ export default {
     systemStatus() {
       if (this.activeIncidents.length > 0) return 'CRITICAL'
       if (this.incidents.some(i => i.status === 'managed')) return 'ACTIVE'
+      if (this.watchdogCount === -1) return 'WATCHDOG ERROR'
       if (this.callouts.length > 0) return 'WATCHDOG ACTIVE'
       return 'NORMAL'
     },
     statusColor() {
       if (this.systemStatus === 'CRITICAL') return 'error'
       if (this.systemStatus === 'ACTIVE') return 'warning'
+      if (this.systemStatus === 'WATCHDOG ERROR') return 'error'
       if (this.systemStatus === 'WATCHDOG ACTIVE') return 'info'
       return 'success'
     },
     statusMessage() {
       if (this.systemStatus === 'CRITICAL') return 'Unacknowledged incidents require immediate attention.'
       if (this.systemStatus === 'ACTIVE') return 'Incident in progress.'
+      if (this.systemStatus === 'WATCHDOG ERROR') return 'Watchdog communication failure. Monitoring status unknown.'
       if (this.systemStatus === 'WATCHDOG ACTIVE') return this.callouts.length + ' open callouts monitored.'
       return 'Systems operational. No open callouts.'
     },
@@ -401,6 +463,9 @@ export default {
       try {
         const res = await axios.get('/api/admin/callouts')
         this.callouts = res.data.data
+        this.watchdogCount = res.data.watchdog_count
+        this.systemCount = res.data.system_count
+        this.isWatchdogOutOfSync = res.data.is_watchdog_out_of_sync
       } catch (e) {
         console.error(e)
       } finally {
@@ -495,6 +560,20 @@ export default {
       if (status === 'open') return 'mdi-bell-ring'
       if (status === 'managed') return 'mdi-account-hard-hat'
       return 'mdi-check-circle'
+    },
+    async sendTestCallout() {
+      this.testingWatchdog = true
+      try {
+        await axios.post('/api/admin/callouts/test-watchdog')
+        this.testWatchdogDialog = false
+        // Show success snackbar if available, or just alert
+        alert('Test callout triggered successfully! Check your SMS/Email.')
+      } catch (e) {
+        console.error(e)
+        alert('Failed to trigger test callout.')
+      } finally {
+        this.testingWatchdog = false
+      }
     }
   }
 }

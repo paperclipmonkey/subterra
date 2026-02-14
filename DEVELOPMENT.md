@@ -231,8 +231,6 @@ class callouts {
    text trip_plan
    varchar(255) car_details
    text team_details
-   varchar(255) emergency_contact_name
-   varchar(255) emergency_contact_phone
    enum status
    timestamp(0) created_at
    timestamp(0) updated_at

@@ -25,11 +25,6 @@ curl -s -X POST "$BASE_URL/watchdog" \
       \"phone\": \"+1234567890\",
       \"email\": \"test@example.com\"
     },
-    \"emergency_contact\": {
-      \"name\": \"Emergency Contact\",
-      \"phone\": \"+1111111111\",
-      \"email\": \"emergency@example.com\"
-    },
     \"participants\": [
       {
         \"name\": \"Participant 1\",

@@ -171,6 +171,7 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     Route::middleware(ApiIsAdmin::class.':duty_officer,platform_admin')->group(function () {
         Route::get('/duty-officers', [App\Http\Controllers\DutyOfficerController::class, 'index'])->name('admin.duty-officers.index');
         Route::get('/callouts', [App\Http\Controllers\Admin\CalloutController::class, 'index'])->name('admin.callouts.index');
+        Route::post('/callouts/test-watchdog', [App\Http\Controllers\Admin\CalloutController::class, 'sendTestWatchdogCallout'])->name('admin.callouts.test-watchdog');
         Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
         Route::post('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'store']);
         Route::put('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'update']);

@@ -157,4 +157,54 @@ describe('Watchdog API', () => {
             expect(response.body.alerts_sent).toHaveLength(1);
         });
     });
+
+    describe('GET /watchdog', () => {
+        it('should list active watchdogs', async () => {
+            const mockWatchdogs = [
+                { callout_id: 'test1', status: 'active' },
+                { callout_id: 'test2', status: 'active' }
+            ];
+            mockFirestore.listActiveWatchdogs = jest.fn().mockResolvedValue(mockWatchdogs);
+
+            const response = await request(app)
+                .get('/watchdog')
+                .set('X-Watchdog-Key', 'test-api-key');
+
+            expect(response.status).toBe(200);
+            expect(response.body.count).toBe(2);
+            expect(response.body.data).toHaveLength(2);
+        });
+    });
+
+    describe('POST /watchdog/test', () => {
+        it('should trigger test alerts', async () => {
+            const payload = {
+                user: { name: 'Test User', phone: '+1234567890', email: 'test@example.com' },
+                cave_name: 'Test Cave'
+            };
+
+            mockSms.sendSms = jest.fn().mockResolvedValue(true);
+            mockEmail.sendAlertEmail = jest.fn().mockResolvedValue(true);
+
+            const response = await request(app)
+                .post('/watchdog/test')
+                .set('X-Watchdog-Key', 'test-api-key')
+                .send(payload);
+
+            expect(response.status).toBe(200);
+            expect(response.body.message).toBe('Test alerts triggered successfully');
+            expect(response.body.sms_sent).toBeDefined();
+            expect(response.body.emails_sent).toBeDefined();
+        });
+
+        it('should return 400 if missing contact info', async () => {
+            const response = await request(app)
+                .post('/watchdog/test')
+                .set('X-Watchdog-Key', 'test-api-key')
+                .send({ user: { name: 'No Contact info' } });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toContain('Missing required fields for test');
+        });
+    });
 });

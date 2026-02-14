@@ -108,8 +108,28 @@ Run with coverage:
 npm run test:coverage
 ```
 
-## Monitoring
+## Security & Secrets
 
-- View Cloud Run logs: `gcloud run services logs read subterra-watchdog`
-- View Firestore data: GCP Console > Firestore
-- View scheduler execution: GCP Console > Cloud Scheduler
+The service uses GCP Secret Manager for sensitive configuration. In production (Cloud Run), it expects a JSON file mounted at `/secrets/config.json`.
+
+### Secret Format
+
+The secret should be a JSON object with the following fields:
+
+```json
+{
+  "TEXTMAGIC_USERNAME": "your-username",
+  "TEXTMAGIC_API_KEY": "your-api-key",
+  "SMTP_USERNAME": "your-smtp-username",
+  "SMTP_PASSWORD": "your-smtp-password",
+  "WATCHDOG_API_KEY": "your-internal-api-key"
+}
+```
+
+- **TEXTMAGIC_USERNAME**: Your TextMagic account username.
+- **TEXTMAGIC_API_KEY**: Your TextMagic API key.
+- **SMTP_USERNAME**: Username for the SMTP server (e.g., Gmail address).
+- **SMTP_PASSWORD**: Password or App Password for the SMTP server.
+- **WATCHDOG_API_KEY**: A shared secret used to authenticate requests from the main Subterra application to the watchdog service.
+
+## Local Development
