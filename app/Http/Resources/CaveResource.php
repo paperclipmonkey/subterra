@@ -11,7 +11,7 @@ class CaveResource extends JsonResource
 {
     protected static $cachedTags = null;
 
-    protected function getCachedTag($label)
+    public static function getCachedTag($label)
     {
         if (self::$cachedTags === null) {
             self::$cachedTags = Tag::whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m'])->get()->keyBy('tag');
@@ -119,7 +119,7 @@ class CaveResource extends JsonResource
                 }) : [],
                 'routes' => $this->system->routes ?? [],
             ],
-            'trips' => TripResource::collection($this->whenLoaded('trips')),
+            'trips' => TripSummaryResource::collection($this->whenLoaded('trips')),
             'previously_done' => optional($previoslyDoneTag)->tag === 'Previously Done',
             'collections' => CollectionResource::collection($this->whenLoaded('collections')),
             'pivot' => $this->whenPivotLoaded('cave_collection', function () {

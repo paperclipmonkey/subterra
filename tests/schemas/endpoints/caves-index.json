@@ -25,10 +25,12 @@
     "data": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/cave"
+        "$ref": "../objects/cave-list-item.json"
       }
     }
   },
-  "required": ["data"],
+  "required": [
+    "data"
+  ],
   "additionalProperties": false
 }

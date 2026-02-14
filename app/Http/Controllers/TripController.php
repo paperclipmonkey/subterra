@@ -10,11 +10,11 @@ use App\Http\Requests\DeleteTripRequest;
 use App\Http\Requests\StoreTripRequest;
 use App\Http\Requests\UpdateTripRequest;
 use App\Http\Resources\TripResource;
+use App\Http\Resources\TripSummaryResource;
 use App\Models\Trip;
 use App\Models\User;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -25,7 +25,7 @@ class TripController extends Controller
     ) {
     }
 
-    public function index(): ResourceCollection
+    public function index(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $user = auth()->user();
         $query = Trip::visibleTo($user);
@@ -39,18 +39,18 @@ class TripController extends Controller
 
         $trips = $query->with(['participants.clubs', 'entrance.heroImage', 'entrance.entranceImage', 'media'])->orderBy('start_time', 'desc')->get();
 
-        return TripResource::collection($trips);
+        return TripSummaryResource::collection($trips);
     }
 
-    public function indexMe(): ResourceCollection
+    public function indexMe(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $user = auth()->user();
         $userId = $user->id;
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with(['entrance.heroImage', 'entrance.entranceImage'])->visibleTo($user)->orderBy('start_time', 'desc')->get();
+        })->with(['entrance.heroImage', 'entrance.entranceImage', 'media'])->visibleTo($user)->orderBy('start_time', 'desc')->get();
 
-        return TripResource::collection($trips);
+        return TripSummaryResource::collection($trips);
     }
 
     public function downloadMyTripsCsv(): StreamedResponse

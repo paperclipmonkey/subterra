@@ -1,0 +1,95 @@
+{
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "name": {
+            "type": "string"
+        },
+        "slug": {
+            "type": "string"
+        },
+        "location_name": {
+            "type": "string"
+        },
+        "location_country": {
+            "type": "string"
+        },
+        "location_lat": {
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "location_lng": {
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "previously_done": {
+            "type": "boolean"
+        },
+        "hero_image": {
+            "type": [
+                "object",
+                "null"
+            ]
+        },
+        "entrance_image": {
+            "type": [
+                "object",
+                "null"
+            ]
+        },
+        "tags": {
+            "type": "array"
+        },
+        "system": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "length": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "vertical_range": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "tags": {
+                    "type": "array"
+                },
+                "catchment_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "id",
+                "name"
+            ]
+        }
+    },
+    "required": [
+        "id",
+        "name",
+        "slug",
+        "location_name",
+        "location_country",
+        "previously_done",
+        "system"
+    ]
+}

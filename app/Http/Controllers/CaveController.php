@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCaveRequest;
 use App\Http\Requests\UpdateCaveRequest;
 use App\Http\Resources\CaveResource;
+use App\Http\Resources\CaveSummaryResource;
 use App\Models\Cave;
 use App\Models\Tag;
 use App\Services\ImageProcessingService;
@@ -26,11 +27,20 @@ class CaveController extends Controller
             $request->user()->load('clubs');
         }
 
-        $caves = Cave::with(['media', 'heroImage', 'entranceImage', 'system.catchment', 'tags', 'trips.participants', 'system.caves', 'system.tags', 'system.files', 'system.routes'])
-                ->orderBy('name')
-                ->get();
+        $query = Cave::with(['heroImage', 'entranceImage', 'tags', 'system.tags'])
+            ->orderBy('name');
 
-        return CaveResource::collection($caves);
+        if ($request->user()) {
+            $query->withExists(['trips as has_visited_system' => function ($q) use ($request) {
+                $q->whereHas('participants', function ($pq) use ($request) {
+                    $pq->where('users.id', $request->user()->id);
+                });
+            }]);
+        }
+
+        $caves = $query->get();
+
+        return CaveSummaryResource::collection($caves);
     }
 
     public function store(StoreCaveRequest $request): CaveResource
