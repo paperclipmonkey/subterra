@@ -27,7 +27,7 @@
       <v-icon class="ml-2">mdi-chevron-right</v-icon>
     </v-system-bar>
  
-    <v-system-bar v-else-if="appStore.user.id && !appStore.canSuggest" color="warning"
+    <v-system-bar v-else-if="appStore.user.id && !appStore.canSuggest && appStore.user.onboarding_completed_at" color="warning"
                   class="text-white px-4" height="40" style="z-index: 9999;" window>
       <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? 'mdi-account-clock' : 'mdi-account-plus' }}</v-icon>
       <span class="font-weight-bold">{{ hasPendingApprovals ? 'PENDING APPROVAL' : 'ACTION REQUIRED' }}</span>
@@ -41,6 +41,8 @@
     <v-main>
       <router-view />
     </v-main>
+
+    <OnboardingWizard />
 
     <!-- Global notification snackbar -->
     <v-snackbar v-model="notificationStore.show" :color="notificationColor" :timeout="notificationStore.timeout"
@@ -64,6 +66,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
 import PrivacyNotice from '@/components/PrivacyNotice.vue'
+import OnboardingWizard from '@/components/OnboardingWizard.vue'
 import moment from 'moment'
 
 const notificationStore = useNotificationStore()

@@ -243,6 +243,7 @@ class UserController extends Controller
             'email_tagged' => ['nullable', 'boolean'],
             'email_platform_news' => ['nullable', 'boolean'],
             'visibility_addable' => ['nullable', 'string', 'in:public,club'],
+            'onboarding_completed_at' => ['nullable', 'date'],
         ]);
 
         // If user is a Duty Officer, they cannot remove their phone number

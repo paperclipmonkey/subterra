@@ -37,6 +37,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'email_tagged',
         'email_platform_news',
         'visibility_addable',
+        'onboarding_completed_at',
     ];
 
     /**
@@ -77,6 +78,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
             'email_trophies' => 'boolean',
             'email_tagged' => 'boolean',
             'email_platform_news' => 'boolean',
+            'onboarding_completed_at' => 'datetime',
         ];
     }
 
