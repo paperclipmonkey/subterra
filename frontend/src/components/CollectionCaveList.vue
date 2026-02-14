@@ -6,7 +6,7 @@
           <v-card :to="`/caves/${cave.slug}`" link class="d-flex flex-row align-center rounded-lg" elevation="1"
                   height="100%">
             <v-avatar rounded="0" size="100" class="h-100">
-              <v-img :src="cave.hero_image || cave.entrance_image" cover class="h-100" />
+              <v-img :src="cave.hero_image?.url || cave.entrance_image?.url" cover class="h-100" />
             </v-avatar>
             <div class="pa-4 flex-grow-1" style="min-width: 0;">
               <div class="text-h6 font-weight-bold text-truncate">{{ cave.name }}</div>
@@ -38,13 +38,13 @@
 import VueMarkdown from 'vue-markdown-render'
 
 defineProps({
-    collection: {
-        type: Object,
-        required: true
-    },
-    canEdit: {
-        type: Boolean,
-        default: false
-    }
+  collection: {
+    type: Object,
+    required: true
+  },
+  canEdit: {
+    type: Boolean,
+    default: false
+  }
 })
 </script>

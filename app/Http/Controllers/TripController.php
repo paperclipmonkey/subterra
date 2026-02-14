@@ -37,7 +37,7 @@ class TripController extends Controller
             });
         });
 
-        $trips = $query->with(['participants.clubs', 'entrance', 'media'])->orderBy('start_time', 'desc')->get();
+        $trips = $query->with(['participants.clubs', 'entrance.heroImage', 'entrance.entranceImage', 'media'])->orderBy('start_time', 'desc')->get();
 
         return TripResource::collection($trips);
     }
@@ -48,7 +48,7 @@ class TripController extends Controller
         $userId = $user->id;
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with('entrance')->visibleTo($user)->orderBy('start_time', 'desc')->get();
+        })->with(['entrance.heroImage', 'entrance.entranceImage'])->visibleTo($user)->orderBy('start_time', 'desc')->get();
 
         return TripResource::collection($trips);
     }
@@ -170,7 +170,7 @@ class TripController extends Controller
             abort(404, 'Trip not found');
         }
 
-        $trip->load(['system', 'entrance', 'exit', 'participants', 'media']);
+        $trip->load(['system', 'entrance.heroImage', 'entrance.entranceImage', 'exit', 'participants', 'media']);
 
         return new TripResource($trip);
     }

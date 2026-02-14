@@ -17,7 +17,7 @@
         <v-col v-for="cave in caveStore.caves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
           <v-card hover elevation="2" class="fill-height d-flex flex-column cave-card"
                   :to="'/caves/' + cave.slug">
-            <v-img :src="cave.hero_image || cave.entrance_image || '/placeholder-cave.jpg'" height="160" cover
+            <v-img :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="160" cover
                    class="bg-grey-lighten-2">
               <template #placeholder>
                 <div class="d-flex align-center justify-center fill-height">

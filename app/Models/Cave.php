@@ -108,6 +108,6 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
 
     public function getCavingRegionAttribute()
     {
-        return $this->tags->where('category', 'region')->first()?->tag;
+        return optional($this->tags()->where('category', 'region')->first())->tag;
     }
 }

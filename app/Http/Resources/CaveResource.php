@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Storage;
 
 class CaveResource extends JsonResource
 {
+    protected static $cachedTags = null;
+
+    protected function getCachedTag($label)
+    {
+        if (self::$cachedTags === null) {
+            self::$cachedTags = Tag::whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m'])->get()->keyBy('tag');
+        }
+
+        return self::$cachedTags->get($label);
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -29,23 +40,23 @@ class CaveResource extends JsonResource
             })->exists();
         }
 
-        $previoslyDoneTag = $hasDone ? Tag::where('tag', 'Previously Done')->first() : Tag::where('tag', 'Not Done Yet')->first();
+        $previoslyDoneTag = $hasDone ? $this->getCachedTag('Previously Done') : $this->getCachedTag('Not Done Yet');
 
         $systemLengthTags = collect([]);
         if ($this->system) {
             $length = $this->system->length;
 
             if ($length >= 5000) {
-                $systemLengthTags->push(Tag::where('tag', '> 5km')->first());
+                $systemLengthTags->push($this->getCachedTag('> 5km'));
             }
             if ($length >= 1000) {
-                $systemLengthTags->push(Tag::where('tag', '> 1km')->first());
+                $systemLengthTags->push($this->getCachedTag('> 1km'));
             }
             if ($length >= 500) {
-                $systemLengthTags->push(Tag::where('tag', '> 500m')->first());
+                $systemLengthTags->push($this->getCachedTag('> 500m'));
             }
             if ($length >= 250) {
-                $systemLengthTags->push(Tag::where('tag', '> 250m')->first());
+                $systemLengthTags->push($this->getCachedTag('> 250m'));
             }
         }
 
@@ -103,7 +114,7 @@ class CaveResource extends JsonResource
                 'routes' => $this->system->routes ?? [],
             ],
             'trips' => TripResource::collection($this->whenLoaded('trips')),
-            'previously_done' => $previoslyDoneTag->tag === 'Previously Done',
+            'previously_done' => optional($previoslyDoneTag)->tag === 'Previously Done',
             'collections' => CollectionResource::collection($this->whenLoaded('collections')),
             'pivot' => $this->whenPivotLoaded('cave_collection', function () {
                 return [

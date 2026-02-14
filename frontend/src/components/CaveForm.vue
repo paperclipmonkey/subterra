@@ -91,20 +91,59 @@
         <div class="text-subtitle-1 mb-2">Media</div>
         <v-row>
           <v-col cols="12" md="6">
-            <v-card variant="outlined" class="pa-4">
-              <div class="text-subtitle-2 mb-2">Hero Image</div>
+            <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
+              <div class="text-subtitle-2 mb-2 d-flex align-center">
+                <v-icon start size="small">mdi-star</v-icon>
+                Hero Image
+              </div>
+              
+              <v-hover v-slot="{ isHovering, props: hoverProps }">
+                <div v-bind="hoverProps" class="position-relative mb-4 bg-grey-lighten-4 rounded overflow-hidden" style="height: 180px;">
+                  <v-img
+                    v-if="heroImagePreview || props.modelValue.hero_image?.url"
+                    :src="heroImagePreview || props.modelValue.hero_image.url"
+                    height="180"
+                    cover
+                  />
+                  <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
+                    <v-icon size="48">mdi-image-outline</v-icon>
+                    <span class="text-caption mt-2">No hero image set</span>
+                  </div>
+                  <v-overlay
+                    :model-value="isHovering && (heroImagePreview || props.modelValue.hero_image?.url)"
+                    contained
+                    class="align-center justify-center"
+                    scrim="black"
+                  >
+                    <v-btn
+                      v-if="heroImageFile || props.modelValue.hero_image"
+                      color="error"
+                      variant="flat"
+                      size="small"
+                      prepend-icon="mdi-delete"
+                      @click="clearHeroImage"
+                    >
+                      Remove
+                    </v-btn>
+                  </v-overlay>
+                </div>
+              </v-hover>
+
               <v-file-input
                 v-model="heroImageFile"
                 prepend-icon="mdi-camera"
                 accept="image/*"
-                label="Select Hero Image"
+                :label="props.modelValue.hero_image ? 'Replace Hero Image' : 'Select Hero Image'"
                 chips
                 density="compact"
+                hide-details
+                class="mb-3"
               />
               <v-text-field
                 v-model="mediaData.hero.title"
                 label="Title"
                 density="compact"
+                variant="outlined"
                 hide-details
                 class="mb-2"
               />
@@ -112,6 +151,7 @@
                 v-model="mediaData.hero.photographer"
                 label="Photographer"
                 density="compact"
+                variant="outlined"
                 hide-details
                 class="mb-2"
               />
@@ -119,25 +159,65 @@
                 v-model="mediaData.hero.copyright"
                 label="Copyright / Source"
                 density="compact"
+                variant="outlined"
                 hide-details
               />
             </v-card>
           </v-col>
           <v-col cols="12" md="6">
-            <v-card variant="outlined" class="pa-4">
-              <div class="text-subtitle-2 mb-2">Entrance Image</div>
+            <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
+              <div class="text-subtitle-2 mb-2 d-flex align-center">
+                <v-icon start size="small">mdi-door-open</v-icon>
+                Entrance Image
+              </div>
+
+              <v-hover v-slot="{ isHovering, props: hoverProps }">
+                <div v-bind="hoverProps" class="position-relative mb-4 bg-grey-lighten-4 rounded overflow-hidden" style="height: 180px;">
+                  <v-img
+                    v-if="entranceImagePreview || props.modelValue.entrance_image?.url"
+                    :src="entranceImagePreview || props.modelValue.entrance_image.url"
+                    height="180"
+                    cover
+                  />
+                  <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
+                    <v-icon size="48">mdi-image-outline</v-icon>
+                    <span class="text-caption mt-2">No entrance image set</span>
+                  </div>
+                  <v-overlay
+                    :model-value="isHovering && (entranceImagePreview || props.modelValue.entrance_image?.url)"
+                    contained
+                    class="align-center justify-center"
+                    scrim="black"
+                  >
+                    <v-btn
+                      v-if="entranceImageFile || props.modelValue.entrance_image"
+                      color="error"
+                      variant="flat"
+                      size="small"
+                      prepend-icon="mdi-delete"
+                      @click="clearEntranceImage"
+                    >
+                      Remove
+                    </v-btn>
+                  </v-overlay>
+                </div>
+              </v-hover>
+
               <v-file-input
                 v-model="entranceImageFile"
                 prepend-icon="mdi-camera"
                 accept="image/*"
-                label="Select Entrance Image"
+                :label="props.modelValue.entrance_image ? 'Replace Entrance Image' : 'Select Entrance Image'"
                 chips
                 density="compact"
+                hide-details
+                class="mb-3"
               />
               <v-text-field
                 v-model="mediaData.entrance.title"
                 label="Title"
                 density="compact"
+                variant="outlined"
                 hide-details
                 class="mb-2"
               />
@@ -145,6 +225,7 @@
                 v-model="mediaData.entrance.photographer"
                 label="Photographer"
                 density="compact"
+                variant="outlined"
                 hide-details
                 class="mb-2"
               />
@@ -152,6 +233,7 @@
                 v-model="mediaData.entrance.copyright"
                 label="Copyright / Source"
                 density="compact"
+                variant="outlined"
                 hide-details
               />
             </v-card>
@@ -228,18 +310,20 @@ const tagsAvailable = ref({})
 const selectedTags = ref({})
 const heroImageFile = ref(null)
 const entranceImageFile = ref(null)
+const heroImagePreview = ref(null)
+const entranceImagePreview = ref(null)
 
 const mediaData = ref({
   hero: {
-    title: internalCave.value.hero_image?.title || '',
-    photographer: internalCave.value.hero_image?.photographer || '',
-    copyright: internalCave.value.hero_image?.copyright || '',
+    title: props.modelValue.hero_image?.title || '',
+    photographer: props.modelValue.hero_image?.photographer || '',
+    copyright: props.modelValue.hero_image?.copyright || '',
     data: null
   },
   entrance: {
-    title: internalCave.value.entrance_image?.title || '',
-    photographer: internalCave.value.entrance_image?.photographer || '',
-    copyright: internalCave.value.entrance_image?.copyright || '',
+    title: props.modelValue.entrance_image?.title || '',
+    photographer: props.modelValue.entrance_image?.photographer || '',
+    copyright: props.modelValue.entrance_image?.copyright || '',
     data: null
   }
 })
@@ -266,6 +350,21 @@ const syncTagsFromModel = () => {
   selectedTags.value = newSelectedTags
 }
 
+const syncMediaDataFromModel = (val) => {
+  mediaData.value.hero = {
+    title: val.hero_image?.title || '',
+    photographer: val.hero_image?.photographer || '',
+    copyright: val.hero_image?.copyright || '',
+    data: mediaData.value.hero.data // keep current upload data
+  }
+  mediaData.value.entrance = {
+    title: val.entrance_image?.title || '',
+    photographer: val.entrance_image?.photographer || '',
+    copyright: val.entrance_image?.copyright || '',
+    data: mediaData.value.entrance.data // keep current upload data
+  }
+}
+
 // Watchers for two-way binding
 watch(() => props.modelValue, (newVal) => {
   // Only update if fundamentally different to avoid recursion
@@ -276,20 +375,7 @@ watch(() => props.modelValue, (newVal) => {
       mapCenter.value = [internalCave.value.location_lng || 0, internalCave.value.location_lat || 0]
     }
     syncTagsFromModel()
-
-    // Sync media data back
-    mediaData.value.hero = {
-      title: newVal.hero_image?.title || '',
-      photographer: newVal.hero_image?.photographer || '',
-      copyright: newVal.hero_image?.copyright || '',
-      data: null
-    }
-    mediaData.value.entrance = {
-      title: newVal.entrance_image?.title || '',
-      photographer: newVal.entrance_image?.photographer || '',
-      copyright: newVal.entrance_image?.copyright || '',
-      data: null
-    }
+    syncMediaDataFromModel(newVal)
   }
 }, { deep: true })
 
@@ -332,31 +418,77 @@ watch(selectedTags, (newTags) => {
 // Image handling
 watch(heroImageFile, async (file) => {
   if (file) {
-    mediaData.value.hero.data = await convertFileToBase64(file)
-    internalCave.value.hero_image = mediaData.value.hero
-  } else if (file === null && props.modelValue.hero_image) {
-    // If explicitly cleared
-    internalCave.value.hero_image = null
+    heroImagePreview.value = URL.createObjectURL(file)
+    const result = await convertFileToBase64(file)
+    mediaData.value.hero.data = result.data
+    internalCave.value.hero_image = {
+      ...(internalCave.value.hero_image || {}),
+      ...mediaData.value.hero
+    }
+  } else if (file === null && internalCave.value.hero_image?.data) {
+    heroImagePreview.value = null
+    mediaData.value.hero.data = null
+    if (props.modelValue.hero_image) {
+      internalCave.value.hero_image = {
+        ...props.modelValue.hero_image,
+        title: mediaData.value.hero.title,
+        photographer: mediaData.value.hero.photographer,
+        copyright: mediaData.value.hero.copyright,
+        data: null
+      }
+    } else {
+      internalCave.value.hero_image = null
+    }
   }
 })
 
 watch(entranceImageFile, async (file) => {
   if (file) {
-    mediaData.value.entrance.data = await convertFileToBase64(file)
-    internalCave.value.entrance_image = mediaData.value.entrance
-  } else if (file === null && props.modelValue.entrance_image) {
-    // If explicitly cleared
-    internalCave.value.entrance_image = null
+    entranceImagePreview.value = URL.createObjectURL(file)
+    const result = await convertFileToBase64(file)
+    mediaData.value.entrance.data = result.data
+    internalCave.value.entrance_image = {
+      ...(internalCave.value.entrance_image || {}),
+      ...mediaData.value.entrance
+    }
+  } else if (file === null && internalCave.value.entrance_image?.data) {
+    entranceImagePreview.value = null
+    mediaData.value.entrance.data = null
+    if (props.modelValue.entrance_image) {
+      internalCave.value.entrance_image = {
+        ...props.modelValue.entrance_image,
+        title: mediaData.value.entrance.title,
+        photographer: mediaData.value.entrance.photographer,
+        copyright: mediaData.value.entrance.copyright,
+        data: null
+      }
+    } else {
+      internalCave.value.entrance_image = null
+    }
   }
 })
 
+const clearHeroImage = () => {
+  heroImageFile.value = null
+  heroImagePreview.value = null
+  mediaData.value.hero.data = null
+  internalCave.value.hero_image = null
+}
+
+const clearEntranceImage = () => {
+  entranceImageFile.value = null
+  entranceImagePreview.value = null
+  mediaData.value.entrance.data = null
+  internalCave.value.entrance_image = null
+}
+
 // Metadata handling (updates internalCave when fields change without file change)
 watch(mediaData, (newVal) => {
-  if (!heroImageFile.value && props.modelValue.hero_image) {
-    internalCave.value.hero_image = newVal.hero
+  if (internalCave.value.hero_image !== null) {
+    Object.assign(internalCave.value.hero_image, newVal.hero)
   }
-  if (!entranceImageFile.value && props.modelValue.entrance_image) {
-    internalCave.value.entrance_image = newVal.entrance
+  if (internalCave.value.entrance_image !== null) {
+    Object.assign(internalCave.value.entrance_image, newVal.entrance)
   }
 }, { deep: true })
 

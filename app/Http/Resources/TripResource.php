@@ -28,11 +28,11 @@ class TripResource extends JsonResource
             'participants' => UserResource::collection($this->participants),
             'media' => MediaResource::collection($this->media),
             'duration' => $this->duration,
-            'entrance_hero_image' => $this->entrance?->hero_image
-                ? Storage::disk('media')->url($this->entrance->hero_image)
+            'entrance_hero_image' => $this->entrance?->heroImage?->filename
+                ? Storage::disk('media')->url($this->entrance->heroImage->filename)
                 : null,
-            'entrance_entrance_image' => $this->entrance?->entrance_image
-                ? Storage::disk('media')->url($this->entrance->entrance_image)
+            'entrance_entrance_image' => $this->entrance?->entranceImage?->filename
+                ? Storage::disk('media')->url($this->entrance->entranceImage->filename)
                 : null,
         ];
     }

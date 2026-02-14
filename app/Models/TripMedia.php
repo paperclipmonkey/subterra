@@ -23,4 +23,11 @@ class TripMedia extends Model implements \OwenIt\Auditing\Contracts\Auditable
     {
         return $this->belongsTo(Trip::class);
     }
+
+    public function url(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->filename ? \Illuminate\Support\Facades\Storage::disk('media')->url($this->filename) : null,
+        );
+    }
 }

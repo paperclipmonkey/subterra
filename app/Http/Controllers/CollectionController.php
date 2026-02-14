@@ -22,15 +22,16 @@ class CollectionController extends Controller
 
         $collection->load(['caves' => function ($query) use ($user) {
             // Check if the user has visited this cave (entrance or exit in a trip)
-            $query->withExists(['entranceTrips as is_entrance' => function ($q) use ($user) {
-                $q->whereHas('participants', function ($u) use ($user) {
-                    $u->where('users.id', $user->id);
-                });
-            }])->withExists(['exitTrips as is_exit' => function ($q) use ($user) {
-                $q->whereHas('participants', function ($u) use ($user) {
-                    $u->where('users.id', $user->id);
-                });
-            }])->orderByPivot('sort_order');
+            $query->with(['heroImage', 'entranceImage', 'tags', 'media'])
+                ->withExists(['entranceTrips as is_entrance' => function ($q) use ($user) {
+                    $q->whereHas('participants', function ($u) use ($user) {
+                        $u->where('users.id', $user->id);
+                    });
+                }])->withExists(['exitTrips as is_exit' => function ($q) use ($user) {
+                    $q->whereHas('participants', function ($u) use ($user) {
+                        $u->where('users.id', $user->id);
+                    });
+                }])->orderByPivot('sort_order');
         }]);
 
         // Transform collection to standard "is_ticked"

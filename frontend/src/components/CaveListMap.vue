@@ -14,7 +14,7 @@
                     :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card>
-              <v-img v-if="cave.hero_image || cave.entrance_image" :src="cave.hero_image || cave.entrance_image"
+              <v-img v-if="cave.hero_image || cave.entrance_image" :src="cave.hero_image?.url || cave.entrance_image?.url"
                      height="80" cover class="rounded-t">
                 <v-card-title class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
                   {{ cave.name }}

@@ -22,7 +22,11 @@ class CaveController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        return CaveResource::collection(Cave::orderBy('name')->get());
+        return CaveResource::collection(
+            Cave::with(['media', 'heroImage', 'entranceImage', 'system.catchment', 'tags', 'trips.participants'])
+                ->orderBy('name')
+                ->get()
+        );
     }
 
     public function store(StoreCaveRequest $request): CaveResource
