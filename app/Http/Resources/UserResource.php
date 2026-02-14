@@ -30,7 +30,6 @@ class UserResource extends JsonResource
             'is_club_admin' => $this->when(isset($this->is_club_admin), function () {
                 return $this->is_club_admin;
             }),
-            'onboarding_completed_at' => $this->onboarding_completed_at,
         ];
     }
 }

@@ -241,6 +241,13 @@
           ],
           "format": "date-time"
         },
+        "onboarding_completed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "open_callouts_count": {
           "type": "integer",
           "minimum": 0
@@ -255,6 +262,7 @@
         "stats",
         "tos_agreed_at",
         "privacy_policy_agreed_at",
+        "onboarding_completed_at",
         "phone",
         "email_trophies",
         "email_tagged",
