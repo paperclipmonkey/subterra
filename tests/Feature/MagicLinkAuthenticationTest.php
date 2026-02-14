@@ -206,7 +206,7 @@ class MagicLinkAuthenticationTest extends TestCase
         // Verify that 2 emails were sent in total
         Mail::assertSent(\App\Mail\MagicLinkMail::class, 2);
 
-        // Note: In v2.25+, old magic links are not automatically deleted.
+        // Note: In v2.25.1+, old magic links are not automatically deleted.
         // They expire based on their configured lifetime.
         // This is acceptable because:
         // 1. Each link has a short lifetime

@@ -56,7 +56,7 @@ class MagicLinkController extends Controller
                 }
             }
 
-            // Note: In v2.25+, actions are serialized with HMAC signing, making it
+            // Note: In v2.25.1+, actions are serialized with HMAC signing, making it
             // impractical to query by user ID. We rely on the lifetime expiry instead.
             // Old links will expire automatically based on their configured lifetime.
 
