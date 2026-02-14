@@ -58,7 +58,7 @@ class MagicLinkController extends Controller
 
             // Note: In v2.25+, actions are serialized with HMAC signing, making it
             // impractical to query by user ID. We rely on the lifetime expiry instead.
-            // Old links will expire automatically after 30 minutes.
+            // Old links will expire automatically based on their configured lifetime.
 
             // Create new magic link for login (30 minutes lifetime)
             $magiclink = MagicLink::create(new LoginAction($user), 30);
