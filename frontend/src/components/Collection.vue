@@ -101,6 +101,7 @@ import CollectionCaveList from '@/components/CollectionCaveList.vue'
 import CollectionMap from '@/components/CollectionMap.vue'
 import VueMarkdown from 'vue-markdown-render'
 import CorrectionModal from '@/components/CorrectionModal.vue'
+import { usePageTitle } from '@/composables/usePageTitle'
 
 const route = useRoute()
 const collectionStore = useCollectionStore()
