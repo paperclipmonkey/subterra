@@ -154,6 +154,7 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
         Route::post('/communications/send', [App\Http\Controllers\Admin\CommunicationController::class, 'send'])->name('admin.communications.send');
         Route::get('/dashboard/popular-records', [App\Http\Controllers\Admin\DashboardController::class, 'popularRecords'])->name('admin.dashboard.popular-records');
+        Route::get('/dashboard/metrics-overview', [App\Http\Controllers\Admin\DashboardController::class, 'metricsOverview'])->name('admin.dashboard.metrics-overview');
     });
 
     // Content & Data shared (Platform Admin OR Data Admin)

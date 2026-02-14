@@ -105,4 +105,42 @@ class DashboardTest extends TestCase
             'trackable_id' => $page->id,
         ]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_metrics_overview()
+    {
+        $admin = User::factory()->admin()->create();
+
+        // Create some data
+        \App\Models\Callout::factory()->count(3)->create(['created_at' => now(), 'user_id' => $admin->id]);
+        \App\Models\Trip::factory()->count(5)->create(['created_at' => now()]);
+        User::factory()->count(2)->create(['created_at' => now()]);
+
+        $response = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/dashboard/metrics-overview');
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'labels',
+            'data' => [
+                '*' => [
+                    'label',
+                    'sparkline',
+                ],
+            ],
+        ]);
+
+        $data = $response->json('data');
+        $this->assertCount(3, $data);
+
+        foreach ($data as $metric) {
+            if ($metric['label'] === 'Callouts') {
+                $this->assertEquals(3, end($metric['sparkline']));
+            } elseif ($metric['label'] === 'Trips') {
+                $this->assertEquals(5, end($metric['sparkline']));
+            } elseif ($metric['label'] === 'Users') {
+                // Includes the admin and the 2 new users = 3
+                $this->assertEquals(3, end($metric['sparkline']));
+            }
+        }
+    }
 }

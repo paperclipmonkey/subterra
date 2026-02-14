@@ -6,6 +6,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiInteraction;
+use App\Models\Callout;
+use App\Models\Trip;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -180,5 +183,51 @@ class DashboardController extends Controller
     private function getModelName($model): string
     {
         return $model->name ?? $model->title ?? $model->slug ?? 'Unknown';
+    }
+
+    /**
+     * Get growth metrics (Callouts, Trips, Users) for the last 30 days.
+     */
+    public function metricsOverview(): JsonResponse
+    {
+        $thirtyDaysAgo = now()->subDays(30);
+        $labels = [];
+        for ($i = 29; $i >= 0; --$i) {
+            $labels[] = now()->subDays($i)->format('Y-m-d');
+        }
+
+        $metrics = [
+            'Callouts' => ['model' => Callout::class, 'column' => 'created_at'],
+            'Trips' => ['model' => Trip::class, 'column' => 'created_at'],
+            'Users' => ['model' => User::class, 'column' => 'created_at'],
+        ];
+
+        $data = [];
+
+        foreach ($metrics as $label => $config) {
+            $modelClass = $config['model'];
+            $column = $config['column'];
+
+            $counts = $modelClass::where($column, '>=', $thirtyDaysAgo)
+                ->select(DB::raw("DATE($column) as date"), DB::raw('COUNT(*) as count'))
+                ->groupBy('date')
+                ->pluck('count', 'date')
+                ->toArray();
+
+            $sparkline = [];
+            foreach ($labels as $date) {
+                $sparkline[] = $counts[$date] ?? 0;
+            }
+
+            $data[] = [
+                'label' => $label,
+                'sparkline' => $sparkline,
+            ];
+        }
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data,
+        ]);
     }
 }

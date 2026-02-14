@@ -32,8 +32,6 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'end_time' => 'datetime',
     ];
 
-    public $timestamps = false;
-
     public function system(): BelongsTo
     {
         return $this->belongsTo(CaveSystem::class, 'cave_system_id', 'id');

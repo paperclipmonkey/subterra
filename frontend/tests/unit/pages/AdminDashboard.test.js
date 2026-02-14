@@ -55,6 +55,8 @@ describe('Dashboard.vue', () => {
             global: {
                 stubs: {
                     'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
                     'v-card': { template: '<div><slot /></div>' },
                     'v-card-title': { template: '<div><slot /></div>' },
                     'v-card-text': { template: '<div><slot /></div>' },
@@ -67,31 +69,23 @@ describe('Dashboard.vue', () => {
         // Wait for onMounted fetch
         await new Promise(resolve => setTimeout(resolve, 0))
         await wrapper.vm.$nextTick()
-        await wrapper.vm.$nextTick() // sometimes need double tick for reactive updates
+        await wrapper.vm.$nextTick()
 
         expect(mockGet).toHaveBeenCalled()
 
-        // Find the mocked Line component
-        // Note: wrapper.findComponent(Line) might not work if import is mocked?
-        // Let's find via class if template rendered
-        const lineComponent = wrapper.find('.mock-line-chart')
-        expect(lineComponent.exists()).toBe(true)
+        // Find the mocked Line components (should have 2 now)
+        const lineCharts = wrapper.findAll('.mock-line-chart')
+        expect(lineCharts.length).toBeGreaterThanOrEqual(1)
 
-        // Verify the data passed to the chart
-        // Since we are mocking the module, we can spy on the component usage if we mounted real component or check props if we use stubs
-        // But since we stubbed vue-chartjs with an object, let's see if we can get the component instance
+        // Verify the data passed to the first chart
+        const chartWrappers = wrapper.findAllComponents({ name: 'Line' })
+        expect(chartWrappers.length).toBe(2)
 
-        // Alternative: verify chartData.value in vm (if expose works, but setup script exposes only returned)
-        // However, we can use wrapper.findComponent(MockLine)
-
-        const chartWrapper = wrapper.findComponent({ name: 'Line' })
-        expect(chartWrapper.exists()).toBe(true)
-
-        const props = chartWrapper.props()
-        expect(props.data.labels).toEqual(mockLabels)
-        expect(props.data.datasets).toHaveLength(2)
-        expect(props.data.datasets[0].label).toContain('Cave 1')
-        expect(props.data.datasets[0].data).toEqual([1, 2, 3])
+        const popularProps = chartWrappers[1].props() // Popular records is the second card now (bottom)
+        expect(popularProps.data.labels).toEqual(mockLabels)
+        expect(popularProps.data.datasets).toHaveLength(2)
+        expect(popularProps.data.datasets[0].label).toContain('Cave 1')
+        expect(popularProps.data.datasets[0].data).toEqual([1, 2, 3])
     })
 
     it('shows "No interactions" message when empty', async () => {
@@ -104,6 +98,8 @@ describe('Dashboard.vue', () => {
             global: {
                 stubs: {
                     'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
                     'v-card': { template: '<div><slot /></div>' },
                     'v-card-title': { template: '<div><slot /></div>' },
                     'v-card-text': { template: '<div><slot /></div>' },
@@ -115,8 +111,9 @@ describe('Dashboard.vue', () => {
 
         await new Promise(resolve => setTimeout(resolve, 0))
         await wrapper.vm.$nextTick()
+        await wrapper.vm.$nextTick()
 
         expect(wrapper.text()).toContain('No API interactions recorded yet')
-        expect(wrapper.find('.mock-line-chart').exists()).toBe(false)
+        expect(wrapper.text()).toContain('No growth data recorded yet')
     })
 })
