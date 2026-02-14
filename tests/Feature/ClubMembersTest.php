@@ -93,6 +93,7 @@ class ClubMembersTest extends TestCase
         ]);
         $response->assertJsonCount(2, 'data');
     }
+
     #[\PHPUnit\Framework\Attributes\Test]
     public function response_includes_club_admin_status(): void
     {
@@ -101,14 +102,14 @@ class ClubMembersTest extends TestCase
 
         $this->actingAs($this->approvedMember1, 'sanctum');
         $response = $this->getJson($this->getEndpointUrl());
-        
+
         $response->assertOk();
-        
+
         $response->assertJsonFragment([
             'id' => $clubAdmin->id,
             'is_club_admin' => true,
         ]);
-        
+
         $response->assertJsonFragment([
             'id' => $this->approvedMember1->id,
             'is_club_admin' => false,

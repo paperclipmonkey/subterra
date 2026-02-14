@@ -9,7 +9,6 @@ use App\Models\Trip;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 class ClubDataController extends Controller
 {
@@ -39,6 +38,7 @@ class ClubDataController extends Controller
         // Used by ClubEditModal for club admins who can't access the full admin endpoint
         return UserResource::collection($members->map(function ($user) {
             $user->is_club_admin = (bool) $user->pivot->is_admin;
+
             return $user;
         }));
     }
@@ -72,7 +72,7 @@ class ClubDataController extends Controller
             $memberCount = 0;
             foreach ($trip->participants as $participant) {
                 if ($approvedMemberIds->has($participant->id)) {
-                    $memberCount++;
+                    ++$memberCount;
                 }
             }
 

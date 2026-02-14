@@ -60,7 +60,7 @@ class PurgeOldCallouts extends Command
             ]);
 
             foreach ($callout->participants as $participant) {
-                // We keep user_id if present to link to internal profiles, 
+                // We keep user_id if present to link to internal profiles,
                 // but scrub the ad-hoc contact details.
                 $participant->update([
                     'name' => 'Scrubbed Participant',

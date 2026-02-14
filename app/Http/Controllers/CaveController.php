@@ -76,13 +76,13 @@ class CaveController extends Controller
 
     private function processImageField(UpdateCaveRequest $request, Cave $cave, string $type): void
     {
-        $fieldName = $type . '_image';
-        
+        $fieldName = $type.'_image';
+
         if ($request->has($fieldName) && $request->input($fieldName) !== null) {
             $imageData = $request->input($fieldName);
             if (is_array($imageData) && isset($imageData['data'])) {
                 $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $type);
-                
+
                 $cave->media()->updateOrCreate(
                     ['type' => $type],
                     [

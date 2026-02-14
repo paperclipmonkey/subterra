@@ -58,19 +58,19 @@ class ClubActivityHeatmapHoursTest extends TestCase
         // The controller uses Carbon::now()->subYear().
         // So let's make sure these dates are within the last year relative to "now".
         // Instead of hardcoding 2023, let's use Carbon::now().
-        
+
         Carbon::setTestNow(Carbon::parse('2023-06-01 12:00:00'));
 
         $this->actingAs($this->member1, 'sanctum');
-        
+
         $response = $this->getJson("/api/clubs/{$this->club->slug}/activity-heatmap");
-        
+
         $response->assertOk();
-        
+
         // Expected data:
         // 2023-01-01: 5 hours (4 + 1)
         // 2022-12-31: 2 hours
-        
+
         $response->assertJsonFragment(['date' => '2023-01-01', 'count' => 5]);
         $response->assertJsonFragment(['date' => '2022-12-31', 'count' => 2]);
     }

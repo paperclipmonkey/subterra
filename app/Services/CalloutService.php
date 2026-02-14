@@ -98,7 +98,6 @@ class CalloutService
                 // Don't fail the callout creation if watchdog registration fails
             }
 
-
             try {
                 // Collect all emails
                 $emails = collect($data['participants'] ?? [])

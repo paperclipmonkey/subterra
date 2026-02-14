@@ -109,33 +109,33 @@ class UserController extends Controller
             return false;
         })
 ->map(function ($user) use ($clubUserIds, $tripUserCounts, $currentUser) {
-            $score = 0;
-            
-            // Current user gets a small score to be visible in suggestions but not top
-            if ($currentUser && $user->id === $currentUser->id) {
-                $score = 0;
-            }
+    $score = 0;
 
-            // Priority 1 (High): Previous Trips
-            if (isset($tripUserCounts[$user->id])) {
-                // Give a high score for trips, potentially weighted by count
-                $score += 10 + ($tripUserCounts[$user->id]);
-            }
+    // Current user gets a small score to be visible in suggestions but not top
+    if ($currentUser && $user->id === $currentUser->id) {
+        $score = 0;
+    }
 
-            // Priority 2: Clubs in common
-            if ($clubUserIds->contains($user->id)) {
-                $score += 5;
-            }
+    // Priority 1 (High): Previous Trips
+    if (isset($tripUserCounts[$user->id])) {
+        // Give a high score for trips, potentially weighted by count
+        $score += 10 + ($tripUserCounts[$user->id]);
+    }
 
-            // Priority 3: Public (Base visibility)
-            if ($user->visibility_addable === 'public') {
-                $score += 1;
-            }
+    // Priority 2: Clubs in common
+    if ($clubUserIds->contains($user->id)) {
+        $score += 5;
+    }
 
-            $user->proximity_score = $score;
+    // Priority 3: Public (Base visibility)
+    if ($user->visibility_addable === 'public') {
+        $score += 1;
+    }
 
-            return $user;
-        })
+    $user->proximity_score = $score;
+
+    return $user;
+})
         ->sortByDesc('proximity_score')
         ->take(20) // Limit results
         ->values();

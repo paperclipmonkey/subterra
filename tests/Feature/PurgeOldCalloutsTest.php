@@ -18,9 +18,9 @@ class PurgeOldCalloutsTest extends TestCase
     {
         // 1. Setup: Create a callout older than 30 days with PII
         $oldDate = Carbon::now()->subDays(31);
-        
+
         $user = User::factory()->create();
-        
+
         $callout = Callout::factory()->create([
             'created_at' => $oldDate,
             'status' => 'cancelled',
@@ -47,7 +47,7 @@ class PurgeOldCalloutsTest extends TestCase
 
         // 3. Execution: Run the command
         $this->artisan('callouts:purge-sensitive-data')
-            ->expectsOutput("Successfully scrubbed sensitive data from 1 callouts and their participants.")
+            ->expectsOutput('Successfully scrubbed sensitive data from 1 callouts and their participants.')
             ->assertExitCode(0);
 
         // 4. Assertion: Verify old callout is scrubbed

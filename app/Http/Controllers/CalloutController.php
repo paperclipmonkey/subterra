@@ -99,6 +99,7 @@ class CalloutController extends Controller
     public function show($id)
     {
         $callout = Callout::with(['participants', 'cave', 'exitCave'])->findOrFail($id);
+
         return response()->json(['data' => $callout]);
     }
 

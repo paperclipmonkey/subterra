@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,7 +16,7 @@ return new class extends Migration
             ->whereNotNull('hero_image')
             ->orWhereNotNull('entrance_image')
             ->count();
-            
+
         if ($caveWithImageCount > 0) {
             $mediaCount = \Illuminate\Support\Facades\DB::table('cave_media')->count();
             if ($mediaCount === 0) {
@@ -49,7 +48,7 @@ return new class extends Migration
                     \Illuminate\Support\Facades\DB::table('caves')
                         ->where('id', $item->cave_id)
                         ->update([
-                            ($item->type === 'hero' ? 'hero_image' : 'entrance_image') => $item->filename
+                            ($item->type === 'hero' ? 'hero_image' : 'entrance_image') => $item->filename,
                         ]);
                 }
             });

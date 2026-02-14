@@ -130,10 +130,10 @@ class SuggestedEditController extends Controller
     private function handleCaveMediaApproval(Cave $cave, array $data): void
     {
         foreach (['hero', 'entrance'] as $type) {
-            $key = $type . '_image';
+            $key = $type.'_image';
             if (isset($data[$key])) {
                 $imageData = $data[$key];
-                
+
                 if (is_array($imageData)) {
                     $cave->media()->updateOrCreate(
                         ['type' => $type],

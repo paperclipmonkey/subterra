@@ -128,7 +128,7 @@ class CaveTest extends TestCase
         $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         Storage::fake('media');
         $cave = Cave::factory()->create();
-        
+
         $cave->media()->create(['type' => 'hero', 'filename' => 'caves/old_hero.webp']);
         $cave->media()->create(['type' => 'entrance', 'filename' => 'caves/old_entrance.webp']);
 

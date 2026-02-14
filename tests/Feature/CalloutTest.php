@@ -10,7 +10,6 @@ use App\Services\SmsService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
 

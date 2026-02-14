@@ -60,15 +60,15 @@
                   <v-text-field v-model="tripDurationHours" label="Duration (hours)" type="number" min="0" step="1"
                                 :rules="rules.duration" :error-messages="validationErrors.end_time"
                                 required hint="How many hours the trip lasted."
-                                @input="tripDurationHours = Math.floor(tripDurationHours)"
-                                persistent-hint variant="outlined" @update:model-value="delete validationErrors.end_time" />
+                                persistent-hint
+                                variant="outlined" @input="tripDurationHours = Math.floor(tripDurationHours)" @update:model-value="delete validationErrors.end_time" />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripDurationMinutes" label="Duration (minutes)" type="number" min="0" max="59" step="1"
                                 :rules="rules.duration" :error-messages="validationErrors.end_time"
                                 required hint="How many minutes the trip lasted."
-                                @input="tripDurationMinutes = Math.floor(tripDurationMinutes)"
-                                persistent-hint variant="outlined" @update:model-value="delete validationErrors.end_time" />
+                                persistent-hint
+                                variant="outlined" @input="tripDurationMinutes = Math.floor(tripDurationMinutes)" @update:model-value="delete validationErrors.end_time" />
                 </v-col>
               </v-row>
             </v-card-text>
