@@ -137,13 +137,8 @@ class MagicLinkController extends Controller
             // Authenticate the user using Laravel's session-based auth
             Auth::login($user);
 
-            // Mark the magic link as visited (increments counter and may delete if max visits reached)
+            // Mark the magic link as visited (increments counter)
             $magicLink->visited();
-
-            // Delete the link if it has reached max visits
-            if ($magicLink->max_visits && $magicLink->num_visits + 1 >= $magicLink->max_visits) {
-                $magicLink->delete();
-            }
 
             Log::info('User authenticated via magic link', ['user_id' => $user->id]);
 
