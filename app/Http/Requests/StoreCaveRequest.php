@@ -34,6 +34,8 @@ class StoreCaveRequest extends FormRequest
             'access_info' => ['nullable', 'string'],
             'hero_image' => ['nullable', 'array'],
             'entrance_image' => ['nullable', 'array'],
+            'slug' => ['nullable', 'string', 'max:255', 'unique:caves,slug'],
+            'tags' => ['nullable', 'array'],
         ];
     }
 }

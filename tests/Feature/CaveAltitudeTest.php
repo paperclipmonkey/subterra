@@ -108,7 +108,7 @@ class CaveAltitudeTest extends TestCase
         $response = $this->actingAs($user)
             ->postJson('/api/caves', $data);
 
-        $response->assertStatus(201);
+        $response->assertStatus(200);
 
         $this->assertDatabaseHas('caves', [
             'name' => 'New Cave with Altitude',

@@ -215,8 +215,20 @@
               <template v-if="cave.system">
                 <div class="d-flex align-center justify-space-between mb-2">
                   <h3 class="text-h6">{{ cave.system.name }}</h3>
-                  <v-btn v-if="appStore.user.is_admin" size="small" variant="text" icon="mdi-pencil"
-                         @click="$router.push('/cave-systems/' + cave.system.id + '/edit')" />
+                  <div v-if="appStore.user.is_admin || (appStore.user.roles && appStore.user.roles.some(r => r.slug === 'data_admin'))">
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      color="primary"
+                      prepend-icon="mdi-plus"
+                      class="mr-2"
+                      :to="`/caves/create?system_id=${cave.system.id}`"
+                    >
+                      Add Cave
+                    </v-btn>
+                    <v-btn size="small" variant="text" icon="mdi-pencil"
+                           @click="$router.push('/cave-systems/' + cave.system.id + '/edit')" />
+                  </div>
                 </div>
 
                 <div v-if="cave.system.catchment_name" class="mb-4">
@@ -314,6 +326,20 @@
                       {{ tag.tag }}
                     </v-chip>
                   </v-chip-group>
+
+                  <template v-if="cave.system?.caves?.length > 1">
+                    <v-divider class="my-4" />
+                    <h3 class="text-h6 mb-2">System Entrances</h3>
+                    <v-list density="compact" class="bg-transparent pa-0">
+                      <v-list-item v-for="ent in cave.system.caves" :key="ent.id" :to="'/caves/' + ent.slug"
+                                   :active="ent.id === cave.id" class="px-0">
+                        <template #prepend>
+                          <v-icon icon="mdi-cave" size="small" />
+                        </template>
+                        <v-list-item-title>{{ ent.name }}</v-list-item-title>
+                      </v-list-item>
+                    </v-list>
+                  </template>
                 </div>
               </template>
               <v-alert v-else type="warning" variant="tonal">No system information available.</v-alert>

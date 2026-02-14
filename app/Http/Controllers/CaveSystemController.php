@@ -163,11 +163,11 @@ class CaveSystemController extends Controller
             if (!empty($imageData[$field]) && is_array($imageData[$field])) {
                 $type = str_replace('_image', '', $field); // 'hero' or 'entrance'
                 $data = $imageData[$field];
-                
+
                 // Check if data key exists and is valid
                 if (!empty($data['data'])) {
                     $filePath = $this->imageProcessingService->processAndStoreImage($data, 'caves', $type);
-                    
+
                     $cave->media()->create([
                         'type' => $type,
                         'filename' => $filePath,

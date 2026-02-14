@@ -46,11 +46,53 @@ class CaveController extends Controller
     public function store(StoreCaveRequest $request): CaveResource
     {
         $validData = $request->validated();
-        $validData['slug'] = Str::slug($validData['name']);
+        if (empty($validData['slug'])) {
+            $validData['slug'] = Str::slug($validData['name']);
+        }
 
         $cave = Cave::create($validData);
 
-        return new CaveResource($cave);
+        // Process tags
+        if ($request->has('tags')) {
+            $tags = collect($request->input('tags', []))->map(function ($tag) {
+                return Tag::where([
+                    'category' => $tag['category'],
+                    'tag' => $tag['tag'],
+                    'assignable' => true,
+                ])->first()?->id;
+            })->filter();
+            $cave->tags()->sync($tags);
+        }
+
+        // Process hero image
+        if ($request->has('hero_image')) {
+            $this->processImageFieldOnCreate($request, $cave, 'hero');
+        }
+
+        // Process entrance image
+        if ($request->has('entrance_image')) {
+            $this->processImageFieldOnCreate($request, $cave, 'entrance');
+        }
+
+        return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage']));
+    }
+
+    private function processImageFieldOnCreate(StoreCaveRequest $request, Cave $cave, string $type): void
+    {
+        $fieldName = $type.'_image';
+        $imageData = $request->input($fieldName);
+
+        if (is_array($imageData) && isset($imageData['data'])) {
+            $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $type);
+
+            $cave->media()->create([
+                'type' => $type,
+                'filename' => $filePath,
+                'title' => $imageData['title'] ?? null,
+                'photographer' => $imageData['photographer'] ?? null,
+                'copyright' => $imageData['copyright'] ?? null,
+            ]);
+        }
     }
 
     public function show($id)
