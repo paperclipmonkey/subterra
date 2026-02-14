@@ -69,7 +69,7 @@ class SuggestedEditController extends Controller
             "*Entity:* {$entityName}\n\n".
             "*Preview:*\n".
             '> '.(isset($suggestedData['description']) ? substr(strip_tags($suggestedData['description']), 0, 150).'...' : 'No description provided')."\n\n".
-            "*Review:* ".config('app.url')."/admin/suggested-edits/{$suggestion->id}";
+            '*Review:* '.config('app.url')."/admin/suggested-edits/{$suggestion->id}";
 
         try {
             SlackAlert::to('corrections')->message($message);

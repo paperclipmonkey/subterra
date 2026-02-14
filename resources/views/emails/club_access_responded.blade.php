@@ -10,11 +10,11 @@
     <p>Hello {{ $user->name }},</p>
     @if ($status === 'approved')
         <p>Good news! Your request to join <strong>{{ $club->name }}</strong> has been <span style="color:green;"><strong>approved</strong></span>.</p>
-        <p>You now have access to the club's member features:</p>
+        <p>You now have access to the club's member features! 🚀</p>
         <ul>
-            <li><strong>Shared Trip Logs</strong> - See where your fellow members have been exploring.</li>
-            <li><strong>Club Activity Heatmap</strong> - Track your club's collective progress over time.</li>
-            <li><strong>Member Directory</strong> - Connect with other cavers in your club.</li>
+            <li>🗺️ <strong>Cave Surveys</strong> - Plan your next trip with detailed maps.</li>
+            <li>📍 <strong>Cave Locations & Access</strong> - Find exactly where to go and how to get in.</li>
+            <li>🚨 <strong>Callouts</strong> - Leave a callout so others know where you are and when you'll be back.</li>
         </ul>
         <div style="margin: 30px 0;">
             <a href="{{ url('/club/' . $club->slug) }}" style="background-color: #2196F3; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Club Page</a>
