@@ -51,8 +51,26 @@ jobs:
       - name: Build frontend
         run: cd frontend && yarn run build
 
+  watchdog-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: gcp-watchdog/package-lock.json
+      - name: Install watchdog dependencies
+        run: cd gcp-watchdog && npm install
+      - name: Run watchdog tests
+        run: cd gcp-watchdog && npm test
+
   deploy-watchdog:
-    needs: [backend-tests, frontend-tests]
+    needs: [backend-tests, frontend-tests, watchdog-tests]
     runs-on: ubuntu-latest
     concurrency: deploy-watchdog-group
     env:
@@ -101,7 +119,7 @@ jobs:
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
 
   deploy:
-    needs: [backend-tests, frontend-tests]
+    needs: [backend-tests, frontend-tests, watchdog-tests]
     runs-on: ubuntu-latest
     concurrency: deploy-group
     env:
