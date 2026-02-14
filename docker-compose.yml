@@ -24,7 +24,6 @@ services:
         depends_on:
             - postgres
             - mailpit
-            - selenium
     postgres:
         image: 'postgres:17.0'
         ports:
