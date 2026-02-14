@@ -161,9 +161,21 @@ class CaveSystemController extends Controller
         // Process Images
         foreach (['hero_image', 'entrance_image'] as $field) {
             if (!empty($imageData[$field]) && is_array($imageData[$field])) {
-                $suffix = str_replace('_image', '', $field);
-                $filePath = $this->imageProcessingService->processAndStoreImage($imageData[$field], 'caves', $suffix);
-                $cave->update([$field => $filePath]);
+                $type = str_replace('_image', '', $field); // 'hero' or 'entrance'
+                $data = $imageData[$field];
+                
+                // Check if data key exists and is valid
+                if (!empty($data['data'])) {
+                    $filePath = $this->imageProcessingService->processAndStoreImage($data, 'caves', $type);
+                    
+                    $cave->media()->create([
+                        'type' => $type,
+                        'filename' => $filePath,
+                        'title' => $data['title'] ?? null,
+                        'photographer' => $data['photographer'] ?? null,
+                        'copyright' => $data['copyright'] ?? null,
+                    ]);
+                }
             }
         }
 
