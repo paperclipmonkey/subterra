@@ -113,7 +113,7 @@ import { useRoute } from 'vue-router'
 import { mande } from 'mande'
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
-import { useTripStore } from '@/stores/trips';
+import { useTripStore } from '@/stores/trips'
 import { ref, computed, onMounted, watch } from 'vue'
 import TripCard from '@/components/TripCard.vue'
 
@@ -123,7 +123,7 @@ const search = ref('')
 const tab = ref('detailed')
 
 const isStubbed = (trip) => {
-  return trip.name === 'Marked as Done';
+  return trip.name === 'Marked as Done'
 }
 
 const isOwnTrips = computed(() => {
@@ -132,15 +132,15 @@ const isOwnTrips = computed(() => {
 })
 
 const isSearching = computed(() => {
-  return search.value.trim().length > 0;
+  return search.value.trim().length > 0
 })
 
 const filteredTrips = computed(() => {
-  let trips = tripStore.trips;
+  let trips = tripStore.trips
 
   // When viewing another user's trips, exclude stubbed
   if (!isOwnTrips.value) {
-    trips = trips.filter(trip => !isStubbed(trip));
+    trips = trips.filter(trip => !isStubbed(trip))
   }
 
   if (search.value.trim()) {
@@ -164,19 +164,19 @@ const stubbedFilteredTrips = computed(() => {
 })
 
 const formatDate = (date) => {
-  let parsedDate = moment(date);
+  let parsedDate = moment(date)
   return parsedDate.isValid() ? parsedDate.format('DD-MM-YYYY') : '~'
 }
 
 const formatDuration = (minutes) => {
-  if (!minutes) return '';
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+  if (!minutes) return ''
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
   if (hours > 0) {
-    if (mins > 0) return `${hours}h ${mins}m`;
-    return `${hours}h`;
+    if (mins > 0) return `${hours}h ${mins}m`
+    return `${hours}h`
   }
-  return `${mins}m`;
+  return `${mins}m`
 }
 
 const getGradientClass = (id) => {

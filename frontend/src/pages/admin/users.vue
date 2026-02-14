@@ -104,24 +104,24 @@
 </template>
 
 <script setup>
-import moment from 'moment';
-import { ref, onMounted } from 'vue';
-import { mande } from 'mande';
-import { useRouter } from 'vue-router';
-import { useAppStore } from '@/stores/app';
+import moment from 'moment'
+import { ref, onMounted } from 'vue'
+import { mande } from 'mande'
+import { useRouter } from 'vue-router'
+import { useAppStore } from '@/stores/app'
 
-const usersApi = mande('/api/admin/users');
-const users = ref([]);
-const loading = ref(false);
-const search = ref('');
-const router = useRouter();
-const appStore = useAppStore();
+const usersApi = mande('/api/admin/users')
+const users = ref([])
+const loading = ref(false)
+const search = ref('')
+const router = useRouter()
+const appStore = useAppStore()
 
 const allRoles = [
   { slug: 'platform_admin', label: 'Platform Admin', color: 'purple', icon: 'mdi-shield-crown' },
   { slug: 'duty_officer', label: 'Duty Officer', color: 'blue', icon: 'mdi-phone-in-talk' },
   { slug: 'data_admin', label: 'Data Admin', color: 'teal', icon: 'mdi-database-edit' },
-];
+]
 
 const headers = [
   { title: 'Name', key: 'name', sortable: true },
@@ -130,120 +130,120 @@ const headers = [
   { title: 'Clubs', key: 'clubs', sortable: true },
   { title: 'Joined', key: 'created_at', sortable: true },
   { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
-];
+]
 
 const isSelf = (user) => {
-  return appStore.user?.id === user.id;
-};
+  return appStore.user?.id === user.id
+}
 
 const hasRole = (user, slug) => {
-  return user.roles && user.roles.some(r => r.slug === slug);
-};
+  return user.roles && user.roles.some(r => r.slug === slug)
+}
 
 const fetchUsers = async () => {
-  loading.value = true;
+  loading.value = true
   try {
-    const response = await usersApi.get();
+    const response = await usersApi.get()
     users.value = (response.data || response).map(user => ({
       ...user,
       loadingRole: null,
       loadingDelete: false,
-    }));
+    }))
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error('Error fetching users:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // Deletion State
-const deleteDialog = ref(false);
-const userToDelete = ref(null);
+const deleteDialog = ref(false)
+const userToDelete = ref(null)
 
 const confirmDelete = (user) => {
-  userToDelete.value = user;
-  deleteDialog.value = true;
-};
+  userToDelete.value = user
+  deleteDialog.value = true
+}
 
 const cancelDelete = () => {
-  deleteDialog.value = false;
-  userToDelete.value = null;
-};
+  deleteDialog.value = false
+  userToDelete.value = null
+}
 
 const executeDelete = async () => {
-  if (!userToDelete.value) return;
+  if (!userToDelete.value) return
 
-  const user = userToDelete.value;
-  user.loadingDelete = true;
-  deleteDialog.value = false;
+  const user = userToDelete.value
+  user.loadingDelete = true
+  deleteDialog.value = false
 
   try {
-    const deleteApi = mande(`/api/users/${user.id}`);
-    await deleteApi.delete();
-    users.value = users.value.filter(u => u.id !== user.id);
+    const deleteApi = mande(`/api/users/${user.id}`)
+    await deleteApi.delete()
+    users.value = users.value.filter(u => u.id !== user.id)
   } catch (error) {
-    console.error(`Error deleting user ${user.id}:`, error);
-    user.loadingDelete = false;
+    console.error(`Error deleting user ${user.id}:`, error)
+    user.loadingDelete = false
   } finally {
-    userToDelete.value = null;
+    userToDelete.value = null
   }
-};
+}
 
 const updateUserInList = (updatedUser) => {
-  const index = users.value.findIndex(u => u.id === updatedUser.id);
+  const index = users.value.findIndex(u => u.id === updatedUser.id)
   if (index !== -1) {
     users.value[index] = {
       ...updatedUser,
       loadingRole: null,
       loadingDelete: false
-    };
+    }
   }
-};
+}
 
 const toggleRole = async (user, roleSlug) => {
-  if (isSelf(user)) return;
-  user.loadingRole = roleSlug;
+  if (isSelf(user)) return
+  user.loadingRole = roleSlug
   try {
-    const toggleApi = mande(`/api/admin/users/${user.id}/toggle-role/${roleSlug}`);
-    const updatedUser = await toggleApi.put();
-    updateUserInList(updatedUser.data || updatedUser);
+    const toggleApi = mande(`/api/admin/users/${user.id}/toggle-role/${roleSlug}`)
+    const updatedUser = await toggleApi.put()
+    updateUserInList(updatedUser.data || updatedUser)
   } catch (error) {
-    console.error(`Error toggling role ${roleSlug} for user ${user.id}:`, error);
-    user.loadingRole = null;
+    console.error(`Error toggling role ${roleSlug} for user ${user.id}:`, error)
+    user.loadingRole = null
   }
-};
+}
 
 const approveMembership = async (user, club) => {
-  loading.value = true;
+  loading.value = true
   try {
-    const approveApi = mande(`/api/admin/clubs/${club.slug}/members/${user.id}/approve`);
-    const updatedUser = await approveApi.put();
-    updateUserInList(updatedUser.data || updatedUser);
+    const approveApi = mande(`/api/admin/clubs/${club.slug}/members/${user.id}/approve`)
+    const updatedUser = await approveApi.put()
+    updateUserInList(updatedUser.data || updatedUser)
   } catch (error) {
-    console.error(`Error approving membership for user ${user.id} in club ${club.slug}:`, error);
+    console.error(`Error approving membership for user ${user.id} in club ${club.slug}:`, error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 
 const handleRowClick = (event, { item }) => {
-  const targetUser = item;
+  const targetUser = item
 
-  let target = event.target;
+  let target = event.target
   while (target && target !== event.currentTarget) {
     if (target.tagName === 'BUTTON' || target.classList.contains('v-icon') || target.classList.contains('v-chip')) {
-      return;
+      return
     }
-    target = target.parentNode;
+    target = target.parentNode
   }
 
-  router.push(`/profile/${targetUser.id}`);
-};
+  router.push(`/profile/${targetUser.id}`)
+}
 
 onMounted(() => {
-  fetchUsers();
-});
+  fetchUsers()
+})
 </script>
 
 <style scoped>

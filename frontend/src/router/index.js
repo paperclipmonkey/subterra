@@ -70,7 +70,7 @@ router.beforeEach(async (to, from, next) => {
     if (!user.is_admin) {
       // Redirect non-admins away from admin pages
       // console.log('[Debug] User not admin, redirecting to /trips')
-      return next({ path: '/trips' });
+      return next({ path: '/trips' })
     }
 
     // Role-based guarding for specific sub-routes

@@ -67,15 +67,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { useAppStore } from '@/stores/app';
-import { useToast } from "vue-toastification";
+import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAppStore } from '@/stores/app'
+import { useToast } from "vue-toastification"
 
-const toast = useToast();
-const route = useRoute();
-const userStore = useAppStore();
-const form = ref(null);
+const toast = useToast()
+const route = useRoute()
+const userStore = useAppStore()
+const form = ref(null)
 
 const props = defineProps({
   entityType: {
@@ -90,17 +90,17 @@ const props = defineProps({
     type: String,
     required: true
   }
-});
+})
 
-const dialog = ref(false);
-const correction = ref('');
-const loading = ref(false);
-const valid = ref(false);
+const dialog = ref(false)
+const correction = ref('')
+const loading = ref(false)
+const valid = ref(false)
 
 const submit = async () => {
-  if (!valid.value) return;
+  if (!valid.value) return
 
-  loading.value = true;
+  loading.value = true
 
   try {
     const response = await fetch('/api/corrections', {
@@ -117,29 +117,29 @@ const submit = async () => {
         entity_id: props.entityId,
         url: window.location.href
       })
-    });
+    })
 
     if (!response.ok) {
-      throw new Error('Failed to submit correction');
+      throw new Error('Failed to submit correction')
     }
 
-    toast.success('Thank you! Your suggestion has been submitted for review.');
+    toast.success('Thank you! Your suggestion has been submitted for review.')
 
     // Reset form and validation state
     if (form.value) {
-      form.value.reset();
+      form.value.reset()
     }
-    correction.value = ''; // Ensure data is cleared
+    correction.value = '' // Ensure data is cleared
 
     setTimeout(() => {
-      dialog.value = false;
-    }, 500);
+      dialog.value = false
+    }, 500)
 
   } catch (error) {
-    console.error(error);
-    toast.error('Error submitting report. Please try again.');
+    console.error(error)
+    toast.error('Error submitting report. Please try again.')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 </script>

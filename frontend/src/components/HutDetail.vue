@@ -159,16 +159,16 @@ const loading = computed(() => hutStore.loading)
 const error = computed(() => hutStore.error)
 
 const canEdit = computed(() => {
-    if (!userStore.user) return false;
-    if (userStore.user.is_admin) return true;
+    if (!userStore.user) return false
+    if (userStore.user.is_admin) return true
     if (hut.value && hut.value.club_id && userStore.user.clubs) {
-        return userStore.user.clubs.some(c => c.id === hut.value.club_id && c.is_admin);
+        return userStore.user.clubs.some(c => c.id === hut.value.club_id && c.is_admin)
     }
-    return false;
-});
+    return false
+})
 
-const pageTitle = computed(() => hut.value?.name);
-usePageTitle(pageTitle);
+const pageTitle = computed(() => hut.value?.name)
+usePageTitle(pageTitle)
 
 
 // Map Setup
@@ -177,11 +177,11 @@ import {
     MglNavigationControl,
     MglMarker,
     MglFullscreenControl,
-} from '@indoorequal/vue-maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+} from '@indoorequal/vue-maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
-const zoom = 11;
+const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const zoom = 11
 const lnglat = computed(() => {
     if (hut.value && hut.value.location_lat && hut.value.location_lng) {
         return [hut.value.location_lng, hut.value.location_lat]

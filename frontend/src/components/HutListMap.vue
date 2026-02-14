@@ -66,17 +66,17 @@ import {
     MglPopup,
     useMap,
     MglGeolocateControl,
-} from '@indoorequal/vue-maplibre-gl';
+} from '@indoorequal/vue-maplibre-gl'
 
-import maplibregl from 'maplibre-gl';
+import maplibregl from 'maplibre-gl'
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
-const zoom = 5;
+const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const zoom = 5
 const lnglat = [-2, 53]
 
-import { onMounted, watch } from 'vue';
+import { onMounted, watch } from 'vue'
 
-const mapOne = useMap();
+const mapOne = useMap()
 
 watch(() => mapOne.isLoaded, (isLoaded) => {
     mapOne.map.resize()
@@ -85,21 +85,21 @@ watch(() => mapOne.isLoaded, (isLoaded) => {
         () => props.huts,
         (huts) => {
             if (huts.length > 0 && mapOne.isLoaded) {
-                const bounds = new maplibregl.LngLatBounds();
-                let hasPoints = false;
+                const bounds = new maplibregl.LngLatBounds()
+                let hasPoints = false
                 huts.forEach((hut) => {
                     if (hut.location_lat && hut.location_lng) {
-                        bounds.extend([hut.location_lng, hut.location_lat]);
-                        hasPoints = true;
+                        bounds.extend([hut.location_lng, hut.location_lat])
+                        hasPoints = true
                     }
-                });
+                })
                 if (hasPoints) {
-                    mapOne.map.fitBounds(bounds, { padding: 50 });
+                    mapOne.map.fitBounds(bounds, { padding: 50 })
                 }
             }
         },
         { immediate: true }
-    );
+    )
 })
 </script>
 

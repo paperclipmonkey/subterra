@@ -140,131 +140,131 @@
 
 <script setup>
 // This script is adapted from the admin/clubs.vue modal logic, but expects props for clubSlug and visibility
-import { ref, computed, watch, onMounted } from 'vue';
-import { mande } from 'mande';
-import { useRouter } from 'vue-router';
-import MilkdownEditor from '@/components/MilkdownEditor.vue';
-import { useToast } from "vue-toastification";
-import { useAppStore } from '@/stores/app';
+import { ref, computed, watch, onMounted } from 'vue'
+import { mande } from 'mande'
+import { useRouter } from 'vue-router'
+import MilkdownEditor from '@/components/MilkdownEditor.vue'
+import { useToast } from "vue-toastification"
+import { useAppStore } from '@/stores/app'
 
-const appStore = useAppStore();
+const appStore = useAppStore()
 const props = defineProps({
   clubSlug: { type: String, default: '' },
   modelValue: Boolean,
   initialTab: { type: String, default: 'details' },
-});
-const emit = defineEmits(['update:modelValue', 'saved']);
+})
+const emit = defineEmits(['update:modelValue', 'saved'])
 
-const dialogVisible = ref(props.modelValue);
-watch(() => props.modelValue, v => dialogVisible.value = v);
-watch(dialogVisible, v => emit('update:modelValue', v));
+const dialogVisible = ref(props.modelValue)
+watch(() => props.modelValue, v => dialogVisible.value = v)
+watch(dialogVisible, v => emit('update:modelValue', v))
 
-const tab = ref(props.initialTab);
-watch(() => props.initialTab, v => { if (v) tab.value = v; });
+const tab = ref(props.initialTab)
+watch(() => props.initialTab, v => { if (v) tab.value = v })
 
-const editMode = ref(true); // Always edit mode for club details page
-const dialogTitle = computed(() => 'Edit Club');
+const editMode = ref(true) // Always edit mode for club details page
+const dialogTitle = computed(() => 'Edit Club')
 const rules = {
   required: value => !!value || 'Required.',
   slug: value => /^[a-z0-9-]+$/.test(value || '') || 'Only lowercase letters, numbers, and dashes allowed.',
   url: value => {
-    if (!value) return true;
-    try { new URL(value); return true; } catch (_) { return 'Must be a valid URL (e.g., https://example.com)'; }
+    if (!value) return true
+    try { new URL(value); return true } catch (_) { return 'Must be a valid URL (e.g., https://example.com)' }
   },
-};
-const editedClub = ref({});
-const clubMembers = ref([]);
-const pendingMembers = ref([]);
-const availableUsers = ref([]);
-const selectedUserToAdd = ref(null);
-const memberDataChanged = ref(false);
-const saving = ref(false);
-const router = useRouter();
-const toast = useToast();
+}
+const editedClub = ref({})
+const clubMembers = ref([])
+const pendingMembers = ref([])
+const availableUsers = ref([])
+const selectedUserToAdd = ref(null)
+const memberDataChanged = ref(false)
+const saving = ref(false)
+const router = useRouter()
+const toast = useToast()
 
 const fetchClub = async () => {
-  if (!props.clubSlug) return;
-  const clubApi = mande(`/api/clubs/${props.clubSlug}`);
-  const clubResponse = await clubApi.get();
-  editedClub.value = clubResponse.data || clubResponse;
-};
+  if (!props.clubSlug) return
+  const clubApi = mande(`/api/clubs/${props.clubSlug}`)
+  const clubResponse = await clubApi.get()
+  editedClub.value = clubResponse.data || clubResponse
+}
 const fetchAvailableUsers = async () => {
   try {
-    const usersApi = mande('/api/admin/users');
-    const response = await usersApi.get();
-    availableUsers.value = response.data || response;
+    const usersApi = mande('/api/admin/users')
+    const response = await usersApi.get()
+    availableUsers.value = response.data || response
   } catch (e) {
     // If not super-admin, this might fail, but we shouldn't block the modal
-    console.warn('Could not fetch all users (likely not platform admin)');
-    availableUsers.value = [];
+    console.warn('Could not fetch all users (likely not platform admin)')
+    availableUsers.value = []
   }
-};
+}
 const fetchClubMembers = async () => {
-  if (!props.clubSlug) return;
+  if (!props.clubSlug) return
   // Use the public (but auth-guarded) endpoint which now includes is_club_admin info
   // This allows Club Admins to see members without needing full platform admin rights
-  const membersApi = mande(`/api/clubs/${props.clubSlug}/members`);
-  const response = await membersApi.get();
+  const membersApi = mande(`/api/clubs/${props.clubSlug}/members`)
+  const response = await membersApi.get()
 
   // Map the response to the format expected by the template
-  const members = response.data || response;
+  const members = response.data || response
   clubMembers.value = members.map(m => ({
     id: m.id,
     name: m.name,
     email: m.email,
     is_club_admin: m.is_club_admin || false
-  }));
+  }))
 
-  memberDataChanged.value = false;
-};
+  memberDataChanged.value = false
+}
 const fetchPendingMembers = async () => {
-  if (!props.clubSlug) return;
-  const pendingApi = mande(`/api/admin/clubs/${props.clubSlug}/pending-members`);
-  const response = await pendingApi.get();
-  pendingMembers.value = (response.data || response).map(user => ({ ...user, loading: false }));
-};
+  if (!props.clubSlug) return
+  const pendingApi = mande(`/api/admin/clubs/${props.clubSlug}/pending-members`)
+  const response = await pendingApi.get()
+  pendingMembers.value = (response.data || response).map(user => ({ ...user, loading: false }))
+}
 const addUserToClub = (user) => {
   if (user && !clubMembers.value.some(m => m.id === user.id)) {
-    clubMembers.value.push({ id: user.id, name: user.name, email: user.email, is_club_admin: false });
-    markMemberDataChanged();
+    clubMembers.value.push({ id: user.id, name: user.name, email: user.email, is_club_admin: false })
+    markMemberDataChanged()
   }
-  selectedUserToAdd.value = null;
-};
+  selectedUserToAdd.value = null
+}
 const removeUserFromClub = (memberToRemove) => {
-  clubMembers.value = clubMembers.value.filter(m => m.id !== memberToRemove.id);
-  markMemberDataChanged();
-};
-const markMemberDataChanged = () => { memberDataChanged.value = true; };
+  clubMembers.value = clubMembers.value.filter(m => m.id !== memberToRemove.id)
+  markMemberDataChanged()
+}
+const markMemberDataChanged = () => { memberDataChanged.value = true }
 const approveMemberRequest = async (pendingUser) => {
-  if (!props.clubSlug) return;
-  pendingUser.loading = true;
+  if (!props.clubSlug) return
+  pendingUser.loading = true
   try {
-    const approveApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${pendingUser.id}/approve`);
-    await approveApi.put();
-    await fetchPendingMembers();
-    await fetchClubMembers();
-    await fetchClub();
-  } finally { pendingUser.loading = false; }
-};
+    const approveApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${pendingUser.id}/approve`)
+    await approveApi.put()
+    await fetchPendingMembers()
+    await fetchClubMembers()
+    await fetchClub()
+  } finally { pendingUser.loading = false }
+}
 const rejectMemberRequest = async (pendingUser) => {
-  if (!props.clubSlug) return;
-  pendingUser.loading = true;
+  if (!props.clubSlug) return
+  pendingUser.loading = true
   try {
-    const rejectApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${pendingUser.id}/reject`);
-    await rejectApi.put();
-    await fetchPendingMembers();
-  } finally { pendingUser.loading = false; }
-};
+    const rejectApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${pendingUser.id}/reject`)
+    await rejectApi.put()
+    await fetchPendingMembers()
+  } finally { pendingUser.loading = false }
+}
 const saveClubAndMembers = async () => {
-  if (!editedClub.value.name) return;
+  if (!editedClub.value.name) return
   // Fix: validation returns a string error message if invalid, or true if valid.
   // We need to check if it does NOT return true.
-  if (editedClub.value.website && rules.url(editedClub.value.website) !== true) return;
+  if (editedClub.value.website && rules.url(editedClub.value.website) !== true) return
 
-  saving.value = true;
+  saving.value = true
   try {
     // Save club details
-    const updateApi = mande(`/api/admin/clubs/${props.clubSlug}`);
+    const updateApi = mande(`/api/admin/clubs/${props.clubSlug}`)
     await updateApi.put({
       name: editedClub.value.name,
       slug: editedClub.value.slug,
@@ -272,35 +272,35 @@ const saveClubAndMembers = async () => {
       website: editedClub.value.website,
       location: editedClub.value.location,
       is_active: editedClub.value.is_active,
-    });
+    })
     // Save members if changed
     if (memberDataChanged.value) {
       const membersPayload = {
         members: clubMembers.value.map(m => ({ id: m.id, is_admin: m.is_club_admin, status: 'approved' }))
-      };
-      const membersApi = mande(`/api/admin/clubs/${props.clubSlug}/members`);
-      await membersApi.put(membersPayload);
-      memberDataChanged.value = false;
+      }
+      const membersApi = mande(`/api/admin/clubs/${props.clubSlug}/members`)
+      await membersApi.put(membersPayload)
+      memberDataChanged.value = false
     }
-    dialogVisible.value = false;
-    emit('saved');
-    toast.success('Club updated successfully');
+    dialogVisible.value = false
+    emit('saved')
+    toast.success('Club updated successfully')
   } catch (e) {
-    console.error(e);
-    toast.error('Failed to update club: ' + (e.message || 'Unknown error'));
+    console.error(e)
+    toast.error('Failed to update club: ' + (e.message || 'Unknown error'))
   } finally {
-    saving.value = false;
+    saving.value = false
   }
-};
-const closeDialog = () => { dialogVisible.value = false; };
+}
+const closeDialog = () => { dialogVisible.value = false }
 
 onMounted(async () => {
-  await fetchClub();
+  await fetchClub()
   if (appStore.user?.is_admin) {
-    await fetchAvailableUsers();
+    await fetchAvailableUsers()
   }
-  await fetchClubMembers();
-  await fetchPendingMembers();
-  if (props.initialTab) tab.value = props.initialTab;
-});
+  await fetchClubMembers()
+  await fetchPendingMembers()
+  if (props.initialTab) tab.value = props.initialTab
+})
 </script>

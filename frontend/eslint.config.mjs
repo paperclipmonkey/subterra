@@ -1,9 +1,9 @@
-import globals from "globals";
-import pluginVue from "eslint-plugin-vue";
-import { createRequire } from "module";
+import globals from "globals"
+import pluginVue from "eslint-plugin-vue"
+import { createRequire } from "module"
 
-const require = createRequire(import.meta.url);
-const autoImport = require("./.eslintrc-auto-import.json");
+const require = createRequire(import.meta.url)
+const autoImport = require("./.eslintrc-auto-import.json")
 
 export default [
     {
@@ -28,9 +28,10 @@ export default [
             'vue/first-attribute-linebreak': 'off',
             'vue/valid-v-slot': 'off',
             'vue/no-unused-components': 'off',
+            'semi': ['error', 'never'],
         }
     },
     {
         ignores: ["dist/**", "node_modules/**", "coverage/**", "playwright-report/**", "test-results/**"]
     }
-];
+]

@@ -340,15 +340,15 @@
 </template>
 
 <script>
-import axios from 'axios';
-import moment from 'moment';
+import axios from 'axios'
+import moment from 'moment'
 import {
     MglMap,
     MglNavigationControl,
     MglMarker,
     MglPopup,
-} from '@indoorequal/vue-maplibre-gl';
-import maplibregl from 'maplibre-gl';
+} from '@indoorequal/vue-maplibre-gl'
+import maplibregl from 'maplibre-gl'
 
 export default {
     components: {
@@ -373,185 +373,185 @@ export default {
             showResolveDialog: false,
             resolveNotes: 'Safe and well.',
             hasFittedBounds: false
-        };
+        }
     },
     computed: {
         bannerColor() {
-            if (!this.incident) return 'grey';
-            if (this.incident.status === 'open') return 'red';
-            if (this.incident.status === 'managed') return 'orange darken-3';
-            return 'green';
+            if (!this.incident) return 'grey'
+            if (this.incident.status === 'open') return 'red'
+            if (this.incident.status === 'managed') return 'orange darken-3'
+            return 'green'
         },
         policeRegion() {
-            if (!this.incident || !this.incident.callout || !this.incident.callout.cave || !this.incident.callout.cave.tags) return null;
-            const regionTag = this.incident.callout.cave.tags.find(t => t.category === 'region');
-            return regionTag ? regionTag.tag : null;
+            if (!this.incident || !this.incident.callout || !this.incident.callout.cave || !this.incident.callout.cave.tags) return null
+            const regionTag = this.incident.callout.cave.tags.find(t => t.category === 'region')
+            return regionTag ? regionTag.tag : null
         }
     },
     watch: {
         incident: {
             handler(newVal) {
                 if (newVal) {
-                    this.fitMapToBounds();
+                    this.fitMapToBounds()
                 }
             },
             immediate: false // fetchIncident calls it manually or via onMapLoad
         }
     },
     async mounted() {
-        await this.fetchIncident();
+        await this.fetchIncident()
         // Restore script state from local storage or infer from incident notes?
         // For now, it resets on reload which is fine for MVP, or we can check police log number presence.
         if (this.incident && this.incident.police_log_number) {
-            this.script.calledPolice = true;
-            this.script.statedNature = true;
-            this.script.providedInfo = true;
+            this.script.calledPolice = true
+            this.script.statedNature = true
+            this.script.providedInfo = true
         }
-        this.poll = setInterval(this.fetchIncident, 10000); // 10s poll for log updates
+        this.poll = setInterval(this.fetchIncident, 10000) // 10s poll for log updates
     },
     beforeUnmount() {
-        clearInterval(this.poll);
+        clearInterval(this.poll)
     },
     methods: {
 
         async fetchIncident() {
             try {
-                const res = await axios.get(`/api/admin/incidents/${this.$route.params.id}`);
-                this.incident = res.data.data;
+                const res = await axios.get(`/api/admin/incidents/${this.$route.params.id}`)
+                this.incident = res.data.data
 
                 // Check if protocol has been dismissed via note
-                const dismissNote = "Police have been contacted and they're waiting to hear from cave rescue.";
+                const dismissNote = "Police have been contacted and they're waiting to hear from cave rescue."
                 if (this.incident.notes.some(n => n.content.includes(dismissNote))) {
-                    this.dismissedProtocol = true;
+                    this.dismissedProtocol = true
                 }
             } catch (e) {
-                console.error(e);
+                console.error(e)
             }
         },
         onMapLoad(event) {
-            this.mapInstance = event.map;
-            this.mapInstance.resize();
-            this.fitMapToBounds();
+            this.mapInstance = event.map
+            this.mapInstance.resize()
+            this.fitMapToBounds()
         },
         fitMapToBounds() {
-            if (!this.mapInstance || !this.incident || !this.incident.callout || this.hasFittedBounds) return;
-            const points = [];
-            const c = this.incident.callout;
+            if (!this.mapInstance || !this.incident || !this.incident.callout || this.hasFittedBounds) return
+            const points = []
+            const c = this.incident.callout
 
             const isValid = (lat, lng) =>
                 lat !== null && lat !== undefined && !isNaN(parseFloat(lat)) && parseFloat(lat) !== 0 &&
-                lng !== null && lng !== undefined && !isNaN(parseFloat(lng)) && parseFloat(lng) !== 0;
+                lng !== null && lng !== undefined && !isNaN(parseFloat(lng)) && parseFloat(lng) !== 0
 
             if (c.cave && isValid(c.cave.location_lat, c.cave.location_lng))
-                points.push([parseFloat(c.cave.location_lng), parseFloat(c.cave.location_lat)]);
+                points.push([parseFloat(c.cave.location_lng), parseFloat(c.cave.location_lat)])
 
             if (c.exit_cave && isValid(c.exit_cave.location_lat, c.exit_cave.location_lng))
-                points.push([parseFloat(c.exit_cave.location_lng), parseFloat(c.exit_cave.location_lat)]);
+                points.push([parseFloat(c.exit_cave.location_lng), parseFloat(c.exit_cave.location_lat)])
 
             if (c.location_data?.latitude && isValid(c.location_data.latitude, c.location_data.longitude))
-                points.push([parseFloat(c.location_data.longitude), parseFloat(c.location_data.latitude)]);
+                points.push([parseFloat(c.location_data.longitude), parseFloat(c.location_data.latitude)])
 
             if (points.length > 0) {
-                const bounds = new maplibregl.LngLatBounds();
-                points.forEach(p => bounds.extend(p));
+                const bounds = new maplibregl.LngLatBounds()
+                points.forEach(p => bounds.extend(p))
 
                 if (points.length > 1) {
                     this.mapInstance.fitBounds(bounds, {
                         padding: 50,
                         maxZoom: 15,
                         duration: 1000
-                    });
-                    this.hasFittedBounds = true;
+                    })
+                    this.hasFittedBounds = true
                 } else {
-                    this.mapInstance.setCenter(points[0]);
-                    this.mapInstance.setZoom(15);
-                    this.hasFittedBounds = true;
+                    this.mapInstance.setCenter(points[0])
+                    this.mapInstance.setZoom(15)
+                    this.hasFittedBounds = true
                 }
             } else {
                 // Default view if no valid points are found
-                this.mapInstance.setCenter([-3.29, 54.46]); // Approximate center of UK caving regions
-                this.mapInstance.setZoom(7);
-                this.hasFittedBounds = true;
+                this.mapInstance.setCenter([-3.29, 54.46]) // Approximate center of UK caving regions
+                this.mapInstance.setZoom(7)
+                this.hasFittedBounds = true
             }
         },
         async dismissProtocol() {
             try {
-                const note = "Police have been contacted and they're waiting to hear from cave rescue.";
-                await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: note });
-                this.$toast.success('Protocol dismissed and logged.');
-                this.dismissedProtocol = true;
-                this.fetchIncident();
+                const note = "Police have been contacted and they're waiting to hear from cave rescue."
+                await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: note })
+                this.$toast.success('Protocol dismissed and logged.')
+                this.dismissedProtocol = true
+                this.fetchIncident()
             } catch (e) {
-                this.$toast.error('Failed to log dismissal.');
+                this.$toast.error('Failed to log dismissal.')
             }
         },
         copyToClipboard(text) {
             if (!navigator.clipboard) {
-                this.$toast.error('Clipboard access not available');
-                return;
+                this.$toast.error('Clipboard access not available')
+                return
             }
             navigator.clipboard.writeText(text).then(() => {
-                this.$toast.success('Copied to clipboard!');
+                this.$toast.success('Copied to clipboard!')
             }).catch(err => {
-                this.$toast.error('Failed to copy');
-            });
+                this.$toast.error('Failed to copy')
+            })
         },
         formatCoord(val) {
-            if (val === null || val === undefined || isNaN(val)) return '';
-            const num = parseFloat(val);
-            const str = num.toString();
-            const parts = str.split('.');
+            if (val === null || val === undefined || isNaN(val)) return ''
+            const num = parseFloat(val)
+            const str = num.toString()
+            const parts = str.split('.')
             // Ensure at least 5 decimal places for reliability, but preserve more if present
             if (parts.length < 2 || parts[1].length < 5) {
-                return num.toFixed(5);
+                return num.toFixed(5)
             }
-            return str;
+            return str
         },
         async acknowledge() {
-            this.processing = true;
+            this.processing = true
             try {
-                await axios.post(`/api/admin/incidents/${this.incident.id}/acknowledge`);
-                this.$toast.success('You have assumed control of this incident.');
+                await axios.post(`/api/admin/incidents/${this.incident.id}/acknowledge`)
+                this.$toast.success('You have assumed control of this incident.')
                 // Immediately refresh to update UI
-                await this.fetchIncident();
+                await this.fetchIncident()
             } catch (e) {
-                this.$toast.error(e.response?.data?.message || 'Failed to acknowledge');
+                this.$toast.error(e.response?.data?.message || 'Failed to acknowledge')
             } finally {
-                this.processing = false;
+                this.processing = false
             }
         },
         async addNote() {
-            if (!this.newNote.trim()) return;
+            if (!this.newNote.trim()) return
             try {
-                await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: this.newNote });
-                this.newNote = '';
-                this.fetchIncident();
+                await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: this.newNote })
+                this.newNote = ''
+                this.fetchIncident()
             } catch (e) {
-                console.error(e);
+                console.error(e)
             }
         },
 
         async resolveIncident() {
             try {
-                await axios.post(`/api/admin/incidents/${this.incident.id}/resolve`, { notes: this.resolveNotes });
-                this.showResolveDialog = false;
-                this.$toast.success('Incident Resolved.');
-                this.$router.push('/admin/callout');
+                await axios.post(`/api/admin/incidents/${this.incident.id}/resolve`, { notes: this.resolveNotes })
+                this.showResolveDialog = false
+                this.$toast.success('Incident Resolved.')
+                this.$router.push('/admin/callout')
             } catch (e) {
-                this.$toast.error('Failed to resolve.');
+                this.$toast.error('Failed to resolve.')
             }
         },
         formatTime(d) {
-            return moment(d).format('HH:mm');
+            return moment(d).format('HH:mm')
         },
         formatRelativeTime(d) {
-            return moment(d).fromNow();
+            return moment(d).fromNow()
         },
         formatDateTime(d) {
-            return moment(d).format('HH:mm DD/MM');
+            return moment(d).format('HH:mm DD/MM')
         }
     }
-};
+}
 </script>
 
 <style lang="scss">

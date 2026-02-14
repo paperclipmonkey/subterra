@@ -309,9 +309,9 @@
 </template>
 
 <script>
-import axios from 'axios';
-import moment from 'moment';
-import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue';
+import axios from 'axios'
+import moment from 'moment'
+import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
 
 export default {
   components: {
@@ -333,119 +333,119 @@ export default {
         { text: 'Date', value: 'date' },
         { text: 'Actions', value: 'actions', sortable: false, align: 'end' },
       ]
-    };
+    }
   },
   computed: {
     activeIncidents() {
-      return this.incidents.filter(i => i.status === 'open' || i.status === 'managed');
+      return this.incidents.filter(i => i.status === 'open' || i.status === 'managed')
     },
     historicIncidents() {
-      return this.incidents.filter(i => i.status !== 'open' && i.status !== 'managed');
+      return this.incidents.filter(i => i.status !== 'open' && i.status !== 'managed')
     },
     systemStatus() {
-      if (this.activeIncidents.length > 0) return 'CRITICAL';
-      if (this.incidents.some(i => i.status === 'managed')) return 'ACTIVE';
-      if (this.callouts.length > 0) return 'WATCHDOG ACTIVE';
-      return 'NORMAL';
+      if (this.activeIncidents.length > 0) return 'CRITICAL'
+      if (this.incidents.some(i => i.status === 'managed')) return 'ACTIVE'
+      if (this.callouts.length > 0) return 'WATCHDOG ACTIVE'
+      return 'NORMAL'
     },
     statusColor() {
-      if (this.systemStatus === 'CRITICAL') return 'error';
-      if (this.systemStatus === 'ACTIVE') return 'warning';
-      if (this.systemStatus === 'WATCHDOG ACTIVE') return 'info';
-      return 'success';
+      if (this.systemStatus === 'CRITICAL') return 'error'
+      if (this.systemStatus === 'ACTIVE') return 'warning'
+      if (this.systemStatus === 'WATCHDOG ACTIVE') return 'info'
+      return 'success'
     },
     statusMessage() {
-      if (this.systemStatus === 'CRITICAL') return 'Unacknowledged incidents require immediate attention.';
-      if (this.systemStatus === 'ACTIVE') return 'Incident in progress.';
-      if (this.systemStatus === 'WATCHDOG ACTIVE') return this.callouts.length + ' open callouts monitored.';
-      return 'Systems operational. No open callouts.';
+      if (this.systemStatus === 'CRITICAL') return 'Unacknowledged incidents require immediate attention.'
+      if (this.systemStatus === 'ACTIVE') return 'Incident in progress.'
+      if (this.systemStatus === 'WATCHDOG ACTIVE') return this.callouts.length + ' open callouts monitored.'
+      return 'Systems operational. No open callouts.'
     },
     dutyOfficerColor() {
-      if (!this.currentOfficer) return 'red darken-3';
-      if (this.nextGapIsSoon) return 'orange darken-3';
-      return 'success darken-2';
+      if (!this.currentOfficer) return 'red darken-3'
+      if (this.nextGapIsSoon) return 'orange darken-3'
+      return 'success darken-2'
     },
     nextGapIsSoon() {
-      if (!this.nextGapStart) return false;
+      if (!this.nextGapStart) return false
       // Warn if gap is within 24 hours
-      return moment(this.nextGapStart).diff(this.now, 'hours') < 24;
+      return moment(this.nextGapStart).diff(this.now, 'hours') < 24
     }
   },
   async mounted() {
-    await Promise.all([this.fetchIncidents(), this.fetchCallouts(), this.fetchDutyOfficer()]);
+    await Promise.all([this.fetchIncidents(), this.fetchCallouts(), this.fetchDutyOfficer()])
     // Poll every 30s
     this.poll = setInterval(() => {
-      this.fetchIncidents();
-      this.fetchCallouts();
-      this.fetchDutyOfficer();
-    }, 30000);
+      this.fetchIncidents()
+      this.fetchCallouts()
+      this.fetchDutyOfficer()
+    }, 30000)
     // Ticker every 1s
     this.ticker = setInterval(() => {
-      this.now = moment();
-    }, 1000);
+      this.now = moment()
+    }, 1000)
   },
   beforeUnmount() {
-    clearInterval(this.poll);
-    clearInterval(this.ticker);
+    clearInterval(this.poll)
+    clearInterval(this.ticker)
   },
   methods: {
     async fetchIncidents() {
       try {
-        const res = await axios.get('/api/admin/incidents');
-        this.incidents = res.data.data;
+        const res = await axios.get('/api/admin/incidents')
+        this.incidents = res.data.data
       } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     },
     async fetchCallouts() {
       try {
-        const res = await axios.get('/api/admin/callouts');
-        this.callouts = res.data.data;
+        const res = await axios.get('/api/admin/callouts')
+        this.callouts = res.data.data
       } catch (e) {
-        console.error(e);
+        console.error(e)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
     async fetchDutyOfficer() {
       try {
-        const res = await axios.get('/api/duty-officers/current');
-        const data = res.data.data;
+        const res = await axios.get('/api/duty-officers/current')
+        const data = res.data.data
 
         if (data.is_covered) {
-          this.currentOfficer = data;
-          this.nextGapStart = data.next_gap_start;
+          this.currentOfficer = data
+          this.nextGapStart = data.next_gap_start
         } else {
-          this.currentOfficer = null;
-          this.nextGapStart = data.next_gap_start || moment();
+          this.currentOfficer = null
+          this.nextGapStart = data.next_gap_start || moment()
         }
       } catch (e) {
-        console.error("Duty Officer Fetch Error", e);
-        this.currentOfficer = null;
-        this.nextGapStart = moment();
+        console.error("Duty Officer Fetch Error", e)
+        this.currentOfficer = null
+        this.nextGapStart = moment()
       } finally {
-        this.loadingOfficer = false;
+        this.loadingOfficer = false
       }
     },
     formatDate(d) {
-      return moment(d).format('HH:mm DD/MM');
+      return moment(d).format('HH:mm DD/MM')
     },
     getRelativeTime(d) {
-      return moment(d).fromNow();
+      return moment(d).fromNow()
     },
     getCountdown(time) {
-      const t = moment(time);
-      const diff = t.diff(this.now);
-      const duration = moment.duration(Math.abs(diff));
+      const t = moment(time)
+      const diff = t.diff(this.now)
+      const duration = moment.duration(Math.abs(diff))
 
-      const hours = Math.floor(duration.asHours());
-      const mins = duration.minutes();
-      const secs = duration.seconds();
+      const hours = Math.floor(duration.asHours())
+      const mins = duration.minutes()
+      const secs = duration.seconds()
 
-      const str = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      const str = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 
-      if (diff < 0) return `-${str}`;
-      return str;
+      if (diff < 0) return `-${str}`
+      return str
     },
     getCalloutProgress(callout) {
       // Assume callout started 12 hours ago max? Or use created_at if available. 
@@ -466,36 +466,36 @@ export default {
       // 1 to 2 hours left: Orange.
       // > 2 hours: Green.
       // Bar checks "Time Until Overdue" against a max window of say 6 hours.
-      const due = moment(callout.callout_time);
-      const hoursLeft = due.diff(this.now, 'hours', true);
+      const due = moment(callout.callout_time)
+      const hoursLeft = due.diff(this.now, 'hours', true)
 
-      if (hoursLeft < 0) return 100; // Overdue
+      if (hoursLeft < 0) return 100 // Overdue
 
       // If 6 hours left, 0% bar. If 0 hours left, 100% bar.
-      const maxWindow = 6;
-      const progress = Math.max(0, Math.min(100, ((maxWindow - hoursLeft) / maxWindow) * 100));
-      return progress;
+      const maxWindow = 6
+      const progress = Math.max(0, Math.min(100, ((maxWindow - hoursLeft) / maxWindow) * 100))
+      return progress
     },
     getCalloutProgressColor(callout) {
-      if (callout.has_incident) return 'error';
-      const due = moment(callout.callout_time);
-      const hoursLeft = due.diff(this.now, 'hours', true);
+      if (callout.has_incident) return 'error'
+      const due = moment(callout.callout_time)
+      const hoursLeft = due.diff(this.now, 'hours', true)
 
-      if (hoursLeft < 0) return 'purple'; // Overdue 
-      if (hoursLeft < 1) return 'red';
-      if (hoursLeft < 2) return 'orange';
-      return 'success';
+      if (hoursLeft < 0) return 'purple' // Overdue 
+      if (hoursLeft < 1) return 'red'
+      if (hoursLeft < 2) return 'orange'
+      return 'success'
     },
     getIncidentColor(status) {
-      if (status === 'open') return 'red';
-      if (status === 'managed') return 'orange darken-3';
-      return 'blue-grey';
+      if (status === 'open') return 'red'
+      if (status === 'managed') return 'orange darken-3'
+      return 'blue-grey'
     },
     getIncidentIcon(status) {
-      if (status === 'open') return 'mdi-bell-ring';
-      if (status === 'managed') return 'mdi-account-hard-hat';
-      return 'mdi-check-circle';
+      if (status === 'open') return 'mdi-bell-ring'
+      if (status === 'managed') return 'mdi-account-hard-hat'
+      return 'mdi-check-circle'
     }
   }
-};
+}
 </script>

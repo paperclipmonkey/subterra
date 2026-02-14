@@ -26,9 +26,9 @@
 </template>
 
 <script setup>
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app'
 
-const userStore = useAppStore();
+const userStore = useAppStore()
 
 const items = [
   {

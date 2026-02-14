@@ -109,7 +109,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue'
 const props = defineProps({
   pendingClubs: {
     type: Array,
@@ -119,31 +119,31 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   }
-});
-const emit = defineEmits(['membershipConfirmed']);
+})
+const emit = defineEmits(['membershipConfirmed'])
 
-const step = ref(1);
-const fullName = ref('');
-const savingName = ref(false);
+const step = ref(1)
+const fullName = ref('')
+const savingName = ref(false)
 
-const availableClubs = ref([]);
-const loadingClubs = ref(false);
-const selectedClub = ref([]);
-const loading = ref(false);
-const success = ref(false);
-const error = ref("");
-const clubAutocomplete = ref(null);
+const availableClubs = ref([])
+const loadingClubs = ref(false)
+const selectedClub = ref([])
+const loading = ref(false)
+const success = ref(false)
+const error = ref("")
+const clubAutocomplete = ref(null)
 
 // Pre-fill name if user prop changes
 watch(() => props.user, (newUser) => {
   if (newUser && newUser.name) {
-    fullName.value = newUser.name;
+    fullName.value = newUser.name
   }
-}, { immediate: true });
+}, { immediate: true })
 
 const saveName = async () => {
-  if (!fullName.value) return;
-  savingName.value = true;
+  if (!fullName.value) return
+  savingName.value = true
   try {
     const response = await fetch(`/api/users/${props.user.id}`, {
       method: 'PUT',
@@ -152,45 +152,45 @@ const saveName = async () => {
         'Accept': 'application/json'
       },
       body: JSON.stringify({ name: fullName.value })
-    });
-    if (!response.ok) throw new Error('Failed to update name');
-    step.value = 2; // Proceed to next step
+    })
+    if (!response.ok) throw new Error('Failed to update name')
+    step.value = 2 // Proceed to next step
   } catch (e) {
-    error.value = "Failed to save name. Please try again.";
+    error.value = "Failed to save name. Please try again."
   } finally {
-    savingName.value = false;
+    savingName.value = false
   }
-};
+}
 
 const fetchAllClubs = async () => {
-  loadingClubs.value = true;
+  loadingClubs.value = true
   try {
-    const response = await fetch('/api/clubs');
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    availableClubs.value = (await response.json()).data;
+    const response = await fetch('/api/clubs')
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    availableClubs.value = (await response.json()).data
   } catch (e) {
-    availableClubs.value = [];
+    availableClubs.value = []
   } finally {
-    loadingClubs.value = false;
+    loadingClubs.value = false
   }
-};
+}
 
 const filteredAvailableClubs = computed(() => {
   // Exclude clubs already pending or approved
-  const pendingIds = (props.pendingClubs || []).map(c => c.id);
-  return availableClubs.value.filter(c => !pendingIds.includes(c.id));
-});
+  const pendingIds = (props.pendingClubs || []).map(c => c.id)
+  return availableClubs.value.filter(c => !pendingIds.includes(c.id))
+})
 
 const submit = async () => {
-  if (!selectedClub.value.length) return;
-  loading.value = true;
-  error.value = "";
-  success.value = false;
+  if (!selectedClub.value.length) return
+  loading.value = true
+  error.value = ""
+  success.value = false
   try {
     // Send a join request for each selected club
     for (const clubId of selectedClub.value) {
-      const club = availableClubs.value.find(c => c.id === clubId);
-      if (!club) continue;
+      const club = availableClubs.value.find(c => c.id === clubId)
+      if (!club) continue
       const response = await fetch(`/api/clubs/${club.slug}/join`, {
         method: 'POST',
         headers: {
@@ -198,30 +198,30 @@ const submit = async () => {
           'Accept': 'application/json',
         },
         body: JSON.stringify({ club_id: club.id }),
-      });
+      })
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
       }
     }
-    success.value = true;
-    emit('membershipConfirmed');
+    success.value = true
+    emit('membershipConfirmed')
   } catch (e) {
-    error.value = e.message || 'An error occurred.';
+    error.value = e.message || 'An error occurred.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 onMounted(() => {
-  fetchAllClubs();
-});
+  fetchAllClubs()
+})
 
 // Watch for first club selection to close the autocomplete (helps on mobile to dismiss keyboard)
 watch(selectedClub, (newValue) => {
   if (newValue && newValue.length === 1 && clubAutocomplete.value) {
     // Blur the autocomplete after first selection to close the dropdown and dismiss mobile keyboard
-    clubAutocomplete.value.blur();
+    clubAutocomplete.value.blur()
   }
-});
+})
 </script>

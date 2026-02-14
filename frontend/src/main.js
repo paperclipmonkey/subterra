@@ -14,7 +14,7 @@ import App from './App.vue'
 import { createApp } from 'vue'
 
 // Import calendar heatmap CSS
-import 'vue3-calendar-heatmap/dist/style.css';
+import 'vue3-calendar-heatmap/dist/style.css'
 
 const app = createApp(App)
 
@@ -26,14 +26,14 @@ app.mount('#app')
 window.addEventListener('beforeunload', (event) => {
     // console.log('[Debug] Page is unloading!', event);
     // debugger; // Uncomment to pause on unload
-});
+})
 
 window.addEventListener('click', (event) => {
-    const target = event.target.closest('a');
+    const target = event.target.closest('a')
     if (target) {
         // console.log('[Debug] Global click on link:', target.href, target);
         if (target.href && target.href.includes(window.location.origin) && !target.hasAttribute('download') && target.target !== '_blank') {
             // console.warn('[Debug] Warning: Clicked an internal link that might be causing a reload if not handled by router:', target.href);
         }
     }
-}, true);
+}, true)

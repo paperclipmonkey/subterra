@@ -99,10 +99,10 @@ const ensureDataStructure = (collection) => {
     // Map pivot description if needed
     collection.caves.forEach(c => {
         if (c.pivot && !c.playlist_description) {
-            c.playlist_description = c.pivot.description;
+            c.playlist_description = c.pivot.description
         }
-    });
-    return collection;
+    })
+    return collection
 }
 
 // Initialize immediately
@@ -135,26 +135,26 @@ const onPhotoChange = async (event) => {
 const addCave = (cave) => {
     if (!cave) return
     if (internalCollection.value.caves && internalCollection.value.caves.find(c => c.id === cave.id)) {
-        selectedCaveToAdd.value = null;
-        return;
+        selectedCaveToAdd.value = null
+        return
     }
 
-    if (!internalCollection.value.caves) internalCollection.value.caves = [];
+    if (!internalCollection.value.caves) internalCollection.value.caves = []
 
-    const newCave = { ...cave, playlist_description: '' };
-    internalCollection.value.caves.push(newCave);
-    selectedCaveToAdd.value = null;
+    const newCave = { ...cave, playlist_description: '' }
+    internalCollection.value.caves.push(newCave)
+    selectedCaveToAdd.value = null
 }
 
 const removeCave = (index) => {
-    internalCollection.value.caves.splice(index, 1);
+    internalCollection.value.caves.splice(index, 1)
 }
 
 const moveCave = (index, direction) => {
-    const newIndex = index + direction;
+    const newIndex = index + direction
     if (newIndex >= 0 && newIndex < internalCollection.value.caves.length) {
-        const item = internalCollection.value.caves.splice(index, 1)[0];
-        internalCollection.value.caves.splice(newIndex, 0, item);
+        const item = internalCollection.value.caves.splice(index, 1)[0]
+        internalCollection.value.caves.splice(newIndex, 0, item)
     }
 }
 

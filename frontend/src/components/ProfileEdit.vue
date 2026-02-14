@@ -198,7 +198,7 @@
 </template>
 
 <script setup>
-import router from '@/router';
+import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useToast } from "vue-toastification"
@@ -245,9 +245,9 @@ const phoneRules = [
 // Filter clubs the user can request to join (not already a member or pending)
 const availableClubs = computed(() => {
   if (!profile.value.clubs || !allClubs.value) return []
-  const userClubIds = profile.value.clubs.map(c => c.slug);
-  return allClubs.value.filter(club => !userClubIds.includes(club.slug));
-});
+  const userClubIds = profile.value.clubs.map(c => c.slug)
+  return allClubs.value.filter(club => !userClubIds.includes(club.slug))
+})
 
 const save = async () => {
   clearErrors()
@@ -274,7 +274,7 @@ const save = async () => {
     toast.success('Profile updated successfully!')
     router.push({ name: '/profile/[id]', params: { id: route.params.id } }) // Redirect only if necessary
   } catch (error) {
-    console.error("Error saving profile:", error);
+    console.error("Error saving profile:", error)
     setErrors(error)
     if (error.response?.status !== 422) {
       toast.error('Failed to save profile: ' + (error.response?.data?.message || error.message || 'Unknown error'))
@@ -287,53 +287,53 @@ const fetchProfile = async () => {
     const response = await api.get(`/api/users/me`)
     profile.value = response.data.data
   } catch (error) {
-    console.error("Error fetching profile:", error);
+    console.error("Error fetching profile:", error)
     // Global interceptor handles the toast
   }
 }
 
 const fetchAllClubs = async () => {
-  loadingClubs.value = true;
+  loadingClubs.value = true
   try {
-    const response = await api.get('/api/clubs'); // Assuming this endpoint exists
-    allClubs.value = response.data.data; // Assuming API returns { data: [...] }
+    const response = await api.get('/api/clubs') // Assuming this endpoint exists
+    allClubs.value = response.data.data // Assuming API returns { data: [...] }
   } catch (error) {
-    console.error("Error fetching clubs:", error);
-    allClubs.value = []; // Reset on error
+    console.error("Error fetching clubs:", error)
+    allClubs.value = [] // Reset on error
   } finally {
-    loadingClubs.value = false;
+    loadingClubs.value = false
   }
 }
 
 const openJoinClubModal = () => {
-  selectedClubToJoinId.value = null; // Reset selection
-  showJoinClubModal.value = true;
+  selectedClubToJoinId.value = null // Reset selection
+  showJoinClubModal.value = true
   // Fetch clubs if not already loaded or needs refresh
   if (allClubs.value.length === 0) {
-    fetchAllClubs();
+    fetchAllClubs()
   }
 }
 
 const closeJoinClubModal = () => {
-  showJoinClubModal.value = false;
+  showJoinClubModal.value = false
 }
 
 const requestToJoinClub = async () => {
-  if (!selectedClubToJoinId.value) return;
+  if (!selectedClubToJoinId.value) return
 
   try {
     const response = await api.post(`/api/clubs/${selectedClubToJoinId.value.slug}/join`, {
       club_id: selectedClubToJoinId.value.id
-    });
+    })
 
     // Success!
-    closeJoinClubModal();
+    closeJoinClubModal()
     toast.success('Club join request submitted! Awaiting approval.')
     // Re-fetch profile data to show the new pending request
-    await fetchProfile();
+    await fetchProfile()
 
   } catch (error) {
-    console.error("Error requesting to join club:", error);
+    console.error("Error requesting to join club:", error)
     // Global interceptor handles the toast
   }
 }
@@ -341,38 +341,38 @@ const requestToJoinClub = async () => {
 // Helper to get chip color based on club membership status
 const getClubStatusColor = (status) => {
   switch (status) {
-    case 'approved': return 'success';
-    case 'pending': return 'warning';
-    case 'rejected': return 'error';
-    default: return 'grey';
+    case 'approved': return 'success'
+    case 'pending': return 'warning'
+    case 'rejected': return 'error'
+    default: return 'grey'
   }
 }
 
 const openDeleteModal = () => {
-  showDeleteModal.value = true;
+  showDeleteModal.value = true
 }
 const closeDeleteModal = () => {
-  showDeleteModal.value = false;
+  showDeleteModal.value = false
 }
 const deleteAccount = async () => {
-  deletingAccount.value = true;
+  deletingAccount.value = true
   try {
-    await api.delete(`/api/users/me`);
+    await api.delete(`/api/users/me`)
     toast.success('Your account has been deleted successfully')
-    router.push({ name: '/' });
+    router.push({ name: '/' })
   } catch (error) {
-    console.error('Error deleting account:', error);
+    console.error('Error deleting account:', error)
   } finally {
-    deletingAccount.value = false;
-    closeDeleteModal();
+    deletingAccount.value = false
+    closeDeleteModal()
   }
 }
 
 onMounted(async () => {
-  await fetchProfile();
+  await fetchProfile()
   // Fetch all clubs needed for the join request modal
   // We don't necessarily need to wait for this for the initial profile display
-  fetchAllClubs();
+  fetchAllClubs()
 })
 </script>
 

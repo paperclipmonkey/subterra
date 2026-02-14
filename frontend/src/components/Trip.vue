@@ -232,9 +232,9 @@ import MediaViewModal from '@/components/MediaViewModal.vue'
 import moment from 'moment'
 import VueMarkdown from 'vue-markdown-render'
 import { useRouter, useRoute } from 'vue-router'
-import { useAppStore } from '@/stores/app';
-import { ref, computed, onMounted } from 'vue';
-import { useToast } from "vue-toastification";
+import { useAppStore } from '@/stores/app'
+import { ref, computed, onMounted } from 'vue'
+import { useToast } from "vue-toastification"
 import { usePageTitle } from '@/composables/usePageTitle'
 
 const appStore = useAppStore()
@@ -245,16 +245,16 @@ const toast = useToast()
 const trip = ref(null)
 const loading = ref(true)
 const error = ref(null)
-const showDeleteConfirmDialog = ref(false);
+const showDeleteConfirmDialog = ref(false)
 
-const pageTitle = computed(() => trip.value?.name);
-usePageTitle(pageTitle);
+const pageTitle = computed(() => trip.value?.name)
+usePageTitle(pageTitle)
 
 const showMediaModal = ref(false)
 const selectedMedia = ref({})
 
 const currentUserWasOnTrip = computed(() => {
-  if (!trip.value || !appStore.user?.id) return false;
+  if (!trip.value || !appStore.user?.id) return false
   return trip.value.participants.some((participant) => participant.id === appStore.user.id)
 })
 
@@ -277,10 +277,10 @@ const formatTime = (date) => {
 }
 const formatDuration = (start, end) => {
   if (!end) return '-'
-  const duration = moment.duration(moment(end).diff(moment(start)));
-  const hours = Math.floor(duration.asHours());
-  const minutes = duration.minutes();
-  return `${hours}h ${minutes}m`;
+  const duration = moment.duration(moment(end).diff(moment(start)))
+  const hours = Math.floor(duration.asHours())
+  const minutes = duration.minutes()
+  return `${hours}h ${minutes}m`
 }
 
 const getVisibilityColor = (vis) => {
@@ -292,7 +292,7 @@ const getVisibilityIcon = (vis) => {
 }
 
 const confirmDelete = async () => {
-  showDeleteConfirmDialog.value = false;
+  showDeleteConfirmDialog.value = false
   try {
     const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE', headers: { 'Accept': 'application/json' } })
     if (response.ok) {

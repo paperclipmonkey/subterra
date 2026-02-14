@@ -172,11 +172,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, defineProps } from 'vue';
+import { ref, onMounted, computed, defineProps } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale } from 'chart.js'
-import 'chartjs-adapter-moment';
-import moment from 'moment';
+import 'chartjs-adapter-moment'
+import moment from 'moment'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale)
 
@@ -185,14 +185,14 @@ const props = defineProps({
     type: [String, Number],
     required: true
   }
-});
+})
 
-const loading = ref(true);
-const error = ref(null);
-const weatherData = ref(null);
-const historicData = ref(null);
-const location = ref({ lat: 0, lng: 0 });
-const caveName = ref('');
+const loading = ref(true)
+const error = ref(null)
+const weatherData = ref(null)
+const historicData = ref(null)
+const location = ref({ lat: 0, lng: 0 })
+const caveName = ref('')
 
 const historicChartOptions = {
   responsive: true,
@@ -202,7 +202,7 @@ const historicChartOptions = {
     tooltip: {
       callbacks: {
         label: function (context) {
-          return context.parsed.y + ' mm';
+          return context.parsed.y + ' mm'
         }
       }
     }
@@ -253,21 +253,21 @@ const forecastChartOptions = {
 }
 
 const historicChartData = computed(() => {
-  if (!historicData.value) return { labels: [], datasets: [] };
+  if (!historicData.value) return { labels: [], datasets: [] }
 
   // historicData is an object keyed by date string
   // Sort keys just in case
-  const dates = Object.keys(historicData.value).sort();
+  const dates = Object.keys(historicData.value).sort()
 
   // Calculate total daily rainfall from hourly data
   const dailyRain = dates.map(date => {
-    const day = historicData.value[date];
-    if (!day.hourly) return 0;
+    const day = historicData.value[date]
+    if (!day.hourly) return 0
 
     // Sum precipIntensity (mm/hour) for each hour. 
     // Assuming data is hourly, summing intensity gives approx total mm.
-    return day.hourly.reduce((sum, hour) => sum + (hour.precipIntensity || 0), 0);
-  });
+    return day.hourly.reduce((sum, hour) => sum + (hour.precipIntensity || 0), 0)
+  })
 
   return {
     labels: dates.map(d => moment(d).format('ddd Do')),
@@ -283,9 +283,9 @@ const historicChartData = computed(() => {
 })
 
 const forecastChartData = computed(() => {
-  if (!weatherData.value?.hourly?.data) return { labels: [], datasets: [] };
+  if (!weatherData.value?.hourly?.data) return { labels: [], datasets: [] }
 
-  const next48Hours = weatherData.value.hourly.data.slice(0, 48);
+  const next48Hours = weatherData.value.hourly.data.slice(0, 48)
 
   return {
     labels: next48Hours.map(h => moment.unix(h.time).format('ddd HH:mm')),
@@ -384,8 +384,8 @@ const rainGaugeChartOptions = {
 }
 
 const getRainGaugeChartData = (gauge, index) => {
-  const sortedReadings = [...gauge.readings].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-  const color = '#2196F3'; // Blue for rain
+  const sortedReadings = [...gauge.readings].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime))
+  const color = '#2196F3' // Blue for rain
 
   return {
     datasets: [{
@@ -395,13 +395,13 @@ const getRainGaugeChartData = (gauge, index) => {
       borderWidth: 1,
       data: sortedReadings.map(r => ({ x: r.dateTime, y: r.value })),
     }]
-  };
+  }
 }
 
 const getRiverLevelChartData = (gauge, index) => {
-  const sortedReadings = [...gauge.reading].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-  const color = ['#4CAF50', '#FF9800', '#F44336'][index % 3];
-  const datasets = [];
+  const sortedReadings = [...gauge.reading].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime))
+  const color = ['#4CAF50', '#FF9800', '#F44336'][index % 3]
+  const datasets = []
 
   // Main Gauge Line
   datasets.push({
@@ -413,22 +413,22 @@ const getRiverLevelChartData = (gauge, index) => {
     borderWidth: 2,
     tension: 0.1,
     order: 1 // Draw on top
-  });
+  })
 
   // Normal Range (if metadata exists)
   if (gauge.metadata?.typicalRangeHigh && gauge.metadata?.typicalRangeLow) {
     if (sortedReadings.length > 0) {
-      const start = sortedReadings[0].dateTime;
-      const end = sortedReadings[sortedReadings.length - 1].dateTime;
+      const start = sortedReadings[0].dateTime
+      const end = sortedReadings[sortedReadings.length - 1].dateTime
 
       const rangeDataHigh = [
         { x: start, y: gauge.metadata.typicalRangeHigh },
         { x: end, y: gauge.metadata.typicalRangeHigh }
-      ];
+      ]
       const rangeDataLow = [
         { x: start, y: gauge.metadata.typicalRangeLow },
         { x: end, y: gauge.metadata.typicalRangeLow }
-      ];
+      ]
 
       // Low Line (Invisible)
       datasets.push({
@@ -439,7 +439,7 @@ const getRiverLevelChartData = (gauge, index) => {
         borderWidth: 0,
         fill: false,
         order: 2
-      });
+      })
 
       // High Line (Fills to Low)
       datasets.push({
@@ -452,61 +452,61 @@ const getRiverLevelChartData = (gauge, index) => {
         pointRadius: 0,
         fill: '-1',
         order: 3
-      });
+      })
     }
   }
 
-  return { datasets };
+  return { datasets }
 }
 
 const hexToRgba = (hex, alpha) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 const fetchWeatherData = async () => {
-  loading.value = true;
-  error.value = null;
+  loading.value = true
+  error.value = null
 
   try {
     // Fetch current and forecast
-    const forecastResponse = await fetch(`/api/caves/${props.caveId}/weather/forecast`);
+    const forecastResponse = await fetch(`/api/caves/${props.caveId}/weather/forecast`)
     if (!forecastResponse.ok) {
       // ... error handling
-      throw new Error(`Failed to fetch weather`);
+      throw new Error(`Failed to fetch weather`)
     }
-    const forecastJson = await forecastResponse.json();
-    weatherData.value = forecastJson.data;
+    const forecastJson = await forecastResponse.json()
+    weatherData.value = forecastJson.data
 
     if (weatherData.value) {
       location.value = {
         lat: weatherData.value.latitude,
         lng: weatherData.value.longitude
       }
-      caveName.value = weatherData.value.cave_name;
+      caveName.value = weatherData.value.cave_name
     }
 
-    fetchHistoricData();
+    fetchHistoricData()
 
   } catch (err) {
-    console.error('Error fetching weather:', err);
-    error.value = 'Failed to load weather data';
+    console.error('Error fetching weather:', err)
+    error.value = 'Failed to load weather data'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const fetchHistoricData = async () => {
   try {
-    const response = await fetch(`/api/caves/${props.caveId}/weather/historic`);
+    const response = await fetch(`/api/caves/${props.caveId}/weather/historic`)
     if (response.ok) {
-      const json = await response.json();
-      historicData.value = json.data;
+      const json = await response.json()
+      historicData.value = json.data
     }
   } catch (e) {
-    console.error("Failed to fetch historic weather", e);
+    console.error("Failed to fetch historic weather", e)
   }
 }
 
@@ -525,35 +525,35 @@ const getWeatherIcon = (icon) => {
     'partly-cloudy-night': 'mdi-weather-night-partly-cloudy',
     'thunderstorm': 'mdi-weather-lightning',
     'tornado': 'mdi-weather-tornado',
-  };
-  return iconMap[icon] || 'mdi-weather-cloudy';
-};
+  }
+  return iconMap[icon] || 'mdi-weather-cloudy'
+}
 
 onMounted(() => {
-  fetchWeatherData();
-});
+  fetchWeatherData()
+})
 
 const getStateColor = (state) => {
   switch (state) {
-    case 'Low': return 'orange';
-    case 'High': return 'red';
-    default: return 'success';
+    case 'Low': return 'orange'
+    case 'High': return 'red'
+    default: return 'success'
   }
 }
 
 const getTrendIcon = (trend) => {
   switch (trend) {
-    case 'Rising': return 'mdi-arrow-top-right';
-    case 'Falling': return 'mdi-arrow-bottom-right';
-    default: return 'mdi-minus';
+    case 'Rising': return 'mdi-arrow-top-right'
+    case 'Falling': return 'mdi-arrow-bottom-right'
+    default: return 'mdi-minus'
   }
 }
 
 const getTrendColor = (trend) => {
   switch (trend) {
-    case 'Rising': return 'red';
-    case 'Falling': return 'green';
-    default: return 'grey';
+    case 'Rising': return 'red'
+    case 'Falling': return 'green'
+    default: return 'grey'
   }
 }
 </script>

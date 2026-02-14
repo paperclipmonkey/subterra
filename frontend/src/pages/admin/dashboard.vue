@@ -98,14 +98,14 @@ const baseOptions = {
     tooltip: {
       callbacks: {
         label: function (context) {
-          let label = context.dataset.label || '';
+          let label = context.dataset.label || ''
           if (label) {
-            label += ': ';
+            label += ': '
           }
           if (context.parsed.y !== null) {
-            label += context.parsed.y;
+            label += context.parsed.y
           }
-          return label;
+          return label
         }
       }
     }

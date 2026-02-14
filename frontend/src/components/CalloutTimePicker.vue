@@ -97,7 +97,7 @@
 </template>
 
 <script>
-import moment from 'moment';
+import moment from 'moment'
 
 export default {
     name: 'CalloutTimePicker',
@@ -113,71 +113,71 @@ export default {
             currentTime: moment(),
             internalValue: null,
             clockInterval: null
-        };
+        }
     },
     computed: {
         currentTimeDisplay() {
-            return this.currentTime.format('HH:mm');
+            return this.currentTime.format('HH:mm')
         },
         calloutTime() {
             if (this.internalValue) {
-                return moment(this.internalValue);
+                return moment(this.internalValue)
             }
-            return moment().add(5, 'hours');
+            return moment().add(5, 'hours')
         },
         calloutTimeDisplay() {
-            return this.calloutTime.format('HH:mm');
+            return this.calloutTime.format('HH:mm')
         },
         calloutDateDisplay() {
-            const now = moment();
-            const callout = this.calloutTime;
+            const now = moment()
+            const callout = this.calloutTime
 
             if (callout.isSame(now, 'day')) {
-                return 'Today';
+                return 'Today'
             } else if (callout.isSame(now.clone().add(1, 'day'), 'day')) {
-                return 'Tomorrow';
+                return 'Tomorrow'
             } else {
-                return callout.format('ddd, MMM D');
+                return callout.format('ddd, MMM D')
             }
         },
         durationDisplay() {
-            const now = moment();
-            const callout = this.calloutTime;
-            const duration = moment.duration(callout.diff(now));
+            const now = moment()
+            const callout = this.calloutTime
+            const duration = moment.duration(callout.diff(now))
 
-            const hours = Math.floor(duration.asHours());
-            const minutes = duration.minutes();
+            const hours = Math.floor(duration.asHours())
+            const minutes = duration.minutes()
 
-            let text = 'That is ';
+            let text = 'That is '
             if (hours > 0) {
-                text += `${hours} hour${hours !== 1 ? 's' : ''}`;
+                text += `${hours} hour${hours !== 1 ? 's' : ''}`
             }
             if (minutes > 0) {
-                if (hours > 0) text += ' and ';
-                text += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+                if (hours > 0) text += ' and '
+                text += `${minutes} minute${minutes !== 1 ? 's' : ''}`
             }
-            text += ' from now';
+            text += ' from now'
 
-            return text;
+            return text
         },
         hoursFromNow() {
-            const now = moment();
-            const callout = this.calloutTime;
-            return Math.floor(moment.duration(callout.diff(now)).asHours());
+            const now = moment()
+            const callout = this.calloutTime
+            return Math.floor(moment.duration(callout.diff(now)).asHours())
         },
         minutesFromNow() {
-            const now = moment();
-            const callout = this.calloutTime;
-            const duration = moment.duration(callout.diff(now));
-            return duration.minutes();
+            const now = moment()
+            const callout = this.calloutTime
+            const duration = moment.duration(callout.diff(now))
+            return duration.minutes()
         },
         isPastTime() {
-            return this.calloutTime.isBefore(moment());
+            return this.calloutTime.isBefore(moment())
         },
         canDecrease() {
             // Can't decrease if it would put us in the past
-            const testTime = this.calloutTime.clone().subtract(15, 'minutes');
-            return testTime.isAfter(moment());
+            const testTime = this.calloutTime.clone().subtract(15, 'minutes')
+            return testTime.isAfter(moment())
         }
     },
     watch: {
@@ -185,55 +185,55 @@ export default {
             immediate: true,
             handler(val) {
                 if (val) {
-                    this.internalValue = val;
+                    this.internalValue = val
                 } else {
                     // Default to 5 hours from now, snapped to 15 min boundary
-                    const defaultTime = moment().add(5, 'hours');
+                    const defaultTime = moment().add(5, 'hours')
                     // Use ISO 8601 format to preserve timezone information
-                    this.internalValue = this.snapTo15Minutes(defaultTime).toISOString();
-                    this.$emit('update:modelValue', this.internalValue);
+                    this.internalValue = this.snapTo15Minutes(defaultTime).toISOString()
+                    this.$emit('update:modelValue', this.internalValue)
                 }
             }
         },
         internalValue(val) {
-            this.$emit('update:modelValue', val);
+            this.$emit('update:modelValue', val)
         }
     },
     mounted() {
         // Update current time every minute
         this.clockInterval = setInterval(() => {
-            this.currentTime = moment();
-        }, 60000);
+            this.currentTime = moment()
+        }, 60000)
     },
     beforeUnmount() {
         if (this.clockInterval) {
-            clearInterval(this.clockInterval);
+            clearInterval(this.clockInterval)
         }
     },
     methods: {
         snapTo15Minutes(time) {
-            const minutes = time.minutes();
-            const remainder = minutes % 15;
-            if (remainder === 0) return time;
+            const minutes = time.minutes()
+            const remainder = minutes % 15
+            if (remainder === 0) return time
 
             // Round to nearest 15 minute boundary
-            const roundedMinutes = Math.round(minutes / 15) * 15;
-            return time.clone().minutes(roundedMinutes).seconds(0).milliseconds(0);
+            const roundedMinutes = Math.round(minutes / 15) * 15
+            return time.clone().minutes(roundedMinutes).seconds(0).milliseconds(0)
         },
         adjustTime(minutes) {
-            const newTime = this.calloutTime.clone().add(minutes, 'minutes');
-            const snapped = this.snapTo15Minutes(newTime);
+            const newTime = this.calloutTime.clone().add(minutes, 'minutes')
+            const snapped = this.snapTo15Minutes(newTime)
             // Use ISO 8601 format to preserve timezone information
-            this.internalValue = snapped.toISOString();
+            this.internalValue = snapped.toISOString()
         },
         adjustHours(hours) {
-            this.adjustTime(hours * 60);
+            this.adjustTime(hours * 60)
         },
         adjustMinutes(minutes) {
-            this.adjustTime(minutes);
+            this.adjustTime(minutes)
         }
     }
-};
+}
 </script>
 
 <style scoped>

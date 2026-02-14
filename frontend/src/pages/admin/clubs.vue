@@ -45,20 +45,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
-import { mande } from 'mande';
-import { useRouter } from 'vue-router';
-import CreateClubDialog from '@/components/admin/CreateClubDialog.vue';
+import { ref, onMounted, computed, watch } from 'vue'
+import { mande } from 'mande'
+import { useRouter } from 'vue-router'
+import CreateClubDialog from '@/components/admin/CreateClubDialog.vue'
 
 // --- API Setup ---
-const clubsApi = mande('/api/admin/clubs');
+const clubsApi = mande('/api/admin/clubs')
 
 // --- Data Fetching ---
-const clubs = ref([]);
-const loading = ref(false);
-const search = ref('');
-const router = useRouter();
-const createDialogVisible = ref(false); // State for dialog visibility
+const clubs = ref([])
+const loading = ref(false)
+const search = ref('')
+const router = useRouter()
+const createDialogVisible = ref(false) // State for dialog visibility
 
 const headers = [
   { title: 'Name', key: 'name', sortable: true },
@@ -68,72 +68,72 @@ const headers = [
   { title: 'Location', key: 'location', sortable: true },
   { title: 'Members', key: 'member_count', sortable: true, align: 'center' },
   { title: 'Enabled', key: 'is_active', sortable: true, align: 'center' },
-];
+]
 
 const fetchClubs = async () => {
-  loading.value = true;
+  loading.value = true
   try {
     // Use actual API
-    const response = await clubsApi.get();
+    const response = await clubsApi.get()
     // Adjust based on actual API response structure (e.g., response.data if nested)
     clubs.value = (response.data || response).map(club => ({
       ...club,
       loadingEnabled: false, // Initialize loading flag for UI
-    }));
+    }))
   } catch (error) {
-    console.error('Error fetching clubs:', error);
+    console.error('Error fetching clubs:', error)
     // Handle error display (e.g., snackbar)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const openCreateDialog = () => {
-  createDialogVisible.value = true;
-};
+  createDialogVisible.value = true
+}
 
 const handleClubCreated = (newClub) => {
   // Add the new club to the list or refetch
   // For simplicity, refetching the list to include the new club
-  fetchClubs();
+  fetchClubs()
   // Alternatively, push to the existing list if the newClub object is complete
   // clubs.value.push({ ...newClub, loadingEnabled: false });
-};
+}
 
 const updateClubInList = (updatedClub) => {
   // Ensure the updatedClub from the API response is used
-  const clubData = updatedClub.data || updatedClub;
-  const index = clubs.value.findIndex(c => c.id === clubData.id);
+  const clubData = updatedClub.data || updatedClub
+  const index = clubs.value.findIndex(c => c.id === clubData.id)
   if (index !== -1) {
     clubs.value[index] = {
       ...clubData,
       loadingEnabled: false, // Reset loading flag
-    };
+    }
   } else {
     clubs.value.push({
       ...clubData,
       loadingEnabled: false,
-    });
+    })
   }
-};
+}
 
 const toggleEnabled = async (club) => {
-  club.loadingEnabled = true;
+  club.loadingEnabled = true
   try {
     // Use slug instead of id
-    const toggleApi = mande(`/api/admin/clubs/${club.slug}/toggle-active`);
-    const updatedClub = await toggleApi.put();
-    updateClubInList(updatedClub); // Update list with response data
+    const toggleApi = mande(`/api/admin/clubs/${club.slug}/toggle-active`)
+    const updatedClub = await toggleApi.put()
+    updateClubInList(updatedClub) // Update list with response data
   } catch (error) {
-    console.error(`Error toggling enabled status for club ${club.slug}:`, error);
-    club.loadingEnabled = false; // Reset loading on error
+    console.error(`Error toggling enabled status for club ${club.slug}:`, error)
+    club.loadingEnabled = false // Reset loading on error
   }
   // No finally needed if updateClubInList handles the flag on success
-};
+}
 
 const handleRowClick = (event, { item }) => {
   // Prevent navigation if clicking interactive elements
-  let target = event.target;
+  let target = event.target
   while (target && target !== event.currentTarget) {
     if (
       target.tagName === 'BUTTON' ||
@@ -141,17 +141,17 @@ const handleRowClick = (event, { item }) => {
       target.classList.contains('v-icon') ||
       target.tagName === 'A'
     ) {
-      return;
+      return
     }
-    target = target.parentNode;
+    target = target.parentNode
   }
   // Navigate to the club's public page using its slug
-  router.push('/club/' + item.slug);
-};
+  router.push('/club/' + item.slug)
+}
 
 onMounted(() => {
-  fetchClubs();
-});
+  fetchClubs()
+})
 
 </script>
 

@@ -24,39 +24,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import VueMarkdownRender from 'vue-markdown-render';
-import moment from 'moment';
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import VueMarkdownRender from 'vue-markdown-render'
+import moment from 'moment'
 
-const route = useRoute();
-const page = ref(null);
-const loading = ref(true);
-const error = ref(null);
+const route = useRoute()
+const page = ref(null)
+const loading = ref(true)
+const error = ref(null)
 
 const fetchPage = async () => {
-    loading.value = true;
-    error.value = null;
+    loading.value = true
+    error.value = null
     try {
-        const res = await fetch(`/api/pages/${route.params.slug}`);
+        const res = await fetch(`/api/pages/${route.params.slug}`)
         if (res.status === 404) {
-            error.value = "Page not found.";
+            error.value = "Page not found."
         } else if (!res.ok) {
-            error.value = "Failed to load page. Please try again later.";
+            error.value = "Failed to load page. Please try again later."
         } else {
-            page.value = (await res.json()).data;
+            page.value = (await res.json()).data
         }
     } catch (e) {
-        console.error(e);
-        error.value = "An unexpected error occurred.";
+        console.error(e)
+        error.value = "An unexpected error occurred."
     } finally {
-        loading.value = false;
+        loading.value = false
     }
 }
 
-const formatDate = (date) => moment(date).format('MMMM Do YYYY, h:mm a');
+const formatDate = (date) => moment(date).format('MMMM Do YYYY, h:mm a')
 
-onMounted(fetchPage);
+onMounted(fetchPage)
 </script>
 
 <style scoped>

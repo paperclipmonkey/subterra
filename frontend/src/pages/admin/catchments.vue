@@ -150,17 +150,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue'
 
-const loading = ref(false);
-const catchments = ref([]);
-const dialog = ref(false);
-const dialogDelete = ref(false);
-const editedIndex = ref(-1);
+const loading = ref(false)
+const catchments = ref([])
+const dialog = ref(false)
+const dialogDelete = ref(false)
+const editedIndex = ref(-1)
 
-const snackbar = ref(false);
-const snackbarText = ref('');
-const snackbarColor = ref('success');
+const snackbar = ref(false)
+const snackbarText = ref('')
+const snackbarColor = ref('success')
 
 const headers = [
   { title: 'Name', align: 'start', key: 'name' },
@@ -168,62 +168,62 @@ const headers = [
   { title: 'Gauges', key: 'gauges', sortable: false },
   { title: 'Cave Systems', key: 'cave_systems_count' },
   { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
-];
+]
 
 const defaultItem = {
   name: '',
   reference_id: '',
   gauges: []
-};
+}
 
-const editedItem = ref({ ...defaultItem });
+const editedItem = ref({ ...defaultItem })
 
 onMounted(() => {
-  fetchCatchments();
-});
+  fetchCatchments()
+})
 
 const generateReferenceId = () => {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+  return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
 const fetchCatchments = async () => {
-  loading.value = true;
+  loading.value = true
   try {
-    const response = await fetch('/api/admin/catchments');
+    const response = await fetch('/api/admin/catchments')
     if (response.ok) {
-      const json = await response.json();
-      catchments.value = json.data;
+      const json = await response.json()
+      catchments.value = json.data
     } else {
-      showSnackbar('Failed to fetch catchments', 'error');
+      showSnackbar('Failed to fetch catchments', 'error')
     }
   } catch (error) {
-    console.error(error);
-    showSnackbar('Error fetching catchments', 'error');
+    console.error(error)
+    showSnackbar('Error fetching catchments', 'error')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const openCreateDialog = () => {
-  editedIndex.value = -1;
-  editedItem.value = JSON.parse(JSON.stringify(defaultItem));
-  editedItem.value.reference_id = generateReferenceId();
-  dialog.value = true;
+  editedIndex.value = -1
+  editedItem.value = JSON.parse(JSON.stringify(defaultItem))
+  editedItem.value.reference_id = generateReferenceId()
+  dialog.value = true
 }
 
 const editItem = (item) => {
-  editedIndex.value = catchments.value.indexOf(item);
-  editedItem.value = JSON.parse(JSON.stringify(item));
+  editedIndex.value = catchments.value.indexOf(item)
+  editedItem.value = JSON.parse(JSON.stringify(item))
   // Ensure gauges is array
-  if (!editedItem.value.gauges) editedItem.value.gauges = [];
-  dialog.value = true;
-};
+  if (!editedItem.value.gauges) editedItem.value.gauges = []
+  dialog.value = true
+}
 
 const deleteItem = (item) => {
-  editedIndex.value = catchments.value.indexOf(item);
-  editedItem.value = { ...item };
-  dialogDelete.value = true;
-};
+  editedIndex.value = catchments.value.indexOf(item)
+  editedItem.value = { ...item }
+  dialogDelete.value = true
+}
 
 const deleteItemConfirm = async () => {
   try {
@@ -233,38 +233,38 @@ const deleteItemConfirm = async () => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       }
-    });
+    })
 
     if (response.ok) {
-      catchments.value.splice(editedIndex.value, 1);
-      showSnackbar('Catchment deleted successfully');
+      catchments.value.splice(editedIndex.value, 1)
+      showSnackbar('Catchment deleted successfully')
     } else {
-      const data = await response.json();
-      showSnackbar(data.message || 'Failed to delete catchment', 'error');
+      const data = await response.json()
+      showSnackbar(data.message || 'Failed to delete catchment', 'error')
     }
   } catch (e) {
-    showSnackbar('Error deleting catchment', 'error');
+    showSnackbar('Error deleting catchment', 'error')
   }
-  closeDelete();
-};
+  closeDelete()
+}
 
 const close = () => {
-  dialog.value = false;
-  editedItem.value = { ...defaultItem };
-  editedIndex.value = -1;
-};
+  dialog.value = false
+  editedItem.value = { ...defaultItem }
+  editedIndex.value = -1
+}
 
 const closeDelete = () => {
-  dialogDelete.value = false;
-  editedItem.value = { ...defaultItem };
-  editedIndex.value = -1;
-};
+  dialogDelete.value = false
+  editedItem.value = { ...defaultItem }
+  editedIndex.value = -1
+}
 
 const save = async () => {
-  const method = editedIndex.value > -1 ? 'PUT' : 'POST';
+  const method = editedIndex.value > -1 ? 'PUT' : 'POST'
   const url = editedIndex.value > -1
     ? `/api/admin/catchments/${editedItem.value.id}`
-    : '/api/admin/catchments';
+    : '/api/admin/catchments'
 
   try {
     const response = await fetch(url, {
@@ -274,39 +274,39 @@ const save = async () => {
         'Accept': 'application/json',
       },
       body: JSON.stringify(editedItem.value)
-    });
+    })
 
     if (response.ok) {
-      const json = await response.json();
+      const json = await response.json()
       if (editedIndex.value > -1) {
-        Object.assign(catchments.value[editedIndex.value], json.data);
+        Object.assign(catchments.value[editedIndex.value], json.data)
       } else {
         // For new items, we might need a refresh to get the count or just push 
-        json.data.cave_systems_count = 0;
-        catchments.value.push(json.data);
+        json.data.cave_systems_count = 0
+        catchments.value.push(json.data)
       }
-      showSnackbar('Catchment saved successfully');
-      close();
+      showSnackbar('Catchment saved successfully')
+      close()
     } else {
-      const data = await response.json();
-      showSnackbar(data.message || 'Failed to save', 'error');
+      const data = await response.json()
+      showSnackbar(data.message || 'Failed to save', 'error')
     }
   } catch (e) {
-    showSnackbar('Error saving catchment', 'error');
+    showSnackbar('Error saving catchment', 'error')
   }
-};
+}
 
 const addGauge = () => {
-  editedItem.value.gauges.push({ name: '', rloi_id: '', type: 'river' });
+  editedItem.value.gauges.push({ name: '', rloi_id: '', type: 'river' })
 }
 
 const removeGauge = (index) => {
-  editedItem.value.gauges.splice(index, 1);
+  editedItem.value.gauges.splice(index, 1)
 }
 
 const showSnackbar = (text, color = 'success') => {
-  snackbarText.value = text;
-  snackbarColor.value = color;
-  snackbar.value = true;
+  snackbarText.value = text
+  snackbarColor.value = color
+  snackbar.value = true
 }
 </script>

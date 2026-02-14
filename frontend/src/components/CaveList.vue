@@ -51,62 +51,62 @@
 </template>
 
 <script setup>
-import { useCaveStore } from '@/stores/caves';
-import FilterByTagModal from './FilterByTagModal.vue';
-import { ref, watch, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useCaveStore } from '@/stores/caves'
+import FilterByTagModal from './FilterByTagModal.vue'
+import { ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const caveStore = useCaveStore()
 
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
 // Initialize search from query parameter
-const search = ref(route.query.search || '');
-const catchmentId = ref(route.query.catchment || null);
+const search = ref(route.query.search || '')
+const catchmentId = ref(route.query.catchment || null)
 
 const showFilterByTagModal = ref(false)
 
-let cachedTags = ref([]);
+let cachedTags = ref([])
 
 const applyFilter = (tags) => {
   cachedTags.value = tags
   caveStore.applyFilters(tags, search.value, catchmentId.value)
   // Update URL with tags as a comma-separated string
-  router.replace({ query: { ...route.query, tags: tags.join(',') } });
+  router.replace({ query: { ...route.query, tags: tags.join(',') } })
   showFilterByTagModal.value = false
 }
 
 watch(search, (newSearch) => {
   caveStore.applyFilters(cachedTags, newSearch, catchmentId.value)
   // Update URL with current search
-  router.replace({ query: { ...route.query, search: newSearch } });
+  router.replace({ query: { ...route.query, search: newSearch } })
 })
 
 const tab = ref(route.query.view || 'list')
 
 // Update URL when tab changes
 watch(tab, (newTab) => {
-  router.replace({ query: { ...route.query, view: newTab } });
+  router.replace({ query: { ...route.query, view: newTab } })
 })
 
 // Watch for route query changes for catchment (deep linking support)
 watch(() => route.query.catchment, (newCatchment) => {
-  catchmentId.value = newCatchment;
-  caveStore.applyFilters(cachedTags, search.value, newCatchment);
+  catchmentId.value = newCatchment
+  caveStore.applyFilters(cachedTags, search.value, newCatchment)
 })
 
 onMounted(async () => {
   // Ensure search and view parameters are applied on reload
-  search.value = route.query.search || '';
-  tab.value = route.query.view || 'list';
-  const tags = route.query.tags ? route.query.tags.split(',') : [];
-  catchmentId.value = route.query.catchment || null;
+  search.value = route.query.search || ''
+  tab.value = route.query.view || 'list'
+  const tags = route.query.tags ? route.query.tags.split(',') : []
+  catchmentId.value = route.query.catchment || null
 
-  cachedTags.value = tags;
-  await caveStore.getList();
+  cachedTags.value = tags
+  await caveStore.getList()
 
   // Apply filters after list is loaded
-  caveStore.applyFilters(tags, search.value, catchmentId.value);
+  caveStore.applyFilters(tags, search.value, catchmentId.value)
 })
 </script>

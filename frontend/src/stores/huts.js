@@ -40,26 +40,26 @@ export const useHutStore = defineStore('huts', {
         },
         async createHut(hut) {
             try {
-                return await api.post(hut);
+                return await api.post(hut)
             } catch (err) {
-                this.error = err.message;
-                throw err;
+                this.error = err.message
+                throw err
             }
         },
         async updateHut(hut) {
             try {
-                return await api.put(hut.id, hut);
+                return await api.put(hut.id, hut)
             } catch (err) {
-                this.error = err.message;
-                throw err;
+                this.error = err.message
+                throw err
             }
         },
         async deleteHut(id) {
             try {
-                return await api.delete(id);
+                return await api.delete(id)
             } catch (err) {
-                this.error = err.message;
-                throw err;
+                this.error = err.message
+                throw err
             }
         }
     },

@@ -35,13 +35,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { mande } from 'mande';
+import { ref, onMounted } from 'vue'
+import { mande } from 'mande'
 
-const pagesApi = mande('/api/admin/pages');
-const pages = ref([]);
-const loading = ref(false);
-const search = ref('');
+const pagesApi = mande('/api/admin/pages')
+const pages = ref([])
+const loading = ref(false)
+const search = ref('')
 
 const headers = [
   { title: 'ID', key: 'id', sortable: true },
@@ -49,29 +49,29 @@ const headers = [
   { title: 'Slug', key: 'slug', sortable: true },
   { title: 'Views', key: 'access_count', sortable: true },
   { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
-];
+]
 
 const fetchPages = async () => {
-  loading.value = true;
+  loading.value = true
   try {
-    pages.value = (await pagesApi.get()).data;
+    pages.value = (await pagesApi.get()).data
   } catch (e) {
-    console.error(e);
+    console.error(e)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const deletePage = async (page) => {
-  if (!confirm('Are you sure you want to delete this page?')) return;
+  if (!confirm('Are you sure you want to delete this page?')) return
   try {
-    await pagesApi.delete(page.id);
-    await fetchPages();
+    await pagesApi.delete(page.id)
+    await fetchPages()
   } catch (e) {
-    console.error(e);
-    alert('Failed to delete page');
+    console.error(e)
+    alert('Failed to delete page')
   }
-};
+}
 
-onMounted(fetchPages);
+onMounted(fetchPages)
 </script>

@@ -111,8 +111,8 @@
 </template>
 
 <script>
-import axios from 'axios';
-import moment from 'moment';
+import axios from 'axios'
+import moment from 'moment'
 
 export default {
     data() {
@@ -138,110 +138,110 @@ export default {
                 { title: 'End', key: 'end_at' },
                 { title: 'Actions', key: 'actions', sortable: false }
             ]
-        };
+        }
     },
     computed: {
         currentMonthName() {
-            return this.currentDate.format('MMMM YYYY');
+            return this.currentDate.format('MMMM YYYY')
         },
         calendarCells() {
-            const cells = [];
-            const startOfMonth = moment(this.currentDate).startOf('month');
-            const endOfMonth = moment(this.currentDate).endOf('month');
+            const cells = []
+            const startOfMonth = moment(this.currentDate).startOf('month')
+            const endOfMonth = moment(this.currentDate).endOf('month')
 
             // Start from the first Monday before or on the 1st
-            const start = moment(startOfMonth).startOf('isoWeek');
-            const end = moment(endOfMonth).endOf('isoWeek');
+            const start = moment(startOfMonth).startOf('isoWeek')
+            const end = moment(endOfMonth).endOf('isoWeek')
 
-            const curr = moment(start);
+            const curr = moment(start)
             while (curr.isBefore(end)) {
                 const dayShifts = this.shifts.filter(s => {
-                    const sStart = moment(s.start_at);
-                    const sEnd = moment(s.end_at);
-                    const dayStart = moment(curr).startOf('day');
-                    const dayEnd = moment(curr).endOf('day');
+                    const sStart = moment(s.start_at)
+                    const sEnd = moment(s.end_at)
+                    const dayStart = moment(curr).startOf('day')
+                    const dayEnd = moment(curr).endOf('day')
 
                     // A shift overlaps with this day if it starts before the end of the day 
                     // AND ends after the start of the day.
-                    return sStart.isBefore(dayEnd) && sEnd.isAfter(dayStart);
-                });
+                    return sStart.isBefore(dayEnd) && sEnd.isAfter(dayStart)
+                })
 
                 cells.push({
                     date: moment(curr),
                     current: curr.month() === this.currentDate.month(),
                     today: curr.isSame(moment(), 'day'),
                     shifts: dayShifts
-                });
-                curr.add(1, 'day');
+                })
+                curr.add(1, 'day')
             }
-            return cells;
+            return cells
         }
     },
     async mounted() {
         await Promise.all([
             this.fetchUsers(),
             this.fetchShifts()
-        ]);
-        this.loading = false;
+        ])
+        this.loading = false
 
         // Default new shift to 07:30 - 11:31 today
-        this.newShift.start_at = moment().set({ hour: 7, minute: 30 }).format('YYYY-MM-DDTHH:mm');
-        this.newShift.end_at = moment().set({ hour: 23, minute: 31 }).format('YYYY-MM-DDTHH:mm');
+        this.newShift.start_at = moment().set({ hour: 7, minute: 30 }).format('YYYY-MM-DDTHH:mm')
+        this.newShift.end_at = moment().set({ hour: 23, minute: 31 }).format('YYYY-MM-DDTHH:mm')
     },
     methods: {
         async fetchUsers() {
             try {
-                const res = await axios.get('/api/admin/duty-officers');
-                this.users = res.data.data;
+                const res = await axios.get('/api/admin/duty-officers')
+                this.users = res.data.data
             } catch (e) {
-                console.error("Error fetching users", e);
+                console.error("Error fetching users", e)
             }
         },
         async fetchShifts() {
-            this.loading = true;
+            this.loading = true
             try {
                 // Fetch a range for the calendar
-                const start = moment(this.currentDate).startOf('month').subtract(7, 'days').format('YYYY-MM-DD');
-                const end = moment(this.currentDate).endOf('month').add(7, 'days').format('YYYY-MM-DD');
-                const res = await axios.get(`/api/admin/shifts?start=${start}&end=${end}`);
-                this.shifts = res.data.data;
+                const start = moment(this.currentDate).startOf('month').subtract(7, 'days').format('YYYY-MM-DD')
+                const end = moment(this.currentDate).endOf('month').add(7, 'days').format('YYYY-MM-DD')
+                const res = await axios.get(`/api/admin/shifts?start=${start}&end=${end}`)
+                this.shifts = res.data.data
             } catch (e) {
-                console.error("Error fetching shifts", e);
+                console.error("Error fetching shifts", e)
             } finally {
-                this.loading = false;
+                this.loading = false
             }
         },
         formatDateTime(d) {
-            return moment(d).format('ddd Do MMM HH:mm');
+            return moment(d).format('ddd Do MMM HH:mm')
         },
         prevMonth() {
-            this.currentDate = moment(this.currentDate).subtract(1, 'month');
-            this.fetchShifts();
+            this.currentDate = moment(this.currentDate).subtract(1, 'month')
+            this.fetchShifts()
         },
         nextMonth() {
-            this.currentDate = moment(this.currentDate).add(1, 'month');
-            this.fetchShifts();
+            this.currentDate = moment(this.currentDate).add(1, 'month')
+            this.fetchShifts()
         },
         getEventColor(userId) {
             // Simple deterministic color from ID
-            const colors = ['#1976D2', '#388E3C', '#F57C00', '#7B1FA2', '#C2185B', '#0097A7', '#689F38'];
-            return colors[userId % colors.length];
+            const colors = ['#1976D2', '#388E3C', '#F57C00', '#7B1FA2', '#C2185B', '#0097A7', '#689F38']
+            return colors[userId % colors.length]
         },
         async addShift() {
-            const { valid } = await this.$refs.form.validate();
-            if (!valid) return;
+            const { valid } = await this.$refs.form.validate()
+            if (!valid) return
 
-            this.processing = true;
+            this.processing = true
             try {
-                await axios.post('/api/admin/shifts', this.newShift);
-                this.$toast.success('Shift added successfully');
-                await this.fetchShifts();
-                this.newShift.user_id = null;
-                this.$refs.form.resetValidation();
+                await axios.post('/api/admin/shifts', this.newShift)
+                this.$toast.success('Shift added successfully')
+                await this.fetchShifts()
+                this.newShift.user_id = null
+                this.$refs.form.resetValidation()
             } catch (e) {
-                this.handleApiError(e, 'Failed to add shift');
+                this.handleApiError(e, 'Failed to add shift')
             } finally {
-                this.processing = false;
+                this.processing = false
             }
         },
         editShift(shift) {
@@ -250,56 +250,56 @@ export default {
                 user_id: shift.user_id,
                 start_at: moment(shift.start_at).format('YYYY-MM-DDTHH:mm'),
                 end_at: moment(shift.end_at).format('YYYY-MM-DDTHH:mm')
-            };
-            this.editDialog = true;
+            }
+            this.editDialog = true
         },
         async saveShift() {
-            this.processing = true;
+            this.processing = true
             try {
-                await axios.put(`/api/admin/shifts/${this.editingShift.id}`, this.editingShift);
-                this.$toast.success('Shift updated successfully');
-                this.editDialog = false;
-                await this.fetchShifts();
+                await axios.put(`/api/admin/shifts/${this.editingShift.id}`, this.editingShift)
+                this.$toast.success('Shift updated successfully')
+                this.editDialog = false
+                await this.fetchShifts()
             } catch (e) {
-                this.handleApiError(e, 'Failed to update shift');
+                this.handleApiError(e, 'Failed to update shift')
             } finally {
-                this.processing = false;
+                this.processing = false
             }
         },
         async deleteShift(id) {
-            if (!confirm("Remove this shift?")) return;
+            if (!confirm("Remove this shift?")) return
 
             try {
-                await axios.delete(`/api/admin/shifts/${id}`);
-                this.$toast.success('Shift removed');
-                this.editDialog = false; // Close dialog if open
-                await this.fetchShifts();
+                await axios.delete(`/api/admin/shifts/${id}`)
+                this.$toast.success('Shift removed')
+                this.editDialog = false // Close dialog if open
+                await this.fetchShifts()
             } catch (e) {
-                this.handleApiError(e, 'Failed to delete shift');
+                this.handleApiError(e, 'Failed to delete shift')
             }
         },
         handleApiError(e, defaultMsg) {
-            console.error(e);
-            let msg = defaultMsg;
+            console.error(e)
+            let msg = defaultMsg
             if (e.response && e.response.data) {
                 if (e.response.data.errors) {
-                    const firstKey = Object.keys(e.response.data.errors)[0];
-                    msg = e.response.data.errors[firstKey][0];
+                    const firstKey = Object.keys(e.response.data.errors)[0]
+                    msg = e.response.data.errors[firstKey][0]
                 } else if (e.response.data.message) {
-                    msg = e.response.data.message;
+                    msg = e.response.data.message
                 }
 
                 // If specialized "orphaned callouts" error
                 if (e.response.status === 422 && e.response.data.affected_callouts) {
-                    const callouts = e.response.data.affected_callouts;
-                    const details = callouts.map(c => `• ${c.cave_name} (${c.user_name})`).join('\n');
-                    alert(`${msg}\n\nExisting callouts require coverage:\n${details}`);
+                    const callouts = e.response.data.affected_callouts
+                    const details = callouts.map(c => `• ${c.cave_name} (${c.user_name})`).join('\n')
+                    alert(`${msg}\n\nExisting callouts require coverage:\n${details}`)
                 }
             }
-            this.$toast.error(msg);
+            this.$toast.error(msg)
         }
     }
-};
+}
 </script>
 
 <style scoped>

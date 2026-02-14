@@ -286,9 +286,9 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { mande } from 'mande';
-import { CalendarHeatmap } from "vue3-calendar-heatmap";
-import moment from 'moment';
+import { mande } from 'mande'
+import { CalendarHeatmap } from "vue3-calendar-heatmap"
+import moment from 'moment'
 import { useAppStore } from '@/stores/app'
 import { usePageTitle } from '@/composables/usePageTitle'
 
@@ -303,72 +303,72 @@ const profile = ref({
    "clubs": [],
 })
 
-const pageTitle = computed(() => profile.value?.name);
-usePageTitle(pageTitle);
+const pageTitle = computed(() => profile.value?.name)
+usePageTitle(pageTitle)
 
 const loading = ref(true)
 const error = ref(null)
 
-const recentTrips = ref([]);
-const heatmapData = ref([]);
-const endDate = ref(new Date());
-const medals = ref([]);
-let user = ref({});
+const recentTrips = ref([])
+const heatmapData = ref([])
+const endDate = ref(new Date())
+const medals = ref([])
+let user = ref({})
 
 // Download Dialog State
-const isDownloadDialogOpen = ref(false);
-const downloadTitle = ref('');
-const downloadDescription = ref('');
-const downloadLink = ref('');
+const isDownloadDialogOpen = ref(false)
+const downloadTitle = ref('')
+const downloadDescription = ref('')
+const downloadLink = ref('')
 
 const openDownloadDialog = (title, description, link) => {
-   downloadTitle.value = title;
-   downloadDescription.value = description;
-   downloadLink.value = link;
-   isDownloadDialogOpen.value = true;
+   downloadTitle.value = title
+   downloadDescription.value = description
+   downloadLink.value = link
+   isDownloadDialogOpen.value = true
 }
 
 const confirmDownload = () => {
-   window.location.href = downloadLink.value;
-   isDownloadDialogOpen.value = false;
+   window.location.href = downloadLink.value
+   isDownloadDialogOpen.value = false
 }
 
 const loadProfile = async (id) => {
    loading.value = true
    error.value = null
    try {
-      const userApi = mande(`/api/users/${id}`);
-      const response = await userApi.get();
+      const userApi = mande(`/api/users/${id}`)
+      const response = await userApi.get()
       user.value = await useAppStore().getUser() || {} // Ensure valid object
-      profile.value = response.data || response;
+      profile.value = response.data || response
       // Ensure stats object exists
-      if (!profile.value.stats) profile.value.stats = { caves: 0, trips: 0, duration: 0 };
+      if (!profile.value.stats) profile.value.stats = { caves: 0, trips: 0, duration: 0 }
 
-      medals.value = (profile.value.medals || []);
+      medals.value = (profile.value.medals || [])
 
       // Fetch recent trips and heatmap data
       // Use Promise.allSettled to ensure one failure doesn't break the whole page
       const [recentTripsResult, heatmapResult] = await Promise.allSettled([
          mande(`/api/users/${id}/recent-trips`).get(),
          mande(`/api/users/${id}/activity-heatmap`).get()
-      ]);
+      ])
 
       if (recentTripsResult.status === 'fulfilled') {
-         recentTrips.value = recentTripsResult.value.data || recentTripsResult.value;
+         recentTrips.value = recentTripsResult.value.data || recentTripsResult.value
       } else {
-         console.warn(`Failed to load recent trips for user ${id}:`, recentTripsResult.reason);
-         recentTrips.value = [];
+         console.warn(`Failed to load recent trips for user ${id}:`, recentTripsResult.reason)
+         recentTrips.value = []
       }
 
       if (heatmapResult.status === 'fulfilled') {
-         heatmapData.value = heatmapResult.value || [];
+         heatmapData.value = heatmapResult.value || []
       } else {
-         console.warn(`Failed to load heatmap for user ${id}:`, heatmapResult.reason);
-         heatmapData.value = [];
+         console.warn(`Failed to load heatmap for user ${id}:`, heatmapResult.reason)
+         heatmapData.value = []
       }
 
    } catch (err) {
-      console.error(`Error fetching profile for user ${id}:`, err);
+      console.error(`Error fetching profile for user ${id}:`, err)
       if (err.response && err.response.status === 404) {
          error.value = "User not found. It may have been deleted or you may have the wrong link."
       } else {
@@ -390,11 +390,11 @@ watch(() => route.params.id, (newId) => {
 })
 
 const openMedalModal = (medal) => {
-   selectedMedal.value = medal;
-   isMedalModalOpen.value = true;
+   selectedMedal.value = medal
+   isMedalModalOpen.value = true
 }
-const selectedMedal = ref({});
-const isMedalModalOpen = ref(false);
+const selectedMedal = ref({})
+const isMedalModalOpen = ref(false)
 
 const formatTripDateMonth = (date) => {
    const parsed = moment(date)

@@ -491,12 +491,12 @@
 
 
 <script setup>
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app'
 import { useDisplay } from 'vuetify'
 import VueMarkdown from 'vue-markdown-render'
 import { useRoute, useRouter } from 'vue-router'
-import { markCaveAsDone } from '@/stores/markAsDone';
-import { useCollectionStore } from '@/stores/collections';
+import { markCaveAsDone } from '@/stores/markAsDone'
+import { useCollectionStore } from '@/stores/collections'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -505,10 +505,10 @@ import {
   MglNavigationControl,
   MglMarker,
   MglFullscreenControl,
-} from '@indoorequal/vue-maplibre-gl';
+} from '@indoorequal/vue-maplibre-gl'
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
-const zoom = 14;
+const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const zoom = 14
 
 const appStore = useAppStore()
 const { smAndDown } = useDisplay()
@@ -521,8 +521,8 @@ const loading = ref(true)
 const error = ref(null)
 const activeTab = ref(route.query.tab || 'overview')
 
-const pageTitle = computed(() => cave.value?.name);
-usePageTitle(pageTitle);
+const pageTitle = computed(() => cave.value?.name)
+usePageTitle(pageTitle)
 
 // Sync tab changes to URL without adding history
 watch(activeTab, (newTab) => {
@@ -596,22 +596,22 @@ const fetchCave = async () => {
     } else if (!response.ok) {
       error.value = "Failed to load cave. Please try again later."
     } else {
-      const responseData = await response.json();
-      cave.value = responseData.data;
+      const responseData = await response.json()
+      cave.value = responseData.data
 
       if (cave.value && cave.value.system) {
-        cave.value.system.files = cave.value.system.files || [];
-        cave.value.system.caves = cave.value.system.caves || [];
+        cave.value.system.files = cave.value.system.files || []
+        cave.value.system.caves = cave.value.system.caves || []
       } else if (cave.value) {
-        cave.value.system = { files: [], caves: [] };
+        cave.value.system = { files: [], caves: [] }
       }
       if (!cave.value.trips) {
-        cave.value.trips = [];
+        cave.value.trips = []
       }
     }
 
   } catch (e) {
-    console.error("Failed to fetch cave data:", e);
+    console.error("Failed to fetch cave data:", e)
     error.value = "An unexpected error occurred."
   } finally {
     loading.value = false
@@ -624,35 +624,35 @@ const lnglat = computed(() => {
 
 const copyLatLng = async () => {
   if (cave.value && navigator.clipboard) {
-    const textToCopy = `${cave.value.location_lat}, ${cave.value.location_lng}`;
+    const textToCopy = `${cave.value.location_lat}, ${cave.value.location_lng}`
     try {
-      await navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(textToCopy)
       // TODO: Add user feedback like a snackbar message
-      console.log('Coordinates copied to clipboard:', textToCopy);
+      console.log('Coordinates copied to clipboard:', textToCopy)
     } catch (err) {
-      console.error('Failed to copy coordinates: ', err);
+      console.error('Failed to copy coordinates: ', err)
     }
   }
-};
+}
 
 const markAsDone = () => {
-  showConfirmModal.value = true;
+  showConfirmModal.value = true
 }
 
 const confirmMarkAsDone = async () => {
-  const ok = await markCaveAsDone({ cave: cave.value, userId: appStore.user.id });
+  const ok = await markCaveAsDone({ cave: cave.value, userId: appStore.user.id })
   if (ok) {
-    await fetchCave();
-    showConfirmModal.value = false;
+    await fetchCave()
+    showConfirmModal.value = false
   } else {
-    console.error('failed to save trip');
+    console.error('failed to save trip')
   }
 }
 
 const openImage = (item) => {
   selectedMedia.value = item
   showMediaModal.value = true
-};
+}
 
 onMounted(() => {
   fetchCave()
@@ -662,7 +662,7 @@ watch(
   () => route.params.id,
   (newId, oldId) => {
     if (newId !== oldId) {
-      fetchCave();
+      fetchCave()
     }
   }
 )

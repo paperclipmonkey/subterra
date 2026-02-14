@@ -65,29 +65,29 @@
 
 <script setup>
 import { ref, defineProps, onMounted } from 'vue'
-import { useRoute } from 'vue-router';
-const route = useRoute();
+import { useRoute } from 'vue-router'
+const route = useRoute()
 const emit = defineEmits(['filter', 'close'])
 
 const tagsAvailable = ref({})
 const selectedTags = ref({})
 
 onMounted(async () => {
-  const response = await fetch('/api/tags');
-  tagsAvailable.value = await response.json();
-  const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : [];
+  const response = await fetch('/api/tags')
+  tagsAvailable.value = await response.json()
+  const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : []
 
   if(pageLoadedTags.length > 0) {
     // Initialize selectedTags with the loaded filters
     for (const group in tagsAvailable.value) {
-      selectedTags.value[group] = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag);
+      selectedTags.value[group] = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag)
     }
   }
 })
 
 const emitFilters = () => {
-  const filters = Object.values(selectedTags.value).flat();
-  emit('filter', filters);
+  const filters = Object.values(selectedTags.value).flat()
+  emit('filter', filters)
 }
 
 const props = defineProps({

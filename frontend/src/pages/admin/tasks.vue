@@ -165,7 +165,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from 'axios'
 
 export default {
   data() {
@@ -181,29 +181,29 @@ export default {
       snackbar: false,
       snackbarText: '',
       snackbarColor: 'success'
-    };
+    }
   },
   mounted() {
-    this.fetchTasks();
+    this.fetchTasks()
   },
   methods: {
     async fetchTasks() {
-      this.loading = true;
+      this.loading = true
       try {
-        const res = await axios.get('/api/admin/tasks');
-        this.tasks = res.data;
+        const res = await axios.get('/api/admin/tasks')
+        this.tasks = res.data
       } catch (e) {
-        console.error(e);
-        this.showSnackbar('Failed to load tasks', 'error');
+        console.error(e)
+        this.showSnackbar('Failed to load tasks', 'error')
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
     showSnackbar(text, color) {
-      this.snackbarText = text;
-      this.snackbarColor = color;
-      this.snackbar = true;
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
     }
   }
-};
+}
 </script>

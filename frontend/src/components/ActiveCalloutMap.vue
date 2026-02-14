@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, watch } from 'vue'
 import {
   MglMap,
   MglFullscreenControl,
@@ -24,15 +24,15 @@ import {
   MglMarker,
   MglPopup,
   useMap
-} from '@indoorequal/vue-maplibre-gl';
-import maplibregl from 'maplibre-gl';
+} from '@indoorequal/vue-maplibre-gl'
+import maplibregl from 'maplibre-gl'
 
 const props = defineProps({
   callouts: {
     type: Array,
     default: () => []
   }
-});
+})
 
 const validCallouts = computed(() => {
   return props.callouts
@@ -41,38 +41,38 @@ const validCallouts = computed(() => {
       ...c,
       lat: Number(c.lat || c.location_lat),
       lng: Number(c.lng || c.location_lng)
-    }));
-});
+    }))
+})
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
-const zoom = 6;
+const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const zoom = 6
 const lnglat = [-2.5, 54.2] // Rough center of UK caving areas
 
-const mapOne = useMap();
+const mapOne = useMap()
 
 const updateBounds = () => {
   if (validCallouts.value.length > 0 && mapOne.isLoaded) {
-    const bounds = new maplibregl.LngLatBounds();
+    const bounds = new maplibregl.LngLatBounds()
     validCallouts.value.forEach((c) => {
-      bounds.extend([c.lng, c.lat]);
-    });
+      bounds.extend([c.lng, c.lat])
+    })
 
     if (!bounds.isEmpty()) {
-      mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 8 });
+      mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 8 })
     }
   }
-};
+}
 
 watch(() => mapOne.isLoaded, (isLoaded) => {
   if (isLoaded) {
-    mapOne.map.resize();
-    updateBounds();
+    mapOne.map.resize()
+    updateBounds()
   }
-});
+})
 
 watch(() => validCallouts.value, () => {
-  updateBounds();
-}, { deep: true, immediate: true });
+  updateBounds()
+}, { deep: true, immediate: true })
 </script>
 
 <style lang="scss">

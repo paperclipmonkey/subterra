@@ -35,60 +35,60 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import { mande } from 'mande';
-import MilkdownEditor from '@/components/MilkdownEditor.vue';
+import { ref, watch } from 'vue'
+import { mande } from 'mande'
+import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
 const props = defineProps({
   modelValue: Boolean,
-});
+})
 
-const emit = defineEmits(['update:modelValue', 'clubCreated']);
+const emit = defineEmits(['update:modelValue', 'clubCreated'])
 
-const dialog = ref(false);
-const clubName = ref('');
-const clubSlug = ref('');
-const clubDescription = ref('');
-const loading = ref(false);
+const dialog = ref(false)
+const clubName = ref('')
+const clubSlug = ref('')
+const clubDescription = ref('')
+const loading = ref(false)
 
 // API instance for clubs
-const clubsApi = mande('/api/admin/clubs');
+const clubsApi = mande('/api/admin/clubs')
 
 watch(() => props.modelValue, (newValue) => {
-  dialog.value = newValue;
+  dialog.value = newValue
   if (newValue) {
     // Reset form when dialog opens
-    clubName.value = '';
-    clubSlug.value = '';
-    clubDescription.value = '';
+    clubName.value = ''
+    clubSlug.value = ''
+    clubDescription.value = ''
   }
-});
+})
 
 function closeDialog() {
-  dialog.value = false;
-  emit('update:modelValue', false);
+  dialog.value = false
+  emit('update:modelValue', false)
 }
 
 async function saveClub() {
   if (!clubName.value || !clubSlug.value) {
-    alert('Club name and slug are required.');
-    return;
+    alert('Club name and slug are required.')
+    return
   }
-  loading.value = true;
+  loading.value = true
   try {
-    const payload = { name: clubName.value, slug: clubSlug.value };
+    const payload = { name: clubName.value, slug: clubSlug.value }
     if (clubDescription.value) {
-      payload.description = clubDescription.value;
+      payload.description = clubDescription.value
     }
-    const response = await clubsApi.post(payload);
-    emit('clubCreated', response);
-    closeDialog();
+    const response = await clubsApi.post(payload)
+    emit('clubCreated', response)
+    closeDialog()
   } catch (error) {
-    console.error('Error creating club:', error);
+    console.error('Error creating club:', error)
     // Handle error display to the user, e.g., using a snackbar
-    alert('Failed to create club. Please try again.');
+    alert('Failed to create club. Please try again.')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>

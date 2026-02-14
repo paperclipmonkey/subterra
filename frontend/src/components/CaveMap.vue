@@ -58,10 +58,10 @@ import {
     MglPopup,
     useMap,
     MglGeolocateControl,
-} from '@indoorequal/vue-maplibre-gl';
+} from '@indoorequal/vue-maplibre-gl'
 
-import maplibregl from 'maplibre-gl';
-import { onMounted, watch, computed } from 'vue';
+import maplibregl from 'maplibre-gl'
+import { onMounted, watch, computed } from 'vue'
 
 const props = defineProps({
     caves: {
@@ -70,12 +70,12 @@ const props = defineProps({
     }
 })
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge';
-const zoom = 5;
+const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const zoom = 5
 // Default center
 const lnglat = [-2, 53]
 
-const mapOne = useMap();
+const mapOne = useMap()
 
 watch(() => mapOne.isLoaded, (isLoaded) => {
     mapOne.map.resize()
@@ -84,21 +84,21 @@ watch(() => mapOne.isLoaded, (isLoaded) => {
         () => props.caves,
         (caves) => {
             if (caves.length > 0 && mapOne.isLoaded) {
-                const bounds = new maplibregl.LngLatBounds();
-                let hasPoints = false;
+                const bounds = new maplibregl.LngLatBounds()
+                let hasPoints = false
                 caves.forEach((cave) => {
                     if (cave.location_lat && cave.location_lng) {
-                        bounds.extend([cave.location_lng, cave.location_lat]);
-                        hasPoints = true;
+                        bounds.extend([cave.location_lng, cave.location_lat])
+                        hasPoints = true
                     }
-                });
+                })
                 if (hasPoints) {
-                    mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+                    mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 15 })
                 }
             }
         },
         { immediate: true }
-    );
+    )
 })
 </script>
 

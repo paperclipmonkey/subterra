@@ -51,7 +51,7 @@ describe('Callout Wizard', () => {
                 query: vi.fn(() => Promise.resolve({ state: 'granted' }))
             },
             writable: true
-        });
+        })
 
         Object.defineProperty(global.navigator, 'geolocation', {
             value: {
@@ -61,7 +61,7 @@ describe('Callout Wizard', () => {
                 }))
             },
             writable: true
-        });
+        })
 
         const wrapper = mount(CalloutIndex, {
             global: {

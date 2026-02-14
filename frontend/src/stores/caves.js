@@ -31,11 +31,11 @@ export const useCaveStore = defineStore('caves', {
     },
     applyFilters(tags, search, catchmentId = null) {
       // Save filters for future use
-      this.savedFilter = tags;
-      this.savedSearch = search;
-      this.savedCatchmentId = catchmentId;
+      this.savedFilter = tags
+      this.savedSearch = search
+      this.savedCatchmentId = catchmentId
 
-      let filtered = this.allCaves;
+      let filtered = this.allCaves
 
       // Apply tags filter if any tags are provided
       if (tags && tags.length > 0) {
@@ -43,35 +43,35 @@ export const useCaveStore = defineStore('caves', {
           return tags.every(tag =>
             cave.tags.some(caveTag => caveTag.tag === tag) ||
             cave.system.tags.some(caveTag => caveTag.tag === tag)
-          );
-        });
+          )
+        })
       }
 
       // Apply catchment filter if provided
       if (catchmentId) {
         filtered = filtered.filter(cave => {
-          return cave.system && Number(cave.system.catchment_id) === Number(catchmentId);
-        });
+          return cave.system && Number(cave.system.catchment_id) === Number(catchmentId)
+        })
       }
 
       // Apply search filter if a search term is provided
       if (search) {
-        const searchLower = search.toLowerCase();
+        const searchLower = search.toLowerCase()
         filtered = filtered.filter(cave => {
           return Object.values(cave).some(value => {
             if (typeof value === 'string') {
-              return value.toLowerCase().includes(searchLower);
+              return value.toLowerCase().includes(searchLower)
             }
             if (typeof value === 'object' && value !== null) {
               return Object.values(value).some(nestedValue =>
                 typeof nestedValue === 'string' && nestedValue.toLowerCase().includes(searchLower)
-              );
+              )
             }
-            return false;
-          });
-        });
+            return false
+          })
+        })
       }
-      this.caves = filtered;
+      this.caves = filtered
     }
   },
 })

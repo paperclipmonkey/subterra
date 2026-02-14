@@ -226,11 +226,11 @@
 <script setup>
 import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
-import AddParticipantManual from './AddParticipantManual.vue';
-import MilkdownEditor from './MilkdownEditor.vue';
+import AddParticipantManual from './AddParticipantManual.vue'
+import MilkdownEditor from './MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useRouter, useRoute } from 'vue-router'
-import { useNotificationStore } from '@/stores/notifications';
+import { useNotificationStore } from '@/stores/notifications'
 
 const router = useRouter()
 const route = useRoute()
@@ -275,7 +275,7 @@ let searchTimeout = null
 
 const onUserSearch = (val) => {
   if (searchTimeout) clearTimeout(searchTimeout)
-  if (val === null) return;
+  if (val === null) return
 
   isSearching.value = true
   searchTimeout = setTimeout(async () => {
@@ -319,21 +319,21 @@ const visibilityOptions = [
 ]
 
 const isClosed = computed(() => {
-  if (!trip.entrance_cave_id) return false;
-  const cave = caves.value.find(c => c.id === trip.entrance_cave_id);
+  if (!trip.entrance_cave_id) return false
+  const cave = caves.value.find(c => c.id === trip.entrance_cave_id)
   // Check direct tags or system tags if applicable
-  const hasClosedTag = (entity) => entity?.tags?.some(t => t.tag === 'Closed');
+  const hasClosedTag = (entity) => entity?.tags?.some(t => t.tag === 'Closed')
 
-  if (hasClosedTag(cave)) return true;
-  if (cave?.system && hasClosedTag(cave.system)) return true;
+  if (hasClosedTag(cave)) return true
+  if (cave?.system && hasClosedTag(cave.system)) return true
 
-  return false;
+  return false
 })
 
 watch(isClosed, (newVal) => {
   if (newVal && trip.visibility === 'public') {
     // Default to private if currently public
-    trip.visibility = 'private';
+    trip.visibility = 'private'
   }
 })
 
@@ -343,10 +343,10 @@ const currentVisibilityOptions = computed(() => {
       if (opt.value === 'public') {
         return { ...opt, disabled: true, description: 'Not available for closed caves' }
       }
-      return opt;
+      return opt
     })
   }
-  return visibilityOptions;
+  return visibilityOptions
 })
 
 const rules = {
@@ -404,8 +404,8 @@ onMounted(async () => {
     // users.value = (await response.json()).data
 
     // Add self to users list so it displays correctly
-    const me = userData.data;
-    users.value = [me];
+    const me = userData.data
+    users.value = [me]
 
     if (!trip.participants.length) {
       trip.participants.push(me.id)
@@ -435,13 +435,13 @@ onMounted(async () => {
 
     if (route.query.callout_id) {
       try {
-        const res = await fetch(`/api/callouts/${route.query.callout_id}`);
-        const calloutData = (await res.json()).data;
+        const res = await fetch(`/api/callouts/${route.query.callout_id}`)
+        const calloutData = (await res.json()).data
         if (calloutData) {
           // Pre-fill plan/description
-          trip.description = `**Originally a Callout:**\n\n${calloutData.trip_plan}`;
+          trip.description = `**Originally a Callout:**\n\n${calloutData.trip_plan}`
           if (calloutData.trip_plan) {
-            markdownOutput.value = trip.description;
+            markdownOutput.value = trip.description
           }
 
           // Pre-fill participants
@@ -450,37 +450,37 @@ onMounted(async () => {
             // Fetch full user data for callout participants so autocomplete can display names
             const userIdsToFetch = calloutData.participants
               .filter(p => p.user_id && !users.value.some(u => u.id === p.user_id))
-              .map(p => p.user_id);
+              .map(p => p.user_id)
             if (userIdsToFetch.length > 0) {
               try {
-                const userResponse = await fetch(`/api/users?ids=${userIdsToFetch.join(',')}`);
-                const fetchedUsers = (await userResponse.json()).data;
+                const userResponse = await fetch(`/api/users?ids=${userIdsToFetch.join(',')}`)
+                const fetchedUsers = (await userResponse.json()).data
                 fetchedUsers.forEach(u => {
                   if (!users.value.some(existing => existing.id === u.id)) {
-                    users.value.push(u);
+                    users.value.push(u)
                   }
-                });
+                })
               } catch (e) {
-                console.error('Error fetching callout participant details', e);
+                console.error('Error fetching callout participant details', e)
               }
             }
             calloutData.participants.forEach(p => {
               if (p.user_id) {
                 // Add existing user ID if not already there
                 if (!trip.participants.includes(p.user_id)) {
-                  trip.participants.push(p.user_id);
+                  trip.participants.push(p.user_id)
                 }
               } else {
                 // If it's a manual participant (no user_id), we might need to add them manually to the trip?
                 // For now, simpler to just handle registered users or log it
-                console.log('Manual participant from callout, consider adding to description:', p.name);
-                trip.description += `\n- Guest: ${p.name}`;
+                console.log('Manual participant from callout, consider adding to description:', p.name)
+                trip.description += `\n- Guest: ${p.name}`
               }
-            });
+            })
           }
         }
       } catch (e) {
-        console.error("Failed to load callout data", e);
+        console.error("Failed to load callout data", e)
       }
     }
 
@@ -563,27 +563,27 @@ const addParticipant = (participant) => {
     .then(response => {
       if (!response.ok) {
         return response.json().then(data => {
-          throw new Error(data.message || 'Failed to add participant');
-        });
+          throw new Error(data.message || 'Failed to add participant')
+        })
       }
-      return response.json();
+      return response.json()
     })
     .then(data => {
       // Use the full user object returned from the API
-      const newUser = data.data;
-      users.value.push(newUser); // So it can be referenced with all fields
-      trip.participants.push(newUser.id);
-      console.log('Participant added successfully:', newUser);
-      showAddParticipant.value = false;
-      notificationStore.showSuccess('Participant added successfully');
+      const newUser = data.data
+      users.value.push(newUser) // So it can be referenced with all fields
+      trip.participants.push(newUser.id)
+      console.log('Participant added successfully:', newUser)
+      showAddParticipant.value = false
+      notificationStore.showSuccess('Participant added successfully')
     })
     .catch(error => {
-      console.error('Error adding participant:', error);
-      addParticipantError.value = error.message;
+      console.error('Error adding participant:', error)
+      addParticipantError.value = error.message
     })
     .finally(() => {
       isAddingParticipant.value = false
-    });
+    })
 }
 
 const cave_system_id = computed(() => {
@@ -658,15 +658,15 @@ const submitForm = async () => {
 
     // Process pending media
     const mediaPayload = await Promise.all(pendingMedia.value.map(async (item) => {
-      const base64Data = await convertFileToBase64(item.file);
+      const base64Data = await convertFileToBase64(item.file)
       return {
         data: base64Data.data, // convertFileToBase64 returns { data, filename }
         filename: base64Data.filename,
         title: item.title,
         copyright: item.copyright,
         photographer: item.photographer
-      };
-    }));
+      }
+    }))
 
     // Prepare payload, separating existing media IDs if needed by the backend
     const payload = {
@@ -674,7 +674,7 @@ const submitForm = async () => {
       media: mediaPayload,
       // If your backend needs existing media IDs separately, adjust here
       // existing_media_ids: trip.existing_media?.map(m => m.id) || []
-    };
+    }
     // Remove properties not expected by the backend if necessary
     // delete payload.existing_media;
 
@@ -693,15 +693,15 @@ const submitForm = async () => {
 
 const handleApiError = async (response) => {
   if (response.status === 422) {
-    const errorData = await response.json();
-    validationErrors.value = errorData.errors;
-    console.error('Validation failed:', errorData.errors);
+    const errorData = await response.json()
+    validationErrors.value = errorData.errors
+    console.error('Validation failed:', errorData.errors)
     notificationStore.showError('Please fix the validation errors and try again.')
   } else if (response.status >= 500) {
-    console.error('Server error:', response.statusText);
+    console.error('Server error:', response.statusText)
     notificationStore.showError('A server error occurred. Please try again later.')
   } else {
-    console.error('Failed operation:', response.statusText);
+    console.error('Failed operation:', response.statusText)
     notificationStore.showError('Failed to save trip. Please check your connection and try again.')
   }
 }
@@ -718,9 +718,9 @@ const updateTrip = async (tripPayload) => {
   if (response.ok) {
     validationErrors.value = {} // Clear errors on success
     notificationStore.showSuccess('Trip updated successfully! 🎉')
-    router.push('/trips/' + tripPayload.id);
+    router.push('/trips/' + tripPayload.id)
   } else {
-    await handleApiError(response);
+    await handleApiError(response)
   }
 }
 
@@ -735,11 +735,11 @@ const saveTrip = async (tripPayload) => {
   })
   if (response.ok) {
     validationErrors.value = {} // Clear errors on success
-    const savedTrip = (await response.json()).data;
+    const savedTrip = (await response.json()).data
     notificationStore.showSuccess('Trip saved successfully! 🚀')
-    router.push('/trips/' + savedTrip.id);
+    router.push('/trips/' + savedTrip.id)
   } else {
-    await handleApiError(response);
+    await handleApiError(response)
   }
 }
 

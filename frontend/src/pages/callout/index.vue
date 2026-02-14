@@ -102,10 +102,10 @@
 </template>
 
 <script>
-import axios from 'axios';
-import moment from 'moment';
-import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue';
-import { useAppStore } from '@/stores/app';
+import axios from 'axios'
+import moment from 'moment'
+import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
+import { useAppStore } from '@/stores/app'
 
 export default {
   name: 'CalloutLanding',
@@ -113,8 +113,8 @@ export default {
     ActiveCalloutMap
   },
   setup() {
-    const appStore = useAppStore();
-    return { appStore };
+    const appStore = useAppStore()
+    return { appStore }
   },
   data() {
     return {
@@ -125,8 +125,8 @@ export default {
   },
   computed: {
     dutyOfficerColor() {
-      if (this.onCallOfficer) return 'success-lighten-5';
-      return 'red-lighten-5';
+      if (this.onCallOfficer) return 'success-lighten-5'
+      return 'red-lighten-5'
     }
   },
   async mounted() {
@@ -134,44 +134,44 @@ export default {
       this.fetchActiveCallouts(),
       this.fetchDutyOfficer(),
       this.appStore.getUser() // Ensure we have the latest user state with active_callout
-    ]);
-    this.loading = false;
+    ])
+    this.loading = false
   },
   methods: {
     async fetchActiveCallouts() {
       try {
-        const res = await axios.get('/api/callouts/active');
-        this.activeCallouts = res.data.data;
+        const res = await axios.get('/api/callouts/active')
+        this.activeCallouts = res.data.data
       } catch (e) {
-        console.error("Failed to fetch open callouts", e);
+        console.error("Failed to fetch open callouts", e)
       }
     },
     async fetchDutyOfficer() {
       try {
-        const res = await axios.get('/api/duty-officers/current');
-        const data = res.data.data;
+        const res = await axios.get('/api/duty-officers/current')
+        const data = res.data.data
 
         if (data.is_covered) {
-          this.onCallOfficer = data;
+          this.onCallOfficer = data
         } else {
-          this.onCallOfficer = null;
+          this.onCallOfficer = null
         }
       } catch (e) {
-        console.error("Failed to fetch duty officer", e);
-        this.onCallOfficer = null;
+        console.error("Failed to fetch duty officer", e)
+        this.onCallOfficer = null
       }
     },
     formatDate(d) {
-      if (!d) return '';
-      return moment(d).format('HH:mm');
+      if (!d) return ''
+      return moment(d).format('HH:mm')
     },
     formatFullDate(d) {
-      if (!d) return '';
+      if (!d) return ''
       // If it's today, show time, else show date and time
       if (moment(d).isSame(moment(), 'day')) {
-        return 'today at ' + moment(d).format('HH:mm');
+        return 'today at ' + moment(d).format('HH:mm')
       }
-      return moment(d).format('MMM Do, HH:mm');
+      return moment(d).format('MMM Do, HH:mm')
     }
   }
 }

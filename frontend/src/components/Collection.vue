@@ -122,26 +122,26 @@ const collection = computed(() => collectionStore.currentCollection)
 const loading = computed(() => collectionStore.loading)
 const error = computed(() => collectionStore.error)
 
-const pageTitle = computed(() => collection.value?.name);
-usePageTitle(pageTitle);
+const pageTitle = computed(() => collection.value?.name)
+usePageTitle(pageTitle)
 
 const tickedCount = computed(() => {
-  if (!collection.value || !collection.value.caves) return 0;
-  return collection.value.caves.filter(c => c.is_ticked).length;
+  if (!collection.value || !collection.value.caves) return 0
+  return collection.value.caves.filter(c => c.is_ticked).length
 })
 
 const totalCount = computed(() => {
-  if (!collection.value || !collection.value.caves) return 0;
-  return collection.value.caves.length;
+  if (!collection.value || !collection.value.caves) return 0
+  return collection.value.caves.length
 })
 
 const progress = computed(() => {
-  if (totalCount.value === 0) return 0;
-  return Math.round((tickedCount.value / totalCount.value) * 100);
+  if (totalCount.value === 0) return 0
+  return Math.round((tickedCount.value / totalCount.value) * 100)
 })
 
 const canEdit = computed(() => {
-  if (!collection.value) return false;
+  if (!collection.value) return false
   return userStore.user.is_admin || userStore.user.id === collection.value.user_id
 })
 

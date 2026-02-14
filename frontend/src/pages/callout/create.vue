@@ -298,11 +298,11 @@
 </template>
 
 <script>
-import moment from 'moment';
-import { useAppStore } from '@/stores/app';
-import { api } from '@/plugins/api';
-import { useFormErrors } from '@/composables/useFormErrors';
-import CalloutTimePicker from '@/components/CalloutTimePicker.vue';
+import moment from 'moment'
+import { useAppStore } from '@/stores/app'
+import { api } from '@/plugins/api'
+import { useFormErrors } from '@/composables/useFormErrors'
+import CalloutTimePicker from '@/components/CalloutTimePicker.vue'
 
 export default {
   name: 'CalloutView',
@@ -312,28 +312,28 @@ export default {
   beforeRouteLeave(to, from, next) {
     // Allow navigation if user clicked "Leave Anyway"
     if (this.allowLeave) {
-      this.allowLeave = false; // Reset for future navigations
-      return next();
+      this.allowLeave = false // Reset for future navigations
+      return next()
     }
 
     // Allow navigation if they already completed the callout or have an active one
     if (this.activeCallout || !this.form.participants.length) {
-      return next();
+      return next()
     }
 
     // If the form is incomplete, show a warning dialog
-    const isFormComplete = this.step === 4 && this.isFormValid;
+    const isFormComplete = this.step === 4 && this.isFormValid
     if (!isFormComplete) {
-      this.showLeaveDialog = true;
-      this.pendingRoute = to; // Store where they want to go
-      next(false); // Cancel navigation
+      this.showLeaveDialog = true
+      this.pendingRoute = to // Store where they want to go
+      next(false) // Cancel navigation
     } else {
-      next(); // Allow navigation
+      next() // Allow navigation
     }
   },
   setup() {
-    const { setErrors, clearErrors, errorMessages, generalError } = useFormErrors();
-    return { setErrors, clearErrors, errorMessages, generalError };
+    const { setErrors, clearErrors, errorMessages, generalError } = useFormErrors()
+    return { setErrors, clearErrors, errorMessages, generalError }
   },
   data() {
     return {
@@ -368,87 +368,87 @@ export default {
       showLeaveDialog: false,
       pendingRoute: null, // Store the destination route instead of callback
       allowLeave: false,
-    };
+    }
   },
   computed: {
     availableUsers() {
-      const addedIds = this.form.participants.map(p => p.user_id).filter(id => id);
-      return this.users.filter(u => !addedIds.includes(u.id));
+      const addedIds = this.form.participants.map(p => p.user_id).filter(id => id)
+      return this.users.filter(u => !addedIds.includes(u.id))
     },
     selectedCave() {
-      return this.caves.find(c => c.id === this.form.cave_id);
+      return this.caves.find(c => c.id === this.form.cave_id)
     },
     systemEntrances() {
-      if (!this.selectedCave) return [];
-      if (!this.selectedCave.system) return [];
-      return this.caves.filter(c => c.system && c.system.id === this.selectedCave.system.id);
+      if (!this.selectedCave) return []
+      if (!this.selectedCave.system) return []
+      return this.caves.filter(c => c.system && c.system.id === this.selectedCave.system.id)
     },
     systemEntrancesCount() {
-      return this.systemEntrances.length;
+      return this.systemEntrances.length
     },
     phoneError() {
       // Only the current user's phone is required and must be valid
-      const currentUserParticipant = this.form.participants.find(p => p.user_id === this.currentUser?.id);
+      const currentUserParticipant = this.form.participants.find(p => p.user_id === this.currentUser?.id)
       if (!currentUserParticipant || !currentUserParticipant.phone || currentUserParticipant.phone.trim().length === 0) {
-        return true;
+        return true
       }
       // Validate format
-      const phone = currentUserParticipant.phone.replace(/\s+/g, '');
+      const phone = currentUserParticipant.phone.replace(/\s+/g, '')
       if (phone.startsWith('07')) {
-        return phone.length !== 11;
+        return phone.length !== 11
       }
       if (phone.startsWith('+44')) {
-        return phone.length !== 13;
+        return phone.length !== 13
       }
-      return true; // Invalid format
+      return true // Invalid format
     },
     canProceed() {
-      if (this.officerError) return false;
+      if (this.officerError) return false
       // Step 1: Cave, Car Details AND Location are now required
       if (this.step === 1) {
-        return !!(this.form.cave_id && this.form.car_registration && this.form.car_parking && this.form.location_data);
+        return !!(this.form.cave_id && this.form.car_registration && this.form.car_parking && this.form.location_data)
       }
-      if (this.step === 2) return !this.phoneError;
-      if (this.step === 3) return this.form.trip_plan.length > 0;
-      return true;
+      if (this.step === 2) return !this.phoneError
+      if (this.step === 3) return this.form.trip_plan.length > 0
+      return true
     },
     isFormValid() {
       return this.form.callout_time &&
-        !this.phoneError;
+        !this.phoneError
     },
     calloutDurationHint() {
-      if (!this.form.callout_time) return '';
-      const end = moment(this.form.callout_time);
-      const now = moment();
+      if (!this.form.callout_time) return ''
+      const end = moment(this.form.callout_time)
+      const now = moment()
 
-      if (!end.isValid()) return '';
+      if (!end.isValid()) return ''
 
       if (end.isBefore(now)) {
-        return 'This time is in the past!';
+        return 'This time is in the past!'
       }
 
-      const duration = moment.duration(end.diff(now));
-      const hours = Math.floor(duration.asHours());
-      const minutes = duration.minutes();
+      const duration = moment.duration(end.diff(now))
+      const hours = Math.floor(duration.asHours())
+      const minutes = duration.minutes()
 
-      let text = `That is ${hours} hours`;
-      if (minutes > 0) text += ` and ${minutes} minutes`;
-      text += ' from now.';
+      let text = `That is ${hours} hours`
+      if (minutes > 0) text += ` and ${minutes} minutes`
+      text += ' from now.'
 
-      return text;
+      return text
     },
     isApproved() {
       // Check store first then local user object
-      const appStore = useAppStore();
-      if (appStore.canSuggest) return true;
-      if (this.currentUser && this.currentUser.clubs && this.currentUser.clubs.some(c => c.status === 'approved')) return true;
-      return false;
+      const appStore = useAppStore()
+      if (appStore.canSuggest) return true
+      if (this.currentUser && this.currentUser.clubs && this.currentUser.clubs.some(c => c.status === 'approved')) return true
+      return false
     }
   },
   watch: {
     'form.cave_id': function () {
-      this.isThroughTrip = false;
-      this.form.exit_cave_id = null;
+      this.isThroughTrip = false
+      this.form.exit_cave_id = null
     }
   },
   async mounted() {
@@ -456,54 +456,54 @@ export default {
       this.fetchCaves(),
       this.fetchUsers(),
       this.fetchDutyOfficer()
-    ]);
+    ])
 
     if (this.currentUser && this.currentUser.active_callout) {
-      this.$router.push('/callout/active');
-      return;
+      this.$router.push('/callout/active')
+      return
     }
 
-    this.prefillForm();
-    this.loading = false;
+    this.prefillForm()
+    this.loading = false
 
     // Auto-check location permission
-    this.checkLocationPermission();
+    this.checkLocationPermission()
   },
   methods: {
     formatDate(date) {
-      if (!date) return null;
-      return moment(date).format('MMMM Do, h:mm a');
+      if (!date) return null
+      return moment(date).format('MMMM Do, h:mm a')
     },
     validateUKPhone(value) {
-      if (!value) return true;
-      const clean = value.replace(/\s+/g, '');
-      if (clean.length === 0) return true;
+      if (!value) return true
+      const clean = value.replace(/\s+/g, '')
+      if (clean.length === 0) return true
 
       if (clean.startsWith('07')) {
-        return clean.length === 11 || 'Mobile number must be 11 digits';
+        return clean.length === 11 || 'Mobile number must be 11 digits'
       }
       if (clean.startsWith('+44')) {
-        return clean.length === 13 || 'Number must be 13 chars (+44...)';
+        return clean.length === 13 || 'Number must be 13 chars (+44...)'
       }
-      return 'Must start with 07 or +44';
+      return 'Must start with 07 or +44'
     },
     async checkLocationPermission() {
-      if (!navigator.permissions || !navigator.permissions.query) return;
+      if (!navigator.permissions || !navigator.permissions.query) return
       try {
-        const result = await navigator.permissions.query({ name: 'geolocation' });
+        const result = await navigator.permissions.query({ name: 'geolocation' })
         if (result.state === 'granted') {
-          this.getLocation();
+          this.getLocation()
         }
       } catch (e) {
-        console.log("Permissions API not supported or error", e);
+        console.log("Permissions API not supported or error", e)
       }
     },
     getLocation() {
       if (!navigator.geolocation) {
-        this.locationStatus = 'error';
-        return;
+        this.locationStatus = 'error'
+        return
       }
-      this.locationStatus = 'loading';
+      this.locationStatus = 'loading'
       navigator.geolocation.getCurrentPosition(
         (position) => {
           this.form.location_data = {
@@ -511,64 +511,64 @@ export default {
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
             timestamp: position.timestamp
-          };
-          this.locationStatus = 'success';
+          }
+          this.locationStatus = 'success'
         },
         (error) => {
-          console.error("Geolocation error", error);
-          this.locationStatus = 'error';
+          console.error("Geolocation error", error)
+          this.locationStatus = 'error'
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
+      )
     },
     getCaveName(id) {
-      const c = this.caves.find(cave => cave.id === id);
-      return c ? c.name : 'Unknown';
+      const c = this.caves.find(cave => cave.id === id)
+      return c ? c.name : 'Unknown'
     },
     async fetchCaves() {
       try {
-        const response = await api.get('/api/caves');
-        this.caves = response.data.data;
+        const response = await api.get('/api/caves')
+        this.caves = response.data.data
       } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     },
     async fetchUsers() {
       try {
-        const me = await api.get('/api/users/me');
-        this.currentUser = me.data.data;
+        const me = await api.get('/api/users/me')
+        this.currentUser = me.data.data
         // Add me to the users list instantly
-        this.users = [this.currentUser];
+        this.users = [this.currentUser]
 
       } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     },
     async fetchDutyOfficer() {
       try {
-        const response = await api.get('/api/duty-officers/current');
-        const data = response.data.data;
+        const response = await api.get('/api/duty-officers/current')
+        const data = response.data.data
 
         if (data.is_covered) {
-          this.onCallOfficer = data;
-          this.officerError = false;
+          this.onCallOfficer = data
+          this.officerError = false
         } else {
-          this.onCallOfficer = null;
-          this.officerError = true;
+          this.onCallOfficer = null
+          this.officerError = true
         }
       } catch (e) {
-        console.error("Failed to fetch duty officer", e);
-        this.officerError = true;
-        this.onCallOfficer = null;
+        console.error("Failed to fetch duty officer", e)
+        this.officerError = true
+        this.onCallOfficer = null
       }
     },
 
     generateId() {
-      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+      return Date.now().toString(36) + Math.random().toString(36).substr(2)
     },
     prefillForm() {
-      const now = moment();
-      this.form.callout_time = now.clone().add(5, 'hours').format('YYYY-MM-DDTHH:mm');
+      const now = moment()
+      this.form.callout_time = now.clone().add(5, 'hours').format('YYYY-MM-DDTHH:mm')
 
       if (this.currentUser) {
         this.form.participants.push({
@@ -578,11 +578,11 @@ export default {
           phone: this.currentUser.phone || '',
           email: this.currentUser.email,
           locked: !!this.currentUser.phone
-        });
+        })
       }
     },
     addSubterraUser(user) {
-      if (!user) return;
+      if (!user) return
       this.form.participants.push({
         local_id: this.generateId(),
         user_id: user.id,
@@ -590,54 +590,54 @@ export default {
         phone: user.phone || '',
         email: user.email,
         locked: !!user.phone
-      });
-      this.userSelect = null;
+      })
+      this.userSelect = null
     },
     addManualParticipant() {
-      this.form.participants.push({ local_id: this.generateId(), name: '', phone: '', user_id: null, locked: false });
+      this.form.participants.push({ local_id: this.generateId(), name: '', phone: '', user_id: null, locked: false })
     },
     removeParticipant(index) {
-      this.form.participants.splice(index, 1);
+      this.form.participants.splice(index, 1)
     },
     updatePhone(index, value) {
-      this.form.participants[index].phone = value;
+      this.form.participants[index].phone = value
     },
     async submitCallout() {
-      if (this.phoneError) return;
+      if (this.phoneError) return
 
-      this.processing = true;
-      this.clearErrors();
+      this.processing = true
+      this.clearErrors()
       try {
-        const response = await api.post('/api/callouts', this.form);
-        this.activeCallout = response.data.callout;
+        const response = await api.post('/api/callouts', this.form)
+        this.activeCallout = response.data.callout
 
         // Refresh user state to acknowledge the new open callout
-        const appStore = useAppStore();
-        await appStore.getUser();
+        const appStore = useAppStore()
+        await appStore.getUser()
 
-        this.$toast.success('Callout activated. Stay safe!');
+        this.$toast.success('Callout activated. Stay safe!')
 
         // Redirect to the open callout dashboard
-        this.$router.push('/callout/active');
+        this.$router.push('/callout/active')
       } catch (e) {
-        console.error('Callout Error:', e);
-        this.setErrors(e);
+        console.error('Callout Error:', e)
+        this.setErrors(e)
       } finally {
-        this.processing = false;
+        this.processing = false
       }
     },
     async cancelCallout() {
-      if (!confirm('Are you definitely out and safe?')) return;
+      if (!confirm('Are you definitely out and safe?')) return
 
-      this.processing = true;
+      this.processing = true
       try {
-        await api.post(`/api/callouts/${this.activeCallout.id}/cancel`);
-        this.showSuccessDialog = true;
-        this.$toast.success('Callout cancelled.');
+        await api.post(`/api/callouts/${this.activeCallout.id}/cancel`)
+        this.showSuccessDialog = true
+        this.$toast.success('Callout cancelled.')
       } catch (e) {
         // Global interceptor handles this
       } finally {
-        this.processing = false;
+        this.processing = false
       }
     },
     async convertToTrip() {
@@ -648,44 +648,44 @@ export default {
           exit_cave_id: this.activeCallout.exit_cave_id,
           date: moment().format('YYYY-MM-DD'), // Default to today
         }
-      });
+      })
     },
     onUserSearch(val) {
-      if (this.searchTimeout) clearTimeout(this.searchTimeout);
-      if (val === null) return;
+      if (this.searchTimeout) clearTimeout(this.searchTimeout)
+      if (val === null) return
 
-      this.isSearching = true;
+      this.isSearching = true
       this.searchTimeout = setTimeout(async () => {
         try {
-          const response = await api.get(`/api/users?search=${encodeURIComponent(val)}`);
-          const matches = response.data.data;
+          const response = await api.get(`/api/users?search=${encodeURIComponent(val)}`)
+          const matches = response.data.data
 
           // Merge matches, avoiding duplicates
-          const existingIds = this.users.map(u => u.id);
+          const existingIds = this.users.map(u => u.id)
           matches.forEach(match => {
             if (!existingIds.includes(match.id)) {
-              this.users.push(match);
+              this.users.push(match)
             }
-          });
+          })
         } catch (e) {
-          console.error("Search failed", e);
+          console.error("Search failed", e)
         } finally {
-          this.isSearching = false;
+          this.isSearching = false
         }
-      }, 300);
+      }, 300)
     },
     confirmLeave() {
-      this.showLeaveDialog = false;
-      this.allowLeave = true;
+      this.showLeaveDialog = false
+      this.allowLeave = true
       // Navigate to the pending route
       if (this.pendingRoute) {
-        const route = this.pendingRoute;
-        this.pendingRoute = null;
-        this.$router.push(route);
+        const route = this.pendingRoute
+        this.pendingRoute = null
+        this.$router.push(route)
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>

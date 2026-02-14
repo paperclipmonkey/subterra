@@ -4,7 +4,7 @@ import { useToast } from "vue-toastification"
 export async function markCaveAsDone({ cave, userId }) {
   const toast = useToast()
 
-  if (!cave || !userId) return false;
+  if (!cave || !userId) return false
   const trip = {
     name: 'Marked as Done',
     entrance_cave_id: cave.id,

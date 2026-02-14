@@ -139,49 +139,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { mande } from 'mande';
-import VueMarkdown from 'vue-markdown-render';
-import { CalendarHeatmap } from "vue3-calendar-heatmap";
-import ClubEditModal from '@/components/ClubEditModal.vue';
-import { useAppStore } from '@/stores/app';
-import moment from 'moment';
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { mande } from 'mande'
+import VueMarkdown from 'vue-markdown-render'
+import { CalendarHeatmap } from "vue3-calendar-heatmap"
+import ClubEditModal from '@/components/ClubEditModal.vue'
+import { useAppStore } from '@/stores/app'
+import moment from 'moment'
 
-const route = useRoute();
-const router = useRouter();
-const club = ref(null);
-const recentTrips = ref([]);
-const members = ref([]);
-const heatmapData = ref([]);
-const error = ref(null);
-const memberDataLoading = ref(true);
-const isApprovedMember = ref(false);
-const endDate = ref(new Date());
+const route = useRoute()
+const router = useRouter()
+const club = ref(null)
+const recentTrips = ref([])
+const members = ref([])
+const heatmapData = ref([])
+const error = ref(null)
+const memberDataLoading = ref(true)
+const isApprovedMember = ref(false)
+const endDate = ref(new Date())
 
 // Modal state
-const showEditClubModal = ref(false);
-const editClubTab = ref('details');
+const showEditClubModal = ref(false)
+const editClubTab = ref('details')
 
 // Pinia user store
-const appStore = useAppStore();
-const user = computed(() => appStore.user);
+const appStore = useAppStore()
+const user = computed(() => appStore.user)
 
 // Determine if user is a club admin for this club (use is_admin property)
 const isClubAdmin = computed(() => {
-  if (!user.value || !club.value || !user.value.clubs) return false;
-  const clubEntry = (user.value.clubs || []).find(c => c.slug === club.value.slug);
-  return (clubEntry && clubEntry.is_admin) || user.value.is_admin;
-});
+  if (!user.value || !club.value || !user.value.clubs) return false
+  const clubEntry = (user.value.clubs || []).find(c => c.slug === club.value.slug)
+  return (clubEntry && clubEntry.is_admin) || user.value.is_admin
+})
 
 function openEditClubModal(tab = 'details') {
-  editClubTab.value = tab;
-  showEditClubModal.value = true;
+  editClubTab.value = tab
+  showEditClubModal.value = true
 }
 
 function onClubEditSaved() {
   // Refetch club data after save
-  fetchClubData();
+  fetchClubData()
 }
 
 function formatTripDate(date) {
@@ -190,54 +190,54 @@ function formatTripDate(date) {
 }
 
 async function fetchClubData() {
-  const clubSlug = route.params.slug;
-  error.value = null;
-  memberDataLoading.value = true;
-  isApprovedMember.value = false;
-  recentTrips.value = [];
-  members.value = [];
-  heatmapData.value = [];
+  const clubSlug = route.params.slug
+  error.value = null
+  memberDataLoading.value = true
+  isApprovedMember.value = false
+  recentTrips.value = []
+  members.value = []
+  heatmapData.value = []
   try {
-    const clubApi = mande(`/api/clubs/${clubSlug}`);
-    const clubResponse = await clubApi.get();
-    club.value = clubResponse.data || clubResponse;
+    const clubApi = mande(`/api/clubs/${clubSlug}`)
+    const clubResponse = await clubApi.get()
+    club.value = clubResponse.data || clubResponse
     // Attempt to load member-specific data ONLY if club loaded
     try {
-      const dataApi = mande(`/api/clubs/${clubSlug}`);
+      const dataApi = mande(`/api/clubs/${clubSlug}`)
       const [tripsResponse, membersResponse, heatmapResponse] = await Promise.all([
         dataApi.get('recent-trips'),
         dataApi.get('members'),
         dataApi.get('activity-heatmap')
-      ]);
-      recentTrips.value = tripsResponse.data || tripsResponse;
-      members.value = membersResponse.data || membersResponse;
-      heatmapData.value = heatmapResponse || [];
-      isApprovedMember.value = true;
+      ])
+      recentTrips.value = tripsResponse.data || tripsResponse
+      members.value = membersResponse.data || membersResponse
+      heatmapData.value = heatmapResponse || []
+      isApprovedMember.value = true
     } catch (memberDataError) {
-      isApprovedMember.value = false;
+      isApprovedMember.value = false
     } finally {
-      memberDataLoading.value = false;
+      memberDataLoading.value = false
     }
   } catch (e) {
-    club.value = null;
+    club.value = null
     if (e.response && e.response.status === 404) {
-      error.value = "Club not found. It may have been deleted or you may have the wrong link.";
+      error.value = "Club not found. It may have been deleted or you may have the wrong link."
     } else {
-      error.value = "Failed to load club. Please try again later.";
+      error.value = "Failed to load club. Please try again later."
     }
-    memberDataLoading.value = false;
+    memberDataLoading.value = false
   }
 }
 
 onMounted(async () => {
-  await appStore.getUser();
-  await fetchClubData();
+  await appStore.getUser()
+  await fetchClubData()
   // Check for ?editClub=1&tab=pending in query
-  const { editClub, tab } = route.query;
+  const { editClub, tab } = route.query
   if (editClub && isClubAdmin.value) {
-    openEditClubModal(tab === 'pending' ? 'pending' : 'details');
+    openEditClubModal(tab === 'pending' ? 'pending' : 'details')
   }
-});
+})
 </script>
 
 <style scoped>

@@ -42,73 +42,73 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { mande } from 'mande';
-import MilkdownEditor from '@/components/MilkdownEditor.vue';
-import { useNotificationStore } from '@/stores/notifications';
+import { ref, onMounted, reactive } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { mande } from 'mande'
+import MilkdownEditor from '@/components/MilkdownEditor.vue'
+import { useNotificationStore } from '@/stores/notifications'
 
-const route = useRoute();
-const router = useRouter();
-const notificationStore = useNotificationStore();
+const route = useRoute()
+const router = useRouter()
+const notificationStore = useNotificationStore()
 
-const pagesApi = mande('/api/admin/pages');
-const isEditing = ref(false);
-const saving = ref(false);
+const pagesApi = mande('/api/admin/pages')
+const isEditing = ref(false)
+const saving = ref(false)
 
 const page = reactive({
   title: '',
   slug: '',
   content: '',
-});
+})
 
 const generateSlug = (val) => {
   if (!isEditing.value && val) {
     page.slug = val.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
+      .replace(/-+/g, '-')
   }
-};
+}
 
 const updateContent = (event) => {
   if (event && event.markdown) {
-    page.content = event.markdown;
+    page.content = event.markdown
   }
 }
 
 const savePage = async () => {
-  saving.value = true;
+  saving.value = true
   try {
     if (isEditing.value) {
-      await pagesApi.put(page.id, page);
-      notificationStore.showSuccess('Page updated successfully');
+      await pagesApi.put(page.id, page)
+      notificationStore.showSuccess('Page updated successfully')
     } else {
-      await pagesApi.post(page);
-      notificationStore.showSuccess('Page created successfully');
+      await pagesApi.post(page)
+      notificationStore.showSuccess('Page created successfully')
     }
-    router.push('/admin/pages');
+    router.push('/admin/pages')
   } catch (error) {
-    console.error(error);
-    notificationStore.showError('Failed to save page');
+    console.error(error)
+    notificationStore.showError('Failed to save page')
   } finally {
-    saving.value = false;
+    saving.value = false
   }
-};
+}
 
 onMounted(async () => {
   if (route.query.id) {
-    isEditing.value = true;
+    isEditing.value = true
     try {
       // Fetch specific page via ID. 
       // Note: The Admin Controller resource usually supports GET /admin/pages/{id}
       // If mande works with `.get(id)`, it appends /id
-      const { data } = await pagesApi.get(route.query.id);
-      Object.assign(page, data);
+      const { data } = await pagesApi.get(route.query.id)
+      Object.assign(page, data)
     } catch (error) {
-      console.error('Error loading page', error);
-      notificationStore.showError('Failed to load page');
+      console.error('Error loading page', error)
+      notificationStore.showError('Failed to load page')
     }
   }
-});
+})
 </script>

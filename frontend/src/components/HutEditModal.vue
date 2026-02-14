@@ -125,20 +125,20 @@ const editedHut = ref({ ...defaultHut })
 const isNew = computed(() => !props.hut)
 
 const canEdit = computed(() => {
-    if (!userStore.user) return false;
-    if (userStore.user.is_admin) return true;
+    if (!userStore.user) return false
+    if (userStore.user.is_admin) return true
 
     // For new huts, allow if user is admin of any club
     if (isNew.value) {
-        return userStore.user.clubs && userStore.user.clubs.some(c => c.is_admin);
+        return userStore.user.clubs && userStore.user.clubs.some(c => c.is_admin)
     }
 
     // For existing huts, allow if user is admin of the owning club
     if (props.hut && props.hut.club_id && userStore.user.clubs) {
-        return userStore.user.clubs.some(c => c.id === props.hut.club_id && c.is_admin);
+        return userStore.user.clubs.some(c => c.id === props.hut.club_id && c.is_admin)
     }
 
-    return false;
+    return false
 })
 
 onMounted(async () => {
@@ -174,7 +174,7 @@ watch(() => props.hut, (newVal) => {
 
 const updateDescription = (event) => {
     if (event && event.markdown) {
-        editedHut.value.description = event.markdown;
+        editedHut.value.description = event.markdown
     }
 }
 
@@ -225,20 +225,20 @@ const deleting = ref(false)
 
 const deleteHut = async () => {
     if (!confirm('Are you certain you want to delete this hut? This action cannot be undone.')) {
-        return;
+        return
     }
 
-    deleting.value = true;
+    deleting.value = true
     try {
-        await hutStore.deleteHut(editedHut.value.id);
-        dialog.value = false;
-        await hutStore.fetchHuts();
+        await hutStore.deleteHut(editedHut.value.id)
+        dialog.value = false
+        await hutStore.fetchHuts()
         router.push('/huts')
     } catch (e) {
-        console.error(e);
-        alert('Failed to delete: ' + e.message);
+        console.error(e)
+        alert('Failed to delete: ' + e.message)
     } finally {
-        deleting.value = false;
+        deleting.value = false
     }
 }
 </script>

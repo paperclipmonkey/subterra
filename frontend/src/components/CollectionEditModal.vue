@@ -36,9 +36,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'
 import CollectionForm from '@/components/CollectionForm.vue'
-import { useToast } from "vue-toastification";
+import { useToast } from "vue-toastification"
 
-const toast = useToast();
+const toast = useToast()
 
 const props = defineProps({
     collection: {
@@ -68,22 +68,22 @@ const isNew = computed(() => !props.collection)
 
 const canEdit = computed(() => {
     // Everyone can suggest edits/creations now
-    if (isNew.value) return true;
-    return true;
+    if (isNew.value) return true
+    return true
 })
 
 const activatorText = computed(() => {
     if (isNew.value) {
-        return userStore.user?.is_admin ? 'New Collection' : 'Suggest New Collection';
+        return userStore.user?.is_admin ? 'New Collection' : 'Suggest New Collection'
     }
-    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Edit Collection' : 'Suggest Edit';
+    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Edit Collection' : 'Suggest Edit'
 })
 
 const saveButtonText = computed(() => {
     if (isNew.value) {
-        return userStore.user?.is_admin ? 'Create Collection' : 'Suggest New Collection';
+        return userStore.user?.is_admin ? 'Create Collection' : 'Suggest New Collection'
     }
-    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Save Changes' : 'Suggest Changes';
+    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Save Changes' : 'Suggest Changes'
 })
 
 const initForm = (newVal) => {
@@ -107,14 +107,14 @@ const save = async () => {
     const { valid } = await form.value.validate()
     if (!valid) return
 
-    saving.value = true;
+    saving.value = true
     try {
         // Prepare payload - CollectionForm handles internal state, we just need to send it
-        const payload = { ...editedCollection.value };
+        const payload = { ...editedCollection.value }
 
         if (payload.photo_data) {
-            payload.photo_path = payload.photo_data;
-            delete payload.photo_data;
+            payload.photo_path = payload.photo_data
+            delete payload.photo_data
         }
 
         // Ensure caves map correctly if needed, though form should produce correct structure
@@ -131,11 +131,11 @@ const save = async () => {
 
         if (userStore.user?.is_admin || (props.collection && userStore.user?.id === props.collection.user_id)) {
             if (isNew.value) {
-                await collectionStore.createCollection(payload);
+                await collectionStore.createCollection(payload)
             } else {
-                await collectionStore.updateCollection(payload);
+                await collectionStore.updateCollection(payload)
             }
-            toast.success(isNew.value ? 'Collection created successfully' : 'Collection updated successfully');
+            toast.success(isNew.value ? 'Collection created successfully' : 'Collection updated successfully')
         } else {
             // Suggest Edit or Create
             const response = await fetch('/api/suggested-edits', {
@@ -150,32 +150,32 @@ const save = async () => {
                     suggested_data: payload,
                     original_data: null
                 }),
-            });
+            })
 
             if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.message || 'Failed to submit suggestion');
+                const data = await response.json()
+                throw new Error(data.message || 'Failed to submit suggestion')
             }
-            toast.success('Suggestion submitted for review');
-            dialog.value = false;
+            toast.success('Suggestion submitted for review')
+            dialog.value = false
         }
     } catch (e) {
-        let errorMessage = 'Failed to save collection';
+        let errorMessage = 'Failed to save collection'
         // Check for backend validation errors
         if (e.response && e.response.data) {
             if (e.response.data.errors) {
                 // Combine the first error of each field for a concise message
-                errorMessage = Object.values(e.response.data.errors).flat()[0];
+                errorMessage = Object.values(e.response.data.errors).flat()[0]
             } else if (e.response.data.message) {
-                errorMessage = e.response.data.message;
+                errorMessage = e.response.data.message
             }
         } else if (e.message) {
-            errorMessage = e.message;
+            errorMessage = e.message
         }
         console.error(e)
-        toast.error(errorMessage);
+        toast.error(errorMessage)
     } finally {
-        saving.value = false;
+        saving.value = false
     }
 }
 </script>
