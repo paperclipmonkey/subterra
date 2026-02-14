@@ -22,16 +22,30 @@
       "type": "string"
     },
     "hero_image": {
-      "type": [
-        "string",
-        "null"
+      "oneOf": [
+        {
+          "$ref": "cave-media.json"
+        },
+        {
+          "type": "null"
+        }
       ]
     },
     "entrance_image": {
-      "type": [
-        "string",
-        "null"
+      "oneOf": [
+        {
+          "$ref": "cave-media.json"
+        },
+        {
+          "type": "null"
+        }
       ]
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "$ref": "cave-media.json"
+      }
     },
     "tags": {
       "type": "array",

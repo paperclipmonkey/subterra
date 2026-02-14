@@ -35,7 +35,8 @@ class CaveUpdateTest extends TestCase
         $this->assertEquals('Updated Name', $cave->name);
         // Verify image was processed (path should contain 'caves/' and end with .webp, assuming service works)
         // If the service works, it saves to storage. We can just check it's not the array and not null.
-        $this->assertStringContainsString('caves/', $cave->hero_image);
-        $this->assertStringEndsWith('.webp', $cave->hero_image);
+        $this->assertNotNull($cave->heroImage);
+        $this->assertStringContainsString('caves/', $cave->heroImage->filename);
+        $this->assertStringEndsWith('.webp', $cave->heroImage->filename);
     }
 }

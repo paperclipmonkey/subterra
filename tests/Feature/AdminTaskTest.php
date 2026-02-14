@@ -29,25 +29,37 @@ class AdminTaskTest extends TestCase
         ]);
 
         // 1. Cave with missing photos (both hero and entrance)
-        Cave::factory()->create(['hero_image' => null, 'entrance_image' => null, 'description' => 'Desc', 'name' => 'No Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        Cave::factory()->create(['description' => 'Desc', 'name' => 'No Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        
         // Cave with hero image but no entrance image - should NOT appear in missing photos
-        Cave::factory()->create(['hero_image' => 'photo.jpg', 'entrance_image' => null, 'description' => 'Desc', 'name' => 'Hero Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        $heroCave = Cave::factory()->create(['description' => 'Desc', 'name' => 'Hero Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        $heroCave->media()->create(['type' => 'hero', 'filename' => 'photo.jpg']);
+        
         // Cave with entrance image but no hero image - should NOT appear in missing photos
-        Cave::factory()->create(['hero_image' => null, 'entrance_image' => 'entrance.jpg', 'description' => 'Desc', 'name' => 'Entrance Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        $entranceCave = Cave::factory()->create(['description' => 'Desc', 'name' => 'Entrance Photo Cave', 'cave_system_id' => $goodSystem->id]);
+        $entranceCave->media()->create(['type' => 'entrance', 'filename' => 'entrance.jpg']);
+        
         // Cave with both photos - should NOT appear in missing photos
-        Cave::factory()->create(['hero_image' => 'photo.jpg', 'entrance_image' => 'entrance.jpg', 'description' => 'Desc', 'name' => 'Both Photos Cave', 'cave_system_id' => $goodSystem->id]);
+        $bothCave = Cave::factory()->create(['description' => 'Desc', 'name' => 'Both Photos Cave', 'cave_system_id' => $goodSystem->id]);
+        $bothCave->media()->create(['type' => 'hero', 'filename' => 'photo.jpg']);
+        $bothCave->media()->create(['type' => 'entrance', 'filename' => 'entrance.jpg']);
 
         // 2. Cave with missing description
-        Cave::factory()->create(['description' => null, 'hero_image' => 'img.jpg', 'name' => 'No Desc Cave', 'cave_system_id' => $goodSystem->id]);
-        Cave::factory()->create(['description' => 'Has description', 'hero_image' => 'img.jpg', 'name' => 'Desc Cave', 'cave_system_id' => $goodSystem->id]);
+        $noDescCave = Cave::factory()->create(['description' => null, 'name' => 'No Desc Cave', 'cave_system_id' => $goodSystem->id]);
+        $noDescCave->media()->create(['type' => 'hero', 'filename' => 'img.jpg']);
+        
+        $descCave = Cave::factory()->create(['description' => 'Has description', 'name' => 'Desc Cave', 'cave_system_id' => $goodSystem->id]);
+        $descCave->media()->create(['type' => 'hero', 'filename' => 'img.jpg']);
 
         // 3. Cave with low tags (< 3)
         // Ensure they have photos/desc so they don't pollute other lists
-        $lowTagsCave = Cave::factory()->create(['name' => 'Low Tags Cave', 'hero_image' => 'img.jpg', 'description' => 'Desc', 'cave_system_id' => $goodSystem->id]);
+        $lowTagsCave = Cave::factory()->create(['name' => 'Low Tags Cave', 'description' => 'Desc', 'cave_system_id' => $goodSystem->id]);
+        $lowTagsCave->media()->create(['type' => 'hero', 'filename' => 'img.jpg']);
         $tag = Tag::factory()->create();
         $lowTagsCave->tags()->attach($tag); // 1 tag
 
-        $highTagsCave = Cave::factory()->create(['name' => 'High Tags Cave', 'hero_image' => 'img.jpg', 'description' => 'Desc', 'cave_system_id' => $goodSystem->id]);
+        $highTagsCave = Cave::factory()->create(['name' => 'High Tags Cave', 'description' => 'Desc', 'cave_system_id' => $goodSystem->id]);
+        $highTagsCave->media()->create(['type' => 'hero', 'filename' => 'img.jpg']);
         $tags = Tag::factory()->count(3)->create();
         $highTagsCave->tags()->attach($tags); // 3 tags
 

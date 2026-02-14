@@ -100,18 +100,26 @@ class CaveTest extends TestCase
         $data = [
             'hero_image' => [
                 'data' => $base64Image,
+                'title' => 'Hero Title',
+                'photographer' => 'Hero Photog',
             ],
             'entrance_image' => [
                 'data' => $base64Image,
+                'title' => 'Entrance Title',
             ],
         ];
 
         $response = $this->putJson('/api/caves/'.$cave->slug, $data);
 
         $response->assertOk();
-        $cave = $cave->fresh();
-        Storage::disk('media')->assertExists($cave->hero_image);
-        Storage::disk('media')->assertExists($cave->entrance_image);
+        $cave->refresh();
+        $this->assertNotNull($cave->heroImage);
+        $this->assertNotNull($cave->entranceImage);
+        Storage::disk('media')->assertExists($cave->heroImage->filename);
+        Storage::disk('media')->assertExists($cave->entranceImage->filename);
+        $this->assertEquals('Hero Title', $cave->heroImage->title);
+        $this->assertEquals('Hero Photog', $cave->heroImage->photographer);
+        $this->assertEquals('Entrance Title', $cave->entranceImage->title);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -119,10 +127,11 @@ class CaveTest extends TestCase
     {
         $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         Storage::fake('media');
-        $cave = Cave::factory()->create([
-            'hero_image' => 'caves/old_hero.webp',
-            'entrance_image' => 'caves/old_entrance.webp',
-        ]);
+        $cave = Cave::factory()->create();
+        
+        $cave->media()->create(['type' => 'hero', 'filename' => 'caves/old_hero.webp']);
+        $cave->media()->create(['type' => 'entrance', 'filename' => 'caves/old_entrance.webp']);
+
         Storage::disk('media')->put('caves/old_hero.webp', 'dummy');
         Storage::disk('media')->put('caves/old_entrance.webp', 'dummy');
 
@@ -134,19 +143,18 @@ class CaveTest extends TestCase
         $response = $this->putJson('/api/caves/'.$cave->slug, $data);
 
         $response->assertOk();
-        $cave = $cave->fresh();
-        $this->assertNull($cave->hero_image);
-        $this->assertNull($cave->entrance_image);
+        $cave->refresh();
+        $this->assertNull($cave->heroImage);
+        $this->assertNull($cave->entranceImage);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_preserves_images_when_string_url_is_passed()
     {
         $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
-        $cave = Cave::factory()->create([
-            'hero_image' => 'caves/existing_hero.webp',
-            'entrance_image' => 'caves/existing_entrance.webp',
-        ]);
+        $cave = Cave::factory()->create();
+        $hero = $cave->media()->create(['type' => 'hero', 'filename' => 'caves/existing_hero.webp']);
+        $entrance = $cave->media()->create(['type' => 'entrance', 'filename' => 'caves/existing_entrance.webp']);
 
         // Simulate sending back the URL string (what the frontend does)
         $data = [
@@ -157,10 +165,9 @@ class CaveTest extends TestCase
         $response = $this->putJson('/api/caves/'.$cave->slug, $data);
 
         $response->assertOk();
-        $cave = $cave->fresh();
+        $cave->refresh();
         // The controller logic should ignore the string and NOT update the field, so it remains as it was in DB
-        // (Note: The controller does NOT download the image from the URL, it just ignores it, preserving DB value)
-        $this->assertEquals('caves/existing_hero.webp', $cave->hero_image);
-        $this->assertEquals('caves/existing_entrance.webp', $cave->entrance_image);
+        $this->assertEquals('caves/existing_hero.webp', $cave->heroImage->filename);
+        $this->assertEquals('caves/existing_entrance.webp', $cave->entranceImage->filename);
     }
 }

@@ -88,20 +88,75 @@
           persistent-hint
         />
 
-        <v-file-input
-          v-model="heroImageFile"
-          prepend-icon="mdi-camera"
-          accept="image/*"
-          label="Hero Image"
-          chips
-        />
-        <v-file-input
-          v-model="entranceImageFile"
-          prepend-icon="mdi-camera"
-          accept="image/*"
-          label="Entrance Image"
-          chips
-        />
+        <div class="text-subtitle-1 mb-2">Media</div>
+        <v-row>
+          <v-col cols="12" md="6">
+            <v-card variant="outlined" class="pa-4">
+              <div class="text-subtitle-2 mb-2">Hero Image</div>
+              <v-file-input
+                v-model="heroImageFile"
+                prepend-icon="mdi-camera"
+                accept="image/*"
+                label="Select Hero Image"
+                chips
+                density="compact"
+              />
+              <v-text-field
+                v-model="mediaData.hero.title"
+                label="Title"
+                density="compact"
+                hide-details
+                class="mb-2"
+              />
+              <v-text-field
+                v-model="mediaData.hero.photographer"
+                label="Photographer"
+                density="compact"
+                hide-details
+                class="mb-2"
+              />
+              <v-text-field
+                v-model="mediaData.hero.copyright"
+                label="Copyright / Source"
+                density="compact"
+                hide-details
+              />
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-card variant="outlined" class="pa-4">
+              <div class="text-subtitle-2 mb-2">Entrance Image</div>
+              <v-file-input
+                v-model="entranceImageFile"
+                prepend-icon="mdi-camera"
+                accept="image/*"
+                label="Select Entrance Image"
+                chips
+                density="compact"
+              />
+              <v-text-field
+                v-model="mediaData.entrance.title"
+                label="Title"
+                density="compact"
+                hide-details
+                class="mb-2"
+              />
+              <v-text-field
+                v-model="mediaData.entrance.photographer"
+                label="Photographer"
+                density="compact"
+                hide-details
+                class="mb-2"
+              />
+              <v-text-field
+                v-model="mediaData.entrance.copyright"
+                label="Copyright / Source"
+                density="compact"
+                hide-details
+              />
+            </v-card>
+          </v-col>
+        </v-row>
       </v-card-text>
     </v-card>
 
@@ -174,6 +229,21 @@ const selectedTags = ref({})
 const heroImageFile = ref(null)
 const entranceImageFile = ref(null)
 
+const mediaData = ref({
+  hero: {
+    title: internalCave.value.hero_image?.title || '',
+    photographer: internalCave.value.hero_image?.photographer || '',
+    copyright: internalCave.value.hero_image?.copyright || '',
+    data: null
+  },
+  entrance: {
+    title: internalCave.value.entrance_image?.title || '',
+    photographer: internalCave.value.entrance_image?.photographer || '',
+    copyright: internalCave.value.entrance_image?.copyright || '',
+    data: null
+  }
+})
+
 // Initialize tags
 const fetchTags = async () => {
   const response = await fetch('/api/tags', { headers: { 'Accept': 'application/json' } })
@@ -206,6 +276,20 @@ watch(() => props.modelValue, (newVal) => {
       mapCenter.value = [internalCave.value.location_lng || 0, internalCave.value.location_lat || 0]
     }
     syncTagsFromModel()
+
+    // Sync media data back
+    mediaData.value.hero = {
+      title: newVal.hero_image?.title || '',
+      photographer: newVal.hero_image?.photographer || '',
+      copyright: newVal.hero_image?.copyright || '',
+      data: null
+    }
+    mediaData.value.entrance = {
+      title: newVal.entrance_image?.title || '',
+      photographer: newVal.entrance_image?.photographer || '',
+      copyright: newVal.entrance_image?.copyright || '',
+      data: null
+    }
   }
 }, { deep: true })
 
@@ -248,15 +332,33 @@ watch(selectedTags, (newTags) => {
 // Image handling
 watch(heroImageFile, async (file) => {
   if (file) {
-    internalCave.value.hero_image = await convertFileToBase64(file)
+    mediaData.value.hero.data = await convertFileToBase64(file)
+    internalCave.value.hero_image = mediaData.value.hero
+  } else if (file === null && props.modelValue.hero_image) {
+    // If explicitly cleared
+    internalCave.value.hero_image = null
   }
 })
 
 watch(entranceImageFile, async (file) => {
   if (file) {
-    internalCave.value.entrance_image = await convertFileToBase64(file)
+    mediaData.value.entrance.data = await convertFileToBase64(file)
+    internalCave.value.entrance_image = mediaData.value.entrance
+  } else if (file === null && props.modelValue.entrance_image) {
+    // If explicitly cleared
+    internalCave.value.entrance_image = null
   }
 })
+
+// Metadata handling (updates internalCave when fields change without file change)
+watch(mediaData, (newVal) => {
+  if (!heroImageFile.value && props.modelValue.hero_image) {
+    internalCave.value.hero_image = newVal.hero
+  }
+  if (!entranceImageFile.value && props.modelValue.entrance_image) {
+    internalCave.value.entrance_image = newVal.entrance
+  }
+}, { deep: true })
 
 const onMapLoad = (event) => {
   // Ensure map is centered on current coordinates if they exist

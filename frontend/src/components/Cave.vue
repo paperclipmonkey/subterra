@@ -46,7 +46,7 @@
 
     <!-- Hero Section -->
     <v-card class="mb-6 rounded-lg" elevation="2">
-      <v-img :src="cave.hero_image || cave.entrance_image || '/placeholder-cave.jpg'" height="300" cover
+      <v-img :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="300" cover
              class="align-end">
         <template #placeholder>
           <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
@@ -55,11 +55,19 @@
         </template>
         <div class="d-flex flex-column pa-6 text-white"
              style="background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));">
-          <div class="text-overline mb-1">{{ cave.system?.name || 'Unknown System' }}</div>
-          <h1 class="text-h3 font-weight-bold mb-2">{{ cave.name }}</h1>
-          <div class="d-flex align-center">
-            <v-icon size="small" class="mr-1">mdi-map-marker</v-icon>
-            <span class="text-subtitle-1">{{ cave.location_name }}, {{ cave.location_country }}</span>
+          <div class="d-flex justify-space-between align-end">
+            <div>
+              <div class="text-overline mb-1">{{ cave.system?.name || 'Unknown System' }}</div>
+              <h1 class="text-h3 font-weight-bold mb-2">{{ cave.name }}</h1>
+              <div class="d-flex align-center">
+                <v-icon size="small" class="mr-1">mdi-map-marker</v-icon>
+                <span class="text-subtitle-1">{{ cave.location_name }}, {{ cave.location_country }}</span>
+              </div>
+            </div>
+            <div v-if="cave.hero_image?.photographer" class="text-caption text-right opacity-70">
+              <v-icon size="x-small" class="mr-1">mdi-camera</v-icon>
+              {{ cave.hero_image.photographer }}
+            </div>
           </div>
         </div>
       </v-img>
@@ -307,16 +315,8 @@
 
             <!-- Media Tab -->
             <v-window-item value="media">
-              <v-row v-if="media.length > 0 || cave.hero_image || cave.entrance_image">
-                <v-col v-if="cave.hero_image" cols="6" sm="4" md="3">
-                  <v-img :src="cave.hero_image" aspect-ratio="1" cover class="rounded cursor-pointer"
-                         @click="openImage(cave.hero_image)" />
-                </v-col>
-                <v-col v-if="cave.entrance_image" cols="6" sm="4" md="3">
-                  <v-img :src="cave.entrance_image" aspect-ratio="1" cover class="rounded cursor-pointer"
-                         @click="openImage(cave.entrance_image)" />
-                </v-col>
-                <v-col v-for="item in media" :key="item.url" cols="6" sm="4" md="3">
+              <v-row v-if="allMedia.length > 0">
+                <v-col v-for="item in allMedia" :key="item.url || item.filename" cols="6" sm="4" md="3">
                   <v-img :src="item.url" aspect-ratio="1" cover class="rounded cursor-pointer"
                          @click="openImage(item)" />
                 </v-col>
@@ -553,20 +553,32 @@ const visibleTripsCount = computed(() => {
   ).length
 })
 
-const media = computed(() => {
-  if (!cave.value?.trips) return []
-  return cave.value.trips.reduce((acc, trip) => {
-    if (trip.media && trip.media.length > 0) {
-      const enrichedMedia = trip.media.map(m => ({
-        ...m,
-        trip_id: trip.id,
-        trip_name: trip.name, // Assuming trip has a name
-        photographer: m.photographer || (m.user_id ? trip.participants.find(p => p.id === m.user_id)?.name : null) // Attempt to find photographer name
-      }))
-      acc.push(...enrichedMedia)
-    }
-    return acc
-  }, [])
+const allMedia = computed(() => {
+  const mediaList = []
+
+  // Add Cave-specific media (Hero, Entrance, etc.)
+  if (cave.value?.media) {
+    mediaList.push(...cave.value.media)
+  }
+
+  // Add Trip-related media
+  if (cave.value?.trips) {
+    const tripMedia = cave.value.trips.reduce((acc, trip) => {
+      if (trip.media && trip.media.length > 0) {
+        const enrichedMedia = trip.media.map(m => ({
+          ...m,
+          trip_id: trip.id,
+          trip_name: trip.name,
+          photographer: m.photographer || (m.user_id ? trip.participants.find(p => p.id === m.user_id)?.name : null)
+        }))
+        acc.push(...enrichedMedia)
+      }
+      return acc
+    }, [])
+    mediaList.push(...tripMedia)
+  }
+
+  return mediaList
 })
 
 // Compute collections that this cave belongs to
@@ -637,19 +649,8 @@ const confirmMarkAsDone = async () => {
   }
 }
 
-
-
 const openImage = (item) => {
-  // If it's just a URL string (hero/entrance image), wrap it
-  if (typeof item === 'string') {
-    selectedMedia.value = {
-      url: item,
-      filename: 'Image',
-      taken_at: null
-    }
-  } else {
-    selectedMedia.value = item
-  }
+  selectedMedia.value = item
   showMediaModal.value = true
 };
 

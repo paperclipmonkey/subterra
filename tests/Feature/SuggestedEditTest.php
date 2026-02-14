@@ -259,7 +259,7 @@ class SuggestedEditTest extends TestCase
         $this->actingAs($admin)->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve");
 
         $cave->refresh();
-        $finalPath = $cave->hero_image;
+        $finalPath = $cave->heroImage?->filename;
 
         $this->assertStringContainsString('caves/', $finalPath);
         Storage::disk('media')->assertExists($finalPath);

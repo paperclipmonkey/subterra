@@ -14,9 +14,10 @@ class TaskController extends Controller
      */
     public function index(): JsonResponse
     {
-        // 1. Caves without Photos
-        $cavesNoPhoto = Cave::whereNull('hero_image')
-            ->whereNull('entrance_image')
+        // 1. Caves without Photos (missing both hero and entrance)
+        $cavesNoPhoto = Cave::whereDoesntHave('media', function ($query) {
+            $query->whereIn('type', ['hero', 'entrance']);
+        })
             ->select('id', 'name', 'slug', 'location_name')
             ->orderBy('name')
             ->get();

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 
 class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
@@ -39,13 +40,26 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'cave_system_id',
         'slug',
         'access_info',
-        'hero_image',
-        'entrance_image',
         'length',
         'depth',
         'latitude',
         'longitude',
     ];
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(CaveMedia::class);
+    }
+
+    public function heroImage(): HasOne
+    {
+        return $this->hasOne(CaveMedia::class)->where('type', 'hero');
+    }
+
+    public function entranceImage(): HasOne
+    {
+        return $this->hasOne(CaveMedia::class)->where('type', 'entrance');
+    }
 
     protected $casts = [
         'location_lat' => 'float',

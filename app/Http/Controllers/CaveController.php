@@ -37,7 +37,7 @@ class CaveController extends Controller
 
     public function show($id)
     {
-        $query = Cave::with(['system', 'system.catchment', 'system.caves', 'system.files', 'system.routes', 'trips.participants', 'trips.media', 'tags', 'collections']);
+        $query = Cave::with(['system.catchment', 'system.caves', 'system.files', 'system.routes', 'trips.participants', 'trips.media', 'tags', 'collections', 'media', 'heroImage', 'entranceImage']);
 
         if (is_numeric($id)) {
             $cave = $query->where('id', $id)->first();
@@ -53,7 +53,6 @@ class CaveController extends Controller
     public function update(UpdateCaveRequest $request, Cave $cave): CaveResource
     {
         $data = $request->validated();
-        unset($data['hero_image'], $data['entrance_image']);
         $cave->update($data);
 
         // Update tags
@@ -67,25 +66,42 @@ class CaveController extends Controller
         $cave->tags()->sync($tags);
 
         // Process hero image
-        $this->processImageField($request, $cave, 'hero_image');
+        $this->processImageField($request, $cave, 'hero');
 
         // Process entrance image
-        $this->processImageField($request, $cave, 'entrance_image');
+        $this->processImageField($request, $cave, 'entrance');
 
-        return new CaveResource($cave);
+        return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage']));
     }
 
-    private function processImageField(UpdateCaveRequest $request, Cave $cave, string $fieldName): void
+    private function processImageField(UpdateCaveRequest $request, Cave $cave, string $type): void
     {
+        $fieldName = $type . '_image';
+        
         if ($request->has($fieldName) && $request->input($fieldName) !== null) {
             $imageData = $request->input($fieldName);
-            if (is_array($imageData)) {
-                $suffix = str_replace('_image', '', $fieldName);
-                $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $suffix);
-                $cave->update([$fieldName => $filePath]);
+            if (is_array($imageData) && isset($imageData['data'])) {
+                $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $type);
+                
+                $cave->media()->updateOrCreate(
+                    ['type' => $type],
+                    [
+                        'filename' => $filePath,
+                        'title' => $imageData['title'] ?? null,
+                        'photographer' => $imageData['photographer'] ?? null,
+                        'copyright' => $imageData['copyright'] ?? null,
+                    ]
+                );
+            } elseif (is_array($imageData)) {
+                // Metadata update only (if file already exists or is not being replaced)
+                $cave->media()->where('type', $type)->update([
+                    'title' => $imageData['title'] ?? null,
+                    'photographer' => $imageData['photographer'] ?? null,
+                    'copyright' => $imageData['copyright'] ?? null,
+                ]);
             }
-        } else {
-            $cave->update([$fieldName => null]);
+        } elseif ($request->has($fieldName) && $request->input($fieldName) === null) {
+            $cave->media()->where('type', $type)->delete();
         }
     }
 }

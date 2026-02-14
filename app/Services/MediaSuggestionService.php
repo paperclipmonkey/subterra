@@ -30,6 +30,13 @@ class MediaSuggestionService
                 if ($base64) {
                     $value = $this->storePendingBase64($base64, $type, $key);
                 }
+            } elseif (in_array($key, ['hero_image', 'entrance_image']) && is_array($value)) {
+                if (isset($value['data']) && is_string($value['data'])) {
+                    $base64 = $this->extractBase64($value['data']);
+                    if ($base64) {
+                        $value['data'] = $this->storePendingBase64($base64, $type, $key);
+                    }
+                }
             } elseif ($key === 'media' && is_array($value)) {
                 foreach ($value as &$mediaItem) {
                     if (isset($mediaItem['data']) && is_string($mediaItem['data'])) {
@@ -56,11 +63,10 @@ class MediaSuggestionService
 
         foreach ($data as $key => &$value) {
             if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path'])) {
-                if (is_array($value) && isset($value['data']) && is_string($value['data'])) {
-                    $value = $value['data'];
-                }
-
-                if (is_string($value)) {
+                if (is_array($value)) {
+                    // Recurse into the array (e.g., hero_image.data)
+                    $value = $this->promotePendingMedia($value, $targetDir);
+                } elseif (is_string($value)) {
                     // Check if it's already a pending file
                     if (str_starts_with($value, self::PENDING_DIR)) {
                         $value = $this->moveFileToPermanent($value, $targetDir);
