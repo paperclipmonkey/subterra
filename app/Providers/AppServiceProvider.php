@@ -31,10 +31,6 @@ class AppServiceProvider extends ServiceProvider
             [\App\Listeners\SendTripCreatedSlackAlert::class, 'handle']
         );
 
-        Event::listen(
-            [\App\Listeners\SendNewUserSignupEmailToAdmins::class, 'handle']
-        );
-
         \App\Models\Incident::observe(\App\Observers\IncidentObserver::class);
         \App\Models\IncidentNote::observe(\App\Observers\IncidentNoteObserver::class);
 

@@ -178,14 +178,23 @@ const allClubs = ref([])
 const joiningClub = ref(null)
 const joinedClubs = ref([])
 
-onMounted(async () => {
-  // Check if onboarding is needed
+import { watch } from 'vue'
+
+const checkOnboarding = () => {
   if (store.user && store.user.id && !store.user.onboarding_completed_at) {
     visible.value = true
     userName.value = store.user.name || ''
     fetchClubs()
   }
+}
+
+onMounted(() => {
+  checkOnboarding()
 })
+
+watch(() => store.user, () => {
+  checkOnboarding()
+}, { deep: true })
 
 const fetchClubs = async () => {
   try {
