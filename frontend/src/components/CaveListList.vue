@@ -56,7 +56,14 @@
 
               <div class="mt-auto">
                 <v-chip-group class="mb-0">
-                  <v-chip v-for="tag in (cave.tags || []).slice(0, 3)" :key="tag.tag" size="x-small" variant="tonal">
+                  <v-chip
+                    v-for="tag in (cave.tags || []).slice(0, 3)"
+                    :key="tag.tag"
+                    size="x-small"
+                    variant="tonal"
+                    style="cursor: pointer;"
+                    @click.stop.prevent="emit('tag-click', tag.tag)"
+                  >
                     {{ tag.tag }}
                   </v-chip>
                   <v-chip v-if="(cave.tags || []).length > 3" size="x-small" variant="text" class="px-1 text-grey">
@@ -99,7 +106,9 @@
 </template>
 <script setup>
 
-import { ref } from 'vue'
+import { ref, defineEmits } from 'vue'
+
+const emit = defineEmits(['tag-click'])
 import { useCaveStore } from '@/stores/caves'
 import { useAppStore } from '@/stores/app'
 import { markCaveAsDone } from '@/stores/markAsDone'

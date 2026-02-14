@@ -302,10 +302,18 @@
 
                   <v-divider class="my-4" />
 
-                  <div class="text-caption text-grey mb-2">Tags</div>
                   <v-chip-group>
-                    <v-chip v-for="tag in cave.tags" :key="tag.tag" size="small" color="secondary" variant="tonal" disabled>{{ tag.tag
-                    }}</v-chip>
+                    <v-chip
+                      v-for="tag in cave.tags"
+                      :key="tag.tag"
+                      size="small"
+                      color="secondary"
+                      variant="tonal"
+                      style="cursor: pointer;"
+                      @click="$router.push({ path: '/caves', query: { tags: tag.tag, view: 'list' } })"
+                    >
+                      {{ tag.tag }}
+                    </v-chip>
                   </v-chip-group>
                 </div>
               </template>
@@ -452,8 +460,17 @@
 
           <div class="text-caption text-grey mb-2">Tags</div>
           <v-chip-group>
-            <v-chip v-for="tag in cave.tags" :key="tag.tag" size="small" color="secondary" variant="tonal" disabled>{{ tag.tag
-            }}</v-chip>
+            <v-chip
+              v-for="tag in cave.tags"
+              :key="tag.tag"
+              size="small"
+              color="secondary"
+              variant="tonal"
+              style="cursor: pointer;"
+              @click="$router.push({ path: '/caves', query: { tags: tag.tag, view: 'list' } })"
+            >
+              {{ tag.tag }}
+            </v-chip>
           </v-chip-group>
         </v-card>
 

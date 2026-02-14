@@ -15,28 +15,36 @@
 
         <v-divider class="mb-4" />
 
-        <v-card-text>
+        <v-card-text class="pa-0" style="max-height: 70vh; overflow-y: auto;">
           <template v-for="(groupItems, groupName) in tagsAvailable" :key="groupName">
+            <div :ref="el => setCategoryRef(el, groupName)" class="pa-4 pt-2">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <h2 class="text-h6 tagGroupTitle">{{ groupName }}</h2>
+                <v-chip v-if="getSelectedCount(groupName)" size="x-small" color="primary" variant="flat">
+                  {{ getSelectedCount(groupName) }} Selected
+                </v-chip>
+              </div>
 
-            <h2 class="text-h6 mb-2 tagGroupTitle">{{ groupName }}</h2>
-
-            <v-chip-group
-              v-model="selectedTags[groupName]"
-              column
-              :multiple="true"
-            >
-              <v-chip
-                v-for="tag in groupItems"
-                :key="tag.tag"
-                :text="tag.tag"
-                variant="outlined"
-                :value="tag.tag"
-                :title="tag.description"
-                filter
-              />
-            </v-chip-group>
+              <v-chip-group
+                v-model="selectedTags[groupName]"
+                column
+                :multiple="!isSingleSelect(groupName)"
+              >
+                <v-chip
+                  v-for="tag in groupItems"
+                  :key="tag.tag"
+                  :text="tag.tag"
+                  variant="outlined"
+                  filter
+                  size="small"
+                  :value="tag.tag"
+                  :title="tag.description"
+                  selected-class="text-primary border-primary"
+                />
+              </v-chip-group>
+              <v-divider v-if="Object.keys(tagsAvailable).indexOf(groupName) < Object.keys(tagsAvailable).length - 1" class="mt-4" />
+            </div>
           </template>
-
         </v-card-text>
         <v-divider class="mt-2" />
 
@@ -63,41 +71,93 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted } from 'vue'
+import { ref, defineProps, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+
 const route = useRoute()
 const emit = defineEmits(['filter', 'close'])
 
+const props = defineProps({
+  isActive: Boolean,
+  loadedFilters: { type: Array, default: () => [] },
+  targetCategory: { type: String, default: null }
+})
+
 const tagsAvailable = ref({})
 const selectedTags = ref({})
+const categoryRefs = ref({})
+
+const setCategoryRef = (el, name) => {
+  if (el) categoryRefs.value[name] = el
+}
 
 onMounted(async () => {
   const response = await fetch('/api/tags')
   tagsAvailable.value = await response.json()
   const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : []
 
-  if (pageLoadedTags.length > 0) {
-    // Initialize selectedTags with the loaded filters
-    for (const group in tagsAvailable.value) {
-      selectedTags.value[group] = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag)
+  // Initialize selectedTags with the loaded filters
+  for (const group in tagsAvailable.value) {
+    const groupTags = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag)
+    if (isSingleSelect(group)) {
+      selectedTags.value[group] = groupTags[0] || null
+    } else {
+      selectedTags.value[group] = groupTags
     }
   }
 })
 
+watch(() => props.isActive, (active) => {
+  if (active) {
+    // Sync state from URL whenever modal opens
+    const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : []
+    for (const group in tagsAvailable.value) {
+      const groupTags = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag)
+      if (isSingleSelect(group)) {
+        selectedTags.value[group] = groupTags[0] || null
+      } else {
+        selectedTags.value[group] = groupTags
+      }
+    }
+
+    if (props.targetCategory) {
+      // Small timeout to ensure DOM is ready and modal animation finished
+      setTimeout(() => {
+        const el = categoryRefs.value[props.targetCategory]
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 200)
+    }
+  }
+})
+
+const isSingleSelect = (groupName) => {
+  const singleSelectGroups = ['region', 'access', 'previously done']
+  return singleSelectGroups.includes(groupName.toLowerCase())
+}
+
 const emitFilters = () => {
-  const filters = Object.values(selectedTags.value).flat()
+  const filters = Object.values(selectedTags.value).flat().filter(Boolean)
   emit('filter', filters)
 }
 
-const props = defineProps({
-  isActive: Boolean,
-  loadedFilters: { type: Array, default: () => [] }
-})
-const loadedFilters = ref(props.loadedFilters)
+const getSelectedCount = (groupName) => {
+  const selection = selectedTags.value[groupName]
+  if (isSingleSelect(groupName)) {
+    return selection ? 1 : 0
+  }
+  return selection?.length || 0
+}
 </script>
 
 <style scoped>
 .tagGroupTitle {
   text-transform: capitalize !important;
+  scroll-margin-top: 10px;
+}
+
+.border-primary {
+  border-color: rgb(var(--v-theme-primary)) !important;
 }
 </style>
