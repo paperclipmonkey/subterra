@@ -135,13 +135,12 @@
                 </div>
               </div>
 
-              <v-list v-if="cave.trips && cave.trips.length > 0" lines="two" rounded>
+              <div v-if="cave.trips && cave.trips.length > 0" class="mt-2">
                 <template v-for="(trip, index) in cave.trips" :key="trip.datetime || index">
                   <CaveTripListItem v-if="trip.end_time || trip.participants.some(participant => participant.id === appStore.user.id)"
                                     :trip="trip" />
-                  <v-divider v-if="index < cave.trips.length - 1" inset />
                 </template>
-              </v-list>
+              </div>
               <v-alert v-else type="info" variant="tonal" class="mt-2">
                 No trips have been recorded for this cave yet. Be the first!
               </v-alert>
