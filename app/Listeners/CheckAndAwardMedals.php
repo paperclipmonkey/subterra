@@ -140,7 +140,7 @@ class CheckAndAwardMedals implements ShouldQueue
                     ->with('entrance')
                     ->get()
                     ->filter(function ($trip) {
-                        return optional($trip->entrance)->tags->where('tag', 'Leader')->pluck('tag')->isNotEmpty();
+                        return optional($trip->entrance)->tags->where('tag', 'Warden')->pluck('tag')->isNotEmpty();
                     });
 
                 return $leaderTrips->count() >= 5;

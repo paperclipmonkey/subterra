@@ -12,161 +12,199 @@ class TagSeeder extends Seeder
      */
     public function run(): void
     {
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Mendip',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "The Mendip hills in Somerset are home to some of the UK's most famous caves, including Wookey Hole, Swildon's Hole, and GB Cave.",
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'South Wales',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "South Wales is home to the UK's longest cave system, Ogof Ffynnon Ddu, as well as the famous Dan-yr-Ogof showcave.",
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Yorkshire',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "Yorkshire is home to the UK's deepest cave, Gaping Gill, as well as the famous White Scar Cave.",
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'North Wales',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => 'North Wales has a long history of mining and some excellent bits of limestone to explore.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Assynt',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "Scotland has some of the UK's most remote and challenging caves, including the famous Claonaite System.",
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Forest of Dean',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "The Forest of Dean is home to some of the UK's most beautiful caves, including Otter Hole.",
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Devon',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "Devon, despite being a smaller caving region, has some excellent caves, including Baker's Pit and Pridhamsleigh Cavern.",
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Portland',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "Portland is home to some of the UK's most challenging sea caves, including a couple of through-trips.",
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Peak District',
             'type' => 'cave',
             'category' => 'region',
+        ], [
             'description' => "The Peak District is home to some of the UK's most famous showcaves, including Blue John Cavern and Speedwell Cavern.",
         ]);
 
         // - - - - - - -- - - - - - Type
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Cave',
             'type' => 'cave',
             'category' => 'type',
+        ], [
             'description' => 'A cave, naturally formed underground cavity, typically large enough for a human to enter.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Mine',
             'type' => 'cave',
             'category' => 'type',
+        ], [
             'description' => 'An underground mine or quarry.',
         ]);
 
         // - - - - - - -- - - - - - Access
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Open',
             'type' => 'cave',
             'category' => 'access',
+        ], [
             'description' => 'A cave that is open to the public.',
         ]);
 
-        Tag::factory()->create([
-            'tag' => 'Gated',
+        Tag::updateOrCreate([
+            'tag' => 'Spanner',
             'type' => 'cave',
             'category' => 'access',
-            'description' => 'A cave that is gated and requires permission to enter.',
+        ], [
+            'description' => 'A cave that requires a spanner to enter.',
         ]);
 
-        Tag::factory()->create([
-            'tag' => 'Leader',
+        Tag::updateOrCreate([
+            'tag' => 'Permit',
             'type' => 'cave',
             'category' => 'access',
-            'description' => 'A cave that requires a leader to enter.',
+        ], [
+            'description' => 'A cave that requires a permit to enter.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
+            'tag' => 'Padlocked',
+            'type' => 'cave',
+            'category' => 'access',
+        ], [
+            'description' => 'A cave that is padlocked and requires permission to enter.',
+        ]);
+
+        Tag::updateOrCreate([
+            'tag' => 'Warden',
+            'type' => 'cave',
+            'category' => 'access',
+        ], [
+            'description' => 'A cave that requires a warden/leader to enter.',
+        ]);
+
+        Tag::updateOrCreate([
             'tag' => 'Keycode',
             'type' => 'cave',
             'category' => 'access',
+        ], [
             'description' => 'A cave that requires a keycode to enter.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Closed',
             'type' => 'cave',
             'category' => 'access',
+        ], [
             'description' => 'Access to this cave is currently not possible.',
         ]);
 
         // - - - - - - - - - Tackle required
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'SRT',
             'type' => 'cave',
             'category' => 'tackle',
+        ], [
             'description' => 'A cave that requires Single Rope Technique (SRT) to descend.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Ladder',
             'type' => 'cave',
             'category' => 'tackle',
+        ], [
             'description' => 'A cave that requires a ladder to descend.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'No Tackle',
             'type' => 'cave',
             'category' => 'tackle',
+        ], [
             'description' => 'A cave that requires no tackle to descend.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Handline',
             'type' => 'cave',
             'category' => 'tackle',
+        ], [
             'description' => 'A cave that requires a handline to descend.',
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Not Done Yet',
             'type' => 'cave',
             'category' => 'previously done',
+        ], [
             'description' => 'A cave you are yet to visit',
             'assignable' => false,
         ]);
 
-        Tag::factory()->create([
+        Tag::updateOrCreate([
             'tag' => 'Previously Done',
             'type' => 'cave',
             'category' => 'previously done',
+        ], [
             'description' => "A cave you've previously visited",
             'assignable' => false,
         ]);

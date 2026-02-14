@@ -233,7 +233,7 @@ class MedalAwardingTest extends TestCase
             'name' => 'Sheep dog',
             'description' => 'Awarded for going on 5 trips to leader systems',
         ]);
-        $leaderTag = \App\Models\Tag::factory()->create(['tag' => 'Leader', 'category' => 'type', 'type' => 'cave']);
+        $leaderTag = \App\Models\Tag::factory()->create(['tag' => 'Warden', 'category' => 'type', 'type' => 'cave']);
         for ($i = 0; $i < 5; ++$i) {
             $cave = \App\Models\Cave::factory()->create();
             $cave->tags()->attach($leaderTag);
