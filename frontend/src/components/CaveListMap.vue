@@ -35,7 +35,7 @@
                 cave.system.vertical_range
               }}m</v-card-text>
               <v-card-actions>
-                <v-btn @click="$router.push({ path: '/caves/' + cave.slug })">
+                <v-btn :to="'/caves/' + cave.slug">
                   View
                 </v-btn>
                 <v-btn :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`" target="_blank"
