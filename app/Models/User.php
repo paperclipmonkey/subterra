@@ -196,8 +196,20 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     /**
      * Check if the user has any approved club membership.
      */
+    protected ?bool $hasApprovedClubCache = null;
+
     public function hasApprovedClub(): bool
     {
-        return $this->clubs()->wherePivot('status', 'approved')->exists();
+        if ($this->hasApprovedClubCache !== null) {
+            return $this->hasApprovedClubCache;
+        }
+
+        if ($this->relationLoaded('clubs')) {
+            return $this->hasApprovedClubCache = $this->clubs->contains(function ($club) {
+                return $club->pivot->status === 'approved';
+            });
+        }
+
+        return $this->hasApprovedClubCache = $this->clubs()->wherePivot('status', 'approved')->exists();
     }
 }

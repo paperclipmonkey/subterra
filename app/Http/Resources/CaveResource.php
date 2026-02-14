@@ -98,7 +98,13 @@ class CaveResource extends JsonResource
                 'catchment_name' => $this->system->catchment?->name,
                 'length' => $this->system->length,
                 'vertical_range' => $this->system->vertical_range,
-                'caves' => $this->system->caves,
+                'caves' => $this->system->caves->map(function ($cave) {
+                    return [
+                        'id' => $cave->id,
+                        'name' => $cave->name,
+                        'slug' => $cave->slug,
+                    ];
+                }),
                 'tags' => TagResource::collection($this->system->tags->merge($systemLengthTags)),
                 'references' => $request->user()?->hasApprovedClub() ? $this->system->references : [],
                 'files' => $request->user()?->hasApprovedClub() && $this->system->files ? $this->system->files->map(function ($file) {

@@ -20,13 +20,17 @@ class CaveController extends Controller
     ) {
     }
 
-    public function index(): AnonymousResourceCollection
+    public function index(\Illuminate\Http\Request $request): AnonymousResourceCollection
     {
-        return CaveResource::collection(
-            Cave::with(['media', 'heroImage', 'entranceImage', 'system.catchment', 'tags', 'trips.participants'])
+        if ($request->user()) {
+            $request->user()->load('clubs');
+        }
+
+        $caves = Cave::with(['media', 'heroImage', 'entranceImage', 'system.catchment', 'tags', 'trips.participants', 'system.caves', 'system.tags', 'system.files', 'system.routes'])
                 ->orderBy('name')
-                ->get()
-        );
+                ->get();
+
+        return CaveResource::collection($caves);
     }
 
     public function store(StoreCaveRequest $request): CaveResource

@@ -86,9 +86,7 @@
   "required": [
     "id",
     "name",
-    "slug",
-    "description",
-    "cave_system_id"
+    "slug"
   ],
   "additionalProperties": false
 }
