@@ -52,8 +52,18 @@ class GenerateThumbnails extends Command
                     continue;
                 }
 
-                $tempPath = tempnam(sys_get_temp_dir(), 'csf_');
-                file_put_contents($tempPath, Storage::disk('media')->get($path));
+                $content = Storage::disk('media')->get($path);
+                if (empty($content)) {
+                    $this->error("File content is empty: {$path}");
+                    continue;
+                }
+
+                $extension = pathinfo($file->filename, PATHINFO_EXTENSION);
+                $tempBase = tempnam(sys_get_temp_dir(), 'csf_');
+                $tempPath = $tempBase . '.' . $extension;
+                rename($tempBase, $tempPath);
+                
+                file_put_contents($tempPath, $content);
 
                 $fileWrapper = new class ($tempPath, $file->mime_type) {
                     private $path;
