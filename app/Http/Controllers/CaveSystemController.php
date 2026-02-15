@@ -47,6 +47,9 @@ class CaveSystemController extends Controller
             $filesToDelete = $caveSystem->files()->whereIn('id', $request->input('deleted_files'))->get();
             foreach ($filesToDelete as $fileToDelete) {
                 Storage::disk('media')->delete("cave_system_files/{$caveSystem->id}/{$fileToDelete->filename}");
+                if ($fileToDelete->thumbnail_filename) {
+                    Storage::disk('media')->delete("cave_system_files/{$caveSystem->id}/{$fileToDelete->thumbnail_filename}");
+                }
                 $fileToDelete->delete();
             }
         }
@@ -96,7 +99,16 @@ class CaveSystemController extends Controller
                     $path = "cave_system_files/{$caveSystem->id}";
 
                     // Save the file to the 'media' disk
-                    $file->storeAs($path, $filename, ['disk' => 'media']);
+                    $filePath = $file->storeAs($path, $filename, ['disk' => 'media']);
+
+                    // Generate thumbnail
+                    $thumbnailFilename = null;
+                    try {
+                        $thumbnailFilename = $this->imageProcessingService->generateThumbnail($file, $filePath);
+                    } catch (\Exception $e) {
+                        // Fallback if thumbnail generation fails - just log it but don't fail the request
+                        report($e);
+                    }
 
                     // Get details for this file, ensuring index exists
                     $fileDetails = $details[$index] ?? null;
@@ -106,8 +118,9 @@ class CaveSystemController extends Controller
                         'filename' => $filename,
                         'details' => $fileDetails,
                         'original_filename' => $file->getClientOriginalName(),
-                        'mime_type' => $mimeType,  // Use server-detected, not client
+                        'mime_type' => $mimeType,
                         'size' => $file->getSize(),
+                        'thumbnail_filename' => $thumbnailFilename,
                     ]);
                 }
             }

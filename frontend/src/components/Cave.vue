@@ -269,7 +269,10 @@
                     <v-col v-for="file in cave.system.files" :key="file.id" cols="12" sm="6">
                       <v-card variant="outlined" class="h-100 hover-card" :href="file.url" target="_blank">
                         <div class="d-flex align-center pa-3">
-                          <v-avatar color="primary-lighten-5" class="mr-3" rounded>
+                          <v-avatar v-if="file.thumbnail_url" class="mr-3" rounded size="48">
+                            <v-img :src="file.thumbnail_url" cover />
+                          </v-avatar>
+                          <v-avatar v-else color="primary-lighten-5" class="mr-3" rounded>
                             <v-icon color="primary">mdi-file-document-outline</v-icon>
                           </v-avatar>
                           <div class="flex-grow-1 overflow-hidden">

@@ -5,7 +5,6 @@ namespace App\Http\Resources;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class CaveResource extends JsonResource
 {
@@ -107,16 +106,7 @@ class CaveResource extends JsonResource
                 }),
                 'tags' => TagResource::collection($this->system->tags->merge($systemLengthTags)),
                 'references' => $request->user()?->hasApprovedClub() ? $this->system->references : [],
-                'files' => $request->user()?->hasApprovedClub() && $this->system->files ? $this->system->files->map(function ($file) {
-                    return [
-                        'id' => $file->id,
-                        'url' => Storage::disk('media')->url('cave_system_files/'.$file->cave_system_id.'/'.$file->filename),
-                        'original_filename' => $file->original_filename,
-                        'mime_type' => $file->mime_type,
-                        'size' => $file->size,
-                        'details' => $file->details,
-                    ];
-                }) : [],
+                'files' => $request->user()?->hasApprovedClub() && $this->system->files ? CaveSystemFileResource::collection($this->system->files) : [],
                 'routes' => $this->system->routes ?? [],
             ],
             'trips' => TripSummaryResource::collection($this->whenLoaded('trips')),

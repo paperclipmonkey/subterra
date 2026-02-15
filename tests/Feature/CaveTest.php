@@ -147,4 +147,26 @@ class CaveTest extends TestCase
         $this->assertNull($cave->heroImage);
         $this->assertNull($cave->entranceImage);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_includes_thumbnail_url_in_cave_details()
+    {
+        $this->actingAs(\App\Models\User::factory()->withApprovedClub()->create());
+        $caveSystem = \App\Models\CaveSystem::factory()->create();
+        $file = $caveSystem->files()->create([
+            'filename' => 'test.jpg',
+            'original_filename' => 'test.jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 100,
+            'thumbnail_filename' => 'thumb.webp',
+        ]);
+        $cave = Cave::factory()->create(['cave_system_id' => $caveSystem->id]);
+
+        $response = $this->getJson("/api/caves/{$cave->slug}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.system.files.0.thumbnail_url', function ($url) {
+                return str_contains($url, 'thumb.webp');
+            });
+    }
 }

@@ -60,6 +60,30 @@ class CaveSystemTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_generates_thumbnail_on_upload()
+    {
+        Storage::fake('media');
+        $this->mock(\App\Services\ImageProcessingService::class, function ($mock) {
+            $mock->shouldReceive('generateThumbnail')
+                ->once()
+                ->andReturn('generated_thumb.webp');
+        });
+
+        $caveSystem = CaveSystem::factory()->create();
+        $newFile = UploadedFile::fake()->image('image.jpg');
+
+        $data = [
+            'name' => 'Updated Name',
+            'new_files' => [$newFile],
+        ];
+
+        $this->json('POST', "/api/cave_systems/{$caveSystem->id}?_method=PUT", $data);
+
+        $caveSystem->refresh();
+        $this->assertEquals('generated_thumb.webp', $caveSystem->files->first()->thumbnail_filename);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_prevents_non_admins_from_updating_a_cave_system()
     {
         $nonAdminUser = User::factory()->create();

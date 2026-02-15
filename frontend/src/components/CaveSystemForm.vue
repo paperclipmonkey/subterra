@@ -71,7 +71,10 @@
           :class="{ 'file-marked-for-deletion': filesToDelete.includes(file.id) }"
         >
           <template #prepend>
-            <v-avatar color="grey-lighten-2" rounded>
+            <v-avatar v-if="file.thumbnail_url" rounded class="mr-2" size="40">
+              <v-img :src="file.thumbnail_url" cover />
+            </v-avatar>
+            <v-avatar v-else color="grey-lighten-2" rounded>
               <v-icon>mdi-file</v-icon>
             </v-avatar>
           </template>

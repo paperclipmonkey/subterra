@@ -68,6 +68,12 @@
           "url": {
             "type": "string"
           },
+          "thumbnail_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "original_filename": {
             "type": "string"
           },

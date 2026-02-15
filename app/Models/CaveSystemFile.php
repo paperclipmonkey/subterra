@@ -18,6 +18,7 @@ class CaveSystemFile extends Model
         'original_filename',
         'mime_type',
         'size',
+        'thumbnail_filename',
     ];
 
     /**
@@ -25,7 +26,7 @@ class CaveSystemFile extends Model
      *
      * @var array
      */
-    protected $appends = ['url'];
+    protected $appends = ['url', 'thumbnail_url'];
 
     /**
      * Get the cave system that owns the file.
@@ -40,10 +41,29 @@ class CaveSystemFile extends Model
      *
      * @return string|null
      */
+    /**
+     * Get the full URL to the file.
+     *
+     * @return string|null
+     */
     public function getUrlAttribute(): ?string
     {
         if ($this->filename) {
             return Storage::disk('media')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}");
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the full URL to the thumbnail.
+     *
+     * @return string|null
+     */
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        if ($this->thumbnail_filename) {
+            return Storage::disk('media')->url("cave_system_files/{$this->cave_system_id}/{$this->thumbnail_filename}");
         }
 
         return null;
