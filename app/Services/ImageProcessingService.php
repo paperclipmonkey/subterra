@@ -6,7 +6,9 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\Encoders\WebpEncoder;
+use Intervention\Image\ImageManager;
 use Intervention\Image\Laravel\Facades\Image;
 
 class ImageProcessingService
@@ -30,11 +32,9 @@ class ImageProcessingService
     public function generateThumbnail($file, string $destinationPath): ?string
     {
         try {
-            // If it's a PDF, we need to read it differently with Imagick
-            // For both PDF and regular images, passing the pathname is safer than passing the object
-            // especially when using our custom wrapper in the artisan command.
             if ($file->getMimeType() === 'application/pdf') {
-                $image = Image::read($file->getPathname());
+                $manager = new ImageManager(new ImagickDriver());
+                $image = $manager->read($file->getPathname());
             } else {
                 $image = Image::read($file->getPathname());
             }

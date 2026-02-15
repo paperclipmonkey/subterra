@@ -33,13 +33,13 @@ class ImportCaves extends Command
         $filePath = $this->argument('file');
         $dryRun = $this->option('dry-run');
 
-        if (! file_exists($filePath)) {
+        if (!file_exists($filePath)) {
             $this->error("File not found: {$filePath}");
 
             return 1;
         }
 
-        $this->info("Importing caves from {$filePath}..." . ($dryRun ? ' [DRY RUN]' : ''));
+        $this->info("Importing caves from {$filePath}...".($dryRun ? ' [DRY RUN]' : ''));
 
         // Detect delimiter based on extension or content
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
@@ -54,9 +54,9 @@ class ImportCaves extends Command
 
         // Get headers
         $headers = fgetcsv($handle, 0, $delimiter);
-        
+
         // Normalize headers: lowercase and trim
-        $headers = array_map(function($h) {
+        $headers = array_map(function ($h) {
             return trim(strtolower($h));
         }, $headers);
 
@@ -65,15 +65,15 @@ class ImportCaves extends Command
         try {
             while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
                 if (count($headers) !== count($data)) {
-                    $this->warn("Skipping row: column count mismatch.");
+                    $this->warn('Skipping row: column count mismatch.');
                     continue;
                 }
-                
+
                 $row = array_combine($headers, $data);
                 $name = trim($row['name'] ?? '');
-                
+
                 if (empty($name)) {
-                    continue; 
+                    continue;
                 }
 
                 $this->info("Processing: {$name}");
@@ -85,7 +85,7 @@ class ImportCaves extends Command
                 // 1. Handle Cave System
                 $systemName = trim($row['system'] ?? '');
                 if (empty($systemName)) {
-                    $systemName = $name; 
+                    $systemName = $name;
                 }
 
                 // Clean numbers
@@ -103,9 +103,9 @@ class ImportCaves extends Command
 
                 // Update system stats if provided and non-zero
                 if ($length > 0 || $depth > 0) {
-                     $system->length = $length > 0 ? (int)$length : $system->length;
-                     $system->vertical_range = $depth > 0 ? (int)$depth : $system->vertical_range;
-                     $system->save();
+                    $system->length = $length > 0 ? (int) $length : $system->length;
+                    $system->vertical_range = $depth > 0 ? (int) $depth : $system->vertical_range;
+                    $system->save();
                 }
 
                 $caveSystemId = $system->id;
@@ -118,14 +118,14 @@ class ImportCaves extends Command
 
                 // 3. Prepare Description
                 $descriptionParts = [];
-                if (! empty($row['description'])) {
+                if (!empty($row['description'])) {
                     $descriptionParts[] = $row['description'];
                 }
-                if (! empty($row['notes'])) {
-                    $descriptionParts[] = "Notes: " . $row['notes'];
+                if (!empty($row['notes'])) {
+                    $descriptionParts[] = 'Notes: '.$row['notes'];
                 }
-                if (! empty($row['references'])) {
-                    $descriptionParts[] = "References: " . $row['references'];
+                if (!empty($row['references'])) {
+                    $descriptionParts[] = 'References: '.$row['references'];
                 }
                 $description = implode("\n\n", $descriptionParts);
 
@@ -146,11 +146,13 @@ class ImportCaves extends Command
                 );
 
                 // 5. Sync Tags
-                if (! empty($row['tags'])) {
+                if (!empty($row['tags'])) {
                     $tags = array_map('trim', explode(',', $row['tags']));
                     $tagIds = [];
                     foreach ($tags as $tagName) {
-                        if (empty($tagName)) continue;
+                        if (empty($tagName)) {
+                            continue;
+                        }
                         $tag = Tag::firstOrCreate(
                             ['tag' => $tagName],
                             ['type' => 'cave', 'category' => 'general']
@@ -162,11 +164,10 @@ class ImportCaves extends Command
             }
 
             DB::commit();
-            $this->info("Import completed successfully.");
-            
+            $this->info('Import completed successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->error("Error during import: " . $e->getMessage());
+            $this->error('Error during import: '.$e->getMessage());
             $this->error($e->getTraceAsString());
 
             return 1;

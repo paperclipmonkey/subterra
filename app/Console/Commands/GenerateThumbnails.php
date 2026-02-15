@@ -60,10 +60,17 @@ class GenerateThumbnails extends Command
 
                 $extension = pathinfo($file->filename, PATHINFO_EXTENSION);
                 $tempBase = tempnam(sys_get_temp_dir(), 'csf_');
-                $tempPath = $tempBase . '.' . $extension;
+                // Ensure extension is not empty, fallback to original filename extension
+                if (empty($extension)) {
+                    $extension = pathinfo($file->original_filename, PATHINFO_EXTENSION);
+                }
+
+                $tempPath = $tempBase.'.'.$extension;
                 rename($tempBase, $tempPath);
-                
+
                 file_put_contents($tempPath, $content);
+
+                $this->info("Processing file ID {$file->id}: {$tempPath} (Ext: {$extension})");
 
                 $fileWrapper = new class ($tempPath, $file->mime_type) {
                     private $path;

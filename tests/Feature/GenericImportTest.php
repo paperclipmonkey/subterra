@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Cave;
-use App\Models\CaveSystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -20,7 +19,7 @@ class GenericImportTest extends TestCase
         parent::setUp();
         $this->csvPath = base_path('tests/fixtures/caves.csv');
         $this->tsvPath = base_path('tests/fixtures/caves.tsv');
-        
+
         if (!File::exists(dirname($this->csvPath))) {
             File::makeDirectory(dirname($this->csvPath), 0755, true);
         }
@@ -109,7 +108,7 @@ class GenericImportTest extends TestCase
         // Should create system with same name
         $this->assertDatabaseHas('cave_systems', [
             'name' => 'Cave D',
-            'length' => 50
+            'length' => 50,
         ]);
     }
 }
