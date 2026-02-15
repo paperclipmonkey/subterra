@@ -1,0 +1,3 @@
+name,system,length,depth,latitude,longitude,altitude,location_name,location_country,description,notes,access_info,tags
+"Test Cave A",,100,10,51.0,-3.0,100,"Test Town","Testland","A test cave description.","Some notes.","Open access","Test Tag 1,Test Tag 2"
+"Test Cave B","Test System B",500,50,52.0,-3.5,200,"Other Town","Testland","Another cave.","","Key required","Test Tag 1"
