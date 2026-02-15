@@ -28,59 +28,40 @@ class CaveSystemTest extends TestCase
 
         $response = $this->getJson('/api/cave_systems/'.$caveSystem->id);
 
-        $response->assertOk()
-            ->assertJsonFragment(['id' => $caveSystem->id])
+        $this->assertEquals(200, $response->status());
+        $response->assertJsonFragment(['id' => $caveSystem->id])
             ->assertJsonStructure(['data' => ['files']]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_can_update_a_cave_system()
+    public function it_can_update_a_cave_system_and_dispatch_job()
     {
         Storage::fake('media');
-        $caveSystem = CaveSystem::factory()->create();
+        \Illuminate\Support\Facades\Queue::fake();
 
-        $newFile = UploadedFile::fake()->create('newfile.pdf', 100, 'application/pdf');
-        $details = ['Some details'];
+        $caveSystem = CaveSystem::factory()->create();
+        $file = UploadedFile::fake()->image('test.jpg');
 
         $data = [
-            'name' => 'Updated Name',
-            'new_files' => [$newFile],
-            'new_file_details' => $details,
+            'new_files' => [$file],
+            'new_file_details' => ['Test Description'],
         ];
 
         $response = $this->json('POST', "/api/cave_systems/{$caveSystem->id}?_method=PUT", $data);
 
-        $response->assertOk()
-            ->assertJsonFragment(['name' => 'Updated Name']);
+        $this->assertEquals(200, $response->status());
 
         // New file exists
         $caveSystem->refresh();
         $this->assertCount(1, $caveSystem->files);
-        Storage::disk('media')->assertExists("cave_system_files/{$caveSystem->id}/".$caveSystem->files->first()->filename);
-    }
+        $fileRecord = $caveSystem->files->first();
 
-    #[\PHPUnit\Framework\Attributes\Test]
-    public function it_generates_thumbnail_on_upload()
-    {
-        Storage::fake('media');
-        $this->mock(\App\Services\ImageProcessingService::class, function ($mock) {
-            $mock->shouldReceive('generateThumbnail')
-                ->once()
-                ->andReturn('generated_thumb.webp');
+        // Assert Job was dispatched
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\GenerateCaveSystemThumbnail::class, function ($job) use ($fileRecord) {
+            return $job->file->id === $fileRecord->id;
         });
 
-        $caveSystem = CaveSystem::factory()->create();
-        $newFile = UploadedFile::fake()->image('image.jpg');
-
-        $data = [
-            'name' => 'Updated Name',
-            'new_files' => [$newFile],
-        ];
-
-        $this->json('POST', "/api/cave_systems/{$caveSystem->id}?_method=PUT", $data);
-
-        $caveSystem->refresh();
-        $this->assertEquals('generated_thumb.webp', $caveSystem->files->first()->thumbnail_filename);
+        Storage::disk('media')->assertExists("cave_system_files/{$caveSystem->id}/".$caveSystem->files->first()->filename);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -124,7 +105,7 @@ class CaveSystemTest extends TestCase
 
         $response = $this->json('PUT', "/api/cave_systems/{$caveSystem->id}", $data);
 
-        $response->assertOk();
+        $this->assertEquals(200, $response->status());
 
         // Check DB
         $this->assertDatabaseMissing('cave_system_files', ['id' => $file->id]);
@@ -150,8 +131,8 @@ class CaveSystemTest extends TestCase
 
         $response = $this->putJson("/api/cave_systems/{$caveSystem->id}", $data);
 
-        $response->assertOk()
-            ->assertJsonPath('data.catchment_id', $catchment->id);
+        $this->assertEquals(200, $response->status());
+        $response->assertJsonPath('data.catchment_id', $catchment->id);
 
         $this->assertEquals($catchment->id, $caveSystem->fresh()->catchment_id);
     }

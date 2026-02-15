@@ -101,27 +101,21 @@ class CaveSystemController extends Controller
                     // Save the file to the 'media' disk
                     $filePath = $file->storeAs($path, $filename, ['disk' => 'media']);
 
-                    // Generate thumbnail
-                    $thumbnailFilename = null;
-                    try {
-                        $thumbnailFilename = $this->imageProcessingService->generateThumbnail($file, $filePath);
-                    } catch (\Exception $e) {
-                        // Fallback if thumbnail generation fails - just log it but don't fail the request
-                        report($e);
-                    }
-
                     // Get details for this file, ensuring index exists
                     $fileDetails = $details[$index] ?? null;
 
                     // Create database record with server-detected MIME type
-                    $caveSystem->files()->create([
+                    $fileRecord = $caveSystem->files()->create([
                         'filename' => $filename,
                         'details' => $fileDetails,
                         'original_filename' => $file->getClientOriginalName(),
                         'mime_type' => $mimeType,
                         'size' => $file->getSize(),
-                        'thumbnail_filename' => $thumbnailFilename,
+                        // 'thumbnail_filename' => $thumbnailFilename // Will be set by job
                     ]);
+
+                    // Dispatch job to generate thumbnail
+                    \App\Jobs\GenerateCaveSystemThumbnail::dispatch($fileRecord);
                 }
             }
         }

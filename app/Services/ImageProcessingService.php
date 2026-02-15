@@ -31,41 +31,34 @@ class ImageProcessingService
 
     public function generateThumbnail($file, string $destinationPath): ?string
     {
-        try {
-            if ($file->getMimeType() === 'application/pdf') {
-                $manager = new ImageManager(new ImagickDriver());
-                $image = $manager->read($file->getPathname());
-            } else {
-                $image = Image::read($file->getPathname());
-            }
-
-            // Create thumbnail
-            $thumbnail = $image->scaleDown(300, 300)->encode(new WebpEncoder(quality: 60));
-
-            // Generate filename based on destination path but with .webp extension
-            $pathInfo = pathinfo($destinationPath);
-            $thumbnailFilename = $pathInfo['filename'].'_thumb.webp';
-            $thumbnailPath = $pathInfo['dirname'].'/'.$thumbnailFilename;
-
-            // Remove beginning slash if present to avoid double slash issue with Storage
-            if (str_starts_with($thumbnailPath, '/')) {
-                $thumbnailPath = substr($thumbnailPath, 1);
-            }
-
-            // If dirname was empty or just '.', we need to be careful
-            if ($pathInfo['dirname'] === '.') {
-                $thumbnailPath = $thumbnailFilename;
-            }
-
-            Storage::disk('media')->put($thumbnailPath, (string) $thumbnail);
-
-            return $thumbnailFilename;
-        } catch (\Exception $e) {
-            // Log error or silently fail?
-            // For now, let's log it out for debugging purposes if needed, otherwise return null
-            report($e);
-
-            return null;
+        if ($file->getMimeType() === 'application/pdf') {
+            $manager = new ImageManager(new ImagickDriver());
+            // Force reading only the first page to save memory
+            $image = $manager->read($file->getPathname().'[0]');
+        } else {
+            $image = Image::read($file->getPathname());
         }
+
+        // Create thumbnail
+        $thumbnail = $image->scaleDown(300, 300)->encode(new WebpEncoder(quality: 60));
+
+        // Generate filename based on destination path but with .webp extension
+        $pathInfo = pathinfo($destinationPath);
+        $thumbnailFilename = $pathInfo['filename'].'_thumb.webp';
+        $thumbnailPath = $pathInfo['dirname'].'/'.$thumbnailFilename;
+
+        // Remove beginning slash if present to avoid double slash issue with Storage
+        if (str_starts_with($thumbnailPath, '/')) {
+            $thumbnailPath = substr($thumbnailPath, 1);
+        }
+
+        // If dirname was empty or just '.', we need to be careful
+        if ($pathInfo['dirname'] === '.') {
+            $thumbnailPath = $thumbnailFilename;
+        }
+
+        Storage::disk('media')->put($thumbnailPath, (string) $thumbnail);
+
+        return $thumbnailFilename;
     }
 }
