@@ -260,6 +260,7 @@ const nextStep = async () => {
   } else if (step.value === 3) {
     loading.value = true
     try {
+      const now = new Date().toISOString()
       await api.put('/api/users/me', { onboarding_completed_at: now })
       await store.getUser() // Refresh user data to update clubs status in App.vue
       store.user.onboarding_completed_at = now
