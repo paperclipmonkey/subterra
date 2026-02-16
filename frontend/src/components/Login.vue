@@ -6,7 +6,7 @@
         <div class="login-container pa-6 pa-md-10">
           <!-- Logo & Brand -->
           <div class="text-center mb-8">
-            <v-img src="@/assets/subterra.svg" height="80" contain class="mb-4" />
+            <v-img src="@/assets/subterra-logo.png" height="160" contain class="mb-4" />
             <h1 class="text-h3 font-weight-bold primary--text mb-2">Subterra</h1>
             <p class="text-subtitle-1 grey--text text--darken-1">The Community Caving Platform</p>
           </div>

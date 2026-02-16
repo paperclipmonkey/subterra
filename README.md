@@ -1,4 +1,4 @@
-![Subterra Logo](frontend/src/assets/subterra.svg)
+![Subterra Logo](public/images/subterra-logo.png)
 
 # Subterra 
 
