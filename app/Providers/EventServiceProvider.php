@@ -24,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\OnCallShiftCreated::class => [
             \App\Listeners\SendOnCallShiftCreatedSlackAlert::class,
         ],
+        \App\Events\TripCreated::class => [
+            \App\Listeners\SendTripCreatedSlackAlert::class,
+        ],
     ];
 
     public function boot()

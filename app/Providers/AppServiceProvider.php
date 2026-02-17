@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,11 +24,6 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::except([
             '*',
         ]);
-
-        Event::listen(
-            \App\Events\TripCreated::class,
-            [\App\Listeners\SendTripCreatedSlackAlert::class, 'handle']
-        );
 
         \App\Models\Incident::observe(\App\Observers\IncidentObserver::class);
         \App\Models\IncidentNote::observe(\App\Observers\IncidentNoteObserver::class);

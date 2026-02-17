@@ -8,8 +8,10 @@ return [
         'signups' => env('SLACK_SIGNUPS_WEBHOOK'),
         'trips' => env('SLACK_TRIPS_WEBHOOK'),
         'corrections' => env('SLACK_CORRECTIONS_WEBHOOK'),
+        'callouts' => env('SLACK_CALLOUTS_OPEN_WEBHOOK'),
         'callouts-open' => env('SLACK_CALLOUTS_OPEN_WEBHOOK'),
         'callouts-overdue' => env('SLACK_CALLOUTS_OVERDUE_WEBHOOK'),
+        'approvals' => env('SLACK_CLUB_APPROVAL_WEBHOOK'),
     ],
 
     /*
