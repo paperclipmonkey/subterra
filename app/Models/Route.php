@@ -14,8 +14,6 @@ class Route extends Model
 {
     use HasFactory;
 
-    protected $appends = ['hero_image_url'];
-
     public function getRouteKeyName()
     {
         return 'slug';
@@ -44,15 +42,20 @@ class Route extends Model
         'hero_image',
     ];
 
-    protected function heroImageUrl(): Attribute
+    protected function heroImage(): Attribute
     {
         return Attribute::make(
-            get: function () {
-                if (!$this->hero_image) {
+            get: function ($value) {
+                if (!$value) {
                     return;
                 }
 
-                return Storage::disk('media')->url($this->hero_image);
+                // If it's already a full URL, return it (backward compatibility or external images)
+                if (filter_var($value, FILTER_VALIDATE_URL)) {
+                    return $value;
+                }
+
+                return Storage::disk('media')->url($value);
             },
         );
     }
