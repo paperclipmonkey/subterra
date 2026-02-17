@@ -14,6 +14,18 @@ vi.mock('@/utilities.js', () => ({
     convertFileToBase64: vi.fn().mockResolvedValue({ data: 'base64data' })
 }))
 
+// Mock router
+vi.mock('vue-router', () => ({
+    useRouter: vi.fn(() => ({
+        push: vi.fn(),
+        replace: vi.fn(),
+    })),
+    useRoute: vi.fn(() => ({
+        params: { id: '1' },
+    })),
+    onBeforeRouteLeave: vi.fn(),
+}))
+
 // Mock store
 const mockUseAppStore = vi.fn()
 vi.mock('@/stores/app', () => ({

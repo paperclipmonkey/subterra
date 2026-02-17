@@ -49,12 +49,13 @@ class ClubDataController extends Controller
     public function activityHeatmap(Club $club): JsonResponse
     {
         $oneYearAgo = Carbon::now()->subYear();
-        $approvedMemberIds = $club->approvedUsers()->pluck('users.id')->flip();
+        $approvedMemberIdsList = $club->approvedUsers()->pluck('users.id');
+        $approvedMemberIds = $approvedMemberIdsList->flip();
 
         $trips = Trip::with('participants')
             ->where('start_time', '>=', $oneYearAgo)
-            ->whereHas('participants', function ($query) use ($club) {
-                $query->whereIn('users.id', $club->approvedUsers()->pluck('users.id'));
+            ->whereHas('participants', function ($query) use ($approvedMemberIdsList) {
+                $query->whereIn('users.id', $approvedMemberIdsList);
             })
             ->get();
 

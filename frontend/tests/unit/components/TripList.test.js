@@ -20,7 +20,8 @@ vi.mock('moment', () => {
 vi.mock('vue-router', () => ({
   useRoute: () => ({
     query: {}
-  })
+  }),
+  onBeforeRouteLeave: vi.fn()
 }))
 
 // Mock the stores completely to avoid network calls

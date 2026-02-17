@@ -28,21 +28,25 @@
       </div>
 
       <v-autocomplete
+        v-if="caves.length > 1"
         v-model="route.entrance_id"
         :items="caves"
         item-title="name"
         item-value="id"
         label="Entrance Cave"
         clearable
+        autocomplete="off"
       />
 
       <v-autocomplete
+        v-if="caves.length > 1"
         v-model="route.exit_id"
         :items="caves"
         item-title="name"
         item-value="id"
         label="Exit Cave"
         clearable
+        autocomplete="off"
       />
 
       <v-select
@@ -62,6 +66,7 @@
         v-model="route.duration"
         :items="['1-2 hours', '2-4 hours', '4-6 hours', 'Full Day']"
         label="Duration"
+        autocomplete="off"
       />
 
       <div class="text-caption mb-2 text-medium-emphasis">Description (Markdown)</div>
@@ -199,11 +204,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useAppStore } from '@/stores/app'
 import { useToast } from "vue-toastification"
+import { onBeforeRouteLeave } from 'vue-router'
 
 const toast = useToast()
 const appStore = useAppStore()
@@ -239,6 +245,27 @@ const route = ref({ ...props.initialRoute })
 const caves = ref([])
 const newMedia = ref([])
 const deletedMediaIds = ref([])
+const isSaved = ref(false)
+
+const isDirty = computed(() => {
+  if (isSaved.value) return false
+  return JSON.stringify(route.value) !== JSON.stringify(props.initialRoute) ||
+    newMedia.value.length > 0 ||
+    deletedMediaIds.value.length > 0
+})
+
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?')
+    if (answer) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+})
 
 const handleHeroImageUpload = async (event) => {
   const file = event.target.files[0]
@@ -281,6 +308,12 @@ onMounted(async () => {
     if (response.ok) {
       const system = await response.json()
       caves.value = system.data.caves || []
+
+      // Auto-prefill if only one cave
+      if (caves.value.length === 1) {
+        route.value.entrance_id = caves.value[0].id
+        route.value.exit_id = caves.value[0].id
+      }
     }
   } catch (e) {
     console.error(e)
@@ -342,6 +375,7 @@ const save = async () => {
       })
 
       if (response.ok) {
+        isSaved.value = true
         emit('saved')
       } else {
         console.error('Failed to save')
@@ -364,6 +398,7 @@ const save = async () => {
 
       if (response.ok) {
         toast.success('Thank you! Your suggestion has been submitted for review.')
+        isSaved.value = true
         emit('saved')
       } else {
         console.error('Failed to submit suggestion')

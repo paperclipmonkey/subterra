@@ -19,7 +19,7 @@ class SuggestedEditController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'suggestable_type' => 'required|string',
+            'suggestable_type' => 'required|string|in:cave,cave_system,route,collection',
             'suggestable_id' => 'nullable', // Nullable for creation suggestions
             'suggested_data' => 'required|array',
             'original_data' => 'nullable|array',
@@ -42,10 +42,35 @@ class SuggestedEditController extends Controller
             'collection' => \App\Models\Collection::class,
         ];
 
-        $modelClass = $typeMap[$validated['suggestable_type']] ?? $validated['suggestable_type'];
+        // Whitelist allowed fields for each suggestable type to prevent mass assignment
+        $allowedFields = [
+            'cave' => [
+                'name', 'description', 'location_name', 'location_country',
+                'location_lat', 'location_lng', 'location_alt', 'latitude', 'longitude',
+                'access_info', 'length', 'depth', 'tags', 'hero_image', 'entrance_image',
+            ],
+            'cave_system' => [
+                'name', 'description', 'media', 'deleted_files', 'updated_files', 'new_file_details',
+            ],
+            'route' => [
+                'name', 'description', 'distance', 'grade', 'time_estimate', 'tackle',
+            ],
+            'collection' => [
+                'name', 'description', 'is_public', 'caves',
+            ],
+        ];
+
+        $modelClass = $typeMap[$validated['suggestable_type']];
+        $allowed = $allowedFields[$validated['suggestable_type']] ?? [];
+
+        // Filter suggested_data to only include whitelisted fields
+        $suggestedDataToProcess = array_intersect_key(
+            $validated['suggested_data'],
+            array_flip($allowed)
+        );
 
         $suggestedData = $this->mediaSuggestionService->savePendingMedia(
-            $validated['suggested_data'],
+            $suggestedDataToProcess,
             $validated['suggestable_type']
         );
 

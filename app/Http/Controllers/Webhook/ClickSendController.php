@@ -30,14 +30,13 @@ class ClickSendController extends Controller
 
         // Verify Secret - user puts ?secret=xyz in the ClickSend webhook URL
         $configuredSecret = config('services.clicksend.webhook_secret');
-        if ($configuredSecret && $request->input('secret') !== $configuredSecret) {
+        if (empty($configuredSecret) || !hash_equals($configuredSecret, $request->input('secret') ?? '')) {
             Log::warning('ClickSend Webhook attempt with invalid secret', ['ip' => $request->ip()]);
 
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
-        // Normalize Phone Number (ClickSend usu sends E.164, assume DB is similar or we use 'like')
-        // Ideally we should sanitize/normalize.
+        // Normalize Phone Number (ClickSend usually sends E.164)
 
         // Check for specific "OUT SAFE" command
         $isOutSafe = Str::of($body)->trim()->upper()->is('OUT SAFE');
@@ -80,8 +79,8 @@ class ClickSendController extends Controller
         Log::info("Cancelling Callout ID: {$callout->id} via SMS from {$from}");
 
         $callout->update([
-            'status' => 'cancelled', // Or 'cancelled' if that's the preferred state
-            'completed_at' => now(), // Assuming column exists or we just use updated_at
+            'status' => 'cancelled',
+            'completed_at' => now(),
             'cancelled_location' => 'SMS',
         ]);
 
@@ -92,9 +91,6 @@ class ClickSendController extends Controller
             ]);
             $callout->incident->update(['status' => 'resolved']);
         }
-
-        // Notify Duty Officer / Admins that it was cancelled safely? (Optional but good)
-        // TODO: Add notification here if required.
     }
 
     private function handleGenericMessage(string $from, string $body): void

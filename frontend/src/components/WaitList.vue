@@ -1,7 +1,13 @@
 <template>
   <v-container>
-    <v-row>
-      <v-col>
+    <v-row justify="center">
+      <v-col cols="12" md="8">
+        <div class="text-center mb-6">
+          <h1 class="text-h4 font-weight-bold mb-2">Membership Status</h1>
+          <p class="text-medium-emphasis">
+            Track your club applications and learn about the features you'll unlock upon approval.
+          </p>
+        </div>
         <ClubMembershipConfirmation
           :pending-clubs="pendingClubs"
           :user="user"

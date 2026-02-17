@@ -4,7 +4,8 @@ import CalloutIndex from '@/pages/callout/index.vue'
 
 // Mock dependencies
 vi.mock('vue-router', () => ({
-    useRouter: () => ({ push: vi.fn() })
+    useRouter: () => ({ push: vi.fn() }),
+    onBeforeRouteLeave: vi.fn()
 }))
 
 // Mock data

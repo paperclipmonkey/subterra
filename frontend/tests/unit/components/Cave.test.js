@@ -7,7 +7,8 @@ const pushMock = vi.fn()
 const replaceMock = vi.fn()
 vi.mock('vue-router', () => ({
     useRouter: () => ({ push: pushMock, replace: replaceMock }),
-    useRoute: () => ({ params: { id: '1' }, query: {} })
+    useRoute: () => ({ params: { id: '1' }, query: {} }),
+    onBeforeRouteLeave: vi.fn()
 }))
 
 vi.mock('vuetify', () => ({

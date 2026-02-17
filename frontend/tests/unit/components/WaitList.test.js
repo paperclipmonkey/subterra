@@ -8,7 +8,9 @@ global.fetch = vi.fn()
 // Mock router
 const pushMock = vi.fn()
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: pushMock })
+  useRouter: () => ({ push: pushMock }),
+  useRoute: vi.fn(() => ({ params: { id: 1 } })),
+  onBeforeRouteLeave: vi.fn()
 }))
 
 describe('WaitList', () => {

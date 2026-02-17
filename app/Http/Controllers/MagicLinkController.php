@@ -81,8 +81,7 @@ class MagicLinkController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Failed to send magic link',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to send magic link. Please try again.',
             ], 500);
         }
     }
@@ -161,7 +160,7 @@ class MagicLinkController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Authentication failed: '.$e->getMessage(),
+                'error' => 'Authentication failed. Please request a new magic link.',
             ], 500);
         }
     }

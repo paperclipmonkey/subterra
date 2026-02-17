@@ -26,7 +26,7 @@ class HutFeatureTest extends TestCase
 
     public function test_can_create_hut(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $club = Club::factory()->create();
 
         $hutData = [
@@ -55,7 +55,7 @@ class HutFeatureTest extends TestCase
 
     public function test_can_create_hut_without_club(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $hutData = [
             'name' => 'Independent Hut',
@@ -80,7 +80,7 @@ class HutFeatureTest extends TestCase
 
     public function test_can_create_hut_with_image(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $club = Club::factory()->create();
 
         // Create a simple base64 encoded 1x1 pixel PNG
@@ -166,7 +166,7 @@ class HutFeatureTest extends TestCase
 
     public function test_can_delete_hut(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $club = Club::factory()->create();
         $hut = Hut::factory()->create([
             'club_id' => $club->id,

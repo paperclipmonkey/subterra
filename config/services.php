@@ -39,6 +39,7 @@ return [
         'api_key' => env('SMS_WORKS_API_KEY'),
         'sender_id' => env('SMS_WORKS_SENDER_ID', 'Subterra'),
         'enabled' => env('SMS_ENABLED', true),
+        'webhook_secret' => env('SMS_WORKS_WEBHOOK_SECRET'),
     ],
 
     'google' => [

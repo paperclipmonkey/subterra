@@ -8,7 +8,8 @@ import moment from 'moment'
 const mockPush = vi.fn()
 vi.mock('vue-router', () => ({
     useRouter: () => ({ push: mockPush }),
-    useRoute: vi.fn(() => ({ path: '/' }))
+    useRoute: vi.fn(() => ({ path: '/' })),
+    onBeforeRouteLeave: vi.fn()
 }))
 
 const mockHideNotification = vi.fn()

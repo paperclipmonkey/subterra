@@ -47,7 +47,7 @@
     <!-- Hero Section -->
     <v-card class="mb-6 rounded-lg" elevation="2">
       <v-img :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="300" cover
-             class="align-end">
+             class="align-end cursor-pointer hero-img" @click="activeTab = 'media'">
         <template #placeholder>
           <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
             <v-icon color="grey" size="64">mdi-image-off</v-icon>
@@ -714,6 +714,18 @@ watch(
 
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hero-img {
+  transition: filter 0.2s ease;
+
+  &:hover {
+    filter: brightness(0.9);
+  }
+}
 
 .file-list {
   background-color: transparent;

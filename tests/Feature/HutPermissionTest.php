@@ -57,4 +57,48 @@ class HutPermissionTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_regular_user_cannot_create_hut()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/huts', [
+            'name' => 'Unauthorized Hut',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_admin_can_create_hut()
+    {
+        $user = User::factory()->admin()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/huts', [
+            'name' => 'Admin Hut',
+        ]);
+
+        $response->assertStatus(201);
+    }
+
+    public function test_regular_user_cannot_delete_hut()
+    {
+        $user = User::factory()->create();
+        $hut = Hut::factory()->create();
+
+        $response = $this->actingAs($user)->deleteJson("/api/huts/{$hut->id}");
+
+        $response->assertStatus(403);
+    }
+
+    public function test_club_admin_can_delete_own_club_hut()
+    {
+        $club = Club::factory()->create();
+        $hut = Hut::factory()->create(['club_id' => $club->id]);
+        $user = User::factory()->create();
+        $club->users()->attach($user->id, ['is_admin' => true, 'status' => 'approved']);
+
+        $response = $this->actingAs($user)->deleteJson("/api/huts/{$hut->id}");
+
+        $response->assertStatus(204);
+    }
 }

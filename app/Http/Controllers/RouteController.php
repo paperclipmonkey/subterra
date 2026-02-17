@@ -156,9 +156,10 @@ class RouteController extends Controller
             }
 
             $filename = $prefix.'_'.Str::random(10).'.'.$type;
-            Storage::disk('public')->put('routes/'.$filename, $data);
+            $path = 'routes/'.$filename;
+            Storage::disk('media')->put($path, $data);
 
-            return Storage::url('routes/'.$filename);
+            return $path;
         }
 
         if (preg_match('/^data:application\/pdf;base64,/', $imageData)) {
@@ -169,9 +170,10 @@ class RouteController extends Controller
             }
 
             $filename = $prefix.'_'.Str::random(10).'.pdf';
-            Storage::disk('public')->put('routes/'.$filename, $data);
+            $path = 'routes/'.$filename;
+            Storage::disk('media')->put($path, $data);
 
-            return Storage::url('routes/'.$filename);
+            return $path;
         }
 
         return $imageData;

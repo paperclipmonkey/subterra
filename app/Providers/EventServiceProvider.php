@@ -12,6 +12,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\ClubAccessResponded::class => [
             \App\Listeners\SendClubAccessRespondedEmail::class,
+            \App\Listeners\SendClubApprovalSlackAlert::class,
         ],
         \App\Events\TripParticipantTagged::class => [
             \App\Listeners\SendTripTaggedEmail::class,

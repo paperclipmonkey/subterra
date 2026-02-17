@@ -109,25 +109,40 @@
 
         <!-- Step 3: Feature Tour -->
         <v-window-item :value="3">
-          <v-card-text class="pa-8 text-center tour-step">
-            <v-avatar color="success" size="64" class="mb-4 elevation-2">
-              <v-icon size="36" color="white">mdi-compass-outline</v-icon>
-            </v-avatar>
-            <h2 class="text-h5 font-weight-bold mb-6">Explore the Platform</h2>
+          <v-card-text class="pa-8">
+            <div class="text-center mb-6">
+              <v-avatar color="success" size="64" class="mb-4 elevation-2">
+                <v-icon size="36" color="white">mdi-compass-outline</v-icon>
+              </v-avatar>
+              <h2 class="text-h5 font-weight-bold mb-2">Platform Highlights</h2>
+              <p class="text-body-2 text-medium-emphasis">
+                Here are a few things you can do even while waiting for club approval.
+              </p>
+            </div>
             
             <div class="feature-tour-grid">
-              <div v-for="item in tourItems" :key="item.title" class="tour-item mb-4 pa-3 border rounded-lg text-left d-flex align-center">
-                <v-icon :icon="item.icon" color="primary" class="mr-4" />
+              <div v-for="item in tourItems" :key="item.title" class="tour-item mb-4 pa-4 border rounded-lg text-left d-flex align-start">
+                <v-avatar :color="item.color || 'primary'" size="32" variant="tonal" class="mr-4 mt-1">
+                  <v-icon :icon="item.icon" size="20" />
+                </v-avatar>
                 <div>
-                  <div class="font-weight-bold">{{ item.title }}</div>
+                  <div class="font-weight-bold text-subtitle-2">{{ item.title }}</div>
                   <div class="text-caption text-medium-emphasis">{{ item.text }}</div>
                 </div>
               </div>
             </div>
 
-            <p class="text-body-2 text-medium-emphasis mt-6">
-              You're all set! Use the bottom tabs to navigate through these features.
-            </p>
+            <v-alert
+              color="primary"
+              variant="tonal"
+              icon="mdi-help-circle-outline"
+              class="mt-4"
+              density="compact"
+            >
+              <div class="text-caption">
+                <strong>Pro Tip:</strong> Visit any cave page to see descriptions. Once you've visited, click the <strong>checkmark</strong> to mark it as <em>Done</em> and keep your logbook up to date!
+              </div>
+            </v-alert>
           </v-card-text>
         </v-window-item>
       </v-window>
@@ -233,10 +248,30 @@ const joinClub = async (club) => {
 }
 
 const tourItems = [
-  { title: 'My Trips', icon: 'mdi-notebook-outline', text: 'Log and view your personal caving logbook.' },
-  { title: 'Caves', icon: 'mdi-earth', text: 'Discover nationwide cave data and access info.' },
-  { title: 'Callout', icon: 'mdi-alert-octagram', text: 'Manage your safety and trip deadlines.' },
-  { title: 'Profile', icon: 'mdi-account', text: 'Configure your preferences and memberships.' },
+  {
+    title: 'My Trips & Logbook',
+    icon: 'mdi-notebook-outline',
+    color: 'blue',
+    text: 'Click the checkmark on any cave to mark it as done. This builds your personal logbook and tracks your progress.'
+  },
+  {
+    title: 'Cave Details',
+    icon: 'mdi-earth',
+    color: 'green',
+    text: 'Explore cave descriptions, history, and photos. Access data and maps will unlock once your club is approved.'
+  },
+  {
+    title: 'Safety Callouts',
+    icon: 'mdi-alert-octagram',
+    color: 'orange',
+    text: 'A vital safety feature for cavers. Set trip deadlines and emergency contacts (Unlocks after approval).'
+  },
+  {
+    title: 'Medals & Stats',
+    icon: 'mdi-trophy-outline',
+    color: 'purple',
+    text: 'Earn medals for your caving achievements as you log more trips and explore new systems.'
+  },
 ]
 
 const nextStep = async () => {

@@ -22,8 +22,10 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/webhooks/incoming-sms', [WebhookController::class, 'handleIncomingSms']);
-Route::post('/webhooks/clicksend/sms', [\App\Http\Controllers\Webhook\ClickSendController::class, 'handleSms']);
+Route::post('/webhooks/incoming-sms', [WebhookController::class, 'handleIncomingSms'])
+    ->middleware('throttle:30,1');
+Route::post('/webhooks/clicksend/sms', [\App\Http\Controllers\Webhook\ClickSendController::class, 'handleSms'])
+    ->middleware('throttle:30,1');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
@@ -36,19 +38,16 @@ Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::cl
     ->middleware('throttle:10,1'); // Max 10 attempts per minute to prevent abuse
 
 Route::get('/users/me', function (Request $request) {
-    if ($request->user()) {
-        return new UserDetailEmailResource($request->user());
-    } else {
-        return abort(400, 'No user logged in');
-    }
-})->name('users.me');
+    return new UserDetailEmailResource($request->user());
+})->middleware('auth:sanctum')->name('users.me');
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update');
     Route::delete('/users/me', [App\Http\Controllers\UserController::class, 'destroyMe'])->name('users.me.destroy');
 });
 
 // Magic link authentication routes (no auth required)
-Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink']);
+Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink'])
+    ->middleware('throttle:5,1');
 Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCallback']);
 
 // Public CMS Pages
@@ -191,11 +190,17 @@ Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
     Route::get('activity-heatmap', [ClubDataController::class, 'activityHeatmap'])->middleware('can:view,club');
 });
 
-Route::get('logout', function (Request $request) {
-    Auth::logout();
+Route::post('logout', function (Request $request) {
+    // Invalidate the session for SPA/stateful auth
+    Auth::guard('web')->logout();
 
-    return redirect('/');
-});
+    if ($request->hasSession()) {
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
+
+    return response()->json(['message' => 'Logged out']);
+})->middleware('auth:sanctum');
 
 Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{id}', [App\Http\Controllers\NewsController::class, 'show'])->name('news.show');

@@ -50,7 +50,8 @@ vi.mock('vue-router', () => ({
   }),
   useRoute: () => ({
     params: { id: '1' }
-  })
+  }),
+  onBeforeRouteLeave: vi.fn()
 }))
 
 const mockTrip = {

@@ -76,7 +76,8 @@ const mockRouter = {
 
 vi.mock('vue-router', () => ({
   useRouter: () => mockRouter,
-  useRoute: () => mockRoute
+  useRoute: () => mockRoute,
+  onBeforeRouteLeave: vi.fn()
 }))
 
 // Mock fetch globally

@@ -6,9 +6,9 @@ const pushMock = vi.fn()
 
 // Mock vue-router
 vi.mock('vue-router', () => ({
-    useRouter: () => ({
-        push: pushMock
-    })
+    useRouter: () => ({ push: vi.fn() }),
+    useRoute: () => ({ query: {} }),
+    onBeforeRouteLeave: vi.fn()
 }))
 
 // Mock Pinia store

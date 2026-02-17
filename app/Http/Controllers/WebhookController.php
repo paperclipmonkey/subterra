@@ -21,6 +21,14 @@ class WebhookController extends Controller
      */
     public function handleIncomingSms(Request $request)
     {
+        // Verify webhook secret to prevent spoofed requests
+        $secret = config('services.sms_works.webhook_secret');
+        if (!$secret || !hash_equals($secret, $request->header('X-Webhook-Secret') ?? '')) {
+            Log::warning('SMS webhook attempt with invalid secret', ['ip' => $request->ip()]);
+
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
         // Log the incoming request for debugging
         Log::info('Incoming SMS Webhook:', $request->all());
 

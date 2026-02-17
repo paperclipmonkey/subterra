@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -142,5 +143,35 @@ class RoleBasedAccessTest extends TestCase
 
         $user->removeRole('duty_officer');
         $this->assertFalse($user->is_admin);
+    }
+
+    public function test_toggle_role_rejects_invalid_role_slug()
+    {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($admin)->putJson("/api/admin/users/{$user->id}/toggle-role/super_hacker");
+
+        $response->assertStatus(422);
+    }
+
+    public function test_toggle_role_accepts_valid_role_slug()
+    {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->create();
+        Role::firstOrCreate(['slug' => 'data_admin', 'name' => 'Data Admin']);
+
+        $response = $this->actingAs($admin)->putJson("/api/admin/users/{$user->id}/toggle-role/data_admin");
+
+        $response->assertStatus(200);
+    }
+
+    public function test_user_cannot_toggle_own_role()
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->putJson("/api/admin/users/{$admin->id}/toggle-role/platform_admin");
+
+        $response->assertStatus(403);
     }
 }

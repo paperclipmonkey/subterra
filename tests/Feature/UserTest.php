@@ -26,6 +26,14 @@ class UserTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_401_when_accessing_me_unauthenticated()
+    {
+        $response = $this->getJson(route('users.me'));
+
+        $response->assertStatus(401);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_a_collection_of_users()
     {
         $this->actingAs(User::factory()->create(['name' => 'Test User 1']), 'sanctum');

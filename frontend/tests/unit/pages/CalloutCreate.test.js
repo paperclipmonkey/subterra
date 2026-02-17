@@ -5,7 +5,8 @@ import CalloutIndex from '@/pages/callout/create.vue'
 // Mock dependencies
 const pushMock = vi.fn()
 vi.mock('vue-router', () => ({
-    useRouter: () => ({ push: pushMock })
+    useRouter: () => ({ push: pushMock }),
+    onBeforeRouteLeave: vi.fn()
 }))
 
 // Mock Axios

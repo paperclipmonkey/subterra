@@ -33,11 +33,9 @@ services:
             POSTGRES_DB: '${DB_DATABASE}'
             POSTGRES_USER: '${DB_USERNAME}'
             PGDATA: /var/lib/postgresql/data/pgdata
-        # volumes:
-            # - 'sail-mysql:/var/lib/postgresql/data'
-            # - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
             - sail
+        shm_size: 2g
     mailpit:
         image: 'axllent/mailpit:latest'
         ports:
@@ -45,19 +43,6 @@ services:
             - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
         networks:
             - sail
-    node:
-        image: 'node:24'
-        volumes:
-            - './frontend:/var/www/html'
-        working_dir: '/var/www/html'
-        entrypoint: 'yarn run dev --host=0.0.0.0'
-        networks:
-            - sail
-        ports:
-            - '3000:3000'
 networks:
     sail:
         driver: bridge
-volumes:
-    sail-mysql:
-        driver: local

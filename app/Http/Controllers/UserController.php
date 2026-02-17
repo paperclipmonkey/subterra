@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -38,21 +39,16 @@ class UserController extends Controller
         }
 
         // Count how many trips each user has shared with the current user
+        // Uses a single SQL query instead of loading all trips into memory
         $tripUserCounts = collect();
         if ($currentUser) {
-            $trips = \App\Models\Trip::whereHas('participants', function ($q) use ($currentUser) {
-                $q->where('user_id', $currentUser->id);
-            })
-                ->with('participants:id')
-                ->get();
-
-            foreach ($trips as $trip) {
-                foreach ($trip->participants as $participant) {
-                    if ($participant->id !== $currentUser->id) {
-                        $tripUserCounts[$participant->id] = ($tripUserCounts[$participant->id] ?? 0) + 1;
-                    }
-                }
-            }
+            $tripUserCounts = DB::table('trip_user')
+                ->select('trip_user.user_id', DB::raw('COUNT(*) as trip_count'))
+                ->join('trip_user as tu2', 'trip_user.trip_id', '=', 'tu2.trip_id')
+                ->where('tu2.user_id', $currentUser->id)
+                ->where('trip_user.user_id', '!=', $currentUser->id)
+                ->groupBy('trip_user.user_id')
+                ->pluck('trip_count', 'user_id');
         }
 
         $query = User::query();
@@ -170,6 +166,12 @@ class UserController extends Controller
      */
     public function toggleRole(User $user, string $role): UserDetailEmailResource
     {
+        // Whitelist of roles that can be assigned via the admin panel
+        $allowedRoles = ['platform_admin', 'data_admin', 'duty_officer'];
+        if (!in_array($role, $allowedRoles, true)) {
+            abort(422, 'Invalid role.');
+        }
+
         // Prevent users from editing their own roles
         if ($user->id === auth()->id()) {
             abort(403, 'You cannot modify your own roles.');

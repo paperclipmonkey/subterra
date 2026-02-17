@@ -42,8 +42,8 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue"
-import { useRoute, useRouter } from "vue-router"
+import { ref, watch, onMounted, computed } from "vue"
+import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import CaveSystemForm from '@/components/CaveSystemForm.vue'
 import { useAppStore } from '@/stores/app'
 import { convertFileToBase64 } from '@/utilities.js'
@@ -62,6 +62,32 @@ const errorMessage = ref('')
 const filesToDelete = ref([])
 const newFiles = ref([])
 const updatedFiles = ref([])
+const isSaved = ref(false)
+
+const initialSystemState = ref(null)
+
+const isDirty = computed(() => {
+  if (isSaved.value) return false
+  if (!initialSystemState.value) return false
+  // Check basic system data
+  return JSON.stringify(cavesystem.value) !== initialSystemState.value ||
+    filesToDelete.value.length > 0 ||
+    newFiles.value.length > 0 ||
+    updatedFiles.value.length > 0
+})
+
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?')
+    if (answer) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+})
 
 const cavesystem = ref({
   name: '',
@@ -81,6 +107,7 @@ const load = async () => {
     if (!response.ok) throw new Error('Failed to load cave system')
     cavesystem.value = (await response.json()).data
     cavesystem.value.files = cavesystem.value.files || []
+    initialSystemState.value = JSON.stringify(cavesystem.value)
     filesToDelete.value = []
     newFiles.value = []
     updatedFiles.value = []
@@ -138,6 +165,7 @@ const save = async () => {
 
       if (response.ok) {
         // Go back to previous page (likely the cave page)
+        isSaved.value = true
         // Check if we have history to go back to, otherwise fallback to system page
         if (window.history.state && window.history.state.back) {
           router.go(-1)
@@ -191,6 +219,7 @@ const save = async () => {
 
       if (response.ok) {
         // Redirect back to the original cave system page
+        isSaved.value = true
         toast.success('Thank you! Your suggestion has been submitted for review.')
         if (window.history.state && window.history.state.back) {
           router.go(-1)

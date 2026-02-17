@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 use Tests\TestCase;
 
 class SuggestedEditTest extends TestCase
@@ -283,5 +284,67 @@ class SuggestedEditTest extends TestCase
         ]);
 
         Storage::disk('media')->assertMissing('pending_edits/cave/another_test_image.webp');
+    }
+
+    public function test_suggested_edit_filters_non_whitelisted_fields()
+    {
+        SlackAlert::fake();
+        $user = User::factory()->withApprovedClub()->create();
+
+        $payload = [
+            'suggestable_type' => 'cave',
+            'suggestable_id' => null,
+            'suggested_data' => [
+                'name' => 'New Cave Name',
+                'description' => 'A beautiful new cave.',
+                'is_admin_only' => true, // This field is NOT whitelisted
+                'internal_notes' => 'Hackers were here', // This field is NOT whitelisted
+            ],
+            'original_data' => null,
+        ];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/suggested-edits', $payload);
+
+        $response->assertStatus(201);
+
+        $suggestion = SuggestedEdit::first();
+        $this->assertNotNull($suggestion);
+
+        // Verify that only whitelisted fields are present in the stored data
+        $this->assertArrayHasKey('name', $suggestion->suggested_data);
+        $this->assertArrayHasKey('description', $suggestion->suggested_data);
+        $this->assertArrayNotHasKey('is_admin_only', $suggestion->suggested_data);
+        $this->assertArrayNotHasKey('internal_notes', $suggestion->suggested_data);
+
+        $this->assertEquals('New Cave Name', $suggestion->suggested_data['name']);
+    }
+
+    public function test_suggested_edit_rejects_arbitrary_suggestable_type()
+    {
+        $user = User::factory()->withApprovedClub()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/suggested-edits', [
+            'suggestable_type' => 'App\\Models\\User',
+            'suggested_data' => ['name' => 'Hacked'],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('suggestable_type');
+    }
+
+    public function test_suggested_edit_accepts_valid_suggestable_type()
+    {
+        $user = User::factory()->withApprovedClub()->create();
+        $cave = Cave::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/suggested-edits', [
+            'suggestable_type' => 'cave',
+            'suggestable_id' => $cave->id,
+            'suggested_data' => ['name' => 'Updated Cave Name'],
+            'original_data' => ['name' => $cave->name],
+        ]);
+
+        $response->assertStatus(201);
     }
 }

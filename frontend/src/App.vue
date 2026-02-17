@@ -30,11 +30,11 @@
     <v-system-bar v-else-if="appStore.user.id && !appStore.canSuggest && appStore.user.onboarding_completed_at" color="warning"
                   class="text-white px-4" height="40" style="z-index: 9999;" window>
       <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? 'mdi-account-clock' : 'mdi-account-plus' }}</v-icon>
-      <span class="font-weight-bold">{{ hasPendingApprovals ? 'PENDING APPROVAL' : 'ACTION REQUIRED' }}</span>
+      <span class="font-weight-bold">{{ hasPendingApprovals ? 'MEMBERSHIP PENDING' : 'MEMBERSHIP REQUIRED' }}</span>
       <v-spacer />
-      <span>Join a club to unlock full access</span>
+      <span>{{ hasPendingApprovals ? 'Your club application is being reviewed' : 'Join a club to unlock full access' }}</span>
       <v-btn variant="text" size="small" class="ml-4" to="/waitlist" color="white" border>
-        {{ hasPendingApprovals ? 'Track Progress' : 'Join Club' }}
+        {{ hasPendingApprovals ? 'Check Status' : 'Join Club' }}
       </v-btn>
     </v-system-bar>
 

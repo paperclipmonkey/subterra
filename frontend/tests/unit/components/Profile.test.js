@@ -27,7 +27,8 @@ vi.mock('@/stores/app', () => ({
 vi.mock('vue-router', () => ({
     useRoute: () => ({
         params: { id: 1 }
-    })
+    }),
+    onBeforeRouteLeave: vi.fn()
 }))
 
 // Mock Calendar Heatmap

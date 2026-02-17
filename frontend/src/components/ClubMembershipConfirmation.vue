@@ -27,38 +27,49 @@
         <!-- Step 2: Club Selection -->
         <div v-else>
           <div v-if="pendingClubs && pendingClubs.length">
-            <h3 class="mb-2">Pending Club Memberships</h3>
-            <v-list>
-              <v-list-item v-for="club in pendingClubs" :key="club.id">
-                <v-list-item-title>{{ club.name }}</v-list-item-title>
-                <v-list-item-subtitle>
-                  <v-chip color="warning" size="small">Pending approval</v-chip>
+            <h3 class="text-h6 font-weight-bold mb-4">Your Applications</h3>
+            <v-list class="pa-0">
+              <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-0 mb-4 border rounded-lg">
+                <template #prepend>
+                  <v-avatar color="warning" size="40" class="mr-4">
+                    <v-icon color="white">mdi-account-clock</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-bold">{{ club.name }}</v-list-item-title>
+                <v-list-item-subtitle class="mt-1">
+                  <v-chip color="warning" size="small" variant="flat" class="mr-2">Pending</v-chip>
+                  <span class="text-caption text-medium-emphasis">
+                    Submitted {{ formatRelativeTime(club.pivot?.created_at) }}
+                  </span>
                 </v-list-item-subtitle>
               </v-list-item>
             </v-list>
-            <v-divider class="my-4" />
+            <v-divider class="my-6" />
           </div>
           <p class="mb-4">
             Please confirm which BCA club(s) you are a member of. Your request will be sent to the club administrators for approval.
           </p>
           
-          <v-alert type="info" variant="tonal" class="mb-6" border="start">
-            <div class="text-subtitle-1 font-weight-bold mb-2">Membership Benefits</div>
+          <v-alert type="info" variant="tonal" class="mb-6" border="start" icon="mdi-shield-check">
+            <div class="text-subtitle-1 font-weight-bold mb-2">Why join a club?</div>
+            <p class="text-body-2 mb-4">
+              Subterra is a community-driven platform. Many features are restricted to verified club members to ensure the privacy and security of sensitive cave data.
+            </p>
             <v-row dense>
               <v-col cols="12" sm="6">
-                <div class="font-weight-medium mb-1">Available Now:</div>
+                <div class="font-weight-bold mb-1 text-primary">Unlocked Now:</div>
                 <ul class="ml-4 text-body-2">
-                  <li>Log your trips & track progress</li>
-                  <li>View public cave descriptions</li>
-                  <li>Browse cave systems</li>
+                  <li><strong>Log Trips</strong>: Records your underground adventures.</li>
+                  <li><strong>Track Stats</strong>: See your caving progress and medals.</li>
+                  <li><strong>Public Data</strong>: See cave names and basic info.</li>
                 </ul>
               </v-col>
               <v-col cols="12" sm="6">
-                <div class="font-weight-medium mb-1">After Approval:</div>
+                <div class="font-weight-bold mb-1 text-success">After Approval:</div>
                 <ul class="ml-4 text-body-2">
-                  <li>View cave locations & maps</li>
-                  <li>See detailed access information</li>
-                  <li>Create safety callouts</li>
+                  <li><strong>Interactive Maps</strong>: View precise cave locations.</li>
+                  <li><strong>Access Info</strong>: Read detailed landowner contacts.</li>
+                  <li><strong>Safety Callouts</strong>: Use our emergency notification system.</li>
                 </ul>
               </v-col>
             </v-row>
@@ -110,6 +121,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import moment from 'moment'
 const props = defineProps({
   pendingClubs: {
     type: Array,
@@ -140,6 +152,11 @@ watch(() => props.user, (newUser) => {
     fullName.value = newUser.name
   }
 }, { immediate: true })
+
+const formatRelativeTime = (time) => {
+  if (!time) return 'recently'
+  return moment(time).fromNow()
+}
 
 const saveName = async () => {
   if (!fullName.value) return

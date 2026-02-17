@@ -15,6 +15,7 @@ vi.mock('@/stores/app', () => ({
 vi.mock('vue-router', () => ({
     useRouter: vi.fn(),
     useRoute: vi.fn(),
+    onBeforeRouteLeave: vi.fn(),
     RouterLink: {
         template: '<a><slot /></a>'
     }

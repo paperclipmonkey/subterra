@@ -7,6 +7,7 @@ use App\Services\CalloutService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class CalloutController extends Controller
 {
@@ -58,6 +59,8 @@ class CalloutController extends Controller
                 'callout' => $callout,
             ], 201);
         } catch (Exception $e) {
+            Log::error('Callout creation failed', ['error' => $e->getMessage(), 'user' => $request->user()->id]);
+
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
@@ -99,6 +102,18 @@ class CalloutController extends Controller
     public function show($id)
     {
         $callout = Callout::with(['participants', 'cave', 'exitCave'])->findOrFail($id);
+
+        // Limit sensitive fields for unauthenticated users
+        if (!auth()->check()) {
+            return response()->json(['data' => [
+                'id' => $callout->id,
+                'status' => $callout->status,
+                'callout_time' => $callout->callout_time,
+                'cave' => $callout->cave ? ['id' => $callout->cave->id, 'name' => $callout->cave->name] : null,
+                'exit_cave' => $callout->exitCave ? ['id' => $callout->exitCave->id, 'name' => $callout->exitCave->name] : null,
+                'participant_count' => $callout->participants->count(),
+            ]]);
+        }
 
         return response()->json(['data' => $callout]);
     }

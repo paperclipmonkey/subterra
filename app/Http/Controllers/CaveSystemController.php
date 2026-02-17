@@ -40,7 +40,18 @@ class CaveSystemController extends Controller
 
     public function update(Request $request, CaveSystem $caveSystem)
     {
-        $caveSystem->update($request->except(['new_files', 'new_file_details', 'deleted_files']));
+        $data = $request->except(['new_files', 'new_file_details', 'deleted_files']);
+
+        // Ensure description is handled correctly if it's an empty string
+        if ($request->has('description')) {
+            $data['description'] = $request->input('description');
+        }
+
+        if ($request->has('references')) {
+            $data['references'] = $request->input('references');
+        }
+
+        $caveSystem->update($data);
 
         // Handle file deletions first
         if ($request->filled('deleted_files') && is_array($request->input('deleted_files'))) {

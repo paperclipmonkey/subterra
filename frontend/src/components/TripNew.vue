@@ -229,7 +229,7 @@ import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'
 import MilkdownEditor from './MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 
 const router = useRouter()
@@ -239,10 +239,45 @@ const notificationStore = useNotificationStore()
 const markdownOutput = ref('')
 
 const showAddParticipant = ref(false)
+const isSaved = ref(false)
 const isSaving = ref(false)
 const isAddingParticipant = ref(false)
 const isSearching = ref(false)
 const addParticipantError = ref(null)
+
+const initialTripState = JSON.stringify({
+  id: -1,
+  name: '',
+  description: '',
+  media: [],
+  entrance_cave_id: '',
+  exit_cave_id: '',
+  participants: [null], // We'll handle this carefully
+  cave_system_id: null,
+  visibility: 'public',
+})
+
+const isDirty = computed(() => {
+  if (isSaved.value) return false
+  // Basic check: has anything changed from empty?
+  return trip.name !== '' ||
+    trip.description !== '' ||
+    trip.entrance_cave_id !== '' ||
+    pendingMedia.value.length > 0
+})
+
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?')
+    if (answer) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+})
 
 let trip = reactive({
   id: -1,
@@ -716,6 +751,7 @@ const updateTrip = async (tripPayload) => {
     body: JSON.stringify(tripPayload)
   })
   if (response.ok) {
+    isSaved.value = true
     validationErrors.value = {} // Clear errors on success
     notificationStore.showSuccess('Trip updated successfully! 🎉')
     router.push('/trips/' + tripPayload.id)
@@ -734,6 +770,7 @@ const saveTrip = async (tripPayload) => {
     body: JSON.stringify(tripPayload)
   })
   if (response.ok) {
+    isSaved.value = true
     validationErrors.value = {} // Clear errors on success
     const savedTrip = (await response.json()).data
     notificationStore.showSuccess('Trip saved successfully! 🚀')

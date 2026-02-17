@@ -170,6 +170,49 @@ class CalloutTest extends TestCase
         $response->assertJsonPath('data.id', $callout->id);
         $response->assertJsonPath('data.cave.id', $cave->id);
         $response->assertJsonPath('data.exit_cave.id', $exitCave->id);
+        // Guests should see limited data (participant_count instead of full participants)
+        $response->assertJsonPath('data.participant_count', 0);
+    }
+
+    public function test_guest_callout_show_does_not_expose_participant_details()
+    {
+        $user = User::factory()->create();
+        $cave = Cave::factory()->create();
+        $callout = Callout::factory()->create([
+            'user_id' => $user->id,
+            'cave_id' => $cave->id,
+        ]);
+        $callout->participants()->create([
+            'name' => 'Secret Person',
+            'phone' => '+447777777777',
+            'email' => 'secret@test.com',
+        ]);
+
+        $response = $this->getJson("/api/callouts/{$callout->id}");
+
+        $response->assertStatus(200);
+        // Guests should NOT see participant details
+        $response->assertJsonMissing(['phone' => '+447777777777']);
+        $response->assertJsonMissing(['email' => 'secret@test.com']);
+        $response->assertJsonMissing(['name' => 'Secret Person']);
+        // But should see participant count
+        $response->assertJsonPath('data.participant_count', 1);
+    }
+
+    public function test_authenticated_user_sees_full_callout_details()
+    {
+        $user = User::factory()->create();
+        $callout = Callout::factory()->create(['user_id' => $user->id]);
+        $callout->participants()->create([
+            'name' => 'Visible Person',
+            'phone' => '+447777777777',
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/callouts/{$callout->id}");
+
+        $response->assertStatus(200);
+        // Authenticated users should see full data
+        $response->assertJsonFragment(['name' => 'Visible Person']);
     }
 
     public function test_user_can_mark_safe_after_rescue_initiated()

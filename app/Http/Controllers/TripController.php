@@ -109,7 +109,7 @@ class TripController extends Controller
 
     public function store(StoreTripRequest $request): TripResource
     {
-        $tripData = $request->all();
+        $tripData = $request->validated();
 
         if (!isset($tripData['visibility'])) {
             $tripData['visibility'] = 'public';
@@ -121,19 +121,18 @@ class TripController extends Controller
         $trip->save();
 
         $participants = $request->input('participants', []);
-        $participantIds = array_map(function ($id) {
-            return User::withoutGlobalScopes()->where('id', $id)->first()->id;
-        }, $participants);
+        $participantIds = User::withoutGlobalScopes()
+            ->whereIn('id', $participants)
+            ->pluck('id')
+            ->toArray();
 
         $trip->participants()->sync($participantIds);
 
         // Fire TripParticipantTagged event for each participant including the creator
         $creator = User::withoutGlobalScopes()->find(auth()->id());
-        foreach ($participantIds as $participantId) {
-            $participant = User::withoutGlobalScopes()->find($participantId);
-            if ($participant) {
-                event(new TripParticipantTagged($trip, $participant, $creator));
-            }
+        $participantModels = User::withoutGlobalScopes()->whereIn('id', $participantIds)->get();
+        foreach ($participantModels as $participant) {
+            event(new TripParticipantTagged($trip, $participant, $creator));
         }
 
         $media = $request->input('media', []);
@@ -195,9 +194,10 @@ class TripController extends Controller
         $trip->update($data);
 
         $participants = $request->input('participants', []);
-        $participantIds = array_map(function ($id) {
-            return User::withoutGlobalScopes()->where('id', $id)->first()->id;
-        }, $participants);
+        $participantIds = User::withoutGlobalScopes()
+            ->whereIn('id', $participants)
+            ->pluck('id')
+            ->toArray();
 
         $trip->participants()->sync($participantIds);
 

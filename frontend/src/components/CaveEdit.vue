@@ -56,8 +56,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue"
-import { useRoute, useRouter } from "vue-router"
+import { ref, onMounted, watch, computed } from "vue"
+import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import VueMarkdown from 'vue-markdown-render'
 import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
@@ -72,6 +72,28 @@ const form = ref(null)
 const loading = ref(false)
 const errorSnackbar = ref(false)
 const errorMessage = ref('')
+const isSaved = ref(false)
+
+const initialCaveState = ref(null)
+
+const isDirty = computed(() => {
+  if (isSaved.value) return false
+  if (!initialCaveState.value) return false
+  return JSON.stringify(cave.value) !== initialCaveState.value
+})
+
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?')
+    if (answer) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+})
 
 const cave = ref({
   name: '',
@@ -102,6 +124,7 @@ const fetchCave = async () => {
     if (response.ok) {
       const data = (await response.json()).data
       cave.value = data
+      initialCaveState.value = JSON.stringify(data)
     }
   } catch (error) {
     console.error("Error fetching cave:", error)
@@ -125,6 +148,7 @@ const saveCave = async () => {
       })
 
       if (response.ok) {
+        isSaved.value = true
         router.push('/caves/' + cave.value.slug)
       } else {
         const data = await response.json()
@@ -150,6 +174,7 @@ const saveCave = async () => {
       if (response.ok) {
         // Stay on the original cave page when suggesting edits
         toast.success('Thank you! Your suggestion has been submitted for review.')
+        isSaved.value = true
         router.push('/caves/' + route.params.id)
       } else {
         const data = await response.json()

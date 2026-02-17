@@ -67,8 +67,8 @@
           <v-col cols="12" sm="8" class="d-flex flex-column">
             <v-card-item>
               <div class="d-flex justify-space-between align-start mb-1">
-                <v-card-title class="text-h5 font-weight-bold pt-0">{{ route.name }}</v-card-title>
-                <v-chip color="warning" variant="flat" size="small" class="font-weight-bold">
+                <v-card-title class="text-h5 font-weight-bold pt-0 text-truncate">{{ route.name }}</v-card-title>
+                <v-chip color="warning" variant="flat" size="small" class="font-weight-bold flex-shrink-0 ml-2">
                   Grade {{ route.grade || '?' }}
                   <v-tooltip v-if="route.grade" activator="parent" location="top">
                     {{ getGradeDescription(route.grade) }}
