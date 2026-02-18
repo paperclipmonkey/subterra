@@ -21,9 +21,6 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\CalloutCreated::class => [
             \App\Listeners\SendCalloutCreatedSlackAlert::class,
         ],
-        \App\Events\OnCallShiftCreated::class => [
-            \App\Listeners\SendOnCallShiftCreatedSlackAlert::class,
-        ],
         \App\Events\TripCreated::class => [
             \App\Listeners\SendTripCreatedSlackAlert::class,
         ],
