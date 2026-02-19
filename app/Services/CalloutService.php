@@ -19,7 +19,6 @@ use Spatie\SlackAlerts\Facades\SlackAlert;
 class CalloutService
 {
     public function __construct(
-        private readonly SmsService $smsService,
         private readonly GcpWatchdogService $watchdogService
     ) {
     }

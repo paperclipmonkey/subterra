@@ -60,11 +60,15 @@ class CaveResource extends JsonResource
         }
 
         // Remove nulls from systemLengthTags to avoid merge errors
-        $systemLengthTags = $systemLengthTags->filter(function ($tag) { return $tag instanceof Tag; });
+        $systemLengthTags = $systemLengthTags->filter(function ($tag) {
+            return $tag instanceof Tag;
+        });
 
         // Ensure $this->tags is always a collection of Tag models
         $tags = $this->tags instanceof \Illuminate\Support\Collection ? $this->tags : collect($this->tags);
-        $tags = $tags->filter(function ($tag) { return $tag instanceof Tag; });
+        $tags = $tags->filter(function ($tag) {
+            return $tag instanceof Tag;
+        });
         if ($previoslyDoneTag instanceof Tag) {
             $tags = $tags->merge([$previoslyDoneTag]);
         }
@@ -81,7 +85,9 @@ class CaveResource extends JsonResource
             'hero_image' => new CaveMediaResource($this->whenLoaded('heroImage', $this->heroImage)),
             'entrance_image' => new CaveMediaResource($this->whenLoaded('entranceImage', $this->entranceImage)),
             'media' => CaveMediaResource::collection($this->whenLoaded('media')),
-            'tags' => TagResource::collection($tags->filter(function ($tag) { return $tag instanceof Tag; })),
+            'tags' => TagResource::collection($tags->filter(function ($tag) {
+                return $tag instanceof Tag;
+            })),
             'caving_region' => $this->caving_region,
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,

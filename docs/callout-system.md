@@ -319,7 +319,6 @@ flowchart TB
         API["API Server"]
         DB[(Database)]
         Scheduler["⏱️ 1-min Scheduler"]
-        SMSWorks["SMS Works"]
         ClickSend["ClickSend"]
         EmailSvc["Email"]
         SlackSvc["Slack"]
@@ -343,7 +342,7 @@ flowchart TB
     API --> DB
     API --> WatchdogAPI
     WatchdogAPI --> Firestore
-    API --> SMSWorks
+    API --> ClickSend
     API --> EmailSvc
     API --> SlackSvc
 

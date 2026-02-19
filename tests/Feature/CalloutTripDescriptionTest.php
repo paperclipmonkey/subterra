@@ -7,7 +7,6 @@ use App\Models\OnCallShift;
 use App\Models\User;
 use App\Services\CalloutService;
 use App\Services\GcpWatchdogService;
-use App\Services\SmsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -30,15 +29,12 @@ class CalloutTripDescriptionTest extends TestCase
         $system = \App\Models\CaveSystem::factory()->create();
         $cave = \App\Models\Cave::factory()->create(['cave_system_id' => $system->id]);
 
-        // 2. Mock SMS Service
-        $smsMock = Mockery::mock(SmsService::class);
-        $smsMock->shouldReceive('sendMessage')->zeroOrMoreTimes();
-        // Mock the GCP Watchdog service
+        // 2. Mock the GCP Watchdog service
         $mockWatchdog = Mockery::mock(GcpWatchdogService::class);
         $mockWatchdog->shouldReceive('register')->andReturn(null);
         $mockWatchdog->shouldReceive('cancel')->andReturn(true);
 
-        $calloutService = new CalloutService($smsMock, $mockWatchdog); // Modified this line
+        $calloutService = new CalloutService($mockWatchdog);
 
         // 3. Create Callout via Service (simulating frontend)
         // Frontend sends 'trip_plan' but NOT 'description'

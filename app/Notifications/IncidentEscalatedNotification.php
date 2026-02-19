@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Channels\SmsChannel;
+use App\Channels\ClickSendChannel;
 use App\Models\Incident;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,7 +30,7 @@ class IncidentEscalatedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', SmsChannel::class];
+        return ['mail', ClickSendChannel::class];
     }
 
     /**
@@ -50,10 +50,15 @@ class IncidentEscalatedNotification extends Notification implements ShouldQueue
                     ->line('All Duty Officers are being notified. Please log in immediately.');
     }
 
-    /**
-     * Get the SMS representation of the notification.
-     */
     public function toSms(object $notifiable): string
+    {
+        return "URGENT: Incident #{$this->incident->id} waiting for Controller >15m! Please log in to Subterra immediately.";
+    }
+
+    /**
+     * Get the ClickSend SMS representation of the notification.
+     */
+    public function toClickSend(object $notifiable): string
     {
         return "URGENT: Incident #{$this->incident->id} waiting for Controller >15m! Please log in to Subterra immediately.";
     }

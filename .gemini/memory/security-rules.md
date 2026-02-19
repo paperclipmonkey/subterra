@@ -15,10 +15,7 @@
 - Role toggling validates against a whitelist of allowed role slugs
 
 ## Webhooks
-- SMS webhook (SmsWorks): validates `X-Webhook-Secret` header against `services.sms_works.webhook_secret`
 - ClickSend webhook: validates secret from `services.clicksend.webhook_secret`
-- Both must reject requests when secret is null, empty, or incorrect
-- Always use `hash_equals()` for secret comparison
 
 ## Data Exposure Rules
 - Guest/unauthenticated callout responses: show `participant_count` only, hide names/phone/email

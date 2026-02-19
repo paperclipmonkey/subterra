@@ -7,7 +7,6 @@ use App\Http\Controllers\HutController;
 use App\Http\Controllers\MagicLinkController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ClubAdminOrAdmin;
@@ -22,8 +21,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/webhooks/incoming-sms', [WebhookController::class, 'handleIncomingSms'])
-    ->middleware('throttle:30,1');
 Route::post('/webhooks/clicksend/sms', [\App\Http\Controllers\Webhook\ClickSendController::class, 'handleSms'])
     ->middleware('throttle:30,1');
 
