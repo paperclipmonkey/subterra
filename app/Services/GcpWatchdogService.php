@@ -73,9 +73,10 @@ class GcpWatchdogService
 
             $response = Http::timeout(10)
                 ->withHeaders(['X-Watchdog-Key' => $this->apiKey])
-                ->delete("{$this->baseUrl}/watchdog", [
+                ->withQueryParameters([
                     'callout_id' => $watchdogId,
-                ]);
+                ])
+                ->delete("{$this->baseUrl}/watchdog");
 
             if ($response->successful()) {
                 Log::info("GCP Watchdog cancelled: {$watchdogId}");
