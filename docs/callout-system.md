@@ -10,7 +10,7 @@ This document explains exactly how the system works, the design decisions behind
 
 The callout system has **three independent layers** that monitor your safety:
 
-1. **Subterra Server** — your primary application, running scheduled checks every minute
+1. **Subterra Server** — primary application, running scheduled checks every minute
 2. **GCP Watchdog** — a completely separate, cloud-hosted backup system on Google Cloud
 3. **Duty Officer Rota** — real humans on-call who are responsible for responding
 
@@ -227,7 +227,7 @@ flowchart LR
     subgraph Primary["Primary: Subterra Server"]
         direction TB
         P1["Laravel Scheduler<br/>(every 1 minute)"]
-        P2["MySQL Database"]
+        P2["Postgres Database"]
         P3["SMS Works API"]
         P4["ClickSend API"]
     end
@@ -247,8 +247,8 @@ flowchart LR
 ```
 
 The two systems share **no infrastructure**:
-- Different servers (your hosting vs Google Cloud Run)
-- Different databases (MySQL vs Firestore)
+- Different servers (Fly.io hosting vs Google Cloud Run)
+- Different databases (Postgres vs Firestore)
 - Different SMS providers (SMS Works/ClickSend vs TextMagic)
 - Different email systems (application email vs direct SMTP)
 - Different schedulers (Laravel cron vs GCP Cloud Scheduler)
