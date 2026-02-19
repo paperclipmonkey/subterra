@@ -97,7 +97,7 @@ class GcpWatchdogServiceTest extends TestCase
             return $request->method() === 'DELETE'
                 && str_contains($request->url(), '/watchdog')
                 && $request->hasHeader('X-Watchdog-Key', 'test-key')
-                && $request->url() === 'https://test-watchdog.run.app/watchdog?callout_id=' . $callout->id;
+                && $request->url() === 'https://test-watchdog.run.app/watchdog?callout_id='.$callout->id;
         });
     }
 

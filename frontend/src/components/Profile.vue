@@ -67,7 +67,7 @@
             </v-btn>
 
             <!-- Logout -->
-            <v-btn v-tooltip="'Logout'" icon variant="text" color="error" href="/api/logout">
+            <v-btn v-tooltip="'Logout'" icon variant="text" color="error" @click="appStore.logout()">
               <v-icon>mdi-logout</v-icon>
             </v-btn>
           </div>
@@ -162,7 +162,7 @@
             <div class="pa-4 pt-6 overflow-x-auto">
               <div class="calendar-wrapper">
                 <calendar-heatmap :values="heatmapData" :end-date="endDate"
-                                  :range-color="[&quot;#f3f4f6&quot;, &quot;#d1fae5&quot;, &quot;#34d399&quot;, &quot;#10b981&quot;, &quot;#059669&quot;]" tooltip-unit="hours"
+                                  :range-color="['#f3f4f6', '#d1fae5', '#34d399', '#10b981', '#059669']" tooltip-unit="hours"
                                   class="heatmap-scale" />
               </div>
             </div>
@@ -292,15 +292,17 @@ import moment from 'moment'
 import { useAppStore } from '@/stores/app'
 import { usePageTitle } from '@/composables/usePageTitle'
 
+const appStore = useAppStore()
+
 const route = useRoute()
 
 const profile = ref({
-   "name": "",
-   "id": 0,
-   "photo": "",
-   "stats": { caves: 0, trips: 0, duration: 0 },
-   "bio": "",
-   "clubs": [],
+  "name": "",
+  "id": 0,
+  "photo": "",
+  "stats": { caves: 0, trips: 0, duration: 0 },
+  "bio": "",
+  "clubs": [],
 })
 
 const pageTitle = computed(() => profile.value?.name)
@@ -322,186 +324,186 @@ const downloadDescription = ref('')
 const downloadLink = ref('')
 
 const openDownloadDialog = (title, description, link) => {
-   downloadTitle.value = title
-   downloadDescription.value = description
-   downloadLink.value = link
-   isDownloadDialogOpen.value = true
+  downloadTitle.value = title
+  downloadDescription.value = description
+  downloadLink.value = link
+  isDownloadDialogOpen.value = true
 }
 
 const confirmDownload = () => {
-   window.location.href = downloadLink.value
-   isDownloadDialogOpen.value = false
+  window.location.href = downloadLink.value
+  isDownloadDialogOpen.value = false
 }
 
 const loadProfile = async (id) => {
-   loading.value = true
-   error.value = null
-   try {
-      const userApi = mande(`/api/users/${id}`)
-      const response = await userApi.get()
-      user.value = await useAppStore().getUser() || {} // Ensure valid object
-      profile.value = response.data || response
-      // Ensure stats object exists
-      if (!profile.value.stats) profile.value.stats = { caves: 0, trips: 0, duration: 0 }
+  loading.value = true
+  error.value = null
+  try {
+    const userApi = mande(`/api/users/${id}`)
+    const response = await userApi.get()
+    user.value = await useAppStore().getUser() || {} // Ensure valid object
+    profile.value = response.data || response
+    // Ensure stats object exists
+    if (!profile.value.stats) profile.value.stats = { caves: 0, trips: 0, duration: 0 }
 
-      medals.value = (profile.value.medals || [])
+    medals.value = (profile.value.medals || [])
 
-      // Fetch recent trips and heatmap data
-      // Use Promise.allSettled to ensure one failure doesn't break the whole page
-      const [recentTripsResult, heatmapResult] = await Promise.allSettled([
-         mande(`/api/users/${id}/recent-trips`).get(),
-         mande(`/api/users/${id}/activity-heatmap`).get()
-      ])
+    // Fetch recent trips and heatmap data
+    // Use Promise.allSettled to ensure one failure doesn't break the whole page
+    const [recentTripsResult, heatmapResult] = await Promise.allSettled([
+      mande(`/api/users/${id}/recent-trips`).get(),
+      mande(`/api/users/${id}/activity-heatmap`).get()
+    ])
 
-      if (recentTripsResult.status === 'fulfilled') {
-         recentTrips.value = recentTripsResult.value.data || recentTripsResult.value
-      } else {
-         console.warn(`Failed to load recent trips for user ${id}:`, recentTripsResult.reason)
-         recentTrips.value = []
-      }
+    if (recentTripsResult.status === 'fulfilled') {
+      recentTrips.value = recentTripsResult.value.data || recentTripsResult.value
+    } else {
+      console.warn(`Failed to load recent trips for user ${id}:`, recentTripsResult.reason)
+      recentTrips.value = []
+    }
 
-      if (heatmapResult.status === 'fulfilled') {
-         heatmapData.value = heatmapResult.value || []
-      } else {
-         console.warn(`Failed to load heatmap for user ${id}:`, heatmapResult.reason)
-         heatmapData.value = []
-      }
+    if (heatmapResult.status === 'fulfilled') {
+      heatmapData.value = heatmapResult.value || []
+    } else {
+      console.warn(`Failed to load heatmap for user ${id}:`, heatmapResult.reason)
+      heatmapData.value = []
+    }
 
-   } catch (err) {
-      console.error(`Error fetching profile for user ${id}:`, err)
-      if (err.response && err.response.status === 404) {
-         error.value = "User not found. It may have been deleted or you may have the wrong link."
-      } else {
-         error.value = "Failed to load profile. Please try again later."
-      }
-   } finally {
-      loading.value = false
-   }
+  } catch (err) {
+    console.error(`Error fetching profile for user ${id}:`, err)
+    if (err.response && err.response.status === 404) {
+      error.value = "User not found. It may have been deleted or you may have the wrong link."
+    } else {
+      error.value = "Failed to load profile. Please try again later."
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {
-   loadProfile(route.params.id)
+  loadProfile(route.params.id)
 })
 
 watch(() => route.params.id, (newId) => {
-   if (newId) {
-      loadProfile(newId)
-   }
+  if (newId) {
+    loadProfile(newId)
+  }
 })
 
 const openMedalModal = (medal) => {
-   selectedMedal.value = medal
-   isMedalModalOpen.value = true
+  selectedMedal.value = medal
+  isMedalModalOpen.value = true
 }
 const selectedMedal = ref({})
 const isMedalModalOpen = ref(false)
 
 const formatTripDateMonth = (date) => {
-   const parsed = moment(date)
-   return parsed.isValid() ? parsed.format('MMM') : '-'
+  const parsed = moment(date)
+  return parsed.isValid() ? parsed.format('MMM') : '-'
 }
 
 const formatTripDateDay = (date) => {
-   const parsed = moment(date)
-   return parsed.isValid() ? parsed.format('D') : '-'
+  const parsed = moment(date)
+  return parsed.isValid() ? parsed.format('D') : '-'
 }
 
 const formatNumber = (num) => {
-   return new Intl.NumberFormat().format(num || 0)
+  return new Intl.NumberFormat().format(num || 0)
 }
 
 const formatDuration = (minutes) => {
-   if (!minutes) return '0m'
-   if (minutes < 60) return `${minutes}m`
-   const hours = Math.floor(minutes / 60)
-   // const remainingMinutes = minutes % 60
-   // returning simple hours for cleaner profile stat
-   return `${hours}h+`
+  if (!minutes) return '0m'
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  // const remainingMinutes = minutes % 60
+  // returning simple hours for cleaner profile stat
+  return `${hours}h+`
 }
 </script>
 
 <style scoped>
 .bg-gradient-primary {
-   background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgb(var(--v-theme-secondary)) 100%);
-   height: 60px;
-   width: 100%;
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgb(var(--v-theme-secondary)) 100%);
+  height: 60px;
+  width: 100%;
 }
 
 @media (min-width: 600px) {
-   .bg-gradient-primary {
-      height: 100px;
-   }
+  .bg-gradient-primary {
+    height: 100px;
+  }
 }
 
 .border-lg {
-   border: 4px solid white !important;
+  border: 4px solid white !important;
 }
 
 .medals-grid {
-   display: grid;
-   grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-   gap: 16px;
-   justify-items: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 16px;
+  justify-items: center;
 }
 
 .medal-item {
-   width: 100%;
-   aspect-ratio: 1;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   border-radius: 12px;
-   padding: 8px;
-   transition: all 0.2s ease;
-   cursor: pointer;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .medal-item:hover {
-   background-color: rgb(var(--v-theme-grey-lighten-4));
-   transform: translateY(-2px);
+  background-color: rgb(var(--v-theme-grey-lighten-4));
+  transform: translateY(-2px);
 }
 
 .medal-img {
-   width: 100%;
-   height: 100%;
-   object-fit: contain;
-   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
 }
 
 .letter-spacing-1 {
-   letter-spacing: 1px;
+  letter-spacing: 1px;
 }
 
 .hover-bg {
-   transition: background-color 0.2s;
+  transition: background-color 0.2s;
 }
 
 .hover-bg:hover {
-   background-color: rgb(var(--v-theme-grey-lighten-5));
+  background-color: rgb(var(--v-theme-grey-lighten-5));
 }
 
 .medal-glow {
-   width: 140px;
-   height: 140px;
-   background: radial-gradient(circle, rgba(var(--v-theme-primary), 0.1) 0%, transparent 70%);
-   border-radius: 50%;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(var(--v-theme-primary), 0.1) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
 .medal-modal-img {
-   width: 120px;
-   height: 120px;
-   object-fit: contain;
-   filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
 }
 
 .calendar-wrapper {
-   width: 100%;
-   overflow: hidden;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Force heatmap to scale */
 .calendar-wrapper :deep(svg) {
-   width: 100%;
-   height: auto;
+  width: 100%;
+  height: auto;
 }
 </style>

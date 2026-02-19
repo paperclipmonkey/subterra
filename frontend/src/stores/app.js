@@ -40,5 +40,27 @@ export const useAppStore = defineStore('app', {
         return { name: '', email: '', is_admin: false, clubs: [] }
       }
     },
+    async logout() {
+      try {
+        this.loading = true
+        await api.post('/api/logout')
+        this.user = {
+          name: '',
+          email: '',
+          is_admin: false,
+          clubs: [],
+          roles: [],
+          onboarding_completed_at: null,
+        }
+        this.loading = false
+        window.location.href = '/'
+      } catch (error) {
+        this.loading = false
+        console.error('Logout failed:', error)
+        // Even if the API call fails, we should probably clear the local state
+        // or at least redirect to home to force a fresh session check
+        window.location.href = '/'
+      }
+    },
   },
 })
