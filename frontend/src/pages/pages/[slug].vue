@@ -10,7 +10,7 @@
       </div>
       <v-sheet class="pa-6" rounded border>
         <div class="vue-markdown">
-          <VueMarkdownRender :source="page.content" />
+          <MarkdownRenderer :source="page.content" />
         </div>
       </v-sheet>
     </div>
@@ -26,7 +26,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import VueMarkdownRender from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import moment from 'moment'
 
 const route = useRoute()
@@ -35,23 +35,23 @@ const loading = ref(true)
 const error = ref(null)
 
 const fetchPage = async () => {
-    loading.value = true
-    error.value = null
-    try {
-        const res = await fetch(`/api/pages/${route.params.slug}`)
-        if (res.status === 404) {
-            error.value = "Page not found."
-        } else if (!res.ok) {
-            error.value = "Failed to load page. Please try again later."
-        } else {
-            page.value = (await res.json()).data
-        }
-    } catch (e) {
-        console.error(e)
-        error.value = "An unexpected error occurred."
-    } finally {
-        loading.value = false
+  loading.value = true
+  error.value = null
+  try {
+    const res = await fetch(`/api/pages/${route.params.slug}`)
+    if (res.status === 404) {
+      error.value = "Page not found."
+    } else if (!res.ok) {
+      error.value = "Failed to load page. Please try again later."
+    } else {
+      page.value = (await res.json()).data
     }
+  } catch (e) {
+    console.error(e)
+    error.value = "An unexpected error occurred."
+  } finally {
+    loading.value = false
+  }
 }
 
 const formatDate = (date) => moment(date).format('MMMM Do YYYY, h:mm a')
@@ -61,58 +61,58 @@ onMounted(fetchPage)
 
 <style scoped>
 :deep(.vue-markdown) {
-    font-family: Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-    color: rgba(0, 0, 0, 0.87);
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 :deep(.vue-markdown h1),
 :deep(.vue-markdown h2),
 :deep(.vue-markdown h3) {
-    font-weight: 500;
-    margin-bottom: 16px;
-    color: #1a1a1a;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #1a1a1a;
 }
 
 :deep(.vue-markdown p) {
-    margin-bottom: 16px;
-    color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 :deep(.vue-markdown a) {
-    color: #1976D2;
-    text-decoration: none;
+  color: #1976D2;
+  text-decoration: none;
 }
 
 :deep(.vue-markdown a:hover) {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 :deep(.vue-markdown ul),
 :deep(.vue-markdown ol) {
-    padding-left: 24px;
-    margin-bottom: 16px;
-    color: rgba(0, 0, 0, 0.87);
+  padding-left: 24px;
+  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 :deep(.vue-markdown li) {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 :deep(.vue-markdown code) {
-    background-color: #f5f5f5;
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    color: #d32f2f;
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #d32f2f;
 }
 
 :deep(.vue-markdown pre) {
-    background-color: #f5f5f5;
-    padding: 16px;
-    border-radius: 4px;
-    overflow-x: auto;
-    color: #333;
+  background-color: #f5f5f5;
+  padding: 16px;
+  border-radius: 4px;
+  overflow-x: auto;
+  color: #333;
 }
 </style>

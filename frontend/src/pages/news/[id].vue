@@ -23,7 +23,7 @@
 
       <v-card class="rounded-xl pa-2 pa-sm-8" border flat>
         <div class="article-content">
-          <vue-markdown :source="article.content" />
+          <MarkdownRenderer :source="article.content" />
         </div>
       </v-card>
     </article>
@@ -33,7 +33,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import moment from 'moment'
 
 const route = useRoute()

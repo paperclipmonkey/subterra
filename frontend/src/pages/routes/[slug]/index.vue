@@ -101,7 +101,7 @@
                   </tbody>
                 </v-table>
                 <div v-if="routeDetail.description" class="mt-4 text-body-1">
-                  <vue-markdown :source="routeDetail.description" />
+                  <MarkdownRenderer :source="routeDetail.description" />
                 </div>
               </v-col>
 
@@ -172,7 +172,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()

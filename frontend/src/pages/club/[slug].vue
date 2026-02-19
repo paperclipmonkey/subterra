@@ -12,7 +12,7 @@
           </v-card-subtitle>
           <v-card-text>
             <div v-if="club.description">
-              <vue-markdown :source="club.description" />
+              <MarkdownRenderer :source="club.description" />
             </div>
             <div class="mt-4">
               <v-chip v-if="club.website" color="primary" variant="outlined" :href="club.website" target="_blank">
@@ -141,7 +141,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mande } from 'mande'
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { CalendarHeatmap } from "vue3-calendar-heatmap"
 import ClubEditModal from '@/components/ClubEditModal.vue'
 import { useAppStore } from '@/stores/app'

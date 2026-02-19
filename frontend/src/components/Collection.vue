@@ -38,7 +38,7 @@
           <CorrectionModal entity-type="collection" :entity-id="collection.id" :entity-name="collection.name" />
         </div>
         <div class="markdown-body text-body-1 text-grey-darken-3">
-          <VueMarkdown :source="collection.description" />
+          <MarkdownRenderer :source="collection.description" />
         </div>
       </div>
     </v-container>
@@ -99,7 +99,7 @@ import { useAppStore } from '@/stores/app'
 import CollectionEditModal from '@/components/CollectionEditModal.vue'
 import CollectionCaveList from '@/components/CollectionCaveList.vue'
 import CollectionMap from '@/components/CollectionMap.vue'
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CorrectionModal from '@/components/CorrectionModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 

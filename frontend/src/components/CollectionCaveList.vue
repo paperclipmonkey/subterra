@@ -15,7 +15,7 @@
               </div>
               <div v-if="cave.pivot && cave.pivot.description"
                    class="text-body-2 mt-2 font-italic text-grey-darken-3 markdown-body">
-                <VueMarkdown :source="cave.pivot.description" />
+                <MarkdownRenderer :source="cave.pivot.description" />
               </div>
             </div>
             <div class="pr-4 d-flex align-center">
@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 defineProps({
   collection: {

@@ -22,7 +22,7 @@
             <v-card-title>System</v-card-title>
             <v-card-subtitle>{{ system.name }}</v-card-subtitle>
             <v-card-text>
-              <vue-markdown v-if="system.description" :source="system.description" />
+              <MarkdownRenderer v-if="system.description" :source="system.description" />
               <p v-if="system.tags && system.tags.length"> Tags:
                 <v-chip v-for="tag in system.tags" :key="tag.tag" class="ma-1">
                   {{ tag.tag }}
@@ -58,7 +58,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
 

@@ -36,7 +36,7 @@
           </v-card-title>
           <v-card-text>
             <div v-if="hut.description" class="vue-markdown">
-              <VueMarkdownRender :source="hut.description" />
+              <MarkdownRenderer :source="hut.description" />
             </div>
             <p v-else class="text-grey font-italic">No description available.</p>
 
@@ -137,7 +137,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import VueMarkdownRender from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRoute } from 'vue-router'
 import { useHutStore } from '@/stores/huts'
 
@@ -151,7 +151,7 @@ const hutStore = useHutStore()
 const userStore = useAppStore()
 
 onMounted(() => {
-    hutStore.fetchHut(route.params.id)
+  hutStore.fetchHut(route.params.id)
 })
 
 const hut = computed(() => hutStore.currentHut)
@@ -159,12 +159,12 @@ const loading = computed(() => hutStore.loading)
 const error = computed(() => hutStore.error)
 
 const canEdit = computed(() => {
-    if (!userStore.user) return false
-    if (userStore.user.is_admin) return true
-    if (hut.value && hut.value.club_id && userStore.user.clubs) {
-        return userStore.user.clubs.some(c => c.id === hut.value.club_id && c.is_admin)
-    }
-    return false
+  if (!userStore.user) return false
+  if (userStore.user.is_admin) return true
+  if (hut.value && hut.value.club_id && userStore.user.clubs) {
+    return userStore.user.clubs.some(c => c.id === hut.value.club_id && c.is_admin)
+  }
+  return false
 })
 
 const pageTitle = computed(() => hut.value?.name)
@@ -173,86 +173,86 @@ usePageTitle(pageTitle)
 
 // Map Setup
 import {
-    MglMap,
-    MglNavigationControl,
-    MglMarker,
-    MglFullscreenControl,
+  MglMap,
+  MglNavigationControl,
+  MglMarker,
+  MglFullscreenControl,
 } from '@indoorequal/vue-maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
 const zoom = 11
 const lnglat = computed(() => {
-    if (hut.value && hut.value.location_lat && hut.value.location_lng) {
-        return [hut.value.location_lng, hut.value.location_lat]
-    }
-    return [-2, 53] // Default
+  if (hut.value && hut.value.location_lat && hut.value.location_lng) {
+    return [hut.value.location_lng, hut.value.location_lat]
+  }
+  return [-2, 53] // Default
 })
 </script>
 
 <style scoped>
 .bg-black-transparent {
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
 }
 
 .backdrop-blur {
-    backdrop-filter: blur(4px);
-    background-color: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.3) !important;
 }
 
 :deep(.vue-markdown) {
-    font-family: Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-    color: rgba(0, 0, 0, 0.87);
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 :deep(.vue-markdown h1),
 :deep(.vue-markdown h2),
 :deep(.vue-markdown h3) {
-    font-weight: 500;
-    margin-bottom: 16px;
-    color: #1a1a1a;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #1a1a1a;
 }
 
 :deep(.vue-markdown p) {
-    margin-bottom: 16px;
-    color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 :deep(.vue-markdown a) {
-    color: #1976D2;
-    text-decoration: none;
+  color: #1976D2;
+  text-decoration: none;
 }
 
 :deep(.vue-markdown a:hover) {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 :deep(.vue-markdown ul),
 :deep(.vue-markdown ol) {
-    padding-left: 24px;
-    margin-bottom: 16px;
-    color: rgba(0, 0, 0, 0.87);
+  padding-left: 24px;
+  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 :deep(.vue-markdown li) {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 :deep(.vue-markdown code) {
-    background-color: #f5f5f5;
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    color: #d32f2f;
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #d32f2f;
 }
 
 :deep(.vue-markdown pre) {
-    background-color: #f5f5f5;
-    padding: 16px;
-    border-radius: 4px;
-    overflow-x: auto;
-    color: #333;
+  background-color: #f5f5f5;
+  padding: 16px;
+  border-radius: 4px;
+  overflow-x: auto;
+  color: #333;
 }
 </style>

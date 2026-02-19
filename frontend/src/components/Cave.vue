@@ -94,7 +94,7 @@
             <!-- Overview Tab -->
             <v-window-item value="overview">
               <div class="text-h6 mb-3 font-weight-bold display-1">Description</div>
-              <vue-markdown :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
+              <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
 
               <v-divider class="mb-6" />
 
@@ -114,7 +114,7 @@
               <div v-else-if="cave.access_info">
                 <v-alert icon="mdi-lock-alert" border="start" border-color="warning" elevation="0" color="warning"
                          variant="tonal" class="mb-4">
-                  <vue-markdown :source="cave.access_info" />
+                  <MarkdownRenderer :source="cave.access_info" />
                 </v-alert>
               </div>
               <p v-else class="text-grey text-body-2">No specific access information provided.</p>
@@ -244,8 +244,8 @@
                   </v-btn>
                 </div>
 
-                <vue-markdown v-if="cave.system.description" :source="cave.system.description"
-                              class="text-body-1 mb-4" />
+                <MarkdownRenderer v-if="cave.system.description" :source="cave.system.description"
+                                  class="text-body-1 mb-4" />
 
                 <v-chip-group class="mb-4">
                   <v-chip v-for="tag in cave.system.tags" :key="tag.tag" size="small" variant="outlined" disabled>{{ tag.tag
@@ -258,7 +258,7 @@
                 <div v-if="appStore.canSuggest && cave.system.references" class="mb-6">
                   <div class="text-subtitle-1 font-weight-bold mb-2">References</div>
                   <v-card variant="tonal" class="pa-4 bg-grey-lighten-5">
-                    <vue-markdown :source="cave.system.references" class="text-body-2" />
+                    <MarkdownRenderer :source="cave.system.references" class="text-body-2" />
                   </v-card>
                 </div>
 
@@ -537,7 +537,7 @@
 <script setup>
 import { useAppStore } from '@/stores/app'
 import { useDisplay } from 'vuetify'
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { markCaveAsDone } from '@/stores/markAsDone'
 import { useCollectionStore } from '@/stores/collections'

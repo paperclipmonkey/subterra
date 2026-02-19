@@ -54,7 +54,7 @@
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6 text-body-1 leading-relaxed">
-              <vue-markdown v-if="trip.description" :source="trip.description" />
+              <MarkdownRenderer v-if="trip.description" :source="trip.description" />
               <div v-else class="d-flex flex-column align-center justify-center py-8 text-grey">
                 <v-icon icon="mdi-fountain-pen-tip" size="large" class="mb-2 opacity-50" />
                 <p>No report written for this trip yet.</p>
@@ -230,7 +230,7 @@
 <script setup>
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import moment from 'moment'
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { ref, computed, onMounted } from 'vue'

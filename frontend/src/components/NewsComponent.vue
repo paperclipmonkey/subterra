@@ -5,7 +5,7 @@
         <v-card>
           <v-card-title>{{ key }}</v-card-title>
           <v-card-text>
-            <vue-markdown class="vue-markdown" :source="value" />      
+            <MarkdownRenderer class="vue-markdown" :source="value" />      
           </v-card-text>
         </v-card>
       </v-col>
@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import VueMarkdown from 'vue-markdown-render'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 const news = ref({})
 

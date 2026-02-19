@@ -20,10 +20,14 @@ class CaveSeeder extends Seeder
 
         // Create multiple caves within the cave system
         for ($i = 0; $i < 3; ++$i) {
+            $description = 'Description for Cave '.($i + 1);
+            if ($i === 0) {
+                $description .= "\n\n### Cave Survey Diagram\n\n```mermaid\ngraph TD\n    A[Entrance] --> B[Main Chamber]\n    B --> C[Streamway]\n    B --> D[Upper Series]\n    C --> E[Sump]\n```";
+            }
             Cave::factory()->create([
                 'cave_system_id' => $caveSystem->id,
                 'name' => 'Cave '.($i + 1),
-                'description' => 'Description for Cave '.($i + 1),
+                'description' => $description,
             ]);
         }
 
