@@ -9,6 +9,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         \App\Events\ClubAccessRequested::class => [
             \App\Listeners\SendClubAccessRequestEmail::class,
+            \App\Listeners\SendClubApplicationSlackAlert::class,
         ],
         \App\Events\ClubAccessResponded::class => [
             \App\Listeners\SendClubAccessRespondedEmail::class,
