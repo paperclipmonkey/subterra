@@ -51,7 +51,7 @@ class UserController extends Controller
                 ->pluck('trip_count', 'user_id');
         }
 
-        $query = User::query();
+        $query = User::with('clubs');
 
         if ($search) {
             // If searching, filter by name or email
@@ -271,7 +271,7 @@ class UserController extends Controller
             $query->where('user_id', $user->id);
         })
             ->where('start_time', '>=', Carbon::now()->subYear())
-            ->with('entrance', 'participants')
+            ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'participants', 'media'])
             ->orderBy('start_time', 'desc')
             ->limit(10)
             ->get();

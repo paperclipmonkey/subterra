@@ -85,7 +85,7 @@ onMounted(async () => {
       success.value = true
       
       // Refresh user data in store
-      await store.getUser()
+      await store.getUser(true)
       
       // Check if user needs to complete their profile
       if (data.data.needs_profile) {

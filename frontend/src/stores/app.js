@@ -12,6 +12,7 @@ export const useAppStore = defineStore('app', {
       roles: [],
       onboarding_completed_at: null,
     },
+    userFetched: false,
     loading: false,
   }),
 
@@ -24,17 +25,22 @@ export const useAppStore = defineStore('app', {
   },
 
   actions: {
-    async getUser() {
+    async getUser(forceRefresh = false) {
+      if (this.userFetched && !forceRefresh) {
+        return this.user
+      }
       try {
         this.loading = true
         const response = await api.get('/api/users/me', {
           suppressErrorNotification: true // Don't show error notification for unauthenticated users
         })
         this.user = response.data.data
+        this.userFetched = true
         this.loading = false
         return this.user
       } catch (error) {
         this.loading = false
+        this.userFetched = true // Set to true even on failure so we don't spam the API with unathenticated requests
         // Silently handle unauthenticated state - it's expected on public pages
         // Return empty user object
         return { name: '', email: '', is_admin: false, clubs: [] }
@@ -52,6 +58,7 @@ export const useAppStore = defineStore('app', {
           roles: [],
           onboarding_completed_at: null,
         }
+        this.userFetched = false
         this.loading = false
         window.location.href = '/'
       } catch (error) {

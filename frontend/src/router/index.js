@@ -40,7 +40,11 @@ router.beforeEach(async (to, from, next) => {
     return next()
   }
 
-  let user = await useAppStore().getUser()
+  let forceRefresh = false
+  if (to.path.startsWith('/profile') || to.path.startsWith('/callout')) {
+    forceRefresh = true
+  }
+  let user = await useAppStore().getUser(forceRefresh)
 
   // Exception for magic link login page, CMS pages, and public trip reports
   if (to.path.startsWith('/magiclink/') || to.path.startsWith('/pages/') || to.path === '/callout/active' || (to.path.startsWith('/trips/') && to.params.id && to.params.id.length >= 8)) {

@@ -35,7 +35,10 @@ Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::cl
     ->middleware('throttle:10,1'); // Max 10 attempts per minute to prevent abuse
 
 Route::get('/users/me', function (Request $request) {
-    return new UserDetailEmailResource($request->user());
+    $user = $request->user();
+    $user->load(['clubs', 'medals', 'roles', 'trips.system']);
+
+    return new UserDetailEmailResource($user);
 })->middleware('auth:sanctum')->name('users.me');
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update');
