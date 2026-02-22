@@ -97,7 +97,7 @@
             </div>
             <div class="text-caption grey--text text--lighten-1">
               Subterra is <a href="https://github.com/paperclipmonkey/subterra"
-                             class="text-decoration-none primary--text">Open Source</a>. Only go underground with a plan.
+                             class="text-decoration-none primary--text">Open Source</a>. Go underground with a plan.
             </div>
           </div>
         </div>
