@@ -29,8 +29,8 @@ class ClubSlackNotificationTest extends TestCase
         event(new ClubAccessRequested($club, $user));
 
         SlackAlert::expectMessagesSent(function ($message) use ($user, $club) {
-            $expectedUrl = url('/club/' . $club->slug) . '?editClub=1&tab=pending';
-            
+            $expectedUrl = url('/club/'.$club->slug).'?editClub=1&tab=pending';
+
             // Check the message is sent to the correctly mapped channel URL if defined,
             // but primarily check the message content has the right text.
             return str_contains($message['text'] ?? '', 'NEW CLUB APPLICATION') &&
