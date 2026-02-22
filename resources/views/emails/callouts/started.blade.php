@@ -18,7 +18,7 @@
 
 ## Participants
 @foreach($callout->participants as $participant)
-- {{ $participant->name }} ({{ $participant->phone ?? 'No Phone' }})
+- {{ $participant->name }} @if($participant->phone) <small>(Phone Provided)</small> @endif
 @endforeach
 
 <br>

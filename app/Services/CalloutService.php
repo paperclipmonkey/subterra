@@ -99,7 +99,7 @@ class CalloutService
 
             try {
                 // Collect all emails
-                $emails = collect($data['participants'] ?? [])
+                $emails = collect($callout->refresh()->participants)
                     ->pluck('email')
                     ->filter();
 
