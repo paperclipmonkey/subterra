@@ -144,7 +144,7 @@ class CheckOverdueCallouts extends Command
 
             $incident = Incident::firstOrCreate(
                 ['callout_id' => $callout->id],
-                ['status' => 'open']
+                ['id' => str()->random(6), 'status' => 'open']
             );
 
             $callout->refresh();

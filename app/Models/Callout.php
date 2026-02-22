@@ -28,6 +28,7 @@ class Callout extends Model
     }
 
     protected $fillable = [
+        'id',
         'user_id',
         'trip_id',
         'cave_id',

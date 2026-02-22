@@ -21,6 +21,7 @@ class SendCalloutCreatedSlackAlert
      */
     public function handle(CalloutCreated $event): void
     {
+        Log::info('SENDING SLACK ALERT NOW');
         try {
             $callout = $event->callout;
             $user = $callout->user; // Helper relation
@@ -33,7 +34,7 @@ class SendCalloutCreatedSlackAlert
 
             $msg = "📢 *NEW CALLOUT* posted by {$user->name} for *{$caveName}*.\n*Party of {$totalParticipants}* due back at {$time}.\n<".url('/admin/callout').'|View Callouts>';
 
-            SlackAlert::to('callouts')->message($msg);
+            SlackAlert::to('callouts-open')->message($msg);
         } catch (\Exception $e) {
             Log::error('Failed to send Callout Created Slack alert: '.$e->getMessage());
         }

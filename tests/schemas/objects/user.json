@@ -12,7 +12,13 @@
       "minLength": 1
     },
     "photo": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "has_phone": {
+      "type": "boolean"
     },
     "clubs": {
       "type": "array",
@@ -21,6 +27,11 @@
       }
     }
   },
-  "required": ["id", "name", "clubs"],
+  "required": [
+    "id",
+    "name",
+    "has_phone",
+    "clubs"
+  ],
   "additionalProperties": false
 }

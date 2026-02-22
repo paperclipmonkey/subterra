@@ -26,6 +26,7 @@ class Incident extends Model
     }
 
     protected $fillable = [
+        'id',
         'callout_id',
         'status',
         'resolved_at',

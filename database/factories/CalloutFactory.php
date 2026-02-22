@@ -13,6 +13,7 @@ class CalloutFactory extends Factory
     public function definition(): array
     {
         return [
+            'id' => str()->random(16),
             'user_id' => User::factory(),
             'cave_id' => \App\Models\Cave::factory(),
             'description' => $this->faker->sentence,

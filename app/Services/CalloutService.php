@@ -62,6 +62,7 @@ class CalloutService
 
         return DB::transaction(function () use ($user, $data, $calloutTime) {
             $callout = Callout::create([
+                'id' => str()->random(16),
                 'user_id' => $user->id,
                 'trip_id' => $data['trip_id'] ?? null,
                 'cave_id' => $data['cave_id'] ?? null,
