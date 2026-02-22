@@ -115,14 +115,12 @@ class WebhookTest extends TestCase
              ->with('+447777777777', 'Callout not cancelled. No active callout found for this number.');
         $this->app->instance(\App\Services\ClickSendService::class, $mock);
 
-        // Expect Exception because no callouts exist
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("Received SMS from +447777777777 but no active callout found.");
-
-        $this->postJson('/api/webhooks/clicksend/sms', [
+        $response = $this->postJson('/api/webhooks/clicksend/sms', [
             'from' => '+447777777777',
             'body' => 'OUT SAFE',
             'secret' => $secret,
         ]);
+
+        $response->assertStatus(200);
     }
 }

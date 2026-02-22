@@ -56,15 +56,15 @@ class ClickSendController extends Controller
 
         // 2. If no callout is found, inform the user and abort
         if ($activeCallouts->isEmpty()) {
-            $msg = "Received SMS from {$from} but no active callout found.";
-            Log::info($msg);
+            $msg = "Received SMS from {$from} ('{$body}') but no active callout found.";
+            Log::error($msg);
             
             app(\App\Services\ClickSendService::class)->sendSms(
                 $from, 
                 "Callout not cancelled. No active callout found for this number."
             );
             
-            throw new \RuntimeException($msg);
+            return response()->json(['status' => 'success']);
         }
 
         // Note: For now, we assume a phone number can only have ONE active callout.
