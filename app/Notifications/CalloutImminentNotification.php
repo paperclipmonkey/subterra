@@ -38,7 +38,7 @@ class CalloutImminentNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $url = url('/admin/callouts/'.$this->callout->id); // Link to callout admin view?
+        $url = url('/admin/callout'); // Link to callout admin view
 
         return (new MailMessage())
                     ->subject('ALERT: Incoming Callout Due Soon - '.($this->callout->cave?->name ?? 'Unknown Location'))
