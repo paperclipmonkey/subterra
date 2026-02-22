@@ -98,9 +98,9 @@ class CalloutService
             }
 
             try {
-                // Collect all emails
-                $emails = collect($callout->refresh()->participants)
-                    ->pluck('email')
+                // Collect all emails, falling back to User account if autocomplete only sent user_id
+                $emails = collect($callout->refresh()->load('participants.user')->participants)
+                    ->map(fn($p) => $p->email ?? $p->user?->email)
                     ->filter();
 
                 if ($user->email) {
@@ -152,12 +152,12 @@ class CalloutService
         }
 
         try {
-            // Ensure participants are loaded
-            $callout->loadMissing('participants');
+            // Ensure participants and attached users are loaded
+            $callout->loadMissing('participants.user');
 
             // Collect all emails
             $emails = collect($callout->participants ?? [])
-                ->pluck('email')
+                ->map(fn($p) => $p->email ?? $p->user?->email)
                 ->filter();
 
             if ($callout->user && $callout->user->email) {

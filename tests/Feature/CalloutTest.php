@@ -86,6 +86,54 @@ class CalloutTest extends TestCase
         Mail::assertSentCount(3);
     }
 
+    public function test_participants_with_only_userid_receive_emails()
+    {
+        Mail::fake();
+        $user = User::factory()->withApprovedClub()->create();
+        $cave = Cave::factory()->create();
+
+        // Admin coverage
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        // Create a registered user to be the participant
+        $registeredParticipant = User::factory()->create([
+            'name' => 'Registered Charlie',
+            'email' => 'charlie@test.com',
+            'phone' => '07777777777'
+        ]);
+
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'description' => 'Test Trip',
+            'trip_plan' => 'Detailed Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm',
+            'participants' => [
+                // Frontend autocomplete only provides user_id and name
+                ['user_id' => $registeredParticipant->id, 'name' => $registeredParticipant->name],
+            ],
+        ];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(201);
+
+        // Verify the registered participant received the email despite the payload lacking the explicit string
+        Mail::assertSent(\App\Mail\CalloutStarted::class, function ($mail) use ($registeredParticipant) {
+            return $mail->hasTo('charlie@test.com');
+        });
+        
+        // 1 for creator, 1 for participant
+        Mail::assertSentCount(2);
+    }
+
     public function test_create_callout_fails_if_no_admin_coverage()
     {
         $user = User::factory()->withApprovedClub()->create();
