@@ -27,7 +27,11 @@ class SendCalloutCreatedSlackAlert
             $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
             $time = $callout->callout_time->format('d/m H:i');
 
-            $msg = "📢 *NEW CALLOUT* posted by {$user->name} for *{$caveName}*.\nDue: {$time}.\n<".url('/admin/callout').'|View Callouts>';
+            $pCount = $callout->participants()->count();
+            $creatorIsParticipant = $callout->participants()->where('user_id', $user->id)->exists();
+            $totalParticipants = $creatorIsParticipant ? $pCount : $pCount + 1;
+
+            $msg = "📢 *NEW CALLOUT* posted by {$user->name} for *{$caveName}*.\n*Party of {$totalParticipants}* due back at {$time}.\n<".url('/admin/callout').'|View Callouts>';
 
             SlackAlert::to('callouts')->message($msg);
         } catch (\Exception $e) {

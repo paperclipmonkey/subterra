@@ -117,22 +117,6 @@ class CalloutService
 
             CalloutCreated::dispatch($callout);
 
-            try {
-                $location = $callout->cave ? $callout->cave->name : 'Custom Location';
-
-                // Calculate participants correctly:
-                // If creator is in the participants list, use the count.
-                // If creator is NOT in the participants list (unlikely based on frontend but possible via API), add 1.
-                $pCount = $callout->participants()->count();
-                $creatorIsParticipant = $callout->participants()->where('user_id', $user->id)->exists();
-                $totalParticipants = $creatorIsParticipant ? $pCount : $pCount + 1;
-
-                SlackAlert::to('callouts-open')
-                    ->message(":wave: New Callout: *{$location}* | Party of {$totalParticipants} | Return: {$callout->callout_time->format('H:i')}");
-            } catch (\Exception $e) {
-                // Ignore Slack failures
-            }
-
             return $callout;
         });
     }
