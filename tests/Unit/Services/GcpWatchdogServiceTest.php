@@ -28,6 +28,14 @@ class GcpWatchdogServiceTest extends TestCase
 
     public function test_register_sends_correct_payload()
     {
+        // 1. Create a Duty Officer to verify they are included in the payload
+        $dutyOfficer = User::factory()->create([
+            'name' => 'Jane Admin',
+            'phone' => '+447999888777',
+            'email' => 'jane@example.com',
+        ]);
+        $dutyOfficer->assignRole('duty_officer');
+
         // Create test data
         $user = User::factory()->create([
             'name' => 'John Doe',
@@ -42,11 +50,15 @@ class GcpWatchdogServiceTest extends TestCase
             'cave_id' => $cave->id,
             'callout_time' => now()->addHours(2),
             'trip_plan' => 'Test trip plan',
+            'car_parking' => 'Layby',
+            'car_registration' => 'AB12 CDE',
+            'team_details' => 'Team Alpha',
+            'location_data' => ['lat' => 51.5, 'lng' => -0.1],
         ]);
 
         // Mock HTTP response
         Http::fake([
-            '*/watchdog' => Http::response(['message' => 'Success', 'callout_id' => $callout->id], 200),
+            'https://test-watchdog.run.app/watchdog' => Http::response(['message' => 'Success', 'callout_id' => $callout->id], 200),
         ]);
 
         // Call register
@@ -57,12 +69,24 @@ class GcpWatchdogServiceTest extends TestCase
         $this->assertEquals($callout->id, $result);
 
         // Verify HTTP request was made
-        Http::assertSent(function ($request) use ($callout) {
+        Http::assertSent(function ($request) use ($callout, $dutyOfficer) {
+            $data = $request->data();
+            
+            // Validate duty officers are accurately fetched and appended
+            $hasJane = collect($data['duty_officers'])->contains(function ($do) use ($dutyOfficer) {
+                return $do['email'] === $dutyOfficer->email && $do['phone'] === $dutyOfficer->phone;
+            });
+
             return $request->url() === 'https://test-watchdog.run.app/watchdog'
                 && $request->hasHeader('X-Watchdog-Key', 'test-key')
-                && $request['callout_id'] === $callout->id
-                && isset($request['callout_time'])
-                && isset($request['user']);
+                && $data['callout_id'] === $callout->id
+                && isset($data['callout_time'])
+                && isset($data['user'])
+                && $hasJane
+                && $data['car_parking'] === 'Layby'
+                && $data['car_registration'] === 'AB12 CDE'
+                && $data['team_details'] === 'Team Alpha'
+                && $data['location_data']['lat'] === 51.5;
         });
     }
 

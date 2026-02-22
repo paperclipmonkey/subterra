@@ -141,6 +141,7 @@ describe('Watchdog API', () => {
                 callout_time: { toDate: () => new Date('2026-01-30T08:00:00Z') },
                 user: { name: 'John Doe', phone: '+1234567890', email: 'john@example.com' },
                 participants: [],
+                duty_officers: [{ name: 'Duty Officer', phone: '+1234567891', email: 'do@example.com' }],
                 trip_plan: 'Test trip',
                 cave_name: 'Test Cave',
             };

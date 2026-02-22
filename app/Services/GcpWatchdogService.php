@@ -158,6 +158,14 @@ class GcpWatchdogService
     private function buildPayload(Callout $callout): array
     {
         $callout->load(['user', 'participants', 'cave', 'exitCave']);
+        
+        $dutyOfficers = \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('slug', 'duty_officer');
+        })->get()->map(fn ($do) => [
+            'name' => $do->name,
+            'phone' => $do->phone,
+            'email' => $do->email,
+        ])->toArray();
 
         return [
             'callout_id' => $callout->id,
@@ -167,6 +175,7 @@ class GcpWatchdogService
                 'phone' => $callout->user->phone,
                 'email' => $callout->user->email,
             ],
+            'duty_officers' => $dutyOfficers,
             'participants' => $callout->participants->map(fn ($p) => [
                 'name' => $p->name,
                 'phone' => $p->phone,
@@ -174,6 +183,10 @@ class GcpWatchdogService
             ])->toArray(),
             'trip_plan' => $callout->trip_plan ?? $callout->description ?? '',
             'cave_name' => $callout->cave->name ?? 'Unknown',
+            'car_registration' => $callout->car_registration,
+            'car_parking' => $callout->car_parking,
+            'team_details' => $callout->team_details,
+            'location_data' => $callout->location_data,
         ];
     }
 }

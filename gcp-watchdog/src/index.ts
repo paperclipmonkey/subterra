@@ -229,7 +229,7 @@ app.post('/check', async (req: Request, res: Response) => {
         for (const callout of overdueCallouts) {
             const calloutId = callout.callout_id;
             const user = callout.user || {};
-            const participants = callout.participants || [];
+            const dutyOfficers = callout.duty_officers || [];
 
             console.warn(`Processing overdue callout: ${calloutId}`);
 
@@ -237,21 +237,20 @@ app.post('/check', async (req: Request, res: Response) => {
             const phoneNumbers: string[] = [];
             const emails: string[] = [];
 
-            // Add all participants
-            for (const participant of participants) {
-                if (participant.phone) phoneNumbers.push(participant.phone);
-                if (participant.email) emails.push(participant.email);
+            // Add all duty officers
+            for (const dofficer of dutyOfficers) {
+                if (dofficer.phone) phoneNumbers.push(dofficer.phone);
+                if (dofficer.email) emails.push(dofficer.email);
             }
 
             // Create alert message
             const alertMessage = `🚨 SUBTERRA EMERGENCY: Callout Overdue
 
-User: ${user.name || 'Unknown'}
-Phone: ${user.phone || 'Unknown'}
+Initiator: ${user.name || 'Unknown'} (Ph: ${user.phone || 'Unknown'})
 Expected return: ${callout.callout_time.toDate().toISOString()}
 Cave: ${callout.cave_name || 'Unknown'}
 
-Please contact immediately. If unreachable, initiate emergency protocols.
+This is a 15m overdue unacknowledged callout. Please contact the team immediately.
 
 Callout ID: ${calloutId}`;
 
