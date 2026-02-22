@@ -52,7 +52,7 @@ class SlackNotificationTest extends TestCase
         $response = $this->actingAs($user)->postJson('/api/callouts', $calloutData);
 
         if ($response->status() !== 201) {
-            throw new \Exception("Validation Failed: " . json_encode($response->json()));
+            throw new \Exception('Validation Failed: '.json_encode($response->json()));
         }
         $response->assertStatus(201);
 

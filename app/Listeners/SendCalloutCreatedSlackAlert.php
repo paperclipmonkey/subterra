@@ -21,7 +21,6 @@ class SendCalloutCreatedSlackAlert
      */
     public function handle(CalloutCreated $event): void
     {
-        Log::info('SENDING SLACK ALERT NOW');
         try {
             $callout = $event->callout;
             $user = $callout->user; // Helper relation
