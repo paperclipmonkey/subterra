@@ -68,11 +68,12 @@ class CheckOverdueCallouts extends Command
         // and a slightly wider window, but ideally we need a flag to prevent double alert.
         // Let's assume we run every minute. We check [now+15m, now+16m).
 
-        $startWindow = now()->addMinutes(15);
-        $endWindow = now()->addMinutes(16);
+        $startWindow = now()->addMinutes(14);
+        $endWindow = now()->addMinutes(15);
 
         $imminentCallouts = Callout::active()
-            ->whereBetween('callout_time', [$startWindow, $endWindow])
+            ->where('callout_time', '>', $startWindow)
+            ->where('callout_time', '<=', $endWindow)
             ->get();
 
         foreach ($imminentCallouts as $callout) {

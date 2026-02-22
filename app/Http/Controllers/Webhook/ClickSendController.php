@@ -46,7 +46,10 @@ class ClickSendController extends Controller
             ->whereIn('status', ['active', 'triggered'])
             ->where(function ($query) use ($normalizedFrom) {
                 $query->whereHas('participants', function ($q) use ($normalizedFrom) {
-                    $q->where('phone', 'like', "%{$normalizedFrom}");
+                    $q->where('phone', 'like', "%{$normalizedFrom}")
+                      ->orWhereHas('user', function ($q2) use ($normalizedFrom) {
+                          $q2->where('phone', 'like', "%{$normalizedFrom}");
+                      });
                 })
                 ->orWhereHas('user', function ($q) use ($normalizedFrom) {
                     $q->where('phone', 'like', "%{$normalizedFrom}");

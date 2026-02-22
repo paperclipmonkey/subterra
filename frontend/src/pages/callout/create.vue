@@ -392,6 +392,9 @@ export default {
       if (!currentUserParticipant || !currentUserParticipant.phone || currentUserParticipant.phone.trim().length === 0) {
         return true
       }
+      if (currentUserParticipant.phone === '🔒 Hidden') {
+        return false
+      }
       // Validate format
       const phone = currentUserParticipant.phone.replace(/\s+/g, '')
       if (phone.startsWith('07')) {
@@ -575,7 +578,7 @@ export default {
           local_id: this.generateId(),
           user_id: this.currentUser.id,
           name: this.currentUser.name,
-          phone: this.currentUser.phone || '',
+          phone: this.currentUser.phone ? '🔒 Hidden' : '',
           email: this.currentUser.email,
           locked: !!this.currentUser.phone
         })
@@ -587,9 +590,9 @@ export default {
         local_id: this.generateId(),
         user_id: user.id,
         name: user.name,
-        phone: user.phone || '',
+        phone: (user.has_phone || user.phone) ? '🔒 Hidden' : '',
         email: user.email,
-        locked: !!user.phone
+        locked: !!(user.has_phone || user.phone)
       })
       this.userSelect = null
     },
@@ -608,7 +611,14 @@ export default {
       this.processing = true
       this.clearErrors()
       try {
-        const response = await api.post('/api/callouts', this.form)
+        const payload = JSON.parse(JSON.stringify(this.form))
+        payload.participants.forEach(p => {
+          if (p.phone === '🔒 Hidden') {
+            p.phone = null
+          }
+        })
+
+        const response = await api.post('/api/callouts', payload)
         this.activeCallout = response.data.callout
 
         // Refresh user state to acknowledge the new open callout
