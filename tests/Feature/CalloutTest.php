@@ -78,6 +78,12 @@ class CalloutTest extends TestCase
         // Verify participants stored
         $callout = Callout::where('user_id', $user->id)->first();
         $this->assertCount(2, $callout->participants);
+
+        // Verify everyone received the CalloutStarted email
+        Mail::assertSent(\App\Mail\CalloutStarted::class, function ($mail) use ($user) {
+            return $mail->hasTo('alice@test.com') || $mail->hasTo('bob@test.com') || $mail->hasTo($user->email);
+        });
+        Mail::assertSentCount(3);
     }
 
     public function test_create_callout_fails_if_no_admin_coverage()
