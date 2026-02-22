@@ -71,7 +71,7 @@ class GcpWatchdogServiceTest extends TestCase
         // Verify HTTP request was made
         Http::assertSent(function ($request) use ($callout, $dutyOfficer) {
             $data = $request->data();
-            
+
             // Validate duty officers are accurately fetched and appended
             $hasJane = collect($data['duty_officers'])->contains(function ($do) use ($dutyOfficer) {
                 return $do['email'] === $dutyOfficer->email && $do['phone'] === $dutyOfficer->phone;

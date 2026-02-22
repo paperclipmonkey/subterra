@@ -9,7 +9,8 @@ use Illuminate\Notifications\Notifiable;
 
 class CalloutParticipant extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
+    use Notifiable;
 
     protected $fillable = [
         'callout_id',

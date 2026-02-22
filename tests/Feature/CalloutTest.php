@@ -104,7 +104,7 @@ class CalloutTest extends TestCase
         $registeredParticipant = User::factory()->create([
             'name' => 'Registered Charlie',
             'email' => 'charlie@test.com',
-            'phone' => '07777777777'
+            'phone' => '07777777777',
         ]);
 
         $payload = [
@@ -129,7 +129,7 @@ class CalloutTest extends TestCase
         Mail::assertSent(\App\Mail\CalloutStarted::class, function ($mail) use ($registeredParticipant) {
             return $mail->hasTo('charlie@test.com');
         });
-        
+
         // 1 for creator, 1 for participant
         Mail::assertSentCount(2);
     }

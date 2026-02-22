@@ -20,7 +20,7 @@ class CalloutParticipantNotificationTest extends TestCase
 
         $user = User::factory()->create();
         $callout = Callout::factory()->create(['user_id' => $user->id]);
-        
+
         $participant = CalloutParticipant::create([
             'callout_id' => $callout->id,
             'user_id' => null,

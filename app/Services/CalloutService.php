@@ -14,7 +14,6 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class CalloutService
 {
@@ -100,7 +99,7 @@ class CalloutService
             try {
                 // Collect all emails, falling back to User account if autocomplete only sent user_id
                 $emails = collect($callout->refresh()->load('participants.user')->participants)
-                    ->map(fn($p) => $p->email ?? $p->user?->email)
+                    ->map(fn ($p) => $p->email ?? $p->user?->email)
                     ->filter();
 
                 if ($user->email) {
@@ -141,7 +140,7 @@ class CalloutService
 
             // Collect all emails
             $emails = collect($callout->participants ?? [])
-                ->map(fn($p) => $p->email ?? $p->user?->email)
+                ->map(fn ($p) => $p->email ?? $p->user?->email)
                 ->filter();
 
             if ($callout->user && $callout->user->email) {

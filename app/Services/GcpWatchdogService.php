@@ -158,7 +158,7 @@ class GcpWatchdogService
     private function buildPayload(Callout $callout): array
     {
         $callout->load(['user', 'participants', 'cave', 'exitCave']);
-        
+
         $dutyOfficers = \App\Models\User::whereHas('roles', function ($query) {
             $query->where('slug', 'duty_officer');
         })->get()->map(fn ($do) => [

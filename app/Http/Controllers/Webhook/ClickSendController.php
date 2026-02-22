@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
 use App\Models\Callout;
-use App\Models\Incident;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -32,6 +31,7 @@ class ClickSendController extends Controller
         $configuredSecret = config('services.clicksend.webhook_secret');
         if (empty($configuredSecret) || !hash_equals($configuredSecret, $request->input('secret') ?? '')) {
             Log::warning('ClickSend Webhook attempt with invalid secret', ['ip' => $request->ip()]);
+
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
@@ -61,12 +61,12 @@ class ClickSendController extends Controller
         if ($activeCallouts->isEmpty()) {
             $msg = "Received SMS from {$from} ('{$body}') but no active callout found.";
             Log::error($msg);
-            
+
             app(\App\Services\ClickSendService::class)->sendSms(
-                $from, 
-                "Callout not cancelled. No active callout found for this number."
+                $from,
+                'Callout not cancelled. No active callout found for this number.'
             );
-            
+
             return response()->json(['status' => 'success']);
         }
 
@@ -91,7 +91,7 @@ class ClickSendController extends Controller
 
         // Use proper service to trigger watchdog, trip logging, and emails
         app(\App\Services\CalloutService::class)->cancel($callout);
-        
+
         // Retain the SMS metadata
         $callout->update(['cancelled_location' => 'SMS']);
 
@@ -102,10 +102,10 @@ class ClickSendController extends Controller
             ]);
             $callout->incident->update(['status' => 'resolved']);
         }
-        
+
         app(\App\Services\ClickSendService::class)->sendSms(
-            $originalFrom, 
-            "Callout cancelled successfully. Glad you are safe."
+            $originalFrom,
+            'Callout cancelled successfully. Glad you are safe.'
         );
     }
 
@@ -123,10 +123,10 @@ class ClickSendController extends Controller
                 Log::info("SMS for Callout {$callout->id} from {$originalFrom}: {$body} (Appended to team_details)");
             }
         }
-        
+
         // Ask the user to clarify to prevent ghost cancellations
         app(\App\Services\ClickSendService::class)->sendSms(
-            $originalFrom, 
+            $originalFrom,
             "Message logged. Not cancelled. Reply exactly 'OUT SAFE' to cancel callout."
         );
     }

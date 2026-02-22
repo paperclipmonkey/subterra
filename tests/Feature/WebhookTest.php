@@ -37,6 +37,7 @@ class WebhookTest extends TestCase
 
         $response->assertStatus(401);
     }
+
     public function test_clicksend_webhook_cancels_callout_with_strict_text_and_normalized_phone()
     {
         $secret = 'test-secret';
@@ -46,7 +47,7 @@ class WebhookTest extends TestCase
         $callout = \App\Models\Callout::factory()->create([
             'user_id' => $user->id,
             'status' => 'active',
-            'trip_plan' => 'Going caving'
+            'trip_plan' => 'Going caving',
         ]);
 
         $mock = \Mockery::mock(\App\Services\ClickSendService::class);
@@ -66,7 +67,7 @@ class WebhookTest extends TestCase
 
         $this->assertEquals('cancelled', $callout->fresh()->status);
         $this->assertDatabaseHas('trips', [
-            'description' => 'Going caving'
+            'description' => 'Going caving',
         ]);
     }
 
@@ -79,7 +80,7 @@ class WebhookTest extends TestCase
         $callout = \App\Models\Callout::factory()->create([
             'user_id' => $user->id,
             'status' => 'active',
-            'team_details' => 'Initial team info'
+            'team_details' => 'Initial team info',
         ]);
 
         $mock = \Mockery::mock(\App\Services\ClickSendService::class);
@@ -105,7 +106,7 @@ class WebhookTest extends TestCase
     public function test_clicksend_webhook_aborts_without_callout_and_replies()
     {
         $this->withoutExceptionHandling();
-        
+
         $secret = 'test-secret';
         Config::set('services.clicksend.webhook_secret', $secret);
 
