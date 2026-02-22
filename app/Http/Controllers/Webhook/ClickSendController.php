@@ -36,93 +36,99 @@ class ClickSendController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
-        // Normalize Phone Number (ClickSend usually sends E.164)
-
-        // Check for specific "OUT SAFE" command
-        $isOutSafe = Str::of($body)->trim()->upper()->is('OUT SAFE');
+        // Normalize Phone Number: Strip all non-numeric characters, and grab the last 10 digits
+        // E.g. +447... vs 07... will both map to the same 10 digits
+        $normalizedFrom = preg_replace('/[^0-9]/', '', $from);
+        if (strlen($normalizedFrom) > 10) {
+            $normalizedFrom = substr($normalizedFrom, -10);
+        }
+        
+        // Loose match for "out safe"
+        $isOutSafe = Str::contains(Str::lower($body), 'out safe');
 
         if ($isOutSafe) {
-            $this->handleOutSafe($from, $body);
+            $this->handleOutSafe($from, $normalizedFrom, $body);
         } else {
-            $this->handleGenericMessage($from, $body);
+            $this->handleGenericMessage($from, $normalizedFrom, $body);
         }
 
         return response()->json(['status' => 'success']);
     }
 
-    private function handleOutSafe(string $from, string $body): void
+    private function handleOutSafe(string $originalFrom, string $normalizedFrom, string $body): void
     {
         // Find active callouts where a participant or user has this phone number
         $activeCallouts = Callout::query()
             ->whereIn('status', ['active', 'triggered'])
-            ->where(function ($query) use ($from) {
-                $query->whereHas('participants', function ($q) use ($from) {
-                    $q->where('phone', $from);
+            ->where(function ($query) use ($normalizedFrom) {
+                // If the user's phone contains the normalized numeric string
+                $query->whereHas('participants', function ($q) use ($normalizedFrom) {
+                    $q->where('phone', 'like', "%{$normalizedFrom}");
                 })
-                ->orWhereHas('user', function ($q) use ($from) {
-                    $q->where('phone', $from);
+                ->orWhereHas('user', function ($q) use ($normalizedFrom) {
+                    $q->where('phone', 'like', "%{$normalizedFrom}");
                 });
             })
             ->get();
 
         if ($activeCallouts->isEmpty()) {
-            Log::info("Received 'OUT SAFE' from {$from} but no active callout found.");
-
-            // Optional: Reply "No active callout found for you."
-            return;
+            $msg = "Received 'OUT SAFE' from {$originalFrom} but no active callout found.";
+            Log::info($msg);
+            throw new \RuntimeException($msg);
         }
 
-        // Since we now enforce that a phone number can only be in one active callout,
-        // we can just grab the first one.
         $callout = $activeCallouts->first();
+        Log::info("Cancelling Callout ID: {$callout->id} via SMS from {$originalFrom}");
 
-        Log::info("Cancelling Callout ID: {$callout->id} via SMS from {$from}");
+        // Use proper service to trigger watchdog, trip logging, and emails
+        app(\App\Services\CalloutService::class)->cancel($callout);
+        
+        // Retain the SMS metadata
+        $callout->update(['cancelled_location' => 'SMS']);
 
-        $callout->update([
-            'status' => 'cancelled',
-            'completed_at' => now(),
-            'cancelled_location' => 'SMS',
-        ]);
-
-        // Add note to incident if exists
-        if ($callout->incident) {
+        // Add note to incident if exists (CalloutService handles the safe note, but we add SMS specificity)
+        if ($callout->incident()->exists()) {
             $callout->incident->notes()->create([
-                'content' => "Callout CANCELLED via SMS from {$from} saying 'OUT SAFE'.",
+                'user_id' => null, // System note
+                'content' => "Callout CANCELLED via SMS from {$originalFrom} saying 'OUT SAFE'.",
             ]);
             $callout->incident->update(['status' => 'resolved']);
         }
     }
 
-    private function handleGenericMessage(string $from, string $body): void
+    private function handleGenericMessage(string $originalFrom, string $normalizedFrom, string $body): void
     {
         // Find relevant context to attach the message to
-        // If triggered, attach to Incident.
-        // If active, attach to Callout (maybe log it?)
-
         $callouts = Callout::query()
             ->whereIn('status', ['active', 'triggered'])
-            ->where(function ($query) use ($from) {
-                $query->whereHas('participants', function ($q) use ($from) {
-                    $q->where('phone', $from);
+            ->where(function ($query) use ($normalizedFrom) {
+                $query->whereHas('participants', function ($q) use ($normalizedFrom) {
+                    $q->where('phone', 'like', "%{$normalizedFrom}");
                 })
-                ->orWhereHas('user', function ($q) use ($from) {
-                    $q->where('phone', $from);
+                ->orWhereHas('user', function ($q) use ($normalizedFrom) {
+                    $q->where('phone', 'like', "%{$normalizedFrom}");
                 });
             })
             ->get();
+            
+        if ($callouts->isEmpty()) {
+            $msg = "Received generic SMS from {$originalFrom} ({$body}) but no active callout found.";
+            Log::info($msg);
+            throw new \RuntimeException($msg);
+        }
 
         foreach ($callouts as $callout) {
             if ($callout->incident) {
                 $callout->incident->notes()->create([
-                    'content' => "SMS Received from {$from}: {$body}",
+                    'content' => "SMS Received from {$originalFrom}: {$body}",
                 ]);
             } else {
                 // No incident yet (still in 15 min window?).
                 // Append to team_details as requested.
-                $newDetails = $callout->team_details."\n\n[SMS from {$from}]: {$body}";
+                $newDetails = $callout->team_details."\n\n[SMS from {$originalFrom}]: {$body}";
                 $callout->update(['team_details' => $newDetails]);
 
-                Log::info("SMS for Callout {$callout->id} from {$from}: {$body} (Appended to team_details)");
+                Log::info("SMS for Callout {$callout->id} from {$originalFrom}: {$body} (Appended to team_details)");
             }
         }
     }
