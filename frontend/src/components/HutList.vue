@@ -21,7 +21,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="list" class="h-100 overflow-y-auto">
-        <v-container>
+        <v-container class="pb-8">
           <div v-if="loading" class="d-flex justify-center my-4">
             <v-progress-circular indeterminate color="primary" />
           </div>
@@ -50,25 +50,25 @@ const tab = ref(route.query.view || 'map')
 const search = ref(route.query.search || '')
 
 onMounted(() => {
-    hutStore.fetchHuts()
+  hutStore.fetchHuts()
 })
 
 watch(tab, (newTab) => {
-    router.replace({ query: { ...route.query, view: newTab } })
+  router.replace({ query: { ...route.query, view: newTab } })
 })
 
 watch(search, (newSearch) => {
-    router.replace({ query: { ...route.query, search: newSearch } })
+  router.replace({ query: { ...route.query, search: newSearch } })
 })
 
 const huts = computed(() => {
-    if (!search.value) return hutStore.huts
-    const term = search.value.toLowerCase()
-    return hutStore.huts.filter(hut =>
-        (hut.name && hut.name.toLowerCase().includes(term)) ||
-        (hut.club && hut.club.name && hut.club.name.toLowerCase().includes(term)) ||
-        (hut.description && hut.description.toLowerCase().includes(term))
-    )
+  if (!search.value) return hutStore.huts
+  const term = search.value.toLowerCase()
+  return hutStore.huts.filter(hut =>
+    (hut.name && hut.name.toLowerCase().includes(term)) ||
+    (hut.club && hut.club.name && hut.club.name.toLowerCase().includes(term)) ||
+    (hut.description && hut.description.toLowerCase().includes(term))
+  )
 })
 const loading = computed(() => hutStore.loading)
 </script>

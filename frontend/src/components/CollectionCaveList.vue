@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container class="pb-8">
     <div v-if="collection.caves && collection.caves.length > 0">
       <v-row>
         <v-col v-for="cave in collection.caves" :key="cave.id" cols="12" md="6">

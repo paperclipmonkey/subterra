@@ -1,5 +1,5 @@
 <template>
-  <v-container class="pa-0">
+  <v-container class="pa-0 pb-8">
     <template v-if="caveStore.loading">
       <div class="d-flex justify-center my-8">
         <v-progress-circular indeterminate color="primary" size="48" />

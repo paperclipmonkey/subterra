@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container class="pb-8">
     <v-toolbar flat color="transparent" class="mb-4">
       <v-toolbar-title class="text-h4 font-weight-bold pl-0">
         Collections
