@@ -24,8 +24,9 @@ class SendClubApplicationSlackAlert
         try {
             $club = $event->club;
             $user = $event->user;
+            $url = url('/club/' . $club->slug) . '?editClub=1&tab=pending';
 
-            $msg = "🆕 *NEW CLUB APPLICATION*\nUser: *{$user->name}* ({$user->email})\nClub: *{$club->name}*";
+            $msg = "🆕 *NEW CLUB APPLICATION*\nUser: *{$user->name}* ({$user->email})\nClub: *{$club->name}*\n\n<$url|Review Request>";
 
             SlackAlert::to('approvals')->message($msg);
         } catch (\Exception $e) {
