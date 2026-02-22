@@ -28,40 +28,23 @@ class ClickSendController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Missing from or body'], 400);
         }
 
-        // Verify Secret - user puts ?secret=xyz in the ClickSend webhook URL
+        // Verify Secret
         $configuredSecret = config('services.clicksend.webhook_secret');
         if (empty($configuredSecret) || !hash_equals($configuredSecret, $request->input('secret') ?? '')) {
             Log::warning('ClickSend Webhook attempt with invalid secret', ['ip' => $request->ip()]);
-
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
         // Normalize Phone Number: Strip all non-numeric characters, and grab the last 10 digits
-        // E.g. +447... vs 07... will both map to the same 10 digits
         $normalizedFrom = preg_replace('/[^0-9]/', '', $from);
         if (strlen($normalizedFrom) > 10) {
             $normalizedFrom = substr($normalizedFrom, -10);
         }
-        
-        // Loose match for "out safe"
-        $isOutSafe = Str::contains(Str::lower($body), 'out safe');
 
-        if ($isOutSafe) {
-            $this->handleOutSafe($from, $normalizedFrom, $body);
-        } else {
-            $this->handleGenericMessage($from, $normalizedFrom, $body);
-        }
-
-        return response()->json(['status' => 'success']);
-    }
-
-    private function handleOutSafe(string $originalFrom, string $normalizedFrom, string $body): void
-    {
-        // Find active callouts where a participant or user has this phone number
+        // 1. Find active callouts related to this phone number
         $activeCallouts = Callout::query()
             ->whereIn('status', ['active', 'triggered'])
             ->where(function ($query) use ($normalizedFrom) {
-                // If the user's phone contains the normalized numeric string
                 $query->whereHas('participants', function ($q) use ($normalizedFrom) {
                     $q->where('phone', 'like', "%{$normalizedFrom}");
                 })
@@ -71,13 +54,36 @@ class ClickSendController extends Controller
             })
             ->get();
 
+        // 2. If no callout is found, inform the user and abort
         if ($activeCallouts->isEmpty()) {
-            $msg = "Received 'OUT SAFE' from {$originalFrom} but no active callout found.";
+            $msg = "Received SMS from {$from} but no active callout found.";
             Log::info($msg);
+            
+            app(\App\Services\ClickSendService::class)->sendSms(
+                $from, 
+                "Callout not cancelled. No active callout found for this number."
+            );
+            
             throw new \RuntimeException($msg);
         }
 
+        // Note: For now, we assume a phone number can only have ONE active callout.
         $callout = $activeCallouts->first();
+
+        // 3. Strict match for "OUT SAFE" (case-insensitive, ignores surrounding whitespace)
+        $isOutSafe = Str::of($body)->trim()->upper()->is('OUT SAFE');
+
+        if ($isOutSafe) {
+            $this->processCancellation($callout, $from, $body);
+        } else {
+            $this->processGenericMessage($activeCallouts, $from, $body);
+        }
+
+        return response()->json(['status' => 'success']);
+    }
+
+    private function processCancellation(Callout $callout, string $originalFrom, string $body): void
+    {
         Log::info("Cancelling Callout ID: {$callout->id} via SMS from {$originalFrom}");
 
         // Use proper service to trigger watchdog, trip logging, and emails
@@ -86,50 +92,39 @@ class ClickSendController extends Controller
         // Retain the SMS metadata
         $callout->update(['cancelled_location' => 'SMS']);
 
-        // Add note to incident if exists (CalloutService handles the safe note, but we add SMS specificity)
         if ($callout->incident()->exists()) {
             $callout->incident->notes()->create([
-                'user_id' => null, // System note
+                'user_id' => null,
                 'content' => "Callout CANCELLED via SMS from {$originalFrom} saying 'OUT SAFE'.",
             ]);
             $callout->incident->update(['status' => 'resolved']);
         }
+        
+        app(\App\Services\ClickSendService::class)->sendSms(
+            $originalFrom, 
+            "Callout cancelled successfully. Glad you are safe."
+        );
     }
 
-    private function handleGenericMessage(string $originalFrom, string $normalizedFrom, string $body): void
+    private function processGenericMessage(\Illuminate\Support\Collection $callouts, string $originalFrom, string $body): void
     {
-        // Find relevant context to attach the message to
-        $callouts = Callout::query()
-            ->whereIn('status', ['active', 'triggered'])
-            ->where(function ($query) use ($normalizedFrom) {
-                $query->whereHas('participants', function ($q) use ($normalizedFrom) {
-                    $q->where('phone', 'like', "%{$normalizedFrom}");
-                })
-                ->orWhereHas('user', function ($q) use ($normalizedFrom) {
-                    $q->where('phone', 'like', "%{$normalizedFrom}");
-                });
-            })
-            ->get();
-            
-        if ($callouts->isEmpty()) {
-            $msg = "Received generic SMS from {$originalFrom} ({$body}) but no active callout found.";
-            Log::info($msg);
-            throw new \RuntimeException($msg);
-        }
-
         foreach ($callouts as $callout) {
             if ($callout->incident) {
                 $callout->incident->notes()->create([
                     'content' => "SMS Received from {$originalFrom}: {$body}",
                 ]);
             } else {
-                // No incident yet (still in 15 min window?).
-                // Append to team_details as requested.
                 $newDetails = $callout->team_details."\n\n[SMS from {$originalFrom}]: {$body}";
                 $callout->update(['team_details' => $newDetails]);
 
                 Log::info("SMS for Callout {$callout->id} from {$originalFrom}: {$body} (Appended to team_details)");
             }
         }
+        
+        // Ask the user to clarify to prevent ghost cancellations
+        app(\App\Services\ClickSendService::class)->sendSms(
+            $originalFrom, 
+            "Message logged. Not cancelled. Reply exactly 'OUT SAFE' to cancel callout."
+        );
     }
 }

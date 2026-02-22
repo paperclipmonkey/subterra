@@ -37,7 +37,7 @@ class WebhookTest extends TestCase
 
         $response->assertStatus(401);
     }
-    public function test_clicksend_webhook_cancels_callout_with_loose_text_and_normalized_phone()
+    public function test_clicksend_webhook_cancels_callout_with_strict_text_and_normalized_phone()
     {
         $secret = 'test-secret';
         Config::set('services.clicksend.webhook_secret', $secret);
@@ -49,10 +49,16 @@ class WebhookTest extends TestCase
             'trip_plan' => 'Going caving'
         ]);
 
-        // Incoming webhook has E.164 format and loose text format
+        $mock = \Mockery::mock(\App\Services\ClickSendService::class);
+        $mock->shouldReceive('sendSms')
+             ->once()
+             ->with('+447777777777', 'Callout cancelled successfully. Glad you are safe.');
+        $this->app->instance(\App\Services\ClickSendService::class, $mock);
+
+        // Incoming webhook has E.164 format and correct text format (case insensitive)
         $response = $this->postJson('/api/webhooks/clicksend/sms', [
             'from' => '+447777777777',
-            'body' => 'We are out safe thanks!',
+            'body' => '   out safe ',
             'secret' => $secret,
         ]);
 
@@ -63,8 +69,8 @@ class WebhookTest extends TestCase
             'description' => 'Going caving'
         ]);
     }
-    
-    public function test_clicksend_webhook_handles_generic_message()
+
+    public function test_clicksend_webhook_handles_generic_message_and_replies()
     {
         $secret = 'test-secret';
         Config::set('services.clicksend.webhook_secret', $secret);
@@ -76,9 +82,16 @@ class WebhookTest extends TestCase
             'team_details' => 'Initial team info'
         ]);
 
+        $mock = \Mockery::mock(\App\Services\ClickSendService::class);
+        $mock->shouldReceive('sendSms')
+             ->once()
+             ->with('07777777777', "Message logged. Not cancelled. Reply exactly 'OUT SAFE' to cancel callout.");
+        $this->app->instance(\App\Services\ClickSendService::class, $mock);
+
+        // Testing loose "OUT SAFE" - should fall into generic handler now
         $response = $this->postJson('/api/webhooks/clicksend/sms', [
-            'from' => '07777777777', // Matches because 10 digit normalized suffix matches
-            'body' => 'We will be an hour late',
+            'from' => '07777777777',
+            'body' => 'Not out safe yet',
             'secret' => $secret,
         ]);
 
@@ -86,7 +99,30 @@ class WebhookTest extends TestCase
 
         $callout->refresh();
         $this->assertEquals('active', $callout->status);
-        $this->assertStringContainsString('We will be an hour late', $callout->team_details);
-        $this->assertStringContainsString('Initial team info', $callout->team_details);
+        $this->assertStringContainsString('Not out safe yet', $callout->team_details);
+    }
+
+    public function test_clicksend_webhook_aborts_without_callout_and_replies()
+    {
+        $this->withoutExceptionHandling();
+        
+        $secret = 'test-secret';
+        Config::set('services.clicksend.webhook_secret', $secret);
+
+        $mock = \Mockery::mock(\App\Services\ClickSendService::class);
+        $mock->shouldReceive('sendSms')
+             ->once()
+             ->with('+447777777777', 'Callout not cancelled. No active callout found for this number.');
+        $this->app->instance(\App\Services\ClickSendService::class, $mock);
+
+        // Expect Exception because no callouts exist
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("Received SMS from +447777777777 but no active callout found.");
+
+        $this->postJson('/api/webhooks/clicksend/sms', [
+            'from' => '+447777777777',
+            'body' => 'OUT SAFE',
+            'secret' => $secret,
+        ]);
     }
 }
