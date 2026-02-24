@@ -31,6 +31,7 @@ class ImageProcessingService
 
     public function generateThumbnail($file, string $destinationPath): ?string
     {
+        \Log::info("Generating thumbnail for {$file->getPathname()}. Initial memory: ".round(memory_get_usage() / 1024 / 1024, 2).'MB');
         if ($file->getMimeType() === 'application/pdf') {
             $manager = new ImageManager(new ImagickDriver());
             // Force reading only the first page to save memory
@@ -41,6 +42,7 @@ class ImageProcessingService
 
         // Create thumbnail
         $thumbnail = $image->scaleDown(300, 300)->encode(new WebpEncoder(quality: 60));
+        unset($image); // Free original image memory ASAP
 
         // Generate filename based on destination path but with .webp extension
         $pathInfo = pathinfo($destinationPath);
@@ -58,6 +60,8 @@ class ImageProcessingService
         }
 
         Storage::disk('media')->put($thumbnailPath, (string) $thumbnail);
+        unset($thumbnail); // Free thumbnail memory
+        gc_collect_cycles(); // Force garbage collection
 
         return $thumbnailFilename;
     }
