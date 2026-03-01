@@ -11,7 +11,7 @@ class CaveUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_cave_update_handles_base64_image_correctly_regression_fix()
+    public function test_cave_update_handles_uploaded_image_correctly_regression_fix()
     {
         \App\Models\Tag::create(['tag' => 'Previously Done', 'category' => 'Status', 'assignable' => false, 'type' => 'trip']);
         \App\Models\Tag::create(['tag' => 'Not Done Yet', 'category' => 'Status', 'assignable' => false, 'type' => 'trip']);
@@ -19,11 +19,15 @@ class CaveUpdateTest extends TestCase
         $user = User::factory()->dataAdmin()->create();
         $cave = Cave::factory()->create();
 
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.gif');
+
         $response = $this->actingAs($user)
-            ->putJson('/api/caves/'.$cave->slug, [
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post('/api/caves/'.$cave->slug, [
+                '_method' => 'PUT',
                 'name' => 'Updated Name',
                 'hero_image' => [
-                    'data' => 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+                    'data' => $imageFile,
                     'filename' => 'test.gif',
                 ],
             ]);

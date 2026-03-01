@@ -28,8 +28,12 @@ describe('CaveSystemForm.vue', () => {
         'v-col': { template: '<div><slot /></div>' },
         'v-list': { template: '<div><slot /></div>' },
         'v-list-item': { template: '<div><slot /></div>' },
-        'v-file-input': { template: '<input type="file" />' }
+        'v-list-item-content': { template: '<div><slot /></div>' },
+        'v-file-input': { template: '<input type="file" />' },
+        'v-autocomplete': { template: '<input />' }
     }
+
+    global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }))
 
     it('emits updates when fields change', async () => {
         const wrapper = mount(CaveSystemForm, {

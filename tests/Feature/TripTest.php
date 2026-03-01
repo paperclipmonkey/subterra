@@ -78,6 +78,8 @@ class TripTest extends TestCase
         $participant = User::factory()->create();
         $entrance = Cave::factory()->create();
         Event::fake([\App\Events\TripCreated::class]);
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
+
         $tripData = [
             'name' => 'Test Trip',
             'start_time' => '2024-01-01 10:00:00',
@@ -89,13 +91,13 @@ class TripTest extends TestCase
             'participants' => [$participant->id],
             'media' => [
                 [
-                    'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
+                    'data' => $imageFile,
                 ],
             ],
         ];
 
         $this->actingAs($user);
-        $response = $this->postJson('/api/trips', $tripData);
+        $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips', $tripData);
         $response->assertCreated()->assertJsonFragment(['name' => 'Test Trip']);
         $this->assertDatabaseHas('trips', ['name' => 'Test Trip']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
@@ -126,9 +128,11 @@ class TripTest extends TestCase
         $trip = Trip::factory()->create(['entrance_cave_id' => $entrance->id]);
         $trip->participants()->attach($user);
 
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
+
         $media = [
             [
-                'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
+                'data' => $imageFile,
             ],
         ];
 
@@ -144,10 +148,11 @@ class TripTest extends TestCase
             'participants' => [$participant->id],
             'media' => $media,
             'existing_media' => [],
+            '_method' => 'PUT',
         ];
 
         $this->actingAs($user);
-        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
+        $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips/'.$trip->short_id, $updateData);
         $response->assertOk();
         $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
@@ -175,9 +180,11 @@ class TripTest extends TestCase
         $trip = Trip::factory()->create(['entrance_cave_id' => $entrance->id]);
         $trip->participants()->attach($user);
 
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
+
         $media = [
             [
-                'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
+                'data' => $imageFile,
             ],
         ];
 
@@ -193,10 +200,11 @@ class TripTest extends TestCase
             'participants' => [$participant->id],
             'media' => $media,
             'existing_media' => [],
+            '_method' => 'PUT',
         ];
 
         $this->actingAs(User::factory()->admin()->create());
-        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
+        $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips/'.$trip->short_id, $updateData);
         $response->assertOk();
         $this->assertDatabaseHas('trips', ['name' => 'Updated Trip']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
@@ -434,10 +442,8 @@ class TripTest extends TestCase
         $entrance = Cave::factory()->create();
         Event::fake([\App\Events\TripCreated::class]);
 
-        // Use a mock HEIC data URI with PNG content (to test the decoder logic)
-        // The key is testing that the ImageProcessingService can handle HEIC mime types
         $pngContent = file_get_contents(__DIR__.'/../../Fixtures/test.png');
-        $heicData = 'data:image/heic;base64,'.base64_encode($pngContent);
+        $heicFile = \Illuminate\Http\UploadedFile::fake()->createWithContent('test.heic', $pngContent)->mimeType('image/heic');
 
         $tripData = [
             'name' => 'Test Trip with HEIC',
@@ -451,7 +457,7 @@ class TripTest extends TestCase
             'visibility' => 'public',
             'media' => [
                 [
-                    'data' => 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png')),
+                    'data' => $heicFile,
                     'taken_at' => '2024-01-01 12:00:00',
                     'photographer' => 'John Doe',
                     'copyright' => '© 2024 John Doe',
@@ -460,7 +466,7 @@ class TripTest extends TestCase
         ];
 
         $this->actingAs($user);
-        $response = $this->postJson('/api/trips', $tripData);
+        $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips', $tripData);
         $response->assertCreated()->assertJsonFragment(['name' => 'Test Trip with HEIC']);
         $this->assertDatabaseHas('trips', ['name' => 'Test Trip with HEIC']);
         $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);

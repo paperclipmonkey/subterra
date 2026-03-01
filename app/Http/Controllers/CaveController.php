@@ -27,7 +27,7 @@ class CaveController extends Controller
             $request->user()->load('clubs');
         }
 
-        $query = Cave::with(['heroImage', 'entranceImage', 'tags', 'system.tags'])
+        $query = Cave::with(['heroImage', 'entranceImage', 'heroVideo', 'tags', 'system.tags'])
             ->orderBy('name');
 
         if ($request->user()) {
@@ -74,15 +74,22 @@ class CaveController extends Controller
             $this->processImageFieldOnCreate($request, $cave, 'entrance');
         }
 
-        return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage']));
+        // Process hero video
+        if ($request->has('hero_video')) {
+            $this->processVideoFieldOnCreate($request, $cave, 'hero_video');
+        }
+
+        return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage', 'heroVideo']));
     }
 
     private function processImageFieldOnCreate(StoreCaveRequest $request, Cave $cave, string $type): void
     {
         $fieldName = $type.'_image';
-        $imageData = $request->input($fieldName);
+        $imageData = $request->input($fieldName, []);
+        $fileData = $request->file($fieldName.'.data');
 
-        if (is_array($imageData) && isset($imageData['data'])) {
+        if ($fileData) {
+            $imageData['data'] = $fileData;
             $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $type);
 
             $cave->media()->create([
@@ -95,6 +102,26 @@ class CaveController extends Controller
         }
     }
 
+    private function processVideoFieldOnCreate(StoreCaveRequest $request, Cave $cave, string $type): void
+    {
+        $fieldName = $type;
+        $videoData = $request->input($fieldName, []);
+        $fileData = $request->file($fieldName.'.data');
+
+        if ($fileData) {
+            $videoData['data'] = $fileData;
+            $filePath = $this->imageProcessingService->processAndStoreVideo($videoData, 'caves', $type);
+
+            $cave->media()->create([
+                'type' => $type,
+                'filename' => $filePath,
+                'title' => $videoData['title'] ?? null,
+                'photographer' => $videoData['photographer'] ?? null,
+                'copyright' => $videoData['copyright'] ?? null,
+            ]);
+        }
+    }
+
     public function show($id)
     {
         $query = Cave::with([
@@ -102,7 +129,7 @@ class CaveController extends Controller
             'trips' => function ($q) {
                 $q->orderBy('start_time', 'desc')->limit(25)->with(['participants', 'media']);
             },
-            'tags', 'collections', 'media', 'heroImage', 'entranceImage',
+            'tags', 'collections', 'media', 'heroImage', 'entranceImage', 'heroVideo',
         ]);
 
         if (is_numeric($id)) {
@@ -137,16 +164,25 @@ class CaveController extends Controller
         // Process entrance image
         $this->processImageField($request, $cave, 'entrance');
 
-        return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage']));
+        // Process hero video
+        $this->processVideoField($request, $cave, 'hero_video');
+
+        return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage', 'heroVideo']));
     }
 
     private function processImageField(UpdateCaveRequest $request, Cave $cave, string $type): void
     {
         $fieldName = $type.'_image';
 
-        if ($request->has($fieldName) && $request->input($fieldName) !== null) {
-            $imageData = $request->input($fieldName);
-            if (is_array($imageData) && isset($imageData['data'])) {
+        $hasField = $request->has($fieldName);
+        $imageData = $request->input($fieldName, []);
+        $fileData = $request->file($fieldName.'.data');
+
+        $isNull = !$fileData && (empty($imageData) || (isset($imageData['data']) && $imageData['data'] === null));
+
+        if ($hasField && !$isNull) {
+            if ($fileData) {
+                $imageData['data'] = $fileData;
                 $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $type);
 
                 $cave->media()->updateOrCreate(
@@ -166,7 +202,44 @@ class CaveController extends Controller
                     'copyright' => $imageData['copyright'] ?? null,
                 ]);
             }
-        } elseif ($request->has($fieldName) && $request->input($fieldName) === null) {
+        } elseif ($hasField && $isNull) {
+            $cave->media()->where('type', $type)->delete();
+        }
+    }
+
+    private function processVideoField(UpdateCaveRequest $request, Cave $cave, string $type): void
+    {
+        $fieldName = $type;
+
+        $hasField = $request->has($fieldName);
+        $videoData = $request->input($fieldName, []);
+        $fileData = $request->file($fieldName.'.data');
+
+        $isNull = !$fileData && (empty($videoData) || (isset($videoData['data']) && $videoData['data'] === null));
+
+        if ($hasField && !$isNull) {
+            if ($fileData) {
+                $videoData['data'] = $fileData;
+                $filePath = $this->imageProcessingService->processAndStoreVideo($videoData, 'caves', $type);
+
+                $cave->media()->updateOrCreate(
+                    ['type' => $type],
+                    [
+                        'filename' => $filePath,
+                        'title' => $videoData['title'] ?? null,
+                        'photographer' => $videoData['photographer'] ?? null,
+                        'copyright' => $videoData['copyright'] ?? null,
+                    ]
+                );
+            } elseif (is_array($videoData)) {
+                // Metadata update only
+                $cave->media()->where('type', $type)->update([
+                    'title' => $videoData['title'] ?? null,
+                    'photographer' => $videoData['photographer'] ?? null,
+                    'copyright' => $videoData['copyright'] ?? null,
+                ]);
+            }
+        } elseif ($hasField && $isNull) {
             $cave->media()->where('type', $type)->delete();
         }
     }

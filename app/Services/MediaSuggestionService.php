@@ -25,24 +25,34 @@ class MediaSuggestionService
     {
         // Recursively look for hero_image, entrance_image, photo_data, or media items
         foreach ($data as $key => &$value) {
-            if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path']) && is_string($value)) {
-                $base64 = $this->extractBase64($value);
-                if ($base64) {
-                    $value = $this->storePendingBase64($base64, $type, $key);
-                }
-            } elseif (in_array($key, ['hero_image', 'entrance_image']) && is_array($value)) {
-                if (isset($value['data']) && is_string($value['data'])) {
-                    $base64 = $this->extractBase64($value['data']);
+            if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path'])) {
+                if ($value instanceof \Illuminate\Http\UploadedFile) {
+                    $value = $this->storePendingFile($value, $type, $key);
+                } elseif (is_string($value)) {
+                    $base64 = $this->extractBase64($value);
                     if ($base64) {
-                        $value['data'] = $this->storePendingBase64($base64, $type, $key);
+                        $value = $this->storePendingBase64($base64, $type, $key);
+                    }
+                } elseif (is_array($value) && isset($value['data'])) {
+                    if ($value['data'] instanceof \Illuminate\Http\UploadedFile) {
+                        $value['data'] = $this->storePendingFile($value['data'], $type, $key);
+                    } elseif (is_string($value['data'])) {
+                        $base64 = $this->extractBase64($value['data']);
+                        if ($base64) {
+                            $value['data'] = $this->storePendingBase64($base64, $type, $key);
+                        }
                     }
                 }
             } elseif ($key === 'media' && is_array($value)) {
                 foreach ($value as &$mediaItem) {
-                    if (isset($mediaItem['data']) && is_string($mediaItem['data'])) {
-                        $base64 = $this->extractBase64($mediaItem['data']);
-                        if ($base64) {
-                            $mediaItem['data'] = $this->storePendingBase64($base64, $type, 'media');
+                    if (isset($mediaItem['data'])) {
+                        if ($mediaItem['data'] instanceof \Illuminate\Http\UploadedFile) {
+                            $mediaItem['data'] = $this->storePendingFile($mediaItem['data'], $type, 'media');
+                        } elseif (is_string($mediaItem['data'])) {
+                            $base64 = $this->extractBase64($mediaItem['data']);
+                            if ($base64) {
+                                $mediaItem['data'] = $this->storePendingBase64($base64, $type, 'media');
+                            }
                         }
                     }
                 }
@@ -218,6 +228,17 @@ class MediaSuggestionService
 
             return ''; // Return empty string on failure, do NOT return raw base64
         }
+    }
+
+    private function storePendingFile(\Illuminate\Http\UploadedFile $file, string $type, string $key): string
+    {
+        $extension = $file->getClientOriginalExtension() ?: $file->guessExtension();
+        $filename = (string) Str::uuid().'_'.$key.'.'.$extension;
+        $path = self::PENDING_DIR.'/'.$type.'/'.$filename;
+
+        Storage::disk('media')->putFileAs(self::PENDING_DIR.'/'.$type, $file, $filename);
+
+        return $path;
     }
 
     private function moveFileToPermanent(string $pendingPath, string $targetDir): string

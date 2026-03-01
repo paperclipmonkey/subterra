@@ -237,14 +237,14 @@ class SuggestedEditTest extends TestCase
         $admin = User::factory()->admin()->create();
         $cave = Cave::factory()->create();
 
-        // 1. Submit suggestion with Base64 image
-        $base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
 
-        $response = $this->actingAs($user)->postJson('/api/suggested-edits', [
+        // 1. Submit suggestion with UploadedFile image
+        $response = $this->actingAs($user)->withHeaders(['Accept' => 'application/json'])->post('/api/suggested-edits', [
             'suggestable_type' => 'cave',
             'suggestable_id' => $cave->id,
             'suggested_data' => [
-                'hero_image' => $base64Image,
+                'hero_image' => $imageFile,
                 'name' => 'Updated Cave Name',
             ],
         ]);

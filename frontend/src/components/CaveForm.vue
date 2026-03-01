@@ -90,7 +90,82 @@
 
         <div class="text-subtitle-1 mb-2">Media</div>
         <v-row>
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="4">
+            <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
+              <div class="text-subtitle-2 mb-2 d-flex align-center">
+                <v-icon start size="small">mdi-video</v-icon>
+                Hero Video
+              </div>
+              
+              <v-hover v-slot="{ isHovering, props: hoverProps }">
+                <div v-bind="hoverProps" class="position-relative mb-4 bg-grey-lighten-4 rounded overflow-hidden" style="height: 180px;">
+                  <video
+                    v-if="heroVideoPreview || props.modelValue.hero_video?.preview_url || props.modelValue.hero_video?.url"
+                    :src="heroVideoPreview || props.modelValue.hero_video?.preview_url || props.modelValue.hero_video?.url"
+                    autoplay muted loop playsinline
+                    class="w-100 h-100"
+                    style="object-fit: cover; border-radius: 4px;"
+                  />
+                  <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
+                    <v-icon size="48">mdi-video-outline</v-icon>
+                    <span class="text-caption mt-2">No hero video set</span>
+                  </div>
+                  <v-overlay
+                    :model-value="isHovering && (heroVideoPreview || props.modelValue.hero_video?.url)"
+                    contained
+                    class="align-center justify-center"
+                    scrim="black"
+                  >
+                    <v-btn
+                      v-if="heroVideoFile || props.modelValue.hero_video"
+                      color="error"
+                      variant="flat"
+                      size="small"
+                      prepend-icon="mdi-delete"
+                      @click="clearHeroVideo"
+                    >
+                      Remove
+                    </v-btn>
+                  </v-overlay>
+                </div>
+              </v-hover>
+
+              <v-file-input
+                v-model="heroVideoFile"
+                prepend-icon="mdi-video"
+                accept="video/*"
+                :label="props.modelValue.hero_video ? 'Replace Hero Video' : 'Select Hero Video'"
+                chips
+                density="compact"
+                hide-details
+                class="mb-3"
+              />
+              <v-text-field
+                v-model="mediaData.hero_video.title"
+                label="Title"
+                density="compact"
+                variant="outlined"
+                hide-details
+                class="mb-2"
+              />
+              <v-text-field
+                v-model="mediaData.hero_video.photographer"
+                label="Videographer"
+                density="compact"
+                variant="outlined"
+                hide-details
+                class="mb-2"
+              />
+              <v-text-field
+                v-model="mediaData.hero_video.copyright"
+                label="Copyright / Source"
+                density="compact"
+                variant="outlined"
+                hide-details
+              />
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
               <div class="text-subtitle-2 mb-2 d-flex align-center">
                 <v-icon start size="small">mdi-star</v-icon>
@@ -164,7 +239,7 @@
               />
             </v-card>
           </v-col>
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
               <div class="text-subtitle-2 mb-2 d-flex align-center">
                 <v-icon start size="small">mdi-door-open</v-icon>
@@ -312,8 +387,16 @@ const heroImageFile = ref(null)
 const entranceImageFile = ref(null)
 const heroImagePreview = ref(null)
 const entranceImagePreview = ref(null)
+const heroVideoFile = ref(null)
+const heroVideoPreview = ref(null)
 
 const mediaData = ref({
+  hero_video: {
+    title: props.modelValue.hero_video?.title || '',
+    photographer: props.modelValue.hero_video?.photographer || '',
+    copyright: props.modelValue.hero_video?.copyright || '',
+    data: null
+  },
   hero: {
     title: props.modelValue.hero_image?.title || '',
     photographer: props.modelValue.hero_image?.photographer || '',
@@ -351,6 +434,12 @@ const syncTagsFromModel = () => {
 }
 
 const syncMediaDataFromModel = (val) => {
+  mediaData.value.hero_video = {
+    title: val.hero_video?.title || '',
+    photographer: val.hero_video?.photographer || '',
+    copyright: val.hero_video?.copyright || '',
+    data: mediaData.value.hero_video.data // keep current upload data
+  }
   mediaData.value.hero = {
     title: val.hero_image?.title || '',
     photographer: val.hero_image?.photographer || '',
@@ -365,10 +454,23 @@ const syncMediaDataFromModel = (val) => {
   }
 }
 
+const getComparable = (caveObj) => {
+  if (!caveObj) return null
+  const clone = { ...caveObj }
+
+  const getLen = (data) => typeof data === 'string' ? data.length : 0
+
+  if (clone.hero_video) clone.hero_video = { ...clone.hero_video, data: getLen(clone.hero_video.data) }
+  if (clone.hero_image) clone.hero_image = { ...clone.hero_image, data: getLen(clone.hero_image.data) }
+  if (clone.entrance_image) clone.entrance_image = { ...clone.entrance_image, data: getLen(clone.entrance_image.data) }
+
+  return JSON.stringify(clone)
+}
+
 // Watchers for two-way binding
 watch(() => props.modelValue, (newVal) => {
   // Only update if fundamentally different to avoid recursion
-  if (JSON.stringify(newVal) !== JSON.stringify(internalCave.value)) {
+  if (getComparable(newVal) !== getComparable(internalCave.value)) {
     internalCave.value = { ...newVal }
     if (internalCave.value.location_lng !== coordinates.value.lng || internalCave.value.location_lat !== coordinates.value.lat) {
       coordinates.value = LngLat.convert([internalCave.value.location_lng || 0, internalCave.value.location_lat || 0])
@@ -381,7 +483,7 @@ watch(() => props.modelValue, (newVal) => {
 
 watch(internalCave, (newVal) => {
   // Only emit if fundamentally different to avoid recursion
-  if (JSON.stringify(newVal) !== JSON.stringify(props.modelValue)) {
+  if (getComparable(newVal) !== getComparable(props.modelValue)) {
     emit('update:modelValue', newVal)
   }
 }, { deep: true })
@@ -419,8 +521,7 @@ watch(selectedTags, (newTags) => {
 watch(heroImageFile, async (file) => {
   if (file) {
     heroImagePreview.value = URL.createObjectURL(file)
-    const result = await convertFileToBase64(file)
-    mediaData.value.hero.data = result.data
+    mediaData.value.hero.data = file // Store raw file temporarily
     internalCave.value.hero_image = {
       ...(internalCave.value.hero_image || {}),
       ...mediaData.value.hero
@@ -442,11 +543,35 @@ watch(heroImageFile, async (file) => {
   }
 })
 
+watch(heroVideoFile, async (file) => {
+  if (file) {
+    heroVideoPreview.value = URL.createObjectURL(file)
+    mediaData.value.hero_video.data = file // Store raw file temporarily
+    internalCave.value.hero_video = {
+      ...(internalCave.value.hero_video || {}),
+      ...mediaData.value.hero_video
+    }
+  } else if (file === null && internalCave.value.hero_video?.data) {
+    heroVideoPreview.value = null
+    mediaData.value.hero_video.data = null
+    if (props.modelValue.hero_video) {
+      internalCave.value.hero_video = {
+        ...props.modelValue.hero_video,
+        title: mediaData.value.hero_video.title,
+        photographer: mediaData.value.hero_video.photographer,
+        copyright: mediaData.value.hero_video.copyright,
+        data: null
+      }
+    } else {
+      internalCave.value.hero_video = null
+    }
+  }
+})
+
 watch(entranceImageFile, async (file) => {
   if (file) {
     entranceImagePreview.value = URL.createObjectURL(file)
-    const result = await convertFileToBase64(file)
-    mediaData.value.entrance.data = result.data
+    mediaData.value.entrance.data = file // Store raw file temporarily
     internalCave.value.entrance_image = {
       ...(internalCave.value.entrance_image || {}),
       ...mediaData.value.entrance
@@ -468,6 +593,13 @@ watch(entranceImageFile, async (file) => {
   }
 })
 
+const clearHeroVideo = () => {
+  heroVideoFile.value = null
+  heroVideoPreview.value = null
+  mediaData.value.hero_video.data = null
+  internalCave.value.hero_video = null
+}
+
 const clearHeroImage = () => {
   heroImageFile.value = null
   heroImagePreview.value = null
@@ -484,13 +616,30 @@ const clearEntranceImage = () => {
 
 // Metadata handling (updates internalCave when fields change without file change)
 watch(mediaData, (newVal) => {
-  if (internalCave.value.hero_image !== null) {
-    Object.assign(internalCave.value.hero_image, newVal.hero)
+  if (typeof internalCave.value.hero_video === 'object' && internalCave.value.hero_video !== null) {
+    Object.assign(internalCave.value.hero_video, newVal.hero_video)
+  } else if (newVal.hero_video && Object.values(newVal.hero_video).some(v => v !== '' && v !== null)) {
+    internalCave.value.hero_video = { ...newVal.hero_video }
   }
-  if (internalCave.value.entrance_image !== null) {
+
+  if (typeof internalCave.value.hero_image === 'object' && internalCave.value.hero_image !== null) {
+    Object.assign(internalCave.value.hero_image, newVal.hero)
+  } else if (newVal.hero && Object.values(newVal.hero).some(v => v !== '' && v !== null)) {
+    internalCave.value.hero_image = { ...newVal.hero }
+  }
+
+  if (typeof internalCave.value.entrance_image === 'object' && internalCave.value.entrance_image !== null) {
     Object.assign(internalCave.value.entrance_image, newVal.entrance)
+  } else if (newVal.entrance && Object.values(newVal.entrance).some(v => v !== '' && v !== null)) {
+    internalCave.value.entrance_image = { ...newVal.entrance }
   }
 }, { deep: true })
+
+defineExpose({
+  prepareForSubmit: async () => {
+    return internalCave.value
+  }
+})
 
 const onMapLoad = (event) => {
   // Ensure map is centered on current coordinates if they exist

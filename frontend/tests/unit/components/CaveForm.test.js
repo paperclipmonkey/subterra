@@ -34,7 +34,8 @@ describe('CaveForm.vue', () => {
         location_country: '',
         location_lat: 0,
         location_lng: 0,
-        tags: []
+        tags: [],
+        hero_video: null
     }
 
     const stubs = {
@@ -57,7 +58,13 @@ describe('CaveForm.vue', () => {
         'mgl-map': { template: '<div><slot /></div>' },
         'mgl-marker': { template: '<div></div>' },
         'mgl-navigation-control': { template: '<div></div>' },
-        'MglGeolocateControl': { template: '<div></div>' }
+        'MglGeolocateControl': { template: '<div></div>' },
+        'v-hover': { template: '<div><slot :isHovering="false" :props="{}" /></div>' },
+        'v-overlay': { template: '<div><slot /></div>' },
+        'v-img': { template: '<div><slot /></div>' },
+        'v-btn': { template: '<button><slot /></button>' },
+        'v-icon': { template: '<i><slot /></i>' },
+        'MilkdownEditor': { template: '<div><slot /></div>' }
     }
 
     it('emits updates when fields change', async () => {
@@ -68,7 +75,7 @@ describe('CaveForm.vue', () => {
             global: { stubs }
         })
 
-        const nameInput = wrapper.find('input')
+        const nameInput = wrapper.findAll('input')[0]
         await nameInput.setValue('New Cave Name')
 
         expect(wrapper.emitted('update:modelValue')).toBeTruthy()

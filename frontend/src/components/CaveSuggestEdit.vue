@@ -14,7 +14,7 @@
           <v-alert type="info" class="mb-4">
             Thank you for contributing! Your changes will be reviewed by an administrator before being published.
           </v-alert>
-          <CaveForm v-model="cave" />
+          <CaveForm ref="caveFormRef" v-model="cave" />
         </v-col>
       </v-row>
 
@@ -45,10 +45,12 @@ import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import CaveForm from '@/components/CaveForm.vue'
 import { api } from '@/plugins/api.js'
+import { objectToFormData } from '@/utils/formData'
 
 const router = useRouter()
 const route = useRoute()
 const form = ref(null)
+const caveFormRef = ref(null)
 const loading = ref(false)
 const successSnackbar = ref(false)
 const errorSnackbar = ref(false)
@@ -56,50 +58,57 @@ const errorMessage = ref('')
 
 const originalCave = ref({})
 const cave = ref({
-    name: '',
-    description: '',
-    // ... other fields initialized empty, will be filled by fetch
-    tags: []
+  name: '',
+  description: '',
+  // ... other fields initialized empty, will be filled by fetch
+  tags: []
 })
 
 const fetchCave = async () => {
-    try {
-        const response = await api.get(`/api/caves/${route.params.id}`)
-        const data = response.data.data
-        originalCave.value = JSON.parse(JSON.stringify(data)) // Deep copy
-        cave.value = JSON.parse(JSON.stringify(data))
-    } catch (error) {
-        console.error("Error fetching cave:", error)
-        errorMessage.value = "Failed to load cave data"
-        errorSnackbar.value = true
-    }
+  try {
+    const response = await api.get(`/api/caves/${route.params.id}`)
+    const data = response.data.data
+    originalCave.value = JSON.parse(JSON.stringify(data)) // Deep copy
+    cave.value = JSON.parse(JSON.stringify(data))
+  } catch (error) {
+    console.error("Error fetching cave:", error)
+    errorMessage.value = "Failed to load cave data"
+    errorSnackbar.value = true
+  }
 }
 
 const submitSuggestion = async () => {
-    const { valid } = await form.value.validate()
-    if (!valid) return
+  const { valid } = await form.value.validate()
+  if (!valid) return
 
-    loading.value = true
-    try {
-        await api.post('/api/suggested-edits', {
-            suggestable_type: 'cave',
-            suggestable_id: originalCave.value.id,
-            original_data: originalCave.value,
-            suggested_data: cave.value
-        })
+  loading.value = true
+  try {
+    const submitData = await caveFormRef.value.prepareForSubmit()
+    const formData = objectToFormData({
+      suggestable_type: 'cave',
+      suggestable_id: originalCave.value.id,
+      original_data: originalCave.value,
+      suggested_data: submitData
+    })
 
-        successSnackbar.value = true
-        setTimeout(() => {
-            router.push(`/caves/${originalCave.value.slug}`)
-        }, 1500)
+    await api.post('/api/suggested-edits', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 
-    } catch (error) {
-        errorMessage.value = error.response?.data?.message || 'Failed to submit suggestion'
-        errorSnackbar.value = true
-        console.error(error)
-    } finally {
-        loading.value = false
-    }
+    successSnackbar.value = true
+    setTimeout(() => {
+      router.push(`/caves/${originalCave.value.slug}`)
+    }, 1500)
+
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message || 'Failed to submit suggestion'
+    errorSnackbar.value = true
+    console.error(error)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(fetchCave)

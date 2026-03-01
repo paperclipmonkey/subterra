@@ -15,76 +15,91 @@
 
       <v-row v-else class="px-2">
         <v-col v-for="cave in caveStore.caves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
-          <v-card hover elevation="2" class="fill-height d-flex flex-column cave-card"
-                  :to="'/caves/' + cave.slug">
-            <v-img :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="160" cover
-                   class="bg-grey-lighten-2">
-              <template #placeholder>
-                <div class="d-flex align-center justify-center fill-height">
-                  <v-icon color="grey-lighten-1" size="large">mdi-image-off-outline</v-icon>
-                </div>
-              </template>
-              <div v-if="cave.previously_done" class="d-flex justify-end pa-2">
-                <v-chip color="success" size="small" variant="elevated" prepend-icon="mdi-check">Done</v-chip>
-              </div>
-            </v-img>
-
-            <div class="pa-4 d-flex flex-column flex-grow-1">
-              <div class="mb-2">
-                <h3 class="text-h6 font-weight-bold lh-tight mb-1 text-truncate">{{ cave.name }}</h3>
-                <div class="d-flex align-center text-caption text-grey-darken-1">
-                  <v-icon size="small" icon="mdi-map-marker" class="mr-1" />
-                  <span class="text-truncate">{{ cave.location_name }}, {{ cave.location_country }}</span>
-                </div>
-              </div>
-
-              <div class="d-flex align-center ga-4 mb-3">
-                <div class="d-flex flex-column">
-                  <span class="text-caption text-grey">Length</span>
-                  <span class="font-weight-medium">
-                    {{ cave.system?.length ? Math.round((cave.system.length / 1000) * 10) / 10 + ' km' : '-' }}
-                  </span>
-                </div>
-                <!-- Add vertical divider if needed -->
-                <div class="d-flex flex-column">
-                  <span class="text-caption text-grey">Vertical</span>
-                  <span class="font-weight-medium">
-                    {{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}
-                  </span>
-                </div>
+          <v-hover v-slot="{ isHovering, props }">
+            <v-card v-bind="props" elevation="2" class="fill-height d-flex flex-column cave-card"
+                    :to="'/caves/' + cave.slug">
+              <div class="position-relative bg-grey-lighten-2" style="height: 160px; overflow: hidden;">
+                <!-- Video Preview -->
+                <video
+                  v-if="cave.hero_video"
+                  :ref="el => { if(el) { videoRefs[cave.id] = el; (!mobile && isHovering) ? el.play() : el.pause() } }"
+                  :src="cave.hero_video.preview_url || cave.hero_video.url"
+                  muted loop playsinline
+                  class="position-absolute w-100 h-100"
+                  style="object-fit: cover; top: 0; left: 0; z-index: 1; transition: opacity 0.3s ease;"
+                  :style="{ opacity: (!mobile && isHovering) ? 1 : 0 }"
+                />
+                <!-- Image Fallback/Poster -->
+                <v-img :src="cave.hero_video?.poster_url || cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="160" cover
+                       class="position-absolute w-100 h-100" style="top: 0; left: 0; z-index: 0;">
+                  <template #placeholder>
+                    <div class="d-flex align-center justify-center fill-height">
+                      <v-icon color="grey-lighten-1" size="large">mdi-image-off-outline</v-icon>
+                    </div>
+                  </template>
+                  <div v-if="cave.previously_done" class="d-flex justify-end pa-2 position-relative" style="z-index: 2;">
+                    <v-chip color="success" size="small" variant="elevated" prepend-icon="mdi-check">Done</v-chip>
+                  </div>
+                </v-img>
               </div>
 
-              <div class="mt-auto">
-                <v-chip-group class="mb-0">
-                  <v-chip
-                    v-for="tag in (cave.tags || []).slice(0, 3)"
-                    :key="tag.tag"
-                    size="x-small"
-                    variant="tonal"
-                    style="cursor: pointer;"
-                    @click.stop.prevent="emit('tag-click', tag.tag)"
-                  >
-                    {{ tag.tag }}
-                  </v-chip>
-                  <v-chip v-if="(cave.tags || []).length > 3" size="x-small" variant="text" class="px-1 text-grey">
-                    +{{ cave.tags.length - 3 }}
-                  </v-chip>
-                </v-chip-group>
+              <div class="pa-4 d-flex flex-column flex-grow-1">
+                <div class="mb-2">
+                  <h3 class="text-h6 font-weight-bold lh-tight mb-1 text-truncate">{{ cave.name }}</h3>
+                  <div class="d-flex align-center text-caption text-grey-darken-1">
+                    <v-icon size="small" icon="mdi-map-marker" class="mr-1" />
+                    <span class="text-truncate">{{ cave.location_name }}, {{ cave.location_country }}</span>
+                  </div>
+                </div>
+
+                <div class="d-flex align-center ga-4 mb-3">
+                  <div class="d-flex flex-column">
+                    <span class="text-caption text-grey">Length</span>
+                    <span class="font-weight-medium">
+                      {{ cave.system?.length ? Math.round((cave.system.length / 1000) * 10) / 10 + ' km' : '-' }}
+                    </span>
+                  </div>
+                  <!-- Add vertical divider if needed -->
+                  <div class="d-flex flex-column">
+                    <span class="text-caption text-grey">Vertical</span>
+                    <span class="font-weight-medium">
+                      {{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="mt-auto">
+                  <v-chip-group class="mb-0">
+                    <v-chip
+                      v-for="tag in (cave.tags || []).slice(0, 3)"
+                      :key="tag.tag"
+                      size="x-small"
+                      variant="tonal"
+                      style="cursor: pointer;"
+                      @click.stop.prevent="emit('tag-click', tag.tag)"
+                    >
+                      {{ tag.tag }}
+                    </v-chip>
+                    <v-chip v-if="(cave.tags || []).length > 3" size="x-small" variant="text" class="px-1 text-grey">
+                      +{{ cave.tags.length - 3 }}
+                    </v-chip>
+                  </v-chip-group>
+                </div>
               </div>
-            </div>
 
-            <v-divider />
+              <v-divider />
 
-            <div class="pa-2 d-flex justify-end">
-              <v-btn v-if="!cave.previously_done" variant="text" color="primary" size="small"
-                     @click.stop.prevent="showConfirmModal = true; caveToMark = cave">
-                Mark as Done
-              </v-btn>
-              <v-btn variant="text" size="small" color="grey-darken-1" :to="'/caves/' + cave.slug">
-                Details
-              </v-btn>
-            </div>
-          </v-card>
+              <div class="pa-2 d-flex justify-end">
+                <v-btn v-if="!cave.previously_done" variant="text" color="primary" size="small"
+                       @click.stop.prevent="showConfirmModal = true; caveToMark = cave">
+                  Mark as Done
+                </v-btn>
+                <v-btn variant="text" size="small" color="grey-darken-1" :to="'/caves/' + cave.slug">
+                  Details
+                </v-btn>
+              </div>
+            </v-card>
+          </v-hover>
         </v-col>
       </v-row>
     </template>
@@ -112,11 +127,14 @@ const emit = defineEmits(['tag-click'])
 import { useCaveStore } from '@/stores/caves'
 import { useAppStore } from '@/stores/app'
 import { markCaveAsDone } from '@/stores/markAsDone'
+import { useDisplay } from 'vuetify'
 
 const caveStore = useCaveStore()
 const appStore = useAppStore()
+const { mobile } = useDisplay()
 const showConfirmModal = ref(false)
 const caveToMark = ref(null)
+const videoRefs = ref({})
 
 const markAsDone = async (cave) => {
   if (!cave) return

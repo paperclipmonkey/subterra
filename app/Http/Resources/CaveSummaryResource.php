@@ -63,6 +63,7 @@ class CaveSummaryResource extends JsonResource
             'slug' => $this->slug,
             'name' => $this->name,
             'hero_image' => new CaveMediaResource($this->whenLoaded('heroImage', $this->heroImage)),
+            'hero_video' => new CaveMediaResource($this->whenLoaded('heroVideo', $this->heroVideo)),
             'entrance_image' => new CaveMediaResource($this->whenLoaded('entranceImage', $this->entranceImage)),
             'tags' => $formattedTags,
             'location_name' => $this->location_name,

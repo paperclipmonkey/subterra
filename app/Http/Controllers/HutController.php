@@ -96,12 +96,14 @@ class HutController extends Controller
 
     private function processImageField(Request $request, Hut $hut): void
     {
-        if ($request->has('image') && $request->input('image') !== null) {
-            $imageData = $request->input('image');
-            if (is_array($imageData)) {
-                $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'huts');
-                $hut->update(['image' => $filePath]);
-            }
+        $hasField = $request->has('image');
+        $imageData = $request->input('image', []);
+        $fileData = $request->file('image.data');
+
+        if ($fileData) {
+            $imageData['data'] = $fileData;
+            $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'huts');
+            $hut->update(['image' => $filePath]);
         } elseif ($request->has('image') && $request->input('image') === null) {
             // Explicitly remove image if null is passed
             $hut->update(['image' => null]);

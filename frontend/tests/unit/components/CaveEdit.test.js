@@ -111,7 +111,12 @@ describe('CaveEdit.vue', () => {
                     'mgl-navigation-control': { template: '<div></div>' },
                     'mgl-geolocate-control': { template: '<div></div>' },
                     'mgl-marker': { template: '<div></div>' },
-                    'CaveForm': { template: '<div></div>' }
+                    'CaveForm': {
+                        template: '<div></div>',
+                        methods: {
+                            prepareForSubmit: vi.fn().mockResolvedValue({ slug: 'test-cave' })
+                        }
+                    }
                 }
             }
         })
@@ -124,9 +129,10 @@ describe('CaveEdit.vue', () => {
         await flushPromises()
 
         // Check the calls
-        const putCall = global.fetch.mock.calls.find(call => call[1] && call[1].method === 'PUT')
+        const postCall = global.fetch.mock.calls.find(call => call[1] && call[1].method === 'POST')
 
-        expect(putCall).toBeDefined()
-        expect(putCall[1].headers).toHaveProperty('Accept', 'application/json')
+        expect(postCall).toBeDefined()
+        expect(postCall[1].headers).toHaveProperty('Accept', 'application/json')
+        expect(postCall[1].body).toBeInstanceOf(FormData)
     })
 })

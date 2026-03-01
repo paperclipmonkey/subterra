@@ -178,9 +178,16 @@ class CaveSystemController extends Controller
 
         // Process Images
         foreach (['hero_image', 'entrance_image'] as $field) {
-            if (!empty($imageData[$field]) && is_array($imageData[$field])) {
+            $fileData = $request->file("cave.{$field}.data");
+
+            if ($fileData || (!empty($imageData[$field]) && is_array($imageData[$field]))) {
                 $type = str_replace('_image', '', $field); // 'hero' or 'entrance'
-                $data = $imageData[$field];
+                $data = $imageData[$field] ?? [];
+
+                // Override string data with binary file stream
+                if ($fileData) {
+                    $data['data'] = $fileData;
+                }
 
                 // Check if data key exists and is valid
                 if (!empty($data['data'])) {

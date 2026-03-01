@@ -31,6 +31,16 @@
         }
       ]
     },
+    "hero_video": {
+      "oneOf": [
+        {
+          "$ref": "cave-media.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "entrance_image": {
       "oneOf": [
         {

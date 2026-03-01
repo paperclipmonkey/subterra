@@ -135,8 +135,9 @@ class TripController extends Controller
             event(new TripParticipantTagged($trip, $participant, $creator));
         }
 
-        $media = $request->input('media', []);
-        $this->storeMedia($media, $trip);
+        $mediaMetadata = $request->input('media', []);
+        $mediaFiles = $request->file('media', []);
+        $this->storeMedia($mediaMetadata, $mediaFiles, $trip);
 
         // Dispatch event instead of calling SlackAlert directly
         event(new TripCreated($trip, $creator));
@@ -144,16 +145,23 @@ class TripController extends Controller
         return new TripResource($trip);
     }
 
-    private function storeMedia(array $media, Trip $trip): void
+    private function storeMedia(array $mediaMetadata, array $mediaFiles, Trip $trip): void
     {
-        foreach ($media as $file) {
-            $filePath = $this->imageProcessingService->processAndStoreImage($file, 'trip');
+        foreach ($mediaMetadata as $index => $fileMeta) {
+            $file = $mediaFiles[$index]['data'] ?? null;
+            if (!$file) {
+                continue;
+            }
+
+            $fileMeta['data'] = $file;
+            $filePath = $this->imageProcessingService->processAndStoreImage($fileMeta, 'trip');
+
             $mediaData = [
                 'filename' => $filePath,
-                'title' => $file['title'] ?? null,
-                'taken_at' => $file['taken_at'] ?? null,
-                'photographer' => $file['photographer'] ?? null,
-                'copyright' => $file['copyright'] ?? null,
+                'title' => $fileMeta['title'] ?? null,
+                'taken_at' => $fileMeta['taken_at'] ?? null,
+                'photographer' => $fileMeta['photographer'] ?? null,
+                'copyright' => $fileMeta['copyright'] ?? null,
             ];
 
             $trip->media()->create($mediaData);
@@ -201,8 +209,9 @@ class TripController extends Controller
 
         $trip->participants()->sync($participantIds);
 
-        $media = $request->input('media', []);
-        $this->storeMedia($media, $trip);
+        $mediaMetadata = $request->input('media', []);
+        $mediaFiles = $request->file('media', []);
+        $this->storeMedia($mediaMetadata, $mediaFiles, $trip);
 
         return new TripResource($trip);
     }

@@ -6,6 +6,7 @@ use App\Models\Cave;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\JsonSchemaValidator;
 use Tests\TestCase;
@@ -93,18 +94,17 @@ class CaveTest extends TestCase
     {
         $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
         Storage::fake('media');
+        $imageFile = UploadedFile::fake()->image('test.png');
         $cave = Cave::factory()->create();
-
-        $base64Image = 'data:image/png;base64,'.base64_encode(file_get_contents(__DIR__.'/../../Fixtures/test.png'));
 
         $data = [
             'hero_image' => [
-                'data' => $base64Image,
+                'data' => $imageFile,
                 'title' => 'Hero Title',
                 'photographer' => 'Hero Photog',
             ],
             'entrance_image' => [
-                'data' => $base64Image,
+                'data' => $imageFile,
                 'title' => 'Entrance Title',
             ],
         ];

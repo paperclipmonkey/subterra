@@ -61,6 +61,11 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->hasOne(CaveMedia::class)->where('type', 'entrance');
     }
 
+    public function heroVideo(): HasOne
+    {
+        return $this->hasOne(CaveMedia::class)->where('type', 'hero_video');
+    }
+
     protected $casts = [
         'location_lat' => 'float',
         'location_lng' => 'float',

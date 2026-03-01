@@ -138,15 +138,14 @@ class RouteTest extends TestCase
         $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
 
-        // Mock a base64 image
-        $image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
 
         $data = [
             'name' => 'Hero Route',
-            'hero_image' => $image,
+            'hero_image' => $imageFile,
         ];
 
-        $response = $this->actingAs($admin)->postJson("/api/cave_systems/{$system->id}/routes", $data);
+        $response = $this->actingAs($admin)->withHeaders(['Accept' => 'application/json'])->post("/api/cave_systems/{$system->id}/routes", $data);
 
         $response->assertStatus(201);
         $route = Route::where('name', 'Hero Route')->first();
@@ -160,18 +159,18 @@ class RouteTest extends TestCase
         $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
 
-        $image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-        $pdf = 'data:application/pdf;base64,JVBERi0xLg0KMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+Pg0KZW5kb2JqAyAwIG9iago8PC9UeXBlL1BhZ2VzL0t'; // Truncated valid-ish header
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
+        $pdfFile = \Illuminate\Http\UploadedFile::fake()->create('test.pdf', 100, 'application/pdf');
 
         $data = [
             'name' => 'Media Route',
             'media' => [
-                ['data' => $image, 'caption' => 'A photo', 'type' => 'photo'],
-                ['data' => $pdf, 'caption' => 'A survey', 'type' => 'pdf'],
+                ['data' => $imageFile, 'caption' => 'A photo', 'type' => 'photo'],
+                ['data' => $pdfFile, 'caption' => 'A survey', 'type' => 'pdf'],
             ],
         ];
 
-        $response = $this->actingAs($admin)->postJson("/api/cave_systems/{$system->id}/routes", $data);
+        $response = $this->actingAs($admin)->withHeaders(['Accept' => 'application/json'])->post("/api/cave_systems/{$system->id}/routes", $data);
 
         $response->assertStatus(201);
         $route = Route::where('name', 'Media Route')->first();

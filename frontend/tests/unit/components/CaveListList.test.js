@@ -42,6 +42,9 @@ describe('CaveListList', () => {
     it('opens confirmation modal when Mark as Done is clicked', async () => {
         const wrapper = mount(CaveListList, {
             global: {
+                provide: {
+                    [Symbol.for('vuetify:display')]: { mobile: false }
+                },
                 plugins: [createPinia()],
                 stubs: {
                     'v-container': { template: '<div><slot></slot></div>' },
@@ -58,6 +61,7 @@ describe('CaveListList', () => {
                         props: ['to', 'variant', 'color', 'size', 'icon'],
                         emits: ['click']
                     },
+                    'v-hover': { template: '<div><slot :isHovering="false" :props="{}" /></div>' },
                     'v-dialog': { template: '<div v-if="modelValue"><slot></slot></div>', props: ['modelValue'] },
                     'v-card-title': true,
                     'v-card-text': true,

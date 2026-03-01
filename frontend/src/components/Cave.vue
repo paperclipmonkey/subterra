@@ -45,16 +45,27 @@
     </v-row>
 
     <!-- Hero Section -->
-    <v-card class="mb-6 rounded-lg" elevation="2">
-      <v-img :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="300" cover
-             class="align-end cursor-pointer hero-img" @click="activeTab = 'media'">
-        <template #placeholder>
-          <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
-            <v-icon color="grey" size="64">mdi-image-off</v-icon>
-          </div>
-        </template>
-        <div class="d-flex flex-column pa-6 text-white"
-             style="background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));">
+    <v-card class="mb-6 rounded-lg position-relative cursor-pointer hero-img" elevation="2" @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }">
+      <div style="height: 300px; width: 100%; position: relative; overflow: hidden; border-radius: inherit;">
+        <video
+          v-if="cave.hero_video?.preview_url || cave.hero_video?.url"
+          ref="heroVideoRef"
+          :src="cave.hero_video?.preview_url || cave.hero_video?.url"
+          autoplay muted loop playsinline
+          class="position-absolute w-100 h-100"
+          style="object-fit: cover; top: 0; left: 0; z-index: 1;"
+        />
+        <v-img v-else :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="300" cover
+               class="align-end" style="z-index: 1;">
+          <template #placeholder>
+            <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
+              <v-icon color="grey" size="64">mdi-image-off</v-icon>
+            </div>
+          </template>
+        </v-img>
+        
+        <div class="d-flex flex-column pa-6 text-white position-absolute w-100"
+             style="background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0)); bottom: 0; z-index: 2;">
           <div class="d-flex justify-space-between align-end">
             <div>
               <div class="text-overline mb-1">{{ cave.system?.name || 'Unknown System' }}</div>
@@ -64,13 +75,13 @@
                 <span class="text-subtitle-1">{{ cave.location_name }}, {{ cave.location_country }}</span>
               </div>
             </div>
-            <div v-if="cave.hero_image?.photographer" class="text-caption text-right opacity-70">
+            <div v-if="cave.hero_video?.photographer || cave.hero_image?.photographer" class="text-caption text-right opacity-70">
               <v-icon size="x-small" class="mr-1">mdi-camera</v-icon>
-              {{ cave.hero_image.photographer }}
+              {{ cave.hero_video?.photographer || cave.hero_image?.photographer }}
             </div>
           </div>
         </div>
-      </v-img>
+      </div>
     </v-card>
 
     <v-row>
@@ -352,8 +363,15 @@
             <v-window-item value="media">
               <v-row v-if="allMedia.length > 0">
                 <v-col v-for="item in allMedia" :key="item.url || item.filename" cols="6" sm="4" md="3">
-                  <v-img :src="item.url" aspect-ratio="1" cover class="rounded cursor-pointer"
-                         @click="openImage(item)" />
+                  <v-card hover class="bg-black" :aspect-ratio="1" @click="openImage(item)">
+                    <video
+                      v-if="item.type === 'hero_video'"
+                      :src="item.preview_url || item.url"
+                      autoplay muted loop playsinline
+                      style="width: 100%; height: 100%; object-fit: cover;"
+                    />
+                    <v-img v-else :src="item.url" aspect-ratio="1" cover class="rounded cursor-pointer" />
+                  </v-card>
                 </v-col>
               </v-row>
               <v-alert v-else type="info" variant="text">No photos available.</v-alert>
@@ -584,6 +602,17 @@ const showConfirmModal = ref(false)
 // Media Modal State
 const showMediaModal = ref(false)
 const selectedMedia = ref({})
+const heroVideoRef = ref(null)
+
+watch(showMediaModal, (isShowing) => {
+  if (heroVideoRef.value) {
+    if (isShowing) {
+      heroVideoRef.value.pause()
+    } else {
+      heroVideoRef.value.play().catch(e => console.error("Could not resume hero video", e))
+    }
+  }
+})
 
 const hasDone = computed(() => {
   return cave.value?.trips?.some(trip => trip.participants.some(participant => participant.id === appStore.user.id))

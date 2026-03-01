@@ -83,6 +83,7 @@ class CaveResource extends JsonResource
             'description' => $this->description ?? '',
             'access_info' => $this->access_info ?? '',
             'hero_image' => new CaveMediaResource($this->whenLoaded('heroImage', $this->heroImage)),
+            'hero_video' => new CaveMediaResource($this->whenLoaded('heroVideo', $this->heroVideo)),
             'entrance_image' => new CaveMediaResource($this->whenLoaded('entranceImage', $this->entranceImage)),
             'media' => CaveMediaResource::collection($this->whenLoaded('media')),
             'tags' => TagResource::collection($tags->filter(function ($tag) {

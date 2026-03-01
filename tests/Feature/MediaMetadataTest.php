@@ -25,6 +25,7 @@ class MediaMetadataTest extends TestCase
         $user = User::factory()->create();
         $entrance = Cave::factory()->create();
 
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test_image.png');
         $tripData = [
             'name' => 'Metadata Test Trip',
             'start_time' => '2024-01-01 10:00:00',
@@ -37,7 +38,7 @@ class MediaMetadataTest extends TestCase
             'visibility' => 'public',
             'media' => [
                 [
-                    'data' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=',
+                    'data' => $imageFile,
                     'filename' => 'test_image.png',
                     'title' => 'My Awesome Photo',
                     'photographer' => 'Photographer Name',
@@ -48,7 +49,7 @@ class MediaMetadataTest extends TestCase
         ];
 
         $this->actingAs($user);
-        $response = $this->postJson('/api/trips', $tripData);
+        $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips', $tripData);
 
         $response->assertCreated();
 
@@ -83,6 +84,7 @@ class MediaMetadataTest extends TestCase
         $trip = Trip::factory()->create();
         $trip->participants()->attach($user);
 
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('new_image.png');
         $updateData = [
             'name' => 'Updated Trip',
             'cave_system_id' => $trip->cave_system_id,
@@ -92,7 +94,7 @@ class MediaMetadataTest extends TestCase
             'participants' => [$user->id],
             'media' => [
                 [
-                    'data' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=',
+                    'data' => $imageFile,
                     'filename' => 'new_image.png',
                     'title' => 'New Awesome Photo',
                     'photographer' => 'New Photographer',
@@ -100,10 +102,11 @@ class MediaMetadataTest extends TestCase
                     'taken_at' => '2024-02-01 12:00:00',
                 ],
             ],
+            '_method' => 'PUT',
         ];
 
         $this->actingAs($user);
-        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
+        $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips/'.$trip->short_id, $updateData);
 
         $response->assertOk();
 

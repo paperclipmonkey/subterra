@@ -42,6 +42,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CaveSystemForm from '@/components/CaveSystemForm.vue'
 import CaveForm from '@/components/CaveForm.vue'
+import { objectToFormData } from '@/utils/formData'
 
 const router = useRouter()
 const form = ref(null)
@@ -78,13 +79,14 @@ const submit = async () => {
 
   loading.value = true
   try {
+    const formData = objectToFormData({ system: system.value, cave: cave.value })
+
     const response = await fetch('/api/cave_systems_with_cave', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ system: system.value, cave: cave.value })
+      body: formData
     })
 
     if (response.ok) {

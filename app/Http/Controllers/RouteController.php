@@ -30,7 +30,7 @@ class RouteController extends Controller
             'exit_id' => 'nullable|exists:caves,id',
             'duration' => 'nullable|string',
             'grade' => 'nullable|integer|min:1|max:5',
-            'hero_image' => 'nullable|string',
+            'hero_image' => 'nullable|file',
             'tackle' => 'array',
             'tackle.*.description' => 'required|string',
             'tackle.*.type' => 'required|string',
@@ -38,13 +38,13 @@ class RouteController extends Controller
             'tackle.*.optional' => 'boolean',
             'tackle.*.quantity' => 'integer',
             'media' => 'array',
-            'media.*.data' => 'nullable|string',
+            'media.*.data' => 'nullable|file',
             'media.*.caption' => 'nullable|string',
             'media.*.type' => 'nullable|string',
         ]);
 
-        if (isset($validated['hero_image'])) {
-            $validated['hero_image'] = $this->handleImageUpload($validated['hero_image'], 'route_hero');
+        if ($request->hasFile('hero_image')) {
+            $validated['hero_image'] = $this->handleImageUpload($request->file('hero_image'), 'route_hero');
         }
 
         return DB::transaction(function () use ($validated, $caveSystem, $request) {
@@ -66,9 +66,10 @@ class RouteController extends Controller
             }
 
             if (!empty($validated['media'])) {
-                foreach ($validated['media'] as $mediaData) {
-                    if (isset($mediaData['data'])) {
-                        $path = $this->handleImageUpload($mediaData['data'], 'route_media');
+                foreach ($validated['media'] as $index => $mediaData) {
+                    $mediaFile = $request->file("media.{$index}.data");
+                    if ($mediaFile) {
+                        $path = $this->handleImageUpload($mediaFile, 'route_media');
                         if ($path) {
                             $route->media()->create([
                                 'path' => $path,
@@ -93,15 +94,18 @@ class RouteController extends Controller
             'exit_id' => 'nullable|exists:caves,id',
             'duration' => 'nullable|string',
             'grade' => 'nullable|integer|min:1|max:5',
-            'hero_image' => 'nullable|string',
+            'hero_image' => 'nullable|file',
             'tackle' => 'array',
             'media' => 'array',
+            'media.*.data' => 'nullable|file',
+            'media.*.caption' => 'nullable|string',
+            'media.*.type' => 'nullable|string',
             'deleted_media' => 'array',
             'deleted_media.*' => 'integer',
         ]);
 
-        if (isset($validated['hero_image']) && $validated['hero_image'] !== $route->hero_image) {
-            $validated['hero_image'] = $this->handleImageUpload($validated['hero_image'], 'route_hero');
+        if ($request->hasFile('hero_image') && $request->file('hero_image')->isValid()) {
+            $validated['hero_image'] = $this->handleImageUpload($request->file('hero_image'), 'route_hero');
         } else {
             unset($validated['hero_image']);
         }
@@ -122,9 +126,10 @@ class RouteController extends Controller
 
             if (isset($validated['media'])) {
                 // Append new media items
-                foreach ($validated['media'] as $mediaData) {
-                    if (isset($mediaData['data'])) {
-                        $path = $this->handleImageUpload($mediaData['data'], 'route_media');
+                foreach ($validated['media'] as $index => $mediaData) {
+                    $mediaFile = $request->file("media.{$index}.data");
+                    if ($mediaFile) {
+                        $path = $this->handleImageUpload($mediaFile, 'route_media');
                         if ($path) {
                             $route->media()->create([
                                 'path' => $path,
@@ -140,43 +145,19 @@ class RouteController extends Controller
         });
     }
 
-    private function handleImageUpload($imageData, $prefix = 'image')
+    private function handleImageUpload($file, $prefix = 'image')
     {
-        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
-            $data = substr($imageData, strpos($imageData, ',') + 1);
-            $type = strtolower($type[1]);
-
-            if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
-                return;
-            }
-
-            $data = base64_decode($data);
-            if ($data === false) {
-                return;
-            }
-
-            $filename = $prefix.'_'.Str::random(10).'.'.$type;
-            $path = 'routes/'.$filename;
-            Storage::disk('media')->put($path, $data);
-
-            return $path;
+        if (!$file instanceof \Illuminate\Http\UploadedFile) {
+            return;
         }
 
-        if (preg_match('/^data:application\/pdf;base64,/', $imageData)) {
-            $data = substr($imageData, strpos($imageData, ',') + 1);
-            $data = base64_decode($data);
-            if ($data === false) {
-                return;
-            }
+        $extension = $file->getClientOriginalExtension() ?: $file->guessExtension();
+        $filename = "{$prefix}_".Str::random(10).".{$extension}";
+        $path = "routes/{$filename}";
 
-            $filename = $prefix.'_'.Str::random(10).'.pdf';
-            $path = 'routes/'.$filename;
-            Storage::disk('media')->put($path, $data);
+        Storage::disk('media')->putFileAs('routes', $file, $filename);
 
-            return $path;
-        }
-
-        return $imageData;
+        return $path;
     }
 
     public function destroy(Route $route)

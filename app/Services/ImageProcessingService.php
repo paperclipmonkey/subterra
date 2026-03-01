@@ -15,8 +15,10 @@ class ImageProcessingService
 {
     public function processAndStoreImage(array $imageData, string $directory, string $suffix = ''): string
     {
-        $fileData = explode(',', $imageData['data']);
-        $image = Image::read($fileData[1])->scaleDown(1500, 1500)->encode(new WebpEncoder(quality: 60));
+        /** @var \Illuminate\Http\UploadedFile $file */
+        $file = $imageData['data'];
+
+        $image = Image::read($file->getPathname())->scaleDown(1500, 1500)->encode(new WebpEncoder(quality: 60));
 
         $filename = Str::uuid();
         if ($suffix) {
@@ -64,5 +66,47 @@ class ImageProcessingService
         gc_collect_cycles(); // Force garbage collection
 
         return $thumbnailFilename;
+    }
+
+    public function processAndStoreVideo(array $videoData, string $directory, string $suffix = ''): string
+    {
+        /** @var \Illuminate\Http\UploadedFile $file */
+        $file = $videoData['data'];
+
+        $filename = Str::uuid();
+        if ($suffix) {
+            $filename .= '_'.$suffix;
+        }
+        $originalFilename = $filename.'.mp4';
+        $originalPath = $directory.'/'.$originalFilename;
+
+        Storage::disk('media')->putFileAs($directory, $file, $originalFilename);
+
+        try {
+            // Generate poster (webp) at 0.5s or 0s
+            $posterFilename = $filename.'.webp';
+            \ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::fromDisk('media')
+                ->open($originalPath)
+                ->getFrameFromSeconds(0.5)
+                ->export()
+                ->toDisk('media')
+                ->save($directory.'/'.$posterFilename);
+
+            // Export preview (webm), muted, scaled down to 480p width
+            $format = new \FFMpeg\Format\Video\WebM();
+            $format->setAdditionalParameters(['-an']); // Mute audio
+
+            \ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::fromDisk('media')
+                ->open($originalPath)
+                ->resize(854, 480, 'width')
+                ->export()
+                ->toDisk('media')
+                ->inFormat($format)
+                ->save($directory.'/'.$filename.'.webm');
+        } catch (\Exception $e) {
+            \Log::error('Video processing failed: '.$e->getMessage());
+        }
+
+        return $originalPath;
     }
 }

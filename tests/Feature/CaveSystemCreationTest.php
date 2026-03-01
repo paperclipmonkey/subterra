@@ -24,8 +24,7 @@ class CaveSystemCreationTest extends TestCase
     {
         Storage::fake('media');
 
-        // Simulate base64 image data
-        $base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
 
         $payload = [
             'system' => [
@@ -43,7 +42,7 @@ class CaveSystemCreationTest extends TestCase
                 'location_lat' => 50.0,
                 'location_lng' => -1.5,
                 'hero_image' => [
-                    'data' => $base64Image,
+                    'data' => $imageFile,
                     'title' => 'Hero Title',
                     'photographer' => 'Photo Grapher',
                     'copyright' => 'Copy Right',
@@ -51,7 +50,7 @@ class CaveSystemCreationTest extends TestCase
             ],
         ];
 
-        $response = $this->postJson('/api/cave_systems_with_cave', $payload);
+        $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/cave_systems_with_cave', $payload);
 
         $response->assertCreated();
 

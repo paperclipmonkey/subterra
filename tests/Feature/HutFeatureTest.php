@@ -83,19 +83,18 @@ class HutFeatureTest extends TestCase
         $user = User::factory()->admin()->create();
         $club = Club::factory()->create();
 
-        // Create a simple base64 encoded 1x1 pixel PNG
-        $imageData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
 
         $hutData = [
             'name' => 'Test Hut',
             'description' => 'A test hut with image',
             'club_id' => $club->id,
             'image' => [
-                'data' => 'data:image/png;base64,'.$imageData,
+                'data' => $imageFile,
             ],
         ];
 
-        $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
+        $response = $this->actingAs($user)->withHeaders(['Accept' => 'application/json'])->post('/api/huts', $hutData);
 
         $response->assertStatus(201)
             ->assertJsonPath('name', 'Test Hut');
@@ -144,18 +143,18 @@ class HutFeatureTest extends TestCase
             'club_id' => $club->id,
         ]);
 
-        // Create a simple base64 encoded 1x1 pixel PNG
-        $imageData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
 
         $updateData = [
             'name' => $hut->name,
             'club_id' => $club->id,
             'image' => [
-                'data' => 'data:image/png;base64,'.$imageData,
+                'data' => $imageFile,
             ],
+            '_method' => 'PUT',
         ];
 
-        $response = $this->actingAs($user)->putJson("/api/huts/{$hut->id}", $updateData);
+        $response = $this->actingAs($user)->withHeaders(['Accept' => 'application/json'])->post("/api/huts/{$hut->id}", $updateData);
 
         $response->assertStatus(200);
 

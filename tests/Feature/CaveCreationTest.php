@@ -31,9 +31,7 @@ class CaveCreationTest extends TestCase
         // Create a tag
         $tag = Tag::factory()->create(['category' => 'type', 'tag' => 'wet', 'assignable' => true]);
 
-        // Mock image data (base64 simulation as used in controller)
-        // Controller expects array with 'data' key containing base64 string
-        $imageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png');
 
         $payload = [
             'name' => 'New Cave',
@@ -51,13 +49,13 @@ class CaveCreationTest extends TestCase
                 ],
             ],
             'hero_image' => [
-                'data' => $imageBase64,
+                'data' => $imageFile,
                 'title' => 'Hero Title',
                 'photographer' => 'Hero Photographer',
                 'copyright' => 'Hero Copyright',
             ],
             'entrance_image' => [
-                'data' => $imageBase64,
+                'data' => $imageFile,
                 'title' => 'Entrance Title',
                 'photographer' => 'Entrance Photographer',
                 'copyright' => 'Entrance Copyright',
@@ -65,7 +63,8 @@ class CaveCreationTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-            ->postJson('/api/caves', $payload);
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post('/api/caves', $payload);
 
         $response->assertStatus(200);
 
@@ -98,5 +97,68 @@ class CaveCreationTest extends TestCase
 
         // Verify System ID
         $this->assertEquals($system->id, $cave->cave_system_id);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_saves_hero_video_on_creation()
+    {
+        Storage::fake('media');
+
+        // Mock the ImageProcessingService to avoid running actual FFMpeg
+        $mockService = \Mockery::mock(\App\Services\ImageProcessingService::class);
+        $mockService->shouldReceive('processAndStoreVideo')
+            ->once()
+            ->andReturn('caves/fake-video-uuid.mp4');
+        $this->app->instance(\App\Services\ImageProcessingService::class, $mockService);
+
+        // Create a data_admin user
+        $user = User::factory()->create();
+        $role = \App\Models\Role::firstOrCreate(['slug' => 'data_admin'], ['name' => 'Data Admin']);
+        $user->roles()->attach($role);
+        $user->refresh();
+
+        $videoFile = \Illuminate\Http\UploadedFile::fake()->create('test.mp4', 100, 'video/mp4');
+
+        $system = CaveSystem::factory()->create();
+
+        $payload = [
+            'name' => 'Cave with Video',
+            'cave_system_id' => $system->id,
+            'location_lat' => 52.123,
+            'location_lng' => -1.123,
+            'location_name' => 'Location',
+            'location_country' => 'Country',
+            'hero_video' => [
+                'data' => $videoFile,
+                'title' => 'Video Title',
+                'photographer' => 'Video Shooter',
+                'copyright' => 'Video Copyright',
+            ],
+        ];
+
+        $response = $this->actingAs($user)
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post('/api/caves', $payload);
+
+        $response->assertStatus(200);
+
+        $cave = Cave::where('name', 'Cave with Video')->first();
+        $this->assertNotNull($cave);
+
+        $this->assertDatabaseHas('cave_media', [
+            'cave_id' => $cave->id,
+            'type' => 'hero_video',
+            'title' => 'Video Title',
+            'photographer' => 'Video Shooter',
+            'copyright' => 'Video Copyright',
+        ]);
+
+        $media = \App\Models\CaveMedia::where('cave_id', $cave->id)->where('type', 'hero_video')->first();
+        // Since we mocked ImageProcessingService to return a generic path,
+        // we can still verify the attributes are dynamically generated.
+        $this->assertNotNull($media->preview_url);
+        $this->assertNotNull($media->poster_url);
+
+        \Mockery::close();
     }
 }

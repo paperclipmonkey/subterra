@@ -12,7 +12,7 @@
     <v-form ref="form" @submit.prevent="saveCave">
       <v-row>
         <v-col cols="12">
-          <CaveForm v-model="cave" />
+          <CaveForm ref="caveFormRef" v-model="cave" />
         </v-col>
       </v-row>
 
@@ -62,6 +62,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
 import { useToast } from "vue-toastification"
+import { objectToFormData } from '@/utils/formData'
 
 const toast = useToast()
 const appStore = useAppStore()
@@ -69,6 +70,7 @@ const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
 const form = ref(null)
+const caveFormRef = ref(null)
 const loading = ref(false)
 const errorSnackbar = ref(false)
 const errorMessage = ref('')
@@ -137,14 +139,18 @@ const saveCave = async () => {
 
   loading.value = true
   try {
+    const submitData = await caveFormRef.value.prepareForSubmit()
+
     if (appStore.user?.is_admin) {
+      const formData = objectToFormData(submitData)
+      formData.append('_method', 'PUT')
+
       const response = await fetch(`/api/caves/${route.params.id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify(cave.value),
+        body: formData,
       })
 
       if (response.ok) {
@@ -157,18 +163,19 @@ const saveCave = async () => {
       }
     } else {
       // Suggest Edit
+      const formData = objectToFormData({
+        suggestable_type: 'cave',
+        suggestable_id: cave.value.id,
+        suggested_data: submitData,
+        original_data: null
+      })
+
       const response = await fetch('/api/suggested-edits', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({
-          suggestable_type: 'cave',
-          suggestable_id: cave.value.id,
-          suggested_data: cave.value,
-          original_data: null
-        }),
+        body: formData,
       })
 
       if (response.ok) {

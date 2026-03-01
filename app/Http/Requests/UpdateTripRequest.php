@@ -35,7 +35,7 @@ class UpdateTripRequest extends FormRequest
             'participants' => ['sometimes', 'array'],
             'participants.*' => ['integer', 'exists:users,id'],
             'media' => ['nullable', 'array'],
-            'media.*.data' => ['required', 'string'],
+            'media.*.data' => ['required', 'file', 'max:512000'],
             'existing_media' => ['nullable', 'array'],
         ];
     }

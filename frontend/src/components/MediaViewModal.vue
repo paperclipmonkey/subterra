@@ -7,7 +7,16 @@
         <div class="bg-black d-flex align-center justify-center flex-grow-1 overflow-hidden position-relative" style="min-height: 300px; flex-basis: 70%;">
           <v-btn icon="mdi-close" variant="text" color="white" class="position-absolute top-0 right-0 ma-2 d-md-none" style="z-index: 10" @click="closeModal" />
           
+          <video
+            v-if="media.type === 'hero_video' || media.type === 'video'"
+            :src="media.url"
+            controls
+            autoplay
+            class="media-video w-100 h-100 d-block"
+            style="max-height: 100%; max-width: 100%; object-fit: contain; outline: none;"
+          />
           <v-img
+            v-else
             :src="media.url"
             :alt="media.filename"
             max-height="100%"
