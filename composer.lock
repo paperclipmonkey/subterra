@@ -288,30 +288,30 @@
         },
         {
             "name": "cesargb/laravel-magiclink",
-            "version": "v2.25.1",
+            "version": "v2.27.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cesargb/laravel-magiclink.git",
-                "reference": "19fa820a49ea9b3984e9a91b4bf4bf0cf8375183"
+                "reference": "af9f8ae042389aa63cc4370024f27eec13512dc9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cesargb/laravel-magiclink/zipball/19fa820a49ea9b3984e9a91b4bf4bf0cf8375183",
-                "reference": "19fa820a49ea9b3984e9a91b4bf4bf0cf8375183",
+                "url": "https://api.github.com/repos/cesargb/laravel-magiclink/zipball/af9f8ae042389aa63cc4370024f27eec13512dc9",
+                "reference": "af9f8ae042389aa63cc4370024f27eec13512dc9",
                 "shasum": ""
             },
             "require": {
-                "illuminate/auth": "^11.0|^12.0",
-                "illuminate/container": "^11.0|^12.0",
-                "illuminate/contracts": "^11.0|^12.0",
-                "illuminate/database": "^11.0|^12.0",
+                "illuminate/auth": "^11.0|^12.0|^13.0",
+                "illuminate/container": "^11.0|^12.0|^13.0",
+                "illuminate/contracts": "^11.0|^12.0|^13.0",
+                "illuminate/database": "^11.0|^12.0|^13.0",
                 "laravel/serializable-closure": "^1.0|^2.0",
                 "php": "^8.2"
             },
             "require-dev": {
                 "laravel/pint": "^1.27",
-                "orchestra/testbench": "^9.0|^10.0",
-                "phpunit/phpunit": "^10.5|^11.5"
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^10.5|^11.5|^12.5.8"
             },
             "type": "library",
             "extra": {
@@ -350,9 +350,9 @@
             ],
             "support": {
                 "issues": "https://github.com/cesargb/laravel-magiclink/issues",
-                "source": "https://github.com/cesargb/laravel-magiclink/tree/v2.25.1"
+                "source": "https://github.com/cesargb/laravel-magiclink/tree/v2.27.0"
             },
-            "time": "2026-02-12T14:31:51+00:00"
+            "time": "2026-02-25T14:12:49+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
