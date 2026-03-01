@@ -7,6 +7,10 @@ import { FirestoreClient, CalloutData } from './firestore-client';
 import { TextMagicClient } from './textmagic-client';
 import { SMTPClient } from './smtp-client';
 import { getSecret } from './secrets';
+import { setupSlackLogger } from './slack-logger';
+
+// Setup Slack logging for console.warn and console.error
+setupSlackLogger();
 
 const app = express();
 app.use(express.json());

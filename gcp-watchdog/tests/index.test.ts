@@ -13,6 +13,10 @@ import { FirestoreClient } from '../src/firestore-client';
 import { TextMagicClient } from '../src/textmagic-client';
 import { SMTPClient } from '../src/smtp-client';
 import * as secrets from '../src/secrets';
+import axios from 'axios';
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('Watchdog API', () => {
     let mockFirestore: jest.Mocked<FirestoreClient>;
@@ -206,6 +210,83 @@ describe('Watchdog API', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.error).toContain('Missing required fields for test');
+        });
+
+        describe('Slack Logging', () => {
+            let originalWarn: typeof console.warn;
+            let originalError: typeof console.error;
+
+            beforeAll(() => {
+                originalWarn = console.warn;
+                originalError = console.error;
+            });
+
+            afterEach(() => {
+                console.warn = originalWarn;
+                console.error = originalError;
+                mockedAxios.post.mockClear();
+            });
+
+            it('should send an HTTP POST to Slack when console.error is called', async () => {
+                // temporarily disable NODE_ENV='test' for this specific test
+                const originalEnv = process.env.NODE_ENV;
+                process.env.NODE_ENV = 'production';
+
+                jest.spyOn(secrets, 'getSecret').mockImplementation((key) => {
+                    if (key === 'SLACK_WEBHOOK_URL') return 'https://hooks.slack.com/services/test/test';
+                    return 'test-api-key';
+                });
+
+                // The setupSlackLogger method is called in index.ts, so the console methods are already wrapped.
+                // We just need to trigger them. We must mock the actual stdout/stderr locally to avoid spamming tests
+                const spiedStderr = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+                mockedAxios.post.mockResolvedValue({ status: 200, data: 'ok' });
+
+                console.error('Test error message', { some: 'data' });
+
+                // Wait a tick for the async HTTP request to fire
+                await new Promise(resolve => setTimeout(resolve, 0));
+
+                expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+                expect(mockedAxios.post).toHaveBeenCalledWith(
+                    'https://hooks.slack.com/services/test/test',
+                    expect.objectContaining({
+                        text: expect.stringContaining('Test error message')
+                    })
+                );
+                expect(mockedAxios.post).toHaveBeenCalledWith(
+                    'https://hooks.slack.com/services/test/test',
+                    expect.objectContaining({
+                        text: expect.stringContaining('🚨 *GCP Watchdog [ERROR]*')
+                    })
+                );
+
+                process.env.NODE_ENV = originalEnv;
+                spiedStderr.mockRestore();
+            });
+
+            it('should not send HTTP POST when webhook URL is missing', async () => {
+                const originalEnv = process.env.NODE_ENV;
+                process.env.NODE_ENV = 'production';
+
+                jest.spyOn(secrets, 'getSecret').mockImplementation((key) => {
+                    if (key === 'SLACK_WEBHOOK_URL') return '';
+                    return 'test-api-key';
+                });
+
+                const spiedStderr = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+                console.error('Test error message should not be sent');
+
+                // Wait a tick for the async HTTP request to fire
+                await new Promise(resolve => setTimeout(resolve, 0));
+
+                expect(mockedAxios.post).not.toHaveBeenCalled();
+
+                process.env.NODE_ENV = originalEnv;
+                spiedStderr.mockRestore();
+            });
         });
     });
 });

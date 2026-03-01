@@ -7,6 +7,7 @@ interface SecretsConfig {
     SMTP_USERNAME: string;
     SMTP_PASSWORD: string;
     WATCHDOG_API_KEY: string;
+    SLACK_WEBHOOK_URL: string;
 }
 
 let cachedSecrets: SecretsConfig | null = null;
@@ -42,6 +43,7 @@ export function loadSecrets(): SecretsConfig {
         SMTP_USERNAME: process.env.SMTP_USERNAME || '',
         SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
         WATCHDOG_API_KEY: process.env.WATCHDOG_API_KEY || '',
+        SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL || '',
     };
 
     console.log('Loaded secrets from environment variables');
