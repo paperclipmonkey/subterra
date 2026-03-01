@@ -18,7 +18,13 @@ class ImageProcessingService
         /** @var \Illuminate\Http\UploadedFile $file */
         $file = $imageData['data'];
 
-        $image = Image::read($file->getPathname())->scaleDown(1500, 1500)->encode(new WebpEncoder(quality: 60));
+        try {
+            $image = Image::read($file->getPathname())->scaleDown(1500, 1500)->encode(new WebpEncoder(quality: 60));
+        } catch (\Intervention\Image\Exceptions\DecoderException $e) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'image' => 'The uploaded image format (e.g. HEIC) is not supported. Please upload a JPEG, PNG, or WebP image.',
+            ]);
+        }
 
         $filename = Str::uuid();
         if ($suffix) {
@@ -34,12 +40,18 @@ class ImageProcessingService
     public function generateThumbnail($file, string $destinationPath): ?string
     {
         \Log::info("Generating thumbnail for {$file->getPathname()}. Initial memory: ".round(memory_get_usage() / 1024 / 1024, 2).'MB');
-        if ($file->getMimeType() === 'application/pdf') {
-            $manager = new ImageManager(new ImagickDriver());
-            // Force reading only the first page to save memory
-            $image = $manager->read($file->getPathname().'[0]');
-        } else {
-            $image = Image::read($file->getPathname());
+        try {
+            if ($file->getMimeType() === 'application/pdf') {
+                $manager = new ImageManager(new ImagickDriver());
+                // Force reading only the first page to save memory
+                $image = $manager->read($file->getPathname().'[0]');
+            } else {
+                $image = Image::read($file->getPathname());
+            }
+        } catch (\Intervention\Image\Exceptions\DecoderException $e) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'image' => 'The uploaded image format (e.g. HEIC) is not supported. Please upload a JPEG, PNG, or WebP image.',
+            ]);
         }
 
         // Create thumbnail
@@ -82,30 +94,8 @@ class ImageProcessingService
 
         Storage::disk('media')->putFileAs($directory, $file, $originalFilename);
 
-        try {
-            // Generate poster (webp) at 0.5s or 0s
-            $posterFilename = $filename.'.webp';
-            \ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::fromDisk('media')
-                ->open($originalPath)
-                ->getFrameFromSeconds(0.5)
-                ->export()
-                ->toDisk('media')
-                ->save($directory.'/'.$posterFilename);
-
-            // Export preview (webm), muted, scaled down to 480p width
-            $format = new \FFMpeg\Format\Video\WebM();
-            $format->setAdditionalParameters(['-an']); // Mute audio
-
-            \ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::fromDisk('media')
-                ->open($originalPath)
-                ->resize(854, 480, 'width')
-                ->export()
-                ->toDisk('media')
-                ->inFormat($format)
-                ->save($directory.'/'.$filename.'.webm');
-        } catch (\Exception $e) {
-            \Log::error('Video processing failed: '.$e->getMessage());
-        }
+        // Dispatch background encoding job to prevent HTTP timeouts
+        \App\Jobs\ProcessVideoJob::dispatch($originalPath, $directory, $filename);
 
         return $originalPath;
     }

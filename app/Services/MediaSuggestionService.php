@@ -166,14 +166,22 @@ class MediaSuggestionService
         $path = $targetDir.'/'.$filename;
 
         try {
-            $image = Image::read($fileData[1])
-                ->scaleDown(1500, 1500)
-                ->encode(new WebpEncoder(quality: 80));
+            try {
+                $image = Image::read($fileData[1])
+                    ->scaleDown(1500, 1500)
+                    ->encode(new WebpEncoder(quality: 80));
+            } catch (\Intervention\Image\Exceptions\DecoderException $e) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'image' => 'The uploaded image format (e.g. HEIC) is not supported. Please upload a JPEG, PNG, or WebP image.',
+                ]);
+            }
 
             Storage::disk('media')->put($path, (string) $image);
             Log::info("Stored permanent image at: $path");
 
             return $path;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to store permanent image: '.$e->getMessage());
 
@@ -216,13 +224,21 @@ class MediaSuggestionService
 
         // Use simple direct storage logic
         try {
-            $image = Image::read($fileData[1])
-                ->scaleDown(1500, 1500)
-                ->encode(new WebpEncoder(quality: 60));
+            try {
+                $image = Image::read($fileData[1])
+                    ->scaleDown(1500, 1500)
+                    ->encode(new WebpEncoder(quality: 60));
+            } catch (\Intervention\Image\Exceptions\DecoderException $e) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'image' => 'The uploaded image format (e.g. HEIC) is not supported. Please upload a JPEG, PNG, or WebP image.',
+                ]);
+            }
 
             Storage::disk('media')->put($path, (string) $image);
 
             return $path;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to store pending image: '.$e->getMessage());
 
