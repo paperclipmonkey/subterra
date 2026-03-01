@@ -6,6 +6,7 @@ use App\Models\Callout;
 use App\Services\GcpWatchdogService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SendTestWatchdogAlert extends Command
 {
@@ -50,6 +51,7 @@ class SendTestWatchdogAlert extends Command
         try {
             // Register directly with GCP watchdog
             $response = \Illuminate\Support\Facades\Http::timeout(10)
+                ->withHeaders(['X-Watchdog-Key' => config('services.gcp_watchdog.api_key')])
                 ->post(config('services.gcp_watchdog.url').'/watchdog', $testCalloutData);
 
             if ($response->successful()) {
@@ -62,11 +64,19 @@ class SendTestWatchdogAlert extends Command
             } else {
                 $this->error("❌ Failed to register test watchdog: {$response->status()}");
                 $this->error($response->body());
+                Log::error('SendTestWatchdogAlert failed: Watchdog API responded with error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
 
                 return Command::FAILURE;
             }
         } catch (\Exception $e) {
             $this->error("❌ Exception: {$e->getMessage()}");
+            Log::error('SendTestWatchdogAlert failed: Exception caught', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return Command::FAILURE;
         }
