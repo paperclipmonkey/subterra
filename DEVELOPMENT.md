@@ -90,6 +90,7 @@ After setting up the application:
    // Make yourself an admin and approve your account
    $user = User::where('email', 'your@email.com')->first();
    $user->assignRole('platform_admin');
+   $user->assignRole('duty_officer');
    $user->assignRole('data_admin');
    
    // Approve your club membership

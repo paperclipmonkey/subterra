@@ -198,4 +198,47 @@ class SlackNotificationTest extends TestCase
                    str_contains($message['text'] ?? '', 'Team is deploying now');
         });
     }
+
+    public function test_closed_callout_sends_slack_notification_to_closed_channel()
+    {
+        SlackAlert::fake();
+        config()->set('slack-alerts.webhook_urls.callouts-closed', 'https://hooks.slack.com/services/test/closed');
+
+        $user = User::factory()->withApprovedClub()->create();
+        $cave = Cave::first();
+
+        // Setup Shift
+        \App\Models\OnCallShift::create([
+            'user_id' => $user->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->addDays(1)->endOfDay(),
+        ]);
+
+        $calloutData = [
+            'cave_id' => $cave->id,
+            'callout_time' => now()->addHours(2)->toDateTimeString(),
+            'trip_plan' => 'Exploring the deep',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Layby',
+            'participants' => [
+                ['name' => 'John Doe'],
+            ],
+        ];
+
+        // 1. Create the callout
+        $response = $this->actingAs($user)->postJson('/api/callouts', $calloutData);
+        $response->assertStatus(201);
+        $calloutId = $response->json('callout.id');
+
+        // 2. Cancel the callout
+        $response = $this->actingAs($user)->postJson("/api/callouts/{$calloutId}/cancel");
+        $response->assertStatus(200);
+
+        SlackAlert::expectMessagesSent(function ($message) use ($user, $cave) {
+            return ($message['webhookUrl'] ?? '') === 'https://hooks.slack.com/services/test/closed' &&
+                   str_contains($message['text'] ?? '', 'CALLOUT CLOSED') &&
+                   str_contains($message['text'] ?? '', $user->name) &&
+                   str_contains($message['text'] ?? '', $cave->name);
+        });
+    }
 }

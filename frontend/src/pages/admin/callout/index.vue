@@ -96,7 +96,12 @@
                       </span>
                     </div>
                     <div class="subtitle-2 grey--text">
-                      Team: {{ callout.team_size }} • Due: {{ formatDate(callout.callout_time) }}
+                      <span class="font-weight-bold black--text">{{ callout.leader_name }}</span>
+                      <span v-if="callout.additional_people > 0"> + {{ callout.additional_people }} other{{ callout.additional_people > 1 ? 's' : '' }}</span>
+                      • Due: {{ formatDate(callout.callout_time) }}
+                    </div>
+                    <div v-if="callout.route" class="caption grey--text text--darken-1 mt-1 font-italic text-truncate" style="max-width: 500px">
+                      {{ callout.route }}
                     </div>
                   </div>
 

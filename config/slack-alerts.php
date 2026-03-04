@@ -10,6 +10,7 @@ return [
         'corrections' => env('SLACK_CORRECTIONS_WEBHOOK'),
         'callouts' => env('SLACK_CALLOUTS_OPEN_WEBHOOK'),
         'callouts-open' => env('SLACK_CALLOUTS_OPEN_WEBHOOK'),
+        'callouts-closed' => env('SLACK_CALLOUTS_CLOSED_WEBHOOK'),
         'callouts-overdue' => env('SLACK_CALLOUTS_OVERDUE_WEBHOOK'),
         'approvals' => env('SLACK_CLUB_APPROVAL_WEBHOOK'),
     ],

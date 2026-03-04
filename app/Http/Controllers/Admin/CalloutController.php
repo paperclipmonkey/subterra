@@ -18,7 +18,7 @@ class CalloutController extends Controller
 
     public function index()
     {
-        $callouts = Callout::with('cave', 'exitCave', 'participants')
+        $callouts = Callout::with('cave', 'exitCave', 'participants', 'user')
             ->whereIn('status', ['active', 'triggered']) // Fetch both so we can show complete picture, or just active?
             // User request: "Open callouts ... as well as flagging those that have turned into active incidents"
             // If I fetch triggered here, they duplicate what IncidentController fetches.
@@ -41,10 +41,13 @@ class CalloutController extends Controller
             return [
                 'id' => $callout->id,
                 'status' => $callout->status,
-                'cave_name' => $callout->cave ? $callout->cave->name : $callout->description,
+                'cave_name' => $callout->cave ? $callout->cave->name : ($callout->description ?: 'Unknown Location'),
                 'exit_cave_name' => $callout->exitCave ? $callout->exitCave->name : null,
                 'callout_time' => $callout->callout_time,
                 'team_size' => $callout->participants->count(),
+                'leader_name' => $callout->user ? $callout->user->name : 'Unknown',
+                'additional_people' => max(0, $callout->participants->count() - 1),
+                'route' => $callout->trip_plan,
                 'has_incident' => $callout->status === 'triggered',
                 'incident_id' => $callout->incident ? $callout->incident->id : null,
                 'lat' => $lat,

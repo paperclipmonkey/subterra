@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
+use App\Events\CalloutCancelled;
 use App\Events\CalloutCreated;
-use App\Mail\CalloutCancelled;
+use App\Mail\CalloutCancelled as CalloutCancelledMail;
 use App\Mail\CalloutStarted;
 use App\Models\Callout;
 use App\Models\OnCallShift;
@@ -149,7 +150,7 @@ class CalloutService
             }
 
             $emails->unique()->each(function ($email) use ($callout) {
-                Mail::to($email)->send(new CalloutCancelled($callout));
+                Mail::to($email)->send(new CalloutCancelledMail($callout));
             });
         } catch (Exception $e) {
             Log::error('Email Failure cancelling callout: '.$e->getMessage());
@@ -170,6 +171,8 @@ class CalloutService
 
         // 5. Mark as cancelled (instead of deleting)
         $callout->update(['status' => 'cancelled']);
+
+        CalloutCancelled::dispatch($callout);
 
         return $trip;
     }
