@@ -109,6 +109,7 @@ import { ref, onMounted } from 'vue'
 import { mande } from 'mande'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useNotificationStore } from '@/stores/notifications'
 
 const usersApi = mande('/api/admin/users')
 const users = ref([])
@@ -116,6 +117,7 @@ const loading = ref(false)
 const search = ref('')
 const router = useRouter()
 const appStore = useAppStore()
+const notificationStore = useNotificationStore()
 
 const allRoles = [
   { slug: 'platform_admin', label: 'Platform Admin', color: 'purple', icon: 'mdi-shield-crown' },
@@ -209,6 +211,19 @@ const toggleRole = async (user, roleSlug) => {
     updateUserInList(updatedUser.data || updatedUser)
   } catch (error) {
     console.error(`Error toggling role ${roleSlug} for user ${user.id}:`, error)
+
+    let message = `Error toggling role ${roleSlug}`
+    if (error.body && error.body.message) {
+      message = error.body.message
+    } else if (error.body && error.body.errors) {
+      // Handle Laravel validation errors structure
+      const firstError = Object.values(error.body.errors)[0]
+      if (Array.isArray(firstError) && firstError.length > 0) {
+        message = firstError[0]
+      }
+    }
+
+    notificationStore.showError(message)
     user.loadingRole = null
   }
 }
@@ -221,6 +236,13 @@ const approveMembership = async (user, club) => {
     updateUserInList(updatedUser.data || updatedUser)
   } catch (error) {
     console.error(`Error approving membership for user ${user.id} in club ${club.slug}:`, error)
+
+    let message = `Error approving membership`
+    if (error.body && error.body.message) {
+      message = error.body.message
+    }
+
+    notificationStore.showError(message)
   } finally {
     loading.value = false
   }

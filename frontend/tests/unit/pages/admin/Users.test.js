@@ -29,6 +29,14 @@ vi.mock('@/stores/app', () => ({
     }))
 }))
 
+// Mock notification store
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: vi.fn(() => ({
+        showError: vi.fn(),
+        showSuccess: vi.fn()
+    }))
+}))
+
 const mockUsers = [
     { id: 1, name: 'User One', email: 'one@example.com', is_admin: false, clubs: [], created_at: '2024-01-01T12:00:00Z' },
     { id: 2, name: 'User Two', email: 'two@example.com', is_admin: false, clubs: [], created_at: '2024-01-02T12:00:00Z' }
