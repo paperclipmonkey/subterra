@@ -677,58 +677,80 @@ const removePendingMedia = (index) => {
 }
 
 const submitForm = async () => {
-  validationErrors.value = {} // Clear previous errors
-  isSaving.value = true // Start loading state
+  validationErrors.value = {}
+  isSaving.value = true
 
   try {
     if (!trip.exit_cave_id || !throughTrip.value) {
       trip.exit_cave_id = trip.entrance_cave_id
     }
-    trip.start_time = `${tripStartDate.value} ${tripStartTime.value}:00` // Add seconds for format Y-m-d H:i:s
-    trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm:ss') // Add seconds for format Y-m-d H:i:s
-    trip.cave_system_id = cave_system_id.value // Ensure system_id is set
+    trip.start_time = `${tripStartDate.value} ${tripStartTime.value}:00`
+    trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm:ss')
+    trip.cave_system_id = cave_system_id.value
     if (markdownOutput.value) {
-      trip.description = markdownOutput.value // Copy the markdown output to the description field
+      trip.description = markdownOutput.value
     }
 
-    // Process pending media
-    const mediaPayload = await Promise.all(pendingMedia.value.map(async (item) => {
-      const base64Data = await convertFileToBase64(item.file)
-      return {
-        data: base64Data.data, // convertFileToBase64 returns { data, filename }
-        filename: base64Data.filename,
-        title: item.title,
-        copyright: item.copyright,
-        photographer: item.photographer
+    const formData = new FormData()
+
+    Object.keys(trip).forEach(key => {
+      if (trip[key] !== null && trip[key] !== undefined && key !== 'media' && key !== 'existing_media' && key !== 'participants') {
+        formData.append(key, trip[key])
       }
-    }))
+    })
 
-    // Prepare payload, separating existing media IDs if needed by the backend
-    const payload = {
-      ...trip,
-      media: mediaPayload,
-      // If your backend needs existing media IDs separately, adjust here
-      // existing_media_ids: trip.existing_media?.map(m => m.id) || []
+    trip.participants.forEach((participantId, index) => {
+      formData.append(`participants[${index}]`, participantId)
+    })
+
+    // In Vue update forms (PUT), we need to send POST with _method = PUT to allow multipart/form-data
+    if (route.params.id) {
+      formData.append('_method', 'PUT')
     }
-    // Remove properties not expected by the backend if necessary
-    // delete payload.existing_media;
+
+    pendingMedia.value.forEach((item, index) => {
+      formData.append(`media[${index}][data]`, item.file)
+      if (item.title) formData.append(`media[${index}][title]`, item.title)
+      if (item.copyright) formData.append(`media[${index}][copyright]`, item.copyright)
+      if (item.photographer) formData.append(`media[${index}][photographer]`, item.photographer)
+    })
+
+    if (trip.existing_media?.length > 0) {
+      trip.existing_media.forEach((item, index) => {
+        formData.append(`existing_media[${index}][id]`, item.id)
+      })
+    }
 
     if (route.params.id) {
-      await updateTrip(payload)
+      await updateTrip(formData, trip.id)
     } else {
-      await saveTrip(payload)
+      await saveTrip(formData)
     }
   } catch (error) {
     console.error('Error saving trip:', error)
     notificationStore.showError('An unexpected error occurred while saving the trip. Please try again.')
   } finally {
-    isSaving.value = false // End loading state
+    isSaving.value = false
   }
 }
 
 const handleApiError = async (response) => {
   if (response.status === 422) {
     const errorData = await response.json()
+
+    // Map wildcard media errors (media.0.data) back to the base 'media' field for the UI
+    const mediaErrors = []
+    Object.keys(errorData.errors).forEach(key => {
+      if (key.startsWith('media.')) {
+        mediaErrors.push(...errorData.errors[key])
+        delete errorData.errors[key]
+      }
+    })
+
+    if (mediaErrors.length > 0) {
+      errorData.errors.media = [...(errorData.errors.media || []), ...mediaErrors]
+    }
+
     validationErrors.value = errorData.errors
     console.error('Validation failed:', errorData.errors)
     notificationStore.showError('Please fix the validation errors and try again.')
@@ -741,37 +763,35 @@ const handleApiError = async (response) => {
   }
 }
 
-const updateTrip = async (tripPayload) => {
-  const response = await fetch(`/api/trips/${tripPayload.id}`, {
-    method: 'PUT',
+const updateTrip = async (formData, id) => {
+  const response = await fetch(`/api/trips/${id}`, {
+    method: 'POST', // Use POST with _method=PUT in the FormData body
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json' // Ensure backend knows we want JSON
+      'Accept': 'application/json'
     },
-    body: JSON.stringify(tripPayload)
+    body: formData
   })
   if (response.ok) {
     isSaved.value = true
-    validationErrors.value = {} // Clear errors on success
+    validationErrors.value = {}
     notificationStore.showSuccess('Trip updated successfully! 🎉')
-    router.push('/trips/' + tripPayload.id)
+    router.push('/trips/' + id)
   } else {
     await handleApiError(response)
   }
 }
 
-const saveTrip = async (tripPayload) => {
+const saveTrip = async (formData) => {
   const response = await fetch('/api/trips', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json' // Ensure backend knows we want JSON
+      'Accept': 'application/json'
     },
-    body: JSON.stringify(tripPayload)
+    body: formData
   })
   if (response.ok) {
     isSaved.value = true
-    validationErrors.value = {} // Clear errors on success
+    validationErrors.value = {}
     const savedTrip = (await response.json()).data
     notificationStore.showSuccess('Trip saved successfully! 🚀')
     router.push('/trips/' + savedTrip.id)

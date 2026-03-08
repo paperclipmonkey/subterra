@@ -570,4 +570,60 @@ class TripTest extends TestCase
         $response = $this->postJson('/api/trips', $tripData);
         $response->assertCreated();
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_files_that_are_too_large()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+        // Create a 600MB fake file (validation limit is 512000 KB)
+        $largeFile = \Illuminate\Http\UploadedFile::fake()->create('huge.mp4', 600000); 
+
+        $tripData = [
+            'name' => 'Large Media Trip',
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$user->id],
+            'media' => [
+                [
+                    'data' => $largeFile,
+                ],
+            ],
+        ];
+
+        $this->actingAs($user);
+        $response = $this->post('/api/trips', $tripData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['media.0.data']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_stores_media_even_without_string_metadata()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test_no_meta.png');
+
+        $tripData = [
+            'name' => 'Trip No Meta',
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$user->id],
+            'media' => [
+                [
+                    'data' => $imageFile,
+                    // No title, copyright, photographer explicitly provided
+                ],
+            ],
+        ];
+
+        $this->actingAs($user);
+        $response = $this->post('/api/trips', $tripData);
+        $response->assertCreated();
+
+        $trip = Trip::where('name', 'Trip No Meta')->first();
+        $this->assertCount(1, $trip->media);
+    }
 }

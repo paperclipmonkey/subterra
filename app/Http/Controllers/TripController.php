@@ -147,12 +147,13 @@ class TripController extends Controller
 
     private function storeMedia(array $mediaMetadata, array $mediaFiles, Trip $trip): void
     {
-        foreach ($mediaMetadata as $index => $fileMeta) {
-            $file = $mediaFiles[$index]['data'] ?? null;
+        foreach ($mediaFiles as $index => $fileData) {
+            $file = $fileData['data'] ?? null;
             if (!$file) {
                 continue;
             }
 
+            $fileMeta = $mediaMetadata[$index] ?? [];
             $fileMeta['data'] = $file;
             $filePath = $this->imageProcessingService->processAndStoreImage($fileMeta, 'trip');
 

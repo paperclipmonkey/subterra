@@ -31,7 +31,22 @@ class StoreTripRequest extends FormRequest
             'end_time' => 'nullable|date_format:Y-m-d H:i:s',
             'visibility' => 'in:public,private,club',
             'media' => 'nullable|array',
+            'media.*.data' => 'required|file|max:512000', // 512MB max to catch files before they hit PHP limits
             'participants' => 'array|min:1',
+        ];
+    }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'media.*.data.max' => 'One or more of the selected photos is too large. The maximum size is 512MB.',
+            'media.*.data.file' => 'One or more of the selected photos failed to upload correctly.',
+            'media.*.data.required' => 'An empty file was provided.',
         ];
     }
 

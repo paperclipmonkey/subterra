@@ -34,6 +34,9 @@ class ImageProcessingService
 
         Storage::disk('media')->put($filePath, (string) $image);
 
+        unset($image); // Free memory immediately
+        gc_collect_cycles();
+
         return $filePath;
     }
 

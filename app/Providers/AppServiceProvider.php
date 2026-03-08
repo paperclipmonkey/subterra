@@ -21,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Reserve 5MB of memory to ensure the Slack log webhook can fire during OOM errors
+        $GLOBALS['reserved_memory_for_fatal_errors'] = \str_repeat('x', 1024 * 1024 * 5);
+        \register_shutdown_function(function () {
+            unset($GLOBALS['reserved_memory_for_fatal_errors']);
+        });
+
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::except([
             '*',
         ]);
