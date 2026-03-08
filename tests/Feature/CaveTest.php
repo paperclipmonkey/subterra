@@ -169,4 +169,60 @@ class CaveTest extends TestCase
                 return str_contains($url, 'thumb.webp');
             });
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function private_trips_are_not_visible_to_non_participants_in_cave_show()
+    {
+        $cave = Cave::factory()->create();
+        $participant = User::factory()->create();
+        $nonParticipant = User::factory()->create();
+
+        // Create a private trip for the cave
+        $privateTrip = \App\Models\Trip::factory()->create([
+            'entrance_cave_id' => $cave->id,
+            'cave_system_id' => $cave->cave_system_id,
+            'visibility' => 'private',
+        ]);
+        $privateTrip->participants()->attach($participant->id);
+
+        // Sanity check: Public trip should be visible
+        $publicTrip = \App\Models\Trip::factory()->create([
+            'entrance_cave_id' => $cave->id,
+            'cave_system_id' => $cave->cave_system_id,
+            'visibility' => 'public',
+        ]);
+
+        $this->actingAs($nonParticipant, 'sanctum');
+
+        $response = $this->getJson("/api/caves/{$cave->slug}");
+
+        $response->assertOk();
+
+        // Assert public trip is present
+        $response->assertJsonFragment(['id' => $publicTrip->short_id]);
+
+        // Assert private trip is MISSING
+        $response->assertJsonMissing(['id' => $privateTrip->short_id]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function private_trips_are_visible_to_participants_in_cave_show()
+    {
+        $cave = Cave::factory()->create();
+        $participant = User::factory()->create();
+
+        $privateTrip = \App\Models\Trip::factory()->create([
+            'entrance_cave_id' => $cave->id,
+            'cave_system_id' => $cave->cave_system_id,
+            'visibility' => 'private',
+        ]);
+        $privateTrip->participants()->attach($participant->id);
+
+        $this->actingAs($participant, 'sanctum');
+
+        $response = $this->getJson("/api/caves/{$cave->slug}");
+
+        $response->assertOk();
+        $response->assertJsonFragment(['id' => $privateTrip->short_id]);
+    }
 }

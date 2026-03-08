@@ -127,7 +127,7 @@ class CaveController extends Controller
         $query = Cave::with([
             'system.catchment', 'system.caves', 'system.files', 'system.routes',
             'trips' => function ($q) {
-                $q->orderBy('start_time', 'desc')->limit(25)->with(['participants', 'media']);
+                $q->visibleTo(auth()->user())->orderBy('start_time', 'desc')->limit(25)->with(['participants', 'media']);
             },
             'tags', 'collections', 'media', 'heroImage', 'entranceImage', 'heroVideo',
         ]);

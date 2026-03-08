@@ -226,7 +226,9 @@ class UserController extends Controller
     public function show($id): UserDetailResource
     {
         $user = User::withoutGlobalScopes()
-            ->with(['trips.system', 'clubs', 'medals'])
+            ->with(['trips' => function ($query) {
+                $query->visibleTo(auth()->user())->with('system');
+            }, 'clubs', 'medals'])
             ->findOrFail($id);
 
         return new UserDetailResource($user);
@@ -267,9 +269,10 @@ class UserController extends Controller
     {
         $user = User::withoutGlobalScopes()->findOrFail($id);
 
-        $trips = Trip::whereHas('participants', function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })
+        $trips = Trip::visibleTo(auth()->user())
+            ->whereHas('participants', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->where('start_time', '>=', Carbon::now()->subYear())
             ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'participants', 'media'])
             ->orderBy('start_time', 'desc')

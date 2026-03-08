@@ -454,4 +454,44 @@ class UserTest extends TestCase
 
         $this->assertNotNull($response->json('data.on_call_until'));
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function private_trips_are_not_visible_in_user_recent_trips_for_other_users()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $privateTrip = \App\Models\Trip::factory()->create(['visibility' => 'private']);
+        $privateTrip->participants()->attach($user->id);
+
+        $this->actingAs($otherUser, 'sanctum');
+
+        $response = $this->getJson("/api/users/{$user->id}/recent-trips");
+
+        $response->assertOk();
+        $response->assertJsonMissing(['id' => $privateTrip->short_id]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function private_trips_are_counted_in_user_activity_heatmap_for_other_users()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $privateTrip = \App\Models\Trip::factory()->create([
+            'visibility' => 'private',
+            'start_time' => now()->subDay(),
+            'end_time' => now()->subDay()->addHours(2),
+        ]);
+        $privateTrip->participants()->attach($user->id);
+
+        $this->actingAs($otherUser, 'sanctum');
+
+        $response = $this->getJson("/api/users/{$user->id}/activity-heatmap");
+
+        $response->assertOk();
+        // Heatmap returns a list of {date, count}
+        // Private trips SHOULD be counted
+        $response->assertJsonFragment(['date' => now()->subDay()->format('Y-m-d')]);
+    }
 }
