@@ -435,7 +435,7 @@ class TripTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_stores_a_trip_with_heic_media()
+    public function it_rejects_heic_media()
     {
         $user = User::factory()->create();
         $participant = User::factory()->create();
@@ -467,15 +467,10 @@ class TripTest extends TestCase
 
         $this->actingAs($user);
         $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips', $tripData);
-        $response->assertCreated()->assertJsonFragment(['name' => 'Test Trip with HEIC']);
-        $this->assertDatabaseHas('trips', ['name' => 'Test Trip with HEIC']);
-        $this->assertDatabaseHas('trip_user', ['user_id' => $participant->id]);
-        $trip = Trip::where('name', 'Test Trip with HEIC')->first();
-        $this->assertCount(1, $trip->media);
-        Event::assertDispatched(\App\Events\TripCreated::class, function ($event) use ($trip) {
-            return $event->trip->id === $trip->id;
-        });
-        Storage::disk('media')->assertExists($trip->media->first()->filename);
+
+        // HEIC is not a supported format — should be rejected at validation
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['media.0.data']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

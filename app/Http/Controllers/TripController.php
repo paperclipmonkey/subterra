@@ -15,6 +15,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -154,18 +155,23 @@ class TripController extends Controller
             }
 
             $fileMeta = $mediaMetadata[$index] ?? [];
-            $fileMeta['data'] = $file;
-            $filePath = $this->imageProcessingService->processAndStoreImage($fileMeta, 'trip');
 
-            $mediaData = [
-                'filename' => $filePath,
+            // Upload the raw file directly to S3 (fast — no image processing)
+            $rawFilename = \Illuminate\Support\Str::uuid().'.'.$file->getClientOriginalExtension();
+            $rawPath = 'trip/'.$rawFilename;
+            Storage::disk('media')->putFileAs('trip', $file, $rawFilename);
+
+            // Create DB record pointing to the raw file
+            $media = $trip->media()->create([
+                'filename' => $rawPath,
                 'title' => $fileMeta['title'] ?? null,
                 'taken_at' => $fileMeta['taken_at'] ?? null,
                 'photographer' => $fileMeta['photographer'] ?? null,
                 'copyright' => $fileMeta['copyright'] ?? null,
-            ];
+            ]);
 
-            $trip->media()->create($mediaData);
+            // Dispatch background job to process (scale + WebP encode) and replace the raw file
+            \App\Jobs\ProcessImageJob::dispatch($media->id, $rawPath, 'trip');
         }
     }
 

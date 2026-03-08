@@ -31,7 +31,7 @@ class StoreTripRequest extends FormRequest
             'end_time' => 'nullable|date_format:Y-m-d H:i:s',
             'visibility' => 'in:public,private,club',
             'media' => 'nullable|array',
-            'media.*.data' => 'required|file|max:512000', // 512MB max to catch files before they hit PHP limits
+            'media.*.data' => 'required|file|max:512000|mimes:jpeg,jpg,png,gif,webp,bmp,tiff,tif', // Images only, 512MB max
             'participants' => 'array|min:1',
         ];
     }
