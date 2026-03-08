@@ -50,14 +50,14 @@ class GcpWatchdogService
                 'response' => $response->body(),
             ]);
 
-            return null;
+            throw new Exception("Failed to register GCP watchdog: {$response->status()}");
         } catch (Exception $e) {
             Log::error("Exception registering GCP watchdog: {$e->getMessage()}", [
                 'callout_id' => $callout->id,
                 'exception' => $e,
             ]);
 
-            return null;
+            throw new Exception("Watchdog registration down or failed: {$e->getMessage()}");
         }
     }
 

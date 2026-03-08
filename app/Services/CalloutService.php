@@ -34,6 +34,21 @@ class CalloutService
         if (!OnCallShift::isCovered($calloutTime)) {
             throw new Exception('Cannot create callout: No administrator is on-call at '.$calloutTime->toDateTimeString());
         }
+
+        // Resolve hidden phone numbers for registered users
+        if (!empty($data['participants'])) {
+            foreach ($data['participants'] as &$p) {
+                if (($p['phone'] ?? '') === '🔒 Hidden') {
+                    if (!empty($p['user_id'])) {
+                        $p['phone'] = User::find($p['user_id'])?->phone;
+                    } else {
+                        $p['phone'] = null;
+                    }
+                }
+            }
+            unset($p);
+        }
+
         // Collect all checking phones
         $phonesToCheck = collect($data['participants'] ?? [])->pluck('phone')->filter();
         if ($user->phone) {
@@ -91,12 +106,7 @@ class CalloutService
                 }
             }
 
-            try {
-                $this->watchdogService->register($callout);
-            } catch (Exception $e) {
-                Log::error('GCP Watchdog registration failed: '.$e->getMessage());
-                // Don't fail the callout creation if watchdog registration fails
-            }
+            $this->watchdogService->register($callout);
 
             try {
                 // Collect all emails, falling back to User account if autocomplete only sent user_id

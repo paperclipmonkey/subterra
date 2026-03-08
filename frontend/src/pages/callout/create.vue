@@ -150,31 +150,84 @@
                                       autocomplete="off"
                                       @update:model-value="addSubterraUser"
                                       @update:search="onUserSearch"
-                                      @focus="onUserSearch('')" />
+                                      @focus="onUserSearch('')">
+                        <template #item="{ props, item }">
+                          <v-list-item v-bind="props">
+                            <template #prepend>
+                              <v-avatar v-if="item.raw.photo" :image="item.raw.photo" class="mr-3" size="40" />
+                              <v-avatar v-else color="primary" class="mr-3" size="40">
+                                <span class="text-white">{{ item.raw.name.charAt(0) }}</span>
+                              </v-avatar>
+                            </template>
+                            <template #title>
+                              <div class="d-flex align-center">
+                                <span class="text-body-1">{{ item.raw.name }}</span>
+                                <v-icon v-if="item.raw.has_phone" size="small" color="success" class="ml-2" title="Phone number saved">mdi-phone</v-icon>
+                              </div>
+                            </template>
+                            <template v-if="item.raw.clubs && item.raw.clubs.length > 0" #subtitle>
+                              <span class="text-caption text-medium-emphasis">{{ item.raw.clubs.map(c => c.name).join(', ') }}</span>
+                            </template>
+                          </v-list-item>
+                        </template>
+                      </v-autocomplete>
 
 
                       <div class="mb-4">
                         <div v-for="(p, i) in form.participants" :key="p.local_id" class="mb-3">
-                          <v-row align="center" dense>
-                            <v-col cols="12" sm="5">
-                              <v-text-field v-model="p.name" label="Name" density="compact" variant="outlined"
-                                            hide-details :readonly="p.user_id === currentUser?.id"
-                                            :prepend-icon="p.user_id ? 'mdi-account-check' : 'mdi-account'" />
-                            </v-col>
-                            <v-col class="flex-grow-1" cols="auto" sm="5">
-                              <v-text-field :model-value="p.phone" label="Phone (Mobile)" density="compact" variant="outlined"
-                                            hide-details placeholder="07... or +44..." :readonly="p.locked && !!p.phone"
-                                            :hint="p.locked && !!p.phone ? 'This number is from their profile' : ''"
-                                            :persistent-hint="p.locked && !!p.phone"
-                                            @update:model-value="updatePhone(i, $event)" />
-                            </v-col>
-                            <v-col cols="auto" sm="2" class="d-flex justify-center">
-                              <v-btn icon color="error" size="x-small" :disabled="p.user_id === currentUser?.id"
-                                     style="aspect-ratio: 1;" @click="removeParticipant(i)">
-                                <v-icon>mdi-delete</v-icon>
-                              </v-btn>
-                            </v-col>
-                          </v-row>
+                          <v-card variant="outlined" class="pa-3">
+                            <div class="d-flex align-center w-100">
+                              <v-avatar v-if="p.photo" :image="p.photo" class="mr-4" size="48" />
+                              <v-avatar v-else color="primary" class="mr-4" size="48">
+                                <v-icon v-if="!p.name">mdi-account</v-icon>
+                                <span v-else class="text-white">{{ p.name.charAt(0) }}</span>
+                              </v-avatar>
+
+                              <v-row dense class="flex-grow-1 align-center">
+                                <v-col cols="12" :sm="p.hasPhone ? 12 : 6">
+                                  <div v-if="p.user_id !== null">
+                                    <div class="d-flex align-center">
+                                      <v-icon size="small" color="primary" class="mr-2">mdi-account-check</v-icon>
+                                      <span class="text-subtitle-1 font-weight-bold">{{ p.name }}</span>
+                                    </div>
+                                    <div v-if="p.clubs && p.clubs.length > 0" class="mt-1 d-flex flex-wrap">
+                                      <v-chip v-for="c in p.clubs" :key="c.slug" size="small" color="blue-grey" variant="tonal" class="mr-1 mb-1">
+                                        {{ c.name }}
+                                      </v-chip>
+                                    </div>
+                                  </div>
+                                  <v-text-field v-else v-model="p.name" label="Guest Name" density="compact" variant="outlined" autocomplete="off"
+                                                hide-details prepend-inner-icon="mdi-account" class="mr-2" />
+                                </v-col>
+                                <v-col v-if="!p.hasPhone" cols="12" sm="6">
+                                  <v-text-field :model-value="p.phone" label="Phone (Mobile)" density="compact" variant="outlined"
+                                                hide-details="auto" placeholder="07... or +44..."
+                                                :autocomplete="p.isCurrentUser ? 'tel' : 'off'"
+                                                :rules="[validateUKPhone]"
+                                                @update:model-value="updatePhone(i, $event)" />
+                                  <v-expand-transition>
+                                    <div v-if="p.isCurrentUser && p.phone && validateUKPhone(p.phone) === true" class="mt-2 text-right">
+                                      <v-btn size="small" color="success" variant="tonal" prepend-icon="mdi-content-save"
+                                             :loading="savingPhone" @click="savePhoneToProfile(p.phone, i)">
+                                        Save to Profile
+                                      </v-btn>
+                                    </div>
+                                  </v-expand-transition>
+                                </v-col>
+                              </v-row>
+
+                              <div class="d-flex flex-column align-center justify-center ml-3" style="min-width: 40px">
+                                <v-btn v-if="p.hasPhone" icon color="success" variant="text" size="small" class="mb-1"
+                                       @click="$toast.info('This user has a valid phone number saved on their profile.')">
+                                  <v-icon size="large">mdi-phone-check</v-icon>
+                                </v-btn>
+                                <v-btn v-if="!p.isCurrentUser" icon color="error" size="small" variant="text"
+                                       @click="removeParticipant(i)">
+                                  <v-icon>mdi-delete</v-icon>
+                                </v-btn>
+                              </div>
+                            </div>
+                          </v-card>
                         </div>
                       </div>
 
@@ -339,6 +392,7 @@ export default {
     return {
       loading: true,
       processing: false,
+      savingPhone: false,
       step: 1,
       valid: false,
       activeCallout: null,
@@ -387,23 +441,23 @@ export default {
       return this.systemEntrances.length
     },
     phoneError() {
-      // Only the current user's phone is required and must be valid
+      // The current user *must* have a phone number
       const currentUserParticipant = this.form.participants.find(p => p.user_id === this.currentUser?.id)
       if (!currentUserParticipant || !currentUserParticipant.phone || currentUserParticipant.phone.trim().length === 0) {
         return true
       }
-      if (currentUserParticipant.phone === '🔒 Hidden') {
-        return false
+
+      // Check all participants' phone numbers for valid format (if they are provided)
+      for (const p of this.form.participants) {
+        if (!p.phone || p.phone === '🔒 Hidden') continue
+
+        const validation = this.validateUKPhone(p.phone)
+        if (validation !== true) {
+          return true // Found an invalid format
+        }
       }
-      // Validate format
-      const phone = currentUserParticipant.phone.replace(/\s+/g, '')
-      if (phone.startsWith('07')) {
-        return phone.length !== 11
-      }
-      if (phone.startsWith('+44')) {
-        return phone.length !== 13
-      }
-      return true // Invalid format
+
+      return false // All checks passed
     },
     canProceed() {
       if (this.officerError) return false
@@ -416,8 +470,13 @@ export default {
       return true
     },
     isFormValid() {
-      return this.form.callout_time &&
-        !this.phoneError
+      if (!this.form.callout_time || this.phoneError) return false
+
+      const end = moment(this.form.callout_time)
+      const now = moment()
+      if (end.isValid() && end.isBefore(now)) return false
+
+      return true
     },
     calloutDurationHint() {
       if (!this.form.callout_time) return ''
@@ -580,7 +639,11 @@ export default {
           name: this.currentUser.name,
           phone: this.currentUser.phone ? '🔒 Hidden' : '',
           email: this.currentUser.email,
-          locked: !!this.currentUser.phone
+          locked: !!this.currentUser.phone,
+          photo: this.currentUser.photo,
+          clubs: this.currentUser.clubs || [],
+          hasPhone: !!this.currentUser.phone,
+          isCurrentUser: true,
         })
       }
     },
@@ -592,12 +655,21 @@ export default {
         name: user.name,
         phone: (user.has_phone || user.phone) ? '🔒 Hidden' : '',
         email: user.email,
-        locked: !!(user.has_phone || user.phone)
+        locked: !!(user.has_phone || user.phone),
+        photo: user.photo,
+        clubs: user.clubs || [],
+        hasPhone: user.has_phone || !!user.phone,
+        isCurrentUser: false,
       })
       this.userSelect = null
+      this.userSearchInput = ''
     },
     addManualParticipant() {
-      this.form.participants.push({ local_id: this.generateId(), name: '', phone: '', user_id: null, locked: false })
+      this.form.participants.push({
+        local_id: this.generateId(),
+        name: '', phone: '', user_id: null, locked: false,
+        photo: null, clubs: [], hasPhone: false, isCurrentUser: false
+      })
     },
     removeParticipant(index) {
       this.form.participants.splice(index, 1)
@@ -605,8 +677,47 @@ export default {
     updatePhone(index, value) {
       this.form.participants[index].phone = value
     },
+    async savePhoneToProfile(phone, index) {
+      if (!this.currentUser) return
+      this.savingPhone = true
+      try {
+        const payload = {
+          name: this.currentUser.name,
+          bio: this.currentUser.bio,
+          phone: phone,
+          email_trophies: this.currentUser.email_trophies ?? true,
+          email_tagged: this.currentUser.email_tagged ?? true,
+          email_platform_news: this.currentUser.email_platform_news ?? true,
+          visibility_addable: this.currentUser.visibility_addable ?? 'public',
+        }
+        const res = await api.put('/api/users/me', payload)
+        this.currentUser = res.data.data
+
+        // Update the form participant to lock it visually
+        this.form.participants[index].locked = true
+        this.form.participants[index].hasPhone = true
+        this.form.participants[index].phone = '🔒 Hidden'
+
+        // Refresh app store user
+        const appStore = useAppStore()
+        await appStore.getUser()
+
+        this.$toast.success('Phone number saved to your profile.')
+      } catch (e) {
+        console.error("Failed to save phone:", e)
+        const errorMsg = e.response?.data?.message || 'Failed to save phone number.'
+        this.$toast.error(errorMsg)
+      } finally {
+        this.savingPhone = false
+      }
+    },
     async submitCallout() {
-      if (this.phoneError) return
+      if (!this.isFormValid) {
+        if (!this.form.callout_time || moment(this.form.callout_time).isBefore(moment())) {
+          this.setErrors(new Error('Callout time must be in the future.'))
+        }
+        return
+      }
 
       this.processing = true
       this.clearErrors()

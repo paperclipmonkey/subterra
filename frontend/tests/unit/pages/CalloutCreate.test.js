@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import CalloutIndex from '@/pages/callout/create.vue'
+import axios from 'axios'
 
 // Mock dependencies
 const pushMock = vi.fn()
@@ -24,6 +25,9 @@ vi.mock('axios', () => {
             return Promise.resolve({ data: {} })
         }),
         post: vi.fn(() => Promise.resolve({ data: { callout: { id: 99 } } })),
+        put: vi.fn(() => Promise.resolve({ data: {} })),
+        delete: vi.fn(() => Promise.resolve({ data: {} })),
+        patch: vi.fn(() => Promise.resolve({ data: {} })),
         create: vi.fn().mockReturnThis(),
         interceptors: {
             request: { use: vi.fn(), eject: vi.fn() },
@@ -45,6 +49,17 @@ vi.mock('@/stores/app', () => ({
 }))
 
 describe('Callout Wizard', () => {
+    beforeEach(() => {
+        // Reset the default get mock between tests to avoid bleed-over
+        axios.get.mockImplementation((url) => {
+            if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
+            if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
+            if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
+            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: 'Officer Jenny', photo: null, is_covered: true } } })
+            return Promise.resolve({ data: {} })
+        })
+    })
+
     it('renders wizard and loads initial data', async () => {
         // Mock Navigator APIs
         Object.defineProperty(global.navigator, 'permissions', {
@@ -88,9 +103,8 @@ describe('Callout Wizard', () => {
                     'v-list': true,
                     'v-list-item': true,
                     'v-btn': true,
-                    'v-icon': true,
                     'v-spacer': true,
-                    'v-alert': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                     'v-textarea': true,
                     'v-dialog': true,
                     'v-progress-circular': true,
@@ -177,6 +191,9 @@ describe('Callout Wizard', () => {
                     'v-icon': true,
                     'v-textarea': true,
                     'v-spacer': true,
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
                 }
             }
         })
@@ -226,7 +243,10 @@ describe('Callout Wizard', () => {
                     'v-toolbar-title': true,
                     'v-card-text': true,
                     'v-progress-circular': true,
-                    'v-alert': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
                 }
             }
         })
@@ -273,7 +293,10 @@ describe('Callout Wizard', () => {
                     'v-card-title': true,
                     'v-card-actions': true,
                     'v-progress-circular': true,
-                    'v-alert': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
                 }
             }
         })
@@ -323,7 +346,10 @@ describe('Callout Wizard', () => {
                     'v-toolbar-title': true,
                     'v-card-text': true,
                     'v-progress-circular': true,
-                    'v-alert': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
                 }
             }
         })
@@ -372,7 +398,10 @@ describe('Callout Wizard', () => {
                     'v-toolbar-title': true,
                     'v-card-text': true,
                     'v-progress-circular': true,
-                    'v-alert': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
                 }
             }
         })
@@ -430,7 +459,11 @@ describe('Callout Wizard', () => {
                     'v-progress-circular': true,
                     'v-avatar': true,
                     'v-img': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                     'v-icon': true,
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
                 }
             }
         })
@@ -455,5 +488,317 @@ describe('Callout Wizard', () => {
         const alerts = wrapper.findAll('.v-alert')
         const alertTexts = alerts.map(a => a.text())
         expect(alertTexts).toContain('Cannot create callout: No administrator is on-call')
+    })
+
+    it('blocks progression to Step 3 if any manual guest has an invalid phone number', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-item': true,
+                    'v-divider': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-progress-circular': true,
+                    'v-avatar': true,
+                    'v-img': true,
+                    'v-textarea': true,
+                    'v-text-field': true,
+                    'v-expand-transition': true,
+                    'v-autocomplete': true,
+                    'v-chip': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        // Move to Step 2
+        wrapper.vm.step = 2
+
+        // Form participants array has current user added by prefillForm
+        expect(wrapper.vm.form.participants.length).toBe(1)
+        expect(wrapper.vm.form.participants[0].isCurrentUser).toBe(true)
+
+        // Use setData to replace the entire participants array for proper reactivity.
+        // Current user with valid phone + invalid manual guest
+        await wrapper.setData({
+            form: {
+                ...wrapper.vm.form,
+                participants: [
+                    { ...wrapper.vm.form.participants[0], phone: '07123456789' },
+                    {
+                        local_id: 'abc', name: 'Invalid Guest', phone: '1234',
+                        user_id: null, locked: false, isCurrentUser: false,
+                        photo: null, clubs: [], hasPhone: false
+                    }
+                ]
+            }
+        })
+        await wrapper.vm.$nextTick()
+
+        // Should be blocked due to invalid phone!
+        expect(wrapper.vm.phoneError).toBe(true)
+        expect(wrapper.vm.canProceed).toBe(false)
+
+        // Correcting the phone number — replace full array to trigger reactivity
+        await wrapper.setData({
+            form: {
+                ...wrapper.vm.form,
+                participants: [
+                    wrapper.vm.form.participants[0],
+                    { ...wrapper.vm.form.participants[1], phone: '07999999999' }
+                ]
+            }
+        })
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.vm.phoneError).toBe(false)
+        expect(wrapper.vm.canProceed).toBe(true)
+    })
+
+    it('allows progression when a registered user with a hidden phone is added alongside valid guests', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-item': true,
+                    'v-divider': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-progress-circular': true,
+                    'v-avatar': true,
+                    'v-img': true,
+                    'v-textarea': true,
+                    'v-text-field': true,
+                    'v-expand-transition': true,
+                    'v-autocomplete': true,
+                    'v-chip': true,
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        wrapper.vm.step = 2
+
+        // Replace participants: current user (valid phone) + registered user with hidden phone
+        await wrapper.setData({
+            form: {
+                ...wrapper.vm.form,
+                participants: [
+                    { ...wrapper.vm.form.participants[0], phone: '07123456789' },
+                    {
+                        local_id: 'def', user_id: 2, name: 'Alice', phone: '🔒 Hidden',
+                        email: 'alice@example.com', locked: true, photo: null,
+                        clubs: [], hasPhone: true, isCurrentUser: false,
+                    }
+                ]
+            }
+        })
+        await wrapper.vm.$nextTick()
+
+        // Should be valid — hidden phone is skipped in validation
+        expect(wrapper.vm.phoneError).toBe(false)
+        expect(wrapper.vm.canProceed).toBe(true)
+
+        // Add one more invalid manual guest by replacing array
+        await wrapper.setData({
+            form: {
+                ...wrapper.vm.form,
+                participants: [
+                    ...wrapper.vm.form.participants,
+                    {
+                        local_id: 'ghi', name: 'Bad Guest', phone: '+44123',
+                        user_id: null, locked: false, isCurrentUser: false,
+                    }
+                ]
+            }
+        })
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.vm.phoneError).toBe(true)
+        expect(wrapper.vm.canProceed).toBe(false)
+    })
+
+    it('shows general error alert and blocks submission if Callout Time is set in the past', async () => {
+        // Enable fake timers BEFORE mount so moment() uses the fake clock
+        vi.useFakeTimers()
+        const now = new Date('2025-01-01T12:00:00')
+        vi.setSystemTime(now)
+
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                    'v-stepper': true,
+                    'v-stepper-header': true,
+                    'v-stepper-item': true,
+                    'v-divider': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-progress-circular': true,
+                    'v-avatar': true,
+                    'v-img': true,
+                    'v-textarea': true,
+                    'v-text-field': true,
+                    'v-expand-transition': true,
+                    'v-autocomplete': true,
+                    'v-chip': true,
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        // Clear any prior post calls from other tests
+        axios.post.mockClear()
+
+        // Set up a valid form with a callout_time in the PAST relative to our fake clock
+        await wrapper.setData({
+            step: 4,
+            form: {
+                ...wrapper.vm.form,
+                cave_id: 1,
+                car_registration: 'AB12 CDE',
+                car_parking: 'Parking',
+                trip_plan: 'Plan',
+                callout_time: '2025-01-01T11:00:00',
+                participants: [
+                    { ...wrapper.vm.form.participants[0], phone: '07123456789' }
+                ]
+            }
+        })
+        await wrapper.vm.$nextTick()
+
+        // Verify isFormValid rejects past time
+        expect(wrapper.vm.isFormValid).toBe(false)
+
+        await wrapper.vm.submitCallout()
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        // Expect generalError to be set — the API should NOT have been called
+        expect(wrapper.vm.generalError).toBe('Callout time must be in the future.')
+        expect(axios.post).not.toHaveBeenCalled()
+
+        vi.useRealTimers()
+    })
+
+    it('allows current user to save phone number to profile', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': { template: '<button @click="$emit(\'click\')"><slot /></button>' },
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-chip': true,
+                    'v-avatar': true,
+                    'v-img': true,
+                    'v-text-field': { template: '<input @input="$emit(\'update:modelValue\', $event.target.value)" />' },
+                    'v-divider': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-card-actions': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                    'v-dialog': true,
+                    'v-progress-circular': true,
+                    'v-expand-transition': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-autocomplete': true,
+                    'v-textarea': true,
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        // Setup: Step 2, current user participant without phone
+        wrapper.vm.step = 2
+        wrapper.vm.form.participants[0].phone = ''
+        wrapper.vm.form.participants[0].hasPhone = false
+        wrapper.vm.form.participants[0].locked = false
+
+        await wrapper.vm.$nextTick()
+
+        // Mock the PUT request
+        axios.put.mockImplementationOnce(() => Promise.resolve({
+            data: { data: { ...mockUserMe, phone: '07111111111' } }
+        }))
+
+        // Call the save method
+        await wrapper.vm.savePhoneToProfile('07111111111', 0)
+        await flushPromises()
+
+        // Check if API was called correctly
+        expect(axios.put).toHaveBeenCalledWith('/api/users/me', expect.objectContaining({
+            phone: '07111111111'
+        }))
+
+        // Check if state was updated
+        expect(wrapper.vm.form.participants[0].locked).toBe(true)
+        expect(wrapper.vm.form.participants[0].phone).toBe('🔒 Hidden')
+        expect(wrapper.vm.$toast.success).toHaveBeenCalledWith('Phone number saved to your profile.')
     })
 })

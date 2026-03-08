@@ -577,7 +577,7 @@ class TripTest extends TestCase
         $user = User::factory()->create();
         $entrance = Cave::factory()->create();
         // Create a 600MB fake file (validation limit is 512000 KB)
-        $largeFile = \Illuminate\Http\UploadedFile::fake()->create('huge.mp4', 600000); 
+        $largeFile = \Illuminate\Http\UploadedFile::fake()->create('huge.mp4', 600000);
 
         $tripData = [
             'name' => 'Large Media Trip',

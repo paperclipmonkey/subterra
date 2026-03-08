@@ -134,6 +134,75 @@ class CalloutTest extends TestCase
         Mail::assertSentCount(2);
     }
 
+    public function test_saving_registered_users_and_manual_guests_to_callout()
+    {
+        Mail::fake();
+        $user = User::factory()->withApprovedClub()->create();
+        $cave = Cave::factory()->create();
+
+        // Admin coverage
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        // Create a registered user to be the participant
+        $registeredParticipant = User::factory()->create([
+            'name' => 'Existing User',
+            'email' => 'existing@test.com',
+            'phone' => '07777777777', // Will be sent as '🔒 Hidden'
+        ]);
+
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'description' => 'Test Trip with mix of users',
+            'trip_plan' => 'Detailed Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm',
+            'participants' => [
+                // 1. Current user (automatically added)
+                ['user_id' => $user->id, 'name' => 'Current User', 'phone' => '07111111111'],
+                // 2. Existing user (phone hidden from UI payload, meaning backend should fetch it)
+                ['user_id' => $registeredParticipant->id, 'name' => $registeredParticipant->name, 'phone' => '🔒 Hidden'],
+                // 3. Manual guest with a provided phone number
+                ['name' => 'Manual Guest', 'phone' => '+447999999999'],
+            ],
+        ];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(201);
+
+        $callout = Callout::where('user_id', $user->id)->first();
+        $this->assertCount(3, $callout->participants);
+
+        // Verify the current user is stored
+        $this->assertDatabaseHas('callout_participants', [
+            'callout_id' => $callout->id,
+            'user_id' => $user->id,
+            'phone' => '07111111111',
+        ]);
+
+        // Verify the existing user is stored and their phone number wasn't literally saved as '🔒 Hidden'
+        $dbParticipant = $callout->participants()->where('user_id', $registeredParticipant->id)->first();
+        $this->assertEquals('Existing User', $dbParticipant->name);
+        $this->assertNotEquals('🔒 Hidden', $dbParticipant->phone);
+        // Backend doesn't currently auto-fill this if passed '🔒 Hidden' unless CalloutController does it,
+        // but let's test what the Controller *actually* does with '🔒 Hidden' payload to ensure it is handled.
+
+        // Verify the manual guest is stored with string fields
+        $this->assertDatabaseHas('callout_participants', [
+            'callout_id' => $callout->id,
+            'user_id' => null,
+            'name' => 'Manual Guest',
+            'phone' => '+447999999999',
+        ]);
+    }
+
     public function test_create_callout_fails_if_no_admin_coverage()
     {
         $user = User::factory()->withApprovedClub()->create();
@@ -357,6 +426,142 @@ class CalloutTest extends TestCase
         $response->assertStatus(422);
         $response->assertJson([
              'message' => 'One or more participants (or you) are already in an active callout. Please resolve the existing callout first.',
+        ]);
+    }
+
+    public function test_prevent_duplicate_active_callouts()
+    {
+        $user = User::factory()->withApprovedClub()->create(['phone' => '07111111111']);
+        $cave = Cave::factory()->create();
+
+        // Active DO shift
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        // Create first callout
+        Callout::factory()->create([
+            'user_id' => $user->id,
+            'status' => 'active',
+        ]);
+
+        // Try to create another
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'trip_plan' => 'Duplicate Trip',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Parking',
+            'participants' => [['name' => 'Self', 'phone' => '07111111111']],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'message' => 'One or more participants (or you) are already in an active callout. Please resolve the existing callout first.',
+        ]);
+    }
+
+    public function test_callout_creation_fails_if_watchdog_service_fails()
+    {
+        Mail::fake();
+        $user = User::factory()->withApprovedClub()->create();
+
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        // Mock GcpWatchdogService to throw exception
+        $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('register')->andThrow(new \Exception('Watchdog API is down'));
+        });
+
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'description' => 'Trip Plan', 'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE', 'car_parking' => 'Bull Pot Farm',
+            'participants' => [['name' => 'Alice']],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
+
+        // Assert it catches the exception, returns 422, and aborts creation
+        $response->assertStatus(422);
+        $this->assertDatabaseMissing('callouts', ['user_id' => $user->id]);
+    }
+
+    public function test_callout_creation_succeeds_even_if_email_service_fails()
+    {
+        $user = User::factory()->withApprovedClub()->create();
+
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        // Mock Mailer to throw exception
+        $this->mock(\Illuminate\Contracts\Mail\Mailer::class, function (MockInterface $mock) {
+            $mock->shouldReceive('to')->andReturnSelf();
+            $mock->shouldReceive('send')->andThrow(new \Exception('Mail service is down'));
+        });
+
+        // Mock Watchdog so we don't accidentally hit the real one
+        $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('register');
+        });
+
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'description' => 'Trip Plan', 'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE', 'car_parking' => 'Bull Pot Farm',
+            'participants' => [['name' => 'Alice', 'email' => 'test@test.com']],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
+
+        // Assert it catches the email exception and succeeds anyway
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('callouts', ['user_id' => $user->id]);
+    }
+
+    public function test_callout_fails_if_duty_officer_shift_ends_before_callout_time()
+    {
+        $user = User::factory()->withApprovedClub()->create();
+        $admin = User::factory()->dutyOfficer()->create();
+
+        // Fixed time testing
+        $shiftStart = Carbon::parse('2030-01-01 10:00:00');
+        $shiftEnd = Carbon::parse('2030-01-01 15:00:00');
+        $calloutTime = Carbon::parse('2030-01-01 15:01:00');
+
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => $shiftStart,
+            'end_at' => $shiftEnd,
+        ]);
+
+        $payload = [
+            'callout_time' => $calloutTime->toIso8601String(),
+            'description' => 'Test', 'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE', 'car_parking' => 'Parking',
+            'participants' => [['name' => 'Alice']],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(422);
+        // Carbon formats the string correctly out of the Carbon class, so '2030-01-01 15:01:00' should match
+        $response->assertJson([
+            'message' => 'Cannot create callout: No administrator is on-call at '.$calloutTime->toDateTimeString(),
         ]);
     }
 }
