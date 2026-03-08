@@ -2,7 +2,7 @@
   <v-card flat class="h-100 d-flex flex-column">
     <template #text>
       <div class="d-flex align-center">
-        <v-text-field v-model="search" label="Search" prepend-inner-icon="mdi-magnify" variant="outlined"
+        <v-text-field v-model="search" label="Search" :prepend-inner-icon="mdiMagnify" variant="outlined"
                       hide-details single-line density="compact" class="flex-grow-1 mr-4" />
         <HutEditModal v-if="userStore.user.is_admin" />
       </div>
@@ -33,6 +33,8 @@
 </template>
 
 <script setup>
+import { mdiMagnify } from '@mdi/js'
+
 import { ref, onMounted, computed, watch } from 'vue'
 import { useHutStore } from '@/stores/huts'
 import { useAppStore } from '@/stores/app'

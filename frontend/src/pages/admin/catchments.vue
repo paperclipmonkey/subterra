@@ -4,7 +4,7 @@
       <v-col cols="12" class="d-flex align-center">
         <h1 class="text-h4">Catchments</h1>
         <v-spacer />
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
+        <v-btn color="primary" :prepend-icon="mdiPlus" @click="openCreateDialog">
           New Catchment
         </v-btn>
       </v-col>
@@ -32,12 +32,8 @@
         </template>
 
         <template #item.actions="{ item }">
-          <v-icon size="small" class="me-2" @click="editItem(item)">
-            mdi-pencil
-          </v-icon>
-          <v-icon size="small" color="error" :disabled="item.cave_systems_count > 0" @click="deleteItem(item)">
-            mdi-delete
-          </v-icon>
+          <v-icon size="small" class="me-2" :icon="mdiPencil" @click="editItem(item)" />
+          <v-icon size="small" color="error" :disabled="item.cave_systems_count > 0" :icon="mdiDelete" @click="deleteItem(item)" />
         </template>
       </v-data-table>
     </v-card>
@@ -73,7 +69,7 @@
                 <div class="d-flex align-center mb-2">
                   <h3 class="text-subtitle-1">Gauges</h3>
                   <v-spacer />
-                  <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="addGauge">Add Gauge</v-btn>
+                  <v-btn size="small" variant="text" :prepend-icon="mdiPlus" @click="addGauge">Add Gauge</v-btn>
                 </div>
                 
                 <div v-for="(gauge, index) in editedItem.gauges" :key="index" class="d-flex align-center gap-4 mb-2">
@@ -111,7 +107,7 @@
                     hide-details
                     class="mr-2"
                   />
-                  <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="removeGauge(index)" />
+                  <v-btn :icon="mdiDelete" size="small" variant="text" color="error" @click="removeGauge(index)" />
                 </div>
                 <div v-if="!editedItem.gauges || editedItem.gauges.length === 0" class="text-caption text-grey font-italic">
                   No gauges added yet.
@@ -150,6 +146,7 @@
 </template>
 
 <script setup>
+import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { ref, reactive, onMounted, computed } from 'vue'
 
 const loading = ref(false)

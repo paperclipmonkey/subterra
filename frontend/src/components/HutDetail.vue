@@ -7,7 +7,7 @@
            :src="hut.image_url"
            cover class="mb-4 rounded">
       <div class="position-absolute top-0 left-0 pa-4 d-flex" style="z-index: 1;">
-        <v-btn icon="mdi-arrow-left" variant="tonal" color="white" class="backdrop-blur mr-2"
+        <v-btn :icon="mdiArrowLeft" variant="tonal" color="white" class="backdrop-blur mr-2"
                @click="$router.push('/huts')" />
       </div>
       <div class="position-absolute top-0 right-0 pa-4" style="z-index: 1;">
@@ -17,7 +17,7 @@
         <div class="bg-black-transparent pa-4 w-100">
           <h1 class="text-h4 text-white font-weight-bold">{{ hut.name }}</h1>
           <div class="text-subtitle-1 text-white">
-            <v-icon color="white" start>mdi-home-group</v-icon> 
+            <v-icon color="white" start :icon="mdiHomeGroup" /> 
             <router-link v-if="hut.club" :to="`/club/${hut.club.slug}`" class="text-white text-decoration-none hover-underline">
               {{ hut.club.name }}
             </router-link>
@@ -43,7 +43,7 @@
             <v-divider class="my-3" />
 
             <div v-if="hut.external_url" class="d-flex align-center mb-2">
-              <v-icon start color="primary">mdi-web</v-icon>
+              <v-icon start color="primary" :icon="mdiWeb" />
               <a :href="hut.external_url" target="_blank">{{ hut.external_url }}</a>
             </div>
 
@@ -74,7 +74,7 @@
             <div v-if="hut.reciprocal_clubs && hut.reciprocal_clubs.length">
               <v-list density="compact">
                 <v-list-item v-for="club in hut.reciprocal_clubs" :key="club.id" :title="club.name"
-                             :to="`/club/${club.slug}`" link prepend-icon="mdi-shield-account" />
+                             :to="`/club/${club.slug}`" link :prepend-icon="mdiShieldAccount" />
               </v-list>
             </div>
             <div v-else class="text-grey font-italic">No reciprocal clubs listed.</div>
@@ -104,7 +104,7 @@
                     <div class="d-flex">
                       <v-tooltip text="Open in Google Maps" location="top">
                         <template #activator="{ props }">
-                          <v-btn icon="mdi-google-maps" size="small" variant="text"
+                          <v-btn :icon="mdiGoogleMaps" size="small" variant="text"
                                  v-bind="props"
                                  :href="`https://www.google.com/maps?q=${hut.location_lat},${hut.location_lng}`"
                                  target="_blank" />
@@ -122,10 +122,10 @@
     </v-row>
   </v-container>
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
-    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+    <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
     <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
     <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-    <v-btn color="primary" variant="flat" to="/huts" prepend-icon="mdi-arrow-left">
+    <v-btn color="primary" variant="flat" to="/huts" :prepend-icon="mdiArrowLeft">
       Back to Huts
     </v-btn>
   </v-container>
@@ -136,6 +136,7 @@
 </template>
 
 <script setup>
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiGoogleMaps, mdiHomeGroup, mdiShieldAccount, mdiWeb } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRoute } from 'vue-router'

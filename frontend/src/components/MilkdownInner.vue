@@ -28,7 +28,7 @@ const emit = defineEmits(['update:modelValue', 'change'])
 const isUserTyping = ref(false)
 let userTypingTimeout = null
 
-const { get } = useEditor((root) => {
+const { get, loading } = useEditor((root) => {
     const crepe = new Crepe({
         root,
         defaultValue: props.modelValue || '',
@@ -64,8 +64,8 @@ const { get } = useEditor((root) => {
 // Handle external value changes (e.g., loading existing trip data)
 // Only update if NOT from user typing - this prevents the feedback loop
 watch(() => props.modelValue, (newValue) => {
-    // Skip if user is actively typing - their input triggered this watch
-    if (isUserTyping.value) {
+    // Skip if editor is still loading or user is actively typing
+    if (loading.value || isUserTyping.value) {
         return
     }
 

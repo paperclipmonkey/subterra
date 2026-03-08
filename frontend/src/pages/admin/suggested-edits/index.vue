@@ -3,7 +3,7 @@
     <div class="d-flex align-center justify-space-between mb-6">
       <h2 class="text-h4">Suggested Edits</h2>
       <v-btn icon variant="text" :loading="loading" @click="fetchItems">
-        <v-icon>mdi-refresh</v-icon>
+        <v-icon :icon="mdiRefresh" />
       </v-btn>
     </div>
     
@@ -18,7 +18,7 @@
     </div>
 
     <div v-else-if="items.length === 0" class="text-center my-12 text-grey">
-      <v-icon size="64" class="mb-4">mdi-file-document-outline</v-icon>
+      <v-icon size="64" class="mb-4" :icon="mdiFileDocumentOutline" />
       <div class="text-h6">No {{ activeTab }} suggestions found</div>
     </div>
 
@@ -48,7 +48,7 @@
             <div class="d-flex align-center mb-2">
               <v-avatar size="24" class="mr-2" color="grey-lighten-2">
                 <span v-if="item.user?.name" class="text-caption">{{ item.user.name.charAt(0) }}</span>
-                <v-icon v-else size="16">mdi-account</v-icon>
+                <v-icon v-else size="16" :icon="mdiAccount" />
               </v-avatar>
               <span class="text-body-2">{{ item.user?.name || 'Unknown User' }}</span>
             </div>
@@ -64,7 +64,7 @@
             <span class="text-caption text-primary font-weight-bold mr-2">
               {{ item.status === 'pending' ? 'REVIEW SUGGESTION' : 'VIEW DETAILS' }}
             </span>
-            <v-icon color="primary" size="small">mdi-arrow-right</v-icon>
+            <v-icon color="primary" size="small" :icon="mdiArrowRight" />
           </v-card-actions>
         </v-card>
       </v-col>
@@ -73,6 +73,7 @@
 </template>
 
 <script setup>
+import { mdiAccount, mdiArrowRight, mdiFileDocument, mdiFileDocumentOutline, mdiFolderMultipleImage, mdiImageFilterHdr, mdiMapMarkerPath, mdiRefresh } from '@mdi/js'
 import { ref, onMounted, watch } from 'vue'
 import { api } from '@/plugins/api.js'
 
@@ -86,10 +87,10 @@ const formatType = (type) => {
 
 const getTypeIcon = (type) => {
   const t = formatType(type).toLowerCase()
-  if (t.includes('cave')) return 'mdi-image-filter-hdr'
-  if (t.includes('route')) return 'mdi-map-marker-path'
-  if (t.includes('collection')) return 'mdi-folder-multiple-image'
-  return 'mdi-file-document'
+  if (t.includes('cave')) return mdiImageFilterHdr
+  if (t.includes('route')) return mdiMapMarkerPath
+  if (t.includes('collection')) return mdiFolderMultipleImage
+  return mdiFileDocument
 }
 
 const fetchItems = async () => {

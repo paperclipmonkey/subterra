@@ -7,7 +7,7 @@
       <v-col cols="12" md="8" lg="6">
         <!-- Rescue Active Banner -->
         <v-alert v-if="callout.incident" type="error" prominent class="mb-6 elevation-5"
-                 icon="mdi-alert-octagram">
+                 :icon="mdiAlertOctagram">
           <div class="text-h6 font-weight-bold">RESCUE IN PROGRESS</div>
           <div>
             Incident #{{ callout.incident.id }} has been opened. Emergency services may have been contacted.
@@ -29,7 +29,7 @@
 
         <v-card class="mb-6">
           <v-card-title class="headline">
-            <v-icon left color="primary">mdi-map-marker</v-icon>
+            <v-icon left color="primary" :icon="mdiMapMarker" />
             <router-link v-if="callout.cave" :to="'/caves/' + callout.cave.slug"
                          class="text-decoration-none text-primary font-weight-bold">
               {{ callout.cave.name }}
@@ -69,7 +69,7 @@
 
         <v-btn block x-large color="success" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
                @click="confirmSafe = true">
-          <v-icon left size="large">mdi-check-circle</v-icon>
+          <v-icon left size="large" :icon="mdiCheckCircle" />
           I AM SAFE
         </v-btn>
       </v-col>
@@ -95,7 +95,7 @@
       <v-card>
         <v-card-title class="headline text-center pt-6">Glad you're safe!</v-card-title>
         <v-card-text class="text-center pb-6">
-          <v-icon size="64" color="green" class="mb-4">mdi-party-popper</v-icon>
+          <v-icon size="64" color="green" class="mb-4" :icon="mdiPartyPopper" />
           <p class="text-h6 mb-2">We've logged a private trip report for you.</p>
           <p class="text-body-2">Would you like to edit the details or publish it for others to see?</p>
         </v-card-text>
@@ -111,6 +111,7 @@
 </template>
 
 <script setup>
+import { mdiAlertOctagram, mdiCheckCircle, mdiMapMarker, mdiPartyPopper } from '@mdi/js'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter, useRoute } from 'vue-router'

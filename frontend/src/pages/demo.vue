@@ -21,11 +21,11 @@
                 @click="simulateLoading"
               >
                 <template v-if="!isLoading">
-                  <v-icon left>mdi-content-save</v-icon>
+                  <v-icon left :icon="mdiContentSave" />
                   Save Trip
                 </template>
                 <template v-else>
-                  <v-icon left class="mdi-spin">mdi-loading</v-icon>
+                  <v-icon left class="mdi-spin" :icon="mdiLoading" />
                   Saving Trip...
                 </template>
               </v-btn>
@@ -42,7 +42,7 @@
                 size="small"
                 @click="showSuccessToast"
               >
-                <v-icon left>mdi-check-circle</v-icon>
+                <v-icon left :icon="mdiCheckCircle" />
                 Success Toast
               </v-btn>
               <v-btn 
@@ -50,7 +50,7 @@
                 size="small" 
                 @click="showErrorToast"
               >
-                <v-icon left>mdi-alert-circle</v-icon>
+                <v-icon left :icon="mdiAlertCircle" />
                 Error Toast
               </v-btn>
               <p class="text-caption mt-2">Test the notification system!</p>
@@ -68,11 +68,11 @@
             @click="simulateSuccess"
           >
             <template v-if="!isSimulatingSuccess">
-              <v-icon left>mdi-check</v-icon>
+              <v-icon left :icon="mdiCheck" />
               Simulate Successful Save
             </template>
             <template v-else>
-              <v-icon left class="mdi-spin">mdi-loading</v-icon>
+              <v-icon left class="mdi-spin" :icon="mdiLoading" />
               Saving...
             </template>
           </v-btn>
@@ -84,11 +84,11 @@
             @click="simulateError"
           >
             <template v-if="!isSimulatingError">
-              <v-icon left>mdi-alert</v-icon>
+              <v-icon left :icon="mdiAlert" />
               Simulate Failed Save
             </template>
             <template v-else>
-              <v-icon left class="mdi-spin">mdi-loading</v-icon>
+              <v-icon left class="mdi-spin" :icon="mdiLoading" />
               Saving...
             </template>
           </v-btn>
@@ -100,6 +100,7 @@
 </template>
 
 <script setup>
+import { mdiAlert, mdiAlertCircle, mdiCheck, mdiCheckCircle, mdiContentSave, mdiLoading } from '@mdi/js'
 import { ref } from 'vue'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -144,7 +145,12 @@ const simulateError = async () => {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

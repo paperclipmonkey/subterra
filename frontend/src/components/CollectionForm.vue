@@ -9,7 +9,7 @@
         <MilkdownEditor v-model="internalCollection.description" placeholder="About this collection..." />
       </v-col>
       <v-col cols="12">
-        <v-file-input v-model="photoFile" label="Photo" accept="image/*" prepend-icon="mdi-camera"
+        <v-file-input v-model="photoFile" label="Photo" accept="image/*" :prepend-icon="mdiCamera"
                       show-size @change="onPhotoChange" />
         <div v-if="internalCollection.photo_path && !photoFile" class="text-caption">
           Current photo: {{ internalCollection.photo_path }}
@@ -29,9 +29,9 @@
         <v-list-item>
           <template #prepend>
             <div class="d-flex flex-column">
-              <v-btn icon="mdi-chevron-up" variant="text" size="x-small"
+              <v-btn :icon="mdiChevronUp" variant="text" size="x-small"
                      :disabled="index === 0" @click="moveCave(index, -1)" />
-              <v-btn icon="mdi-chevron-down" variant="text" size="x-small"
+              <v-btn :icon="mdiChevronDown" variant="text" size="x-small"
                      :disabled="index === internalCollection.caves.length - 1"
                      @click="moveCave(index, 1)" />
             </div>
@@ -45,7 +45,7 @@
                           placeholder="Add a note about this cave in the collection..." />
 
           <template #append>
-            <v-btn icon="mdi-delete" size="small" color="error" variant="text"
+            <v-btn :icon="mdiDelete" size="small" color="error" variant="text"
                    @click="removeCave(index)" />
           </template>
         </v-list-item>
@@ -60,6 +60,8 @@
 </template>
 
 <script setup>
+import { mdiCamera, mdiChevronDown, mdiChevronUp, mdiDelete } from '@mdi/js'
+
 import { ref, watch, onMounted, computed } from 'vue'
 import { useCaveStore } from '@/stores/caves'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'

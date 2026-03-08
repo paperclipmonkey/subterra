@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="dialog" max-width="800px">
     <template #activator="{ props: activatorProps }">
-      <v-btn v-if="canEdit" color="primary" variant="text" :prepend-icon="isNew ? 'mdi-plus' : 'mdi-pencil'"
+      <v-btn v-if="canEdit" color="primary" variant="text" :prepend-icon="isNew ? mdiPlus : mdiPencil"
              v-bind="activatorProps">
         {{ isNew ? 'New Hut' : 'Edit Hut' }}
       </v-btn>
@@ -52,7 +52,7 @@
               </v-col>
               <v-col cols="12">
                 <v-file-input v-model="editedHut.image" label="Hut Image" accept="image/*"
-                              prepend-icon="mdi-camera" show-size truncate-length="50" />
+                              :prepend-icon="mdiCamera" show-size truncate-length="50" />
               </v-col>
               <v-col cols="12">
                 <v-combobox v-model="editedHut.amenities" label="Amenities" multiple chips
@@ -81,6 +81,8 @@
 </template>
 
 <script setup>
+import { mdiCamera, mdiPencil, mdiPlus } from '@mdi/js'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '@/stores/app'

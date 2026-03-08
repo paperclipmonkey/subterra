@@ -2,7 +2,7 @@
   <v-card class="map-container">
     <v-card-text class="map-holder">
       <div v-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-4 h-100 flex-column text-center">
-        <v-icon size="64" color="grey" class="mb-4">mdi-map-lock</v-icon>
+        <v-icon size="64" color="grey" class="mb-4" :icon="mdiLock" />
         <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
         <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
           Cave locations and map features are exclusive to approved club members.
@@ -40,11 +40,11 @@
                 </v-btn>
                 <v-btn :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`" target="_blank"
                        icon>
-                  <v-icon>mdi-google-maps</v-icon>
+                  <v-icon :icon="mdiGoogleMaps" />
                 </v-btn>
                 <v-btn :href="`https://maps.apple.com/?q=${cave.location_lat},${cave.location_lng}`" target="_blank"
                        icon>
-                  <v-icon>mdi-apple</v-icon>
+                  <v-icon :icon="mdiApple" />
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -59,6 +59,7 @@
 </template>
 
 <script setup>
+import { mdiApple, mdiGoogleMaps, mdiLock } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 const appStore = useAppStore()
 

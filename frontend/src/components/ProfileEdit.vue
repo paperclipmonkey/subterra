@@ -115,11 +115,11 @@
           variant="outlined"
         >
           <v-btn value="public">
-            <v-icon left>mdi-earth</v-icon>
+            <v-icon left :icon="mdiEarth" />
             Public
           </v-btn>
           <v-btn value="club">
-            <v-icon left>mdi-account-group</v-icon>
+            <v-icon left :icon="mdiAccountGroup" />
             Club Members Only
           </v-btn>
         </v-btn-toggle>
@@ -198,6 +198,7 @@
 </template>
 
 <script setup>
+import { mdiAccountGroup, mdiEarth } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'

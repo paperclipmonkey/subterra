@@ -5,7 +5,7 @@
         
         <!-- Image Area (Left/Top) -->
         <div class="bg-black d-flex align-center justify-center flex-grow-1 overflow-hidden position-relative" style="min-height: 300px; flex-basis: 70%;">
-          <v-btn icon="mdi-close" variant="text" color="white" class="position-absolute top-0 right-0 ma-2 d-md-none" style="z-index: 10" @click="closeModal" />
+          <v-btn :icon="mdiClose" variant="text" color="white" class="position-absolute top-0 right-0 ma-2 d-md-none" style="z-index: 10" @click="closeModal" />
           
           <video
             v-if="media.type === 'hero_video' || media.type === 'video'"
@@ -38,7 +38,7 @@
           <!-- Header (Desktop only close button) -->
           <div class="d-none d-md-flex justify-space-between align-center pa-4 pb-2">
             <div class="text-overline text-medium-emphasis">Media Details</div>
-            <v-btn icon="mdi-close" variant="text" density="comfortable" @click="closeModal" />
+            <v-btn :icon="mdiClose" variant="text" density="comfortable" @click="closeModal" />
           </div>
 
           <v-divider class="d-none d-md-block mb-2" />
@@ -55,7 +55,7 @@
               <div v-if="media.trip_name" class="mb-3">
                 <div class="text-caption text-medium-emphasis mb-1">Trip</div>
                 <div class="d-flex align-center">
-                  <v-icon size="small" start icon="mdi-hiking" color="primary" />
+                  <v-icon size="small" start :icon="mdiHiking" color="primary" />
                   <router-link :to="`/trips/${media.trip_id}`" class="text-decoration-none text-body-1 font-weight-medium text-primary text-truncate" @click="closeModal">
                     {{ media.trip_name }}
                   </router-link>
@@ -66,7 +66,7 @@
               <div v-if="media.photographer" class="mb-3">
                 <div class="text-caption text-medium-emphasis mb-1">Photographer</div>
                 <div class="d-flex align-center">
-                  <v-icon size="small" start icon="mdi-camera" class="text-medium-emphasis" />
+                  <v-icon size="small" start :icon="mdiCamera" class="text-medium-emphasis" />
                   <span class="text-body-1">{{ media.photographer }}</span>
                 </div>
               </div>
@@ -75,7 +75,7 @@
               <div v-if="media.copyright" class="mb-3">
                 <div class="text-caption text-medium-emphasis mb-1">Copyright</div>
                 <div class="d-flex align-center">
-                  <v-icon size="small" start icon="mdi-copyright" class="text-medium-emphasis" />
+                  <v-icon size="small" start :icon="mdiCopyright" class="text-medium-emphasis" />
                   <span class="text-body-2">{{ media.copyright }}</span>
                 </div>
               </div>
@@ -86,7 +86,7 @@
 
           <!-- Actions Footer -->
           <div class="pa-4 mt-auto">
-            <v-btn block color="primary" variant="tonal" prepend-icon="mdi-open-in-new" @click="openInNewTab">
+            <v-btn block color="primary" variant="tonal" :prepend-icon="mdiOpenInNew" @click="openInNewTab">
               Open Original
             </v-btn>
           </div>
@@ -98,6 +98,8 @@
 </template>
 
 <script setup>
+import { mdiCamera, mdiClose, mdiCopyright, mdiHiking, mdiOpenInNew } from '@mdi/js'
+
 import { ref, watch } from 'vue'
 import moment from 'moment'
 

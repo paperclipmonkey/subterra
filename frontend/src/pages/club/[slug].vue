@@ -8,7 +8,7 @@
             <h1 class="text-wrap">{{ club.name }}</h1>
           </v-card-title>
           <v-card-subtitle v-if="club.location">
-            <v-icon start>mdi-map-marker</v-icon> {{ club.location }}
+            <v-icon start :icon="mdiMapMarker" /> {{ club.location }}
           </v-card-subtitle>
           <v-card-text>
             <div v-if="club.description">
@@ -16,19 +16,19 @@
             </div>
             <div class="mt-4">
               <v-chip v-if="club.website" color="primary" variant="outlined" :href="club.website" target="_blank">
-                <v-icon start>mdi-web</v-icon> Website
+                <v-icon start :icon="mdiWeb" /> Website
               </v-chip>
               <v-chip class="ml-2" color="info" variant="outlined">
-                <v-icon start>mdi-account-group</v-icon> {{ club.member_count }} members
+                <v-icon start :icon="mdiAccountGroup" /> {{ club.member_count }} members
               </v-chip>
               <!-- Edit Club Button (Club Admins Only) -->
               <v-btn v-if="isClubAdmin" class="ml-2" color="primary" variant="outlined"
                      size="small" @click="openEditClubModal('details')">
-                <v-icon start>mdi-pencil</v-icon> Edit Club
+                <v-icon start :icon="mdiPencil" /> Edit Club
               </v-btn>
               <v-btn v-if="isClubAdmin" class="ml-2" color="info" variant="outlined"
                      size="small" @click="openEditClubModal('pending')">
-                <v-icon start>mdi-account-clock</v-icon> Pending Requests <span
+                <v-icon start :icon="mdiAccountClock" /> Pending Requests <span
                   v-if="club.pending_users_count > 0">({{ club.pending_users_count }})</span>
               </v-btn>
             </div>
@@ -39,10 +39,10 @@
                        @saved="onClubEditSaved" />
         <!-- Loading/Error State for Club Info -->
         <v-container v-else-if="error" class="text-center mt-6">
-          <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+          <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
           <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
           <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-          <v-btn color="primary" variant="flat" to="/" prepend-icon="mdi-arrow-left">
+          <v-btn color="primary" variant="flat" to="/" :prepend-icon="mdiArrowLeft">
             Back to Home
           </v-btn>
         </v-container>
@@ -138,6 +138,7 @@
 </template>
 
 <script setup>
+import { mdiAccountClock, mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiMapMarker, mdiPencil, mdiWeb } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mande } from 'mande'

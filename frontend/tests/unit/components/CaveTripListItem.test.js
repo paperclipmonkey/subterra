@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import CaveTripListItem from '@/components/CaveTripListItem.vue'
 
 // Mock moment
@@ -7,12 +8,16 @@ vi.mock('moment', () => {
   const mockMoment = (date) => ({
     isValid: () => date && date !== '~',
     fromNow: () => '2 days ago',
-    diff: (startTime, unit) => unit === 'hours' ? 4 : 240
+    diff: (startTime, unit) => unit === 'hours' ? 4 : 240,
+    format: () => 'Dec 13, 2023'
   })
   return { default: mockMoment }
 })
 
 describe('CaveTripListItem', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
   const mockTrip = {
     id: 1,
     name: 'Deep Cave Exploration',
@@ -43,7 +48,7 @@ describe('CaveTripListItem', () => {
         trip: mockTrip
       }
     })
-    
+
     expect(wrapper.exists()).toBe(true)
     expect(wrapper.props('trip')).toEqual(mockTrip)
   })
@@ -54,7 +59,7 @@ describe('CaveTripListItem', () => {
         trip: mockTrip
       }
     })
-    
+
     expect(wrapper.props('trip')).toBeDefined()
     expect(wrapper.props('trip').id).toBe(1)
     expect(wrapper.props('trip').name).toBe('Deep Cave Exploration')
@@ -66,7 +71,7 @@ describe('CaveTripListItem', () => {
         trip: mockTrip
       }
     })
-    
+
     expect(typeof wrapper.props('trip')).toBe('object')
     expect(wrapper.props('trip').participants).toBeInstanceOf(Array)
   })
@@ -77,7 +82,7 @@ describe('CaveTripListItem', () => {
         trip: mockTripInvalid
       }
     })
-    
+
     expect(wrapper.props('trip').start_time).toBeNull()
     expect(wrapper.props('trip').end_time).toBeNull()
     expect(wrapper.props('trip').participants.length).toBe(1)

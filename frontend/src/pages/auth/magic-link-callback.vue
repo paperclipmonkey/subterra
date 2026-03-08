@@ -15,18 +15,14 @@
           size="64" 
           color="success" 
           class="mb-4"
-        >
-          mdi-check-circle
-        </v-icon>
+          :icon="mdiCheckCircle" />
         
         <v-icon 
           v-else 
           size="64" 
           color="error" 
           class="mb-4"
-        >
-          mdi-alert-circle
-        </v-icon>
+          :icon="mdiAlertCircle" />
 
         <h2 v-if="loading">Authenticating...</h2>
         <h2 v-else-if="success">Welcome to Subterra!</h2>
@@ -56,6 +52,7 @@
 </template>
 
 <script setup>
+import { mdiAlertCircle, mdiCheckCircle } from '@mdi/js'
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'

@@ -3,25 +3,38 @@
     <v-row>
       <v-col cols="12" class="d-flex justify-space-between align-center">
         <v-btn variant="text" size="small" :to="`/caves/${routeDetail?.entrance?.id || routeDetail?.exit?.id}`" class="mb-4">
-          <v-icon start>mdi-arrow-left</v-icon>
+          <v-icon start :icon="mdiArrowLeft" />
           Back to Cave
         </v-btn>
         
         <v-btn
-          v-if="appStore.user"
+          v-if="appStore.user && (appStore.user.is_admin || appStore.canSuggest)"
           color="primary"
           variant="text"
-          prepend-icon="mdi-pencil"
+          :prepend-icon="mdiPencil"
           :to="`/routes/${route.params.slug}/edit`"
           class="mr-2"
         >
           {{ appStore.user?.is_admin ? 'Edit Route' : 'Suggest Edit' }}
         </v-btn>
         <v-btn
+          v-else-if="appStore.user"
+          color="grey"
+          variant="text"
+          disabled
+          :prepend-icon="mdiPencilOff"
+          class="mr-2"
+        >
+          <v-tooltip activator="parent" location="top">
+            Your account must be approved to suggest edits
+          </v-tooltip>
+          Suggest Edit
+        </v-btn>
+        <v-btn
           v-else
           color="primary"
           variant="text"
-          prepend-icon="mdi-pencil"
+          :prepend-icon="mdiPencil"
           to="/login"
           class="mr-2"
         >
@@ -71,7 +84,7 @@
                 {{ getGradeDescription(routeDetail.grade) }}
               </v-tooltip>
             </v-chip>
-            <v-chip v-if="routeDetail.duration" prepend-icon="mdi-clock-outline">
+            <v-chip v-if="routeDetail.duration" :prepend-icon="mdiClockOutline">
               {{ routeDetail.duration }}
             </v-chip>
           </v-card-subtitle>
@@ -118,9 +131,9 @@
                   <tbody>
                     <tr v-for="item in routeDetail.tackle" :key="item.id">
                       <td>
-                        <v-icon v-if="['rope', 'srt_rope', 'handline', 'lifeline'].includes(item.type)" size="small">mdi-rope</v-icon>
-                        <v-icon v-else-if="item.type === 'ladder'" size="small">mdi-stairs</v-icon>
-                        <v-icon v-else-if="item.type === 'rope_protector'" size="small">mdi-shield-half-full</v-icon>
+                        <v-icon v-if="['rope', 'srt_rope', 'handline', 'lifeline'].includes(item.type)" size="small" :icon="mdiHelpCircleOutline" />
+                        <v-icon v-else-if="item.type === 'ladder'" size="small" :icon="mdiStairs" />
+                        <v-icon v-else-if="item.type === 'rope_protector'" size="small" :icon="mdiShieldHalfFull" />
                         <span class="text-capitalize ml-1">{{ item.type ? item.type.replace('_', ' ') : '' }}</span>
                       </td>
                       <td>{{ item.description }}</td>
@@ -148,7 +161,7 @@
                           cover
                         />
                         <div v-else class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 150px;">
-                          <v-icon size="x-large" color="error">mdi-file-pdf-box</v-icon>
+                          <v-icon size="x-large" color="error" :icon="mdiFilePdfBox" />
                         </div>
                         <v-card-subtitle v-if="media.caption" class="py-2 text-caption">{{ media.caption }}</v-card-subtitle>
                         <v-card-subtitle v-else class="py-2 text-caption">{{ media.type === 'pdf' ? 'View PDF' : 'View Image' }}</v-card-subtitle>
@@ -170,6 +183,7 @@
 </template>
 
 <script setup>
+import { mdiArrowLeft, mdiClockOutline, mdiFilePdfBox, mdiPencil, mdiPencilOff, mdiHelpCircleOutline, mdiShieldHalfFull, mdiStairs } from '@mdi/js'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'

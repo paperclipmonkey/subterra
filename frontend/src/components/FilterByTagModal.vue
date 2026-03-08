@@ -7,7 +7,7 @@
             Filter
           </div>
           <v-btn
-            icon="mdi-close"
+            :icon="mdiClose"
             variant="text"
             @click="$emit('close')"
           />
@@ -71,6 +71,8 @@
 </template>
 
 <script setup>
+import { mdiClose } from '@mdi/js'
+
 import { ref, defineProps, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 

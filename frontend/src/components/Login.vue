@@ -12,7 +12,7 @@
           </div>
 
           <!-- BCA Requirement Notice -->
-          <v-alert color="amber darken-4" variant="tonal" icon="mdi-shield-account" class="mb-8" border="start"
+          <v-alert color="amber darken-4" variant="tonal" :icon="mdiShieldAccount" class="mb-8" border="start"
                    density="comfortable">
             <div class="text-body-2 font-weight-medium">
               Member Access Only
@@ -61,7 +61,7 @@
 
               <v-form ref="emailForm" @submit.prevent="sendMagicLink">
                 <v-text-field v-model="email" label="Email Address" type="email" :rules="emailRules" variant="outlined"
-                              density="comfortable" prepend-inner-icon="mdi-email-outline" class="mb-2"
+                              density="comfortable" :prepend-inner-icon="mdiEmailOutline" class="mb-2"
                               hide-details="auto" />
                 <v-btn type="submit" color="primary" block size="large" :loading="sendingEmail"
                        :disabled="!email || sendingEmail || !agreedToToS" class="mt-4 text-none font-weight-bold" elevation="0">
@@ -75,12 +75,12 @@
 
             <!-- Email Sent Success -->
             <v-card v-else class="text-center py-4 bg-green-lighten-5" variant="flat">
-              <v-icon color="success" size="48" class="mb-2">mdi-email-check</v-icon>
+              <v-icon color="success" size="48" class="mb-2" :icon="mdiEmailCheck" />
               <h3 class="text-h6 font-weight-bold success--text mb-1">Check your inbox</h3>
               <p class="text-body-2 mb-4">
                 We've sent a magic link to <strong>{{ email }}</strong>
               </p>
-              <v-btn variant="text" color="primary" size="small" prepend-icon="mdi-arrow-left" @click="resetForm">
+              <v-btn variant="text" color="primary" size="small" :prepend-icon="mdiArrowLeft" @click="resetForm">
                 Try a different email
               </v-btn>
             </v-card>
@@ -124,7 +124,7 @@
             <v-col cols="12" sm="6" class="mb-4">
               <div class="d-flex align-start">
                 <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
-                  <v-icon color="white">mdi-map-search</v-icon>
+                  <v-icon color="white" :icon="mdiMapSearch" />
                 </v-avatar>
                 <div>
                   <div class="font-weight-bold text-subtitle-1">Discover Caves</div>
@@ -136,7 +136,7 @@
             <v-col cols="12" sm="6" class="mb-4">
               <div class="d-flex align-start">
                 <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
-                  <v-icon color="white">mdi-notebook-check</v-icon>
+                  <v-icon color="white" :icon="mdiNotebookCheck" />
                 </v-avatar>
                 <div>
                   <div class="font-weight-bold text-subtitle-1">Plan & Track</div>
@@ -148,7 +148,7 @@
             <v-col cols="12" sm="6" class="mb-4">
               <div class="d-flex align-start">
                 <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
-                  <v-icon color="white">mdi-account-group</v-icon>
+                  <v-icon color="white" :icon="mdiAccountGroup" />
                 </v-avatar>
                 <div>
                   <div class="font-weight-bold text-subtitle-1">Community Logbook</div>
@@ -165,6 +165,7 @@
 </template>
 
 <script setup>
+import { mdiAccountGroup, mdiArrowLeft, mdiEmailCheck, mdiEmailOutline, mdiMapSearch, mdiNotebookCheck, mdiShieldAccount } from '@mdi/js'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'

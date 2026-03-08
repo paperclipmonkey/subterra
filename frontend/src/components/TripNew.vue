@@ -141,7 +141,7 @@
                         item-value="value" :error-messages="validationErrors.visibility" hint="Who can see this trip report"
                         persistent-hint variant="outlined" class="mb-4" item-props />
 
-              <v-file-input prepend-icon="" prepend-inner-icon="mdi-camera" accept="image/*" label="Add Photos"
+              <v-file-input prepend-icon="" :prepend-inner-icon="mdiCamera" accept="image/*" label="Add Photos"
                             :model-value="[]"
                             :error-messages="validationErrors.media"
                             chips
@@ -162,7 +162,7 @@
                         <v-col cols="12">
                           <div class="d-flex justify-space-between align-center">
                             <span class="text-caption text-truncate">{{ item.file.name }}</span>
-                            <v-btn icon="mdi-close" size="x-small" variant="text" color="error" @click="removePendingMedia(i)" />
+                            <v-btn :icon="mdiClose" size="x-small" variant="text" color="error" @click="removePendingMedia(i)" />
                           </div>
                         </v-col>
                         <v-col cols="12">
@@ -187,7 +187,7 @@
                   <v-col v-for="(media, i) in trip.existing_media" :key="i" cols="4" sm="3">
                     <v-img cover aspect-ratio="1" class="rounded bg-grey-lighten-2" :src="media.url"
                            :alt="media.file_name">
-                      <v-btn icon="mdi-delete" size="x-small" color="error" class="position-absolute top-0 right-0 ma-1"
+                      <v-btn :icon="mdiDelete" size="x-small" color="error" class="position-absolute top-0 right-0 ma-1"
                              @click="removeExistingMedia(media)" />
                     </v-img>
                   </v-col>
@@ -201,7 +201,7 @@
               <v-btn color="primary" size="large" elevation="2" :loading="isSaving" :disabled="isSaving"
                      min-width="150" @click="submitForm">
                 <template v-if="!isSaving">
-                  <v-icon start>mdi-content-save</v-icon>
+                  <v-icon start :icon="mdiContentSave" />
                   Save Trip
                 </template>
                 <template v-else>
@@ -224,6 +224,7 @@
 </template>
 
 <script setup>
+import { mdiCamera, mdiClose, mdiContentSave, mdiDelete } from '@mdi/js'
 import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'

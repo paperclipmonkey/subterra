@@ -8,7 +8,7 @@
           color="primary"
           size="small"
           :variant="appStore.user?.is_admin ? 'flat' : 'text'"
-          prepend-icon="mdi-plus"
+          :prepend-icon="mdiPlus"
           :to="`/cave-systems/${caveSystemId}/routes/new`"
         >
           {{ appStore.user?.is_admin ? 'Add Route' : 'Suggest New Route' }}
@@ -19,7 +19,7 @@
           size="small"
           variant="text"
           disabled
-          prepend-icon="mdi-plus"
+          :prepend-icon="mdiPlus"
         >
           <v-tooltip activator="parent" location="top">
             {{ !appStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
@@ -31,7 +31,7 @@
           color="primary"
           size="small"
           variant="text"
-          prepend-icon="mdi-plus"
+          :prepend-icon="mdiPlus"
           to="/login"
         >
           Log in to Suggest Route
@@ -59,7 +59,7 @@
             >
               <template #placeholder>
                 <div class="d-flex align-center justify-center fill-height">
-                  <v-icon color="grey-lighten-1" size="48">mdi-map-marker-path</v-icon>
+                  <v-icon color="grey-lighten-1" size="48" :icon="mdiMapMarkerPath" />
                 </div>
               </template>
             </v-img>
@@ -78,15 +78,15 @@
                     
               <div class="d-flex flex-wrap gap-4 text-body-2 text-medium-emphasis mb-3">
                 <div v-if="route.duration" class="d-flex align-center mr-4">
-                  <v-icon start size="small" color="primary">mdi-clock-outline</v-icon>
+                  <v-icon start size="small" color="primary" :icon="mdiClockOutline" />
                   {{ route.duration }}
                 </div>
                 <div v-if="route.entrance" class="d-flex align-center mr-4">
-                  <v-icon start size="small" color="primary">mdi-door-open</v-icon>
+                  <v-icon start size="small" color="primary" :icon="mdiDoorOpen" />
                   In: {{ route.entrance.name }}
                 </div>
                 <div v-if="route.exit" class="d-flex align-center">
-                  <v-icon start size="small" color="primary">mdi-exit-to-app</v-icon>
+                  <v-icon start size="small" color="primary" :icon="mdiExitToApp" />
                   Out: {{ route.exit.name }}
                 </div>
               </div>
@@ -99,7 +99,7 @@
             <v-spacer />
 
             <v-card-actions class="px-4 pb-4 pt-0">
-              <v-btn variant="text" color="primary" class="px-0" append-icon="mdi-arrow-right">
+              <v-btn variant="text" color="primary" class="px-0" :append-icon="mdiArrowRight">
                 View Details
               </v-btn>
             </v-card-actions>
@@ -114,6 +114,7 @@
 </template>
 
 <script setup>
+import { mdiArrowRight, mdiClockOutline, mdiDoorOpen, mdiExitToApp, mdiMapMarkerPath, mdiPlus } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()

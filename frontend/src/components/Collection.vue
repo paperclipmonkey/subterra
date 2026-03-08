@@ -8,7 +8,7 @@
       :src="collection.photo_path || 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
       height="350" cover class="align-end" gradient="to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 60%">
       <div class="position-absolute top-0 left-0 pa-4" style="z-index: 1;">
-        <v-btn icon="mdi-arrow-left" variant="tonal" color="white" class="backdrop-blur"
+        <v-btn :icon="mdiArrowLeft" variant="tonal" color="white" class="backdrop-blur"
                @click="$router.push('/collections')" />
       </div>
 
@@ -60,8 +60,8 @@
     <!-- Mobile View: Tabs -->
     <div v-else>
       <v-tabs v-model="tab" color="primary" align-tabs="center" grow>
-        <v-tab value="list" class="font-weight-bold"><v-icon start>mdi-format-list-bulleted</v-icon> List View</v-tab>
-        <v-tab value="map" class="font-weight-bold"><v-icon start>mdi-map</v-icon> Map View</v-tab>
+        <v-tab value="list" class="font-weight-bold"><v-icon start :icon="mdiFormatListBulleted" /> List View</v-tab>
+        <v-tab value="map" class="font-weight-bold"><v-icon start :icon="mdiMap" /> Map View</v-tab>
       </v-tabs>
 
       <v-window v-model="tab">
@@ -77,10 +77,10 @@
   </v-sheet>
 
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
-    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+    <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
     <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
     <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-    <v-btn color="primary" variant="flat" to="/collections" prepend-icon="mdi-arrow-left">
+    <v-btn color="primary" variant="flat" to="/collections" :prepend-icon="mdiArrowLeft">
       Back to Collections
     </v-btn>
   </v-container>
@@ -91,6 +91,7 @@
 </template>
 
 <script setup>
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiFormatListBulleted, mdiMap } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'

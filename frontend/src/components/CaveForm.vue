@@ -93,7 +93,7 @@
           <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
               <div class="text-subtitle-2 mb-2 d-flex align-center">
-                <v-icon start size="small">mdi-video</v-icon>
+                <v-icon start size="small" :icon="mdiVideo" />
                 Hero Video
               </div>
               
@@ -107,7 +107,7 @@
                     style="object-fit: cover; border-radius: 4px;"
                   />
                   <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
-                    <v-icon size="48">mdi-video-outline</v-icon>
+                    <v-icon size="48" :icon="mdiVideoOutline" />
                     <span class="text-caption mt-2">No hero video set</span>
                   </div>
                   <v-overlay
@@ -121,7 +121,7 @@
                       color="error"
                       variant="flat"
                       size="small"
-                      prepend-icon="mdi-delete"
+                      :prepend-icon="mdiDelete"
                       @click="clearHeroVideo"
                     >
                       Remove
@@ -132,7 +132,7 @@
 
               <v-file-input
                 v-model="heroVideoFile"
-                prepend-icon="mdi-video"
+                :prepend-icon="mdiVideo"
                 accept="video/*"
                 :label="props.modelValue.hero_video ? 'Replace Hero Video' : 'Select Hero Video'"
                 chips
@@ -168,7 +168,7 @@
           <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
               <div class="text-subtitle-2 mb-2 d-flex align-center">
-                <v-icon start size="small">mdi-star</v-icon>
+                <v-icon start size="small" :icon="mdiStar" />
                 Hero Image
               </div>
               
@@ -181,7 +181,7 @@
                     cover
                   />
                   <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
-                    <v-icon size="48">mdi-image-outline</v-icon>
+                    <v-icon size="48" :icon="mdiImageOutline" />
                     <span class="text-caption mt-2">No hero image set</span>
                   </div>
                   <v-overlay
@@ -195,7 +195,7 @@
                       color="error"
                       variant="flat"
                       size="small"
-                      prepend-icon="mdi-delete"
+                      :prepend-icon="mdiDelete"
                       @click="clearHeroImage"
                     >
                       Remove
@@ -206,7 +206,7 @@
 
               <v-file-input
                 v-model="heroImageFile"
-                prepend-icon="mdi-camera"
+                :prepend-icon="mdiCamera"
                 accept="image/*"
                 :label="props.modelValue.hero_image ? 'Replace Hero Image' : 'Select Hero Image'"
                 chips
@@ -242,7 +242,7 @@
           <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
               <div class="text-subtitle-2 mb-2 d-flex align-center">
-                <v-icon start size="small">mdi-door-open</v-icon>
+                <v-icon start size="small" :icon="mdiDoorOpen" />
                 Entrance Image
               </div>
 
@@ -255,7 +255,7 @@
                     cover
                   />
                   <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
-                    <v-icon size="48">mdi-image-outline</v-icon>
+                    <v-icon size="48" :icon="mdiImageOutline" />
                     <span class="text-caption mt-2">No entrance image set</span>
                   </div>
                   <v-overlay
@@ -269,7 +269,7 @@
                       color="error"
                       variant="flat"
                       size="small"
-                      prepend-icon="mdi-delete"
+                      :prepend-icon="mdiDelete"
                       @click="clearEntranceImage"
                     >
                       Remove
@@ -280,7 +280,7 @@
 
               <v-file-input
                 v-model="entranceImageFile"
-                prepend-icon="mdi-camera"
+                :prepend-icon="mdiCamera"
                 accept="image/*"
                 :label="props.modelValue.entrance_image ? 'Replace Entrance Image' : 'Select Entrance Image'"
                 chips
@@ -350,6 +350,7 @@
 </template>
 
 <script setup>
+import { mdiCamera, mdiDelete, mdiDoorOpen, mdiImageOutline, mdiStar, mdiVideo, mdiVideoOutline } from '@mdi/js'
 import { ref, watch, onMounted, computed } from 'vue'
 import {
   MglMap,

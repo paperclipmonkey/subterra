@@ -4,12 +4,12 @@
       <v-col>
         <div class="d-flex justify-space-between align-center mb-4">
           <h1>Manage Pages</h1>
-          <v-btn color="primary" to="/admin/pages/edit" prepend-icon="mdi-plus">Create Page</v-btn>
+          <v-btn color="primary" to="/admin/pages/edit" :prepend-icon="mdiPlus">Create Page</v-btn>
         </div>
 
         <v-text-field
           v-model="search"
-          append-inner-icon="mdi-magnify"
+          :append-inner-icon="mdiMagnify"
           label="Search Pages"
           single-line
           hide-details
@@ -24,9 +24,9 @@
           class="elevation-1"
         >
           <template #item.actions="{ item }">
-            <v-btn icon="mdi-pencil" variant="text" size="small" :to="'/admin/pages/edit?id=' + item.id" />
-            <v-btn icon="mdi-open-in-new" variant="text" size="small" :to="'/pages/' + item.slug" target="_blank" />
-            <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click="deletePage(item)" />
+            <v-btn :icon="mdiPencil" variant="text" size="small" :to="'/admin/pages/edit?id=' + item.id" />
+            <v-btn :icon="mdiOpenInNew" variant="text" size="small" :to="'/pages/' + item.slug" target="_blank" />
+            <v-btn :icon="mdiDelete" variant="text" size="small" color="error" @click="deletePage(item)" />
           </template>
         </v-data-table>
       </v-col>
@@ -35,6 +35,8 @@
 </template>
 
 <script setup>
+import { mdiDelete, mdiMagnify, mdiOpenInNew, mdiPencil, mdiPlus } from '@mdi/js'
+
 import { ref, onMounted } from 'vue'
 import { mande } from 'mande'
 

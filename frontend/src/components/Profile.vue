@@ -5,10 +5,10 @@
     </v-container>
 
     <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
-      <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+      <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
       <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
       <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-      <v-btn color="primary" variant="flat" to="/" prepend-icon="mdi-arrow-left">
+      <v-btn color="primary" variant="flat" to="/" :prepend-icon="mdiArrowLeft">
         Back to Home
       </v-btn>
     </v-container>
@@ -32,7 +32,7 @@
             <h1 class="text-h5 text-sm-h4 font-weight-bold text-grey-darken-4 mb-1">{{ profile.name }}</h1>
             <div class="d-flex align-center justify-center justify-sm-start flex-wrap gap-2">
               <v-chip v-if="profile.clubs && profile.clubs.length > 0" color="primary" variant="flat"
-                      size="small" prepend-icon="mdi-account-group-outline" class="font-weight-medium">
+                      size="small" :prepend-icon="mdiAccountGroupOutline" class="font-weight-medium">
                 {{ profile.clubs[0].name }}
                 <span v-if="profile.clubs.length > 1" class="ml-1 opacity-70">+{{ profile.clubs.length - 1
                 }}</span>
@@ -49,26 +49,26 @@
             <!-- Edit -->
             <v-btn v-tooltip="'Edit Profile'" icon variant="text"
                    color="grey-darken-1" @click="$router.push('/profile/' + profile.id + '/edit')">
-              <v-icon>mdi-pencil</v-icon>
+              <v-icon :icon="mdiPencil" />
             </v-btn>
 
             <!-- Export CSV -->
             <v-btn v-tooltip="'Export Trips (CSV)'" icon variant="text"
                    color="grey-darken-1"
                    @click="openDownloadDialog('Export Trips (CSV)', 'Your trip history will be exported as a CSV file.', '/api/me/trips/download')">
-              <v-icon>mdi-file-export</v-icon>
+              <v-icon :icon="mdiFileExport" />
             </v-btn>
 
             <!-- Download All Data (JSON) -->
             <v-btn v-tooltip="'Download My Data (JSON)'" icon variant="text"
                    color="primary"
                    @click="openDownloadDialog('Download My Data (JSON)', 'All your profile data, trips, and memberships will be exported as a JSON file.', '/api/user/export')">
-              <v-icon>mdi-database-export</v-icon>
+              <v-icon :icon="mdiDatabaseExport" />
             </v-btn>
 
             <!-- Logout -->
             <v-btn v-tooltip="'Logout'" icon variant="text" color="error" @click="appStore.logout()">
-              <v-icon>mdi-logout</v-icon>
+              <v-icon :icon="mdiLogout" />
             </v-btn>
           </div>
         </div>
@@ -79,7 +79,7 @@
         <v-col cols="12" md="4">
           <v-card class="py-4 px-6 rounded-xl h-100 d-flex align-center" elevation="0" border>
             <v-avatar color="blue-lighten-5" size="56" class="mr-4">
-              <v-icon color="blue" icon="mdi-flashlight" size="32" />
+              <v-icon color="blue" :icon="mdiFlashlight" size="32" />
             </v-avatar>
             <div>
               <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatNumber(profile.stats.caves) }}
@@ -92,7 +92,7 @@
         <v-col cols="12" md="4">
           <v-card class="py-4 px-6 rounded-xl h-100 d-flex align-center" elevation="0" border>
             <v-avatar color="orange-lighten-5" size="56" class="mr-4">
-              <v-icon color="orange-darken-1" icon="mdi-hiking" size="32" />
+              <v-icon color="orange-darken-1" :icon="mdiHiking" size="32" />
             </v-avatar>
             <div>
               <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatNumber(profile.stats.trips) }}
@@ -105,7 +105,7 @@
         <v-col cols="12" md="4">
           <v-card class="py-4 px-6 rounded-xl h-100 d-flex align-center" elevation="0" border>
             <v-avatar color="purple-lighten-5" size="56" class="mr-4">
-              <v-icon color="purple" icon="mdi-clock-time-four-outline" size="32" />
+              <v-icon color="purple" :icon="mdiClockTimeFourOutline" size="32" />
             </v-avatar>
             <div>
               <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatDuration(profile.stats.duration)
@@ -122,7 +122,7 @@
         <v-col v-if="medals.length > 0 || profile.id === user.id" cols="12" md="4">
           <v-card class="rounded-xl h-100" elevation="0" border>
             <v-card-title class="d-flex align-center py-4 px-6">
-              <v-icon icon="mdi-medal-outline" color="amber-darken-2" class="mr-2" />
+              <v-icon :icon="mdiMedalOutline" color="amber-darken-2" class="mr-2" />
               <span class="text-h6 font-weight-bold">Trophy Case</span>
               <v-spacer />
               <v-chip size="x-small" color="amber" variant="flat">{{ medals.length }}</v-chip>
@@ -133,16 +133,16 @@
                 <div v-for="medal in medals" :key="medal.id" v-tooltip="medal.name" class="medal-item"
                      @click="openMedalModal(medal)">
                   <img v-if="medal.image_url" :src="medal.image_url" class="medal-img">
-                  <v-icon v-else icon="mdi-medal-outline" size="32" color="grey-lighten-2" />
+                  <v-icon v-else :icon="mdiMedalOutline" size="32" color="grey-lighten-2" />
                 </div>
               </div>
               <div v-else-if="profile.id === user.id" class="text-center py-4">
-                <v-icon icon="mdi-medal-outline" size="48" color="grey-lighten-1" class="mb-3" />
+                <v-icon :icon="mdiMedalOutline" size="48" color="grey-lighten-1" class="mb-3" />
                 <div class="text-subtitle-1 font-weight-bold mb-2">Start your collection!</div>
                 <p class="text-body-2 text-medium-emphasis mb-4">
                   You can earn medals by completing specific trips and exploring new caves.
                 </p>
-                <v-btn color="primary" variant="tonal" size="small" to="/caves" prepend-icon="mdi-magnify">
+                <v-btn color="primary" variant="tonal" size="small" to="/caves" :prepend-icon="mdiMagnify">
                   Find a cave
                 </v-btn>
               </div>
@@ -155,7 +155,7 @@
           <!-- Heatmap -->
           <v-card class="rounded-xl mb-6" elevation="0" border>
             <v-card-title class="py-4 px-6 d-flex align-center">
-              <v-icon icon="mdi-fire" color="orange" class="mr-2" />
+              <v-icon :icon="mdiFire" color="orange" class="mr-2" />
               <span class="text-h6 font-weight-bold">Activity Log</span>
             </v-card-title>
             <v-divider />
@@ -172,7 +172,7 @@
           <!-- Clubs -->
           <v-card v-if="profile.clubs && profile.clubs.length > 0" class="rounded-xl mb-6" elevation="0" border>
             <v-card-title class="py-4 px-6 d-flex align-center">
-              <v-icon icon="mdi-account-group" color="indigo" class="mr-2" />
+              <v-icon :icon="mdiAccountGroup" color="indigo" class="mr-2" />
               <span class="text-h6 font-weight-bold">Clubs</span>
             </v-card-title>
             <v-divider />
@@ -182,7 +182,7 @@
                 <v-list-item :to="`/club/${club.slug}`" class="py-3 px-6 hover-bg">
                   <template #prepend>
                     <v-avatar color="indigo-lighten-5" class="mr-4">
-                      <v-icon color="indigo" icon="mdi-shield-account" />
+                      <v-icon color="indigo" :icon="mdiShieldAccount" />
                     </v-avatar>
                   </template>
 
@@ -194,7 +194,7 @@
                     <v-chip v-if="club.is_admin" color="primary" size="x-small" variant="flat" class="mr-2">
                       Admin
                     </v-chip>
-                    <v-icon icon="mdi-chevron-right" color="grey-lighten-1" />
+                    <v-icon :icon="mdiChevronRight" color="grey-lighten-1" />
                   </template>
                 </v-list-item>
               </template>
@@ -204,10 +204,10 @@
           <!-- Recent Trips -->
           <v-card class="rounded-xl" elevation="0" border>
             <v-card-title class="py-4 px-6 d-flex align-center">
-              <v-icon icon="mdi-history" color="primary" class="mr-2" />
+              <v-icon :icon="mdiHistory" color="primary" class="mr-2" />
               <span class="text-h6 font-weight-bold">Recent Trips</span>
               <v-spacer />
-              <v-btn variant="text" size="small" color="primary" :to="`/trips?user_id=${profile.id}`" append-icon="mdi-arrow-right">View
+              <v-btn variant="text" size="small" color="primary" :to="`/trips?user_id=${profile.id}`" :append-icon="mdiArrowRight">View
                 All</v-btn>
             </v-card-title>
 
@@ -231,18 +231,18 @@
                   </v-list-item-title>
 
                   <v-list-item-subtitle class="d-flex align-center text-body-2">
-                    <v-icon size="small" icon="mdi-map-marker" class="mr-1" />
+                    <v-icon size="small" :icon="mdiMapMarker" class="mr-1" />
                     {{ trip.entrance?.name || 'Unknown Entrance' }}
                   </v-list-item-subtitle>
 
                   <template #append>
-                    <v-icon icon="mdi-chevron-right" color="grey-lighten-1" />
+                    <v-icon :icon="mdiChevronRight" color="grey-lighten-1" />
                   </template>
                 </v-list-item>
               </template>
             </v-list>
             <div v-else class="pa-12 text-center text-medium-emphasis">
-              <v-icon icon="mdi-hiking" size="64" class="mb-4 opacity-20" />
+              <v-icon :icon="mdiHiking" size="64" class="mb-4 opacity-20" />
               <div class="text-h6 font-weight-regular">No recent trips</div>
             </div>
           </v-card>
@@ -267,7 +267,7 @@
     <v-dialog v-model="isDownloadDialogOpen" max-width="400">
       <v-card class="rounded-xl pa-4">
         <v-card-title class="text-h6 font-weight-bold">
-          <v-icon color="primary" class="mr-2">mdi-download</v-icon>
+          <v-icon color="primary" class="mr-2" :icon="mdiDownload" />
           {{ downloadTitle }}
         </v-card-title>
         <v-card-text class="text-body-1 py-4">
@@ -284,6 +284,7 @@
 </template>
 
 <script setup>
+import { mdiAccountGroup, mdiAccountGroupOutline, mdiAlertCircleOutline, mdiArrowLeft, mdiArrowRight, mdiChevronRight, mdiClockTimeFourOutline, mdiDatabaseExport, mdiDownload, mdiFileExport, mdiFire, mdiFlashlight, mdiHiking, mdiHistory, mdiLogout, mdiMagnify, mdiMapMarker, mdiMedalOutline, mdiPencil, mdiShieldAccount } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { mande } from 'mande'

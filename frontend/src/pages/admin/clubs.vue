@@ -5,12 +5,12 @@
         <h1>Club Administration</h1>
         <v-row justify="space-between" class="mb-4">
           <v-col cols="12" md="6">
-            <v-text-field v-model="search" append-inner-icon="mdi-magnify" label="Search Clubs (Name, Location)"
+            <v-text-field v-model="search" :append-inner-icon="mdiMagnify" label="Search Clubs (Name, Location)"
                           single-line hide-details />
           </v-col>
           <v-col cols="12" md="auto" class="d-flex align-center justify-end">
             <v-btn color="primary" @click="openCreateDialog">
-              <v-icon start>mdi-plus</v-icon> Create Club
+              <v-icon start :icon="mdiPlus" /> Create Club
             </v-btn>
           </v-col>
         </v-row>
@@ -22,7 +22,7 @@
             <v-btn icon variant="text" size="small" :loading="item.loadingEnabled" :color="item.is_active ? 'green' : 'red'"
                    @click.stop="toggleEnabled(item)">
               <v-icon>
-                {{ item.is_active ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                {{ item.is_active ? mdiCheckCircle : mdiCloseCircle }}
               </v-icon>
               <v-tooltip activator="parent" location="top">{{ item.is_active ? 'Disable Club' : 'Enable Club'
               }}</v-tooltip>
@@ -45,6 +45,7 @@
 </template>
 
 <script setup>
+import { mdiCheckCircle, mdiCloseCircle, mdiMagnify, mdiPlus } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import { mande } from 'mande'
 import { useRouter } from 'vue-router'

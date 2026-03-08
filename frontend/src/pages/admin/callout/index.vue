@@ -18,7 +18,7 @@
         <div v-if="callouts.length > 0 || activeIncidents.length > 0">
           <div class="d-flex align-center justify-space-between mb-4">
             <v-btn v-if="callouts.length > 0" small text class="ml-auto" @click="showMap = !showMap">
-              <v-icon left>mdi-map</v-icon> {{ showMap ? 'Hide Map' : 'Show Map' }}
+              <v-icon left :icon="mdiMap" /> {{ showMap ? 'Hide Map' : 'Show Map' }}
             </v-btn>
           </div>
             
@@ -32,7 +32,7 @@
           <!-- Active Incidents (Priority) -->
           <div v-if="activeIncidents.length > 0" class="mb-8">
             <h3 class="title error--text mb-3 d-flex align-center">
-              <v-icon color="error" class="mr-2">mdi-alert-octagram</v-icon> 
+              <v-icon color="error" class="mr-2" :icon="mdiAlertOctagram" /> 
               Open Incidents
             </h3>
             <v-row>
@@ -40,7 +40,7 @@
                 <v-card hover :to="'/admin/incidents/' + incident.id" class="elevation-3"
                         style="border-left: 8px solid #d32f2f; overflow: hidden;">
                   <div class="pa-4 d-flex align-center">
-                    <v-icon color="error" size="48" class="mr-4">mdi-alert-decagram</v-icon>
+                    <v-icon color="error" size="48" class="mr-4" :icon="mdiAlertDecagram" />
                     <div class="flex-grow-1">
                       <div class="d-flex align-center mb-1">
                         <span class="text-overline font-weight-black error--text mr-2">OPEN INCIDENT
@@ -52,10 +52,10 @@
                         {{ incident.callout.cave ? incident.callout.cave.name : 'Unknown Location' }}
                       </div>
                       <div class="text-body-2 grey--text text--darken-2">
-                        <v-icon small left>mdi-clock-outline</v-icon>
+                        <v-icon small left :icon="mdiClockOutline" />
                         <strong>Due:</strong> {{ formatDate(incident.callout.callout_time) }}
                         <span v-if="incident.incident_controller_id" class="ml-4 text-uppercase">
-                          <v-icon small left>mdi-account-star</v-icon>
+                          <v-icon small left :icon="mdiAccountStar" />
                           Controller: {{ incident.controller.name }}
                         </span>
                       </div>
@@ -76,7 +76,7 @@
           <!-- Live Callouts -->
           <div v-if="callouts.length > 0" class="mb-6">
             <h3 class="title grey--text text--darken-1 mb-3 d-flex align-center">
-              <v-icon class="mr-2">mdi-watch</v-icon>
+              <v-icon class="mr-2" :icon="mdiWatch" />
               Monitored Callouts
             </h3>
             <v-card v-for="callout in callouts" :key="callout.id" class="mb-4 elevation-1" outlined>
@@ -84,7 +84,7 @@
                 <div class="d-flex align-center flex-wrap">
                   <!-- Status Indicator -->
                   <v-icon :color="callout.has_incident ? 'error' : 'success'" class="mr-3" size="32">
-                    {{ callout.has_incident ? 'mdi-alert-circle' : 'mdi-run' }}
+                    {{ callout.has_incident ? mdiAlertCircle : mdiRun }}
                   </v-icon>
 
                   <!-- Location -->
@@ -92,7 +92,7 @@
                     <div class="font-weight-bold text-h6">
                       {{ callout.cave_name }}
                       <span v-if="callout.exit_cave_name" class="grey--text text--darken-1">
-                        <v-icon small>mdi-arrow-right</v-icon> {{ callout.exit_cave_name }}
+                        <v-icon small :icon="mdiArrowRight" /> {{ callout.exit_cave_name }}
                       </span>
                     </div>
                     <div class="subtitle-2 grey--text">
@@ -138,7 +138,7 @@
         
         <div v-else-if="!loading" class="mb-8">
           <v-card class="pa-10 text-center rounded-xl" outlined>
-            <v-icon size="80" color="success lighten-4">mdi-check-circle-outline</v-icon>
+            <v-icon size="80" color="success lighten-4" :icon="mdiCheckCircleOutline" />
             <h2 class="text-h4 mt-4 font-weight-thin grey--text text--darken-2">All Quiet</h2>
             <p class="grey--text mt-2 text-h6">No open operations.</p>
           </v-card>
@@ -151,7 +151,7 @@
           <v-expansion-panel>
             <v-expansion-panel-title>
               <div class="d-flex align-center">
-                <v-icon left color="grey">mdi-history</v-icon>
+                <v-icon left color="grey" :icon="mdiHistory" />
                 Resolved & Historic Incidents
                 <span class="ml-2 grey--text">({{ historicIncidents.length }})</span>
               </div>
@@ -179,7 +179,7 @@
                 </template>
                 <template #item.actions="{ item }">
                   <v-btn icon small :to="'/admin/incidents/' + item.id">
-                    <v-icon>mdi-eye</v-icon>
+                    <v-icon :icon="mdiEye" />
                   </v-btn>
                 </template>
               </v-data-table>
@@ -222,18 +222,18 @@
               </v-col>
             </v-row>
 
-            <v-alert v-if="watchdogCount === -1" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" icon="mdi-lan-disconnect">
+            <v-alert v-if="watchdogCount === -1" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiLanDisconnect">
               Communication error with watchdog service.
             </v-alert>
-            <v-alert v-else-if="watchdogCount === -2" type="info" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" icon="mdi-cog-off">
+            <v-alert v-else-if="watchdogCount === -2" type="info" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiCogOff">
               Watchdog service not configured.
             </v-alert>
-            <v-alert v-else-if="isWatchdogOutOfSync" type="warning" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" icon="mdi-alert">
+            <v-alert v-else-if="isWatchdogOutOfSync" type="warning" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiAlert">
               Watchdog count differs from system.
             </v-alert>
 
             <v-btn block small color="primary" variant="outlined" class="mt-3" @click="testWatchdogDialog = true">
-              <v-icon left small>mdi-bug-play</v-icon> Send Test Callout
+              <v-icon left small :icon="mdiBugPlay" /> Send Test Callout
             </v-btn>
           </div>
         </v-card>
@@ -256,7 +256,7 @@
         <!-- Duty Officer Status -->
         <v-card class="d-flex flex-column mb-4" :color="dutyOfficerColor" dark>
           <v-card-title class="pb-1 subtitle-1 font-weight-bold">
-            <v-icon left small>mdi-police-badge</v-icon> Duty Officer
+            <v-icon left small :icon="mdiPoliceBadge" /> Duty Officer
           </v-card-title>
           <v-card-text class="flex-grow-1">
             <div v-if="loadingOfficer">
@@ -275,7 +275,7 @@
  
             <div v-if="!loadingOfficer">
               <div v-if="nextGapIsSoon" class="d-flex align-center font-weight-bold yellow--text text--lighten-4">
-                <v-icon small left color="yellow lighten-4">mdi-alert</v-icon>
+                <v-icon small left color="yellow lighten-4" :icon="mdiAlert" />
                 Gap starts {{ getRelativeTime(nextGapStart) }}
               </div>
               <div v-else class="caption">
@@ -292,9 +292,9 @@
         <v-card outlined class="bg-grey-lighten-4">
           <v-card-title class="subtitle-2">Legend</v-card-title>
           <v-card-text class="caption">
-            <div class="d-flex align-center mb-1"><v-icon small color="success" class="mr-2">mdi-run</v-icon> Active Callout</div>
-            <div class="d-flex align-center mb-1"><v-icon small color="error" class="mr-2">mdi-alert-octagram</v-icon> Active Incident</div>
-            <div class="d-flex align-center"><v-icon small color="grey" class="mr-2">mdi-history</v-icon> Resolved</div>
+            <div class="d-flex align-center mb-1"><v-icon small color="success" class="mr-2" :icon="mdiRun" /> Active Callout</div>
+            <div class="d-flex align-center mb-1"><v-icon small color="error" class="mr-2" :icon="mdiAlertOctagram" /> Active Incident</div>
+            <div class="d-flex align-center"><v-icon small color="grey" class="mr-2" :icon="mdiHistory" /> Resolved</div>
           </v-card-text>
         </v-card>
 
@@ -368,6 +368,7 @@
 </template>
 
 <script>
+import { mdiAccountHardHat, mdiAccountStar, mdiAlert, mdiAlertCircle, mdiAlertDecagram, mdiAlertOctagram, mdiArrowRight, mdiBellRing, mdiBugPlay, mdiCheckCircle, mdiCheckCircleOutline, mdiClockOutline, mdiCogOff, mdiEye, mdiHistory, mdiLanDisconnect, mdiMap, mdiPoliceBadge, mdiRun, mdiWatch } from '@mdi/js'
 import axios from 'axios'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
@@ -375,6 +376,30 @@ import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
 export default {
   components: {
     ActiveCalloutMap
+  },
+  setup() {
+    return {
+      mdiAccountHardHat,
+      mdiAccountStar,
+      mdiAlert,
+      mdiAlertCircle,
+      mdiAlertDecagram,
+      mdiAlertOctagram,
+      mdiArrowRight,
+      mdiBellRing,
+      mdiBugPlay,
+      mdiCheckCircle,
+      mdiCheckCircleOutline,
+      mdiClockOutline,
+      mdiCogOff,
+      mdiEye,
+      mdiHistory,
+      mdiLanDisconnect,
+      mdiMap,
+      mdiPoliceBadge,
+      mdiRun,
+      mdiWatch
+    }
   },
   data() {
     return {
@@ -562,9 +587,9 @@ export default {
       return 'blue-grey'
     },
     getIncidentIcon(status) {
-      if (status === 'open') return 'mdi-bell-ring'
-      if (status === 'managed') return 'mdi-account-hard-hat'
-      return 'mdi-check-circle'
+      if (status === 'open') return mdiBellRing
+      if (status === 'managed') return mdiAccountHardHat
+      return mdiCheckCircle
     },
     async sendTestCallout() {
       this.testingWatchdog = true

@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-btn icon class="mb-4" @click="$router.go(-1)">
-      <v-icon>mdi-arrow-left</v-icon>
+      <v-icon :icon="mdiArrowLeft" />
     </v-btn>
     
     <div v-if="suggestion">
@@ -11,7 +11,7 @@
           v-if="viewUrl"
           :href="viewUrl"
           target="_blank"
-          prepend-icon="mdi-open-in-new"
+          :prepend-icon="mdiOpenInNew"
           variant="text"
           color="primary"
         >
@@ -32,7 +32,7 @@
 
       <v-card v-if="changedFields.length > 0" class="mb-6">
         <v-card-title class="bg-grey-lighten-4 py-3">
-          <v-icon start>mdi-compare</v-icon>
+          <v-icon start :icon="mdiCompare" />
           Changes
         </v-card-title>
         <v-divider />
@@ -120,7 +120,7 @@
                   <span class="text-decoration-line-through text-error">{{ field.oldValue || '(Empty)' }}</span>
                 </v-col>
                 <v-col cols="2" class="text-center">
-                  <v-icon>mdi-arrow-right</v-icon>
+                  <v-icon :icon="mdiArrowRight" />
                 </v-col>
                 <v-col cols="5">
                   <span class="text-success font-weight-bold">{{ field.newValue || '(Empty)' }}</span>
@@ -177,6 +177,7 @@
 </template>
 
 <script setup>
+import { mdiArrowLeft, mdiArrowRight, mdiCompare, mdiOpenInNew } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/plugins/api.js'

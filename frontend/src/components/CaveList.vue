@@ -7,7 +7,7 @@
         <v-text-field
           v-model="search"
           placeholder="Search by name, system, or location..."
-          prepend-inner-icon="mdi-magnify"
+          :prepend-inner-icon="mdiMagnify"
           variant="solo-filled"
           flat
           hide-details
@@ -24,11 +24,11 @@
                 offset-x="4"
                 offset-y="4"
               >
-                <v-icon icon="mdi-filter-variant" density="comfortable" />
+                <v-icon :icon="mdiFilterVariant" density="comfortable" />
               </v-badge>
               <v-icon
                 v-else
-                icon="mdi-filter-outline"
+                :icon="mdiFilterOutline"
                 density="comfortable"
               />
             </div>
@@ -65,7 +65,7 @@
             @click="openCategoryFilter(groupName)"
           >
             {{ groupName }}
-            <v-icon end icon="mdi-chevron-down" size="x-small" />
+            <v-icon end :icon="mdiChevronDown" size="x-small" />
           </v-chip>
           
           <v-btn
@@ -109,6 +109,8 @@
 </template>
 
 <script setup>
+import { mdiChevronDown, mdiFilterOutline, mdiFilterVariant, mdiMagnify } from '@mdi/js'
+
 import { useCaveStore } from '@/stores/caves'
 import FilterByTagModal from './FilterByTagModal.vue'
 import { ref, watch, onMounted } from 'vue'

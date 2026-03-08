@@ -6,7 +6,7 @@
         <div class="d-flex align-center justify-space-between mb-1 opacity-80">
           <div class="text-caption font-weight-bold">{{ formatDate(trip.start_time) }}</div>
           <div v-if="trip.duration" class="d-flex align-center text-caption font-weight-bold">
-            <v-icon size="small" icon="mdi-clock-outline" class="mr-1" />
+            <v-icon size="small" :icon="mdiClockOutline" class="mr-1" />
             {{ formatDuration(trip.duration) }}
           </div>
         </div>
@@ -20,7 +20,7 @@
         <div class="d-flex align-center justify-space-between mb-1 opacity-80">
           <div class="text-caption font-weight-bold">{{ formatDate(trip.start_time) }}</div>
           <div v-if="trip.duration" class="d-flex align-center text-caption font-weight-bold">
-            <v-icon size="small" icon="mdi-clock-outline" class="mr-1" />
+            <v-icon size="small" :icon="mdiClockOutline" class="mr-1" />
             {{ formatDuration(trip.duration) }}
           </div>
         </div>
@@ -38,7 +38,7 @@
     <!-- Participants footer -->
     <div class="pa-3 bg-grey-lighten-5">
       <div class="d-flex align-center flex-wrap ga-1">
-        <v-icon size="small" color="grey" icon="mdi-account-group" class="mr-1" />
+        <v-icon size="small" color="grey" :icon="mdiAccountGroup" class="mr-1" />
         <span v-if="!trip.participants || trip.participants.length === 0" class="text-caption text-grey">No
           participants</span>
         <template v-else>
@@ -57,6 +57,8 @@
 </template>
 
 <script setup>
+import { mdiAccountGroup, mdiClockOutline } from '@mdi/js'
+
 import { computed } from 'vue'
 
 const props = defineProps({

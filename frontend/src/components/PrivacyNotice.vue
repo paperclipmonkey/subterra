@@ -4,7 +4,7 @@
       <v-card class="cookie-banner pa-4 pa-md-6 rounded-xl elevation-10" border>
         <div class="d-flex flex-column flex-sm-row align-center gap-4">
           <v-avatar color="primary-lighten-5" size="48" class="flex-shrink-0">
-            <v-icon color="primary" icon="mdi-cookie-outline" size="28" />
+            <v-icon color="primary" :icon="mdiCookieOutline" size="28" />
           </v-avatar>
           
           <div class="flex-grow-1 text-center text-sm-left">
@@ -28,6 +28,8 @@
 </template>
 
 <script setup>
+import { mdiCookieOutline } from '@mdi/js'
+
 import { ref, onMounted } from 'vue'
 
 const showBanner = ref(false)

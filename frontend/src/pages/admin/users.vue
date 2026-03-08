@@ -5,7 +5,7 @@
         <h1>User Administration</h1>
         <v-text-field
           v-model="search"
-          append-inner-icon="mdi-magnify"
+          :append-inner-icon="mdiMagnify"
           label="Search Users (Name, Email)"
           single-line
           hide-details
@@ -73,7 +73,7 @@
               :loading="item.loadingDelete"
               @click.stop="confirmDelete(item)"
             >
-              <v-icon>mdi-delete</v-icon>
+              <v-icon :icon="mdiDelete" />
               <v-tooltip activator="parent" location="top">Delete User</v-tooltip>
             </v-btn>
           </template>
@@ -104,6 +104,8 @@
 </template>
 
 <script setup>
+import { mdiDatabaseEdit, mdiDelete, mdiMagnify, mdiPhoneInTalk, mdiShieldCrown } from '@mdi/js'
+
 import moment from 'moment'
 import { ref, onMounted } from 'vue'
 import { mande } from 'mande'
@@ -120,9 +122,9 @@ const appStore = useAppStore()
 const notificationStore = useNotificationStore()
 
 const allRoles = [
-  { slug: 'platform_admin', label: 'Platform Admin', color: 'purple', icon: 'mdi-shield-crown' },
-  { slug: 'duty_officer', label: 'Duty Officer', color: 'blue', icon: 'mdi-phone-in-talk' },
-  { slug: 'data_admin', label: 'Data Admin', color: 'teal', icon: 'mdi-database-edit' },
+  { slug: 'platform_admin', label: 'Platform Admin', color: 'purple', icon: mdiShieldCrown },
+  { slug: 'duty_officer', label: 'Duty Officer', color: 'blue', icon: mdiPhoneInTalk },
+  { slug: 'data_admin', label: 'Data Admin', color: 'teal', icon: mdiDatabaseEdit },
 ]
 
 const headers = [

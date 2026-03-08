@@ -12,7 +12,7 @@
         <v-window-item :value="1">
           <v-card-text class="pa-8 text-center">
             <v-avatar color="primary" size="80" class="mb-6 elevation-4">
-              <v-icon size="48" color="white">mdi-account-plus</v-icon>
+              <v-icon size="48" color="white" :icon="mdiAccountPlus" />
             </v-avatar>
             <h2 class="text-h4 font-weight-bold mb-2">Welcome to Subterra!</h2>
             <p class="text-subtitle-1 text-medium-emphasis mb-8">
@@ -27,7 +27,7 @@
                 variant="outlined"
                 color="primary"
                 :rules="[v => !!v || 'Name is required']"
-                prepend-inner-icon="mdi-account-outline"
+                :prepend-inner-icon="mdiAccountOutline"
                 class="mb-4"
               />
             </v-form>
@@ -39,7 +39,7 @@
           <v-card-text class="pa-8">
             <div class="text-center mb-6">
               <v-avatar color="secondary" size="64" class="mb-4 elevation-2">
-                <v-icon size="36" color="white">mdi-account-group</v-icon>
+                <v-icon size="36" color="white" :icon="mdiAccountGroup" />
               </v-avatar>
               <h2 class="text-h5 font-weight-bold mb-2">Find Your Community</h2>
               <p class="text-body-2 text-medium-emphasis">
@@ -49,7 +49,7 @@
               <v-alert
                 color="info"
                 variant="tonal"
-                icon="mdi-information-outline"
+                :icon="mdiInformationOutline"
                 class="mt-4 text-left"
                 density="compact"
               >
@@ -65,7 +65,7 @@
               label="Search Clubs"
               variant="outlined"
               density="compact"
-              prepend-inner-icon="mdi-magnify"
+              :prepend-inner-icon="mdiMagnify"
               hide-details
               class="mb-4"
             />
@@ -88,7 +88,7 @@
                     @click="joinClub(club)"
                   >
                     Join
-                    <v-icon end icon="mdi-plus" />
+                    <v-icon end :icon="mdiPlus" />
                   </v-btn>
                   <v-chip v-else :color="getStatus(club) === 'approved' ? 'success' : 'warning'" size="small" variant="flat">
                     {{ getStatus(club) === 'approved' ? 'Approved' : 'Pending' }}
@@ -112,7 +112,7 @@
           <v-card-text class="pa-8">
             <div class="text-center mb-6">
               <v-avatar color="success" size="64" class="mb-4 elevation-2">
-                <v-icon size="36" color="white">mdi-compass-outline</v-icon>
+                <v-icon size="36" color="white" :icon="mdiCompassOutline" />
               </v-avatar>
               <h2 class="text-h5 font-weight-bold mb-2">Platform Highlights</h2>
               <p class="text-body-2 text-medium-emphasis">
@@ -135,7 +135,7 @@
             <v-alert
               color="primary"
               variant="tonal"
-              icon="mdi-help-circle-outline"
+              :icon="mdiHelpCircleOutline"
               class="mt-4"
               density="compact"
             >
@@ -167,7 +167,7 @@
           @click="nextStep"
         >
           {{ step === 3 ? 'Get Started' : 'Continue' }}
-          <v-icon v-if="step < 3" end icon="mdi-arrow-right" />
+          <v-icon v-if="step < 3" end :icon="mdiArrowRight" />
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -175,6 +175,7 @@
 </template>
 
 <script setup>
+import { mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAlertOctagram, mdiArrowRight, mdiCompassOutline, mdiEarth, mdiHelpCircleOutline, mdiInformationOutline, mdiMagnify, mdiNotebookOutline, mdiPlus, mdiTrophyOutline } from '@mdi/js'
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
@@ -250,25 +251,25 @@ const joinClub = async (club) => {
 const tourItems = [
   {
     title: 'My Trips & Logbook',
-    icon: 'mdi-notebook-outline',
+    icon: mdiNotebookOutline,
     color: 'blue',
     text: 'Click the checkmark on any cave to mark it as done. This builds your personal logbook and tracks your progress.'
   },
   {
     title: 'Cave Details',
-    icon: 'mdi-earth',
+    icon: mdiEarth,
     color: 'green',
     text: 'Explore cave descriptions, history, and photos. Access data and maps will unlock once your club is approved.'
   },
   {
     title: 'Safety Callouts',
-    icon: 'mdi-alert-octagram',
+    icon: mdiAlertOctagram,
     color: 'orange',
     text: 'A vital safety feature for cavers. Set trip deadlines and emergency contacts (Unlocks after approval).'
   },
   {
     title: 'Medals & Stats',
-    icon: 'mdi-trophy-outline',
+    icon: mdiTrophyOutline,
     color: 'purple',
     text: 'Earn medals for your caving achievements as you log more trips and explore new systems.'
   },

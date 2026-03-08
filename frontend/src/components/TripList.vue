@@ -7,20 +7,20 @@
           (route.query.user_id ? 'User Trips' : 'My Trips') }}</h1>
         <v-menu>
           <template #activator="{ props }">
-            <v-btn icon="mdi-dots-vertical" variant="text" v-bind="props" />
+            <v-btn :icon="mdiDotsVertical" variant="text" v-bind="props" />
           </template>
           <v-list>
-            <v-list-item to="/create-trip" prepend-icon="mdi-plus">
+            <v-list-item to="/create-trip" :prepend-icon="mdiPlus">
               <v-list-item-title>Log Trip</v-list-item-title>
             </v-list-item>
-            <v-list-item href="/api/me/trips/download" download="my_trips.csv" prepend-icon="mdi-download">
+            <v-list-item href="/api/me/trips/download" download="my_trips.csv" :prepend-icon="mdiDownload">
               <v-list-item-title>Download Trips</v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
       </div>
 
-      <v-text-field v-model="search" placeholder="Search trips..." prepend-inner-icon="mdi-magnify" variant="outlined"
+      <v-text-field v-model="search" placeholder="Search trips..." :prepend-inner-icon="mdiMagnify" variant="outlined"
                     hide-details density="comfortable" bg-color="surface" class="rounded-lg mb-2" />
 
       <!-- Only show tabs when viewing own trips and not searching -->
@@ -40,7 +40,7 @@
       <!-- Unified search results (searching across both collections) -->
       <template v-if="isSearching">
         <div v-if="filteredTrips.length === 0" class="text-center py-8">
-          <v-icon size="64" color="grey lighten-10" icon="mdi-magnify" class="mb-4" />
+          <v-icon size="64" color="grey lighten-10" :icon="mdiMagnify" class="mb-4" />
           <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No results found</h3>
           <p class="text-body-2 text-grey-darken-1">Try a different search term.</p>
         </div>
@@ -57,12 +57,12 @@
       <v-window v-else v-model="tab" class="flex-grow-1">
         <v-window-item value="detailed">
           <div v-if="detailedFilteredTrips.length === 0" class="text-center py-8">
-            <v-icon size="64" color="grey lighten-10" icon="mdi-compass-outline" class="mb-4" />
+            <v-icon size="64" color="grey lighten-10" :icon="mdiCompassOutline" class="mb-4" />
             <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No trips found</h3>
             <p class="text-body-2 text-grey-darken-1 mb-6">Try adjusting your search or log a new trip.</p>
             <div class="d-flex justify-center ga-4">
-              <v-btn color="primary" to="/caves" prepend-icon="mdi-map-search">Find Caves</v-btn>
-              <v-btn variant="outlined" color="primary" to="/create-trip" prepend-icon="mdi-plus">Log Trip</v-btn>
+              <v-btn color="primary" to="/caves" :prepend-icon="mdiMapSearch">Find Caves</v-btn>
+              <v-btn variant="outlined" color="primary" to="/create-trip" :prepend-icon="mdiPlus">Log Trip</v-btn>
             </div>
           </div>
 
@@ -77,7 +77,7 @@
 
         <v-window-item v-if="isOwnTrips" value="stubbed">
           <!-- Explanatory banner -->
-          <v-alert type="info" variant="tonal" density="compact" class="mx-3 mt-3 mb-2" icon="mdi-information-outline">
+          <v-alert type="info" variant="tonal" density="compact" class="mx-3 mt-3 mb-2" :icon="mdiInformationOutline">
             These are caves you've quickly marked as visited. Tap any entry to add details and turn it into a full trip report.
           </v-alert>
 
@@ -88,7 +88,7 @@
             <v-list-item v-for="trip in stubbedFilteredTrips" :key="trip.id" :to="`/trips/${trip.id}`" class="mb-2 rounded-lg elevation-1 bg-surface" lines="two">
               <template #prepend>
                 <v-avatar color="primary" variant="tonal" class="mr-2">
-                  <v-icon icon="mdi-check" />
+                  <v-icon :icon="mdiCheck" />
                 </v-avatar>
               </template>
               <v-list-item-title class="font-weight-medium">
@@ -98,7 +98,7 @@
                 {{ formatDate(trip.start_time) }} • {{ trip.participants?.length || 0 }} participants
               </v-list-item-subtitle>
               <template #append>
-                <v-icon icon="mdi-chevron-right" color="grey-lighten-1" />
+                <v-icon :icon="mdiChevronRight" color="grey-lighten-1" />
               </template>
             </v-list-item>
           </v-list>
@@ -109,6 +109,8 @@
 </template>
 
 <script setup>
+import { mdiCheck, mdiChevronRight, mdiCompassOutline, mdiDotsVertical, mdiDownload, mdiInformationOutline, mdiMagnify, mdiMapSearch, mdiPlus } from '@mdi/js'
+
 import { useRoute } from 'vue-router'
 import { mande } from 'mande'
 import moment from 'moment'

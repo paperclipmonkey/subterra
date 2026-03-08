@@ -13,7 +13,7 @@
         <v-file-input
           accept="image/*"
           label="Upload Hero Image"
-          prepend-icon="mdi-camera"
+          :prepend-icon="mdiCamera"
           show-size
           density="compact"
           @change="handleHeroImageUpload"
@@ -120,11 +120,11 @@
             />
           </v-col>
           <v-col cols="1" class="d-flex align-center">
-            <v-btn icon="mdi-delete" size="small" color="error" variant="text" @click="removeTackle(index)" />
+            <v-btn :icon="mdiDelete" size="small" color="error" variant="text" @click="removeTackle(index)" />
           </v-col>
         </v-row>
       </div>
-      <v-btn prepend-icon="mdi-plus" variant="tonal" size="small" class="mb-4" @click="addTackle">Add Tackle</v-btn>
+      <v-btn :prepend-icon="mdiPlus" variant="tonal" size="small" class="mb-4" @click="addTackle">Add Tackle</v-btn>
 
       <v-divider class="my-4" />
 
@@ -134,7 +134,7 @@
           label="Upload Photos/PDFs"
           multiple
           chips
-          prepend-icon="mdi-camera"
+          :prepend-icon="mdiCamera"
           show-size
           @change="handleMediaUpload"
         />
@@ -142,7 +142,7 @@
         <v-list v-if="newMedia.length > 0">
           <v-list-item v-for="(item, i) in newMedia" :key="i">
             <template #prepend>
-              <v-icon v-if="item.type === 'pdf'">mdi-file-pdf-box</v-icon>
+              <v-icon v-if="item.type === 'pdf'" :icon="mdiFilePdfBox" />
               <v-img v-else :src="item.data" width="40" height="40" cover class="mr-2 rounded" />
             </template>
             <v-list-item-title>
@@ -155,7 +155,7 @@
               />
             </v-list-item-title>
             <template #append>
-              <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="newMedia.splice(i, 1)" />
+              <v-btn :icon="mdiDelete" size="small" variant="text" color="error" @click="newMedia.splice(i, 1)" />
             </template>
           </v-list-item>
         </v-list>
@@ -167,12 +167,12 @@
               <v-card variant="outlined">
                 <v-img v-if="media.type !== 'pdf'" :src="media.path" height="100" cover />
                 <div v-else class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 100px;">
-                  <v-icon size="large">mdi-file-pdf-box</v-icon>
+                  <v-icon size="large" :icon="mdiFilePdfBox" />
                 </div>
                 <v-card-text class="pa-2 text-caption text-truncate d-flex justify-space-between align-center">
                   <span>{{ media.caption || 'No caption' }}</span>
                   <v-btn 
-                    icon="mdi-delete" 
+                    :icon="mdiDelete" 
                     size="x-small" 
                     color="error" 
                     variant="text"
@@ -204,6 +204,7 @@
 </template>
 
 <script setup>
+import { mdiCamera, mdiDelete, mdiFilePdfBox, mdiPlus } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'

@@ -6,7 +6,7 @@
       </v-toolbar-title>
       <v-spacer />
       <div style="width: 300px" class="mr-4">
-        <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="Search collections" single-line
+        <v-text-field v-model="search" :prepend-inner-icon="mdiMagnify" label="Search collections" single-line
                       hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface" />
       </div>
       <CollectionEditModal v-if="userStore.canSuggest" />
@@ -15,7 +15,7 @@
         color="grey"
         variant="text"
         disabled
-        prepend-icon="mdi-plus"
+        :prepend-icon="mdiPlus"
         class="mr-2"
       >
         <v-tooltip activator="parent" location="top">
@@ -28,7 +28,7 @@
         color="primary"
         variant="text"
         to="/login"
-        prepend-icon="mdi-plus"
+        :prepend-icon="mdiPlus"
       >
         Log in to Suggest
       </v-btn>
@@ -70,7 +70,7 @@
       </v-col>
     </v-row>
     <div v-if="!loading && filteredCollections.length === 0" class="text-center text-grey my-12">
-      <v-icon size="64" color="grey-lighten-2" class="mb-4">mdi-folder-search-outline</v-icon>
+      <v-icon size="64" color="grey-lighten-2" class="mb-4" :icon="mdiFolderSearchOutline" />
       <div class="text-h6">No collections found</div>
       <p>Try adjusting your search terms</p>
     </div>
@@ -78,6 +78,7 @@
 </template>
 
 <script setup>
+import { mdiFolderSearchOutline, mdiMagnify, mdiPlus } from '@mdi/js'
 import { computed, onMounted, ref } from 'vue'
 import { useCollectionStore } from '@/stores/collections'
 import { useAppStore } from '@/stores/app'

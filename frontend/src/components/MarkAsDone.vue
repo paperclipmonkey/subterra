@@ -1,7 +1,7 @@
 <template>
   <span>
     <v-btn class="float-right" icon @click="showConfirmModal = true">
-      <v-icon>mdi-check</v-icon>
+      <v-icon :icon="mdiCheck" />
     </v-btn>
     <v-dialog v-model="showConfirmModal" max-width="500">
       <v-card>
@@ -18,6 +18,8 @@
 </template>
 
 <script setup>
+import { mdiCheck } from '@mdi/js'
+
 import { ref } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { markCaveAsDone } from '@/stores/markAsDone'

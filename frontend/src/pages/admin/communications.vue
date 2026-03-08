@@ -12,7 +12,7 @@
 
     <v-card :loading="loading">
       <v-card-title>
-        <v-icon start>mdi-email-outline</v-icon>
+        <v-icon start :icon="mdiEmailOutline" />
         Draft New Email
       </v-card-title>
       
@@ -59,7 +59,7 @@
           :disabled="!valid || !subject || !body"
           @click="send(true)"
         >
-          <v-icon start>mdi-test-tube</v-icon>
+          <v-icon start :icon="mdiTestTube" />
           Send Test to Me
         </v-btn>
 
@@ -70,7 +70,7 @@
           :disabled="!valid || !subject || !body"
           @click="confirmSend"
         >
-          <v-icon start>mdi-send</v-icon>
+          <v-icon start :icon="mdiSend" />
           Send to All Subscribers
         </v-btn>
       </v-card-actions>
@@ -96,6 +96,7 @@
 </template>
 
 <script setup>
+import { mdiEmailOutline, mdiSend, mdiTestTube } from '@mdi/js'
 import { ref } from 'vue'
 import { api } from '@/plugins/api'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'

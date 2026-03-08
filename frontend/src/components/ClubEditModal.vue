@@ -80,7 +80,7 @@
                           inset
                           @change="markMemberDataChanged"
                         />
-                        <v-btn icon="mdi-delete" variant="text" color="red" size="small" @click="removeUserFromClub(member)" />
+                        <v-btn :icon="mdiDelete" variant="text" color="red" size="small" @click="removeUserFromClub(member)" />
                       </template>
                     </v-list-item>
                   </v-list>
@@ -106,7 +106,7 @@
                         <v-btn
                           color="green"
                           variant="text"
-                          icon="mdi-check"
+                          :icon="mdiCheck"
                           :loading="pending.loading"
                           :disabled="pending.loading"
                           @click="approveMemberRequest(pending)"
@@ -114,7 +114,7 @@
                         <v-btn
                           color="red"
                           variant="text"
-                          icon="mdi-close"
+                          :icon="mdiClose"
                           :loading="pending.loading"
                           :disabled="pending.loading"
                           @click="rejectMemberRequest(pending)"
@@ -139,6 +139,8 @@
 </template>
 
 <script setup>
+import { mdiCheck, mdiClose, mdiDelete } from '@mdi/js'
+
 // This script is adapted from the admin/clubs.vue modal logic, but expects props for clubSlug and visibility
 import { ref, computed, watch, onMounted } from 'vue'
 import { mande } from 'mande'

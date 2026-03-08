@@ -3,13 +3,13 @@
     <!-- Top Navigation -->
     <v-row class="mb-2">
       <v-col cols="12" class="d-flex align-center">
-        <v-btn icon="mdi-arrow-left" variant="text" class="mr-2" @click="$router.push('/caves')" />
+        <v-btn :icon="mdiArrowLeft" variant="text" class="mr-2" @click="$router.push('/caves')" />
         <v-spacer />
         <v-btn
           v-if="appStore.user && appStore.canSuggest"
           variant="text"
           color="primary"
-          prepend-icon="mdi-pencil"
+          :prepend-icon="mdiPencil"
           class="text-none mr-2"
           size="small"
           @click="$router.push('/caves/' + route.params.id + '/edit')"
@@ -21,7 +21,7 @@
           variant="text"
           color="grey"
           disabled
-          prepend-icon="mdi-pencil-off"
+          :prepend-icon="mdiPencilOff"
           class="text-none mr-2"
           size="small"
         >
@@ -35,7 +35,7 @@
           variant="text"
           color="primary"
           to="/login"
-          prepend-icon="mdi-pencil"
+          :prepend-icon="mdiPencil"
           class="text-none mr-2"
           size="small"
         >
@@ -59,7 +59,7 @@
                class="align-end" style="z-index: 1;">
           <template #placeholder>
             <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
-              <v-icon color="grey" size="64">mdi-image-off</v-icon>
+              <v-icon color="grey" size="64" :icon="mdiImageOff" />
             </div>
           </template>
         </v-img>
@@ -71,12 +71,12 @@
               <div class="text-overline mb-1">{{ cave.system?.name || 'Unknown System' }}</div>
               <h1 class="text-h3 font-weight-bold mb-2">{{ cave.name }}</h1>
               <div class="d-flex align-center">
-                <v-icon size="small" class="mr-1">mdi-map-marker</v-icon>
+                <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
                 <span class="text-subtitle-1">{{ cave.location_name }}, {{ cave.location_country }}</span>
               </div>
             </div>
             <div v-if="cave.hero_video?.photographer || cave.hero_image?.photographer" class="text-caption text-right opacity-70">
-              <v-icon size="x-small" class="mr-1">mdi-camera</v-icon>
+              <v-icon size="x-small" class="mr-1" :icon="mdiCamera" />
               {{ cave.hero_video?.photographer || cave.hero_image?.photographer }}
             </div>
           </div>
@@ -111,9 +111,9 @@
 
               <div class="text-h6 mb-3 font-weight-bold">Access Information</div>
               <div v-if="!appStore.canSuggest">
-                <v-alert icon="mdi-lock" border="start" border-color="grey" elevation="0" color="grey-lighten-3"
+                <v-alert :icon="mdiLock" border="start" border-color="grey" elevation="0" color="grey-lighten-3"
                          class="mb-4">
-                  <v-icon color="grey-darken-2" size="40" class="mr-4">mdi-lock</v-icon>
+                  <v-icon color="grey-darken-2" size="40" class="mr-4" :icon="mdiLock" />
                   <div>
                     <div class="text-body-2 text-grey-darken-2">
                       Access information is restricted to approved club members.
@@ -123,7 +123,7 @@
                 </v-alert>
               </div>
               <div v-else-if="cave.access_info">
-                <v-alert icon="mdi-lock-alert" border="start" border-color="warning" elevation="0" color="warning"
+                <v-alert :icon="mdiLockAlert" border="start" border-color="warning" elevation="0" color="warning"
                          variant="tonal" class="mb-4">
                   <MarkdownRenderer :source="cave.access_info" />
                 </v-alert>
@@ -136,10 +136,10 @@
               <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-4">
                 <h3 class="text-h6 mb-2 mb-sm-0">Recent Trips</h3>
                 <div class="d-flex align-center flex-wrap" style="gap: 8px;">
-                  <v-btn v-if="!hasDone" variant="text" color="primary" prepend-icon="mdi-check" @click="markAsDone">
+                  <v-btn v-if="!hasDone" variant="text" color="primary" :prepend-icon="mdiCheck" @click="markAsDone">
                     Mark Visited
                   </v-btn>
-                  <v-btn color="primary" prepend-icon="mdi-plus"
+                  <v-btn color="primary" :prepend-icon="mdiPlus"
                          @click="$router.push({ name: '/create-trip', query: { cave_id: cave.id } })">
                     Log Trip
                   </v-btn>
@@ -188,7 +188,7 @@
                 </template>
                 <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
                   <div class="text-center pa-4">
-                    <v-icon size="48" color="grey" class="mb-2">mdi-map-lock</v-icon>
+                    <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
                     <div class="text-h6 text-grey-darken-1">Location Locked</div>
                     <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
                   </div>
@@ -204,13 +204,13 @@
                     <div v-if="appStore.canSuggest" class="d-flex">
                       <v-tooltip text="Copy Coordinates" location="top">
                         <template #activator="{ props }">
-                          <v-btn icon="mdi-content-copy" size="small" variant="text" v-bind="props"
+                          <v-btn :icon="mdiContentCopy" size="small" variant="text" v-bind="props"
                                  @click="copyLatLng" />
                         </template>
                       </v-tooltip>
                       <v-tooltip text="Open in Google Maps" location="top">
                         <template #activator="{ props }">
-                          <v-btn icon="mdi-google-maps" size="small" variant="text" v-bind="props"
+                          <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
                                  :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
                                  target="_blank" />
                         </template>
@@ -231,13 +231,13 @@
                       size="small"
                       variant="text"
                       color="primary"
-                      prepend-icon="mdi-plus"
+                      :prepend-icon="mdiPlus"
                       class="mr-2"
                       :to="`/caves/create?system_id=${cave.system.id}`"
                     >
                       Add Cave
                     </v-btn>
-                    <v-btn size="small" variant="text" icon="mdi-pencil"
+                    <v-btn size="small" variant="text" :icon="mdiPencil"
                            @click="$router.push('/cave-systems/' + cave.system.id + '/edit')" />
                   </div>
                 </div>
@@ -249,7 +249,7 @@
                     color="primary"
                     size="small"
                     :to="{ path: '/caves', query: { catchment: cave.system.catchment_id } }"
-                    prepend-icon="mdi-water"
+                    :prepend-icon="mdiWater"
                   >
                     {{ cave.system.catchment_name }}
                   </v-btn>
@@ -284,13 +284,13 @@
                             <v-img :src="file.thumbnail_url" cover />
                           </v-avatar>
                           <v-avatar v-else color="primary-lighten-5" class="mr-3" rounded>
-                            <v-icon color="primary">mdi-file-document-outline</v-icon>
+                            <v-icon color="primary" :icon="mdiFileDocumentOutline" />
                           </v-avatar>
                           <div class="flex-grow-1 overflow-hidden">
                             <div class="text-body-2 font-weight-bold text-truncate">{{ file.original_filename }}</div>
                             <div class="text-caption text-medium-emphasis">{{ file.details || 'No description' }}</div>
                           </div>
-                          <v-icon size="small" color="grey">mdi-download</v-icon>
+                          <v-icon size="small" color="grey" :icon="mdiDownload" />
                         </div>
                       </v-card>
                     </v-col>
@@ -299,7 +299,7 @@
 
                 <!-- Unapproved User Placeholder -->
                 <div v-if="!appStore.canSuggest" class="text-center pa-8 bg-grey-lighten-5 rounded-lg border border-dashed">
-                  <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-shield-lock-outline</v-icon>
+                  <v-icon size="48" color="grey-lighten-1" class="mb-3" :icon="mdiShieldLockOutline" />
                   <div class="text-body-1 font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
                   <div class="text-caption text-grey-darken-1 mb-4">
                     References, surveys, and technical documents are available to approved club members.
@@ -348,7 +348,7 @@
                       <v-list-item v-for="ent in cave.system.caves" :key="ent.id" :to="'/caves/' + ent.slug"
                                    :active="ent.id === cave.id" class="px-0">
                         <template #prepend>
-                          <v-icon icon="mdi-cave" size="small" />
+                          <v-icon :icon="mdiTunnel" size="small" />
                         </template>
                         <v-list-item-title>{{ ent.name }}</v-list-item-title>
                       </v-list-item>
@@ -399,7 +399,7 @@
                         </div>
                       </div>
                       <div class="pr-4">
-                        <v-icon color="grey-lighten-1">mdi-chevron-right</v-icon>
+                        <v-icon color="grey-lighten-1" :icon="mdiChevronRight" />
                       </div>
                     </v-card>
                   </v-col>
@@ -425,7 +425,7 @@
                     color="primary"
                     size="small"
                     variant="text"
-                    prepend-icon="mdi-plus"
+                    :prepend-icon="mdiPlus"
                     :to="`/cave-systems/${cave.system.id}/routes/new`"
                   >
                     Add Route
@@ -452,7 +452,7 @@
           </template>
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
             <div class="text-center pa-4">
-              <v-icon size="48" color="grey" class="mb-2">mdi-map-lock</v-icon>
+              <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
               <div class="text-h6 text-grey-darken-1">Location Locked</div>
               <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
             </div>
@@ -468,13 +468,13 @@
               <div v-if="appStore.canSuggest" class="d-flex">
                 <v-tooltip text="Copy Coordinates" location="top">
                   <template #activator="{ props }">
-                    <v-btn icon="mdi-content-copy" size="small" variant="text" v-bind="props"
+                    <v-btn :icon="mdiContentCopy" size="small" variant="text" v-bind="props"
                            @click="copyLatLng" />
                   </template>
                 </v-tooltip>
                 <v-tooltip text="Open in Google Maps" location="top">
                   <template #activator="{ props }">
-                    <v-btn icon="mdi-google-maps" size="small" variant="text" v-bind="props"
+                    <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
                            :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
                            target="_blank" />
                   </template>
@@ -527,7 +527,7 @@
             <v-list-item v-for="ent in cave.system.caves" :key="ent.id" :to="'/caves/' + ent.slug"
                          :active="ent.id === cave.id">
               <template #prepend>
-                <v-icon icon="mdi-cave" size="small" />
+                <v-icon :icon="mdiTunnel" size="small" />
               </template>
               <v-list-item-title>{{ ent.name }}</v-list-item-title>
             </v-list-item>
@@ -542,10 +542,10 @@
   </v-container>
   
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
-    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+    <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
     <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
     <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-    <v-btn color="primary" variant="flat" to="/caves" prepend-icon="mdi-arrow-left">
+    <v-btn color="primary" variant="flat" to="/caves" :prepend-icon="mdiArrowLeft">
       Back to Caves
     </v-btn>
   </v-container>
@@ -553,6 +553,7 @@
 
 
 <script setup>
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useDisplay } from 'vuetify'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'

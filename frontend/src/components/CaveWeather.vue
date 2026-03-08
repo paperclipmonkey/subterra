@@ -108,7 +108,7 @@
               </div>
             </v-card-text>
             <v-card-actions>
-              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.rloi_id}`" target="_blank" prepend-icon="mdi-open-in-new">
+              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.rloi_id}`" target="_blank" :prepend-icon="mdiOpenInNew">
                 View Official Gauge Data
               </v-btn>
             </v-card-actions>
@@ -134,7 +134,7 @@
               </div>
             </v-card-text>
             <v-card-actions>
-              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.station_id}`" target="_blank" prepend-icon="mdi-open-in-new">
+              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.station_id}`" target="_blank" :prepend-icon="mdiOpenInNew">
                 View Official Gauge Data
               </v-btn>
             </v-card-actions>
@@ -146,14 +146,14 @@
             <v-card-title class="text-subtitle-1 font-weight-bold">External Resources</v-card-title>
             <v-list density="compact">
               <v-list-item 
-                prepend-icon="mdi-weather-windy" 
+                :prepend-icon="mdiWeatherWindy" 
                 title="Windy.com - Rain Accumulation"
                 subtitle="View detailed rain accumulation maps"
                 :href="`https://www.windy.com/-Rain-accumulation-rainAccu?rainAccu,${location.lat},${location.lng},8`"
                 target="_blank"
               />
               <v-list-item 
-                prepend-icon="mdi-weather-cloudy-clock" 
+                :prepend-icon="mdiWeatherCloudyClock" 
                 title="Met Office"
                 subtitle="UK Weather Forecast"
                 :href="`https://www.metoffice.gov.uk/`"
@@ -172,6 +172,8 @@
 </template>
 
 <script setup>
+import { mdiArrowBottomRight, mdiArrowTopRight, mdiMinus, mdiOpenInNew, mdiWeatherCloudy, mdiWeatherCloudyClock, mdiWeatherFog, mdiWeatherLightning, mdiWeatherNight, mdiWeatherNightPartlyCloudy, mdiWeatherPartlyCloudy, mdiWeatherRainy, mdiWeatherSnowy, mdiWeatherSnowyRainy, mdiWeatherSunny, mdiWeatherTornado, mdiWeatherWindy } from '@mdi/js'
+
 import { ref, onMounted, computed, defineProps } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale } from 'chart.js'
@@ -513,20 +515,20 @@ const fetchHistoricData = async () => {
 
 const getWeatherIcon = (icon) => {
   const iconMap = {
-    'clear-day': 'mdi-weather-sunny',
-    'clear-night': 'mdi-weather-night',
-    'rain': 'mdi-weather-rainy',
-    'snow': 'mdi-weather-snowy',
-    'sleet': 'mdi-weather-snowy-rainy',
-    'wind': 'mdi-weather-windy',
-    'fog': 'mdi-weather-fog',
-    'cloudy': 'mdi-weather-cloudy',
-    'partly-cloudy-day': 'mdi-weather-partly-cloudy',
-    'partly-cloudy-night': 'mdi-weather-night-partly-cloudy',
-    'thunderstorm': 'mdi-weather-lightning',
-    'tornado': 'mdi-weather-tornado',
+    'clear-day': mdiWeatherSunny,
+    'clear-night': mdiWeatherNight,
+    'rain': mdiWeatherRainy,
+    'snow': mdiWeatherSnowy,
+    'sleet': mdiWeatherSnowyRainy,
+    'wind': mdiWeatherWindy,
+    'fog': mdiWeatherFog,
+    'cloudy': mdiWeatherCloudy,
+    'partly-cloudy-day': mdiWeatherPartlyCloudy,
+    'partly-cloudy-night': mdiWeatherNightPartlyCloudy,
+    'thunderstorm': mdiWeatherLightning,
+    'tornado': mdiWeatherTornado,
   }
-  return iconMap[icon] || 'mdi-weather-cloudy'
+  return iconMap[icon] || mdiWeatherCloudy
 }
 
 onMounted(() => {
@@ -543,9 +545,9 @@ const getStateColor = (state) => {
 
 const getTrendIcon = (trend) => {
   switch (trend) {
-    case 'Rising': return 'mdi-arrow-top-right'
-    case 'Falling': return 'mdi-arrow-bottom-right'
-    default: return 'mdi-minus'
+    case 'Rising': return mdiArrowTopRight
+    case 'Falling': return mdiArrowBottomRight
+    default: return mdiMinus
   }
 }
 

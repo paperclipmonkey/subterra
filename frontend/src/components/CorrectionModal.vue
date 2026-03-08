@@ -5,7 +5,7 @@
         v-if="userStore.canSuggest"
         variant="text"
         color="warning"
-        prepend-icon="mdi-flag"
+        :prepend-icon="mdiFlag"
         v-bind="activatorProps"
         class="text-none"
         size="small"
@@ -17,7 +17,7 @@
         variant="text"
         color="grey"
         disabled
-        prepend-icon="mdi-flag-off"
+        :prepend-icon="mdiFlagOff"
         class="text-none"
         size="small"
       >
@@ -67,6 +67,8 @@
 </template>
 
 <script setup>
+import { mdiFlag, mdiFlagOff } from '@mdi/js'
+
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'

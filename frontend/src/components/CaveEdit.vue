@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="12">
         <v-btn icon @click="$router.go(-1)">
-          <v-icon>mdi-arrow-left</v-icon>
+          <v-icon :icon="mdiArrowLeft" />
         </v-btn>
         <v-toolbar-title>{{ cave.name }}</v-toolbar-title>
         <v-divider v-if="cave.system">{{ cave.system.name }}</v-divider>
@@ -56,6 +56,8 @@
 </template>
 
 <script setup>
+import { mdiArrowLeft } from '@mdi/js'
+
 import { ref, onMounted, watch, computed } from "vue"
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'

@@ -41,7 +41,7 @@
             </v-alert>
 
             <div v-else-if="!isApproved" class="mb-6 pa-4 bg-grey-lighten-4 rounded border text-center">
-              <v-icon size="48" color="grey" class="mb-2">mdi-shield-lock</v-icon>
+              <v-icon size="48" color="grey" class="mb-2" :icon="mdiShieldLock" />
               <h3 class="text-h6 mb-2">Member Access Only</h3>
               <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
               <v-btn color="primary" :to="`/profile/${currentUser?.id}`">Join a Club</v-btn>
@@ -120,7 +120,7 @@
                                                 
                         <v-alert v-if="!form.location_data" :type="locationStatus === 'error' ? 'warning' : 'info'" variant="text" density="compact" class="mb-0 pa-0">
                           <div class="d-flex align-center">
-                            <v-btn size="small" color="primary" :loading="locationStatus === 'loading'" class="mr-3" prepend-icon="mdi-crosshairs-gps" @click="getLocation">
+                            <v-btn size="small" color="primary" :loading="locationStatus === 'loading'" class="mr-3" :prepend-icon="mdiCrosshairsGps" @click="getLocation">
                               Share Location
                             </v-btn>
                             <span v-if="locationStatus === 'error'" class="text-caption red--text font-weight-bold">Location access is required to proceed. Please enable it in your browser settings.</span>
@@ -128,7 +128,7 @@
                           </div>
                         </v-alert>
                         <v-alert v-else type="success" density="compact" variant="outlined" class="mb-0 mt-2">
-                          <v-icon left color="success">mdi-check</v-icon>
+                          <v-icon left color="success" :icon="mdiCheck" />
                           Location captured (Accuracy: {{ Math.round(form.location_data.accuracy) }}m)
                         </v-alert>
                       </div>
@@ -144,7 +144,7 @@
                       <v-autocomplete v-model="userSelect" v-model:search="userSearchInput"
                                       label="Add Subterra User" :items="availableUsers" item-title="name"
                                       item-value="id"
-                                      variant="outlined" prepend-inner-icon="mdi-account-search" return-object
+                                      variant="outlined" :prepend-inner-icon="mdiAccountSearch" return-object
                                       clearable hint="Type to search for users..."
                                       :loading="isSearching"
                                       autocomplete="off"
@@ -162,7 +162,7 @@
                             <template #title>
                               <div class="d-flex align-center">
                                 <span class="text-body-1">{{ item.raw.name }}</span>
-                                <v-icon v-if="item.raw.has_phone" size="small" color="success" class="ml-2" title="Phone number saved">mdi-phone</v-icon>
+                                <v-icon v-if="item.raw.has_phone" size="small" color="success" class="ml-2" title="Phone number saved" :icon="mdiPhone" />
                               </div>
                             </template>
                             <template v-if="item.raw.clubs && item.raw.clubs.length > 0" #subtitle>
@@ -179,7 +179,7 @@
                             <div class="d-flex align-center w-100">
                               <v-avatar v-if="p.photo" :image="p.photo" class="mr-4" size="48" />
                               <v-avatar v-else color="primary" class="mr-4" size="48">
-                                <v-icon v-if="!p.name">mdi-account</v-icon>
+                                <v-icon v-if="!p.name" :icon="mdiAccount" />
                                 <span v-else class="text-white">{{ p.name.charAt(0) }}</span>
                               </v-avatar>
 
@@ -187,7 +187,7 @@
                                 <v-col cols="12" :sm="p.hasPhone ? 12 : 6">
                                   <div v-if="p.user_id !== null">
                                     <div class="d-flex align-center">
-                                      <v-icon size="small" color="primary" class="mr-2">mdi-account-check</v-icon>
+                                      <v-icon size="small" color="primary" class="mr-2" :icon="mdiAccountCheck" />
                                       <span class="text-subtitle-1 font-weight-bold">{{ p.name }}</span>
                                     </div>
                                     <div v-if="p.clubs && p.clubs.length > 0" class="mt-1 d-flex flex-wrap">
@@ -197,7 +197,7 @@
                                     </div>
                                   </div>
                                   <v-text-field v-else v-model="p.name" label="Guest Name" density="compact" variant="outlined" autocomplete="off"
-                                                hide-details prepend-inner-icon="mdi-account" class="mr-2" />
+                                                hide-details :prepend-inner-icon="mdiAccount" class="mr-2" />
                                 </v-col>
                                 <v-col v-if="!p.hasPhone" cols="12" sm="6">
                                   <v-text-field :model-value="p.phone" label="Phone (Mobile)" density="compact" variant="outlined"
@@ -207,7 +207,7 @@
                                                 @update:model-value="updatePhone(i, $event)" />
                                   <v-expand-transition>
                                     <div v-if="p.isCurrentUser && p.phone && validateUKPhone(p.phone) === true" class="mt-2 text-right">
-                                      <v-btn size="small" color="success" variant="tonal" prepend-icon="mdi-content-save"
+                                      <v-btn size="small" color="success" variant="tonal" :prepend-icon="mdiContentSave"
                                              :loading="savingPhone" @click="savePhoneToProfile(p.phone, i)">
                                         Save to Profile
                                       </v-btn>
@@ -219,11 +219,11 @@
                               <div class="d-flex flex-column align-center justify-center ml-3" style="min-width: 40px">
                                 <v-btn v-if="p.hasPhone" icon color="success" variant="text" size="small" class="mb-1"
                                        @click="$toast.info('This user has a valid phone number saved on their profile.')">
-                                  <v-icon size="large">mdi-phone-check</v-icon>
+                                  <v-icon size="large" :icon="mdiPhoneCheck" />
                                 </v-btn>
                                 <v-btn v-if="!p.isCurrentUser" icon color="error" size="small" variant="text"
                                        @click="removeParticipant(i)">
-                                  <v-icon>mdi-delete</v-icon>
+                                  <v-icon :icon="mdiDelete" />
                                 </v-btn>
                               </div>
                             </div>
@@ -232,7 +232,7 @@
                       </div>
 
 
-                      <v-btn variant="text" color="primary" prepend-icon="mdi-plus" @click="addManualParticipant">
+                      <v-btn variant="text" color="primary" :prepend-icon="mdiPlus" @click="addManualParticipant">
                         Add Manual Guest
                       </v-btn>
 
@@ -267,7 +267,7 @@
 
                       <!-- Third-Party Consent Notice -->
                       <v-alert type="warning" variant="outlined" density="compact" class="mt-6"
-                               icon="mdi-shield-check">
+                               :icon="mdiShieldCheck">
                         <div class="text-caption">
                           <strong>Third-Party Consent:</strong> By providing emergency contact details, you confirm that you have their explicit permission to share their personal data with Subterra for rescue purposes.
                         </div>
@@ -275,7 +275,7 @@
 
                       <!-- Privacy Notice -->
                       <v-alert type="info" variant="outlined" density="compact" class="mt-4"
-                               icon="mdi-clock-outline">
+                               :icon="mdiClockOutline">
                         <div class="text-caption">
                           <strong>Privacy Notice:</strong> Your information (including team
                           details) will be securely stored and
@@ -324,7 +324,7 @@
     <v-dialog v-model="showLeaveDialog" max-width="500" persistent>
       <v-card>
         <v-card-title class="headline">
-          <v-icon color="warning" class="mr-2">mdi-alert</v-icon>
+          <v-icon color="warning" class="mr-2" :icon="mdiAlert" />
           Leave Without Creating Callout?
         </v-card-title>
         <v-card-text>
@@ -351,6 +351,7 @@
 </template>
 
 <script>
+import { mdiAccount, mdiAccountCheck, mdiAccountSearch, mdiAlert, mdiCheck, mdiClockOutline, mdiContentSave, mdiCrosshairsGps, mdiDelete, mdiPhone, mdiPhoneCheck, mdiPlus, mdiShieldCheck, mdiShieldLock } from '@mdi/js'
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
@@ -386,7 +387,26 @@ export default {
   },
   setup() {
     const { setErrors, clearErrors, errorMessages, generalError } = useFormErrors()
-    return { setErrors, clearErrors, errorMessages, generalError }
+    return {
+      setErrors,
+      clearErrors,
+      errorMessages,
+      generalError,
+      mdiAccount,
+      mdiAccountCheck,
+      mdiAccountSearch,
+      mdiAlert,
+      mdiCheck,
+      mdiClockOutline,
+      mdiContentSave,
+      mdiCrosshairsGps,
+      mdiDelete,
+      mdiPhone,
+      mdiPhoneCheck,
+      mdiPlus,
+      mdiShieldCheck,
+      mdiShieldLock
+    }
   },
   data() {
     return {

@@ -10,7 +10,7 @@
       <v-col cols="12" md="6" lg="4">
         <v-card height="100%" class="d-flex flex-column">
           <v-card-title class="primary--text">
-            <v-icon left color="primary">mdi-image-off</v-icon>
+            <v-icon left color="primary" :icon="mdiImageOff" />
             Missing Photos <v-chip small class="ml-2">{{ tasks.caves_no_photo.length }}</v-chip>
           </v-card-title>
           <v-divider />
@@ -18,19 +18,19 @@
             <template v-for="(cave, i) in tasks.caves_no_photo" :key="cave.id">
               <v-list-item :to="`/caves/${cave.slug}`" link>
                 <template #prepend>
-                  <v-icon color="grey">mdi-cave</v-icon>
+                  <v-icon color="grey" :icon="mdiTunnel" />
                 </template>
                 <v-list-item-title>{{ cave.name }}</v-list-item-title>
                 <v-list-item-subtitle>{{ cave.location_name || 'Unknown Location' }}</v-list-item-subtitle>
                 <template #append>
-                  <v-icon small>mdi-open-in-new</v-icon>
+                  <v-icon small :icon="mdiOpenInNew" />
                 </template>
               </v-list-item>
               <v-divider v-if="i < tasks.caves_no_photo.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
-            <v-icon size="48" color="grey lighten-2">mdi-check-all</v-icon>
+            <v-icon size="48" color="grey lighten-2" :icon="mdiCheckAll" />
             <div class="mt-2">Good</div>
           </v-card-text>
         </v-card>
@@ -40,7 +40,7 @@
       <v-col cols="12" md="6" lg="4">
         <v-card height="100%" class="d-flex flex-column">
           <v-card-title class="info--text">
-            <v-icon left color="info">mdi-text-box-missing</v-icon>
+            <v-icon left color="info" :icon="mdiFileQuestion" />
             Missing Descriptions <v-chip small class="ml-2">{{ tasks.caves_no_description.length }}</v-chip>
           </v-card-title>
           <v-divider />
@@ -48,19 +48,19 @@
             <template v-for="(cave, i) in tasks.caves_no_description" :key="cave.id">
               <v-list-item :to="`/caves/${cave.slug}`" link>
                 <template #prepend>
-                  <v-icon color="grey">mdi-cave</v-icon>
+                  <v-icon color="grey" :icon="mdiTunnel" />
                 </template>
                 <v-list-item-title>{{ cave.name }}</v-list-item-title>
                 <v-list-item-subtitle>{{ cave.location_name || 'Unknown Location' }}</v-list-item-subtitle>
                 <template #append>
-                  <v-icon small>mdi-open-in-new</v-icon>
+                  <v-icon small :icon="mdiOpenInNew" />
                 </template>
               </v-list-item>
               <v-divider v-if="i < tasks.caves_no_description.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
-            <v-icon size="48" color="grey lighten-2">mdi-check-all</v-icon>
+            <v-icon size="48" color="grey lighten-2" :icon="mdiCheckAll" />
             <div class="mt-2">Good</div>
           </v-card-text>
         </v-card>
@@ -70,7 +70,7 @@
       <v-col cols="12" md="6" lg="4">
         <v-card height="100%" class="d-flex flex-column">
           <v-card-title class="purple--text">
-            <v-icon left color="purple">mdi-tag-outline</v-icon>
+            <v-icon left color="purple" :icon="mdiTagOutline" />
             Low Tags (&lt; 3) <v-chip small class="ml-2">{{ tasks.caves_low_tags.length }}</v-chip>
           </v-card-title>
           <v-divider />
@@ -78,19 +78,19 @@
             <template v-for="(cave, i) in tasks.caves_low_tags" :key="cave.id">
               <v-list-item :to="`/caves/${cave.slug}`" link>
                 <template #prepend>
-                  <v-icon color="grey">mdi-cave</v-icon>
+                  <v-icon color="grey" :icon="mdiTunnel" />
                 </template>
                 <v-list-item-title>{{ cave.name }}</v-list-item-title>
                 <v-list-item-subtitle>Has {{ cave.tags_count }} tags</v-list-item-subtitle>
                 <template #append>
-                  <v-icon small>mdi-open-in-new</v-icon>
+                  <v-icon small :icon="mdiOpenInNew" />
                 </template>
               </v-list-item>
               <v-divider v-if="i < tasks.caves_low_tags.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
-            <v-icon size="48" color="grey lighten-2">mdi-check-all</v-icon>
+            <v-icon size="48" color="grey lighten-2" :icon="mdiCheckAll" />
             <div class="mt-2">Good</div>
           </v-card-text>
         </v-card>
@@ -100,7 +100,7 @@
       <v-col cols="12" md="6" lg="6">
         <v-card height="100%" class="d-flex flex-column">
           <v-card-title class="orange--text text--darken-2">
-            <v-icon left color="orange darken-2">mdi-book-open-page-variant</v-icon>
+            <v-icon left color="orange darken-2" :icon="mdiBookOpenPageVariant" />
             Systems No References <v-chip small class="ml-2">{{ tasks.systems_no_references.length }}</v-chip>
           </v-card-title>
           <v-divider />
@@ -108,18 +108,18 @@
             <template v-for="(system, i) in tasks.systems_no_references" :key="system.id">
               <v-list-item :to="`/cave-systems/${system.id}/edit`" link>
                 <template #prepend>
-                  <v-icon color="grey">mdi-family-tree</v-icon>
+                  <v-icon color="grey" :icon="mdiFamilyTree" />
                 </template>
                 <v-list-item-title>{{ system.name }}</v-list-item-title>
                 <template #append>
-                  <v-icon small>mdi-open-in-new</v-icon>
+                  <v-icon small :icon="mdiOpenInNew" />
                 </template>
               </v-list-item>
               <v-divider v-if="i < tasks.systems_no_references.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
-            <v-icon size="48" color="grey lighten-2">mdi-check-all</v-icon>
+            <v-icon size="48" color="grey lighten-2" :icon="mdiCheckAll" />
             <div class="mt-2">Good</div>
           </v-card-text>
         </v-card>
@@ -129,7 +129,7 @@
       <v-col cols="12" md="6" lg="6">
         <v-card height="100%" class="d-flex flex-column">
           <v-card-title class="teal--text">
-            <v-icon left color="teal">mdi-file-find</v-icon>
+            <v-icon left color="teal" :icon="mdiFileFind" />
             Systems No Surveys <v-chip small class="ml-2">{{ tasks.systems_no_files.length }}</v-chip>
           </v-card-title>
           <v-divider />
@@ -137,18 +137,18 @@
             <template v-for="(system, i) in tasks.systems_no_files" :key="system.id">
               <v-list-item :to="`/cave-systems/${system.id}/edit`" link>
                 <template #prepend>
-                  <v-icon color="grey">mdi-family-tree</v-icon>
+                  <v-icon color="grey" :icon="mdiFamilyTree" />
                 </template>
                 <v-list-item-title>{{ system.name }}</v-list-item-title>
                 <template #append>
-                  <v-icon small>mdi-open-in-new</v-icon>
+                  <v-icon small :icon="mdiOpenInNew" />
                 </template>
               </v-list-item>
               <v-divider v-if="i < tasks.systems_no_files.length - 1" />
             </template>
           </v-list>
           <v-card-text v-else class="text-center grey--text py-8">
-            <v-icon size="48" color="grey lighten-2">mdi-check-all</v-icon>
+            <v-icon size="48" color="grey lighten-2" :icon="mdiCheckAll" />
             <div class="mt-2">Good</div>
           </v-card-text>
         </v-card>
@@ -165,9 +165,23 @@
 </template>
 
 <script>
+import { mdiBookOpenPageVariant, mdiTunnel, mdiCheckAll, mdiFamilyTree, mdiFileFind, mdiImageOff, mdiOpenInNew, mdiTagOutline, mdiFileQuestion } from '@mdi/js'
 import axios from 'axios'
 
 export default {
+  setup() {
+    return {
+      mdiBookOpenPageVariant,
+      mdiTunnel,
+      mdiCheckAll,
+      mdiFamilyTree,
+      mdiFileFind,
+      mdiImageOff,
+      mdiOpenInNew,
+      mdiTagOutline,
+      mdiFileQuestion
+    }
+  },
   data() {
     return {
       tasks: {

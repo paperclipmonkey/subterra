@@ -4,7 +4,7 @@
       <v-col cols="12" md="8">
         <!-- Header -->
         <div class="text-center mb-6">
-          <v-icon size="64" color="warning" class="mb-2">mdi-alert-octagram</v-icon>
+          <v-icon size="64" color="warning" class="mb-2" :icon="mdiAlertOctagram" />
           <h1 class="text-h3 font-weight-bold">Safety Callout</h1>
           <p class="text-subtitle-1 grey--text text--darken-1 mt-2">
             Tell us where you're going. We'll watch your back.
@@ -13,7 +13,7 @@
 
         <!-- Callout Stats & Map -->
         <v-card v-if="activeCallouts.length > 0" class="mb-6 elevation-2 overflow-hidden">
-          <v-alert icon="mdi-account-group" border="start" variant="tonal" color="info" density="compact" class="mb-0 rounded-b-0">
+          <v-alert :icon="mdiAccountGroup" border="start" variant="tonal" color="info" density="compact" class="mb-0 rounded-b-0">
             <strong>{{ activeCallouts.length }} Open Trips</strong> currently underground.
           </v-alert>
           <ActiveCalloutMap :callouts="activeCallouts" />
@@ -30,7 +30,7 @@
               <v-avatar color="white" size="48" class="mr-4 elevation-1">
                 <v-img v-if="onCallOfficer && onCallOfficer.photo" :src="onCallOfficer.photo" />
                 <span v-else-if="onCallOfficer" class="text-h5 primary--text font-weight-bold">{{ onCallOfficer.name.charAt(0) }}</span>
-                <v-icon v-else large color="grey">mdi-account-off</v-icon>
+                <v-icon v-else large color="grey" :icon="mdiAccountOff" />
               </v-avatar>
               <div>
                 <div class="text-caption font-weight-bold text-uppercase" style="letter-spacing: 1px;">Duty Officer Status</div>
@@ -55,7 +55,7 @@
         <v-expansion-panels class="mb-8" flat>
           <v-expansion-panel>
             <v-expansion-panel-title>
-              <v-icon left color="primary" class="mr-2">mdi-information-outline</v-icon>
+              <v-icon left color="primary" class="mr-2" :icon="mdiInformationOutline" />
               How it works
             </v-expansion-panel-title>
             <v-expansion-panel-text>
@@ -80,7 +80,7 @@
             </v-alert>
             <v-btn x-large color="error" size="x-large" block to="/callout/active" class="mb-4 font-weight-bold elevation-4">
               MANAGE OPEN CALLOUT
-              <v-icon right class="ml-2">mdi-alert</v-icon>
+              <v-icon right class="ml-2" :icon="mdiAlert" />
             </v-btn>
           </div>
                     
@@ -91,7 +91,7 @@
             </v-alert>
             <v-btn x-large color="warning" size="x-large" block to="/callout/create" class="mb-4 font-weight-bold elevation-4" :disabled="!onCallOfficer">
               START CALLOUT
-              <v-icon right class="ml-2">mdi-arrow-right</v-icon>
+              <v-icon right class="ml-2" :icon="mdiArrowRight" />
             </v-btn>
           </div>
         </div>
@@ -102,6 +102,7 @@
 </template>
 
 <script>
+import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRight, mdiInformationOutline } from '@mdi/js'
 import axios from 'axios'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
@@ -114,7 +115,15 @@ export default {
   },
   setup() {
     const appStore = useAppStore()
-    return { appStore }
+    return {
+      appStore,
+      mdiAccountGroup,
+      mdiAccountOff,
+      mdiAlert,
+      mdiAlertOctagram,
+      mdiArrowRight,
+      mdiInformationOutline
+    }
   },
   data() {
     return {

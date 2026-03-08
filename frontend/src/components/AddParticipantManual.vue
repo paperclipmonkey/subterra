@@ -8,7 +8,7 @@
           </div>
 
           <v-btn
-            icon="mdi-close"
+            :icon="mdiClose"
             variant="text"
             @click="$emit('close')"
           />
@@ -74,6 +74,8 @@
 </template>
 
 <script setup>
+import { mdiClose } from '@mdi/js'
+
 import { ref, computed, watch } from 'vue'
 
 const props = defineProps({

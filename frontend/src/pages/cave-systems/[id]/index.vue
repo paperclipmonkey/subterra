@@ -2,19 +2,31 @@
   <div>
     <div class="d-flex justify-end pa-4">
       <v-btn
-        v-if="appStore.user"
+        v-if="appStore.user && (appStore.user.is_admin || appStore.canSuggest)"
         color="primary"
         variant="text"
-        prepend-icon="mdi-pencil"
+        :prepend-icon="mdiPencil"
         :to="`/cave-systems/${route.params.id}/edit`"
       >
         {{ appStore.user?.is_admin ? 'Edit Cave System' : 'Suggest Edit' }}
       </v-btn>
       <v-btn
+        v-else-if="appStore.user"
+        color="grey"
+        variant="text"
+        disabled
+        :prepend-icon="mdiPencilOff"
+      >
+        <v-tooltip activator="parent" location="top">
+          Your account must be approved to suggest edits
+        </v-tooltip>
+        Suggest Edit
+      </v-btn>
+      <v-btn
         v-else
         color="primary"
         variant="text"
-        prepend-icon="mdi-pencil"
+        :prepend-icon="mdiPencil"
         to="/login"
       >
         Log in to Suggest Edit
@@ -33,6 +45,8 @@
 </template>
 
 <script setup>
+import { mdiPencil, mdiPencilOff } from '@mdi/js'
+
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'

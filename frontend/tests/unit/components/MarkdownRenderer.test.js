@@ -17,7 +17,10 @@ vi.mock('vue-markdown-render', () => ({
         props: ['source', 'plugins'],
         setup(props) {
             // Simulate the plugin processing for mermaid blocks
-            const processedSource = props.source
+            let processedSource = props.source || ''
+            if (processedSource.includes('```mermaid')) {
+                processedSource = processedSource.replace(/```mermaid\n?([\s\S]*?)\n?```/g, '<div class="mermaid">$1</div>')
+            }
             return { processedSource }
         },
         template: '<div class="vue-markdown-stub" v-html="processedSource"></div>'
@@ -46,8 +49,11 @@ describe('MarkdownRenderer', () => {
     it('initializes mermaid on mount', async () => {
         const mermaid = (await import('mermaid')).default
         mount(MarkdownRenderer, {
-            props: { source: 'test' }
+            props: { source: '```mermaid\ngraph TD\nA-->B\n```' }
         })
+        // wait for nextTick and lazy load
+        await new Promise(resolve => setTimeout(resolve, 50))
+
         expect(mermaid.initialize).toHaveBeenCalledWith({
             startOnLoad: false,
             theme: 'default',

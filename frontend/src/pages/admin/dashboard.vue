@@ -10,7 +10,7 @@
       <v-col cols="12">
         <v-card :loading="growthLoading" class="pa-4 mb-4">
           <v-card-title>
-            <v-icon left>mdi-trending-up</v-icon>
+            <v-icon left :icon="mdiTrendingUp" />
             Growth Metrics (Last 30 Days)
           </v-card-title>
           
@@ -29,7 +29,7 @@
       <v-col cols="12">
         <v-card :loading="popularLoading" class="pa-4">
           <v-card-title>
-            <v-icon left>mdi-chart-line</v-icon>
+            <v-icon left :icon="mdiChartLine" />
             Top 10 Most Popular Records (Last 30 Days)
           </v-card-title>
           
@@ -49,6 +49,7 @@
 </template>
 
 <script setup>
+import { mdiChartLine, mdiTrendingUp } from '@mdi/js'
 import { ref, onMounted } from 'vue'
 import { mande } from 'mande'
 import {

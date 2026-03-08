@@ -1,6 +1,6 @@
 <template>
   <v-container class="py-8" style="max-width: 800px;">
-    <v-btn variant="text" prepend-icon="mdi-arrow-left" to="/news" class="mb-4 text-none" color="grey-darken-1">
+    <v-btn variant="text" :prepend-icon="mdiArrowLeft" to="/news" class="mb-4 text-none" color="grey-darken-1">
       Back to News
     </v-btn>
 
@@ -9,7 +9,7 @@
     </div>
 
     <div v-else-if="error" class="text-center py-12">
-      <v-icon icon="mdi-alert-circle-outline" size="48" color="error" class="mb-4" />
+      <v-icon :icon="mdiAlertCircleOutline" size="48" color="error" class="mb-4" />
       <div class="text-h6 text-medium-emphasis">Article not found</div>
       <v-btn to="/news" color="primary" class="mt-4" variant="tonal">Return to Feed</v-btn>
     </div>
@@ -31,6 +31,8 @@
 </template>
 
 <script setup>
+import { mdiAlertCircleOutline, mdiArrowLeft } from '@mdi/js'
+
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'

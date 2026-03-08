@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="12">
         <v-btn icon @click="$router.go(-1)">
-          <v-icon>mdi-arrow-left</v-icon>
+          <v-icon :icon="mdiArrowLeft" />
         </v-btn>
         <v-toolbar-title>Suggest Edit for {{ originalCollection.name }}</v-toolbar-title>
       </v-col>
@@ -34,6 +34,8 @@
 </template>
 
 <script setup>
+import { mdiArrowLeft } from '@mdi/js'
+
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import CollectionForm from '@/components/CollectionForm.vue'

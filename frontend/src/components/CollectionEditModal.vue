@@ -1,8 +1,14 @@
 <template>
   <v-dialog v-model="dialog" max-width="800px">
     <template #activator="{ props: activatorProps }">
-      <v-btn v-if="canEdit" color="primary" variant="text" :prepend-icon="isNew ? 'mdi-plus' : 'mdi-pencil'"
+      <v-btn v-if="canEdit && (isNew || userStore.canSuggest)" color="primary" variant="text" :prepend-icon="isNew ? mdiPlus : mdiPencil"
              v-bind="activatorProps">
+        {{ activatorText }}
+      </v-btn>
+      <v-btn v-else-if="canEdit" color="grey" variant="text" disabled :prepend-icon="mdiPencilOff">
+        <v-tooltip activator="parent" location="top">
+          Your account must be approved to suggest edits
+        </v-tooltip>
         {{ activatorText }}
       </v-btn>
     </template>
@@ -32,6 +38,8 @@
 </template>
 
 <script setup>
+import { mdiPencil, mdiPencilOff, mdiPlus } from '@mdi/js'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'

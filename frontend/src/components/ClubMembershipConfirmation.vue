@@ -19,7 +19,7 @@
             :rules="[v => !!v || 'Name is required', v => v.length >= 2 || 'Name must be at least 2 characters']"
             required
           />
-          <v-alert type="info" variant="tonal" class="mt-4" icon="mdi-shield-check">
+          <v-alert type="info" variant="tonal" class="mt-4" :icon="mdiShieldCheck">
             This name will be visible to club admins when you request to join.
           </v-alert>
         </div>
@@ -32,7 +32,7 @@
               <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-0 mb-4 border rounded-lg">
                 <template #prepend>
                   <v-avatar color="warning" size="40" class="mr-4">
-                    <v-icon color="white">mdi-account-clock</v-icon>
+                    <v-icon color="white" :icon="mdiAccountClock" />
                   </v-avatar>
                 </template>
                 <v-list-item-title class="font-weight-bold">{{ club.name }}</v-list-item-title>
@@ -50,7 +50,7 @@
             Please confirm which BCA club(s) you are a member of. Your request will be sent to the club administrators for approval.
           </p>
           
-          <v-alert type="info" variant="tonal" class="mb-6" border="start" icon="mdi-shield-check">
+          <v-alert type="info" variant="tonal" class="mb-6" border="start" :icon="mdiShieldCheck">
             <div class="text-subtitle-1 font-weight-bold mb-2">Why join a club?</div>
             <p class="text-body-2 mb-4">
               Subterra is a community-driven platform. Many features are restricted to verified club members to ensure the privacy and security of sensitive cave data.
@@ -120,6 +120,7 @@
 </template>
 
 <script setup>
+import { mdiAccountClock, mdiShieldCheck } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import moment from 'moment'
 const props = defineProps({

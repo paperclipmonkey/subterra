@@ -5,19 +5,19 @@
            gradient="to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.8)">
       <template #placeholder>
         <div class="d-flex align-center justify-center fill-height bg-grey-darken-3">
-          <v-icon icon="mdi-image-off" color="grey-darken-1" />
+          <v-icon :icon="mdiImageOff" color="grey-darken-1" />
         </div>
       </template>
 
       <!-- Top Navigation (Absolute) -->
       <div class="position-absolute top-0 left-0 w-100 p-4 d-flex align-center pa-4">
-        <v-btn icon="mdi-arrow-left" variant="tonal" color="white" class="backdrop-blur"
+        <v-btn :icon="mdiArrowLeft" variant="tonal" color="white" class="backdrop-blur"
                @click="$router.push('/trips')" />
         <v-spacer />
         <template v-if="currentUserWasOnTrip">
-          <v-btn icon="mdi-pencil" variant="tonal" color="white" class="mr-2 backdrop-blur"
+          <v-btn :icon="mdiPencil" variant="tonal" color="white" class="mr-2 backdrop-blur"
                  @click="$router.push('/trips/' + trip.id + '/edit')" />
-          <v-btn icon="mdi-delete" variant="tonal" color="error" class="backdrop-blur text-white"
+          <v-btn :icon="mdiDelete" variant="tonal" color="error" class="backdrop-blur text-white"
                  @click="showDeleteConfirmDialog = true" />
         </template>
       </div>
@@ -25,13 +25,13 @@
       <!-- Hero Content -->
       <v-container class="pb-6">
         <div class="text-subtitle-1 text-white mb-1 d-flex align-center">
-          <v-icon icon="mdi-map-marker" size="small" class="mr-1" />
+          <v-icon :icon="mdiMapMarker" size="small" class="mr-1" />
           {{ trip.system?.name || 'Unknown System' }}
         </div>
         <h1 class="text-h3 text-white font-weight-bold mb-2">{{ trip.name }}</h1>
         <div class="d-flex align-center text-white">
           <v-chip size="small" color="white" variant="outlined" class="mr-3">
-            <v-icon start icon="mdi-calendar" />
+            <v-icon start :icon="mdiCalendar" />
             {{ formatDate(trip.start_time) }}
           </v-chip>
           <v-chip :color="getVisibilityColor(trip.visibility)" size="small" variant="flat">
@@ -49,14 +49,14 @@
           <!-- Trip Report -->
           <v-card class="rounded-lg mb-6" elevation="2">
             <v-card-title class="d-flex align-center py-4 bg-surface">
-              <v-icon icon="mdi-text-box-outline" class="mr-2 text-primary" />
+              <v-icon :icon="mdiTextBoxOutline" class="mr-2 text-primary" />
               Trip Report
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6 text-body-1 leading-relaxed">
               <MarkdownRenderer v-if="trip.description" :source="trip.description" />
               <div v-else class="d-flex flex-column align-center justify-center py-8 text-grey">
-                <v-icon icon="mdi-fountain-pen-tip" size="large" class="mb-2 opacity-50" />
+                <v-icon :icon="mdiFountainPenTip" size="large" class="mb-2 opacity-50" />
                 <p>No report written for this trip yet.</p>
               </div>
             </v-card-text>
@@ -65,7 +65,7 @@
           <!-- Photo Gallery -->
           <v-card v-if="trip.media && trip.media.length > 0" class="rounded-lg mb-6" elevation="2">
             <v-card-title class="d-flex align-center py-4">
-              <v-icon icon="mdi-image-multiple-outline" class="mr-2 text-primary" />
+              <v-icon :icon="mdiImageMultipleOutline" class="mr-2 text-primary" />
               Gallery
               <span class="text-caption text-grey ml-2">({{ trip.media.length }})</span>
             </v-card-title>
@@ -105,7 +105,7 @@
               <v-list-item class="py-3">
                 <template #prepend>
                   <v-avatar color="green-lighten-5" class="mr-4" rounded>
-                    <v-icon color="green-darken-1" icon="mdi-location-enter" />
+                    <v-icon color="green-darken-1" :icon="mdiLocationEnter" />
                   </v-avatar>
                 </template>
                 <v-list-item-subtitle class="text-caption mb-1">Entrance</v-list-item-subtitle>
@@ -123,7 +123,7 @@
               <v-list-item v-if="trip.exit && trip.entrance.id !== trip.exit.id" class="py-3">
                 <template #prepend>
                   <v-avatar color="red-lighten-5" class="mr-4" rounded>
-                    <v-icon color="red-darken-1" icon="mdi-location-exit" />
+                    <v-icon color="red-darken-1" :icon="mdiLocationExit" />
                   </v-avatar>
                 </template>
                 <v-list-item-subtitle class="text-caption mb-1">Exit</v-list-item-subtitle>
@@ -141,7 +141,7 @@
               <v-list-item class="py-3">
                 <template #prepend>
                   <v-avatar color="blue-lighten-5" class="mr-4" rounded>
-                    <v-icon color="blue-darken-1" icon="mdi-clock-outline" />
+                    <v-icon color="blue-darken-1" :icon="mdiClockOutline" />
                   </v-avatar>
                 </template>
                 <v-list-item-subtitle class="text-caption mb-1">Start Time</v-list-item-subtitle>
@@ -155,7 +155,7 @@
               <v-list-item class="py-3">
                 <template #prepend>
                   <v-avatar color="orange-lighten-5" class="mr-4" rounded>
-                    <v-icon color="orange-darken-1" icon="mdi-timer-outline" />
+                    <v-icon color="orange-darken-1" :icon="mdiTimerOutline" />
                   </v-avatar>
                 </template>
                 <v-list-item-subtitle class="text-caption mb-1">Duration</v-list-item-subtitle>
@@ -218,16 +218,18 @@
 
   <!-- Error State -->
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
-    <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+    <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
     <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
     <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-    <v-btn color="primary" variant="flat" to="/trips" prepend-icon="mdi-arrow-left">
+    <v-btn color="primary" variant="flat" to="/trips" :prepend-icon="mdiArrowLeft">
       Back to Trips
     </v-btn>
   </v-container>
 </template>
 
 <script setup>
+import { mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiCalendar, mdiClockOutline, mdiDelete, mdiEarth, mdiFountainPenTip, mdiImageMultipleOutline, mdiImageOff, mdiLocationEnter, mdiLocationExit, mdiLock, mdiMapMarker, mdiPencil, mdiTextBoxOutline, mdiTimerOutline } from '@mdi/js'
+
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import moment from 'moment'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
@@ -288,7 +290,7 @@ const getVisibilityColor = (vis) => {
 }
 
 const getVisibilityIcon = (vis) => {
-  return vis === 'public' ? 'mdi-earth' : vis === 'club' ? 'mdi-account-group' : 'mdi-lock'
+  return vis === 'public' ? mdiEarth : vis === 'club' ? mdiAccountGroup : mdiLock
 }
 
 const confirmDelete = async () => {

@@ -8,7 +8,7 @@
 
     <template v-else>
       <div v-if="caveStore.caves.length === 0" class="text-center py-8">
-        <v-icon size="64" color="grey lighten-10" icon="mdi-map-marker-off" class="mb-4" />
+        <v-icon size="64" color="grey lighten-10" :icon="mdiMapMarkerOff" class="mb-4" />
         <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found</h3>
         <p class="text-body-2 text-grey-darken-1">Try adjusting your filters or search.</p>
       </div>
@@ -34,11 +34,11 @@
                        class="position-absolute w-100 h-100" style="top: 0; left: 0; z-index: 0;">
                   <template #placeholder>
                     <div class="d-flex align-center justify-center fill-height">
-                      <v-icon color="grey-lighten-1" size="large">mdi-image-off-outline</v-icon>
+                      <v-icon color="grey-lighten-1" size="large" :icon="mdiImageOffOutline" />
                     </div>
                   </template>
                   <div v-if="cave.previously_done" class="d-flex justify-end pa-2 position-relative" style="z-index: 2;">
-                    <v-chip color="success" size="small" variant="elevated" prepend-icon="mdi-check">Done</v-chip>
+                    <v-chip color="success" size="small" variant="elevated" :prepend-icon="mdiCheck">Done</v-chip>
                   </div>
                 </v-img>
               </div>
@@ -47,7 +47,7 @@
                 <div class="mb-2">
                   <h3 class="text-h6 font-weight-bold lh-tight mb-1 text-truncate">{{ cave.name }}</h3>
                   <div class="d-flex align-center text-caption text-grey-darken-1">
-                    <v-icon size="small" icon="mdi-map-marker" class="mr-1" />
+                    <v-icon size="small" :icon="mdiMapMarker" class="mr-1" />
                     <span class="text-truncate">{{ cave.location_name }}, {{ cave.location_country }}</span>
                   </div>
                 </div>
@@ -120,7 +120,7 @@
   </v-container>
 </template>
 <script setup>
-
+import { mdiCheck, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
 import { ref, defineEmits } from 'vue'
 
 const emit = defineEmits(['tag-click'])

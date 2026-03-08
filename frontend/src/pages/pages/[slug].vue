@@ -15,7 +15,7 @@
       </v-sheet>
     </div>
     <div v-else-if="error" class="text-center mt-12">
-      <v-icon icon="mdi-alert-circle-outline" size="64" color="grey" class="mb-4" />
+      <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
       <h2 class="text-h4 mb-2">Page not found</h2>
       <p class="text-body-1 text-grey mb-4">{{ error }}</p>
       <v-btn to="/" color="primary" variant="flat">Go Home</v-btn>
@@ -24,6 +24,8 @@
 </template>
 
 <script setup>
+import { mdiAlertCircleOutline } from '@mdi/js'
+
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'

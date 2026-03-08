@@ -10,12 +10,12 @@
       <span class="d-none d-sm-flex">
         EXPECTED: {{ formatTime(appStore.user.active_callout.callout_time) }}
       </span>
-      <v-icon class="ml-2">mdi-chevron-right</v-icon>
+      <v-icon class="ml-2" :icon="mdiChevronRight" />
     </v-system-bar>
 
     <v-system-bar v-else-if="appStore.user.on_call" color="deep-purple-darken-2" class="text-white cursor-pointer px-4"
                   height="40" style="cursor: pointer; z-index: 9999;" window @click="router.push('/admin/callout')">
-      <v-icon color="white" class="mr-2">mdi-shield-check</v-icon>
+      <v-icon color="white" class="mr-2" :icon="mdiShieldCheck" />
       <span class="font-weight-bold">ON-CALL DUTY OFFICER</span>
       <v-spacer />
       <span v-if="appStore.user.on_call_until" class="d-none d-sm-flex mr-4">
@@ -24,12 +24,12 @@
       <span class="font-weight-bold">
         {{ appStore.user.open_callouts_count }} OPEN CALLOUTS
       </span>
-      <v-icon class="ml-2">mdi-chevron-right</v-icon>
+      <v-icon class="ml-2" :icon="mdiChevronRight" />
     </v-system-bar>
  
     <v-system-bar v-else-if="appStore.user.id && !appStore.canSuggest && appStore.user.onboarding_completed_at" color="warning"
                   class="text-white px-4" height="40" style="z-index: 9999;" window>
-      <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? 'mdi-account-clock' : 'mdi-account-plus' }}</v-icon>
+      <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? mdiAccountClock : mdiAccountPlus }}</v-icon>
       <span class="font-weight-bold">{{ hasPendingApprovals ? 'MEMBERSHIP PENDING' : 'MEMBERSHIP REQUIRED' }}</span>
       <v-spacer />
       <span>{{ hasPendingApprovals ? 'Your club application is being reviewed' : 'Join a club to unlock full access' }}</span>
@@ -51,7 +51,7 @@
       {{ notificationStore.message }}
 
       <template #actions>
-        <v-btn icon="mdi-close" variant="text" @click="notificationStore.hideNotification()" />
+        <v-btn :icon="mdiClose" variant="text" @click="notificationStore.hideNotification()" />
       </template>
     </v-snackbar>
 
@@ -61,6 +61,7 @@
 </template>
 
 <script setup>
+import { mdiAccountClock, mdiAccountPlus, mdiAlert, mdiAlertCircle, mdiAlertOutline, mdiCheckCircle, mdiChevronRight, mdiClose, mdiInformation, mdiShieldCheck } from '@mdi/js'
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
@@ -85,9 +86,9 @@ const calloutBannerColor = computed(() => {
 })
 
 const calloutBannerIcon = computed(() => {
-  if (!appStore.user?.active_callout) return 'mdi-alert-circle'
+  if (!appStore.user?.active_callout) return mdiAlertCircle
   const diff = moment(appStore.user.active_callout.callout_time).diff(moment(), 'minutes')
-  return diff < 60 ? 'mdi-alert-circle' : 'mdi-alert-outline'
+  return diff < 60 ? mdiAlertCircle : mdiAlertOutline
 })
 
 const hasPendingApprovals = computed(() => {
@@ -121,14 +122,14 @@ const notificationColor = computed(() => {
 const notificationIcon = computed(() => {
   switch (notificationStore.type) {
     case 'success':
-      return 'mdi-check-circle'
+      return mdiCheckCircle
     case 'error':
-      return 'mdi-alert-circle'
+      return mdiAlertCircle
     case 'warning':
-      return 'mdi-alert'
+      return mdiAlert
     case 'info':
     default:
-      return 'mdi-information'
+      return mdiInformation
   }
 })
 </script>

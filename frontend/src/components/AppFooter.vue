@@ -17,7 +17,7 @@
     <v-footer v-else app>
       <v-bottom-navigation bg-color="primary" elevation="4">
         <v-btn to="/" block class="text-none">
-          <v-icon start icon="mdi-login" />
+          <v-icon start :icon="mdiLogin" />
           Login or Join to see more
         </v-btn>
       </v-bottom-navigation>
@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+import { mdiAccount, mdiAlertOctagram, mdiDotsHorizontal, mdiEarth, mdiLogin, mdiNotebookOutline } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 
 const userStore = useAppStore()
@@ -33,28 +34,28 @@ const userStore = useAppStore()
 const items = [
   {
     title: 'My Trips',
-    icon: `mdi-notebook-outline`,
+    icon: mdiNotebookOutline,
     href: '/trips',
   },
   {
     title: 'Caves',
-    icon: 'mdi-earth',
+    icon: mdiEarth,
     href: '/caves',
   },
   {
     title: 'Callout',
-    icon: `mdi-alert-octagram`,
+    icon: mdiAlertOctagram,
     href: '/callout',
     class: 'v-btn--active-warning'
   },
   {
     title: 'Profile',
-    icon: `mdi-account`,
+    icon: mdiAccount,
     href: '/profile/' + userStore.user.id,
   },
   {
     title: 'More',
-    icon: `mdi-dots-horizontal`,
+    icon: mdiDotsHorizontal,
     href: '/more',
   },
 ]

@@ -15,7 +15,7 @@
         <div class="d-flex flex-column flex-md-row">
           <div class="pa-6 pa-md-8 flex-grow-1">
             <div class="d-flex align-center mb-3">
-              <v-icon icon="mdi-calendar" size="small" color="primary" class="mr-2" />
+              <v-icon :icon="mdiCalendar" size="small" color="primary" class="mr-2" />
               <span
                 class="text-caption font-weight-bold text-uppercase text-medium-emphasis letter-spacing-1">
                 {{ moment(item.date).format('MMMM D, YYYY') }}
@@ -31,7 +31,7 @@
             </div>
 
             <div class="d-flex align-center text-primary font-weight-bold text-body-2">
-              Read Article <v-icon icon="mdi-arrow-right" class="ml-1" size="small" />
+              Read Article <v-icon :icon="mdiArrowRight" class="ml-1" size="small" />
             </div>
           </div>
         </div>
@@ -41,6 +41,8 @@
 </template>
 
 <script setup>
+import { mdiArrowRight, mdiCalendar } from '@mdi/js'
+
 import { ref, onMounted } from 'vue'
 import moment from 'moment'
 

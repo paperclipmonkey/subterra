@@ -7,7 +7,6 @@
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
 import VueMarkdown from 'vue-markdown-render'
-import mermaid from 'mermaid'
 
 const props = defineProps({
     source: {
@@ -42,6 +41,16 @@ const renderMermaidDiagrams = async () => {
     if (!container.value) return
     const nodes = container.value.querySelectorAll('.mermaid')
     if (nodes.length === 0) return
+
+    // Lazy load mermaid only when needed
+    const mermaid = (await import('mermaid')).default
+
+    mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+    })
+
     // Reset any previously-rendered diagrams so mermaid re-processes the raw text
     nodes.forEach(node => {
         node.removeAttribute('data-processed')
@@ -54,11 +63,6 @@ const renderMermaidDiagrams = async () => {
 }
 
 onMounted(() => {
-    mermaid.initialize({
-        startOnLoad: false,
-        theme: 'default',
-        securityLevel: 'loose',
-    })
     renderMermaidDiagrams()
 })
 

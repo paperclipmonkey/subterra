@@ -1,6 +1,6 @@
 <template>
   <div v-if="huts.length === 0" class="text-center py-8">
-    <v-icon size="64" color="grey lighten-10" icon="mdi-map-marker-off" class="mb-4" />
+    <v-icon size="64" color="grey lighten-10" :icon="mdiMapMarkerOff" class="mb-4" />
     <h3 class="text-h6 font-weight-medium text-grey-darken-1">No huts found</h3>
     <p class="text-body-2 text-grey-darken-1">Try adjusting your search.</p>
   </div>
@@ -16,11 +16,11 @@
         </v-img>
         <v-card-text>
           <div class="mb-2">
-            <v-icon size="small" start>mdi-home-group</v-icon>
+            <v-icon size="small" start :icon="mdiHomeGroup" />
             {{ hut.club?.name || 'Unknown Club' }}
           </div>
           <div v-if="hut.location_lat && hut.location_lng" class="text-caption">
-            <v-icon size="small" start>mdi-map-marker</v-icon>
+            <v-icon size="small" start :icon="mdiMapMarker" />
             {{ hut.location_lat.toFixed(4) }}, {{ hut.location_lng.toFixed(4) }}
           </div>
         </v-card-text>
@@ -30,6 +30,7 @@
 </template>
 
 <script setup>
+import { mdiHomeGroup, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
 defineProps({
     huts: {
         type: Array,

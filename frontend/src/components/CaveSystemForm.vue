@@ -75,7 +75,7 @@
               <v-img :src="file.thumbnail_url" cover />
             </v-avatar>
             <v-avatar v-else color="grey-lighten-2" rounded>
-              <v-icon>mdi-file</v-icon>
+              <v-icon :icon="mdiFile" />
             </v-avatar>
           </template>
 
@@ -112,7 +112,7 @@
           <template #append>
             <v-btn
               color="red"
-              icon="mdi-delete"
+              :icon="mdiDelete"
               variant="text"
               size="small"
               @click="toggleFileDeletion(file.id)"
@@ -125,7 +125,7 @@
         <v-list-item v-for="(item, index) in pendingFiles" :key="item.id">
           <template #prepend>
             <v-avatar color="blue-lighten-4" rounded>
-              <v-icon>mdi-file-plus</v-icon>
+              <v-icon :icon="mdiFilePlus" />
             </v-avatar>
           </template>
           
@@ -151,7 +151,7 @@
           <template #append>
             <v-btn
               color="red"
-              icon="mdi-close"
+              :icon="mdiClose"
               variant="text"
               size="small"
               @click="removePendingFile(index)"
@@ -167,7 +167,7 @@
         chips
         show-size
         counter
-        prepend-icon="mdi-paperclip"
+        :prepend-icon="mdiPaperclip"
         @update:model-value="addFiles"
       />
 
@@ -184,6 +184,8 @@
 </template>
 
 <script setup>
+import { mdiClose, mdiDelete, mdiFile, mdiFilePlus, mdiPaperclip } from '@mdi/js'
+
 import { ref, watch, onMounted } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
