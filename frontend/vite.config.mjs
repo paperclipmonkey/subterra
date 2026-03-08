@@ -116,18 +116,6 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       cssCodeSplit: true,
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('vuetify')) return 'vendor-vuetify'
-              if (id.includes('maplibre-gl')) return 'vendor-maplibre'
-              if (id.includes('chart.js') || id.includes('vue-chartjs')) return 'vendor-charts'
-              return 'vendor'
-            }
-          }
-        }
-      }
     }
   }
 })
