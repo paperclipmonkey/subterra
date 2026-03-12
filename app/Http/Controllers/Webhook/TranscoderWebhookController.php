@@ -39,8 +39,9 @@ class TranscoderWebhookController extends Controller
         $mediaModel = $this->resolveMediaModel($labels['media_model'] ?? '');
         $mediaId = (int) ($labels['media_id'] ?? 0);
         $outputDir = base64_decode($labels['output_dir'] ?? '');
+        $inputPrefix = base64_decode($labels['input_prefix'] ?? '');
 
-        if (!$mediaModel || !$mediaId || !$outputDir) {
+        if (!$mediaModel || !$mediaId || !$outputDir || !$inputPrefix) {
             Log::error('TranscoderWebhook: missing required job labels', ['labels' => $labels]);
 
             return response()->json(['status' => 'error', 'message' => 'Missing job labels'], 400);
@@ -66,10 +67,9 @@ class TranscoderWebhookController extends Controller
                 Storage::disk('gcs_staging')->readStream($gcsOutputPath)
             );
 
-            // Clean up the GCS staging files for this job
-            $inputPrefix = 'input/';
-            Storage::disk('gcs_staging')->delete($gcsOutputPath);
+            // Clean up both the input and output files from GCS staging
             $this->deleteGcsDirectory($outputDir);
+            $this->deleteGcsDirectory($inputPrefix);
 
             // Update the media record to point at the new MP4 file
             $filenameColumn = property_exists($media, 'filename') ? 'filename' : 'path';

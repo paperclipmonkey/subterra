@@ -83,7 +83,8 @@ class TranscodeJobTest extends TestCase
 
             return $labels['media_model'] === 'trip_media'
                 && $labels['media_id'] === '42'
-                && !empty($labels['output_dir']);
+                && !empty($labels['output_dir'])
+                && !empty($labels['input_prefix']);
         });
     }
 

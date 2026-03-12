@@ -63,7 +63,9 @@ class TranscoderWebhookControllerTest extends TestCase
 
         // Place a fake transcoded MP4 on the GCS staging disk
         $outputDir = 'output/some-uuid/';
+        $inputPrefix = 'input/some-input-uuid/';
         Storage::disk('gcs_staging')->put($outputDir.'sd0000000000.mp4', 'transcoded-content');
+        Storage::disk('gcs_staging')->put($inputPrefix.'original-video.mp4', 'original-content');
 
         $payload = $this->buildPubSubPayload([
             'state' => 'SUCCEEDED',
@@ -71,6 +73,7 @@ class TranscoderWebhookControllerTest extends TestCase
                 'media_model' => 'cave_media',
                 'media_id' => (string) $media->id,
                 'output_dir' => base64_encode($outputDir),
+                'input_prefix' => base64_encode($inputPrefix),
             ],
         ]);
 
@@ -94,7 +97,9 @@ class TranscoderWebhookControllerTest extends TestCase
         ]);
 
         $outputDir = 'output/trip-uuid/';
+        $inputPrefix = 'input/trip-input-uuid/';
         Storage::disk('gcs_staging')->put($outputDir.'sd0000000000.mp4', 'transcoded-content');
+        Storage::disk('gcs_staging')->put($inputPrefix.'trip-raw.mp4', 'original-content');
 
         $payload = $this->buildPubSubPayload([
             'state' => 'SUCCEEDED',
@@ -102,6 +107,7 @@ class TranscoderWebhookControllerTest extends TestCase
                 'media_model' => 'trip_media',
                 'media_id' => (string) $tripMedia->id,
                 'output_dir' => base64_encode($outputDir),
+                'input_prefix' => base64_encode($inputPrefix),
             ],
         ]);
 
@@ -112,8 +118,9 @@ class TranscoderWebhookControllerTest extends TestCase
         // s3_clone should have the new file
         Storage::disk('s3_clone')->assertExists('trips/trip-raw.mp4');
 
-        // Staging file should be cleaned up
+        // Both staging directories should be cleaned up
         Storage::disk('gcs_staging')->assertMissing($outputDir.'sd0000000000.mp4');
+        Storage::disk('gcs_staging')->assertMissing($inputPrefix.'trip-raw.mp4');
 
         $tripMedia->refresh();
         $this->assertStringEndsWith('.mp4', $tripMedia->filename);
@@ -153,6 +160,7 @@ class TranscoderWebhookControllerTest extends TestCase
     public function it_returns_200_when_media_record_is_not_found(): void
     {
         $outputDir = 'output/gone-uuid/';
+        $inputPrefix = 'input/gone-input-uuid/';
         Storage::disk('gcs_staging')->put($outputDir.'sd0000000000.mp4', 'content');
 
         $payload = $this->buildPubSubPayload([
@@ -161,6 +169,7 @@ class TranscoderWebhookControllerTest extends TestCase
                 'media_model' => 'cave_media',
                 'media_id' => '99999',
                 'output_dir' => base64_encode($outputDir),
+                'input_prefix' => base64_encode($inputPrefix),
             ],
         ]);
 

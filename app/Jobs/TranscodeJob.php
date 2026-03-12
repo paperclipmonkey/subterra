@@ -49,13 +49,14 @@ class TranscodeJob implements ShouldQueue
             inputUri: "gs://{$bucket}/{$inputKey}",
             outputUri: "gs://{$bucket}/{$outputDir}",
             outputDir: $outputDir,
+            inputKey: $inputKey,
         );
     }
 
     /**
      * Submit a job to the GCP Transcoder API using the web-hd-mp4 template.
      */
-    protected function submitTranscoderJob(string $inputUri, string $outputUri, string $outputDir): void
+    protected function submitTranscoderJob(string $inputUri, string $outputUri, string $outputDir, string $inputKey): void
     {
         $projectId = config('services.gcp.project_id');
         $location = config('services.gcp.location', 'europe-west1');
@@ -68,6 +69,7 @@ class TranscodeJob implements ShouldQueue
                 'media_model' => Str::snake(class_basename($this->mediaModel)),
                 'media_id' => (string) $this->mediaId,
                 'output_dir' => base64_encode($outputDir),
+                'input_prefix' => base64_encode(dirname($inputKey).'/'),
             ],
         ];
 
