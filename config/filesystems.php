@@ -78,6 +78,35 @@ return [
             'visibility' => 'public',
             'throw' => false,
         ],
+
+        // S3-compatible disk used as primary storage for the transcoding pipeline
+        's3_clone' => env('BUCKET_NAME') ? [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_REGION'),
+            'bucket' => env('BUCKET_NAME'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT_URL_S3'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+        ] : [
+            'driver' => 'local',
+            'root' => storage_path('app/public'),
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
+        // GCS staging bucket used as a temporary area for GCP video transcoding
+        'gcs_staging' => [
+            'driver' => 'gcs',
+            'project_id' => env('GCS_PROJECT_ID'),
+            'key_file_path' => env('GCS_KEY_FILE'),
+            'key_file' => env('GCS_KEY_FILE_JSON') ? json_decode(env('GCS_KEY_FILE_JSON'), true) : null,
+            'bucket' => env('GCS_TRANSCODER_BUCKET', 'video-transcode-staging'),
+            'throw' => false,
+        ],
     ],
 
     /*

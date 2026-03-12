@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use League\Flysystem\Filesystem;
+use League\Flysystem\GoogleCloudStorage\GoogleCloudStorageAdapter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +48,24 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('user_without_scopes', function ($id) {
             // Use the correct namespace for your User model
             return User::withoutGlobalScopes()->findOrFail($id);
+        });
+
+        // Register the GCS storage driver used for the transcoding staging bucket
+        Storage::extend('gcs', function ($app, array $config) {
+            $storageClient = new \Google\Cloud\Storage\StorageClient([
+                'projectId' => $config['project_id'] ?? null,
+                'keyFilePath' => !empty($config['key_file_path']) ? $config['key_file_path'] : null,
+                'keyFile' => !empty($config['key_file']) ? $config['key_file'] : null,
+            ]);
+
+            $bucket = $storageClient->bucket($config['bucket']);
+            $adapter = new GoogleCloudStorageAdapter($bucket);
+
+            return new \Illuminate\Filesystem\FilesystemAdapter(
+                new Filesystem($adapter),
+                $adapter,
+                $config
+            );
         });
     }
 }

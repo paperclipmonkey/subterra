@@ -24,6 +24,9 @@ Route::get('/user', function (Request $request) {
 Route::post('/webhooks/clicksend/sms', [\App\Http\Controllers\Webhook\ClickSendController::class, 'handleSms'])
     ->middleware('throttle:30,1');
 
+Route::post('/webhooks/gcp/transcoder', [\App\Http\Controllers\Webhook\TranscoderWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1');
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
     Route::get('/callouts/active', [App\Http\Controllers\CalloutController::class, 'active']);
