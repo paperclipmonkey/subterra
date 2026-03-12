@@ -95,13 +95,27 @@
               <v-row>
                 <v-col>
                   <p class="mb-2">Review requests from users wanting to join the club.</p>
-                  <v-list v-if="pendingMembers.length > 0" lines="one">
+                  <div v-if="loadingPending" class="d-flex justify-center align-center py-6">
+                    <v-progress-circular indeterminate color="primary" />
+                  </div>
+                  <v-list v-else-if="pendingMembers.length > 0" lines="one">
                     <v-list-item
                       v-for="pending in pendingMembers"
                       :key="pending.id"
-                      :title="pending.name"
                       :subtitle="pending.email"
                     >
+                      <template #title>
+                        <span
+                          v-if="appStore.user?.is_admin"
+                          class="text-primary"
+                          style="cursor: pointer; text-decoration: underline;"
+                          role="button"
+                          tabindex="0"
+                          @click="navigateToUserAdmin(pending)"
+                          @keydown.enter="navigateToUserAdmin(pending)"
+                        >{{ pending.name }}</span>
+                        <span v-else>{{ pending.name }}</span>
+                      </template>
                       <template #append>
                         <v-btn
                           color="green"
@@ -122,7 +136,7 @@
                       </template>
                     </v-list-item>
                   </v-list>
-                  <p v-else class="text-grey mt-4">No pending join requests.</p>
+                  <p v-else-if="!loadingPending" class="text-grey mt-4">No pending join requests.</p>
                 </v-col>
               </v-row>
             </v-container>
@@ -131,8 +145,13 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn color="blue darken-1" text @click="closeDialog">Cancel</v-btn>
-        <v-btn color="blue darken-1" text :loading="saving" @click="saveClubAndMembers">Save</v-btn>
+        <template v-if="tab === 'pending'">
+          <v-btn color="blue darken-1" text @click="closeDialog">Close</v-btn>
+        </template>
+        <template v-else>
+          <v-btn color="blue darken-1" text @click="closeDialog">Cancel</v-btn>
+          <v-btn color="blue darken-1" text :loading="saving" @click="saveClubAndMembers">Save</v-btn>
+        </template>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -181,6 +200,7 @@ const availableUsers = ref([])
 const selectedUserToAdd = ref(null)
 const memberDataChanged = ref(false)
 const saving = ref(false)
+const loadingPending = ref(false)
 const router = useRouter()
 const toast = useToast()
 
@@ -221,9 +241,14 @@ const fetchClubMembers = async () => {
 }
 const fetchPendingMembers = async () => {
   if (!props.clubSlug) return
-  const pendingApi = mande(`/api/admin/clubs/${props.clubSlug}/pending-members`)
-  const response = await pendingApi.get()
-  pendingMembers.value = (response.data || response).map(user => ({ ...user, loading: false }))
+  loadingPending.value = true
+  try {
+    const pendingApi = mande(`/api/admin/clubs/${props.clubSlug}/pending-members`)
+    const response = await pendingApi.get()
+    pendingMembers.value = (response.data || response).map(user => ({ ...user, loading: false }))
+  } finally {
+    loadingPending.value = false
+  }
 }
 const addUserToClub = (user) => {
   if (user && !clubMembers.value.some(m => m.id === user.id)) {
@@ -295,6 +320,11 @@ const saveClubAndMembers = async () => {
   }
 }
 const closeDialog = () => { dialogVisible.value = false }
+
+const navigateToUserAdmin = (user) => {
+  dialogVisible.value = false
+  router.push({ path: '/admin/users', query: { search: user.email } })
+}
 
 onMounted(async () => {
   await fetchClub()
