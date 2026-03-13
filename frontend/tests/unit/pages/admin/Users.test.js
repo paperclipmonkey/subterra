@@ -19,6 +19,9 @@ vi.mock('mande', () => ({
 vi.mock('vue-router', () => ({
     useRouter: () => ({
         push: vi.fn()
+    }),
+    useRoute: () => ({
+        query: {}
     })
 }))
 
