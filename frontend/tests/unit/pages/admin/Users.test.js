@@ -1,5 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+
+// Mock vue-router
+vi.mock('vue-router', () => ({
+    useRouter: () => ({
+        push: vi.fn()
+    }),
+    useRoute: () => ({
+        query: {}
+    })
+}))
+
 import Users from '@/pages/admin/users.vue'
 
 // Mock mande
@@ -13,16 +24,6 @@ vi.mock('mande', () => ({
         put: mockPut,
         delete: mockDelete
     }))
-}))
-
-// Mock vue-router
-vi.mock('vue-router', () => ({
-    useRouter: () => ({
-        push: vi.fn()
-    }),
-    useRoute: () => ({
-        query: {}
-    })
 }))
 
 // Mock app store

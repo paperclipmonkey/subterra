@@ -109,7 +109,7 @@ import { mdiDatabaseEdit, mdiDelete, mdiMagnify, mdiPhoneInTalk, mdiShieldCrown 
 import moment from 'moment'
 import { ref, onMounted } from 'vue'
 import { mande } from 'mande'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -118,7 +118,7 @@ const users = ref([])
 const loading = ref(false)
 const search = ref('')
 const router = useRouter()
-const route = useRoute()
+const currentRoute = useRoute()
 const appStore = useAppStore()
 const notificationStore = useNotificationStore()
 
@@ -267,8 +267,8 @@ const handleRowClick = (event, { item }) => {
 }
 
 onMounted(() => {
-  if (route.query.search) {
-    search.value = Array.isArray(route.query.search) ? route.query.search[0] : String(route.query.search)
+  if (currentRoute.query.search) {
+    search.value = Array.isArray(currentRoute.query.search) ? currentRoute.query.search[0] : String(currentRoute.query.search)
   }
   fetchUsers()
 })
