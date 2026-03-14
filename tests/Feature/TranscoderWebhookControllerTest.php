@@ -127,7 +127,7 @@ class TranscoderWebhookControllerTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_returns_400_when_required_labels_are_missing(): void
+    public function it_returns_200_when_required_labels_are_missing(): void
     {
         $payload = $this->buildPubSubPayload([
             'state' => 'SUCCEEDED',
@@ -136,11 +136,12 @@ class TranscoderWebhookControllerTest extends TestCase
 
         $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
 
-        $response->assertStatus(400)->assertJson(['status' => 'error']);
+        // Returns 200 to acknowledge — invalid labels will never succeed on retry
+        $response->assertOk()->assertJson(['status' => 'ignored']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_ignores_unknown_media_model_labels(): void
+    public function it_returns_200_for_unknown_media_model_labels(): void
     {
         $payload = $this->buildPubSubPayload([
             'state' => 'SUCCEEDED',
@@ -148,12 +149,14 @@ class TranscoderWebhookControllerTest extends TestCase
                 'media_model' => 'unknown_model',
                 'media_id' => '1',
                 'output_dir' => base64_encode('output/x/'),
+                'input_prefix' => base64_encode('input/x/'),
             ],
         ]);
 
         $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
 
-        $response->assertStatus(400)->assertJson(['status' => 'error']);
+        // Returns 200 to acknowledge — unknown models will never succeed on retry
+        $response->assertOk()->assertJson(['status' => 'ignored']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -174,6 +177,34 @@ class TranscoderWebhookControllerTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
+
+        $response->assertOk()->assertJson(['status' => 'ignored']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_requests_with_invalid_bearer_token(): void
+    {
+        config(['services.gcp.webhook_secret' => 'correct-secret']);
+
+        $payload = $this->buildPubSubPayload(['state' => 'SUCCEEDED']);
+
+        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload, [
+            'Authorization' => 'Bearer wrong-secret',
+        ]);
+
+        $response->assertStatus(401);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_accepts_requests_with_valid_bearer_token(): void
+    {
+        config(['services.gcp.webhook_secret' => 'correct-secret']);
+
+        $payload = $this->buildPubSubPayload(['state' => 'RUNNING']);
+
+        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload, [
+            'Authorization' => 'Bearer correct-secret',
+        ]);
 
         $response->assertOk()->assertJson(['status' => 'ignored']);
     }

@@ -37,10 +37,19 @@ class TranscodeJob implements ShouldQueue
         $inputKey = 'input/'.Str::uuid().'/'.basename($this->filePath);
 
         // Stream the source file from the S3-compatible disk to GCS staging — no full-file buffering
-        Storage::disk('gcs_staging')->writeStream(
-            $inputKey,
-            Storage::disk('s3_clone')->readStream($this->filePath)
-        );
+        $sourceStream = Storage::disk('s3_clone')->readStream($this->filePath);
+        if (!$sourceStream) {
+            throw new \RuntimeException("TranscodeJob: failed to read source file '{$this->filePath}' from s3_clone disk.");
+        }
+
+        $written = Storage::disk('gcs_staging')->writeStream($inputKey, $sourceStream);
+        if (is_resource($sourceStream)) {
+            fclose($sourceStream);
+        }
+
+        if (!$written) {
+            throw new \RuntimeException("TranscodeJob: failed to write '{$inputKey}' to gcs_staging disk.");
+        }
 
         $bucket = config('filesystems.disks.gcs_staging.bucket');
         $outputDir = 'output/'.Str::uuid().'/';

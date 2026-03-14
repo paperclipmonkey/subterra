@@ -38,4 +38,12 @@ return [
         'test_phone' => env('GCP_WATCHDOG_TEST_PHONE'),
     ],
 
+    'gcp' => [
+        'project_id' => env('GCP_PROJECT_ID'),
+        'location' => env('GCP_LOCATION', 'europe-west2'),
+        'transcoder_pubsub_topic' => env('GCP_TRANSCODER_PUBSUB_TOPIC'),
+        'webhook_secret' => env('GCP_WEBHOOK_SECRET'),
+        'image_processor_url' => env('GCP_IMAGE_PROCESSOR_URL'),
+    ],
+
 ];

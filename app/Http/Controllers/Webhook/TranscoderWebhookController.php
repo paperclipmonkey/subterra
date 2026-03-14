@@ -10,6 +10,16 @@ use Illuminate\Support\Facades\Storage;
 class TranscoderWebhookController extends Controller
 {
     /**
+     * Media model label → [class, filename attribute] mapping.
+     * RouteMedia uses 'path' instead of 'filename'.
+     */
+    private const MEDIA_MODEL_MAP = [
+        'cave_media' => ['class' => \App\Models\CaveMedia::class, 'attribute' => 'filename'],
+        'trip_media' => ['class' => \App\Models\TripMedia::class, 'attribute' => 'filename'],
+        'route_media' => ['class' => \App\Models\RouteMedia::class, 'attribute' => 'path'],
+    ];
+
+    /**
      * Handle a Pub/Sub push notification from GCP when a transcoding job completes.
      *
      * GCP pushes a JSON payload with a base64-encoded `message.data` field containing
@@ -19,6 +29,17 @@ class TranscoderWebhookController extends Controller
      */
     public function handle(Request $request): \Illuminate\Http\JsonResponse
     {
+        // Verify webhook bearer token when configured
+        $expectedSecret = config('services.gcp.webhook_secret');
+        if ($expectedSecret) {
+            $providedToken = $request->bearerToken();
+            if (!$providedToken || !hash_equals($expectedSecret, $providedToken)) {
+                Log::warning('TranscoderWebhook: unauthorized request', ['ip' => $request->ip()]);
+
+                return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+            }
+        }
+
         // Pub/Sub push messages arrive as { "message": { "data": "<base64>", "attributes": {...} } }
         $messageData = $request->input('message.data');
 
@@ -36,20 +57,24 @@ class TranscoderWebhookController extends Controller
         }
 
         $labels = $notification['labels'] ?? [];
-        $mediaModel = $this->resolveMediaModel($labels['media_model'] ?? '');
+        $modelConfig = self::MEDIA_MODEL_MAP[$labels['media_model'] ?? ''] ?? null;
         $mediaId = (int) ($labels['media_id'] ?? 0);
         $outputDir = base64_decode($labels['output_dir'] ?? '');
         $inputPrefix = base64_decode($labels['input_prefix'] ?? '');
 
-        if (!$mediaModel || !$mediaId || !$outputDir || !$inputPrefix) {
-            Log::error('TranscoderWebhook: missing required job labels', ['labels' => $labels]);
+        if (!$modelConfig || !$mediaId || !$outputDir || !$inputPrefix) {
+            // Return 200 to acknowledge — these will never succeed on retry
+            Log::error('TranscoderWebhook: missing or invalid job labels', ['labels' => $labels]);
 
-            return response()->json(['status' => 'error', 'message' => 'Missing job labels'], 400);
+            return response()->json(['status' => 'ignored'], 200);
         }
 
-        $media = $mediaModel::find($mediaId);
+        $mediaClass = $modelConfig['class'];
+        $filenameAttribute = $modelConfig['attribute'];
+
+        $media = $mediaClass::find($mediaId);
         if (!$media) {
-            Log::warning("TranscoderWebhook: {$mediaModel} #{$mediaId} not found, skipping.");
+            Log::warning("TranscoderWebhook: {$mediaClass} #{$mediaId} not found, skipping.");
 
             return response()->json(['status' => 'ignored'], 200);
         }
@@ -58,7 +83,8 @@ class TranscoderWebhookController extends Controller
         $gcsOutputPath = rtrim($outputDir, '/').'/'.'sd0000000000.mp4';
 
         // Destination on the primary S3-compatible disk
-        $s3DestPath = dirname($media->filename).'/'.pathinfo($media->filename, PATHINFO_FILENAME).'.mp4';
+        $currentPath = $media->{$filenameAttribute};
+        $s3DestPath = dirname($currentPath).'/'.pathinfo($currentPath, PATHINFO_FILENAME).'.mp4';
 
         try {
             // Stream the transcoded MP4 from GCS staging to the S3-compatible disk
@@ -72,11 +98,10 @@ class TranscoderWebhookController extends Controller
             $this->deleteGcsDirectory($inputPrefix);
 
             // Update the media record to point at the new MP4 file
-            $filenameColumn = property_exists($media, 'filename') ? 'filename' : 'path';
-            $media->update([$filenameColumn => $s3DestPath]);
+            $media->update([$filenameAttribute => $s3DestPath]);
 
             Log::info('TranscoderWebhook: transcoded video stored', [
-                'media_model' => $mediaModel,
+                'media_model' => $mediaClass,
                 'media_id' => $mediaId,
                 'path' => $s3DestPath,
             ]);
@@ -90,22 +115,6 @@ class TranscoderWebhookController extends Controller
         }
 
         return response()->json(['status' => 'ok'], 200);
-    }
-
-    /**
-     * Map a snake_case label value back to a media model class.
-     *
-     * Only models that have a `filename` or `path` column are supported.
-     */
-    private function resolveMediaModel(string $label): ?string
-    {
-        $map = [
-            'cave_media' => \App\Models\CaveMedia::class,
-            'trip_media' => \App\Models\TripMedia::class,
-            'route_media' => \App\Models\RouteMedia::class,
-        ];
-
-        return $map[$label] ?? null;
     }
 
     /**
