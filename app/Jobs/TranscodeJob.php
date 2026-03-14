@@ -68,7 +68,7 @@ class TranscodeJob implements ShouldQueue
     protected function submitTranscoderJob(string $inputUri, string $outputUri, string $outputDir, string $inputKey): void
     {
         $projectId = config('services.gcp.project_id');
-        $location = config('services.gcp.location', 'europe-west1');
+        $location = config('services.gcp.location');
 
         $payload = [
             'inputUri' => $inputUri,
