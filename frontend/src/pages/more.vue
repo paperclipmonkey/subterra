@@ -49,12 +49,17 @@
       <v-col cols="12">
         <v-divider class="my-4" />
       </v-col>
-      <v-col cols="6">
+      <v-col cols="4">
+        <v-btn block variant="text" to="/pages/about" class="text-none">
+          About
+        </v-btn>
+      </v-col>
+      <v-col cols="4">
         <v-btn block variant="text" to="/pages/terms-of-service" class="text-none">
           Terms of Service
         </v-btn>
       </v-col>
-      <v-col cols="6">
+      <v-col cols="4">
         <v-btn block variant="text" to="/pages/privacy-policy" class="text-none">
           Privacy Policy
         </v-btn>
