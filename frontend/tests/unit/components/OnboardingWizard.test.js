@@ -133,7 +133,7 @@ describe('OnboardingWizard.vue', () => {
 
         wrapper.vm.step = 1
         wrapper.vm.visible = true
-        wrapper.vm.userName = 'New Caver'
+        wrapper.vm.userName = 'Joe Bloggs'
         wrapper.vm.nameValid = true
         await wrapper.vm.$nextTick()
 
@@ -143,7 +143,35 @@ describe('OnboardingWizard.vue', () => {
 
         expect(mockPut).toHaveBeenCalledWith(
             '/api/users/me',
-            { name: 'New Caver' }
+            { name: 'Joe Bloggs' }
         )
+    })
+
+    describe('nameRules validation', () => {
+        it('rejects a name with no space (single word)', () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            const nameRules = wrapper.vm.nameRules
+
+            const results = nameRules.map(rule => rule('John'))
+            // The space rule should fail
+            expect(results).toContain('Please enter your full name (first and last name)')
+        })
+
+        it('accepts a name with first and last name', () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            const nameRules = wrapper.vm.nameRules
+
+            const results = nameRules.map(rule => rule('John Smith'))
+            // All rules should return true
+            expect(results.every(r => r === true)).toBe(true)
+        })
+
+        it('rejects an empty name', () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            const nameRules = wrapper.vm.nameRules
+
+            const results = nameRules.map(rule => rule(''))
+            expect(results).toContain('Name is required')
+        })
     })
 })

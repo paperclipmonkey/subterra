@@ -16,11 +16,12 @@
         <h3>Full Name:</h3>
         <v-text-field
           v-model="profile.name"
-          label="Your full name"
+          label="Your full name (first and last)"
           outlined
           :rules="nameRules"
           :error-messages="errorMessages('name')"
-          hint="This will be displayed to other cavers"
+          hint="Your name may be passed to cave rescue as an emergency point of contact and should be your legal first and last name"
+          persistent-hint
           required
         />
       </div>
@@ -198,7 +199,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiEarth } from '@mdi/js'
+import { mdiAccountGroup, mdiAlert, mdiEarth } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -235,8 +236,9 @@ const deletingAccount = ref(false)
 // Name validation rules
 const nameRules = [
   v => !!v || 'Name is required',
-  v => (v && v.length >= 2) || 'Name must be at least 2 characters',
-  v => (v && v.length <= 100) || 'Name must be less than 100 characters'
+  v => (v && v.trim().includes(' ')) || 'Please enter your full name (first and last name)',
+  v => (v && v.trim().length >= 4) || 'Name must be at least 4 characters',
+  v => (v && v.length <= 100) || 'Name must be less than 100 characters',
 ]
 
 const phoneRules = [
@@ -360,7 +362,7 @@ const deleteAccount = async () => {
   try {
     await api.delete(`/api/users/me`)
     toast.success('Your account has been deleted successfully')
-    router.push({ name: '/' })
+        router.push({ path: '/' })
   } catch (error) {
     console.error('Error deleting account:', error)
   } finally {

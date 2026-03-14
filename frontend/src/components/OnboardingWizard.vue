@@ -22,15 +22,28 @@
             <v-form ref="nameForm" v-model="nameValid" @submit.prevent="nextStep">
               <v-text-field
                 v-model="userName"
-                label="What's your name?"
+                label="Your full name (first and last)"
                 placeholder="e.g., John Smith"
                 variant="outlined"
                 color="primary"
-                :rules="[v => !!v || 'Name is required']"
+                :rules="nameRules"
                 :prepend-inner-icon="mdiAccountOutline"
+                hint="Please use your full name so others can identify you correctly when selecting callout members."
+                persistent-hint
                 class="mb-4"
               />
             </v-form>
+            <v-alert
+              color="warning"
+              variant="tonal"
+              :icon="mdiAlertOutline"
+              density="compact"
+              class="mt-4 text-left"
+            >
+              <div class="text-caption">
+                Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
+              </div>
+            </v-alert>
           </v-card-text>
         </v-window-item>
 
@@ -109,7 +122,7 @@
 
         <!-- Step 3: Feature Tour -->
         <v-window-item :value="3">
-          <v-card-text class="pa-8">
+          <v-card-text class="pa-8" style="max-height: 70vh; overflow-y: auto;">
             <div class="text-center mb-6">
               <v-avatar color="success" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiCompassOutline" />
@@ -175,7 +188,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAlertOctagram, mdiArrowRight, mdiCompassOutline, mdiEarth, mdiHelpCircleOutline, mdiInformationOutline, mdiMagnify, mdiNotebookOutline, mdiPlus, mdiTrophyOutline } from '@mdi/js'
+import { mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAlertOctagram, mdiAlertOutline, mdiArrowRight, mdiCompassOutline, mdiEarth, mdiHelpCircleOutline, mdiInformationOutline, mdiMagnify, mdiNotebookOutline, mdiPlus, mdiTrophyOutline } from '@mdi/js'
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
@@ -188,6 +201,13 @@ const loading = ref(false)
 const userName = ref('')
 const nameValid = ref(false)
 const nameForm = ref(null)
+
+const nameRules = [
+  v => !!v || 'Name is required',
+  v => (v && v.trim().includes(' ')) || 'Please enter your full name (first and last name)',
+  v => (v && v.trim().length >= 4) || 'Name must be at least 4 characters',
+  v => (v && v.length <= 100) || 'Name must be less than 100 characters',
+]
 
 const clubSearch = ref('')
 const allClubs = ref([])
@@ -253,25 +273,25 @@ const tourItems = [
     title: 'My Trips & Logbook',
     icon: mdiNotebookOutline,
     color: 'blue',
-    text: 'Click the checkmark on any cave to mark it as done. This builds your personal logbook and tracks your progress.'
+    text: 'Click the checkmark on any cave to mark it as done. This builds your personal logbook.'
   },
   {
     title: 'Cave Details',
     icon: mdiEarth,
     color: 'green',
-    text: 'Explore cave descriptions, history, and photos. Access data and maps will unlock once your club is approved.'
+    text: 'Explore cave descriptions, history, and photos. (Access to maps will unlock after club approval)'
   },
   {
     title: 'Safety Callouts',
     icon: mdiAlertOctagram,
     color: 'orange',
-    text: 'A vital safety feature for cavers. Set trip deadlines and emergency contacts (Unlocks after approval).'
+    text: 'A vital safety feature for cavers. Set trip deadlines and emergency contacts (Unlocks after club approval).'
   },
   {
     title: 'Medals & Stats',
     icon: mdiTrophyOutline,
     color: 'purple',
-    text: 'Earn medals for your caving achievements as you log more trips and explore new systems.'
+    text: 'Earn medals for your caving achievements as you log more trips.'
   },
 ]
 
