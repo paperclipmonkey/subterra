@@ -144,7 +144,7 @@ describe('TripNew - Duration Loading', () => {
         return Promise.resolve({
           json: () => Promise.resolve({
             data: [
-              { id: 1, name: 'Test User', photo: null, club: 'Test Club' }
+              { id: 1, name: 'Test User', photo: null, clubs: [{ name: 'Test Club', slug: 'test-club' }] }
             ]
           })
         })

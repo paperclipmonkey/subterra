@@ -76,22 +76,34 @@
 
           <v-card title="Who" class="mb-4">
             <v-card-text>
-              <v-autocomplete v-model="trip.participants" v-model:search="userSearch" label="Participants" :items="users" item-title="name" item-value="id"
-                              multiple chips closable-chips
-                              :rules="rules.participants"
+              <v-autocomplete ref="userAutocomplete" v-model="userSelect" v-model:search="userSearch" label="Add Participant" :items="availableUsers" item-title="name" item-value="id"
+                              variant="outlined" :prepend-inner-icon="mdiAccountSearch" return-object
+                              clearable hint="Type to search for users..."
                               :loading="isSearching"
-                              :error-messages="validationErrors.participants" hint="Type to search for users. All participants can edit this report."
-                              persistent-hint autocomplete="off"
+                              :error-messages="validationErrors.participants"
+                              autocomplete="off"
                               name="random_unique_user_search_field"
-                              variant="outlined"
+                              class="mb-4"
+                              @update:model-value="addSubterraUser"
                               @update:search="onUserSearch"
                               @focus="onUserSearch('')">
-                <template #chip="{ props, item }">
-                  <v-chip v-bind="props" :prepend-avatar="item.raw.photo" :text="item.raw.name" />
-                </template>
                 <template #item="{ props, item }">
-                  <v-list-item v-bind="props" :prepend-avatar="item.raw.photo" :subtitle="item.raw.club"
-                               :title="item.raw.name" />
+                  <v-list-item v-bind="props">
+                    <template #prepend>
+                      <v-avatar v-if="item.raw.photo" :image="item.raw.photo" class="mr-3" size="40" />
+                      <v-avatar v-else color="primary" class="mr-3" size="40">
+                        <span class="text-white">{{ item.raw.name.charAt(0) }}</span>
+                      </v-avatar>
+                    </template>
+                    <template #title>
+                      <div class="d-flex align-center">
+                        <span class="text-body-1">{{ item.raw.name }}</span>
+                      </div>
+                    </template>
+                    <template v-if="item.raw.clubs && item.raw.clubs.length" #subtitle>
+                      <span class="text-caption text-medium-emphasis">{{ item.raw.clubs.map(c => c.name).join(', ') }}</span>
+                    </template>
+                  </v-list-item>
                 </template>
                 <template #no-data>
                   <v-list-item>
@@ -106,6 +118,36 @@
                   </v-list-item>
                 </template>
               </v-autocomplete>
+
+              <div class="mb-4">
+                <div v-for="(userId, index) in trip.participants" :key="userId" class="mb-3">
+                  <v-card variant="outlined" class="pa-3">
+                    <div class="d-flex align-center w-100">
+                      <template v-if="getParticipant(userId)">
+                        <v-avatar v-if="getParticipant(userId).photo" :image="getParticipant(userId).photo" class="mr-4" size="48" />
+                        <v-avatar v-else color="primary" class="mr-4" size="48">
+                          <span class="text-white">{{ getParticipant(userId).name.charAt(0) }}</span>
+                        </v-avatar>
+
+                        <div class="flex-grow-1">
+                          <div class="text-subtitle-1 font-weight-bold">{{ getParticipant(userId).name }}</div>
+                          <div v-if="getParticipant(userId).clubs && getParticipant(userId).clubs.length" class="text-caption text-medium-emphasis">
+                            {{ getParticipant(userId).clubs.map(c => c.name).join(', ') }}
+                          </div>
+                        </div>
+
+                        <v-btn icon color="error" size="small" variant="text" @click="removeParticipant(index)">
+                          <v-icon :icon="mdiDelete" />
+                        </v-btn>
+                      </template>
+                    </div>
+                  </v-card>
+                </div>
+              </div>
+
+              <v-btn variant="text" color="primary" :prepend-icon="mdiPlus" @click="showAddParticipant = true">
+                Add Manual Participant
+              </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
@@ -224,7 +266,7 @@
 </template>
 
 <script setup>
-import { mdiCamera, mdiClose, mdiContentSave, mdiDelete } from '@mdi/js'
+import { mdiAccountSearch, mdiCamera, mdiClose, mdiContentSave, mdiDelete, mdiPlus } from '@mdi/js'
 import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'
@@ -245,6 +287,34 @@ const isSaving = ref(false)
 const isAddingParticipant = ref(false)
 const isSearching = ref(false)
 const addParticipantError = ref(null)
+
+const userSelect = ref(null)
+
+const availableUsers = computed(() => {
+  return users.value.filter(u => !trip.participants.includes(u.id))
+})
+
+const getParticipant = (id) => {
+  return users.value.find(u => u.id === id)
+}
+
+const addSubterraUser = (user) => {
+  if (!user) return
+  if (!trip.participants.includes(user.id)) {
+    trip.participants.push(user.id)
+  }
+  // Double-nextTick: first tick lets Vuetify finish its selection commit,
+  // second tick resets the component after that cycle is complete.
+  nextTick(() => nextTick(() => {
+    userSelect.value = null
+    userSearch.value = ''
+    userAutocomplete.value?.reset()
+  }))
+}
+
+const removeParticipant = (index) => {
+  trip.participants.splice(index, 1)
+}
 
 const initialTripState = JSON.stringify({
   id: -1,
@@ -305,6 +375,8 @@ const userId = ref({})
 const users = ref([])
 const caves = ref([])
 const loading = ref(true)
+
+const userAutocomplete = ref(null)
 
 const userSearch = ref('')
 let searchTimeout = null
