@@ -1,7 +1,7 @@
-variable "transcoder_staging_bucket" {
-  description = "Name of the GCS bucket used as a staging area for video transcoding"
+variable "media_staging_bucket" {
+  description = "Name of the GCS bucket used as a staging area for media processing"
   type        = string
-  default     = "video-transcode-staging"
+  default     = "subterra-media-staging"
 }
 
 # Enable the Transcoder API
@@ -10,9 +10,9 @@ resource "google_project_service" "transcoder" {
   disable_on_destroy = false
 }
 
-# GCS staging bucket for video transcoding
-resource "google_storage_bucket" "transcoder_staging" {
-  name          = var.transcoder_staging_bucket
+# GCS staging bucket for media processing
+resource "google_storage_bucket" "media_staging" {
+  name          = var.media_staging_bucket
   location      = var.region
   force_destroy = true
 
@@ -31,7 +31,7 @@ data "google_project" "transcoder_project" {}
 
 # Grant the Transcoder Service Agent storage.admin on the staging bucket
 resource "google_storage_bucket_iam_member" "transcoder_sa_storage_admin" {
-  bucket = google_storage_bucket.transcoder_staging.name
+  bucket = google_storage_bucket.media_staging.name
   role   = "roles/storage.admin"
   member = "serviceAccount:service-${data.google_project.transcoder_project.number}@gcp-sa-transcoder.iam.gserviceaccount.com"
 

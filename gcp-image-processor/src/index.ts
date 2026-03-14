@@ -9,6 +9,7 @@ import express, { Request, Response } from 'express';
 import { Storage } from '@google-cloud/storage';
 import sharp from 'sharp';
 import axios from 'axios';
+import { getSecret } from './secrets';
 
 const app = express();
 app.use(express.json());
@@ -29,7 +30,7 @@ export const IMAGE_SIZES = [
  * Middleware to check API Key
  */
 const checkApiKey = (req: Request, res: Response, next: () => void) => {
-    const apiKey = process.env.IMAGE_PROCESSOR_API_KEY;
+    const apiKey = getSecret('IMAGE_PROCESSOR_API_KEY');
 
     if (!apiKey) {
         console.warn('IMAGE_PROCESSOR_API_KEY not configured. Endpoints are unprotected.');
@@ -171,7 +172,7 @@ export async function processImage(params: ProcessImageParams): Promise<void> {
     console.log(`Sending callback to ${callbackUrl}`);
     await axios.post(callbackUrl, callbackPayload, {
         headers: {
-            Authorization: `Bearer ${process.env.CALLBACK_SECRET || ''}`,
+            Authorization: `Bearer ${getSecret('CALLBACK_SECRET')}`,
             'Content-Type': 'application/json',
         },
         timeout: 10000,

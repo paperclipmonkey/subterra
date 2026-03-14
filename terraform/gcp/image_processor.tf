@@ -13,7 +13,7 @@ resource "google_service_account" "image_processor_service" {
 
 # Grant the image processor service account read/write on the GCS staging bucket
 resource "google_storage_bucket_iam_member" "image_processor_storage_admin" {
-  bucket = google_storage_bucket.transcoder_staging.name
+  bucket = google_storage_bucket.media_staging.name
   role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.image_processor_service.email}"
 }
@@ -32,6 +32,17 @@ resource "google_cloud_run_v2_service" "image_processor" {
       max_instance_count = 5
     }
 
+    volumes {
+      name = "secrets"
+      secret {
+        secret = google_secret_manager_secret.image_processor_config.secret_id
+        items {
+          version = "latest"
+          path    = "config.json"
+        }
+      }
+    }
+
     containers {
       image = "europe-west2-docker.pkg.dev/${var.project_id}/subterra-image-processor/subterra-image-processor:${var.image_processor_image_tag}"
 
@@ -45,24 +56,9 @@ resource "google_cloud_run_v2_service" "image_processor" {
         value = var.environment
       }
 
-      env {
-        name  = "IMAGE_PROCESSOR_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.image_processor_api_key.secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name  = "CALLBACK_SECRET"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.image_processor_callback_secret.secret_id
-            version = "latest"
-          }
-        }
+      volume_mounts {
+        name       = "secrets"
+        mount_path = "/secrets"
       }
 
       resources {
@@ -84,8 +80,7 @@ resource "google_cloud_run_v2_service" "image_processor" {
 
   depends_on = [
     google_project_service.run,
-    google_secret_manager_secret_version.image_processor_api_key,
-    google_secret_manager_secret_version.image_processor_callback_secret,
+    google_secret_manager_secret_version.image_processor_config,
   ]
 }
 
@@ -98,8 +93,8 @@ resource "google_cloud_run_v2_service_iam_member" "image_processor_public_access
 }
 
 # Secrets for the image processor
-resource "google_secret_manager_secret" "image_processor_api_key" {
-  secret_id = "image-processor-api-key"
+resource "google_secret_manager_secret" "image_processor_config" {
+  secret_id = "subterra-image-proc-config"
 
   replication {
     auto {}
@@ -108,28 +103,14 @@ resource "google_secret_manager_secret" "image_processor_api_key" {
   depends_on = [google_project_service.secretmanager]
 }
 
-resource "google_secret_manager_secret_version" "image_processor_api_key" {
-  secret      = google_secret_manager_secret.image_processor_api_key.id
-  secret_data = "CHANGE_ME_ON_FIRST_DEPLOY"
+resource "google_secret_manager_secret_version" "image_processor_config" {
+  secret = google_secret_manager_secret.image_processor_config.id
 
-  lifecycle {
-    ignore_changes = [secret_data]
-  }
-}
-
-resource "google_secret_manager_secret" "image_processor_callback_secret" {
-  secret_id = "image-processor-callback-secret"
-
-  replication {
-    auto {}
-  }
-
-  depends_on = [google_project_service.secretmanager]
-}
-
-resource "google_secret_manager_secret_version" "image_processor_callback_secret" {
-  secret      = google_secret_manager_secret.image_processor_callback_secret.id
-  secret_data = "CHANGE_ME_ON_FIRST_DEPLOY"
+  # Empty JSON placeholder - populate this manually with actual credentials
+  secret_data = jsonencode({
+    IMAGE_PROCESSOR_API_KEY = "CHANGE_ME"
+    CALLBACK_SECRET         = "CHANGE_ME"
+  })
 
   lifecycle {
     ignore_changes = [secret_data]
@@ -137,14 +118,8 @@ resource "google_secret_manager_secret_version" "image_processor_callback_secret
 }
 
 # Grant the service account access to read secrets
-resource "google_secret_manager_secret_iam_member" "image_processor_api_key_access" {
-  secret_id = google_secret_manager_secret.image_processor_api_key.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.image_processor_service.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "image_processor_callback_secret_access" {
-  secret_id = google_secret_manager_secret.image_processor_callback_secret.id
+resource "google_secret_manager_secret_iam_member" "image_processor_config_access" {
+  secret_id = google_secret_manager_secret.image_processor_config.id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.image_processor_service.email}"
 }
