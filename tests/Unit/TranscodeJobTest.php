@@ -30,7 +30,7 @@ class TranscodeJobTest extends TestCase
 
         config([
             'services.gcp.project_id' => 'test-project',
-            'services.gcp.location' => 'europe-west1',
+            'services.gcp.location' => 'europe-west2',
             'filesystems.disks.gcs_staging.bucket' => 'test-staging-bucket',
         ]);
 
@@ -67,7 +67,7 @@ class TranscodeJobTest extends TestCase
 
         config([
             'services.gcp.project_id' => 'test-project',
-            'services.gcp.location' => 'europe-west1',
+            'services.gcp.location' => 'europe-west2',
             'filesystems.disks.gcs_staging.bucket' => 'test-staging-bucket',
         ]);
 
@@ -99,7 +99,7 @@ class TranscodeJobTest extends TestCase
 
         config([
             'services.gcp.project_id' => 'test-project',
-            'services.gcp.location' => 'europe-west1',
+            'services.gcp.location' => 'europe-west2',
             'services.gcp.transcoder_pubsub_topic' => 'projects/test-project/topics/transcoder-notifications',
             'filesystems.disks.gcs_staging.bucket' => 'test-staging-bucket',
         ]);

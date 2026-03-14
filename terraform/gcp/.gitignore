@@ -1,0 +1,8 @@
+# Terraform local state and cache
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+# Lock file is checked in intentionally for reproducible builds
+# .terraform.lock.hcl
