@@ -49,3 +49,14 @@ variable "image_tag" {
   default     = "latest"
 }
 
+variable "webhook_secret" {
+  description = "Secret used to authenticate webhook callbacks from image processor & transcoder"
+  type        = string
+}
+
+variable "app_url" {
+  description = "Domain (with https://) of the Laravel application to send webhooks back to"
+  type        = string
+  default     = "https://subterra.world"
+}
+

@@ -27,3 +27,8 @@ output "scheduler_job_name" {
   description = "Cloud Scheduler job name"
   value       = google_cloud_scheduler_job.watchdog_checker.name
 }
+
+output "transcoder_pubsub_topic" {
+  description = "Pub/Sub topic that GCP Transcoder should notify on completion"
+  value       = google_pubsub_topic.transcoder_notifications.id
+}

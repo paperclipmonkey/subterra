@@ -170,8 +170,8 @@ class TripController extends Controller
                 'copyright' => $fileMeta['copyright'] ?? null,
             ]);
 
-            // Dispatch background job to process (scale + WebP encode) and replace the raw file
-            \App\Jobs\ProcessImageJob::dispatch($media->id, $rawPath, 'trip');
+            // Dispatch background image processing to Cloud Run
+            \App\Jobs\ProcessImageCloudJob::dispatch($rawPath, \App\Models\TripMedia::class, $media->id);
         }
     }
 

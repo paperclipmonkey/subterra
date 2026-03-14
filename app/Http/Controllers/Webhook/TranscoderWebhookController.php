@@ -29,10 +29,10 @@ class TranscoderWebhookController extends Controller
      */
     public function handle(Request $request): \Illuminate\Http\JsonResponse
     {
-        // Verify webhook bearer token when configured
+        // Verify webhook token (Supports Bearer Auth or ?token= query parameter)
         $expectedSecret = config('services.gcp.webhook_secret');
         if ($expectedSecret) {
-            $providedToken = $request->bearerToken();
+            $providedToken = $request->bearerToken() ?? $request->query('token');
             if (!$providedToken || !hash_equals($expectedSecret, $providedToken)) {
                 Log::warning('TranscoderWebhook: unauthorized request', ['ip' => $request->ip()]);
 

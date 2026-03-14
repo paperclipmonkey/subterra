@@ -74,3 +74,24 @@ resource "google_transcoder_job_template" "web_hd_mp4" {
 
   depends_on = [google_project_service.transcoder]
 }
+
+# --- Pub/sub Topic for finished transcoder jobs ---
+resource "google_pubsub_topic" "transcoder_notifications" {
+  name = "${var.app_name}-transcoder-notifications"
+}
+
+resource "google_pubsub_subscription" "transcoder_webhook" {
+  name  = "${var.app_name}-transcoder-webhook"
+  topic = google_pubsub_topic.transcoder_notifications.id
+
+  # Push message to Laravel URL containing query param auth
+  push_config {
+    push_endpoint = "${var.app_url}/api/webhooks/gcp/transcoder?token=${var.webhook_secret}"
+    
+    attributes = {
+      "x-goog-version" = "v1"
+    }
+  }
+
+  ack_deadline_seconds = 60
+}
