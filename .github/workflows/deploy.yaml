@@ -140,7 +140,8 @@ jobs:
             -var="image_tag=${{ github.sha }}" \
             -var="image_processor_image_tag=${{ github.sha }}" \
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
-            -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
+            -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}" \
+            -var="webhook_secret=${{ secrets.WEBHOOK_SECRET }}"
 
   deploy-fly:
     needs: [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
