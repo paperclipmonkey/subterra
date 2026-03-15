@@ -52,6 +52,7 @@ variable "image_tag" {
 variable "webhook_secret" {
   description = "Secret used to authenticate webhook callbacks from image processor & transcoder"
   type        = string
+  sensitive   = true
 }
 
 variable "app_url" {
