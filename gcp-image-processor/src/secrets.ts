@@ -3,6 +3,7 @@ import * as fs from 'fs';
 interface SecretsConfig {
     IMAGE_PROCESSOR_API_KEY: string;
     CALLBACK_SECRET: string;
+    SLACK_WEBHOOK_URL: string;
 }
 
 let cachedSecrets: SecretsConfig | null = null;
@@ -34,6 +35,7 @@ export function loadSecrets(): SecretsConfig {
     cachedSecrets = {
         IMAGE_PROCESSOR_API_KEY: process.env.IMAGE_PROCESSOR_API_KEY || '',
         CALLBACK_SECRET: process.env.CALLBACK_SECRET || '',
+        SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL || '',
     };
 
     console.log('Loaded secrets from environment variables');

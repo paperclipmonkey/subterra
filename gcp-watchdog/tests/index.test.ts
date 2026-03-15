@@ -194,8 +194,12 @@ describe('Watchdog API', () => {
             const response = await request(app)
                 .post('/watchdog/test')
                 .set('X-Watchdog-Key', 'test-api-key')
+                .set('Content-Type', 'application/json')
                 .send(payload);
 
+            if (response.status !== 200) {
+                throw new Error("DUMP: Status " + response.status + " Body: " + JSON.stringify(response.body));
+            }
             expect(response.status).toBe(200);
             expect(response.body.message).toBe('Test alerts triggered successfully');
             expect(response.body.sms_sent).toBeDefined();

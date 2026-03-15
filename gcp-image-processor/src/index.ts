@@ -10,6 +10,10 @@ import { Storage } from '@google-cloud/storage';
 import sharp from 'sharp';
 import axios from 'axios';
 import { getSecret } from './secrets';
+import { setupSlackLogger } from './slack-logger';
+
+// Setup Slack logging for console.warn and console.error
+setupSlackLogger();
 
 const app = express();
 app.use(express.json());
