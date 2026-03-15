@@ -20,6 +20,7 @@
         "league/flysystem-aws-s3-v3": "^3.29",
         "owen-it/laravel-auditing": "^14.0",
         "pbmedia/laravel-ffmpeg": "^8.9",
+        "php-coord/php-coord": "^5.11",
         "spatie/laravel-slack-alerts": "^1.5"
     },
     "require-dev": {
