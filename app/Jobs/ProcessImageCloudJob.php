@@ -103,6 +103,6 @@ class ProcessImageCloudJob implements ShouldQueue
      */
     protected function getApiKey(): string
     {
-        return config('services.gcp.webhook_secret', '');
+        return config('services.gcp.image_processor_api_key') ?? '';
     }
 }

@@ -26,6 +26,7 @@ class ProcessImageCloudJobTest extends TestCase
         Storage::fake('gcs_staging');
         config(['filesystems.disks.gcs_staging.bucket' => 'test-bucket']);
         config(['services.gcp.image_processor_url' => 'https://mock.cloud.run']);
+        config(['services.gcp.image_processor_api_key' => 'test-api-key']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

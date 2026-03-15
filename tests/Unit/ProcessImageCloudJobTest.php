@@ -29,29 +29,27 @@ class ProcessImageCloudJobTest extends TestCase
 
         config([
             'services.gcp.image_processor_url' => 'https://image-processor.run.app',
-            'services.gcp.webhook_secret' => 'test-key',
+            'services.gcp.image_processor_api_key' => 'test-api-key',
             'filesystems.disks.gcs_staging.bucket' => 'test-staging-bucket',
             'app.url' => 'https://subterra.test',
         ]);
 
-        $job = \Mockery::mock(ProcessImageCloudJob::class, ['caves/photo.jpg', CaveMedia::class, 1])
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
-        $job->shouldReceive('getApiKey')->once()->andReturn('test-key');
+        $job = new ProcessImageCloudJob('caves/photo.jpg', CaveMedia::class, 1);
 
         $job->handle();
 
         // File was written to GCS staging
         $this->assertNotEmpty(Storage::disk('gcs_staging')->allFiles('input'));
 
-        // Cloud Run was called with the correct structure
+        // Cloud Run was called with the correct structure and the right bearer token
         Http::assertSent(function ($request) {
             return str_contains($request->url(), '/process')
                 && $request['bucket'] === 'test-staging-bucket'
                 && str_contains($request['path'], 'input/')
                 && $request['callbackUrl'] === 'https://subterra.test/api/webhooks/gcp/image-processor'
                 && $request['mediaModel'] === 'cave_media'
-                && $request['mediaId'] === 1;
+                && $request['mediaId'] === 1
+                && $request->header('Authorization')[0] === 'Bearer test-api-key';
         });
     }
 
