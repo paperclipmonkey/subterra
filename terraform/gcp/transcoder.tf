@@ -86,7 +86,7 @@ resource "google_pubsub_subscription" "transcoder_webhook" {
 
   # Push message to Laravel URL containing query param auth
   push_config {
-    push_endpoint = "${var.app_url}/api/webhooks/gcp/transcoder?token=${var.webhook_secret}"
+    push_endpoint = sensitive("${var.app_url}/api/webhooks/gcp/transcoder?token=${var.webhook_secret}")
     
     attributes = {
       "x-goog-version" = "v1"

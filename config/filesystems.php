@@ -105,7 +105,7 @@ return [
             'key_file_path' => env('GCS_KEY_FILE'),
             'key_file' => env('GCS_KEY_FILE_JSON') ? json_decode(env('GCS_KEY_FILE_JSON'), true) : null,
             'bucket' => env('GCS_TRANSCODER_BUCKET', 'video-transcode-staging'),
-            'throw' => false,
+            'throw' => true,
         ],
     ],
 

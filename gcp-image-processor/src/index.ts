@@ -83,11 +83,11 @@ app.post('/process', async (req: Request, res: Response) => {
         });
     }
 
-    // Respond immediately — processing happens asynchronously
-    res.json({ status: 'accepted', mediaId });
-
     try {
         await processImage({ bucketName, sourcePath, callbackUrl, mediaModel, mediaId, outputPrefix });
+        
+        // Respond once processing is complete so Cloud Run doesn't throttle CPU
+        return res.json({ status: 'success', mediaId });
     } catch (error) {
         console.error(`Image processing failed for ${mediaModel}#${mediaId}:`, error);
 
@@ -102,6 +102,8 @@ app.post('/process', async (req: Request, res: Response) => {
         } catch (cbError) {
             console.error('Failed to send error callback:', cbError);
         }
+
+        return res.status(500).json({ error: (error as Error).message });
     }
 });
 
