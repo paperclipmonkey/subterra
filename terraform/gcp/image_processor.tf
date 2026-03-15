@@ -161,7 +161,7 @@ resource "google_eventarc_trigger" "gcs_upload_trigger" {
   }
 
   destination {
-    cloud_run {
+    cloud_run_service {
       service = google_cloud_run_v2_service.image_processor.name
       region  = var.region
     }
