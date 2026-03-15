@@ -80,6 +80,10 @@ resource "google_pubsub_topic" "media_notifications" {
   name = "${var.app_name}-media-notifications"
 }
 
+resource "google_pubsub_topic" "media_dead_letter" {
+  name = "${var.app_name}-media-dead-letter"
+}
+
 resource "google_pubsub_subscription" "media_webhook" {
   name  = "${var.app_name}-media-webhook"
   topic = google_pubsub_topic.media_notifications.id
@@ -93,5 +97,27 @@ resource "google_pubsub_subscription" "media_webhook" {
     }
   }
 
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.media_dead_letter.id
+    max_delivery_attempts = 5
+  }
+
   ack_deadline_seconds = 60
+}
+
+# Find the Pub/Sub service agent for the project
+data "google_project" "project" {}
+
+# Grant the Pub/Sub Service Agent Publisher role on the dead letter topic
+resource "google_pubsub_topic_iam_member" "pubsub_agent_dead_letter_publisher" {
+  topic  = google_pubsub_topic.media_dead_letter.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+# Grant the Pub/Sub Service Agent Subscriber role on the subscription
+resource "google_pubsub_subscription_iam_member" "pubsub_agent_dead_letter_subscriber" {
+  subscription = google_pubsub_subscription.media_webhook.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }

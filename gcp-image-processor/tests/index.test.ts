@@ -2,38 +2,31 @@ import request from 'supertest';
 import app from '../src/index';
 import { Storage } from '@google-cloud/storage';
 import sharp from 'sharp';
-
-const mockDownload = jest.fn();
-const mockSave = jest.fn();
-const mockGetMetadata = jest.fn();
-const mockPublishMessage = jest.fn().mockResolvedValue('msg-id');
-
-jest.mock('@google-cloud/storage', () => {
-    return {
-        Storage: jest.fn(() => ({
-            bucket: jest.fn(() => ({
-                file: jest.fn(() => ({
-                    download: mockDownload,
-                    save: mockSave,
-                    getMetadata: mockGetMetadata
-                }))
-            }))
-        }))
-    };
-});
-
-const mockTopic = jest.fn(() => ({
-    publishMessage: mockPublishMessage
+var mockDownload: any = jest.fn();
+var mockSave: any = jest.fn();
+var mockGetMetadata: any = jest.fn();
+var mockPublishMessage: any = jest.fn().mockResolvedValue('msg-id');
+var mockTopic: any = jest.fn(() => ({
+    publishMessage: (payload: any) => mockPublishMessage(payload)
 }));
 
-jest.mock('@google-cloud/pubsub', () => {
-    return {
-        PubSub: jest.fn(() => ({
-            topic: mockTopic
+jest.mock('@google-cloud/storage', () => ({
+    Storage: jest.fn(() => ({
+        bucket: jest.fn(() => ({
+            file: jest.fn(() => ({
+                download: (options?: any) => mockDownload(options),
+                save: (data: any, options?: any) => mockSave(data, options),
+                getMetadata: () => mockGetMetadata()
+            }))
         }))
-    };
-});
+    }))
+}));
 
+jest.mock('@google-cloud/pubsub', () => ({
+    PubSub: jest.fn(() => ({
+        topic: (name: string) => mockTopic(name)
+    }))
+}));
 // Mock sharp correctly since it's a default export of a function
 jest.mock('sharp', () => {
     const mSharp = jest.fn(() => ({
