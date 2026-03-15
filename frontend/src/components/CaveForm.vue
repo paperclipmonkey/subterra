@@ -36,21 +36,21 @@
           required
         />
 
-        <mgl-map
-          :map-style="style"
-          :center="mapCenter"
-          :zoom="zoom"
-          height="350px"
-          @load="onMapLoad"
+        <AppMap ref="mapRef" v-model="style"
+                geolocate
+                :center="mapCenter"
+                :zoom="zoom"
+                height="350px"
+                @map:load="onMapLoad"
         >
           <mgl-marker
             v-model:coordinates="coordinates"
             :draggable="true"
             color="#cc0000"
           />
-          <mgl-navigation-control />
-          <MglGeolocateControl />
-        </mgl-map>
+          
+          
+        </AppMap>
 
         <v-row>
           <v-col cols="12" md="4">
@@ -350,6 +350,8 @@
 </template>
 
 <script setup>
+import AppMap from '@/components/AppMap.vue'
+import { MapStyleControl } from '@/utilities/MapStyleControl'
 import { mdiCamera, mdiDelete, mdiDoorOpen, mdiImageOutline, mdiStar, mdiVideo, mdiVideoOutline } from '@mdi/js'
 import { ref, watch, onMounted, computed } from 'vue'
 import {
@@ -372,7 +374,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const internalCave = ref({ ...props.modelValue })
-const style = 'https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528'
+
+
+const style = ref('https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = ref(internalCave.value.location_lat ? 16 : 5)
 const defaultLng = -1.5
 const defaultLat = 52
@@ -647,6 +651,7 @@ const onMapLoad = (event) => {
   if (internalCave.value.location_lng || internalCave.value.location_lat) {
     event.map.setCenter([internalCave.value.location_lng, internalCave.value.location_lat])
   }
+
 }
 
 onMounted(() => {

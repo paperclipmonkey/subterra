@@ -9,7 +9,7 @@
         </p>
         <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
       </div>
-      <mgl-map v-else ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
+      <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15">
         <mgl-marker v-for="cave in caveStore.caves" :key="cave.id"
                     :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
@@ -50,15 +50,18 @@
             </v-card>
           </mgl-popup>
         </mgl-marker>
-        <mgl-fullscreen-control />
-        <mgl-navigation-control />
-        <MglGeolocateControl :track-user-location="true" :show-accuracy-circle="true" />
-      </mgl-map>
+        
+        
+        
+      </AppMap>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
+import AppMap from '@/components/AppMap.vue'
+import { MapStyleControl } from '@/utilities/MapStyleControl'
+
 import { mdiApple, mdiGoogleMaps, mdiLock } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 const appStore = useAppStore()
@@ -78,26 +81,29 @@ import {
 
 import maplibregl from 'maplibre-gl'
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
 const zoom = 5
 const lnglat = [-2, 53]
 
-import { onMounted, watch } from 'vue'
 
-const mapOne = useMap()
 
-watch(() => mapOne.isLoaded, (isLoaded) => {
-  mapOne.map.resize()
+
+import { onMounted, watch, ref } from 'vue'
+
+const mapRef = ref(null)
+
+watch(() => mapRef.value?.isLoaded, (isLoaded) => {
+  mapRef.value?.map.resize()
 
   watch(
     () => caveStore.caves,
     (caves) => {
-      if (caves.length > 0 && mapOne.isLoaded) {
+      if (caves.length > 0 && mapRef.value?.isLoaded) {
         const bounds = new maplibregl.LngLatBounds()
         caves.forEach((cave) => {
           bounds.extend([cave.location_lng, cave.location_lat])
         })
-        mapOne.map.fitBounds(bounds, { padding: 50 })
+        mapRef.value?.map.fitBounds(bounds, { padding: 50 })
       }
     },
     { immediate: true }

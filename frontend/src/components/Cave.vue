@@ -212,11 +212,11 @@
             <v-window-item v-if="smAndDown" value="map">
               <v-card class="mb-4 rounded-lg" elevation="0" variant="flat">
                 <template v-if="appStore.canSuggest">
-                  <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px">
+                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad">
                     <mgl-marker :coordinates="lnglat" color="#cc0000" />
-                    <mgl-navigation-control />
-                    <mgl-fullscreen-control />
-                  </mgl-map>
+                    
+                    
+                  </AppMap>
                 </template>
                 <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
                   <div class="text-center pa-4">
@@ -476,11 +476,11 @@
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg" elevation="1">
           <template v-if="appStore.canSuggest">
-            <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
+            <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad">
               <mgl-marker :coordinates="lnglat" color="#cc0000" />
-              <mgl-navigation-control />
-              <mgl-fullscreen-control />
-            </mgl-map>
+              
+              
+            </AppMap>
           </template>
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
             <div class="text-center pa-4">
@@ -585,6 +585,9 @@
 
 
 <script setup>
+import AppMap from '@/components/AppMap.vue'
+import { MapStyleControl } from '@/utilities/MapStyleControl'
+
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useDisplay } from 'vuetify'
@@ -602,8 +605,10 @@ import {
   MglFullscreenControl,
 } from '@indoorequal/vue-maplibre-gl'
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
 const zoom = 14
+
+
 
 const appStore = useAppStore()
 const { smAndDown } = useDisplay()
@@ -778,6 +783,9 @@ watch(
     }
   }
 )
+const onMapLoad = (event) => {
+
+}
 </script>
 
 <style lang="scss">

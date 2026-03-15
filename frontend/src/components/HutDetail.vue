@@ -88,11 +88,11 @@
           <v-card-text>
             <div v-if="hut.location_lat && hut.location_lng">
               <v-card class="mb-4 rounded-lg" elevation="1">
-                <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
+                <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad">
                   <mgl-marker :coordinates="lnglat" color="#cc0000" />
-                  <mgl-navigation-control />
-                  <mgl-fullscreen-control />
-                </mgl-map>
+                  
+                  
+                </AppMap>
                 <v-card-text>
                   <div class="d-flex justify-space-between align-center">
                     <div>
@@ -136,6 +136,9 @@
 </template>
 
 <script setup>
+import AppMap from '@/components/AppMap.vue'
+import { MapStyleControl } from '@/utilities/MapStyleControl'
+
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiGoogleMaps, mdiHomeGroup, mdiShieldAccount, mdiWeb } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
@@ -181,7 +184,9 @@ import {
 } from '@indoorequal/vue-maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+
+
+const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
 const zoom = 11
 const lnglat = computed(() => {
   if (hut.value && hut.value.location_lat && hut.value.location_lng) {
@@ -189,6 +194,9 @@ const lnglat = computed(() => {
   }
   return [-2, 53] // Default
 })
+const onMapLoad = (event) => {
+
+}
 </script>
 
 <style scoped>

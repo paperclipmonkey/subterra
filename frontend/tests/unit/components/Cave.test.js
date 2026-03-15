@@ -31,11 +31,13 @@ vi.mock('@/stores/markAsDone', () => ({
 
 // Mock MapLibre (canvas dependency causes issues in jsdom)
 vi.mock('@indoorequal/vue-maplibre-gl', () => ({
-    MglMap: { template: '<div></div>' },
+    MglMap: { name: 'MglMap', template: '<div><slot /></div>' },
     MglNavigationControl: { template: '<div></div>' },
-    MglMarker: { template: '<div></div>' },
+    MglMarker: { name: 'MglMarker', template: '<div><slot /></div>', props: ['coordinates'] },
+    MglPopup: { name: 'MglPopup', template: '<div><slot /></div>' },
+    MglFullscreenControl: { template: '<div></div>' },
     MglGeolocateControl: { template: '<div></div>' },
-    MglFullscreenControl: { template: '<div></div>' }
+    useMap: () => ({ map: { fitBounds: vi.fn(), resize: vi.fn(), setCenter: vi.fn(), setZoom: vi.fn() }, isLoaded: true })
 }))
 
 // Mock API response

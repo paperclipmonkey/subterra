@@ -28,10 +28,13 @@ vi.mock('vue-router', () => ({
     useRouter: () => ({ push: vi.fn() })
 }))
 vi.mock('@indoorequal/vue-maplibre-gl', () => ({
-    MglMap: { template: '<div><slot /></div>' },
+    MglMap: { name: 'MglMap', template: '<div><slot /></div>' },
     MglNavigationControl: { template: '<div></div>' },
-    MglMarker: { template: '<div><slot /></div>' },
-    MglPopup: { template: '<div><slot /></div>' },
+    MglMarker: { name: 'MglMarker', template: '<div><slot /></div>', props: ['coordinates'] },
+    MglPopup: { name: 'MglPopup', template: '<div><slot /></div>' },
+    MglFullscreenControl: { template: '<div></div>' },
+    MglGeolocateControl: { template: '<div></div>' },
+    useMap: () => ({ map: { fitBounds: vi.fn(), resize: vi.fn(), setCenter: vi.fn(), setZoom: vi.fn() }, isLoaded: true })
 }))
 vi.mock('maplibre-gl', () => ({
     default: {
