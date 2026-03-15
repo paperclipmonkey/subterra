@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Install build dependencies for sharp (native module)
 RUN apk add --no-cache python3 make g++ vips-dev
@@ -21,7 +21,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:24-alpine
 
 # Install vips runtime for sharp
 RUN apk add --no-cache vips
