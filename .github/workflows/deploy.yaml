@@ -1,4 +1,4 @@
-name: Fly Deploy
+name: Deploy
 on:
   push:
     branches:
@@ -142,10 +142,10 @@ jobs:
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
 
-  deploy:
+  deploy-fly:
     needs: [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
     runs-on: ubuntu-latest
-    concurrency: deploy-group
+    concurrency: deploy-fly-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
