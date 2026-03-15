@@ -1,6 +1,6 @@
 # Service Account for Cloud Run
 resource "google_service_account" "watchdog_service" {
-  account_id   = "${var.app_name}-service"
+  account_id   = "${var.app_name}-watchdog-service"
   display_name = "Subterra Watchdog Service Account"
   description  = "Service account for Subterra Watchdog Cloud Run service"
 }
@@ -14,7 +14,7 @@ resource "google_project_iam_member" "firestore_user" {
 
 # Cloud Run Service
 resource "google_cloud_run_v2_service" "watchdog" {
-  name     = var.app_name
+  name     = "${var.app_name}-watchdog"
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
 

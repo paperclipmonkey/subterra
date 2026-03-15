@@ -56,6 +56,11 @@ resource "google_cloud_run_v2_service" "image_processor" {
         value = var.environment
       }
 
+      env {
+        name  = "IMAGE_PROCESSOR_PUBSUB_TOPIC"
+        value = google_pubsub_topic.media_notifications.id
+      }
+
       volume_mounts {
         name       = "secrets"
         mount_path = "/secrets"

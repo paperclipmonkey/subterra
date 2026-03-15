@@ -3,7 +3,7 @@
 
 # Single consolidated secret for all watchdog credentials
 resource "google_secret_manager_secret" "watchdog_config" {
-  secret_id = "${var.app_name}-config"
+  secret_id = "${var.app_name}-watchdog-config"
 
   replication {
     auto {}

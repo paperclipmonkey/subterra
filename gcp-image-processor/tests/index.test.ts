@@ -22,12 +22,14 @@ jest.mock('@google-cloud/storage', () => {
     };
 });
 
+const mockTopic = jest.fn(() => ({
+    publishMessage: mockPublishMessage
+}));
+
 jest.mock('@google-cloud/pubsub', () => {
     return {
         PubSub: jest.fn(() => ({
-            topic: jest.fn(() => ({
-                publishMessage: mockPublishMessage
-            }))
+            topic: mockTopic
         }))
     };
 });
@@ -87,6 +89,7 @@ describe('POST / GCS Trigger Execution', () => {
         expect(mockDownload).toHaveBeenCalled();
         expect(mockSave).toHaveBeenCalledTimes(3); // desktop, tablet, mobile presets
 
+        expect(mockTopic).toHaveBeenCalledWith('media-notifications');
         expect(mockPublishMessage).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.any(Buffer)
@@ -119,7 +122,9 @@ describe('POST / GCS Trigger Execution', () => {
         expect(response.status).toBe(200); // Catches and acknowledges to ignored failure delivery loop
         expect(response.body).toHaveProperty('status', 'ignored');
 
+        expect(mockTopic).toHaveBeenCalledWith('media-notifications');
         expect(mockPublishMessage).toHaveBeenCalled();
+
 
         const publishCall = mockPublishMessage.mock.calls[0][0];
         const publishedData = JSON.parse(publishCall.data.toString());

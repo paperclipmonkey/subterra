@@ -15,7 +15,7 @@ app.use(express.json());
 const storage = new Storage();
 const pubsub = new PubSub();
 const transcoderClient = new TranscoderServiceClient();
-const pubsubTopicName = process.env.IMAGE_PROCESSOR_PUBSUB_TOPIC || 'subterra-image-processor-notifications';
+const pubsubTopicName = process.env.IMAGE_PROCESSOR_PUBSUB_TOPIC || 'media-notifications';
 
 /**
  * Image size presets for responsive srcset generation.

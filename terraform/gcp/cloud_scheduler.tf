@@ -1,6 +1,6 @@
 # Service Account for Cloud Scheduler
 resource "google_service_account" "scheduler" {
-  account_id   = "${var.app_name}-scheduler"
+  account_id   = "${var.app_name}-watchdog-scheduler"
   display_name = "Subterra Watchdog Scheduler"
   description  = "Service account for Cloud Scheduler to invoke Cloud Run"
 }
@@ -15,7 +15,7 @@ resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker" {
 
 # Cloud Scheduler Job - runs every 5 minutes
 resource "google_cloud_scheduler_job" "watchdog_checker" {
-  name             = "${var.app_name}-checker"
+  name             = "${var.app_name}-watchdog-checker"
   description      = "Check for overdue callouts every 5 minutes"
   schedule         = "*/5 * * * *"
   time_zone        = "UTC"

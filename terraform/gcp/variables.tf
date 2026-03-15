@@ -12,7 +12,7 @@ variable "region" {
 variable "app_name" {
   description = "Application name prefix"
   type        = string
-  default     = "subterra-watchdog"
+  default     = "subterra"
 }
 
 variable "environment" {
