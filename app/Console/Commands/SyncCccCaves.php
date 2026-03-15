@@ -7,8 +7,8 @@ use App\Models\CaveSystem;
 use App\Models\Tag;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class SyncCccCaves extends Command
 {
@@ -38,17 +38,19 @@ class SyncCccCaves extends Command
         $minLength = (float) $this->option('min-length');
         $whitelistNames = $this->getWhitelist();
 
-        $this->info("Fetching CCC data...");
+        $this->info('Fetching CCC data...');
         $url = 'https://cambriancavingcouncil.org.uk/registry/CCR_data2.xml';
-        
+
         try {
             $response = Http::get($url);
             if (!$response->successful()) {
                 $this->error("Failed to download XML from: {$url}");
+
                 return 1;
             }
         } catch (\Exception $e) {
-            $this->error("HTTP Request failed: " . $e->getMessage());
+            $this->error('HTTP Request failed: '.$e->getMessage());
+
             return 1;
         }
 
@@ -56,17 +58,19 @@ class SyncCccCaves extends Command
         $xml = @simplexml_load_string($xmlStr);
 
         if ($xml === false) {
-            $this->error("Failed to parse XML.");
+            $this->error('Failed to parse XML.');
+
             return 1;
         }
 
         $entries = $xml->xpath('//Entry');
         if (empty($entries)) {
-            $this->warn("No <Entry> nodes found in XML.");
+            $this->warn('No <Entry> nodes found in XML.');
+
             return 0;
         }
 
-        $this->info("Found " . count($entries) . " entries in XML.");
+        $this->info('Found '.count($entries).' entries in XML.');
 
         DB::beginTransaction();
 
@@ -88,12 +92,12 @@ class SyncCccCaves extends Command
                 $isLongEnough = $length >= $minLength;
 
                 if (!$isWhitelisted && !$isLongEnough) {
-                    $skippedCount++;
+                    ++$skippedCount;
                     continue;
                 }
 
-                $this->info("Processing: {$name} (" . ($isWhitelisted ? 'Whitelisted' : 'Length: ' . $length . ' m') . ")");
-                $importedCount++;
+                $this->info("Processing: {$name} (".($isWhitelisted ? 'Whitelisted' : 'Length: '.$length.' m').')');
+                ++$importedCount;
 
                 if ($dryRun) {
                     continue;
@@ -130,13 +134,13 @@ class SyncCccCaves extends Command
                     $grStr = trim(str_replace(' ', '', (string) $entry['GR']));
 
                     if (!empty($grStr) && !empty($eStr) && !empty($nStr) && strlen($eStr) === strlen($nStr)) {
-                        $ref = $grStr . $eStr . $nStr;
+                        $ref = $grStr.$eStr.$nStr;
                         $gridPoint = \PHPCoord\Point\BritishNationalGridPoint::fromGridReference($ref);
                         $wgs84 = $gridPoint->convert(\PHPCoord\CoordinateReferenceSystem\Geographic2D::fromSRID('urn:ogc:def:crs:EPSG::4326'));
                         $lat = $wgs84->getLatitude()->asDegrees()->getValue();
                         $lng = $wgs84->getLongitude()->asDegrees()->getValue();
                     } else {
-                        throw new \Exception("Invalid or unequal E/N sizes");
+                        throw new \Exception('Invalid or unequal E/N sizes');
                     }
                 } catch (\Exception $e) {
                     // Fallback to LL on any parsing error or unequal length
@@ -156,9 +160,9 @@ class SyncCccCaves extends Command
                 if (!empty($entry->Desc)) {
                     $descriptionParts[] = (string) $entry->Desc;
                 }
-                
-                $cccLink = "https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=" . (string) $entry['id'];
-                $descriptionParts[] = "CCC Registry: " . $cccLink;
+
+                $cccLink = 'https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID='.(string) $entry['id'];
+                $descriptionParts[] = 'CCC Registry: '.$cccLink;
 
                 $description = implode("\n\n", $descriptionParts);
 
@@ -190,7 +194,7 @@ class SyncCccCaves extends Command
                         'cave_system_id' => $caveSystemId,
                         // Values similar to csv importer defaults
                         // Update location_name from ancestor Region
-                        'location_name' => ($entry->xpath('ancestor::Region') ? (string)$entry->xpath('ancestor::Region')[0]['name'] : null), 
+                        'location_name' => ($entry->xpath('ancestor::Region') ? (string) $entry->xpath('ancestor::Region')[0]['name'] : null),
                         'location_country' => 'United Kingdom',
                         'location_lat' => $lat,
                         'location_lng' => $lng,
@@ -211,7 +215,7 @@ class SyncCccCaves extends Command
 
                 // Region tags from ancestor Region in the XML
                 $regions = $entry->xpath('ancestor::Region');
-                $regionName = $regions ? (string)$regions[0]['name'] : '';
+                $regionName = $regions ? (string) $regions[0]['name'] : '';
                 $regionNameLower = strtolower($regionName);
 
                 if (strpos($regionNameLower, 'north wales') !== false) {
@@ -221,8 +225,8 @@ class SyncCccCaves extends Command
                     );
                     $tagIds[] = $tagNorthWales->id;
                 } elseif (
-                    strpos($regionNameLower, 'south') !== false || 
-                    strpos($regionNameLower, 'gower') !== false || 
+                    strpos($regionNameLower, 'south') !== false ||
+                    strpos($regionNameLower, 'gower') !== false ||
                     strpos($regionNameLower, 'northern outcrop') !== false
                 ) {
                     $tagSouthWales = \App\Models\Tag::firstOrCreate(
@@ -233,7 +237,7 @@ class SyncCccCaves extends Command
                 }
 
                 if (!empty($tagIds)) {
-                     $cave->tags()->syncWithoutDetaching($tagIds);
+                    $cave->tags()->syncWithoutDetaching($tagIds);
                 }
             }
 
@@ -244,7 +248,6 @@ class SyncCccCaves extends Command
                 DB::rollBack();
                 $this->info("Dry run completed: {$importedCount} would be imported/updated, {$skippedCount} skipped.");
             }
-
         } catch (\Exception $e) {
             DB::rollBack();
             $this->error('Error during import: '.$e->getMessage());
@@ -257,7 +260,7 @@ class SyncCccCaves extends Command
     }
 
     /**
-     * Get list of whitelisted names from option or file
+     * Get list of whitelisted names from option or file.
      *
      * @return array
      */
@@ -275,7 +278,7 @@ class SyncCccCaves extends Command
             $fileContent = file_get_contents($filePath);
             $names = array_map('trim', explode("\n", $fileContent));
             // Filter empty lines
-            $names = array_filter($names, fn($name) => !empty($name));
+            $names = array_filter($names, fn ($name) => !empty($name));
             $whitelist = array_merge($whitelist, array_values($names));
         }
 
