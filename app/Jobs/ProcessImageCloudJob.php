@@ -52,10 +52,12 @@ class ProcessImageCloudJob implements ShouldQueue
 
         $written = Storage::disk('gcs_staging')->put($inputKey, $sourceStream, [
             'metadata' => [
-                'media_model' => Str::snake(class_basename($this->mediaModel)),
-                'media_id' => (string) $this->mediaId,
-                'output_prefix' => $outputPrefix,
-                'file_path' => $this->filePath,
+                'metadata' => [
+                    'media_model' => Str::snake(class_basename($this->mediaModel)),
+                    'media_id' => (string) $this->mediaId,
+                    'output_prefix' => $outputPrefix,
+                    'file_path' => $this->filePath,
+                ],
             ],
         ]);
 
