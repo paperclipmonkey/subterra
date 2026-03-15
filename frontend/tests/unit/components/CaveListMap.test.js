@@ -22,15 +22,12 @@ vi.mock('@/stores/caves', () => ({
 // Mock Map Libraries
 vi.mock('@indoorequal/vue-maplibre-gl', () => ({
     MglMap: { name: 'MglMap', template: '<div><slot /></div>' },
-    MglFullscreenControl: { template: '<div></div>' },
     MglNavigationControl: { template: '<div></div>' },
-    MglMarker: { template: '<div><slot /></div>' },
-    MglPopup: { template: '<div><slot /></div>' },
+    MglMarker: { name: 'MglMarker', template: '<div><slot /></div>', props: ['coordinates'] },
+    MglPopup: { name: 'MglPopup', template: '<div><slot /></div>' },
+    MglFullscreenControl: { template: '<div></div>' },
     MglGeolocateControl: { template: '<div></div>' },
-    useMap: () => ({
-        map: { resize: vi.fn(), fitBounds: vi.fn() },
-        isLoaded: true
-    })
+    useMap: () => ({ map: { fitBounds: vi.fn(), resize: vi.fn(), setCenter: vi.fn(), setZoom: vi.fn() }, isLoaded: true })
 }))
 
 vi.mock('maplibre-gl', () => ({

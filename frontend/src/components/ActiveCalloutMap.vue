@@ -1,6 +1,6 @@
 <template>
   <div class="map-container">
-    <mgl-map ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
+    <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
       <mgl-marker v-for="(callout) in validCallouts" :key="callout.id"
                   :coordinates="[callout.lng, callout.lat]">
         <mgl-popup>
@@ -9,14 +9,15 @@
           </v-card>
         </mgl-popup>
       </mgl-marker>
-      <mgl-fullscreen-control />
-      <mgl-navigation-control />
-    </mgl-map>
+    </AppMap>
   </div>
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import AppMap from '@/components/AppMap.vue'
+import { MapStyleControl } from '@/utilities/MapStyleControl'
+
+import { computed, ref, watch } from 'vue'
 import {
   MglMap,
   MglFullscreenControl,
@@ -44,28 +45,31 @@ const validCallouts = computed(() => {
     }))
 })
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
 const zoom = 6
-const lnglat = [-2.5, 54.2] // Rough center of UK caving areas
+const lnglat = [-2.5, 54.2]
 
-const mapOne = useMap()
+
+ // Rough center of UK caving areas
+
+const mapRef = ref(null)
 
 const updateBounds = () => {
-  if (validCallouts.value.length > 0 && mapOne.isLoaded) {
+  if (validCallouts.value.length > 0 && mapRef.value?.isLoaded) {
     const bounds = new maplibregl.LngLatBounds()
     validCallouts.value.forEach((c) => {
       bounds.extend([c.lng, c.lat])
     })
 
     if (!bounds.isEmpty()) {
-      mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 8 })
+      mapRef.value?.map.fitBounds(bounds, { padding: 50, maxZoom: 8 })
     }
   }
 }
 
-watch(() => mapOne.isLoaded, (isLoaded) => {
+watch(() => mapRef.value?.isLoaded, (isLoaded) => {
   if (isLoaded) {
-    mapOne.map.resize()
+    mapRef.value?.map.resize()
     updateBounds()
   }
 })
