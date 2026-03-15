@@ -622,4 +622,50 @@ class TripTest extends TestCase
         $trip = Trip::where('name', 'Trip No Meta')->first();
         $this->assertCount(1, $trip->media);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_updates_existing_media_metadata()
+    {
+        $user = User::factory()->create();
+        $trip = Trip::factory()->create(['visibility' => 'public']);
+        $trip->participants()->attach($user);
+
+        $media = $trip->media()->create([
+            'filename' => 'test.jpg',
+            'title' => 'Old Title',
+            'copyright' => 'Old Copyright',
+            'photographer' => 'Old Photographer',
+        ]);
+
+        $updateData = [
+            'name' => 'Updated Trip',
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
+            'cave_system_id' => $trip->cave_system_id,
+            'entrance_cave_id' => $trip->entrance_cave_id,
+            'exit_cave_id' => $trip->exit_cave_id,
+            'existing_media' => [
+                [
+                    'id' => $media->id,
+                    'title' => 'New Title',
+                    'copyright' => 'New Copyright',
+                    'photographer' => 'New Photographer',
+                ]
+            ],
+            '_method' => 'PUT',
+        ];
+
+        $this->actingAs($user);
+        $response = $this->withHeaders(['Accept' => 'application/json'])
+                         ->post('/api/trips/'.$trip->short_id, $updateData);
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('trip_media', [
+            'id' => $media->id,
+            'title' => 'New Title',
+            'copyright' => 'New Copyright',
+            'photographer' => 'New Photographer',
+        ]);
+    }
 }

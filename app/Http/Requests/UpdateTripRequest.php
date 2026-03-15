@@ -37,6 +37,10 @@ class UpdateTripRequest extends FormRequest
             'media' => ['nullable', 'array'],
             'media.*.data' => ['required', 'file', 'max:512000', 'mimes:jpeg,jpg,png,gif,webp,bmp,tiff,tif'],
             'existing_media' => ['nullable', 'array'],
+            'existing_media.*.id' => ['required', 'exists:trip_media,id'],
+            'existing_media.*.title' => ['nullable', 'string', 'max:255'],
+            'existing_media.*.copyright' => ['nullable', 'string', 'max:255'],
+            'existing_media.*.photographer' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

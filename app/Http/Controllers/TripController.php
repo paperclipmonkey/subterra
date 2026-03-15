@@ -198,6 +198,19 @@ class TripController extends Controller
         } else {
             $existingMediaIds = array_column($existingMedia, 'id');
             $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
+
+            foreach ($existingMedia as $mediaData) {
+                if (isset($mediaData['id'])) {
+                    $mediaRecord = $trip->media()->find($mediaData['id']);
+                    if ($mediaRecord) {
+                        $mediaRecord->update([
+                            'title' => $mediaData['title'] ?? $mediaRecord->title,
+                            'copyright' => $mediaData['copyright'] ?? $mediaRecord->copyright,
+                            'photographer' => $mediaData['photographer'] ?? $mediaRecord->photographer,
+                        ]);
+                    }
+                }
+            }
         }
 
         // Validate Closed Access

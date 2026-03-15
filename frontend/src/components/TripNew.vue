@@ -120,23 +120,23 @@
               </v-autocomplete>
 
               <div class="mb-4">
-                <div v-for="(userId, index) in trip.participants" :key="userId" class="mb-3">
+                <div v-for="(participantId, index) in trip.participants" :key="participantId" class="mb-3">
                   <v-card variant="outlined" class="pa-3">
                     <div class="d-flex align-center w-100">
-                      <template v-if="getParticipant(userId)">
-                        <v-avatar v-if="getParticipant(userId).photo" :image="getParticipant(userId).photo" class="mr-4" size="48" />
+                      <template v-if="getParticipant(participantId)">
+                        <v-avatar v-if="getParticipant(participantId).photo" :image="getParticipant(participantId).photo" class="mr-4" size="48" />
                         <v-avatar v-else color="primary" class="mr-4" size="48">
-                          <span class="text-white">{{ getParticipant(userId).name.charAt(0) }}</span>
+                          <span class="text-white">{{ getParticipant(participantId).name.charAt(0) }}</span>
                         </v-avatar>
 
                         <div class="flex-grow-1">
-                          <div class="text-subtitle-1 font-weight-bold">{{ getParticipant(userId).name }}</div>
-                          <div v-if="getParticipant(userId).clubs && getParticipant(userId).clubs.length" class="text-caption text-medium-emphasis">
-                            {{ getParticipant(userId).clubs.map(c => c.name).join(', ') }}
+                          <div class="text-subtitle-1 font-weight-bold">{{ getParticipant(participantId).name }}</div>
+                          <div v-if="getParticipant(participantId).clubs && getParticipant(participantId).clubs.length" class="text-caption text-medium-emphasis">
+                            {{ getParticipant(participantId).clubs.map(c => c.name).join(', ') }}
                           </div>
                         </div>
 
-                        <v-btn icon color="error" size="small" variant="text" @click="removeParticipant(index)">
+                        <v-btn v-if="canRemoveParticipant(participantId)" icon color="error" size="small" variant="text" @click="removeParticipant(index)">
                           <v-icon :icon="mdiDelete" />
                         </v-btn>
                       </template>
@@ -225,15 +225,32 @@
 
               <template v-if="trip.existing_media && trip.existing_media.length">
                 <div class="text-subtitle-2 mt-4 mb-2">Existing media:</div>
-                <v-row>
-                  <v-col v-for="(media, i) in trip.existing_media" :key="i" cols="4" sm="3">
-                    <v-img cover aspect-ratio="1" class="rounded bg-grey-lighten-2" :src="media.url"
-                           :alt="media.file_name">
-                      <v-btn :icon="mdiDelete" size="x-small" color="error" class="position-absolute top-0 right-0 ma-1"
-                             @click="removeExistingMedia(media)" />
-                    </v-img>
-                  </v-col>
-                </v-row>
+                <v-card v-for="(media, i) in trip.existing_media" :key="i" class="mb-3 border" flat>
+                  <v-row no-gutters>
+                    <v-col cols="4" sm="3">
+                      <v-img :src="media.url" aspect-ratio="1" cover class="h-100 bg-grey-lighten-2" />
+                    </v-col>
+                    <v-col cols="8" sm="9" class="pa-2">
+                      <v-row dense>
+                        <v-col cols="12">
+                          <div class="d-flex justify-space-between align-center">
+                            <span class="text-caption text-truncate">{{ media.filename || media.file_name }}</span>
+                            <v-btn :icon="mdiDelete" size="x-small" variant="text" color="error" @click="removeExistingMedia(media)" />
+                          </div>
+                        </v-col>
+                        <v-col cols="12">
+                          <v-text-field v-model="media.title" label="Title" density="compact" variant="underlined" hide-details />
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-text-field v-model="media.copyright" label="Copyright" density="compact" variant="underlined" hide-details />
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-text-field v-model="media.photographer" label="Photographer" density="compact" variant="underlined" hide-details />
+                        </v-col>
+                      </v-row>
+                    </v-col>
+                  </v-row>
+                </v-card>
               </template>
             </v-card-text>
             <v-divider />
@@ -298,6 +315,15 @@ const getParticipant = (id) => {
   return users.value.find(u => u.id === id)
 }
 
+const canRemoveParticipant = (participantId) => {
+  if (trip.id === -1) {
+    // New trip: current user is the creator and cannot be removed
+    return participantId !== userId.value
+  }
+  // Existing trip: creator cannot be removed
+  return participantId !== trip.creator_id
+}
+
 const addSubterraUser = (user) => {
   if (!user) return
   if (!trip.participants.includes(user.id)) {
@@ -326,6 +352,7 @@ const initialTripState = JSON.stringify({
   participants: [null], // We'll handle this carefully
   cave_system_id: null,
   visibility: 'public',
+  creator_id: null,
 })
 
 const isDirty = computed(() => {
@@ -363,6 +390,7 @@ let trip = reactive({
   participants: [],
   cave_system_id: null,
   visibility: 'public',
+  creator_id: null,
 })
 
 const tripStartDate = ref(moment().format('YYYY-MM-DD'))
@@ -415,14 +443,14 @@ const visibilityOptions = [
     description: 'Visible to everyone'
   },
   {
-    value: 'private',
-    label: 'Private',
-    description: 'Visible only to trip participants'
-  },
-  {
     value: 'club',
     label: 'Club Members',
     description: 'Visible to members of your clubs'
+  },
+  {
+    value: 'private',
+    label: 'Private',
+    description: 'Visible only to trip participants'
   }
 ]
 
@@ -791,6 +819,9 @@ const submitForm = async () => {
     if (trip.existing_media?.length > 0) {
       trip.existing_media.forEach((item, index) => {
         formData.append(`existing_media[${index}][id]`, item.id)
+        if (item.title) formData.append(`existing_media[${index}][title]`, item.title)
+        if (item.copyright) formData.append(`existing_media[${index}][copyright]`, item.copyright)
+        if (item.photographer) formData.append(`existing_media[${index}][photographer]`, item.photographer)
       })
     }
 

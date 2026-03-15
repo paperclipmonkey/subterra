@@ -26,6 +26,7 @@ class TripResource extends JsonResource
             'end_time' => $this->end_time,
             'visibility' => $this->visibility,
             'participants' => UserResource::collection($this->participants),
+            'creator_id' => $this->audits()->where('event', 'created')->first()?->user_id,
             'media' => MediaResource::collection($this->media),
             'duration' => $this->duration,
             'entrance_hero_image' => $this->entrance?->heroImage?->filename

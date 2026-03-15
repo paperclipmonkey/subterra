@@ -89,6 +89,12 @@
         "string",
         "null"
       ]
+    },
+    "creator_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
     }
   },
   "required": [
