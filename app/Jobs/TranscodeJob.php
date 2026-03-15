@@ -27,7 +27,8 @@ class TranscodeJob implements ShouldQueue
         public readonly string $filePath,
         public readonly string $mediaModel,
         public readonly int $mediaId,
-    ) {}
+    ) {
+    }
 
     /**
      * Execute the job.
