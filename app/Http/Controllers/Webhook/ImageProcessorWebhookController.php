@@ -9,9 +9,6 @@ use Illuminate\Support\Facades\Storage;
 
 class ImageProcessorWebhookController extends Controller
 {
-    /**
-     * Media model label → [class, filename attribute] mapping.
-     */
     private const MEDIA_MODEL_MAP = [
         'cave_media' => ['class' => \App\Models\CaveMedia::class, 'attribute' => 'filename'],
         'trip_media' => ['class' => \App\Models\TripMedia::class, 'attribute' => 'filename'],
@@ -19,48 +16,33 @@ class ImageProcessorWebhookController extends Controller
     ];
 
     /**
-     * Handle callback from the GCP Cloud Run image processor.
-     *
-     * The processor sends a JSON payload with:
-     *   - status: "succeeded" or "failed"
-     *   - mediaModel: snake_case model label
-     *   - mediaId: primary key
-     *   - variants: array of { name, path, width, height, size }
-     *   - sourcePath: original GCS input path
+     * Handle Pub/Sub Push Notification from GCS Image Processor.
      */
     public function handle(Request $request): \Illuminate\Http\JsonResponse
     {
-        // Verify callback bearer token
-        $expectedSecret = config('services.gcp.webhook_secret');
-        if ($expectedSecret) {
-            $providedToken = $request->bearerToken();
-            if (!$providedToken || !hash_equals($expectedSecret, $providedToken)) {
-                Log::warning('ImageProcessorWebhook: unauthorized request', ['ip' => $request->ip()]);
+        $messageData = $request->input('message.data');
 
-                return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
-            }
-        }
-
-        $status = $request->input('status');
-        $mediaModelLabel = $request->input('mediaModel');
-        $mediaId = (int) $request->input('mediaId', 0);
-
-        if ($status !== 'succeeded') {
-            Log::warning('ImageProcessorWebhook: processing failed', [
-                'media_model' => $mediaModelLabel,
-                'media_id' => $mediaId,
-                'error' => $request->input('error'),
-            ]);
+        if (!$messageData) {
+            Log::warning('ImageProcessorWebhook: received request without Pub/Sub message data');
 
             return response()->json(['status' => 'ignored'], 200);
         }
 
+        $notification = json_decode(base64_decode($messageData), true);
+
+        if (!$notification || ($notification['status'] ?? '') !== 'succeeded') {
+            return response()->json(['status' => 'ignored'], 200);
+        }
+
+        $mediaModelLabel = $notification['mediaModel'] ?? '';
+        $mediaId = (int) ($notification['mediaId'] ?? 0);
+        $variants = $notification['variants'] ?? [];
+        $sourcePath = $notification['sourcePath'] ?? '';
+        $originalPath = $notification['originalPath'] ?? '';
+
         $modelConfig = self::MEDIA_MODEL_MAP[$mediaModelLabel] ?? null;
         if (!$modelConfig || !$mediaId) {
-            Log::error('ImageProcessorWebhook: missing or invalid fields', [
-                'media_model' => $mediaModelLabel,
-                'media_id' => $mediaId,
-            ]);
+            Log::error('ImageProcessorWebhook: missing or invalid job labels', ['labels' => $notification]);
 
             return response()->json(['status' => 'ignored'], 200);
         }
@@ -75,19 +57,14 @@ class ImageProcessorWebhookController extends Controller
             return response()->json(['status' => 'ignored'], 200);
         }
 
-        $variants = $request->input('variants', []);
-        $sourcePath = $request->input('sourcePath', '');
-
         if (empty($variants)) {
-            Log::error('ImageProcessorWebhook: no variants in callback', ['media_id' => $mediaId]);
+            Log::error('ImageProcessorWebhook: no variants in notification', ['media_id' => $mediaId]);
 
             return response()->json(['status' => 'ignored'], 200);
         }
 
         try {
-            // Use the desktop variant as the primary image (largest)
-            $desktopVariant = collect($variants)->firstWhere('name', 'desktop') ?? $variants[0];
-            $currentPath = $media->{$filenameAttribute};
+            $currentPath = $originalPath ?: $media->{$filenameAttribute};
             $directory = dirname($currentPath);
             $baseName = pathinfo($currentPath, PATHINFO_FILENAME);
 
@@ -117,37 +94,30 @@ class ImageProcessorWebhookController extends Controller
             }
             if ($sourcePath) {
                 Storage::disk('gcs_staging')->delete($sourcePath);
-                // Try to remove the parent input directory
                 $inputDir = dirname($sourcePath).'/';
                 $this->deleteGcsDirectory($inputDir);
             }
 
-            // Delete the original raw file from S3 (it's been replaced by WebP variants)
-            if ($currentPath !== $primaryPath) {
+            // Delete original file from S3
+            if ($currentPath && $currentPath !== $primaryPath) {
                 Storage::disk('s3_clone')->delete($currentPath);
             }
 
-            Log::info('ImageProcessorWebhook: image variants stored', [
+            Log::info('ImageProcessorWebhook: image variants stored async', [
                 'media_model' => $mediaClass,
                 'media_id' => $mediaId,
                 'variants' => array_keys($storedPaths),
                 'primary_path' => $primaryPath,
             ]);
         } catch (\Throwable $e) {
-            Log::error('ImageProcessorWebhook: failed to process callback', [
-                'media_id' => $mediaId,
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('ImageProcessorWebhook: failed to move variants', ['error' => $e->getMessage()]);
 
-            return response()->json(['status' => 'error', 'message' => 'Internal error'], 500);
+            return response()->json(['status' => 'error'], 500);
         }
 
-        return response()->json(['status' => 'ok'], 200);
+        return response()->json(['status' => 'ok']);
     }
 
-    /**
-     * Delete all objects within a GCS "directory" prefix.
-     */
     private function deleteGcsDirectory(string $directory): void
     {
         $files = Storage::disk('gcs_staging')->allFiles($directory);

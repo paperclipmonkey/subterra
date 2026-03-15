@@ -43,8 +43,7 @@ return [
         'location' => env('GCP_LOCATION', 'europe-west2'),
         'transcoder_pubsub_topic' => env('GCP_TRANSCODER_PUBSUB_TOPIC'),
         'webhook_secret' => env('GCP_WEBHOOK_SECRET'),
-        'image_processor_url' => env('GCP_IMAGE_PROCESSOR_URL'),
-        'image_processor_api_key' => env('GCP_IMAGE_PROCESSOR_API_KEY'),
+        'media_processing_enabled' => env('GCP_MEDIA_PROCESSING_ENABLED', true),
     ],
 
 ];

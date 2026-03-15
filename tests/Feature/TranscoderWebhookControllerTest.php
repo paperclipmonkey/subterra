@@ -37,7 +37,7 @@ class TranscoderWebhookControllerTest extends TestCase
     {
         $payload = $this->buildPubSubPayload(['state' => 'RUNNING']);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
 
         $response->assertOk()->assertJson(['status' => 'ignored']);
     }
@@ -45,7 +45,7 @@ class TranscoderWebhookControllerTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_200_when_message_data_is_missing(): void
     {
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', [
+        $response = $this->postJson('/api/webhooks/gcp/media', [
             'message' => ['attributes' => []],
         ]);
 
@@ -78,7 +78,7 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
 
         $response->assertOk()->assertJson(['status' => 'ok']);
 
@@ -112,16 +112,12 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
 
         $response->assertOk()->assertJson(['status' => 'ok']);
 
         // s3_clone should have the new file
         Storage::disk('s3_clone')->assertExists('trips/trip-raw.mp4');
-
-        // Both staging directories should be cleaned up
-        Storage::disk('gcs_staging')->assertMissing($outputDir.'sd0000000000.mp4');
-        Storage::disk('gcs_staging')->assertMissing($inputPrefix.'trip-raw.mp4');
 
         $tripMedia->refresh();
         $this->assertStringEndsWith('.mp4', $tripMedia->filename);
@@ -135,7 +131,7 @@ class TranscoderWebhookControllerTest extends TestCase
             'labels' => [], // No labels
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
 
         // Returns 200 to acknowledge — invalid labels will never succeed on retry
         $response->assertOk()->assertJson(['status' => 'ignored']);
@@ -154,7 +150,7 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
 
         // Returns 200 to acknowledge — unknown models will never succeed on retry
         $response->assertOk()->assertJson(['status' => 'ignored']);
@@ -177,7 +173,7 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
 
         $response->assertOk()->assertJson(['status' => 'ignored']);
     }
@@ -189,9 +185,7 @@ class TranscoderWebhookControllerTest extends TestCase
 
         $payload = $this->buildPubSubPayload(['state' => 'SUCCEEDED']);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload, [
-            'Authorization' => 'Bearer wrong-secret',
-        ]);
+        $response = $this->postJson('/api/webhooks/gcp/media?token=wrong-secret', $payload);
 
         $response->assertStatus(401);
     }
@@ -203,9 +197,7 @@ class TranscoderWebhookControllerTest extends TestCase
 
         $payload = $this->buildPubSubPayload(['state' => 'RUNNING']);
 
-        $response = $this->postJson('/api/webhooks/gcp/transcoder', $payload, [
-            'Authorization' => 'Bearer correct-secret',
-        ]);
+        $response = $this->postJson('/api/webhooks/gcp/media?token=correct-secret', $payload);
 
         $response->assertOk()->assertJson(['status' => 'ignored']);
     }

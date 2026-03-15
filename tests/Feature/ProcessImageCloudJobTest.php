@@ -10,7 +10,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -25,8 +24,6 @@ class ProcessImageCloudJobTest extends TestCase
         Storage::fake('s3_clone');
         Storage::fake('gcs_staging');
         config(['filesystems.disks.gcs_staging.bucket' => 'test-bucket']);
-        config(['services.gcp.image_processor_url' => 'https://mock.cloud.run']);
-        config(['services.gcp.image_processor_api_key' => 'test-api-key']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -99,12 +96,8 @@ class ProcessImageCloudJobTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function process_image_cloud_job_streams_file_to_gcs_and_submits_http_request()
+    public function process_image_cloud_job_streams_file_to_gcs()
     {
-        Http::fake([
-            'https://mock.cloud.run/process' => Http::response(['status' => 'submitted'], 200),
-        ]);
-
         $rawPath = 'trip/test-raw.png';
         Storage::disk('s3_clone')->put($rawPath, 'fake content');
 
@@ -119,13 +112,6 @@ class ProcessImageCloudJobTest extends TestCase
         // Should have streamed to gcs_staging disk
         $files = Storage::disk('gcs_staging')->allFiles('input');
         $this->assertCount(1, $files);
-
-        // Http request should have been submitted
-        Http::assertSent(function ($request) {
-            return $request->url() === 'https://mock.cloud.run/process' &&
-                   $request['bucket'] === 'test-bucket' &&
-                   $request['mediaId'] === $this->getCreatedMediaId();
-        });
     }
 
     private function getCreatedMediaId()

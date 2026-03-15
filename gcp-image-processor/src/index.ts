@@ -1,14 +1,8 @@
-/**
- * Subterra Image Processor - GCP Cloud Run Application
- *
- * Receives image processing requests, downloads images from GCS,
- * generates multiple WebP variants for srcset (desktop, tablet, mobile),
- * uploads results back to GCS, and notifies the Laravel app via webhook.
- */
 import express, { Request, Response } from 'express';
 import { Storage } from '@google-cloud/storage';
+import { PubSub } from '@google-cloud/pubsub';
+import { TranscoderServiceClient } from '@google-cloud/video-transcoder';
 import sharp from 'sharp';
-import axios from 'axios';
 import { getSecret } from './secrets';
 import { setupSlackLogger } from './slack-logger';
 
@@ -19,6 +13,9 @@ const app = express();
 app.use(express.json());
 
 const storage = new Storage();
+const pubsub = new PubSub();
+const transcoderClient = new TranscoderServiceClient();
+const pubsubTopicName = process.env.IMAGE_PROCESSOR_PUBSUB_TOPIC || 'subterra-image-processor-notifications';
 
 /**
  * Image size presets for responsive srcset generation.
@@ -59,64 +56,96 @@ app.get('/health', (_req: Request, res: Response) => {
     });
 });
 
-// Protected routes
-app.use(['/process'], checkApiKey);
-
 /**
- * POST /process
- *
- * Accepts a JSON body with:
- *   - bucket: GCS bucket name containing the source image
- *   - path: Object path within the bucket
- *   - callbackUrl: URL to POST results to when processing is complete
- *   - mediaModel: snake_case model label (e.g. "cave_media", "trip_media")
- *   - mediaId: Primary key of the media record
- *   - outputPrefix: GCS prefix for output files
- *
- * Downloads the source image, generates WebP variants at multiple sizes,
- * uploads them to the same bucket under outputPrefix, and POSTs results
- * to the callbackUrl.
+ * POST /
+ * Eventarc GCS Trigger handler.
  */
-app.post('/process', async (req: Request, res: Response) => {
-    const { bucket: bucketName, path: sourcePath, callbackUrl, mediaModel, mediaId, outputPrefix } =
-        req.body;
+app.post('/', async (req: Request, res: Response) => {
+    // Eventarc deliveries CloudEvent containing target Object notifications
+    const data = req.body;
+    const bucketName = data.bucket;
+    const sourcePath = data.name;
 
-    if (!bucketName || !sourcePath || !callbackUrl || !mediaModel || !mediaId || !outputPrefix) {
-        return res.status(400).json({
-            error: 'Missing required fields: bucket, path, callbackUrl, mediaModel, mediaId, outputPrefix',
-        });
+    console.log(`Received GCS Trigger event for gs://${bucketName}/${sourcePath}`);
+
+    if (!bucketName || !sourcePath) {
+        return res.status(400).json({ error: 'Missing bucket or name' });
     }
 
-    try {
-        await processImage({ bucketName, sourcePath, callbackUrl, mediaModel, mediaId, outputPrefix });
-        
-        // Respond once processing is complete so Cloud Run doesn't throttle CPU
-        return res.json({ status: 'success', mediaId });
-    } catch (error) {
-        console.error(`Image processing failed for ${mediaModel}#${mediaId}:`, error);
+    if (!sourcePath.startsWith('input/')) {
+        console.log(`Ignoring trigger for non-input path: ${sourcePath}`);
+        return res.json({ status: 'ignored' });
+    }
 
-        // Notify callback of failure
-        try {
-            await axios.post(callbackUrl, {
-                status: 'failed',
-                mediaModel,
-                mediaId,
-                error: (error as Error).message,
-            });
-        } catch (cbError) {
-            console.error('Failed to send error callback:', cbError);
+    let customMetadata: any = {};
+
+    try {
+        const bucket = storage.bucket(bucketName);
+        const [gcsMetadata] = await bucket.file(sourcePath).getMetadata();
+        customMetadata = gcsMetadata.metadata || {};
+
+        const mediaModel = customMetadata['media_model'] as string | undefined;
+        const mediaId = customMetadata['media_id'] as string | undefined;
+        const outputPrefix = customMetadata['output_prefix'] as string | undefined;
+        const originalPath = customMetadata['file_path'] as string | undefined;
+
+        if (!mediaModel || !mediaId || !outputPrefix) {
+             console.log(`Skipping: missing custom metadata on ${sourcePath}`, customMetadata);
+             return res.json({ status: 'ignored', message: 'Missing custom metadata' });
         }
 
-        return res.status(500).json({ error: (error as Error).message });
+        const isVideo = sourcePath.match(/\.(mp4|mov|avi|mkv|m4v)$/i);
+
+        if (isVideo) {
+             console.log(`Processing Video: gs://${bucketName}/${sourcePath}`);
+             await submitTranscodeJob({ bucketName, sourcePath, outputPrefix, mediaModel, mediaId });
+        } else {
+             console.log(`Processing Image: gs://${bucketName}/${sourcePath}`);
+             const result = await processImage({ bucketName, sourcePath, outputPrefix });
+
+             const callbackPayload = {
+                  status: 'succeeded',
+                  mediaModel,
+                  mediaId: Number(mediaId),
+                  variants: result.variants,
+                  sourcePath: result.sourcePath,
+                  originalPath
+             };
+
+             const dataBuffer = Buffer.from(JSON.stringify(callbackPayload));
+             await pubsub.topic(pubsubTopicName).publishMessage({ data: dataBuffer });
+
+             console.log(`Published success notification to Pub/Sub topic ${pubsubTopicName} for ${sourcePath}`);
+        }
+
+        return res.json({ status: 'success' });
+    } catch (error) {
+        console.error(`Media processing failed for ${sourcePath}:`, error);
+
+        try {
+             if (customMetadata['media_id'] && customMetadata['media_model']) {
+                  const callbackPayload = {
+                       status: 'failed',
+                       mediaModel: customMetadata['media_model'] as string,
+                       mediaId: Number(customMetadata['media_id']),
+                       error: (error as Error).message,
+                       sourcePath
+                  };
+                  const dataBuffer = Buffer.from(JSON.stringify(callbackPayload));
+                  await pubsub.topic(pubsubTopicName).publishMessage({ data: dataBuffer });
+                  console.log(`Published failure notification to Pub/Sub for ${sourcePath}`);
+             }
+        } catch (pubSubError) {
+             console.error('Failed to publish error to PubSub:', pubSubError);
+        }
+
+        return res.json({ status: 'ignored', message: (error as Error).message });
     }
 });
 
 interface ProcessImageParams {
     bucketName: string;
     sourcePath: string;
-    callbackUrl: string;
-    mediaModel: string;
-    mediaId: string | number;
     outputPrefix: string;
 }
 
@@ -124,8 +153,8 @@ interface ProcessImageParams {
  * Core image processing logic.
  * Downloads source → generates WebP variants → uploads → notifies callback.
  */
-export async function processImage(params: ProcessImageParams): Promise<void> {
-    const { bucketName, sourcePath, callbackUrl, mediaModel, mediaId, outputPrefix } = params;
+export async function processImage(params: ProcessImageParams): Promise<{ variants: any[], sourcePath: string }> {
+    const { bucketName, sourcePath, outputPrefix } = params;
     const bucket = storage.bucket(bucketName);
 
     console.log(`Processing image: gs://${bucketName}/${sourcePath}`);
@@ -166,25 +195,57 @@ export async function processImage(params: ProcessImageParams): Promise<void> {
         );
     }
 
-    // Notify the Laravel callback
-    const callbackPayload = {
-        status: 'succeeded',
-        mediaModel,
-        mediaId,
+    console.log(`Image processing complete for ${sourcePath}: ${variants.length} variants`);
+
+    return {
         variants,
         sourcePath,
     };
+}
 
-    console.log(`Sending callback to ${callbackUrl}`);
-    await axios.post(callbackUrl, callbackPayload, {
-        headers: {
-            Authorization: `Bearer ${getSecret('CALLBACK_SECRET')}`,
-            'Content-Type': 'application/json',
+/**
+ * Submit a job to the GCP Transcoder API using the web-hd-mp4 template.
+ */
+async function submitTranscodeJob(params: {
+    bucketName: string;
+    sourcePath: string;
+    outputPrefix: string;
+    mediaModel: string;
+    mediaId: string;
+}) {
+    const { bucketName, sourcePath, outputPrefix, mediaModel, mediaId } = params;
+    const projectId = process.env.GCP_PROJECT_ID;
+    const location = process.env.GCP_LOCATION || 'europe-west2';
+
+    if (!projectId) {
+        throw new Error('GCP_PROJECT_ID environment variable is not configured.');
+    }
+
+    const parent = transcoderClient.locationPath(projectId, location);
+
+    const job = {
+        inputUri: `gs://${bucketName}/${sourcePath}`,
+        outputUri: `gs://${bucketName}/${outputPrefix}`,
+        templateId: 'web-hd-mp4',
+        labels: {
+            'media_model': mediaModel,
+            'media_id': mediaId,
+            'output_dir': Buffer.from(outputPrefix).toString('base64'),
+            'input_prefix': Buffer.from(sourcePath).toString('base64'),
         },
-        timeout: 10000,
+        config: {
+            pubsubDestination: {
+                topic: `projects/${projectId}/topics/${pubsubTopicName}`
+            }
+        }
+    };
+
+    const [response] = await transcoderClient.createJob({
+        parent,
+        job,
     });
 
-    console.log(`Image processing complete for ${mediaModel}#${mediaId}: ${variants.length} variants`);
+    console.log(`Submitted GCP Transcoder Job: ${response.name} for ${sourcePath}`);
 }
 
 // Start server only if not in test environment

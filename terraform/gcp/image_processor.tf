@@ -133,3 +133,64 @@ resource "google_artifact_registry_repository" "image_processor" {
 
   depends_on = [google_project_service.artifactregistry]
 }
+
+# --- Eventarc Trigger for GCS Uploads ---
+
+data "google_storage_project_service_account" "gcs_agent" {}
+
+# Grant GCS service agent publishing rights to Pub/Sub (required for Eventarc delivery)
+resource "google_project_iam_member" "gcs_pubsub_publishing" {
+  project = var.project_id
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${data.google_storage_project_service_account.gcs_agent.email_address}"
+}
+
+# Eventarc Trigger from GCS to Cloud Run
+resource "google_eventarc_trigger" "gcs_upload_trigger" {
+  name     = "${var.app_name}-media-trigger"
+  location = var.region
+
+  matching_criteria {
+    attribute = "type"
+    value     = "google.cloud.storage.object.v1.finalized"
+  }
+
+  matching_criteria {
+    attribute = "bucket"
+    value     = google_storage_bucket.media_staging.name
+  }
+
+  destination {
+    cloud_run {
+      service = google_cloud_run_v2_service.image_processor.name
+      region  = var.region
+    }
+  }
+
+  service_account = google_service_account.image_processor_service.email
+
+  depends_on = [
+    google_project_iam_member.gcs_pubsub_publishing
+  ]
+}
+
+# Grant the image processor SA permissions to receive Eventarc events
+resource "google_project_iam_member" "image_processor_event_receiver" {
+  project = var.project_id
+  role    = "roles/eventarc.eventReceiver"
+  member  = "serviceAccount:${google_service_account.image_processor_service.email}"
+}
+
+# Grant the image processor SA permissions to publish to Pub/Sub
+resource "google_project_iam_member" "image_processor_pubsub_publisher" {
+  project = var.project_id
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.image_processor_service.email}"
+}
+
+# Grant the image processor SA permissions to submit Transcoder jobs
+resource "google_project_iam_member" "image_processor_transcoder_user" {
+  project = var.project_id
+  role    = "roles/transcoder.admin"
+  member  = "serviceAccount:${google_service_account.image_processor_service.email}"
+}

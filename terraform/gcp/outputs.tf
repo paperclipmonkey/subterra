@@ -3,11 +3,6 @@ output "watchdog_url" {
   value       = google_cloud_run_v2_service.watchdog.uri
 }
 
-output "image_processor_url" {
-  description = "URL of the Image Processor Cloud Run service"
-  value       = google_cloud_run_v2_service.image_processor.uri
-}
-
 output "firestore_database" {
   description = "Firestore database name"
   value       = google_firestore_database.watchdog_db.name
@@ -28,7 +23,7 @@ output "scheduler_job_name" {
   value       = google_cloud_scheduler_job.watchdog_checker.name
 }
 
-output "transcoder_pubsub_topic" {
-  description = "Pub/Sub topic that GCP Transcoder should notify on completion"
-  value       = google_pubsub_topic.transcoder_notifications.id
+output "media_pubsub_topic" {
+  description = "Pub/Sub topic for all media processing notifications"
+  value       = google_pubsub_topic.media_notifications.id
 }

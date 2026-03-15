@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -35,6 +34,12 @@ class ProcessImageCloudJob implements ShouldQueue
      */
     public function handle(): void
     {
+        if (!config('services.gcp.media_processing_enabled', true)) {
+            Log::info('ProcessImageCloudJob: media processing is disabled, keeping raw file.');
+
+            return;
+        }
+
         $inputKey = 'input/'.Str::uuid().'/'.basename($this->filePath);
 
         // Stream the source image from S3 to GCS staging — no full-file buffering
@@ -43,7 +48,17 @@ class ProcessImageCloudJob implements ShouldQueue
             throw new \RuntimeException("ProcessImageCloudJob: failed to read source file '{$this->filePath}' from s3_clone disk.");
         }
 
-        $written = Storage::disk('gcs_staging')->writeStream($inputKey, $sourceStream);
+        $outputPrefix = 'output/'.Str::uuid().'/';
+
+        $written = Storage::disk('gcs_staging')->put($inputKey, $sourceStream, [
+            'metadata' => [
+                'media_model' => Str::snake(class_basename($this->mediaModel)),
+                'media_id' => (string) $this->mediaId,
+                'output_prefix' => $outputPrefix,
+                'file_path' => $this->filePath,
+            ],
+        ]);
+
         if (is_resource($sourceStream)) {
             fclose($sourceStream);
         }
@@ -52,57 +67,10 @@ class ProcessImageCloudJob implements ShouldQueue
             throw new \RuntimeException("ProcessImageCloudJob: failed to write '{$inputKey}' to gcs_staging disk.");
         }
 
-        $bucket = config('filesystems.disks.gcs_staging.bucket');
-        $outputPrefix = 'output/'.Str::uuid().'/';
-
-        $this->submitProcessingJob($bucket, $inputKey, $outputPrefix);
-    }
-
-    /**
-     * Submit an image processing request to the Cloud Run image processor.
-     */
-    protected function submitProcessingJob(string $bucket, string $inputKey, string $outputPrefix): void
-    {
-        $processorUrl = config('services.gcp.image_processor_url');
-        if (!$processorUrl) {
-            throw new \RuntimeException('ProcessImageCloudJob: GCP_IMAGE_PROCESSOR_URL is not configured.');
-        }
-
-        $callbackUrl = rtrim(config('app.url'), '/').'/api/webhooks/gcp/image-processor';
-
-        $payload = [
-            'bucket' => $bucket,
-            'path' => $inputKey,
-            'callbackUrl' => $callbackUrl,
-            'mediaModel' => Str::snake(class_basename($this->mediaModel)),
-            'mediaId' => $this->mediaId,
-            'outputPrefix' => $outputPrefix,
-        ];
-
-        $response = Http::withToken($this->getApiKey())
-            ->timeout(30)
-            ->post(rtrim($processorUrl, '/').'/process', $payload);
-
-        if ($response->failed()) {
-            Log::error('ProcessImageCloudJob: Cloud Run request failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-                'media_id' => $this->mediaId,
-            ]);
-            $response->throw();
-        }
-
-        Log::info('ProcessImageCloudJob: image processing submitted', [
+        Log::info('ProcessImageCloudJob: image uploaded to GCS staging, awaiting trigger', [
             'media_model' => $this->mediaModel,
             'media_id' => $this->mediaId,
+            'input_key' => $inputKey,
         ]);
-    }
-
-    /**
-     * Get the API key for the Cloud Run image processor.
-     */
-    protected function getApiKey(): string
-    {
-        return config('services.gcp.image_processor_api_key') ?? '';
     }
 }
