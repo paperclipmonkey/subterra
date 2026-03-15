@@ -121,7 +121,9 @@ class SuggestedEditController extends Controller
 
         $suggestedEdit->update(['status' => 'approved']);
 
-        Mail::to($suggestedEdit->user)->send(new SuggestionApprovedMail($suggestedEdit));
+        if ($suggestedEdit->user) {
+            Mail::to($suggestedEdit->user)->send(new SuggestionApprovedMail($suggestedEdit));
+        }
 
         return response()->json(['message' => 'Suggestion approved and applied.']);
     }

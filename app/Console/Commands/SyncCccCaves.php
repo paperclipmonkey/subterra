@@ -145,8 +145,8 @@ class SyncCccCaves extends Command
                         $ref = $grStr.$eStr.$nStr;
                         $gridPoint = \PHPCoord\Point\BritishNationalGridPoint::fromGridReference($ref);
                         $wgs84 = $gridPoint->convert(\PHPCoord\CoordinateReferenceSystem\Geographic2D::fromSRID('urn:ogc:def:crs:EPSG::4326'));
-                        $lat = $wgs84->getLatitude()->asDegrees()->getValue();
-                        $lng = $wgs84->getLongitude()->asDegrees()->getValue();
+                        $lat = round($wgs84->getLatitude()->asDegrees()->getValue(), 6);
+                        $lng = round($wgs84->getLongitude()->asDegrees()->getValue(), 6);
                     } else {
                         throw new \Exception('Invalid or unequal E/N sizes');
                     }
@@ -156,12 +156,12 @@ class SyncCccCaves extends Command
                     if (!empty($llStr)) {
                         $ll = explode(',', $llStr);
                         // Standard order in this XML file: Longitude, Latitude
-                        $lng = (float) ($ll[0] ?? 0);
-                        $lat = (float) ($ll[1] ?? 0);
+                        $lng = round((float) ($ll[0] ?? 0), 6);
+                        $lat = round((float) ($ll[1] ?? 0), 6);
                     }
                 }
 
-                $alt = (float) ($entry['alt'] ?? 0);
+                $alt = round((float) ($entry['alt'] ?? 0), 1);
 
                 // 3. Description & References
                 $descriptionParts = [];
@@ -194,11 +194,30 @@ class SyncCccCaves extends Command
                 $accessInfo = (string) ($entry->Access['con'] ?? '');
 
                 // 5. Create/Update Cave
+                // Note: slug and cave_system_id are excluded from diff checking — they are
+                // internal fields that should not appear as suggested edits.
+
+                // Build region-prefixed slug (e.g. north_wales_cave_name)
+                $regions = $entry->xpath('ancestor::Region');
+                $regionName = $regions ? (string) $regions[0]['name'] : '';
+                $regionNameLower = strtolower($regionName);
+
+                $regionPrefix = '';
+                if (strpos($regionNameLower, 'north wales') !== false) {
+                    $regionPrefix = 'north_wales_';
+                } elseif (
+                    strpos($regionNameLower, 'south') !== false ||
+                    strpos($regionNameLower, 'gower') !== false ||
+                    strpos($regionNameLower, 'northern outcrop') !== false
+                ) {
+                    $regionPrefix = 'south_wales_';
+                }
+
+                $baseSlug = $regionPrefix . Str::slug($name);
+
                 $caveData = [
-                    'slug' => Str::slug($name),
                     'description' => $description,
-                    'cave_system_id' => $caveSystemId,
-                    'location_name' => ($entry->xpath('ancestor::Region') ? (string) $entry->xpath('ancestor::Region')[0]['name'] : null),
+                    'location_name' => $regionName ?: null,
                     'location_country' => 'United Kingdom',
                     'location_lat' => $lat,
                     'location_lng' => $lng,
@@ -206,14 +225,19 @@ class SyncCccCaves extends Command
                     'access_info' => $accessInfo ?: null,
                 ];
 
-                $existingCave = Cave::where('name', $name)->first();
+                $existingCave = Cave::where('name', $name)->first()
+                    ?? Cave::where('slug', $baseSlug)->first();
 
                 if ($existingCave) {
-                    // Check for differences
+                    // Check for differences. Round both sides before comparing floats to avoid
+                    // false negatives from legacy high-precision stored values.
+                    $coordKeys = ['location_lat', 'location_lng', 'location_alt'];
                     $differences = [];
                     foreach ($caveData as $key => $value) {
-                        if (in_array($key, ['location_lat', 'location_lng', 'location_alt'])) {
-                            if (abs((float)$existingCave->$key - (float)$value) > 0.00001) {
+                        if (in_array($key, $coordKeys)) {
+                            $existingRounded = round((float) $existingCave->$key, 6);
+                            $newRounded = round((float) $value, 6);
+                            if ($existingRounded !== $newRounded) {
                                 $differences[$key] = $value;
                             }
                         } elseif ($existingCave->$key !== $value) {
@@ -224,7 +248,10 @@ class SyncCccCaves extends Command
                     if (!empty($differences)) {
                         $originalData = [];
                         foreach (array_keys($differences) as $key) {
-                            $originalData[$key] = $existingCave->$key;
+                            $val = $existingCave->$key;
+                            $originalData[$key] = in_array($key, ['location_lat', 'location_lng', 'location_alt'])
+                                ? round((float) $val, 6)
+                                : $val;
                         }
 
                         $existingPendingEdit = \App\Models\SuggestedEdit::where('suggestable_type', Cave::class)
@@ -252,7 +279,11 @@ class SyncCccCaves extends Command
                     }
                     $cave = $existingCave;
                 } else {
-                    $cave = Cave::create(array_merge(['name' => $name], $caveData));
+                    $cave = Cave::create(array_merge([
+                        'name' => $name,
+                        'slug' => $this->uniqueSlug($baseSlug, 'caves'),
+                        'cave_system_id' => $caveSystemId,
+                    ], $caveData));
                 }
 
                 // 6. Sync Tags
@@ -266,10 +297,7 @@ class SyncCccCaves extends Command
                 $tagIds[] = $tagCave->id;
 
                 // Region tags from ancestor Region in the XML
-                $regions = $entry->xpath('ancestor::Region');
-                $regionName = $regions ? (string) $regions[0]['name'] : '';
-                $regionNameLower = strtolower($regionName);
-
+                // ($regionName and $regionNameLower already computed above)
                 if (strpos($regionNameLower, 'north wales') !== false) {
                     $tagNorthWales = \App\Models\Tag::firstOrCreate(
                         ['tag' => 'North Wales'],
@@ -359,5 +387,16 @@ class SyncCccCaves extends Command
         }
 
         return $blocklist;
+    }
+
+    private function uniqueSlug(string $base, string $table): string
+    {
+        $slug = $base;
+        $count = 2;
+        while (\Illuminate\Support\Facades\DB::table($table)->where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $count++;
+        }
+
+        return $slug;
     }
 }

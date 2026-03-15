@@ -15,7 +15,7 @@
             <h1>Suggestion Approved!</h1>
         </div>
         <div class="content">
-            <p>Hi {{ $suggestedEdit->user->first_name ?: $suggestedEdit->user->name }},</p>
+            <p>Hi {{ $suggestedEdit->user?->first_name ?: $suggestedEdit->user?->name ?? 'there' }},</p>
             
             <p>Thank you for your contribution to Subterra!</p>
             

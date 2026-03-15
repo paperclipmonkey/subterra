@@ -347,4 +347,89 @@ class SuggestedEditTest extends TestCase
 
         $response->assertStatus(201);
     }
+
+    public function test_robot_suggestion_can_be_approved_without_sending_email()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create(['description' => 'Original Description']);
+
+        // Simulate a robot/sync-generated suggestion with no user_id
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => $cave->toArray(),
+            'suggested_data' => array_merge($cave->toArray(), ['description' => 'Robot Updated Description']),
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve");
+
+        $response->assertStatus(200);
+
+        // No email should be sent for robot suggestions
+        Mail::assertNotSent(SuggestionApprovedMail::class);
+        Mail::assertNothingQueued();
+
+        $this->assertDatabaseHas('suggested_edits', [
+            'id' => $suggestion->id,
+            'status' => 'approved',
+        ]);
+
+        $this->assertEquals('Robot Updated Description', $cave->fresh()->description);
+    }
+
+    public function test_robot_suggestion_can_be_rejected()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create(['description' => 'Original Description']);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => $cave->toArray(),
+            'suggested_data' => array_merge($cave->toArray(), ['description' => 'Robot Rejected Description']),
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/reject", [
+                'admin_comment' => 'Incorrect robot data',
+            ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('suggested_edits', [
+            'id' => $suggestion->id,
+            'status' => 'rejected',
+            'admin_comment' => 'Incorrect robot data',
+        ]);
+
+        $this->assertEquals('Original Description', $cave->fresh()->description);
+    }
+
+    public function test_admin_index_includes_robot_suggestions()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create();
+
+        SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => $cave->toArray(),
+            'suggested_data' => ['description' => 'Robot suggestion'],
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson('/api/admin/suggested-edits?status=pending');
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment(['user_id' => null]);
+    }
 }

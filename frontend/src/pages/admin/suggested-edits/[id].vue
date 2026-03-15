@@ -5,27 +5,40 @@
     </v-btn>
     
     <div v-if="suggestion">
-      <div class="d-flex align-center justify-space-between mb-4">
-        <h2 class="text-h4">Review Suggestion #{{ suggestion.id }}</h2>
+      <div class="d-flex align-center justify-space-between mb-2">
+        <div>
+          <div class="d-flex align-center gap-2 mb-1">
+            <v-chip size="small" :color="suggestion.suggestable_id ? 'blue-darken-1' : 'success'" variant="tonal">
+              {{ suggestion.suggestable_id ? formatType(suggestion.suggestable_type) : '✨ New Item' }}
+            </v-chip>
+            <v-chip size="small" :color="suggestion.status === 'approved' ? 'success' : suggestion.status === 'rejected' ? 'error' : 'warning'" variant="tonal">
+              {{ suggestion.status }}
+            </v-chip>
+          </div>
+          <h2 class="text-h4 font-weight-bold">
+            {{ suggestion.suggestable?.name || suggestion.suggested_data?.name || `Suggestion #${suggestion.id}` }}
+          </h2>
+          <div class="text-subtitle-2 text-grey mt-1">
+            Suggestion #{{ suggestion.id }}
+            · by <router-link v-if="suggestion.user" :to="`/profile/${suggestion.user.id}`" class="text-decoration-none font-weight-bold text-primary">{{ suggestion.user.name }}</router-link><span v-else>🤖 Robot</span>
+          </div>
+        </div>
         <v-btn
           v-if="viewUrl"
           :href="viewUrl"
           target="_blank"
           :prepend-icon="mdiOpenInNew"
-          variant="text"
+          variant="tonal"
           color="primary"
         >
           View Live
         </v-btn>
       </div>
-      <div class="text-subtitle-1 mb-4">
-        By <router-link v-if="suggestion.user" :to="`/profile/${suggestion.user.id}`" class="text-decoration-none font-weight-bold text-primary">{{ suggestion.user.name }}</router-link><span v-else>Unknown User</span> for {{ formatType(suggestion.suggestable_type) }} #{{ suggestion.suggestable_id }}
-      </div>
 
       <v-alert
         v-if="suggestion.status !== 'pending'"
         :type="suggestion.status === 'approved' ? 'success' : 'error'"
-        class="mb-4"
+        class="mt-4 mb-4"
       >
         This suggestion has been {{ suggestion.status }}.
       </v-alert>
@@ -248,67 +261,71 @@ const normalizeCaves = (caves) => {
 const changedFields = computed(() => {
     if (!suggestion.value) return []
 
-    // Fallback to current model data if original_data wasn't captured at submission time
-    const original = JSON.parse(JSON.stringify(suggestion.value.original_data || suggestion.value.suggestable || {}))
+    // Build baseline: original_data is a partial snapshot of only the changed fields.
+    // For each key, prefer original_data (snapshot at submission time), fall back to
+    // the live suggestable so we always have a meaningful before-value.
+    const originalData = suggestion.value.original_data || {}
+    const suggestable = suggestion.value.suggestable || {}
     const suggested = JSON.parse(JSON.stringify(suggestion.value.suggested_data || {}))
     const fields = []
 
-    // Normalize comparison for common relationships
-    if (original.tags || suggested.tags) {
-        original.tags = normalizeTags(original.tags)
-        suggested.tags = normalizeTags(suggested.tags)
-    }
-    if (original.caves || suggested.caves) {
-        original.caves = normalizeCaves(original.caves)
-        suggested.caves = normalizeCaves(suggested.caves)
-    }
-
-    // Get all unique keys from both objects
-    const keys = [...new Set([...Object.keys(original), ...Object.keys(suggested)])]
-
-    // Internal keys to ignore
-    const ignoredKeys = [
+    // Keys to show = everything proposed in suggested_data, plus anything in original_data
+    // that was removed (not present in suggested_data). Ignore pure-metadata keys.
+    const ignoredKeys = new Set([
         'id', 'created_at', 'updated_at', 'deleted_at', 'slug', 'user_id',
         'suggestable_id', 'suggestable_type', 'photo_data',
-        'trips', 'visits', 'collections', 'is_ticked', // Non-editable relationships
-        'previously_done', 'cave_system_id' // Loaded relationships/counts
-    ]
+        'trips', 'visits', 'collections', 'is_ticked',
+        'previously_done', 'cave_system_id',
+    ])
+    const keys = [...new Set([...Object.keys(suggested), ...Object.keys(originalData)])]
 
     for (const key of keys) {
-        if (ignoredKeys.includes(key)) continue
+        if (ignoredKeys.has(key)) continue
 
-        const oldVal = original[key]
         const newVal = suggested[key]
+        // Per-key fallback: use snapshot if available, else live model
+        const oldVal = (key in originalData) ? originalData[key] : suggestable[key]
 
-        // Check for double empty
+        // Normalise tags/caves in place before comparing
+        if (key === 'tags') {
+            const normOld = normalizeTags(oldVal)
+            const normNew = normalizeTags(newVal)
+            if (JSON.stringify(normOld) !== JSON.stringify(normNew)) {
+                fields.push({ key, label: 'TAGS', oldValue: normOld, newValue: normNew, isTags: true })
+            }
+            continue
+        }
+        if (key === 'caves') {
+            const normOld = normalizeCaves(oldVal)
+            const normNew = normalizeCaves(newVal)
+            if (JSON.stringify(normOld) !== JSON.stringify(normNew)) {
+                fields.push({ key, label: 'CAVES', oldValue: normOld, newValue: normNew, isCaves: true })
+            }
+            continue
+        }
+
+        // Skip if both are empty
         if (isEmpty(oldVal) && isEmpty(newVal)) continue
 
-        // Deep comparison for arrays/objects
-        if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-            const isImage = isImageField(key)
-            const isTags = key === 'tags'
-            const isCaves = key === 'caves'
-            const isSystem = key === 'cave_system' || key === 'system'
+        // Deep equality check
+        if (JSON.stringify(oldVal) === JSON.stringify(newVal)) continue
 
-            let displayOld = oldVal
-            let displayNew = newVal
+        const isImage = isImageField(key)
+        const isSystem = key === 'cave_system' || key === 'system'
 
-            if (isSystem) {
-                displayOld = oldVal?.name || oldVal
-                displayNew = newVal?.name || newVal
-            }
+        let displayOld = isSystem ? (oldVal?.name ?? oldVal) : oldVal
+        let displayNew = isSystem ? (newVal?.name ?? newVal) : newVal
 
-            fields.push({
-                key,
-                label: key.replace(/_/g, ' ').toUpperCase(),
-                oldValue: (isImage || isTags || isCaves) ? oldVal : formatValue(displayOld),
-                newValue: (isImage || isTags || isCaves) ? newVal : formatValue(displayNew),
-                isImage,
-                isTags,
-                isCaves,
-                isLongText: !isImage && !isTags && !isCaves && !isSystem && (String(oldVal || '').length > 50 || String(newVal || '').length > 50)
-            })
-        }
+        fields.push({
+            key,
+            label: key.replace(/_/g, ' ').toUpperCase(),
+            oldValue: isImage ? oldVal : formatValue(displayOld),
+            newValue: isImage ? newVal : formatValue(displayNew),
+            isImage,
+            isTags: false,
+            isCaves: false,
+            isLongText: !isImage && !isSystem && (String(oldVal ?? '').length > 50 || String(newVal ?? '').length > 50)
+        })
     }
 
     return fields
