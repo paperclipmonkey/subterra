@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\ProcessImageJob;
+use App\Jobs\ProcessImageCloudJob;
 use App\Models\Cave;
 use App\Models\Trip;
 use App\Models\User;
@@ -10,11 +10,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
 use Tests\TestCase;
 
-class ProcessImageJobTest extends TestCase
+class ProcessImageCloudJobTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -22,12 +22,16 @@ class ProcessImageJobTest extends TestCase
     {
         parent::setUp();
         Storage::fake('media');
+        Storage::fake('s3_clone');
+        Storage::fake('gcs_staging');
+        config(['filesystems.disks.gcs_staging.bucket' => 'test-bucket']);
+        config(['services.gcp.image_processor_url' => 'https://mock.cloud.run']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_dispatches_process_image_job_on_trip_creation()
+    public function it_dispatches_process_image_cloud_job_on_trip_creation()
     {
-        Bus::fake([ProcessImageJob::class]);
+        Bus::fake([ProcessImageCloudJob::class]);
 
         $user = User::factory()->create();
         $entrance = Cave::factory()->create();
@@ -55,19 +59,16 @@ class ProcessImageJobTest extends TestCase
         $trip = Trip::where('name', 'Job Dispatch Test')->first();
         $this->assertCount(1, $trip->media);
 
-        // Raw file should be on disk
-        Storage::disk('media')->assertExists($trip->media->first()->filename);
-
         // Job should have been dispatched
-        Bus::assertDispatched(ProcessImageJob::class, function ($job) use ($trip) {
-            return $job->mediaId === $trip->media->first()->id;
+        Bus::assertDispatched(ProcessImageCloudJob::class, function ($job) use ($trip) {
+            return $job->mediaId === $trip->media->first()->id && $job->mediaModel === \App\Models\TripMedia::class;
         });
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_dispatches_process_image_job_on_trip_update()
+    public function it_dispatches_process_image_cloud_job_on_trip_update()
     {
-        Bus::fake([ProcessImageJob::class]);
+        Bus::fake([ProcessImageCloudJob::class]);
 
         $user = User::factory()->create();
         $entrance = Cave::factory()->create();
@@ -93,56 +94,42 @@ class ProcessImageJobTest extends TestCase
         $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips/'.$trip->short_id, $updateData);
         $response->assertOk();
 
-        $trip = $trip->fresh();
-        $this->assertCount(1, $trip->media);
-
-        // Raw file should be on disk
-        Storage::disk('media')->assertExists($trip->media->first()->filename);
-
-        Bus::assertDispatched(ProcessImageJob::class);
+        Bus::assertDispatched(ProcessImageCloudJob::class);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function process_image_job_processes_and_replaces_raw_file()
+    public function process_image_cloud_job_streams_file_to_gcs_and_submits_http_request()
     {
-        // Upload a raw image to the fake disk
-        $rawPath = 'trip/test-raw.png';
-        $pngContent = file_get_contents(__DIR__.'/../../Fixtures/test.png');
-        Storage::disk('media')->put($rawPath, $pngContent);
+        Http::fake([
+            'https://mock.cloud.run/process' => Http::response(['status' => 'submitted'], 200),
+        ]);
 
-        // Create a trip and media record
+        $rawPath = 'trip/test-raw.png';
+        Storage::disk('s3_clone')->put($rawPath, 'fake content');
+
         $trip = Trip::factory()->create();
         $media = $trip->media()->create([
             'filename' => $rawPath,
         ]);
 
-        // Run the job
-        $job = new ProcessImageJob($media->id, $rawPath, 'trip');
+        $job = new ProcessImageCloudJob($rawPath, \App\Models\TripMedia::class, $media->id);
         $job->handle();
 
-        $media->refresh();
+        // Should have streamed to gcs_staging disk
+        $files = Storage::disk('gcs_staging')->allFiles('input');
+        $this->assertCount(1, $files);
 
-        // The filename should have changed to a .webp
-        $this->assertStringEndsWith('.webp', $media->filename);
-        $this->assertNotEquals($rawPath, $media->filename);
-
-        // Processed file should exist, raw file should be deleted
-        Storage::disk('media')->assertExists($media->filename);
-        Storage::disk('media')->assertMissing($rawPath);
+        // Http request should have been submitted
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://mock.cloud.run/process' &&
+                   $request['bucket'] === 'test-bucket' &&
+                   $request['mediaId'] === $this->getCreatedMediaId();
+        });
     }
 
-    #[\PHPUnit\Framework\Attributes\Test]
-    public function process_image_job_handles_missing_media_gracefully()
+    private function getCreatedMediaId()
     {
-        $rawPath = 'trip/nonexistent-media.png';
-        Storage::disk('media')->put($rawPath, 'fake content');
-
-        // Use a media ID that doesn't exist
-        $job = new ProcessImageJob(99999, $rawPath, 'trip');
-        $job->handle(); // Should not throw
-
-        // Raw file should still exist (job skipped processing)
-        Storage::disk('media')->assertExists($rawPath);
+        return \App\Models\TripMedia::first()->id;
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -178,7 +165,6 @@ class ProcessImageJobTest extends TestCase
         $user = User::factory()->create();
         $entrance = Cave::factory()->create();
 
-        // SVG files can contain JavaScript but aren't in the allowed mimes list
         $svgFile = UploadedFile::fake()->create('evil.svg', 100, 'image/svg+xml');
 
         $tripData = [

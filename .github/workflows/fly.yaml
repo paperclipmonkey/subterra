@@ -69,10 +69,28 @@ jobs:
       - name: Run watchdog tests
         run: cd gcp-watchdog && npm test
 
-  deploy-watchdog:
-    needs: [backend-tests, frontend-tests, watchdog-tests]
+  image-processor-tests:
     runs-on: ubuntu-latest
-    concurrency: deploy-watchdog-group
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: gcp-image-processor/package.json
+      - name: Install image processor dependencies
+        run: cd gcp-image-processor && npm install
+      - name: Run image processor tests
+        run: cd gcp-image-processor && npm test
+
+  deploy-gcp:
+    needs: [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
+    runs-on: ubuntu-latest
+    concurrency: deploy-gcp-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
       GCP_REGION: europe-west2
@@ -91,12 +109,17 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker europe-west2-docker.pkg.dev
       
-      - name: Build and push Docker image
+      - name: Build and push Watchdog image
         run: |
           cd gcp-watchdog
           docker build -t europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog/subterra-watchdog:${{ github.sha }} .
-          # Push image, silently skip if tag already exists (for pipeline re-runs)
           docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog/subterra-watchdog:${{ github.sha }} || echo "Image already exists, skipping push"
+      
+      - name: Build and push Image Processor image
+        run: |
+          cd gcp-image-processor
+          docker build -t europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-image-processor/subterra-image-processor:${{ github.sha }} .
+          docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-image-processor/subterra-image-processor:${{ github.sha }} || echo "Image already exists, skipping push"
       
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -105,21 +128,22 @@ jobs:
       
       - name: Terraform Init
         run: |
-          cd gcp-watchdog/terraform
+          cd terraform/gcp
           terraform init
       
       - name: Terraform Apply
         run: |
-          cd gcp-watchdog/terraform
+          cd terraform/gcp
           terraform apply -auto-approve \
             -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var="region=${{ env.GCP_REGION }}" \
             -var="image_tag=${{ github.sha }}" \
+            -var="image_processor_image_tag=${{ github.sha }}" \
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}"
 
   deploy:
-    needs: [backend-tests, frontend-tests, watchdog-tests]
+    needs: [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
     runs-on: ubuntu-latest
     concurrency: deploy-group
     env:

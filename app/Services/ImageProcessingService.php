@@ -97,9 +97,6 @@ class ImageProcessingService
 
         Storage::disk('media')->putFileAs($directory, $file, $originalFilename);
 
-        // Dispatch background encoding job to prevent HTTP timeouts
-        \App\Jobs\ProcessVideoJob::dispatch($originalPath, $directory, $filename);
-
         return $originalPath;
     }
 }

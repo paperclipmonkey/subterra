@@ -17,6 +17,7 @@ class MediaMetadataTest extends TestCase
     {
         parent::setUp();
         Storage::fake('media');
+        \Illuminate\Support\Facades\Bus::fake([\App\Jobs\ProcessImageCloudJob::class]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
