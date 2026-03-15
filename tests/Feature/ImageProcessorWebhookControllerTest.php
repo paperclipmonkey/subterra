@@ -18,6 +18,7 @@ class ImageProcessorWebhookControllerTest extends TestCase
         parent::setUp();
         Storage::fake('s3_clone');
         Storage::fake('gcs_staging');
+        config(['services.gcp.webhook_secret' => null]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
