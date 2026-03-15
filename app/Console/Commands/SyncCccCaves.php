@@ -20,6 +20,7 @@ class SyncCccCaves extends Command
     protected $signature = 'sync:ccc-caves 
                             {--dry-run : Parse the file without inserting data} 
                             {--whitelist= : Comma-separated list of names to always import} 
+                            {--blocklist= : Comma-separated list of names to always skip}
                             {--min-length=250 : Minimum length in meters to import}';
 
     /**
@@ -37,6 +38,7 @@ class SyncCccCaves extends Command
         $dryRun = $this->option('dry-run');
         $minLength = (float) $this->option('min-length');
         $whitelistNames = $this->getWhitelist();
+        $blocklistNames = $this->getBlocklist();
 
         $this->info('Fetching CCC data...');
         $url = 'https://cambriancavingcouncil.org.uk/registry/CCR_data2.xml';
@@ -89,7 +91,13 @@ class SyncCccCaves extends Command
 
                 // Apply Filters
                 $isWhitelisted = in_array(strtolower($name), array_map('strtolower', $whitelistNames));
+                $isBlocklisted = in_array(strtolower($name), array_map('strtolower', $blocklistNames));
                 $isLongEnough = $length >= $minLength;
+
+                if ($isBlocklisted) {
+                    ++$skippedCount;
+                    continue;
+                }
 
                 if (!$isWhitelisted && !$isLongEnough) {
                     ++$skippedCount;
@@ -186,22 +194,66 @@ class SyncCccCaves extends Command
                 $accessInfo = (string) ($entry->Access['con'] ?? '');
 
                 // 5. Create/Update Cave
-                $cave = Cave::updateOrCreate(
-                    ['name' => $name],
-                    [
-                        'slug' => Str::slug($name),
-                        'description' => $description,
-                        'cave_system_id' => $caveSystemId,
-                        // Values similar to csv importer defaults
-                        // Update location_name from ancestor Region
-                        'location_name' => ($entry->xpath('ancestor::Region') ? (string) $entry->xpath('ancestor::Region')[0]['name'] : null),
-                        'location_country' => 'United Kingdom',
-                        'location_lat' => $lat,
-                        'location_lng' => $lng,
-                        'location_alt' => $alt,
-                        'access_info' => $accessInfo ?: null,
-                    ]
-                );
+                $caveData = [
+                    'slug' => Str::slug($name),
+                    'description' => $description,
+                    'cave_system_id' => $caveSystemId,
+                    'location_name' => ($entry->xpath('ancestor::Region') ? (string) $entry->xpath('ancestor::Region')[0]['name'] : null),
+                    'location_country' => 'United Kingdom',
+                    'location_lat' => $lat,
+                    'location_lng' => $lng,
+                    'location_alt' => $alt,
+                    'access_info' => $accessInfo ?: null,
+                ];
+
+                $existingCave = Cave::where('name', $name)->first();
+
+                if ($existingCave) {
+                    // Check for differences
+                    $differences = [];
+                    foreach ($caveData as $key => $value) {
+                        if (in_array($key, ['location_lat', 'location_lng', 'location_alt'])) {
+                            if (abs((float)$existingCave->$key - (float)$value) > 0.00001) {
+                                $differences[$key] = $value;
+                            }
+                        } elseif ($existingCave->$key !== $value) {
+                            $differences[$key] = $value;
+                        }
+                    }
+
+                    if (!empty($differences)) {
+                        $originalData = [];
+                        foreach (array_keys($differences) as $key) {
+                            $originalData[$key] = $existingCave->$key;
+                        }
+
+                        $existingPendingEdit = \App\Models\SuggestedEdit::where('suggestable_type', Cave::class)
+                            ->where('suggestable_id', $existingCave->id)
+                            ->where('status', 'pending')
+                            ->first();
+
+                        if ($existingPendingEdit) {
+                            $existingPendingEdit->update([
+                                'original_data' => $originalData,
+                                'suggested_data' => $differences,
+                            ]);
+                            $this->info("Updated suggested edit for existing cave: {$name}");
+                        } else {
+                            \App\Models\SuggestedEdit::create([
+                                'user_id' => null,
+                                'suggestable_type' => Cave::class,
+                                'suggestable_id' => $existingCave->id,
+                                'original_data' => $originalData,
+                                'suggested_data' => $differences,
+                                'status' => 'pending',
+                            ]);
+                            $this->info("Created suggested edit for existing cave: {$name}");
+                        }
+                    }
+                    $cave = $existingCave;
+                } else {
+                    $cave = Cave::create(array_merge(['name' => $name], $caveData));
+                }
 
                 // 6. Sync Tags
                 $tagIds = [];
@@ -283,5 +335,29 @@ class SyncCccCaves extends Command
         }
 
         return $whitelist;
+    }
+    /**
+     * Get list of backlisted names from option or file.
+     *
+     * @return array
+     */
+    private function getBlocklist(): array
+    {
+        $blocklist = [];
+        $blocklistArg = $this->option('blocklist');
+
+        if (!empty($blocklistArg)) {
+            $blocklist = array_map('trim', explode(',', $blocklistArg));
+        }
+
+        $filePath = storage_path('app/ccc_blocklist.txt');
+        if (file_exists($filePath)) {
+            $fileContent = file_get_contents($filePath);
+            $names = array_map('trim', explode("\n", $fileContent));
+            $names = array_filter($names, fn ($name) => !empty($name));
+            $blocklist = array_merge($blocklist, array_values($names));
+        }
+
+        return $blocklist;
     }
 }
