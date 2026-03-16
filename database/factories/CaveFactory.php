@@ -25,7 +25,7 @@ class CaveFactory extends Factory
             'location_lat' => fake()->randomFloat(3, 50, 58),
             'location_lng' => fake()->randomFloat(3, -6, 1),
             'location_alt' => fake()->randomDigitNotNull(),
-            'slug' => fake()->slug(),
+            'slug' => fake()->unique()->slug(),
             'cave_system_id' => CaveSystem::factory(),
         ];
     }
