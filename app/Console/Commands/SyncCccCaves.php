@@ -177,32 +177,42 @@ class SyncCccCaves extends Command
 
                 $description = implode("\n\n", $descriptionParts);
 
-                if (!empty($entry->Bibl)) {
-                    $systemReferences = [];
-                    foreach ($entry->Bibl as $bibl) {
-                        $biblText = trim((string) $bibl);
-                        if (!empty($biblText)) {
-                            $systemReferences[] = $biblText;
+                {
+                    $systemReferences = ['[CCC Registry]('.$cccLink.')'];
+                    if (!empty($entry->Bibl)) {
+                        foreach ($entry->Bibl as $bibl) {
+                            $biblText = trim((string) $bibl);
+                            if (!empty($biblText)) {
+                                $systemReferences[] = $biblText;
+                            }
                         }
                     }
-                    if (!empty($systemReferences)) {
-                        // Format as markdown list items
-                        $formattedNewRefs = array_map(fn($r) => '- ' . $r, $systemReferences);
+                    // Deduplicate XML entries (CCC data can have duplicate Bibl elements)
+                    $systemReferences = array_values(array_unique($systemReferences));
 
-                        if ($system->wasRecentlyCreated || empty($system->references)) {
-                            // New system: set references directly
-                            $system->references = implode("\n", $formattedNewRefs);
-                            $system->save();
-                        } else {
+                    // Format as markdown list items
+                    $formattedNewRefs = array_map(fn($r) => '- ' . $r, $systemReferences);
+
+                    if ($system->wasRecentlyCreated) {
+                        // New system: set references directly
+                        $system->references = implode("\n", $formattedNewRefs);
+                        $system->save();
+                    } else {
                             // Existing system: check for new references using normalized comparison
-                            $existingRefs = explode("\n", $system->references);
+                            $existingRefs = !empty($system->references) ? explode("\n", $system->references) : [];
                             $normalizedExisting = array_map(
                                 fn($ref) => strtolower(trim(preg_replace('/^-\s*/', '', $ref))),
                                 $existingRefs
                             );
+                            $existingRefsLower = strtolower($system->references ?? '');
 
-                            $newRefs = array_filter($systemReferences, function ($ref) use ($normalizedExisting) {
-                                return !in_array(strtolower(trim($ref)), $normalizedExisting);
+                            $newRefs = array_filter($systemReferences, function ($ref) use ($normalizedExisting, $existingRefsLower) {
+                                $normalizedRef = strtolower(trim($ref));
+
+                                // Exact line match (for properly-formatted refs)
+                                // or substring match (for legacy refs stored in concatenated lines)
+                                return !in_array($normalizedRef, $normalizedExisting)
+                                    && !str_contains($existingRefsLower, $normalizedRef);
                             });
 
                             if (!empty($newRefs)) {
@@ -236,11 +246,10 @@ class SyncCccCaves extends Command
                                 ++$suggestedEditCount;
                             }
                         }
-                    }
                 }
 
-                // 4. Access
-                $accessInfo = (string) ($entry->Access['con'] ?? '');
+                // 4. Access (text content only — the 'con' attribute is not useful)
+                $accessInfo = trim((string) ($entry->Access ?? ''));
 
                 // 5. Create/Update Cave
                 // Note: slug and cave_system_id are excluded from diff checking — they are
@@ -418,15 +427,16 @@ class SyncCccCaves extends Command
         if (file_exists($filePath)) {
             $fileContent = file_get_contents($filePath);
             $names = array_map('trim', explode("\n", $fileContent));
-            // Filter empty lines
-            $names = array_filter($names, fn ($name) => !empty($name));
+            // Filter empty lines and comments
+            $names = array_filter($names, fn ($name) => !empty($name) && !str_starts_with($name, '#'));
             $whitelist = array_merge($whitelist, array_values($names));
         }
 
         return $whitelist;
     }
+
     /**
-     * Get list of backlisted names from option or file.
+     * Get list of blocklisted names from option or file.
      *
      * @return array
      */
@@ -443,7 +453,8 @@ class SyncCccCaves extends Command
         if (file_exists($filePath)) {
             $fileContent = file_get_contents($filePath);
             $names = array_map('trim', explode("\n", $fileContent));
-            $names = array_filter($names, fn ($name) => !empty($name));
+            // Filter empty lines and comments
+            $names = array_filter($names, fn ($name) => !empty($name) && !str_starts_with($name, '#'));
             $blocklist = array_merge($blocklist, array_values($names));
         }
 
