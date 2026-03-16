@@ -35,7 +35,7 @@ class SyncCccCavesTest extends TestCase
         <Entry id="1" len="300" dep="50" alt="150" E="260000" N="215000" GR="SN">
             <Name>Test Cave One</Name>
             <Desc>A test cave description.</Desc>
-            <Access con="Permit required">Permit Details</Access>
+            <Access con="loc">Entry through <a href="http://example.com">Ogof Gam</a>. See caving.wales for details</Access>
             <Bibl>Welsh Cave Guide, 1st Edition</Bibl>
             <Bibl>Caves of South Wales, 2005</Bibl>
         </Entry>
@@ -152,7 +152,7 @@ XML;
             'description' => "A test cave description.\n\nCCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1\n\nAdditional Subterra notes about the cave history and geology.",
             'location_name' => 'South Wales',
             'location_country' => 'United Kingdom',
-            'access_info' => 'Permit Details',
+            'access_info' => 'Entry through Ogof Gam. See caving.wales for details',
         ]);
 
         $this->artisan('sync:ccc-caves --min-length=250')
@@ -174,7 +174,7 @@ XML;
             'description' => "Extra intro text. A test cave description.\n\nCCC Registry: <https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1> <br />",
             'location_name' => 'South Wales',
             'location_country' => 'United Kingdom',
-            'access_info' => 'Permit Details',
+            'access_info' => 'Entry through Ogof Gam. See caving.wales for details',
         ]);
 
         $this->artisan('sync:ccc-caves --min-length=250')
@@ -213,7 +213,7 @@ XML;
             'description' => "A test cave description.\n\nCCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1",
             'location_name' => 'South Wales',
             'location_country' => 'United Kingdom',
-            'access_info' => 'Permit Details. Contact the landowner for access.',
+            'access_info' => 'Entry through Ogof Gam. See caving.wales for details. Contact the landowner for access.',
         ]);
 
         $this->artisan('sync:ccc-caves --min-length=250')

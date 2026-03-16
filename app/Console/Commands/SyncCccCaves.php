@@ -169,7 +169,7 @@ class SyncCccCaves extends Command
                 // 3. Description & References
                 $descriptionParts = [];
                 if (!empty($entry->Desc)) {
-                    $descriptionParts[] = (string) $entry->Desc;
+                    $descriptionParts[] = $this->xmlInnerText($entry->Desc);
                 }
 
                 $cccLink = 'https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID='.(string) $entry['id'];
@@ -181,7 +181,7 @@ class SyncCccCaves extends Command
                     $systemReferences = ['[CCC Registry]('.$cccLink.')'];
                     if (!empty($entry->Bibl)) {
                         foreach ($entry->Bibl as $bibl) {
-                            $biblText = trim((string) $bibl);
+                            $biblText = $this->xmlInnerText($bibl);
                             if (!empty($biblText)) {
                                 $systemReferences[] = $biblText;
                             }
@@ -249,7 +249,7 @@ class SyncCccCaves extends Command
                 }
 
                 // 4. Access (text content only — the 'con' attribute is not useful)
-                $accessInfo = trim((string) ($entry->Access ?? ''));
+                $accessInfo = !empty($entry->Access) ? $this->xmlInnerText($entry->Access) : '';
 
                 // 5. Create/Update Cave
                 // Note: slug and cave_system_id are excluded from diff checking — they are
@@ -503,5 +503,23 @@ class SyncCccCaves extends Command
         }
 
         return true;
+    }
+
+    /**
+     * Extract inner text from a SimpleXML element, preserving text from child elements.
+     *
+     * SimpleXML's (string) cast only returns direct text nodes, dropping content
+     * inside child elements like <a href="...">link text</a>. This method gets
+     * the full inner XML and strips tags to produce complete plain text.
+     */
+    private function xmlInnerText(\SimpleXMLElement $element): string
+    {
+        $innerXml = $element->asXML();
+        // Remove the outer element tags
+        $tagName = $element->getName();
+        $innerXml = preg_replace('/^<'.$tagName.'[^>]*>/', '', $innerXml);
+        $innerXml = preg_replace('/<\/'.$tagName.'>$/', '', $innerXml);
+
+        return trim(strip_tags($innerXml));
     }
 }
