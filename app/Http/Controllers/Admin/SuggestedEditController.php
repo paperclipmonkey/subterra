@@ -52,8 +52,30 @@ class SuggestedEditController extends Controller
         return $suggestedEdit;
     }
 
-    public function approve(SuggestedEdit $suggestedEdit)
+    public function approve(Request $request, SuggestedEdit $suggestedEdit)
     {
+        // Partial approval: if specific fields are provided, only approve those
+        $selectedFields = $request->input('fields');
+
+        $allSuggestedData = $suggestedEdit->suggested_data;
+        $allOriginalData = $suggestedEdit->original_data ?? [];
+
+        if (is_array($selectedFields) && !empty($selectedFields)) {
+            // Split data into approved and remaining
+            $approvedData = array_intersect_key($allSuggestedData, array_flip($selectedFields));
+            $remainingData = array_diff_key($allSuggestedData, array_flip($selectedFields));
+            $remainingOriginal = array_intersect_key($allOriginalData, $remainingData);
+        } else {
+            $approvedData = $allSuggestedData;
+            $remainingData = [];
+            $remainingOriginal = [];
+        }
+
+        // Update the suggestion to contain only the approved fields
+        $suggestedEdit->suggested_data = $approvedData;
+        $suggestedEdit->original_data = array_intersect_key($allOriginalData, $approvedData);
+        $suggestedEdit->save();
+
         $targetDirMap = [
             Cave::class => 'caves',
             CaveSystem::class => 'cave_systems',
@@ -120,6 +142,18 @@ class SuggestedEditController extends Controller
         }
 
         $suggestedEdit->update(['status' => 'approved']);
+
+        // Create a new pending suggestion for any remaining unapproved fields
+        if (!empty($remainingData)) {
+            SuggestedEdit::create([
+                'user_id' => $suggestedEdit->user_id,
+                'suggestable_type' => $suggestedEdit->suggestable_type,
+                'suggestable_id' => $suggestedEdit->suggestable_id,
+                'original_data' => $remainingOriginal,
+                'suggested_data' => $remainingData,
+                'status' => 'pending',
+            ]);
+        }
 
         if ($suggestedEdit->user) {
             Mail::to($suggestedEdit->user)->send(new SuggestionApprovedMail($suggestedEdit));

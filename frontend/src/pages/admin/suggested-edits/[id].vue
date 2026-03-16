@@ -44,14 +44,32 @@
       </v-alert>
 
       <v-card v-if="changedFields.length > 0" class="mb-6">
-        <v-card-title class="bg-grey-lighten-4 py-3">
+        <v-card-title class="bg-grey-lighten-4 py-3 d-flex align-center">
           <v-icon start :icon="mdiCompare" />
           Changes
+          <v-spacer />
+          <v-btn
+            v-if="suggestion.status === 'pending' && changedFields.length > 1"
+            size="small"
+            variant="text"
+            @click="toggleAll"
+          >
+            {{ allSelected ? 'Deselect All' : 'Select All' }}
+          </v-btn>
         </v-card-title>
         <v-divider />
         <v-list class="pa-0">
           <template v-for="(field, index) in changedFields" :key="field.key">
             <v-list-item class="pa-4">
+              <template #prepend v-if="suggestion.status === 'pending'">
+                <v-checkbox
+                  v-model="selectedFields"
+                  :value="field.key"
+                  hide-details
+                  density="compact"
+                  class="mr-2 mt-0"
+                />
+              </template>
               <div class="text-overline text-grey-darken-1 mb-1">{{ field.label }}</div>
                         
               <v-row v-if="field.isImage" no-gutters>
@@ -162,9 +180,10 @@
           color="success"
           variant="elevated"
           :loading="processing"
+          :disabled="selectedFields.length === 0"
           @click="approve()"
         >
-          Approve & Apply
+          {{ selectedFields.length === changedFields.length ? 'Approve All' : `Approve ${selectedFields.length} of ${changedFields.length}` }}
         </v-btn>
       </v-card-actions>
     </div>
@@ -192,11 +211,12 @@
 <script setup>
 import { mdiArrowLeft, mdiArrowRight, mdiCompare, mdiOpenInNew } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/plugins/api.js'
 import { useToast } from "vue-toastification"
 
 const route = useRoute()
+const router = useRouter()
 const toast = useToast()
 
 const suggestion = ref(null)
@@ -204,6 +224,11 @@ const loading = ref(true)
 const processing = ref(false)
 const rejectDialog = ref(false)
 const rejectReason = ref('')
+const selectedFields = ref([])
+
+const allSelected = computed(() => {
+    return changedFields.value.length > 0 && selectedFields.value.length === changedFields.value.length
+})
 
 const formatType = (type) => {
     return type?.split('\\').pop()
@@ -365,11 +390,21 @@ const formatValue = (val) => {
     return String(val)
 }
 
+const toggleAll = () => {
+    if (allSelected.value) {
+        selectedFields.value = []
+    } else {
+        selectedFields.value = changedFields.value.map(f => f.key)
+    }
+}
+
 const fetchSuggestion = async () => {
     loading.value = true
     try {
         const response = await api.get(`/api/admin/suggested-edits/${route.params.id}`)
         suggestion.value = response.data
+        // Default: all fields selected
+        selectedFields.value = changedFields.value.map(f => f.key)
     } catch (error) {
         console.error("Error fetching suggestion", error)
     } finally {
@@ -380,9 +415,19 @@ const fetchSuggestion = async () => {
 const approve = async () => {
     processing.value = true
     try {
-        await api.post(`/api/admin/suggested-edits/${suggestion.value.id}/approve`)
+        const payload = {}
+        // Only send fields param if partial approval (not all selected)
+        if (selectedFields.value.length < changedFields.value.length) {
+            payload.fields = selectedFields.value
+        }
+        await api.post(`/api/admin/suggested-edits/${suggestion.value.id}/approve`, payload)
         toast.success("Suggestion approved successfully")
-        fetchSuggestion()
+        // If full approval, go back to list; if partial, reload to show remaining
+        if (selectedFields.value.length >= changedFields.value.length) {
+            router.push('/admin/suggested-edits')
+        } else {
+            fetchSuggestion()
+        }
     } catch (error) {
         toast.error("Failed to approve suggestion")
         console.error(error)
@@ -399,7 +444,7 @@ const reject = async () => {
         })
         toast.success("Suggestion rejected")
         rejectDialog.value = false
-        fetchSuggestion()
+        router.push('/admin/suggested-edits')
     } catch (error) {
         toast.error("Failed to reject suggestion")
         console.error(error)

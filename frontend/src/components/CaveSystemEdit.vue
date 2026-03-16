@@ -32,6 +32,123 @@
       </v-row>
     </v-form>
 
+    <!-- Merge Cave System (admin only) -->
+    <template v-if="appStore.user?.is_admin">
+      <v-divider class="my-6" />
+      <v-row>
+        <v-col class="d-flex justify-end">
+          <v-btn
+            variant="text"
+            color="grey"
+            size="small"
+            @click="mergeSelectDialog = true"
+          >
+            Merge another system
+          </v-btn>
+        </v-col>
+      </v-row>
+
+      <!-- Merge Selection Dialog -->
+      <v-dialog v-model="mergeSelectDialog" max-width="500">
+        <v-card>
+          <v-card-title>Merge Another Cave System</v-card-title>
+          <v-card-text>
+            <p class="mb-4">Merge another cave system into this one. All caves, routes, trips, files, and tags from the selected system will be moved here, and the other system will be deleted.</p>
+            <v-select
+              v-model="mergeSourceId"
+              :items="availableSystems"
+              item-title="name"
+              item-value="id"
+              label="Select cave system to merge in"
+              clearable
+              variant="outlined"
+              density="compact"
+              :loading="systemsLoading"
+              :no-data-text="systemsLoading ? 'Loading...' : 'No other cave systems found'"
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="mergeSelectDialog = false">Cancel</v-btn>
+            <v-btn
+              color="warning"
+              variant="flat"
+              :disabled="!mergeSourceId"
+              :loading="mergePreviewLoading"
+              @click="loadMergePreview"
+            >
+              Preview Merge
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Merge Confirmation Dialog -->
+      <v-dialog v-model="mergeDialog" max-width="600" persistent>
+        <v-card>
+          <v-card-title class="text-h5">Confirm Merge</v-card-title>
+          <v-card-text v-if="mergePreview">
+            <v-alert type="warning" variant="tonal" class="mb-4">
+              This action cannot be undone!
+            </v-alert>
+
+            <p class="mb-3">
+              You are about to merge <strong>{{ mergePreview.source.name }}</strong> into
+              <strong>{{ mergePreview.target.name }}</strong>.
+            </p>
+
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>{{ mergePreview.source.name }}</th>
+                  <th>{{ mergePreview.target.name }}</th>
+                  <th>After Merge</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Caves</td>
+                  <td>{{ mergePreview.source.caves_count }}</td>
+                  <td>{{ mergePreview.target.caves_count }}</td>
+                  <td><strong>{{ mergePreview.result.caves_count }}</strong></td>
+                </tr>
+                <tr>
+                  <td>Routes</td>
+                  <td>{{ mergePreview.source.routes_count }}</td>
+                  <td>{{ mergePreview.target.routes_count }}</td>
+                  <td><strong>{{ mergePreview.result.routes_count }}</strong></td>
+                </tr>
+                <tr>
+                  <td>Files</td>
+                  <td>{{ mergePreview.source.files_count }}</td>
+                  <td>{{ mergePreview.target.files_count }}</td>
+                  <td><strong>{{ mergePreview.result.files_count }}</strong></td>
+                </tr>
+              </tbody>
+            </v-table>
+
+            <v-alert type="error" variant="tonal" class="mt-4">
+              <strong>{{ mergePreview.source.name }}</strong> will be permanently deleted.
+              <strong>{{ mergePreview.target.name }}</strong> will become the master system.
+            </v-alert>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="mergeDialog = false">Cancel</v-btn>
+            <v-btn
+              color="warning"
+              variant="flat"
+              :loading="mergeLoading"
+              @click="executeMerge"
+            >
+              Confirm Merge
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </template>
+
     <v-snackbar v-model="errorSnackbar" color="error">
       {{ errorMessage }}
       <template #actions>
@@ -65,6 +182,16 @@ const filesToDelete = ref([])
 const newFiles = ref([])
 const updatedFiles = ref([])
 const isSaved = ref(false)
+
+// Merge state
+const mergeSourceId = ref(null)
+const mergeSelectDialog = ref(false)
+const mergeDialog = ref(false)
+const mergePreview = ref(null)
+const mergePreviewLoading = ref(false)
+const mergeLoading = ref(false)
+const availableSystems = ref([])
+const systemsLoading = ref(false)
 
 const initialSystemState = ref(null)
 
@@ -242,6 +369,82 @@ const save = async () => {
   }
 }
 
+const loadAvailableSystems = async () => {
+  systemsLoading.value = true
+  try {
+    const response = await fetch('/api/cave_systems')
+    if (!response.ok) return
+    const data = await response.json()
+    // Filter out the current system
+    availableSystems.value = (data.data || data).filter(
+      s => s.id !== cavesystem.value.id
+    )
+  } catch (error) {
+    console.error('Error loading cave systems:', error)
+  } finally {
+    systemsLoading.value = false
+  }
+}
+
+const loadMergePreview = async () => {
+  if (!mergeSourceId.value) return
+  mergePreviewLoading.value = true
+  try {
+    const response = await fetch(
+      `/api/admin/cave-systems/${cavesystem.value.id}/merge-preview?source_id=${mergeSourceId.value}`
+    )
+    if (response.ok) {
+      mergePreview.value = await response.json()
+      mergeSelectDialog.value = false
+      mergeDialog.value = true
+    } else {
+      const data = await response.json()
+      errorMessage.value = data.error || 'Failed to load merge preview'
+      errorSnackbar.value = true
+    }
+  } catch (error) {
+    errorMessage.value = error.message
+    errorSnackbar.value = true
+  } finally {
+    mergePreviewLoading.value = false
+  }
+}
+
+const executeMerge = async () => {
+  mergeLoading.value = true
+  try {
+    const response = await fetch(
+      `/api/admin/cave-systems/${cavesystem.value.id}/merge`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ source_id: mergeSourceId.value }),
+      }
+    )
+    if (response.ok) {
+      const data = await response.json()
+      mergeDialog.value = false
+      mergeSourceId.value = null
+      mergePreview.value = null
+      toast.success(data.message)
+      load()
+      loadAvailableSystems()
+    } else {
+      const data = await response.json()
+      errorMessage.value = data.error || 'Merge failed'
+      errorSnackbar.value = true
+    }
+  } catch (error) {
+    errorMessage.value = error.message
+    errorSnackbar.value = true
+  } finally {
+    mergeLoading.value = false
+  }
+}
+
 onMounted(async () => {
   if (appStore.user && !appStore.canSuggest && !appStore.user.is_admin) {
     errorMessage.value = 'You do not have permission to suggest edits.'
@@ -250,6 +453,10 @@ onMounted(async () => {
     return
   }
   load()
+
+  if (appStore.user?.is_admin) {
+    loadAvailableSystems()
+  }
 })
 
 watch(

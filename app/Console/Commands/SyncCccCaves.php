@@ -78,6 +78,9 @@ class SyncCccCaves extends Command
 
         $importedCount = 0;
         $skippedCount = 0;
+        $newCaveCount = 0;
+        $suggestedEditCount = 0;
+        $noOpCount = 0;
 
         try {
             foreach ($entries as $entry) {
@@ -104,7 +107,7 @@ class SyncCccCaves extends Command
                     continue;
                 }
 
-                $this->info("Processing: {$name} (".($isWhitelisted ? 'Whitelisted' : 'Length: '.$length.' m').')');
+                $this->line("Processing: {$name} <fg=gray>(".($isWhitelisted ? 'Whitelisted' : 'Length: '.$length.' m').')</>');
                 ++$importedCount;
 
                 if ($dryRun) {
@@ -145,8 +148,8 @@ class SyncCccCaves extends Command
                         $ref = $grStr.$eStr.$nStr;
                         $gridPoint = \PHPCoord\Point\BritishNationalGridPoint::fromGridReference($ref);
                         $wgs84 = $gridPoint->convert(\PHPCoord\CoordinateReferenceSystem\Geographic2D::fromSRID('urn:ogc:def:crs:EPSG::4326'));
-                        $lat = round($wgs84->getLatitude()->asDegrees()->getValue(), 6);
-                        $lng = round($wgs84->getLongitude()->asDegrees()->getValue(), 6);
+                        $lat = round($wgs84->getLatitude()->asDegrees()->getValue(), 5);
+                        $lng = round($wgs84->getLongitude()->asDegrees()->getValue(), 5);
                     } else {
                         throw new \Exception('Invalid or unequal E/N sizes');
                     }
@@ -156,8 +159,8 @@ class SyncCccCaves extends Command
                     if (!empty($llStr)) {
                         $ll = explode(',', $llStr);
                         // Standard order in this XML file: Longitude, Latitude
-                        $lng = round((float) ($ll[0] ?? 0), 6);
-                        $lat = round((float) ($ll[1] ?? 0), 6);
+                        $lng = round((float) ($ll[0] ?? 0), 5);
+                        $lat = round((float) ($ll[1] ?? 0), 5);
                     }
                 }
 
@@ -170,7 +173,7 @@ class SyncCccCaves extends Command
                 }
 
                 $cccLink = 'https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID='.(string) $entry['id'];
-                $descriptionParts[] = 'CCC Registry: '.$cccLink;
+                $descriptionParts[] = '[CCC Registry]('.$cccLink.')';
 
                 $description = implode("\n\n", $descriptionParts);
 
@@ -183,10 +186,56 @@ class SyncCccCaves extends Command
                         }
                     }
                     if (!empty($systemReferences)) {
-                        $existingRefs = $system->references ? explode("\n", $system->references) : [];
-                        $existingRefs = array_merge($existingRefs, $systemReferences);
-                        $system->references = implode("\n", array_unique($existingRefs));
-                        $system->save();
+                        // Format as markdown list items
+                        $formattedNewRefs = array_map(fn($r) => '- ' . $r, $systemReferences);
+
+                        if ($system->wasRecentlyCreated || empty($system->references)) {
+                            // New system: set references directly
+                            $system->references = implode("\n", $formattedNewRefs);
+                            $system->save();
+                        } else {
+                            // Existing system: check for new references using normalized comparison
+                            $existingRefs = explode("\n", $system->references);
+                            $normalizedExisting = array_map(
+                                fn($ref) => strtolower(trim(preg_replace('/^-\s*/', '', $ref))),
+                                $existingRefs
+                            );
+
+                            $newRefs = array_filter($systemReferences, function ($ref) use ($normalizedExisting) {
+                                return !in_array(strtolower(trim($ref)), $normalizedExisting);
+                            });
+
+                            if (!empty($newRefs)) {
+                                // Build suggested value: keep existing entries, append new ones as list items
+                                $suggestedRefs = array_merge($existingRefs, array_map(fn($r) => '- ' . $r, $newRefs));
+                                $suggestedValue = implode("\n", $suggestedRefs);
+
+                                $existingPendingEdit = \App\Models\SuggestedEdit::where('suggestable_type', CaveSystem::class)
+                                    ->where('suggestable_id', $system->id)
+                                    ->where('status', 'pending')
+                                    ->first();
+
+                                if ($existingPendingEdit) {
+                                    $mergedSuggested = array_merge($existingPendingEdit->suggested_data, ['references' => $suggestedValue]);
+                                    $mergedOriginal = array_merge($existingPendingEdit->original_data, ['references' => $system->references]);
+                                    $existingPendingEdit->update([
+                                        'original_data' => $mergedOriginal,
+                                        'suggested_data' => $mergedSuggested,
+                                    ]);
+                                } else {
+                                    \App\Models\SuggestedEdit::create([
+                                        'user_id' => null,
+                                        'suggestable_type' => CaveSystem::class,
+                                        'suggestable_id' => $system->id,
+                                        'original_data' => ['references' => $system->references],
+                                        'suggested_data' => ['references' => $suggestedValue],
+                                        'status' => 'pending',
+                                    ]);
+                                }
+                                $this->line("<fg=yellow>  ✏ Suggested references update:</> {$name}");
+                                ++$suggestedEditCount;
+                            }
+                        }
                     }
                 }
 
@@ -232,12 +281,23 @@ class SyncCccCaves extends Command
                     // Check for differences. Round both sides before comparing floats to avoid
                     // false negatives from legacy high-precision stored values.
                     $coordKeys = ['location_lat', 'location_lng', 'location_alt'];
+                    // Large text fields: skip if CCC text is already contained in Subterra text
+                    $textKeys = ['description', 'access_info'];
                     $differences = [];
                     foreach ($caveData as $key => $value) {
                         if (in_array($key, $coordKeys)) {
-                            $existingRounded = round((float) $existingCave->$key, 6);
-                            $newRounded = round((float) $value, 6);
+                            $existingRounded = round((float) $existingCave->$key, 5);
+                            $newRounded = round((float) $value, 5);
                             if ($existingRounded !== $newRounded) {
+                                $differences[$key] = $value;
+                            }
+                        } elseif (in_array($key, $textKeys)) {
+                            $existingText = (string) ($existingCave->$key ?? '');
+                            $newText = (string) ($value ?? '');
+                            // Skip if both empty or if every paragraph of CCC text is already
+                            // contained in Subterra text (accounts for formatting differences
+                            // like angle-bracket-wrapped URLs from previous imports).
+                            if (!empty($newText) && !$this->textAlreadyContained($newText, $existingText)) {
                                 $differences[$key] = $value;
                             }
                         } elseif ($existingCave->$key !== $value) {
@@ -250,7 +310,7 @@ class SyncCccCaves extends Command
                         foreach (array_keys($differences) as $key) {
                             $val = $existingCave->$key;
                             $originalData[$key] = in_array($key, ['location_lat', 'location_lng', 'location_alt'])
-                                ? round((float) $val, 6)
+                                ? round((float) $val, 5)
                                 : $val;
                         }
 
@@ -264,7 +324,7 @@ class SyncCccCaves extends Command
                                 'original_data' => $originalData,
                                 'suggested_data' => $differences,
                             ]);
-                            $this->info("Updated suggested edit for existing cave: {$name}");
+                            $this->line("<fg=yellow>  ✏ Updated suggested edit:</> {$name} <fg=gray>[" . implode(', ', array_keys($differences)) . ']</>');
                         } else {
                             \App\Models\SuggestedEdit::create([
                                 'user_id' => null,
@@ -274,8 +334,12 @@ class SyncCccCaves extends Command
                                 'suggested_data' => $differences,
                                 'status' => 'pending',
                             ]);
-                            $this->info("Created suggested edit for existing cave: {$name}");
+                            $this->line("<fg=yellow>  ✏ Created suggested edit:</> {$name} <fg=gray>[" . implode(', ', array_keys($differences)) . ']</>');
                         }
+                        ++$suggestedEditCount;
+                    } else {
+                        $this->line("<fg=blue>  ⊘ No changes:</> {$name}");
+                        ++$noOpCount;
                     }
                     $cave = $existingCave;
                 } else {
@@ -284,35 +348,28 @@ class SyncCccCaves extends Command
                         'slug' => $this->uniqueSlug($baseSlug, 'caves'),
                         'cave_system_id' => $caveSystemId,
                     ], $caveData));
+                    $this->line("<fg=green>  ✚ New cave created:</> {$name}");
+                    ++$newCaveCount;
                 }
 
                 // 6. Sync Tags
                 $tagIds = [];
 
                 // General "cave" tag
-                $tagCave = \App\Models\Tag::firstOrCreate(
-                    ['tag' => 'cave'],
-                    ['type' => 'cave', 'category' => 'general']
-                );
+                $tagCave = \App\Models\Tag::where('tag', 'Cave')->where('category', 'type')->firstOrFail();
                 $tagIds[] = $tagCave->id;
 
                 // Region tags from ancestor Region in the XML
                 // ($regionName and $regionNameLower already computed above)
                 if (strpos($regionNameLower, 'north wales') !== false) {
-                    $tagNorthWales = \App\Models\Tag::firstOrCreate(
-                        ['tag' => 'North Wales'],
-                        ['type' => 'cave', 'category' => 'region']
-                    );
+                    $tagNorthWales = \App\Models\Tag::where('tag', 'North Wales')->where('category', 'region')->firstOrFail();
                     $tagIds[] = $tagNorthWales->id;
                 } elseif (
                     strpos($regionNameLower, 'south') !== false ||
                     strpos($regionNameLower, 'gower') !== false ||
                     strpos($regionNameLower, 'northern outcrop') !== false
                 ) {
-                    $tagSouthWales = \App\Models\Tag::firstOrCreate(
-                        ['tag' => 'South Wales'],
-                        ['type' => 'cave', 'category' => 'region']
-                    );
+                    $tagSouthWales = \App\Models\Tag::where('tag', 'South Wales')->where('category', 'region')->firstOrFail();
                     $tagIds[] = $tagSouthWales->id;
                 }
 
@@ -323,7 +380,11 @@ class SyncCccCaves extends Command
 
             if (!$dryRun) {
                 DB::commit();
-                $this->info("Import completed: {$importedCount} imported/updated, {$skippedCount} skipped.");
+                $this->newLine();
+                $this->info("Import completed: {$importedCount} processed, {$skippedCount} skipped.");
+                $this->line("  <fg=green>✚ New caves:</> {$newCaveCount}");
+                $this->line("  <fg=yellow>✏ Suggested edits:</> {$suggestedEditCount}");
+                $this->line("  <fg=blue>⊘ No changes:</> {$noOpCount}");
             } else {
                 DB::rollBack();
                 $this->info("Dry run completed: {$importedCount} would be imported/updated, {$skippedCount} skipped.");
@@ -398,5 +459,38 @@ class SyncCccCaves extends Command
         }
 
         return $slug;
+    }
+
+    private function textAlreadyContained(string $newText, string $existingText): bool
+    {
+        if (empty($existingText)) {
+            return false;
+        }
+
+        // Check each paragraph/part of the new text individually.
+        // This handles formatting differences (e.g. URLs wrapped in <> brackets,
+        // trailing <br/> tags) from previous imports or manual edits.
+        $parts = preg_split('/\n{2,}/', trim($newText));
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (empty($part)) {
+                continue;
+            }
+
+            if (!str_contains($existingText, $part)) {
+                // For CCC Registry links, check if the ID is already referenced
+                // regardless of link format (markdown, angle-bracket, plain URL)
+                if (preg_match('/CCC Registry/i', $part) && preg_match('/[?&]ID=(\d+)/', $part, $idMatch)) {
+                    if (str_contains($existingText, 'ID=' . $idMatch[1])) {
+                        continue;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        return true;
     }
 }

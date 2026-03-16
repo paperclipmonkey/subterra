@@ -432,4 +432,189 @@ class SuggestedEditTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonFragment(['user_id' => null]);
     }
+
+    public function test_admin_can_partially_approve_suggestion()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create([
+            'description' => 'Original Description',
+            'location_name' => 'Original Location',
+            'access_info' => 'Original Access',
+        ]);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => [
+                'description' => 'Original Description',
+                'location_name' => 'Original Location',
+                'access_info' => 'Original Access',
+            ],
+            'suggested_data' => [
+                'description' => 'Updated Description',
+                'location_name' => 'Updated Location',
+                'access_info' => 'Updated Access',
+            ],
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        // Approve only description and location_name, leave access_info
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve", [
+                'fields' => ['description', 'location_name'],
+            ]);
+
+        $response->assertStatus(200);
+
+        // Approved fields should be applied
+        $cave->refresh();
+        $this->assertEquals('Updated Description', $cave->description);
+        $this->assertEquals('Updated Location', $cave->location_name);
+        // Non-approved field should remain unchanged
+        $this->assertEquals('Original Access', $cave->access_info);
+
+        // Original suggestion should be approved with only the selected fields
+        $this->assertDatabaseHas('suggested_edits', [
+            'id' => $suggestion->id,
+            'status' => 'approved',
+        ]);
+
+        // A new pending suggestion should be created with the remaining fields
+        $remaining = SuggestedEdit::where('suggestable_id', $cave->id)
+            ->where('status', 'pending')
+            ->first();
+
+        $this->assertNotNull($remaining);
+        $this->assertArrayHasKey('access_info', $remaining->suggested_data);
+        $this->assertEquals('Updated Access', $remaining->suggested_data['access_info']);
+        $this->assertArrayNotHasKey('description', $remaining->suggested_data);
+        $this->assertArrayNotHasKey('location_name', $remaining->suggested_data);
+        // Original data should also only include the remaining fields
+        $this->assertArrayHasKey('access_info', $remaining->original_data);
+        $this->assertEquals('Original Access', $remaining->original_data['access_info']);
+    }
+
+    public function test_full_approval_does_not_create_remaining_suggestion()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create([
+            'description' => 'Original Description',
+            'location_name' => 'Original Location',
+        ]);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => [
+                'description' => 'Original Description',
+                'location_name' => 'Original Location',
+            ],
+            'suggested_data' => [
+                'description' => 'Updated Description',
+                'location_name' => 'Updated Location',
+            ],
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        // Approve all fields (no fields param = approve everything)
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve");
+
+        $response->assertStatus(200);
+
+        $cave->refresh();
+        $this->assertEquals('Updated Description', $cave->description);
+        $this->assertEquals('Updated Location', $cave->location_name);
+
+        // No remaining suggestion should exist
+        $this->assertDatabaseCount('suggested_edits', 1);
+        $this->assertDatabaseHas('suggested_edits', [
+            'id' => $suggestion->id,
+            'status' => 'approved',
+        ]);
+    }
+
+    public function test_partial_approval_with_single_field()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create([
+            'description' => 'Original',
+            'location_name' => 'Original Loc',
+            'access_info' => 'Original Access',
+        ]);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => [
+                'description' => 'Original',
+                'location_name' => 'Original Loc',
+                'access_info' => 'Original Access',
+            ],
+            'suggested_data' => [
+                'description' => 'New Desc',
+                'location_name' => 'New Loc',
+                'access_info' => 'New Access',
+            ],
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        // Approve only one field
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve", [
+                'fields' => ['description'],
+            ]);
+
+        $response->assertStatus(200);
+
+        $cave->refresh();
+        $this->assertEquals('New Desc', $cave->description);
+        $this->assertEquals('Original Loc', $cave->location_name);
+        $this->assertEquals('Original Access', $cave->access_info);
+
+        // Remaining suggestion should have 2 fields
+        $remaining = SuggestedEdit::where('status', 'pending')->first();
+        $this->assertNotNull($remaining);
+        $this->assertCount(2, $remaining->suggested_data);
+        $this->assertArrayHasKey('location_name', $remaining->suggested_data);
+        $this->assertArrayHasKey('access_info', $remaining->suggested_data);
+    }
+
+    public function test_partial_approval_of_robot_suggestion_does_not_send_email()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create([
+            'description' => 'Original',
+            'location_name' => 'Original Loc',
+        ]);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => ['description' => 'Original', 'location_name' => 'Original Loc'],
+            'suggested_data' => ['description' => 'New Desc', 'location_name' => 'New Loc'],
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve", [
+                'fields' => ['description'],
+            ]);
+
+        $response->assertStatus(200);
+        Mail::assertNotSent(SuggestionApprovedMail::class);
+        Mail::assertNothingQueued();
+    }
 }

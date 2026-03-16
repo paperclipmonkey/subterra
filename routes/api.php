@@ -79,6 +79,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class.':data_admin');
     Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class.':data_admin');
 
+    Route::get('/cave_systems', [App\Http\Controllers\CaveSystemController::class, 'index']);
     Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
     Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
     Route::post('/cave_systems_with_cave', [App\Http\Controllers\CaveSystemController::class, 'storeWithCave'])->middleware(ApiIsAdmin::class);
@@ -167,6 +168,10 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::post('/suggested-edits/{suggested_edit}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approve']);
         Route::post('/suggested-edits/{suggested_edit}/reject', [App\Http\Controllers\Admin\SuggestedEditController::class, 'reject']);
         Route::apiResource('catchments', App\Http\Controllers\CatchmentController::class);
+
+        // Cave System merge
+        Route::get('/cave-systems/{cave_system}/merge-preview', [App\Http\Controllers\Admin\CaveSystemController::class, 'mergePreview']);
+        Route::post('/cave-systems/{cave_system}/merge', [App\Http\Controllers\Admin\CaveSystemController::class, 'merge']);
     });
 
     // Duty Officer — callouts, shifts, incidents
