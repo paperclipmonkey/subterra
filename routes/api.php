@@ -172,6 +172,7 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         // Cave System merge
         Route::get('/cave-systems/{cave_system}/merge-preview', [App\Http\Controllers\Admin\CaveSystemController::class, 'mergePreview']);
         Route::post('/cave-systems/{cave_system}/merge', [App\Http\Controllers\Admin\CaveSystemController::class, 'merge']);
+        Route::delete('/cave-systems/{cave_system}', [App\Http\Controllers\Admin\CaveSystemController::class, 'destroy']);
     });
 
     // Duty Officer — callouts, shifts, incidents

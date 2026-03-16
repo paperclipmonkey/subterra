@@ -156,4 +156,75 @@ class CaveSystemController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Delete a cave system and all associated caves, routes, files, tags, and suggested edits.
+     *
+     * Only allowed when no trips exist for this system.
+     */
+    public function destroy(CaveSystem $caveSystem)
+    {
+        $tripCount = Trip::where('cave_system_id', $caveSystem->id)->count();
+
+        if ($tripCount > 0) {
+            return response()->json([
+                'error' => 'Cannot delete a cave system that has trips. Remove all trips first.',
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Delete suggested edits for the system and its caves
+            $caveIds = $caveSystem->caves()->pluck('id')->toArray();
+            SuggestedEdit::where('suggestable_type', CaveSystem::class)
+                ->where('suggestable_id', $caveSystem->id)
+                ->delete();
+            if (!empty($caveIds)) {
+                SuggestedEdit::where('suggestable_type', Cave::class)
+                    ->whereIn('suggestable_id', $caveIds)
+                    ->delete();
+            }
+
+            // Delete files from storage
+            $files = $caveSystem->files()->get();
+            foreach ($files as $file) {
+                $path = "cave_system_files/{$caveSystem->id}/{$file->filename}";
+                if (Storage::disk('media')->exists($path)) {
+                    Storage::disk('media')->delete($path);
+                }
+                if ($file->thumbnail_filename) {
+                    $thumbPath = "cave_system_files/{$caveSystem->id}/{$file->thumbnail_filename}";
+                    if (Storage::disk('media')->exists($thumbPath)) {
+                        Storage::disk('media')->delete($thumbPath);
+                    }
+                }
+            }
+            $caveSystem->files()->delete();
+
+            // Delete routes
+            $caveSystem->routes()->delete();
+
+            // Delete caves
+            $caveSystem->caves()->delete();
+
+            // Detach tags
+            $caveSystem->tags()->detach();
+
+            // Delete the system
+            $caveSystem->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => "Cave system \"{$caveSystem->name}\" has been deleted.",
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'error' => 'Delete failed: '.$e->getMessage(),
+            ], 500);
+        }
+    }
 }

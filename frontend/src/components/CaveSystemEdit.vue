@@ -45,8 +45,44 @@
           >
             Merge another system
           </v-btn>
+          <v-btn
+            variant="text"
+            color="red"
+            size="small"
+            @click="deleteDialog = true"
+          >
+            Delete system
+          </v-btn>
         </v-col>
       </v-row>
+
+      <!-- Delete Confirmation Dialog -->
+      <v-dialog v-model="deleteDialog" max-width="500" persistent>
+        <v-card>
+          <v-card-title class="text-h5">Delete Cave System</v-card-title>
+          <v-card-text>
+            <v-alert type="error" variant="tonal" class="mb-4">
+              This action cannot be undone!
+            </v-alert>
+            <p>
+              Are you sure you want to delete <strong>{{ cavesystem.name }}</strong>?
+              All caves, routes, files, and tags associated with this system will also be deleted.
+            </p>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
+            <v-btn
+              color="red"
+              variant="flat"
+              :loading="deleteLoading"
+              @click="executeDelete"
+            >
+              Delete Permanently
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Merge Selection Dialog -->
       <v-dialog v-model="mergeSelectDialog" max-width="500">
@@ -192,6 +228,10 @@ const mergePreviewLoading = ref(false)
 const mergeLoading = ref(false)
 const availableSystems = ref([])
 const systemsLoading = ref(false)
+
+// Delete state
+const deleteDialog = ref(false)
+const deleteLoading = ref(false)
 
 const initialSystemState = ref(null)
 
@@ -442,6 +482,35 @@ const executeMerge = async () => {
     errorSnackbar.value = true
   } finally {
     mergeLoading.value = false
+  }
+}
+
+const executeDelete = async () => {
+  deleteLoading.value = true
+  try {
+    const response = await fetch(
+      `/api/admin/cave-systems/${cavesystem.value.id}`,
+      {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+      }
+    )
+    if (response.ok) {
+      const data = await response.json()
+      isSaved.value = true
+      toast.success(data.message)
+      router.push('/')
+    } else {
+      const data = await response.json()
+      errorMessage.value = data.error || 'Delete failed'
+      errorSnackbar.value = true
+    }
+  } catch (error) {
+    errorMessage.value = error.message
+    errorSnackbar.value = true
+  } finally {
+    deleteLoading.value = false
+    deleteDialog.value = false
   }
 }
 
