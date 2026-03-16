@@ -61,7 +61,7 @@
         <v-list class="pa-0">
           <template v-for="(field, index) in changedFields" :key="field.key">
             <v-list-item class="pa-4">
-              <template #prepend v-if="suggestion.status === 'pending'">
+              <template v-if="suggestion.status === 'pending'" #prepend>
                 <v-checkbox
                   v-model="selectedFields"
                   :value="field.key"

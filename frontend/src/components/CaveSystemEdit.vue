@@ -100,7 +100,7 @@
             <v-table density="compact">
               <thead>
                 <tr>
-                  <th></th>
+                  <th />
                   <th>{{ mergePreview.source.name }}</th>
                   <th>{{ mergePreview.target.name }}</th>
                   <th>After Merge</th>

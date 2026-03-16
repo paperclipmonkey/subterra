@@ -650,7 +650,7 @@ class TripTest extends TestCase
                     'title' => 'New Title',
                     'copyright' => 'New Copyright',
                     'photographer' => 'New Photographer',
-                ]
+                ],
             ],
             '_method' => 'PUT',
         ];

@@ -191,61 +191,61 @@ class SyncCccCaves extends Command
                     $systemReferences = array_values(array_unique($systemReferences));
 
                     // Format as markdown list items
-                    $formattedNewRefs = array_map(fn($r) => '- ' . $r, $systemReferences);
+                    $formattedNewRefs = array_map(fn ($r) => '- '.$r, $systemReferences);
 
                     if ($system->wasRecentlyCreated) {
                         // New system: set references directly
                         $system->references = implode("\n", $formattedNewRefs);
                         $system->save();
                     } else {
-                            // Existing system: check for new references using normalized comparison
-                            $existingRefs = !empty($system->references) ? explode("\n", $system->references) : [];
-                            $normalizedExisting = array_map(
-                                fn($ref) => strtolower(trim(preg_replace('/^-\s*/', '', $ref))),
-                                $existingRefs
-                            );
-                            $existingRefsLower = strtolower($system->references ?? '');
+                        // Existing system: check for new references using normalized comparison
+                        $existingRefs = !empty($system->references) ? explode("\n", $system->references) : [];
+                        $normalizedExisting = array_map(
+                            fn ($ref) => strtolower(trim(preg_replace('/^-\s*/', '', $ref))),
+                            $existingRefs
+                        );
+                        $existingRefsLower = strtolower($system->references ?? '');
 
-                            $newRefs = array_filter($systemReferences, function ($ref) use ($normalizedExisting, $existingRefsLower) {
-                                $normalizedRef = strtolower(trim($ref));
+                        $newRefs = array_filter($systemReferences, function ($ref) use ($normalizedExisting, $existingRefsLower) {
+                            $normalizedRef = strtolower(trim($ref));
 
-                                // Exact line match (for properly-formatted refs)
-                                // or substring match (for legacy refs stored in concatenated lines)
-                                return !in_array($normalizedRef, $normalizedExisting)
-                                    && !str_contains($existingRefsLower, $normalizedRef);
-                            });
+                            // Exact line match (for properly-formatted refs)
+                            // or substring match (for legacy refs stored in concatenated lines)
+                            return !in_array($normalizedRef, $normalizedExisting)
+                                && !str_contains($existingRefsLower, $normalizedRef);
+                        });
 
-                            if (!empty($newRefs)) {
-                                // Build suggested value: keep existing entries, append new ones as list items
-                                $suggestedRefs = array_merge($existingRefs, array_map(fn($r) => '- ' . $r, $newRefs));
-                                $suggestedValue = implode("\n", $suggestedRefs);
+                        if (!empty($newRefs)) {
+                            // Build suggested value: keep existing entries, append new ones as list items
+                            $suggestedRefs = array_merge($existingRefs, array_map(fn ($r) => '- '.$r, $newRefs));
+                            $suggestedValue = implode("\n", $suggestedRefs);
 
-                                $existingPendingEdit = \App\Models\SuggestedEdit::where('suggestable_type', CaveSystem::class)
-                                    ->where('suggestable_id', $system->id)
-                                    ->where('status', 'pending')
-                                    ->first();
+                            $existingPendingEdit = \App\Models\SuggestedEdit::where('suggestable_type', CaveSystem::class)
+                                ->where('suggestable_id', $system->id)
+                                ->where('status', 'pending')
+                                ->first();
 
-                                if ($existingPendingEdit) {
-                                    $mergedSuggested = array_merge($existingPendingEdit->suggested_data, ['references' => $suggestedValue]);
-                                    $mergedOriginal = array_merge($existingPendingEdit->original_data, ['references' => $system->references]);
-                                    $existingPendingEdit->update([
-                                        'original_data' => $mergedOriginal,
-                                        'suggested_data' => $mergedSuggested,
-                                    ]);
-                                } else {
-                                    \App\Models\SuggestedEdit::create([
-                                        'user_id' => null,
-                                        'suggestable_type' => CaveSystem::class,
-                                        'suggestable_id' => $system->id,
-                                        'original_data' => ['references' => $system->references],
-                                        'suggested_data' => ['references' => $suggestedValue],
-                                        'status' => 'pending',
-                                    ]);
-                                }
-                                $this->line("<fg=yellow>  ✏ Suggested references update:</> {$name}");
-                                ++$suggestedEditCount;
+                            if ($existingPendingEdit) {
+                                $mergedSuggested = array_merge($existingPendingEdit->suggested_data, ['references' => $suggestedValue]);
+                                $mergedOriginal = array_merge($existingPendingEdit->original_data, ['references' => $system->references]);
+                                $existingPendingEdit->update([
+                                    'original_data' => $mergedOriginal,
+                                    'suggested_data' => $mergedSuggested,
+                                ]);
+                            } else {
+                                \App\Models\SuggestedEdit::create([
+                                    'user_id' => null,
+                                    'suggestable_type' => CaveSystem::class,
+                                    'suggestable_id' => $system->id,
+                                    'original_data' => ['references' => $system->references],
+                                    'suggested_data' => ['references' => $suggestedValue],
+                                    'status' => 'pending',
+                                ]);
                             }
+                            $this->line("<fg=yellow>  ✏ Suggested references update:</> {$name}");
+                            ++$suggestedEditCount;
                         }
+                    }
                 }
 
                 // 4. Access (text content only — the 'con' attribute is not useful)
@@ -271,7 +271,7 @@ class SyncCccCaves extends Command
                     $regionPrefix = 'south_wales_';
                 }
 
-                $baseSlug = $regionPrefix . Str::slug($name);
+                $baseSlug = $regionPrefix.Str::slug($name);
 
                 $caveData = [
                     'description' => $description,
@@ -333,7 +333,7 @@ class SyncCccCaves extends Command
                                 'original_data' => $originalData,
                                 'suggested_data' => $differences,
                             ]);
-                            $this->line("<fg=yellow>  ✏ Updated suggested edit:</> {$name} <fg=gray>[" . implode(', ', array_keys($differences)) . ']</>');
+                            $this->line("<fg=yellow>  ✏ Updated suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
                         } else {
                             \App\Models\SuggestedEdit::create([
                                 'user_id' => null,
@@ -343,7 +343,7 @@ class SyncCccCaves extends Command
                                 'suggested_data' => $differences,
                                 'status' => 'pending',
                             ]);
-                            $this->line("<fg=yellow>  ✏ Created suggested edit:</> {$name} <fg=gray>[" . implode(', ', array_keys($differences)) . ']</>');
+                            $this->line("<fg=yellow>  ✏ Created suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
                         }
                         ++$suggestedEditCount;
                     } else {
@@ -466,7 +466,7 @@ class SyncCccCaves extends Command
         $slug = $base;
         $count = 2;
         while (\Illuminate\Support\Facades\DB::table($table)->where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $count++;
+            $slug = $base.'-'.$count++;
         }
 
         return $slug;
@@ -493,7 +493,7 @@ class SyncCccCaves extends Command
                 // For CCC Registry links, check if the ID is already referenced
                 // regardless of link format (markdown, angle-bracket, plain URL)
                 if (preg_match('/CCC Registry/i', $part) && preg_match('/[?&]ID=(\d+)/', $part, $idMatch)) {
-                    if (str_contains($existingText, 'ID=' . $idMatch[1])) {
+                    if (str_contains($existingText, 'ID='.$idMatch[1])) {
                         continue;
                     }
                 }

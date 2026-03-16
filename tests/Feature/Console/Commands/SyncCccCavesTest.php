@@ -17,18 +17,18 @@ class SyncCccCavesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         Http::fake([
-            'cambriancavingcouncil.org.uk/*' => Http::response($this->getMockXml(), 200)
+            'cambriancavingcouncil.org.uk/*' => Http::response($this->getMockXml(), 200),
         ]);
-        
+
         Tag::firstOrCreate(['tag' => 'Cave', 'category' => 'type'], ['type' => 'cave']);
         Tag::firstOrCreate(['tag' => 'South Wales', 'category' => 'region'], ['type' => 'cave']);
     }
 
     private function getMockXml(): string
     {
-        return <<<XML
+        return <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <Registry>
     <Region name="South Wales">
@@ -64,11 +64,11 @@ XML;
         $this->assertDatabaseMissing('caves', [
             'name' => 'Short Cave',
         ]);
-        
+
         $this->assertDatabaseHas('caves', [
             'name' => 'Blocked Cave',
         ]);
-        
+
         $this->assertDatabaseCount('suggested_edits', 0);
     }
 
@@ -85,7 +85,7 @@ XML;
             'name' => 'Blocked Cave',
         ]);
     }
-    
+
     public function test_it_creates_suggested_edit_for_existing_cave_with_differences()
     {
         $cave = Cave::factory()->create([
@@ -110,13 +110,13 @@ XML;
             'suggestable_id' => $cave->id,
             'status' => 'pending',
         ]);
-        
+
         $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
         $this->assertNull($edit->user_id);
         $this->assertArrayHasKey('description', $edit->suggested_data);
         $this->assertStringContainsString('A test cave description.', $edit->suggested_data['description']);
     }
-    
+
     public function test_it_updates_existing_pending_suggested_edit()
     {
         $cave = Cave::factory()->create([
@@ -139,7 +139,7 @@ XML;
             ->assertExitCode(0);
 
         $this->assertDatabaseCount('suggested_edits', 1);
-        
+
         $edit = SuggestedEdit::first();
         $this->assertStringContainsString('A test cave description.', $edit->suggested_data['description']);
     }
@@ -276,7 +276,7 @@ XML;
     public function test_it_does_not_suggest_empty_text_fields()
     {
         Http::fake([
-            'cambriancavingcouncil.org.uk/*' => Http::response($this->getXmlWithEmptyDesc(), 200)
+            'cambriancavingcouncil.org.uk/*' => Http::response($this->getXmlWithEmptyDesc(), 200),
         ]);
 
         $cave = Cave::factory()->create([
@@ -297,7 +297,7 @@ XML;
 
     private function getXmlWithEmptyDesc(): string
     {
-        return <<<XML
+        return <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <Registry>
     <Region name="South Wales">
@@ -312,7 +312,6 @@ XML;
 
     public function test_new_cave_system_gets_references_as_markdown_list()
     {
-
         $this->artisan('sync:ccc-caves --min-length=250')
             ->assertExitCode(0);
 
@@ -415,7 +414,7 @@ XML;
     {
         // XML has duplicate Bibl entries (CCC data can contain these)
         Http::fake([
-            'cambriancavingcouncil.org.uk/*' => Http::response(<<<XML
+            'cambriancavingcouncil.org.uk/*' => Http::response(<<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <Registry>
     <Region name="South Wales">
@@ -447,7 +446,7 @@ XML, 200),
             'slug' => 'test-cave-one',
             'length' => 0,
             'vertical_range' => 0,
-            'references' => "Other Ref [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1) Welsh Cave Guide, 1st Edition Caves of South Wales, 2005",
+            'references' => 'Other Ref [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1) Welsh Cave Guide, 1st Edition Caves of South Wales, 2005',
         ]);
 
         Cave::factory()->create([

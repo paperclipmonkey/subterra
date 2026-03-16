@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -29,7 +28,7 @@ return new class extends Migration
 
                 // Keep the first occurrence, rename the rest
                 foreach ($rows->skip(1)->values() as $i => $row) {
-                    $newSlug = $slug . '-' . ($i + 2);
+                    $newSlug = $slug.'-'.($i + 2);
                     while (DB::table($tableName)->where('slug', $newSlug)->exists()) {
                         $newSlug .= '-x';
                     }
