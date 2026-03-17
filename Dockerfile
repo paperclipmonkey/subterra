@@ -49,6 +49,7 @@ RUN apt-get update \
 # 2. Copy config files to proper locations
 COPY .fly/nginx/ /etc/nginx/
 COPY .fly/fpm/ /etc/php/${PHP_VERSION}/fpm/
+COPY .fly/fpm/opcache.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-opcache-settings.ini
 COPY .fly/supervisor/ /etc/supervisor/
 COPY .fly/entrypoint.sh /entrypoint
 COPY .fly/start-nginx.sh /usr/local/bin/start-nginx
