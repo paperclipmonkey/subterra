@@ -19,3 +19,5 @@ Nant Maelor Tunnel
 Ogof Ffynnon Wyntog
 # No public access
 Caswell Valley Sink
+# Covered by Tunnel Cave
+Tunnel Cave Lower Cavers Entrance
