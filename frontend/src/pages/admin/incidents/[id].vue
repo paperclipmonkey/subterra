@@ -350,10 +350,6 @@ import {
 } from '@indoorequal/vue-maplibre-gl'
 import maplibregl from 'maplibre-gl'
 
-import { MapStyleControl } from '@/utilities/MapStyleControl'
-
-import AppMap from '@/components/AppMap.vue'
-
 export default {
   components: {
     MglMap,

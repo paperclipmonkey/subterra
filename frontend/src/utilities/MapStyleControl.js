@@ -3,6 +3,7 @@ export class MapStyleControl {
     this.styles = styles || []
     this.currentStyle = currentStyle
     this.onStyleChange = onStyleChange
+    this._documentClickHandler = null
   }
 
   onAdd(map) {
@@ -73,9 +74,10 @@ export class MapStyleControl {
       menu.style.display = menu.style.display === 'none' ? 'block' : 'none'
     })
 
-    document.addEventListener('click', () => {
+    this._documentClickHandler = () => {
       menu.style.display = 'none'
-    })
+    }
+    document.addEventListener('click', this._documentClickHandler)
 
     this._container.appendChild(btn)
     this._container.appendChild(menu)
@@ -98,7 +100,13 @@ export class MapStyleControl {
   }
 
   onRemove() {
-    this._container.parentNode.removeChild(this._container)
+    if (this._documentClickHandler) {
+      document.removeEventListener('click', this._documentClickHandler)
+      this._documentClickHandler = null
+    }
+    if (this._container && this._container.parentNode) {
+      this._container.parentNode.removeChild(this._container)
+    }
     this._map = undefined
   }
 }

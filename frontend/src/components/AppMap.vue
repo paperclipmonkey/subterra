@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { } from 'vue'
 import { MapStyleControl } from '@/utilities/MapStyleControl'
 import { mdiTerrain, mdiSatelliteVariant } from '@mdi/js'
 import {
@@ -83,8 +83,12 @@ const onMapLoad = (event) => {
 // Expose map context to parent via refs
 const mapOne = useMap()
 defineExpose({
-  map: computed(() => mapOne.map),
-  isLoaded: computed(() => mapOne.isLoaded)
+  get map() {
+    return mapOne.map?.value
+  },
+  get isLoaded() {
+    return mapOne.isLoaded?.value
+  }
 })
 </script>
 

@@ -60,7 +60,6 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { MapStyleControl } from '@/utilities/MapStyleControl'
 
 import { mdiApple, mdiGoogleMaps, mdiLock } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
@@ -93,7 +92,11 @@ import { onMounted, watch, ref } from 'vue'
 const mapRef = ref(null)
 
 watch(() => mapRef.value?.isLoaded, (isLoaded) => {
-  mapRef.value?.map.resize()
+  if (!isLoaded) {
+    return
+  }
+
+  mapRef.value?.map?.resize()
 
   watch(
     () => caveStore.caves,
@@ -103,7 +106,7 @@ watch(() => mapRef.value?.isLoaded, (isLoaded) => {
         caves.forEach((cave) => {
           bounds.extend([cave.location_lng, cave.location_lat])
         })
-        mapRef.value?.map.fitBounds(bounds, { padding: 50 })
+        mapRef.value?.map?.fitBounds(bounds, { padding: 50 })
       }
     },
     { immediate: true }
