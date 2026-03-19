@@ -137,7 +137,6 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { MapStyleControl } from '@/utilities/MapStyleControl'
 
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiGoogleMaps, mdiHomeGroup, mdiShieldAccount, mdiWeb } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'

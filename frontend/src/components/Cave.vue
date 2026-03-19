@@ -554,7 +554,6 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { MapStyleControl } from '@/utilities/MapStyleControl'
 
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
@@ -566,12 +565,7 @@ import { useCollectionStore } from '@/stores/collections'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
-import {
-  MglMap,
-  MglNavigationControl,
-  MglMarker,
-  MglFullscreenControl,
-} from '@indoorequal/vue-maplibre-gl'
+import { MglMarker } from '@indoorequal/vue-maplibre-gl'
 
 const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
 const zoom = 14

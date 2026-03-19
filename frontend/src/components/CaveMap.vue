@@ -51,7 +51,6 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { MapStyleControl } from '@/utilities/MapStyleControl'
 
 import { mdiApple, mdiGoogleMaps } from '@mdi/js'
 
@@ -86,7 +85,11 @@ const lnglat = [-2, 53]
 const mapRef = ref(null)
 
 watch(() => mapRef.value?.isLoaded, (isLoaded) => {
-  mapRef.value?.map.resize()
+  if (!isLoaded) {
+    return
+  }
+
+  mapRef.value?.map?.resize()
 
   watch(
     () => props.caves,

@@ -15,7 +15,6 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { MapStyleControl } from '@/utilities/MapStyleControl'
 
 import { computed, ref, watch } from 'vue'
 import {
@@ -62,16 +61,18 @@ const updateBounds = () => {
     })
 
     if (!bounds.isEmpty()) {
-      mapRef.value?.map.fitBounds(bounds, { padding: 50, maxZoom: 8 })
+      mapRef.value?.map?.fitBounds(bounds, { padding: 50, maxZoom: 8 })
     }
   }
 }
 
 watch(() => mapRef.value?.isLoaded, (isLoaded) => {
-  if (isLoaded) {
-    mapRef.value?.map.resize()
-    updateBounds()
+  if (!isLoaded) {
+    return
   }
+
+  mapRef.value?.map?.resize()
+  updateBounds()
 })
 
 watch(() => validCallouts.value, () => {

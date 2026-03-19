@@ -351,7 +351,6 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { MapStyleControl } from '@/utilities/MapStyleControl'
 import { mdiCamera, mdiDelete, mdiDoorOpen, mdiImageOutline, mdiStar, mdiVideo, mdiVideoOutline } from '@mdi/js'
 import { ref, watch, onMounted, computed } from 'vue'
 import {

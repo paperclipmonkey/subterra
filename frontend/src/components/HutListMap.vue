@@ -51,8 +51,8 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { MapStyleControl } from '@/utilities/MapStyleControl'
-import { mdiApple, mdiGoogleMaps, mdiTerrain, mdiSatelliteVariant } from '@mdi/js'
+
+
 
 // Removed store usage for huts, now coming from props
 const props = defineProps({
@@ -86,7 +86,11 @@ import { onMounted, watch, ref } from 'vue'
 const mapRef = ref(null)
 
 watch(() => mapRef.value?.isLoaded, (isLoaded) => {
-    mapRef.value?.map.resize()
+    if (!isLoaded) {
+        return
+    }
+
+    mapRef.value?.map?.resize()
 
     watch(
         () => props.huts,
@@ -101,7 +105,7 @@ watch(() => mapRef.value?.isLoaded, (isLoaded) => {
                     }
                 })
                 if (hasPoints) {
-                    mapRef.value?.map.fitBounds(bounds, { padding: 50 })
+                    mapRef.value?.map?.fitBounds(bounds, { padding: 50 })
                 }
             }
         },
