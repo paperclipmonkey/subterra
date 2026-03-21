@@ -747,7 +747,7 @@ const addParticipant = (participant) => {
 
 const cave_system_id = computed(() => {
   const found = caves.value.find(cave => cave.id === trip.entrance_cave_id)
-  return found ? found.system.id : null
+  return found?.system?.id ?? null
 })
 
 const curatedCaves = computed(() => {
@@ -767,7 +767,7 @@ const entranceCaveOptions = computed(() => {
 })
 
 const exitCaveOptions = computed(() => {
-  const filtered = curatedCaves.value.filter(cave => cave.system.id === cave_system_id.value && cave.id !== trip.entrance_cave_id)
+  const filtered = curatedCaves.value.filter(cave => cave.system?.id === cave_system_id.value && cave.id !== trip.entrance_cave_id)
   return includeSelectedCave(filtered, trip.exit_cave_id)
 })
 
