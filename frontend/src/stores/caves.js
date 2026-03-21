@@ -49,9 +49,11 @@ export const useCaveStore = defineStore('caves', {
       // Apply tags filter if any tags are provided
       if (tags && tags.length > 0) {
         filtered = filtered.filter(cave => {
+          const caveTags = cave.tags ?? []
+          const systemTags = cave.system?.tags ?? []
           return tags.every(tag =>
-            cave.tags.some(caveTag => caveTag.tag === tag) ||
-            cave.system.tags.some(caveTag => caveTag.tag === tag)
+            caveTags.some(caveTag => caveTag.tag === tag) ||
+            systemTags.some(caveTag => caveTag.tag === tag)
           )
         })
       }
