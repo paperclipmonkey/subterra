@@ -295,4 +295,43 @@ describe('TripNew - Duration Loading', () => {
     // Verify participants array contains just the IDs
     expect(wrapper.vm.trip.participants).toEqual([1, 12])
   })
+
+  it('defaults cave options to curated list and allows all caves', async () => {
+    mockRoute.params = {}
+    fetch.mockImplementation((url) => {
+      if (url === '/api/caves') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            data: [
+              { id: 1, name: 'Big Cave', system: { id: 1, length: 400 }, location_name: 'A', location_country: 'UK' },
+              { id: 2, name: 'Small Cave', system: { id: 2, length: 50 }, location_name: 'B', location_country: 'UK' }
+            ]
+          })
+        })
+      }
+      if (url === '/api/users/me') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            data: { id: 1, name: 'Current User', photo: null, clubs: [] }
+          })
+        })
+      }
+      return Promise.reject(new Error('Unknown URL'))
+    })
+
+    const wrapper = mount(TripNew, {
+      global: {
+        plugins: [createPinia()],
+        stubs: defaultStubs
+      }
+    })
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(wrapper.vm.entranceCaveOptions.map(c => c.name)).toEqual(['Big Cave'])
+    wrapper.vm.toggleAllCaveChoices()
+    await nextTick()
+    expect(wrapper.vm.entranceCaveOptions.map(c => c.name)).toEqual(['Big Cave', 'Small Cave'])
+  })
 })

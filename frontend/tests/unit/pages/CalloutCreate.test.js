@@ -11,7 +11,10 @@ vi.mock('vue-router', () => ({
 }))
 
 // Mock Axios
-const mockCaves = [{ id: 1, name: 'Alum Pot', location_name: 'Yorkshire', system: { id: 10 } }]
+const mockCaves = [
+    { id: 1, name: 'Alum Pot', location_name: 'Yorkshire', location_country: 'United Kingdom', system: { id: 10, length: 500 } },
+    { id: 2, name: 'Tiny Pot', location_name: 'Yorkshire', location_country: 'United Kingdom', system: { id: 11, length: 40 } }
+]
 const mockUsers = [{ id: 2, name: 'Alice' }, { id: 3, name: 'Bob' }]
 const mockUserMe = { id: 1, name: 'Test User', email: 'test@example.com', clubs: [{ status: 'approved' }] }
 
@@ -800,5 +803,50 @@ describe('Callout Wizard', () => {
         expect(wrapper.vm.form.participants[0].locked).toBe(true)
         expect(wrapper.vm.form.participants[0].phone).toBe('🔒 Hidden')
         expect(wrapper.vm.$toast.success).toHaveBeenCalledWith('Phone number saved to your profile.')
+    })
+
+    it('defaults entrance options to curated caves and allows toggling all caves', async () => {
+        const wrapper = mount(CalloutIndex, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-btn': true,
+                    'v-icon': true,
+                    'v-spacer': true,
+                    'v-chip': true,
+                    'v-avatar': true,
+                    'v-img': true,
+                    'v-text-field': true,
+                    'v-divider': true,
+                    'v-toolbar': true,
+                    'v-toolbar-title': true,
+                    'v-card-text': true,
+                    'v-card-actions': true,
+                    'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                    'v-dialog': true,
+                    'v-progress-circular': true,
+                    'v-expand-transition': true,
+                    'v-form': true,
+                    'v-window': true,
+                    'v-window-item': true,
+                    'v-autocomplete': true,
+                    'v-textarea': true,
+                },
+                mocks: {
+                    $toast: { success: vi.fn(), error: vi.fn() }
+                }
+            }
+        })
+
+        await flushPromises()
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.vm.entranceCaveOptions.map(c => c.name)).toEqual(['Alum Pot'])
+        wrapper.vm.toggleAllCaveChoices()
+        await wrapper.vm.$nextTick()
+        expect(wrapper.vm.entranceCaveOptions.map(c => c.name)).toEqual(['Alum Pot', 'Tiny Pot'])
     })
 })

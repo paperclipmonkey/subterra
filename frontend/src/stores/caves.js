@@ -10,6 +10,9 @@ export const useCaveStore = defineStore('caves', {
     allCaves: [],
     savedFilter: [],
     savedSearch: '',
+    savedCatchmentId: null,
+    savedShowAllCaves: false,
+    savedMinSystemLength: 250,
   }),
 
   actions: {
@@ -21,21 +24,27 @@ export const useCaveStore = defineStore('caves', {
         this.loading = false
 
         // Apply saved filters after loading caves
-        if (this.savedFilter.length > 0 || this.savedSearch || this.savedCatchmentId) {
-          this.applyFilters(this.savedFilter, this.savedSearch, this.savedCatchmentId)
+        if (this.savedFilter.length > 0 || this.savedSearch || this.savedCatchmentId || this.savedShowAllCaves) {
+          this.applyFilters(this.savedFilter, this.savedSearch, this.savedCatchmentId, this.savedShowAllCaves, this.savedMinSystemLength)
         }
       } catch (error) {
         this.loading = false
         return error
       }
     },
-    applyFilters(tags, search, catchmentId = null) {
+    applyFilters(tags, search, catchmentId = null, showAllCaves = false, minSystemLength = 250) {
       // Save filters for future use
       this.savedFilter = tags
       this.savedSearch = search
       this.savedCatchmentId = catchmentId
+      this.savedShowAllCaves = showAllCaves
+      this.savedMinSystemLength = minSystemLength
 
       let filtered = this.allCaves
+
+      if (!showAllCaves) {
+        filtered = filtered.filter(cave => Number(cave?.system?.length || 0) >= Number(minSystemLength))
+      }
 
       // Apply tags filter if any tags are provided
       if (tags && tags.length > 0) {

@@ -12,13 +12,20 @@
         <v-col cols="12" md="6">
           <v-card title="Where" class="mb-4">
             <v-card-text>
-              <v-autocomplete v-model="trip.entrance_cave_id" label="Location" :items="caves" item-title="name" :rules="rules.location"
+              <v-autocomplete v-model="trip.entrance_cave_id" v-model:search="entranceCaveSearch" label="Location" :items="entranceCaveOptions" item-title="name" :rules="rules.location"
                               item-value="id" :error-messages="validationErrors.entrance_cave_id"
                               hint="Select the cave entrance where the trip started." persistent-hint variant="outlined"
                               autocomplete="off" name="random_unique_cave_search_field">
                 <template #item="{ props, item }">
-                  <v-list-item v-bind="props" :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
-                               :title="item.raw.name" />
+                  <v-list-item v-bind="props" :subtitle="formatCaveSubtitle(item.raw)" :title="item.raw.name" />
+                </template>
+                <template #append-item>
+                  <v-list-item
+                    v-if="showAllCaveChoices || entranceCaveSearch?.trim()"
+                    :title="showAllCaveChoices ? 'Back to curated list' : 'Search all caves...'"
+                    :subtitle="showAllCaveChoices ? 'Show caves >= 250m by default' : 'Include shorter/less-curated caves in results'"
+                    @click.stop="toggleAllCaveChoices"
+                  />
                 </template>
               </v-autocomplete>
               <template v-if="system_entrances_count > 1">
@@ -26,13 +33,25 @@
                             hint="Tick if you exited from a different entrance." persistent-hint class="mt-2" />
                 <v-expand-transition>
                   <div v-if="throughTrip">
-                    <v-autocomplete v-model="trip.exit_cave_id"
+                    <v-autocomplete v-model="trip.exit_cave_id" v-model:search="exitCaveSearch"
                                     label="Exit"
-                                    :items="caves.filter(cave => cave.system.id === cave_system_id && cave.id !== trip.entrance_cave_id)" item-title="name" item-value="id"
+                                    :items="exitCaveOptions" item-title="name" item-value="id"
                                     :error-messages="validationErrors.exit_cave_id"
                                     hint="Select the cave entrance where the trip ended." persistent-hint variant="outlined"
                                     autocomplete="off" name="random_unique_exit_search_field"
-                                    class="mt-2" />
+                                    class="mt-2">
+                      <template #item="{ props, item }">
+                        <v-list-item v-bind="props" :subtitle="formatCaveSubtitle(item.raw)" :title="item.raw.name" />
+                      </template>
+                      <template #append-item>
+                        <v-list-item
+                          v-if="showAllCaveChoices || exitCaveSearch?.trim()"
+                          :title="showAllCaveChoices ? 'Back to curated list' : 'Search all caves...'"
+                          :subtitle="showAllCaveChoices ? 'Show caves >= 250m by default' : 'Include shorter/less-curated caves in results'"
+                          @click.stop="toggleAllCaveChoices"
+                        />
+                      </template>
+                    </v-autocomplete>
                   </div>
                 </v-expand-transition>
               </template>
@@ -402,6 +421,10 @@ const throughTrip = ref(false)
 const userId = ref({})
 const users = ref([])
 const caves = ref([])
+const entranceCaveSearch = ref('')
+const exitCaveSearch = ref('')
+const showAllCaveChoices = ref(false)
+const minSystemLength = 250
 const loading = ref(true)
 
 const userAutocomplete = ref(null)
@@ -727,17 +750,51 @@ const cave_system_id = computed(() => {
   return found ? found.system.id : null
 })
 
+const curatedCaves = computed(() => {
+  if (showAllCaveChoices.value) return caves.value
+  return caves.value.filter(cave => Number(cave?.system?.length || 0) >= minSystemLength)
+})
+
+const includeSelectedCave = (items, selectedId) => {
+  if (!selectedId) return items
+  if (items.some(cave => cave.id === selectedId)) return items
+  const selected = caves.value.find(cave => cave.id === selectedId)
+  return selected ? [selected, ...items] : items
+}
+
+const entranceCaveOptions = computed(() => {
+  return includeSelectedCave(curatedCaves.value, trip.entrance_cave_id)
+})
+
+const exitCaveOptions = computed(() => {
+  const filtered = curatedCaves.value.filter(cave => cave.system.id === cave_system_id.value && cave.id !== trip.entrance_cave_id)
+  return includeSelectedCave(filtered, trip.exit_cave_id)
+})
+
+const formatCaveSubtitle = (cave) => {
+  const region = cave?.location_name || 'Unknown location'
+  const country = cave?.location_country || ''
+  return country ? `${region}, ${country}` : region
+}
+
+const toggleAllCaveChoices = () => {
+  showAllCaveChoices.value = !showAllCaveChoices.value
+}
+
 const system_entrances_count = computed(() => {
   if (!cave_system_id.value) return 0
-  return caves.value.filter((cave => cave.system.id === cave_system_id.value)).length
+  return caves.value.filter((cave => cave.system?.id === cave_system_id.value)).length
 })
 
 watch(() => trip.entrance_cave_id, (cave_id) => {
   if (!cave_id) return
   if (throughTrip.value) { // Currently set as through trip
     const currentSystem = caves.value.find(cave => cave.id === trip.entrance_cave_id)
-    const multipleEntrances = caves.value.filter((cave => cave.system.id == currentSystem.id))
-    throughTrip.value = !!multipleEntrances
+    const systemId = currentSystem?.system?.id
+    const multipleEntrances = systemId != null
+      ? caves.value.filter(cave => cave.system?.id === systemId)
+      : []
+    throughTrip.value = multipleEntrances.length > 1
   }
 })
 

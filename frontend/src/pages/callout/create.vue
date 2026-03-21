@@ -68,15 +68,22 @@
                     <div class="pa-4">
                       <p class="text-body-1 mb-4">Where are you going and where are you parking?</p>
 
-                      <v-autocomplete v-model="form.cave_id" label="Cave Entrance" :items="caves"
+                      <v-autocomplete v-model="form.cave_id" v-model:search="caveSearchInput" label="Cave Entrance" :items="entranceCaveOptions"
                                       item-title="name" item-value="id" variant="outlined"
                                       placeholder="Search for a cave..."
                                       autocomplete="off"
                                       :error-messages="errorMessages('cave_id')"
                                       name="cave_search_no_autofill">
                         <template #item="{ props, item }">
-                          <v-list-item v-bind="props" :subtitle="item.raw.location_name"
-                                       :title="item.raw.name" />
+                          <v-list-item v-bind="props" :subtitle="formatCaveSubtitle(item.raw)" :title="item.raw.name" />
+                        </template>
+                        <template #append-item>
+                          <v-list-item
+                            v-if="showAllCaveChoices || caveSearchInput?.trim()"
+                            :title="showAllCaveChoices ? 'Back to curated list' : 'Search all caves...'"
+                            :subtitle="showAllCaveChoices ? 'Show caves >= 250m by default' : 'Include shorter/less-curated caves in results'"
+                            @click.stop="toggleAllCaveChoices"
+                          />
                         </template>
                       </v-autocomplete>
 
@@ -86,11 +93,23 @@
 
                       <v-expand-transition>
                         <div v-if="isThroughTrip">
-                          <v-autocomplete v-model="form.exit_cave_id" label="Exit Cave"
+                          <v-autocomplete v-model="form.exit_cave_id" v-model:search="exitCaveSearchInput" label="Exit Cave"
                                           :items="systemEntrances" item-title="name" item-value="id"
                                           variant="outlined" class="mt-2"
                                           autocomplete="off"
-                                          name="exit_cave_search_no_autofill" />
+                                          name="exit_cave_search_no_autofill">
+                            <template #item="{ props, item }">
+                              <v-list-item v-bind="props" :subtitle="formatCaveSubtitle(item.raw)" :title="item.raw.name" />
+                            </template>
+                            <template #append-item>
+                              <v-list-item
+                                v-if="showAllCaveChoices || exitCaveSearchInput?.trim()"
+                                :title="showAllCaveChoices ? 'Back to curated list' : 'Search all caves...'"
+                                :subtitle="showAllCaveChoices ? 'Show caves >= 250m by default' : 'Include shorter/less-curated caves in results'"
+                                @click.stop="toggleAllCaveChoices"
+                              />
+                            </template>
+                          </v-autocomplete>
                         </div>
                       </v-expand-transition>
 
@@ -437,6 +456,10 @@ export default {
       onCallOfficer: null,
       officerError: false,
       userSearchInput: '',
+      caveSearchInput: '',
+      exitCaveSearchInput: '',
+      showAllCaveChoices: false,
+      minSystemLength: 250,
       searchTimeout: null,
       isSearching: false,
       showLeaveDialog: false,
@@ -452,13 +475,22 @@ export default {
     selectedCave() {
       return this.caves.find(c => c.id === this.form.cave_id)
     },
+    curatedCaves() {
+      if (this.showAllCaveChoices) return this.caves
+      return this.caves.filter(c => Number(c?.system?.length || 0) >= this.minSystemLength)
+    },
+    entranceCaveOptions() {
+      return this.includeSelectedCave(this.curatedCaves, this.form.cave_id)
+    },
     systemEntrances() {
       if (!this.selectedCave) return []
       if (!this.selectedCave.system) return []
-      return this.caves.filter(c => c.system && c.system.id === this.selectedCave.system.id)
+      const inSystem = this.curatedCaves.filter(c => c.system && c.system.id === this.selectedCave.system.id)
+      return this.includeSelectedCave(inSystem, this.form.exit_cave_id)
     },
     systemEntrancesCount() {
-      return this.systemEntrances.length
+      if (!this.selectedCave?.system) return 0
+      return this.caves.filter(c => c.system && c.system.id === this.selectedCave.system.id).length
     },
     phoneError() {
       // The current user *must* have a phone number
@@ -606,6 +638,20 @@ export default {
     getCaveName(id) {
       const c = this.caves.find(cave => cave.id === id)
       return c ? c.name : 'Unknown'
+    },
+    includeSelectedCave(items, selectedId) {
+      if (!selectedId) return items
+      if (items.some(cave => cave.id === selectedId)) return items
+      const selected = this.caves.find(cave => cave.id === selectedId)
+      return selected ? [selected, ...items] : items
+    },
+    formatCaveSubtitle(cave) {
+      const region = cave?.location_name || 'Unknown location'
+      const country = cave?.location_country || ''
+      return country ? `${region}, ${country}` : region
+    },
+    toggleAllCaveChoices() {
+      this.showAllCaveChoices = !this.showAllCaveChoices
     },
     async fetchCaves() {
       try {

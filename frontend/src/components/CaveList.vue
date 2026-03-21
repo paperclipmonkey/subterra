@@ -35,6 +35,15 @@
           </template>
         </v-text-field>
       </div>
+      <div class="d-flex justify-end mb-2 px-1">
+        <v-checkbox
+          v-model="showAllCaves"
+          label="View all caves"
+          hide-details
+          density="compact"
+          color="primary"
+        />
+      </div>
 
       <!-- Compact Horizontal Filter Bar -->
       <div class="filter-bar-container px-1 mt-n1">
@@ -124,6 +133,8 @@ const router = useRouter()
 // Initialize search and tags from query parameter
 const search = ref(route.query.search || '')
 const catchmentId = ref(route.query.catchment || null)
+const showAllCaves = ref(route.query.view_all === '1')
+const minSystemLength = 250
 
 const showFilterByTagModal = ref(false)
 const targetCategory = ref(null)
@@ -142,7 +153,7 @@ const fetchTags = async () => {
 
 const applyFilter = (tags) => {
   cachedTags.value = tags
-  caveStore.applyFilters(tags, search.value, catchmentId.value)
+  caveStore.applyFilters(tags, search.value, catchmentId.value, showAllCaves.value, minSystemLength)
   // Update URL with tags as a comma-separated string
   router.replace({ query: { ...route.query, tags: tags.length ? tags.join(',') : undefined } })
   showFilterByTagModal.value = false
@@ -175,9 +186,14 @@ const clearAllFilters = () => {
 }
 
 watch(search, (newSearch) => {
-  caveStore.applyFilters(cachedTags.value, newSearch, catchmentId.value)
+  caveStore.applyFilters(cachedTags.value, newSearch, catchmentId.value, showAllCaves.value, minSystemLength)
   // Update URL with current search
   router.replace({ query: { ...route.query, search: newSearch || undefined } })
+})
+
+watch(showAllCaves, (newValue) => {
+  caveStore.applyFilters(cachedTags.value, search.value, catchmentId.value, newValue, minSystemLength)
+  router.replace({ query: { ...route.query, view_all: newValue ? '1' : undefined } })
 })
 
 const tab = ref(route.query.view || 'list')
@@ -190,13 +206,14 @@ watch(tab, (newTab) => {
 // Watch for route query changes for catchment (deep linking support)
 watch(() => route.query.catchment, (newCatchment) => {
   catchmentId.value = newCatchment
-  caveStore.applyFilters(cachedTags.value, search.value, newCatchment)
+  caveStore.applyFilters(cachedTags.value, search.value, newCatchment, showAllCaves.value, minSystemLength)
 })
 
 onMounted(async () => {
   // Ensure search and view parameters are applied on reload
   search.value = route.query.search || ''
   tab.value = route.query.view || 'list'
+  showAllCaves.value = route.query.view_all === '1'
   const tags = route.query.tags ? route.query.tags.split(',') : []
   catchmentId.value = route.query.catchment || null
 
@@ -207,7 +224,7 @@ onMounted(async () => {
   ])
 
   // Apply filters after list is loaded
-  caveStore.applyFilters(tags, search.value, catchmentId.value)
+  caveStore.applyFilters(tags, search.value, catchmentId.value, showAllCaves.value, minSystemLength)
 })
 </script>
 
