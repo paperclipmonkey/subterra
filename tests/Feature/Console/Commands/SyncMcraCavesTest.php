@@ -22,57 +22,124 @@ class SyncMcraCavesTest extends TestCase
         Tag::firstOrCreate(['tag' => 'Mendip', 'category' => 'region'], ['type' => 'cave']);
     }
 
-    private function fakeXmlFeed(): void
+    /**
+     * Browse table rows: Name (linked), Location, Tags, Length, Depth, Altitude, System, Bibliography.
+     * Detail pages are faked per sitedetails.php?id=….
+     */
+    private function fakeMcraHttp(string $browseHtml): void
     {
-        Http::fake([
-            '*' => Http::response($this->getMockXml(), 200),
-        ]);
+        Http::fake(function (\Illuminate\Http\Client\Request $request) use ($browseHtml) {
+            $url = $request->url();
+            if (str_contains($url, 'browse.php')) {
+                return Http::response($browseHtml, 200);
+            }
+            if (str_contains($url, 'sitedetails.php') && preg_match('/[?&]id=(\d+)/', $url, $m)) {
+                return Http::response($this->detailHtmlForId((int) $m[1]), 200);
+            }
+
+            return Http::response('not found', 404);
+        });
     }
 
-    private function getMockXml(): string
+    private function mcraBrowseFixtureHtml(): string
     {
-        return <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<Registry>
-    <Region name="Mendip">
-        <Entry id="1" length="300" dep="50" lat="51.27000" lng="-2.70000" alt="210">
-            <Name>MCRA Test Cave</Name>
-            <System>Main System</System>
-            <Desc>A test cave description.</Desc>
-            <Access>Open access via club</Access>
-            <Reference>Mendip Guide 2026</Reference>
-        </Entry>
-        <Entry id="2" length="20" dep="5" lat="51.25000" lng="-2.60000">
-            <Name>Tiny Cave</Name>
-            <Desc>Small cave for testing min length.</Desc>
-            <Access>Open</Access>
-        </Entry>
-        <Entry id="3" length="700" dep="120" lat="51.26000" lng="-2.65000">
-            <Name>No Access Cave</Name>
-            <Desc>Should be skipped by access phrase.</Desc>
-            <Access>No known access at present</Access>
-        </Entry>
-        <Entry id="4" length="300" dep="50" lat="51.28000" lng="-2.68000">
-            <Name>Lost Tagged Cave</Name>
-            <Desc>Listed but cave is lost.</Desc>
-            <Tags>Lost, Cave</Tags>
-        </Entry>
-        <Entry id="5" length="1" dep="5" lat="51.29000" lng="-2.69000">
-            <Name>One Metre Cave</Name>
-            <Desc>Tiny cave record.</Desc>
-        </Entry>
-        <Entry id="6" dep="5" lat="51.29500" lng="-2.69500">
-            <Name>Unknown Length Cave</Name>
-            <Desc>Length unknown.</Desc>
-        </Entry>
-    </Region>
-</Registry>
-XML;
+        $base = 'https://www.mcra.org.uk/registry/';
+
+        return <<<HTML
+<html>
+<body>
+  <div>Page 1 of 1</div>
+  <table>
+    <tr><th>Name</th><th>Location</th><th>Tags</th><th>Length</th><th>Depth</th><th>Altitude</th><th>System</th><th>Ref</th></tr>
+    <tr>
+      <td><a href="{$base}sitedetails.php?id=101">MCRA Test Cave</a></td>
+      <td>Mendip</td>
+      <td>Cave</td>
+      <td>300</td>
+      <td>50</td>
+      <td>210</td>
+      <td>Main System</td>
+      <td>Mendip Guide 2026</td>
+    </tr>
+    <tr>
+      <td><a href="{$base}sitedetails.php?id=102">Tiny Cave</a></td>
+      <td>Mendip</td>
+      <td>Cave</td>
+      <td>20</td>
+      <td>5</td>
+      <td>100</td>
+      <td>Tiny System</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="{$base}sitedetails.php?id=103">No Access Cave</a></td>
+      <td>Mendip</td>
+      <td>Cave</td>
+      <td>700</td>
+      <td>120</td>
+      <td>100</td>
+      <td>No Access System</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="{$base}sitedetails.php?id=104">Lost Tagged Cave</a></td>
+      <td>Mendip</td>
+      <td>Lost, Cave</td>
+      <td>300</td>
+      <td>50</td>
+      <td>100</td>
+      <td>Lost System</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="{$base}sitedetails.php?id=105">One Metre Cave</a></td>
+      <td>Mendip</td>
+      <td>Cave</td>
+      <td>1</td>
+      <td>5</td>
+      <td>100</td>
+      <td>One System</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="{$base}sitedetails.php?id=106">Unknown Length Cave</a></td>
+      <td>Mendip</td>
+      <td>Cave</td>
+      <td></td>
+      <td>5</td>
+      <td>100</td>
+      <td>Unknown System</td>
+      <td></td>
+    </tr>
+  </table>
+</body>
+</html>
+HTML;
+    }
+
+    private function detailHtmlForId(int $id): string
+    {
+        return match ($id) {
+            101 => <<<'HTML'
+<html><body>
+<p>Access information: Open access via club</p>
+<p>Registry: | entry
+A test cave description with plenty of text for the registry.</p>
+<p>WGS84: 51.27000, -2.70000</p>
+</body></html>
+HTML,
+            103 => <<<'HTML'
+<html><body><p>Access: No known access at present for this site.</p></body></html>
+HTML,
+            default => <<<'HTML'
+<html><body><p>Access: Open</p></body></html>
+HTML,
+        };
     }
 
     public function test_it_imports_new_caves_and_systems(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $this->artisan('sync:mcra-caves')
             ->assertExitCode(0);
@@ -93,7 +160,7 @@ XML;
 
     public function test_it_creates_suggested_edit_for_existing_cave_with_differences(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $cave = Cave::factory()->create([
             'name' => 'MCRA Test Cave',
@@ -122,7 +189,7 @@ XML;
 
     public function test_it_skips_no_known_access_entries(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $this->artisan('sync:mcra-caves --skip-unknown-access')
             ->assertExitCode(0);
@@ -134,7 +201,7 @@ XML;
 
     public function test_it_imports_no_known_access_entries_by_default(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $this->artisan('sync:mcra-caves')
             ->assertExitCode(0);
@@ -146,7 +213,7 @@ XML;
 
     public function test_it_skips_lost_tagged_entries(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $this->artisan('sync:mcra-caves')
             ->assertExitCode(0);
@@ -158,7 +225,7 @@ XML;
 
     public function test_it_skips_unknown_or_one_metre_length_entries(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $this->artisan('sync:mcra-caves')
             ->assertExitCode(0);
@@ -173,7 +240,7 @@ XML;
 
     public function test_blocklist_and_whitelist_are_applied(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $this->artisan('sync:mcra-caves --min-length=250 --blocklist="MCRA Test Cave" --whitelist="Tiny Cave"')
             ->assertExitCode(0);
@@ -189,7 +256,7 @@ XML;
 
     public function test_dry_run_does_not_persist(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $this->artisan('sync:mcra-caves --dry-run')
             ->assertExitCode(0);
@@ -200,7 +267,7 @@ XML;
 
     public function test_existing_system_references_create_suggested_edit(): void
     {
-        $this->fakeXmlFeed();
+        $this->fakeMcraHttp($this->mcraBrowseFixtureHtml());
 
         $system = CaveSystem::create([
             'name' => 'Main System',
@@ -234,8 +301,36 @@ XML;
 
     public function test_it_parses_browse_html_feed(): void
     {
+        Http::fake(function (\Illuminate\Http\Client\Request $request) {
+            $url = $request->url();
+            if (str_contains($url, 'browse.php')) {
+                return Http::response($this->getBrowseHtml(), 200);
+            }
+            if (str_contains($url, 'sitedetails.php')) {
+                return Http::response('<html><body><p>Access: Open</p></body></html>', 200);
+            }
+
+            return Http::response('not found', 404);
+        });
+
+        $this->artisan('sync:mcra-caves --dry-run')
+            ->assertExitCode(0);
+    }
+
+    public function test_real_run_fails_when_browse_feed_parses_zero_rows(): void
+    {
         Http::fake([
-            '*' => Http::response($this->getBrowseHtml(), 200),
+            '*' => Http::response('<html><body><div>Page 1 of 1</div><p>No table rows</p></body></html>', 200),
+        ]);
+
+        $this->artisan('sync:mcra-caves')
+            ->assertExitCode(1);
+    }
+
+    public function test_dry_run_succeeds_when_browse_feed_parses_zero_rows(): void
+    {
+        Http::fake([
+            '*' => Http::response('<html><body><div>Page 1 of 1</div><p>No table rows</p></body></html>', 200),
         ]);
 
         $this->artisan('sync:mcra-caves --dry-run')

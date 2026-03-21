@@ -66,7 +66,8 @@ class SyncMcraCaves extends Command
         if (empty($entries)) {
             $this->warn('No cave records found in browse feed.');
 
-            return 0;
+            // Fail real imports so scheduled jobs surface feed/parser regressions; dry-run stays 0.
+            return $dryRun ? 0 : 1;
         }
 
         $this->info('Found '.count($entries).' entries in feed.');
@@ -875,7 +876,7 @@ class SyncMcraCaves extends Command
         $maxPages = min(max($totalPages, 1), 250);
         $readCount = 0;
 
-        for ($pageOffset = 0; $pageOffset < $maxPages; $pageOffset++) {
+        for ($pageOffset = 0; $pageOffset < $maxPages; ++$pageOffset) {
             $pageIndex = $basePage + $pageOffset;
             $html = $pageOffset === 0 ? $initialHtml : $this->downloadBrowsePage($feedUrl, $pageIndex);
             if (empty($html)) {
@@ -941,7 +942,7 @@ class SyncMcraCaves extends Command
 
     private function extractBrowseRows(string $html, string $feedUrl): array
     {
-        $dom = new \DOMDocument;
+        $dom = new \DOMDocument();
         @$dom->loadHTML($html);
         $xpath = new \DOMXPath($dom);
         $rows = $xpath->query('//tr[td]');
@@ -969,6 +970,10 @@ class SyncMcraCaves extends Command
 
             $tagsText = trim($cells[2]->textContent ?? '');
 
+            $systemFromRow = (count($cells) >= 7) ? trim($cells[6]->textContent ?? '') : '';
+            $systemName = $systemFromRow !== '' ? $systemFromRow : $name;
+            $biblFromRow = (count($cells) >= 8) ? trim($cells[7]->textContent ?? '') : '';
+
             $detailUrl = '';
             $link = (new \DOMXPath($dom))->query('.//a[@href]', $cells[0])->item(0);
             if ($link instanceof \DOMElement) {
@@ -980,7 +985,8 @@ class SyncMcraCaves extends Command
             $out[] = [
                 'id' => $this->extractIdFromUrl($detailUrl),
                 'name' => $name,
-                'system' => $name,
+                'system' => $systemName,
+                'bibl' => $biblFromRow,
                 'length' => $this->extractFirstNumber($cells[3]->textContent ?? ''),
                 'depth' => $this->extractFirstNumber($cells[4]->textContent ?? ''),
                 'altitude' => $this->extractFirstNumber($cells[5]->textContent ?? ''),
@@ -1029,6 +1035,7 @@ class SyncMcraCaves extends Command
         $tags = htmlspecialchars((string) ($row['tags'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
         $region = htmlspecialchars((string) ($row['region'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
         $reference = htmlspecialchars((string) ($row['reference'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $bibl = htmlspecialchars((string) ($row['bibl'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
         $id = (string) ($row['id'] ?? '');
         $length = (string) ((float) ($row['length'] ?? 0));
@@ -1036,6 +1043,8 @@ class SyncMcraCaves extends Command
         $alt = (string) ((float) ($row['altitude'] ?? 0));
         $lat = (string) ((float) ($row['lat'] ?? 0));
         $lng = (string) ((float) ($row['lng'] ?? 0));
+
+        $biblXml = $bibl !== '' ? "  <Bibl>{$bibl}</Bibl>\n" : '';
 
         return <<<XML
 <Entry id="{$id}" length="{$length}" dep="{$depth}" alt="{$alt}" lat="{$lat}" lng="{$lng}">
@@ -1046,7 +1055,7 @@ class SyncMcraCaves extends Command
   <Access>{$access}</Access>
   <Tags>{$tags}</Tags>
   <Reference>{$reference}</Reference>
-</Entry>
+{$biblXml}</Entry>
 XML;
     }
 
