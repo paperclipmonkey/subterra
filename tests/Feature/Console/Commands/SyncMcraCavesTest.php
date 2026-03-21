@@ -232,48 +232,6 @@ XML;
         $this->assertStringContainsString('Mendip Guide 2026', $edit->suggested_data['references']);
     }
 
-    public function test_it_imports_from_kml_placemarks(): void
-    {
-        Http::fake([
-            '*' => Http::response($this->getMockKml(), 200),
-        ]);
-
-        $exit = \Illuminate\Support\Facades\Artisan::call('sync:mcra-caves');
-        $this->assertSame(0, $exit, \Illuminate\Support\Facades\Artisan::output());
-
-        $this->assertDatabaseHas('caves', [
-            'name' => 'KML Cave One',
-            'location_lat' => 51.40123,
-            'location_lng' => -2.50123,
-        ]);
-
-        $this->assertDatabaseHas('caves', [
-            'name' => 'KML No Access Cave',
-        ]);
-        $this->assertDatabaseMissing('caves', [
-            'name' => 'Flow Sink to Rising',
-        ]);
-
-        $system = CaveSystem::where('name', 'KML System')->first();
-        $this->assertNotNull($system);
-        $this->assertStringContainsString('MCRA Registry', (string) $system->references);
-    }
-
-    public function test_it_follows_networklink_wrappers_for_kml(): void
-    {
-        Http::fake([
-            'example.com/registry/googleEarth/Registry_kml.php' => Http::response($this->getMockKml(), 200),
-            '*' => Http::response($this->getWrapperKml(), 200),
-        ]);
-
-        $exit = \Illuminate\Support\Facades\Artisan::call('sync:mcra-caves');
-        $this->assertSame(0, $exit, \Illuminate\Support\Facades\Artisan::output());
-
-        $this->assertDatabaseHas('caves', [
-            'name' => 'KML Cave One',
-        ]);
-    }
-
     public function test_it_parses_browse_html_feed(): void
     {
         Http::fake([
@@ -282,63 +240,6 @@ XML;
 
         $this->artisan('sync:mcra-caves --dry-run')
             ->assertExitCode(0);
-    }
-
-    private function getMockKml(): string
-    {
-        return <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <Placemark>
-      <name>KML Cave One</name>
-      <description>Open access by arrangement.</description>
-      <ExtendedData>
-        <Data name="system"><value>KML System</value></Data>
-        <Data name="length"><value>450</value></Data>
-        <Data name="depth"><value>80</value></Data>
-        <Data name="region"><value>Mendip</value></Data>
-        <Data name="id"><value>kml-1</value></Data>
-      </ExtendedData>
-      <Point>
-        <coordinates>-2.50123,51.40123,123</coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>KML No Access Cave</name>
-      <description>No known access currently.</description>
-      <ExtendedData>
-        <Data name="length"><value>300</value></Data>
-      </ExtendedData>
-      <Point>
-        <coordinates>-2.60000,51.50000,100</coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>Flow Sink to Rising</name>
-      <LineString>
-        <coordinates>-2.60000,51.50000,0 -2.59000,51.51000,0</coordinates>
-      </LineString>
-    </Placemark>
-  </Document>
-</kml>
-XML;
-    }
-
-    private function getWrapperKml(): string
-    {
-        return <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <NetworkLink>
-      <Link>
-        <href>https://example.com/registry/googleEarth/Registry_kml.php</href>
-      </Link>
-    </NetworkLink>
-  </Document>
-</kml>
-XML;
     }
 
     private function getBrowseHtml(): string

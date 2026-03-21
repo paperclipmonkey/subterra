@@ -108,7 +108,7 @@ class SyncMcraCaves extends Command
                 }
                 $noKnownAccess = $this->hasNoKnownAccess($accessInfo);
 
-                if ($this->isLikelyConnectionPlacemark($name, $length, $depth, $accessInfo, $hasPointGeometry)) {
+                if ($this->isLikelyConnectionRecord($name, $length, $depth, $accessInfo, $hasPointGeometry)) {
                     ++$skippedCount;
                     continue;
                 }
@@ -702,7 +702,7 @@ class SyncMcraCaves extends Command
         return !empty($pointNodes);
     }
 
-    private function isLikelyConnectionPlacemark(string $name, float $length, float $depth, string $accessInfo, bool $hasPointGeometry): bool
+    private function isLikelyConnectionRecord(string $name, float $length, float $depth, string $accessInfo, bool $hasPointGeometry): bool
     {
         $looksLikeConnectionName = preg_match('/\s+to\s+/i', trim($name)) === 1;
         $hasNoMetrics = $length <= 0 && $depth <= 0;
