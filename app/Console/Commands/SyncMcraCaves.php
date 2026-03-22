@@ -24,7 +24,7 @@ class SyncMcraCaves extends Command
                             {--dry-run : Parse the file without inserting data} 
                             {--whitelist= : Comma-separated list of names to always import} 
                             {--blocklist= : Comma-separated list of names to always skip}
-                            {--min-length=0 : Minimum length in meters to import}
+                            {--min-length=0 : Minimum surveyed length in metres (250 matches app curated list)}
                             {--skip-unknown-access : Skip entries where access is explicitly unknown}';
 
     /**
@@ -32,7 +32,7 @@ class SyncMcraCaves extends Command
      *
      * @var string
      */
-    protected $description = 'Sync caves from MCRA registry';
+    protected $description = 'Sync caves from the MCRA registry. Default min-length is 0 (broader import than sync:ccc-caves, which defaults to 250m). Use --min-length=250 to match the curated cave list threshold in the app UI.';
 
     /**
      * Execute the console command.
@@ -44,6 +44,8 @@ class SyncMcraCaves extends Command
         $skipUnknownAccess = (bool) $this->option('skip-unknown-access');
         $whitelistNames = $this->getWhitelist();
         $blocklistNames = $this->getBlocklist();
+        $whitelistLookup = array_flip(array_map('strtolower', $whitelistNames));
+        $blocklistLookup = array_flip(array_map('strtolower', $blocklistNames));
 
         $this->info('Fetching MCRA data...');
         $url = self::MCRA_FEED_URL;
@@ -72,7 +74,9 @@ class SyncMcraCaves extends Command
 
         $this->info('Found '.count($entries).' entries in feed.');
 
-        DB::beginTransaction();
+        if (!$dryRun) {
+            DB::beginTransaction();
+        }
 
         $importedCount = 0;
         $skippedCount = 0;
@@ -115,8 +119,9 @@ class SyncMcraCaves extends Command
                 }
 
                 // Apply Filters
-                $isWhitelisted = in_array(strtolower($name), array_map('strtolower', $whitelistNames));
-                $isBlocklisted = in_array(strtolower($name), array_map('strtolower', $blocklistNames));
+                $nameLower = strtolower($name);
+                $isWhitelisted = isset($whitelistLookup[$nameLower]);
+                $isBlocklisted = isset($blocklistLookup[$nameLower]);
                 $isLongEnough = $length >= $minLength;
 
                 if ($isBlocklisted) {
@@ -486,11 +491,12 @@ class SyncMcraCaves extends Command
                 $this->line("  <fg=yellow>✏ Suggested edits:</> {$suggestedEditCount}");
                 $this->line("  <fg=blue>⊘ No changes:</> {$noOpCount}");
             } else {
-                DB::rollBack();
                 $this->info("Dry run completed: {$importedCount} would be imported/updated, {$skippedCount} skipped.");
             }
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             $this->error('Error during import: '.$e->getMessage());
             $this->error($e->getTraceAsString());
 
@@ -584,7 +590,7 @@ class SyncMcraCaves extends Command
                 // For MCRA Registry links, check if the ID is already referenced
                 // regardless of link format (markdown, angle-bracket, plain URL)
                 if (preg_match('/MCRA Registry/i', $part) && preg_match('/[?&]ID=(\d+)/i', $part, $idMatch)) {
-                    if (str_contains($existingText, 'ID='.$idMatch[1])) {
+                    if (stripos($existingText, 'id='.$idMatch[1]) !== false) {
                         continue;
                     }
                 }
@@ -1070,11 +1076,15 @@ XML;
         }
 
         try {
-            $response = Http::get($detailUrl);
+            $response = Http::timeout(15)->retry(2, 250)->get($detailUrl);
             if (!$response->successful()) {
+                $this->detailPageCache[$detailUrl] = [];
+
                 return [];
             }
         } catch (\Throwable $e) {
+            $this->detailPageCache[$detailUrl] = [];
+
             return [];
         }
 

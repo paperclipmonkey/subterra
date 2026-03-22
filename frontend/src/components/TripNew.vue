@@ -758,7 +758,7 @@ const curatedCaves = computed(() => {
 const includeSelectedCave = (items, selectedId) => {
   if (!selectedId) return items
   if (items.some(cave => cave.id === selectedId)) return items
-  const selected = caves.value.find(cave => cave.id === selectedId)
+  const selected = caves.value.fin  d(cave => cave.id === selectedId)
   return selected ? [selected, ...items] : items
 }
 
