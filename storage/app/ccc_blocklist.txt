@@ -5,8 +5,6 @@
 Barland Quarry Cave
 # permanently blocked by landowner in 2011
 Tir-Duweunydd South Sink
-# do not officially give permission to visit the site
-Llygad Llwchwr
 # not open for inspection
 Schwyll Risings
 # The Cave is no longer accessible due to quarrying.
