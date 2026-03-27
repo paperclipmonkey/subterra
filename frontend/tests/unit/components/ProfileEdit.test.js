@@ -96,7 +96,7 @@ describe('ProfileEdit.vue', () => {
             const nameRules = wrapper.vm.nameRules
 
             const results = nameRules.map(rule => rule('Jane'))
-            expect(results).toContain('Please enter your full name (first and last name)')
+            expect(results).toContain('Please enter both your first and last name')
         })
 
         it('accepts a name with first and last name', () => {
@@ -120,7 +120,7 @@ describe('ProfileEdit.vue', () => {
             const nameRules = wrapper.vm.nameRules
 
             const results = nameRules.map(rule => rule('A B'))
-            expect(results).toContain('Name must be at least 4 characters')
+            expect(results).toContain('Each part of your name must be at least 2 characters')
         })
 
         it('rejects a name that exceeds 100 characters', () => {
