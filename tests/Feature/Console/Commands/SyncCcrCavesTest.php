@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
-class SyncCccCavesTest extends TestCase
+class SyncCcrCavesTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -54,7 +54,7 @@ XML;
 
     public function test_it_imports_new_caves_that_meet_criteria()
     {
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('caves', [
@@ -74,7 +74,7 @@ XML;
 
     public function test_it_respects_the_blocklist()
     {
-        $this->artisan('sync:ccc-caves --min-length=250 --blocklist="Blocked Cave"')
+        $this->artisan('sync:ccr-caves --min-length=250 --blocklist="Blocked Cave"')
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('caves', [
@@ -95,7 +95,7 @@ XML;
             'location_lng' => -3.0,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // Cave should not be directly updated with new description
@@ -135,7 +135,7 @@ XML;
             'status' => 'pending',
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         $this->assertDatabaseCount('suggested_edits', 1);
@@ -144,21 +144,21 @@ XML;
         $this->assertStringContainsString('A test cave description.', $edit->suggested_data['description']);
     }
 
-    public function test_it_skips_description_when_ccc_text_already_in_subterra_text()
+    public function test_it_skips_description_when_ccr_text_already_in_subterra_text()
     {
-        // Subterra has an expanded description that already contains the CCC text
+        // Subterra has an expanded description that already contains the CCR text
         $cave = Cave::factory()->create([
             'name' => 'Test Cave One',
-            'description' => "A test cave description.\n\nCCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1\n\nAdditional Subterra notes about the cave history and geology.",
+            'description' => "A test cave description.\n\nCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1\n\nAdditional Subterra notes about the cave history and geology.",
             'location_name' => 'South Wales',
             'location_country' => 'United Kingdom',
             'access_info' => 'Entry through Ogof Gam. See caving.wales for details',
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
-        // Description should NOT appear in suggested edits because CCC text
+        // Description should NOT appear in suggested edits because CCR text
         // is already contained within the longer Subterra text
         $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
         if ($edit) {
@@ -166,29 +166,29 @@ XML;
         }
     }
 
-    public function test_it_skips_description_when_ccc_link_has_different_formatting()
+    public function test_it_skips_description_when_ccr_link_has_different_formatting()
     {
-        // Subterra has the CCC link wrapped in angle brackets (from a previous import)
+        // Subterra has the CCR link wrapped in angle brackets (from a previous import)
         $cave = Cave::factory()->create([
             'name' => 'Test Cave One',
-            'description' => "Extra intro text. A test cave description.\n\nCCC Registry: <https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1> <br />",
+            'description' => "Extra intro text. A test cave description.\n\nCC Registry: <https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1> <br />",
             'location_name' => 'South Wales',
             'location_country' => 'United Kingdom',
             'access_info' => 'Entry through Ogof Gam. See caving.wales for details',
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // Description should NOT appear because the Desc text is found and
-        // the CCC registry ID is already referenced (even with different formatting)
+        // the CC registry ID is already referenced (even with different formatting)
         $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('description', $edit->suggested_data);
         }
     }
 
-    public function test_it_suggests_description_when_ccc_text_not_in_subterra_text()
+    public function test_it_suggests_description_when_ccr_text_not_in_subterra_text()
     {
         // Subterra has a completely different description
         $cave = Cave::factory()->create([
@@ -198,7 +198,7 @@ XML;
             'location_lng' => -3.0,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
@@ -210,13 +210,13 @@ XML;
     {
         $cave = Cave::factory()->create([
             'name' => 'Test Cave One',
-            'description' => "A test cave description.\n\nCCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1",
+            'description' => "A test cave description.\n\nCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1",
             'location_name' => 'South Wales',
             'location_country' => 'United Kingdom',
             'access_info' => 'Entry through Ogof Gam. See caving.wales for details. Contact the landowner for access.',
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
@@ -236,7 +236,7 @@ XML;
             'location_lng' => -3.0,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // The sync should find by name and create a suggested edit,
@@ -259,7 +259,7 @@ XML;
             'location_lng' => -3.0,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // Should match by slug and not create a duplicate with the import name
@@ -286,7 +286,7 @@ XML;
             'location_country' => 'United Kingdom',
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
@@ -312,12 +312,12 @@ XML;
 
     public function test_new_cave_system_gets_references_as_markdown_list()
     {
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         $system = CaveSystem::where('name', 'Test Cave One')->first();
         $this->assertNotNull($system);
-        $this->assertEquals("- [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005", $system->references);
+        $this->assertEquals("- [CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005", $system->references);
     }
 
     public function test_existing_system_references_create_suggested_edit_not_direct_update()
@@ -335,7 +335,7 @@ XML;
             'cave_system_id' => $system->id,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // References should NOT be directly modified
@@ -350,7 +350,7 @@ XML;
 
         $this->assertNotNull($edit);
         $this->assertArrayHasKey('references', $edit->suggested_data);
-        $this->assertStringContainsString('- [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)', $edit->suggested_data['references']);
+        $this->assertStringContainsString('- [CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)', $edit->suggested_data['references']);
         $this->assertStringContainsString('- Welsh Cave Guide, 1st Edition', $edit->suggested_data['references']);
         $this->assertStringContainsString('- My own reference', $edit->suggested_data['references']);
     }
@@ -362,7 +362,7 @@ XML;
             'slug' => 'test-cave-one',
             'length' => 0,
             'vertical_range' => 0,
-            'references' => "- [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005",
+            'references' => "- [CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005",
         ]);
 
         Cave::factory()->create([
@@ -370,7 +370,7 @@ XML;
             'cave_system_id' => $system->id,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // No suggested edit should be created — references already match
@@ -381,7 +381,7 @@ XML;
 
         // References should remain unchanged
         $system->refresh();
-        $this->assertEquals("- [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005", $system->references);
+        $this->assertEquals("- [CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005", $system->references);
     }
 
     public function test_existing_system_references_without_list_prefix_still_match()
@@ -392,7 +392,7 @@ XML;
             'slug' => 'test-cave-one',
             'length' => 0,
             'vertical_range' => 0,
-            'references' => "[CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\nWelsh Cave Guide, 1st Edition\nCaves of South Wales, 2005",
+            'references' => "[CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\nWelsh Cave Guide, 1st Edition\nCaves of South Wales, 2005",
         ]);
 
         Cave::factory()->create([
@@ -400,7 +400,7 @@ XML;
             'cave_system_id' => $system->id,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // Should not create a suggested edit since the references match after normalization
@@ -412,7 +412,7 @@ XML;
 
     public function test_duplicate_xml_bibl_entries_are_deduplicated()
     {
-        // XML has duplicate Bibl entries (CCC data can contain these)
+        // XML has duplicate Bibl entries (CCR data can contain these)
         Http::fake([
             'cambriancavingcouncil.org.uk/*' => Http::response(<<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -430,12 +430,12 @@ XML;
 XML, 200),
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         $system = CaveSystem::where('name', 'Test Cave One')->first();
-        // Should only have unique references (CCC link + 2 bibl entries)
-        $this->assertEquals("- [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005", $system->references);
+        // Should only have unique references (CCR link + 2 bibl entries)
+        $this->assertEquals("- [CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)\n- Welsh Cave Guide, 1st Edition\n- Caves of South Wales, 2005", $system->references);
     }
 
     public function test_existing_references_in_concatenated_line_are_not_added_again()
@@ -446,7 +446,7 @@ XML, 200),
             'slug' => 'test-cave-one',
             'length' => 0,
             'vertical_range' => 0,
-            'references' => 'Other Ref [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1) Welsh Cave Guide, 1st Edition Caves of South Wales, 2005',
+            'references' => 'Other Ref [CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1) Welsh Cave Guide, 1st Edition Caves of South Wales, 2005',
         ]);
 
         Cave::factory()->create([
@@ -454,7 +454,7 @@ XML, 200),
             'cave_system_id' => $system->id,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // Should not create a suggested edit because both refs already appear in the existing text
@@ -479,7 +479,7 @@ XML, 200),
             'cave_system_id' => $system->id,
         ]);
 
-        $this->artisan('sync:ccc-caves --min-length=250')
+        $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
         // References should NOT be directly modified
@@ -494,7 +494,7 @@ XML, 200),
 
         $this->assertNotNull($edit);
         $this->assertArrayHasKey('references', $edit->suggested_data);
-        $this->assertStringContainsString('- [CCC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)', $edit->suggested_data['references']);
+        $this->assertStringContainsString('- [CC Registry](https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1)', $edit->suggested_data['references']);
         $this->assertStringContainsString('- Welsh Cave Guide, 1st Edition', $edit->suggested_data['references']);
     }
 }
