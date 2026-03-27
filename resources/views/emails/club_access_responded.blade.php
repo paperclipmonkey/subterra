@@ -21,7 +21,13 @@
         </div>
     @else
         <p>We’re sorry, but your request to join <strong>{{ $club->name }}</strong> has been <span style="color:red;"><strong>rejected</strong></span>.</p>
-        <p>If you believe this is a mistake, you may contact a club administrator for more information.</p>
+        @if (isset($reason) && $reason === 'incorrect_name')
+            <p><strong>Reason:</strong> Invalid Name</p>
+            <p>We require members to use their full legal first and last name to ensure everyone is correctly identified and tagged in emergency safety callouts and trip logs.</p>
+            <p>Please update your name in your profile and feel free to re-apply to join the club.</p>
+        @else
+            <p>If you believe this is a mistake, you may contact a club administrator for more information.</p>
+        @endif
     @endif
     <p>Thank you for your interest in Subterra clubs!</p>
     <p>Best regards,<br>The Subterra Team</p>

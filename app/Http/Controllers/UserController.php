@@ -241,7 +241,23 @@ class UserController extends Controller
     {
         $validatedData = $request->validate([
             'bio' => ['nullable', 'string'],
-            'name' => ['nullable', 'string', 'max:255'],
+            'name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $parts = array_filter(explode(' ', trim((string) $value)));
+                    if (count($parts) < 2) {
+                        return $fail('The name must contain at least a first and last name.');
+                    }
+                    foreach ($parts as $part) {
+                        if (mb_strlen($part, 'UTF-8') < 2) {
+                            return $fail('Each part of the name must be at least 2 characters.');
+                        }
+                    }
+                },
+            ],
             'phone' => ['nullable', 'string', 'regex:/^(07[0-9]{9}|\+44[0-9]{10})$/', 'unique:users,phone,'.$user->id],
             'email_trophies' => ['nullable', 'boolean'],
             'email_tagged' => ['nullable', 'boolean'],

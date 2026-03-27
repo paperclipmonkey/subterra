@@ -204,8 +204,14 @@ const nameForm = ref(null)
 
 const nameRules = [
   v => !!v || 'Name is required',
-  v => (v && v.trim().includes(' ')) || 'Please enter your full name (first and last name)',
-  v => (v && v.trim().length >= 4) || 'Name must be at least 4 characters',
+  v => {
+    const parts = (v || '').trim().split(/\s+/)
+    if (parts.length < 2) return 'Please enter both your first and last name'
+    for (const part of parts) {
+      if (part.length < 2) return 'Each part of your name must be at least 2 characters'
+    }
+    return true
+  },
   v => (v && v.length <= 100) || 'Name must be less than 100 characters',
 ]
 
@@ -318,7 +324,7 @@ const nextStep = async () => {
     try {
       const now = new Date().toISOString()
       await api.put('/api/users/me', { onboarding_completed_at: now })
-      await store.getUser() // Refresh user data to update clubs status in App.vue
+      await store.getUser(true) // Refresh user data to update clubs status in App.vue
       store.user.onboarding_completed_at = now
       visible.value = false
     } catch (error) {

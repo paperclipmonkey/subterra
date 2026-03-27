@@ -16,6 +16,7 @@ class SendClubAccessRespondedEmail implements ShouldQueue
         $club = $event->club;
         $user = $event->user;
         $status = $event->status;
-        Mail::to($user->email)->send(new \App\Mail\ClubAccessRespondedMail($club, $user, $status));
+        $reason = $event->reason;
+        Mail::to($user->email)->send(new \App\Mail\ClubAccessRespondedMail($club, $user, $status, $reason));
     }
 }

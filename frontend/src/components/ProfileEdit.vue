@@ -195,6 +195,22 @@
       </v-card>
     </v-dialog>
 
+    <!-- Confirm Legal Name Modal -->
+    <v-dialog v-model="showConfirmNameModal" persistent max-width="500px">
+      <v-card>
+        <v-card-title class="text-h5">Confirm Legal Name</v-card-title>
+        <v-card-text>
+          <p>Please confirm that <strong>{{ profile.name }}</strong> is your full legal name.</p>
+          <p class="text-caption text-grey mt-2">We require full legal names to ensure accurate tagging in safety callouts and emergency situations.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey" variant="text" @click="showConfirmNameModal = false">Cancel</v-btn>
+          <v-btn color="success" variant="text" @click="confirmAndSave">Confirm & Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
 
@@ -232,12 +248,20 @@ const showJoinClubModal = ref(false)
 const selectedClubToJoinId = ref(null)
 const showDeleteModal = ref(false)
 const deletingAccount = ref(false)
+const showConfirmNameModal = ref(false)
+const isNameConfirmed = ref(false)
 
 // Name validation rules
 const nameRules = [
   v => !!v || 'Name is required',
-  v => (v && v.trim().includes(' ')) || 'Please enter your full name (first and last name)',
-  v => (v && v.trim().length >= 4) || 'Name must be at least 4 characters',
+  v => {
+    const parts = (v || '').trim().split(/\s+/)
+    if (parts.length < 2) return 'Please enter both your first and last name'
+    for (const part of parts) {
+      if (part.length < 2) return 'Each part of your name must be at least 2 characters'
+    }
+    return true
+  },
   v => (v && v.length <= 100) || 'Name must be less than 100 characters',
 ]
 
@@ -253,6 +277,18 @@ const availableClubs = computed(() => {
 })
 
 const save = async () => {
+  // Validate name with rules first
+  const nameError = nameRules.map(r => r(profile.value.name)).find(r => r !== true)
+  if (nameError) {
+    toast.error(nameError)
+    return
+  }
+
+  if (!isNameConfirmed.value) {
+    showConfirmNameModal.value = true
+    return
+  }
+
   clearErrors()
   try {
     const response = await api.put(`/api/users/me`, {
@@ -283,6 +319,12 @@ const save = async () => {
       toast.error('Failed to save profile: ' + (error.response?.data?.message || error.message || 'Unknown error'))
     }
   }
+}
+
+const confirmAndSave = () => {
+  isNameConfirmed.value = true
+  showConfirmNameModal.value = false
+  save()
 }
 
 const fetchProfile = async () => {
@@ -362,7 +404,7 @@ const deleteAccount = async () => {
   try {
     await api.delete(`/api/users/me`)
     toast.success('Your account has been deleted successfully')
-        router.push({ path: '/' })
+    window.location.href = '/'
   } catch (error) {
     console.error('Error deleting account:', error)
   } finally {

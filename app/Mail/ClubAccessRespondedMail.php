@@ -17,12 +17,14 @@ class ClubAccessRespondedMail extends Mailable implements ShouldQueue
     public $club;
     public $user;
     public $status;
+    public $reason;
 
-    public function __construct(Club $club, User $user, string $status)
+    public function __construct(Club $club, User $user, string $status, ?string $reason = null)
     {
         $this->club = $club;
         $this->user = $user;
         $this->status = $status;
+        $this->reason = $reason;
     }
 
     public function build()
@@ -35,6 +37,7 @@ class ClubAccessRespondedMail extends Mailable implements ShouldQueue
                 'club' => $this->club,
                 'user' => $this->user,
                 'status' => $this->status,
+                'reason' => $this->reason,
             ]);
     }
 }
