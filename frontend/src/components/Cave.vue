@@ -125,7 +125,9 @@
               <div v-else-if="cave.access_info">
                 <v-alert :icon="mdiLockAlert" border="start" border-color="warning" elevation="0" color="warning"
                          variant="tonal" class="mb-4">
-                  <MarkdownRenderer :source="cave.access_info" />
+                  <div class="text-high-emphasis text-body-1">
+                    <MarkdownRenderer :source="cave.access_info" />
+                  </div>
                 </v-alert>
               </div>
               <p v-else class="text-grey text-body-2">No specific access information provided.</p>
