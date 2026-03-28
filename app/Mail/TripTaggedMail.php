@@ -27,12 +27,15 @@ class TripTaggedMail extends Mailable implements ShouldQueue
 
     public function build()
     {
+        $isNewUser = !$this->user->is_active || is_null($this->user->tos_agreed_at);
+
         return $this->subject('You have been tagged in a trip')
-            ->view('emails.trip_tagged')
+            ->markdown('emails.trip_tagged')
             ->with([
                 'trip' => $this->trip,
                 'user' => $this->user,
                 'creator' => $this->creator,
+                'isNewUser' => $isNewUser,
             ]);
     }
 }

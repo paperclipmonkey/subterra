@@ -14,12 +14,16 @@
 **Rescue Activation Time:** {{ $callout->callout_time->format('H:i, D jS M') }}
 
 ## Plan
+<x-mail::panel>
 {{ $callout->trip_plan }}
+</x-mail::panel>
 
 ## Participants
+<x-mail::panel>
 @foreach($callout->participants as $participant)
 - @if($participant->user_id) <a href="{{ config('app.url') . '/profile/' . $participant->user_id }}">{{ $participant->name }}</a> @else {{ $participant->name }} @endif @if($participant->user_id && $participant->user->clubs->count() > 0) <small class="text-gray-500">({{ $participant->user->clubs->reject(fn($c) => $c->pivot->status !== 'approved')->pluck('slug')->join(', ') }})</small> @endif @if($participant->phone || ($participant->user_id && $participant->user->phone)) <small>(Phone Provided)</small> @endif
 @endforeach
+</x-mail::panel>
 
 <br>
 ### Your Role

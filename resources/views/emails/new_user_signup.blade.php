@@ -1,23 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>New User Signup</title>
-</head>
-<body>
-    <h1>New User Requires Approval</h1>
+<x-mail::message>
+# New User Requires Approval
 
-    <p>A new user has signed up and requires your approval:</p>
+A new user has signed up and requires your approval:
 
-    <ul>
-        <li><strong>Name:</strong> {{ $userName }}</li>
-        <li><strong>Email:</strong> {{ $userEmail }}</li>
-    </ul>
+- **Name:** {{ $userName }}
+- **Email:** {{ $userEmail }}
 
-    <p>Please review their details and approve or deny their access:</p>
+Please review their details and approve or deny their access:
 
-    <p><a href="{{ $approvalUrl }}">Review User</a></p>
+<x-mail::button :url="$approvalUrl" color="primary">
+Review User
+</x-mail::button>
 
-    <p>Thanks,</p>
-    <p>{{ config('app.name') }}</p>
-</body>
-</html>
+Thanks,<br>
+{{ config('app.name') }}
+</x-mail::message>

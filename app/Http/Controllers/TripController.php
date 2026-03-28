@@ -226,9 +226,17 @@ class TripController extends Controller
             ->whereIn('id', $participants)
             ->pluck('id')
             ->toArray();
+        $syncResult = $trip->participants()->sync($participantIds);
 
-        $trip->participants()->sync($participantIds);
-
+        $newParticipantIds = $syncResult['attached'] ?? [];
+        if (!empty($newParticipantIds)) {
+            $creator = auth()->user() ?? $trip->creator;
+            // Fire TripParticipantTagged event for each new participant
+            $newParticipants = User::withoutGlobalScopes()->whereIn('id', $newParticipantIds)->get();
+            foreach ($newParticipants as $participant) {
+                event(new TripParticipantTagged($trip, $participant, $creator));
+            }
+        }
         $mediaMetadata = $request->input('media', []);
         $mediaFiles = $request->file('media', []);
         $this->storeMedia($mediaMetadata, $mediaFiles, $trip);

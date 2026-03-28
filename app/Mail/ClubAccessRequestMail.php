@@ -28,7 +28,7 @@ class ClubAccessRequestMail extends Mailable implements ShouldQueue
     public function build()
     {
         return $this->subject('New Club Access Request')
-            ->view('emails.club_access_request')
+            ->markdown('emails.club_access_request')
             ->with([
                 'club' => $this->club,
                 'user' => $this->user,
