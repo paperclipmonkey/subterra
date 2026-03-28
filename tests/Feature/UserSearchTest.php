@@ -28,7 +28,7 @@ class UserSearchTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_finds_public_users_by_name()
     {
-        $me = User::factory()->create();
+        $me = User::factory()->create(['name' => 'Tester User']);
         $target = User::factory()->create(['name' => 'Target User', 'visibility_addable' => 'public']);
         $other = User::factory()->create(['name' => 'Other Person', 'visibility_addable' => 'public']);
 
@@ -43,7 +43,7 @@ class UserSearchTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_hides_private_unconnected_users()
     {
-        $me = User::factory()->create();
+        $me = User::factory()->create(['name' => 'Tester User']);
         // Private user, not in club, not on trip
         $target = User::factory()->create(['name' => 'Secret User', 'visibility_addable' => 'private']);
 
@@ -57,7 +57,7 @@ class UserSearchTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_shows_private_user_if_exact_email_match()
     {
-        $me = User::factory()->create();
+        $me = User::factory()->create(['name' => 'Tester User']);
         $target = User::factory()->create(['name' => 'Secret User', 'email' => 'secret@example.com', 'visibility_addable' => 'private']);
 
         // Search by email
@@ -72,7 +72,7 @@ class UserSearchTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_prioritizes_trip_partners_over_club_over_public()
     {
-        $me = User::factory()->create();
+        $me = User::factory()->create(['name' => 'Tester User']);
 
         // 1. Public user (Low priority)
         $publicUser = User::factory()->create(['name' => 'Dave Public', 'visibility_addable' => 'public']);
@@ -113,7 +113,7 @@ class UserSearchTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_shows_club_members_regardless_of_visibility_setting()
     {
-        $me = User::factory()->create();
+        $me = User::factory()->create(['name' => 'Tester User']);
         $club = Club::factory()->create();
 
         // Create club member with PRIVATE visibility
