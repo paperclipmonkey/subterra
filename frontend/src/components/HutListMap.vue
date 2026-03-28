@@ -51,7 +51,7 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-
+import { mdiApple, mdiGoogleMaps } from '@mdi/js'
 
 
 // Removed store usage for huts, now coming from props

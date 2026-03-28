@@ -210,47 +210,45 @@
 
             <!-- Map Tab (Mobile only) -->
             <v-window-item v-if="smAndDown" value="map">
-              <v-card class="mb-4 rounded-lg" elevation="0" variant="flat">
+              <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
                   <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad">
                     <mgl-marker :coordinates="lnglat" color="#cc0000" />
-                    
-                    
                   </AppMap>
                 </template>
-                <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
+                <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
                   <div class="text-center pa-4">
                     <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
                     <div class="text-h6 text-grey-darken-1">Location Locked</div>
                     <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
                   </div>
                 </div>
-                <v-card-text>
-                  <div class="d-flex justify-space-between align-center">
-                    <div>
-                      <div class="text-caption text-grey">Coordinates</div>
-                      <div v-if="appStore.canSuggest && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
-                        cave.location_lng.toFixed(5) }}</div>
-                      <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
-                    </div>
-                    <div v-if="appStore.canSuggest" class="d-flex">
-                      <v-tooltip text="Copy Coordinates" location="top">
-                        <template #activator="{ props }">
-                          <v-btn :icon="mdiContentCopy" size="small" variant="text" v-bind="props"
-                                 @click="copyLatLng" />
-                        </template>
-                      </v-tooltip>
-                      <v-tooltip text="Open in Google Maps" location="top">
-                        <template #activator="{ props }">
-                          <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
-                                 :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
-                                 target="_blank" />
-                        </template>
-                      </v-tooltip>
-                    </div>
+              </div>
+              <v-card-text v-if="appStore.canSuggest">
+                <div class="d-flex justify-space-between align-center">
+                  <div>
+                    <div class="text-caption text-grey">Coordinates</div>
+                    <div v-if="cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                      cave.location_lng.toFixed(5) }}</div>
+                    <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
                   </div>
-                </v-card-text>
-              </v-card>
+                  <div class="d-flex">
+                    <v-tooltip text="Copy Coordinates" location="top">
+                      <template #activator="{ props }">
+                        <v-btn :icon="mdiContentCopy" size="small" variant="text" v-bind="props"
+                               @click="copyLatLng" />
+                      </template>
+                    </v-tooltip>
+                    <v-tooltip text="Open in Google Maps" location="top">
+                      <template #activator="{ props }">
+                        <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
+                               :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
+                               target="_blank" />
+                      </template>
+                    </v-tooltip>
+                  </div>
+                </div>
+              </v-card-text>
             </v-window-item>
 
             <!-- System Tab -->
@@ -809,5 +807,9 @@ const onMapLoad = (event) => {
 
 .file-item:last-child {
   border-bottom: none;
+}
+.cave-map-mobile {
+  margin-left: -16px;
+  margin-right: -16px;
 }
 </style>

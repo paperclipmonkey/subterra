@@ -1,21 +1,23 @@
 <template>
-  <mgl-map
-    :map-style="modelValue"
-    :center="center"
-    :zoom="zoom"
-    :max-zoom="maxZoom"
-    :height="height"
-    @map:load="onMapLoad"
-  >
-    <slot />
-    <mgl-navigation-control />
-    <mgl-fullscreen-control />
-    <MglGeolocateControl v-if="geolocate" :track-user-location="true" :show-accuracy-circle="true" />
-  </mgl-map>
+  <div ref="containerRef" style="height: 100%; width: 100%;">
+    <mgl-map
+      :map-style="modelValue"
+      :center="center"
+      :zoom="zoom"
+      :max-zoom="maxZoom"
+      :height="height"
+      @map:load="onMapLoad"
+    >
+      <slot />
+      <mgl-navigation-control />
+      <mgl-fullscreen-control />
+      <MglGeolocateControl v-if="geolocate" :track-user-location="true" :show-accuracy-circle="true" />
+    </mgl-map>
+  </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onBeforeUnmount } from 'vue'
 import { MapStyleControl } from '@/utilities/MapStyleControl'
 import { mdiTerrain, mdiSatelliteVariant } from '@mdi/js'
 import {
@@ -70,6 +72,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'map:load'])
 
+const containerRef = ref(null)
+let resizeObserver = null
+
 const onMapLoad = (event) => {
   event.map.addControl(
     new MapStyleControl(props.customOptions, props.modelValue, (newStyle) => {
@@ -77,8 +82,24 @@ const onMapLoad = (event) => {
     }),
     'top-right'
   )
+
+  // Set up ResizeObserver to handle container size changes (tab switches, layout shifts)
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      event.map.resize()
+    })
+    resizeObserver.observe(containerRef.value)
+  }
+
   emit('map:load', event)
 }
+
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+})
 
 // Expose map context to parent via refs
 const mapOne = useMap()
