@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\UserCreated;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -18,9 +19,20 @@ class GoogleLoginController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    public function handleGoogleCallback(): RedirectResponse
+    public function handleGoogleCallback(Request $request): RedirectResponse
     {
-        $googleUser = Socialite::driver('google')->stateless()->user();
+        if ($request->has('error') || !$request->has('code')) {
+            return redirect(config('app.url').'/login');
+        }
+
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+        } catch (\Exception $e) {
+            Log::error('Google OAuth callback failed: '.$e->getMessage());
+
+            return redirect(config('app.url').'/login');
+        }
+
         $user = User::where('email', $googleUser->email)->first();
 
         if (!$user || !$user->has_signed_up) {
