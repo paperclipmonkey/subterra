@@ -80,7 +80,7 @@ import {
 
 import maplibregl from 'maplibre-gl'
 
-const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
+const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 5
 const lnglat = [-2, 53]
 
@@ -118,7 +118,7 @@ watch(() => mapRef.value?.isLoaded, (isLoaded) => {
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 .map-container {
-  height: calc(100dvh - 195px);
+  height: calc(100dvh - 200px);
 }
 
 .map-holder {

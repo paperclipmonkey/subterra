@@ -51,7 +51,7 @@
         </v-col>
         <v-col cols="12" md="4">
           <div class="position-sticky" style="top: 20px;">
-            <CollectionMap :collection="collection" />
+            <CollectionMap :collection="collection" :active="true" />
           </div>
         </v-col>
       </v-row>
@@ -70,7 +70,7 @@
         </v-window-item>
 
         <v-window-item value="map">
-          <CollectionMap :collection="collection" />
+          <CollectionMap v-if="tab === 'map'" :collection="collection" />
         </v-window-item>
       </v-window>
     </div>

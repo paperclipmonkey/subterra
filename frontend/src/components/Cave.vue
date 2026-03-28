@@ -211,7 +211,7 @@
             <!-- Map Tab (Mobile only) -->
             <v-window-item v-if="smAndDown" value="map">
               <v-card class="mb-4 rounded-lg" elevation="0" variant="flat">
-                <template v-if="appStore.canSuggest">
+                <template v-if="appStore.canSuggest && activeTab === 'map'">
                   <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad">
                     <mgl-marker :coordinates="lnglat" color="#cc0000" />
                     
@@ -599,7 +599,7 @@ import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { MglMarker } from '@indoorequal/vue-maplibre-gl'
 
-const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
+const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 14
 
 

@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { } from 'vue'
+import { computed } from 'vue'
 import { MapStyleControl } from '@/utilities/MapStyleControl'
 import { mdiTerrain, mdiSatelliteVariant } from '@mdi/js'
 import {
@@ -55,14 +55,14 @@ const props = defineProps({
     type: Array,
     default: () => [
       {
-        title: 'OS',
-        value: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge',
-        icon: mdiTerrain
-      },
-      {
         title: 'Satellite Hybrid',
         value: 'https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528',
         icon: mdiSatelliteVariant
+      },
+      {
+        title: 'OS',
+        value: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge',
+        icon: mdiTerrain
       }
     ]
   }
@@ -83,12 +83,8 @@ const onMapLoad = (event) => {
 // Expose map context to parent via refs
 const mapOne = useMap()
 defineExpose({
-  get map() {
-    return mapOne.map?.value
-  },
-  get isLoaded() {
-    return mapOne.isLoaded?.value
-  }
+  map: computed(() => mapOne.map),
+  isLoaded: computed(() => mapOne.isLoaded)
 })
 </script>
 

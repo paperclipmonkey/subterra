@@ -96,7 +96,7 @@
         <CaveListList @tag-click="toggleTag" />
       </v-tabs-window-item>
       <v-tabs-window-item value="map">
-        <CaveListMap />
+        <CaveListMap v-if="tab === 'map'" />
       </v-tabs-window-item>
     </v-tabs-window>
     <FilterByTagModal 

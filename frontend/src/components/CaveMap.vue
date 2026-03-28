@@ -74,7 +74,7 @@ const props = defineProps({
   }
 })
 
-const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
+const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 5
 // Default center
 const lnglat = [-2, 53]
@@ -90,6 +90,7 @@ watch(() => mapRef.value?.isLoaded, (isLoaded) => {
   }
 
   mapRef.value?.map?.resize()
+
 
   watch(
     () => props.caves,

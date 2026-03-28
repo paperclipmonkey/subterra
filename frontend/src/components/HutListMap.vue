@@ -56,25 +56,25 @@ import AppMap from '@/components/AppMap.vue'
 
 // Removed store usage for huts, now coming from props
 const props = defineProps({
-    huts: {
-        type: Array,
-        default: () => []
-    }
+  huts: {
+    type: Array,
+    default: () => []
+  }
 })
 
 import {
-    MglMap,
-    MglFullscreenControl,
-    MglNavigationControl,
-    MglMarker,
-    MglPopup,
-    useMap,
-    MglGeolocateControl,
+  MglMap,
+  MglFullscreenControl,
+  MglNavigationControl,
+  MglMarker,
+  MglPopup,
+  useMap,
+  MglGeolocateControl,
 } from '@indoorequal/vue-maplibre-gl'
 
 import maplibregl from 'maplibre-gl'
 
-const style = ref('https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge')
+const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 5
 const lnglat = [-2, 53]
 
@@ -86,31 +86,32 @@ import { onMounted, watch, ref } from 'vue'
 const mapRef = ref(null)
 
 watch(() => mapRef.value?.isLoaded, (isLoaded) => {
-    if (!isLoaded) {
-        return
-    }
+  if (!isLoaded) {
+    return
+  }
 
-    mapRef.value?.map?.resize()
+  mapRef.value?.map?.resize()
 
-    watch(
-        () => props.huts,
-        (huts) => {
-            if (huts.length > 0 && mapRef.value?.isLoaded) {
-                const bounds = new maplibregl.LngLatBounds()
-                let hasPoints = false
-                huts.forEach((hut) => {
-                    if (hut.location_lat && hut.location_lng) {
-                        bounds.extend([hut.location_lng, hut.location_lat])
-                        hasPoints = true
-                    }
-                })
-                if (hasPoints) {
-                    mapRef.value?.map?.fitBounds(bounds, { padding: 50 })
-                }
-            }
-        },
-        { immediate: true }
-    )
+
+  watch(
+    () => props.huts,
+    (huts) => {
+      if (huts.length > 0 && mapRef.value?.isLoaded) {
+        const bounds = new maplibregl.LngLatBounds()
+        let hasPoints = false
+        huts.forEach((hut) => {
+          if (hut.location_lat && hut.location_lng) {
+            bounds.extend([hut.location_lng, hut.location_lat])
+            hasPoints = true
+          }
+        })
+        if (hasPoints) {
+          mapRef.value?.map?.fitBounds(bounds, { padding: 50 })
+        }
+      }
+    },
+    { immediate: true }
+  )
 })
 </script>
 
@@ -118,24 +119,24 @@ watch(() => mapRef.value?.isLoaded, (isLoaded) => {
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 .map-container {
-    height: calc(100dvh - 195px);
+  height: calc(100dvh - 165px);
 }
 
 .map-holder {
-    margin-left: -20px;
-    margin-right: -20px;
-    padding-bottom: 0px;
-    width: calc(100% + 40px);
-    height: 100%;
+  margin-left: -20px;
+  margin-right: -20px;
+  padding-bottom: 0px;
+  width: calc(100% + 40px);
+  height: 100%;
 }
 
 .maplibregl-popup .maplibregl-popup-content {
-    padding: 0;
-    background: transparent;
+  padding: 0;
+  background: transparent;
 }
 
 .maplibregl-popup-content .maplibregl-popup-close-button {
-    right: 6px;
-    top: 0px;
+  right: 6px;
+  top: 0px;
 }
 </style>
