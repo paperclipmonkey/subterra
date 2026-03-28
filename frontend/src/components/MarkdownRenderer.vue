@@ -105,14 +105,140 @@ watch(() => props.source, () => {
 }, { immediate: true })
 </script>
 
-<style>
-.markdown-renderer .mermaid {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0;
+<style scoped>
+.markdown-renderer {
+  font-family: 'Roboto', sans-serif;
+  line-height: 1.75;
+  color: #374151;
+  max-width: 100%;
 }
 
-.markdown-renderer .mermaid svg {
-    max-width: 100%;
+.markdown-renderer :deep(h1),
+.markdown-renderer :deep(h2),
+.markdown-renderer :deep(h3),
+.markdown-renderer :deep(h4) {
+  color: #111827;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.markdown-renderer :deep(h1) {
+  font-size: 2.25rem;
+  border-bottom: 3px solid #4285f4;
+  padding-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+.markdown-renderer :deep(h2) {
+  font-size: 1.875rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.25rem;
+}
+
+.markdown-renderer :deep(h3) {
+  font-size: 1.5rem;
+}
+
+.markdown-renderer :deep(p) {
+  margin-bottom: 1.25rem;
+}
+
+.markdown-renderer :deep(ul),
+.markdown-renderer :deep(ol) {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-renderer :deep(li) {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-renderer :deep(blockquote) {
+  border-left: 4px solid #4285f4;
+  background: #f9fafb;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #4b5563;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.markdown-renderer :deep(pre) {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.markdown-renderer :deep(code) {
+  font-family: 'Fira Code', 'Cascadia Code', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+}
+
+.markdown-renderer :deep(:not(pre) > code) {
+  background: #f1f5f9;
+  color: #4285f4;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+}
+
+.markdown-renderer :deep(table) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.5rem 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-renderer :deep(th) {
+  background: #f8fafc;
+  text-align: left;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  color: #374151;
+}
+
+.markdown-renderer :deep(td) {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.markdown-renderer :deep(tr:last-child td) {
+  border-bottom: none;
+}
+
+.markdown-renderer :deep(tr:nth-child(even)) {
+  background: #f9fafb;
+}
+
+.markdown-renderer :deep(hr) {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 2.5rem 0;
+}
+
+.markdown-renderer :deep(.mermaid) {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.markdown-renderer :deep(.mermaid svg) {
+  max-width: 100%;
+  height: auto;
 }
 </style>
