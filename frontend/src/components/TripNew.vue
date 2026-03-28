@@ -211,7 +211,8 @@
                           <v-text-field v-model="item.title" label="Title" density="compact" variant="underlined" hide-details />
                         </v-col>
                         <v-col cols="12" sm="6">
-                          <v-text-field v-model="item.copyright" label="Copyright" density="compact" variant="underlined" hide-details />
+                          <v-combobox v-model="item.copyright" :items="copyrightOptions" label="Licence / Copyright" density="compact" variant="underlined" hide-details 
+                                      item-title="title" item-value="value" item-props :return-object="false" />
                         </v-col>
                         <v-col cols="12" sm="6">
                           <v-text-field v-model="item.photographer" label="Photographer" density="compact" variant="underlined" hide-details />
@@ -242,7 +243,8 @@
                           <v-text-field v-model="media.title" label="Title" density="compact" variant="underlined" hide-details />
                         </v-col>
                         <v-col cols="12" sm="6">
-                          <v-text-field v-model="media.copyright" label="Copyright" density="compact" variant="underlined" hide-details />
+                          <v-combobox v-model="media.copyright" :items="copyrightOptions" label="Licence / Copyright" density="compact" variant="underlined" hide-details 
+                                      item-title="title" item-value="value" item-props :return-object="false" />
                         </v-col>
                         <v-col cols="12" sm="6">
                           <v-text-field v-model="media.photographer" label="Photographer" density="compact" variant="underlined" hide-details />
@@ -452,6 +454,13 @@ const visibilityOptions = [
     label: 'Private',
     description: 'Visible only to trip participants'
   }
+]
+
+const copyrightOptions = [
+  { value: 'CC BY-SA 4.0', title: 'CC BY-SA 4.0', subtitle: 'Free to use & remix, must share alike.' },
+  { value: 'CC BY-NC 4.0', title: 'CC BY-NC 4.0', subtitle: 'Free to use & remix, non-commercial only.' },
+  { value: 'Public Domain (CC0)', title: 'Public Domain (CC0)', subtitle: 'No copyright reserved, completely free.' },
+  { value: 'Copyright (All rights reserved)', title: 'Copyright', subtitle: 'Others must ask permission to use.' }
 ]
 
 const isClosed = computed(() => {
@@ -765,8 +774,8 @@ const handleFileSelect = async (files) => {
         file: file,
         preview: e.target.result,
         title: '',
-        copyright: '',
-        photographer: '', // Could default to current user name if available
+        copyright: 'CC BY-SA 4.0',
+        photographer: users.value.find(u => u.id === userId.value)?.name || '',
       })
     }
     reader.readAsDataURL(file)
