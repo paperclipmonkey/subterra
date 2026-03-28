@@ -107,6 +107,36 @@
               <div class="text-h6 mb-3 font-weight-bold display-1">Description</div>
               <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
 
+              <v-alert v-if="isDescriptionStub" type="info" variant="tonal" class="mb-6">
+                <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between w-100">
+                  <div>
+                    <div class="text-subtitle-1 font-weight-bold">Help improve this page</div>
+                    <div class="text-body-2">This cave's description is a stub. Could you write an improved description?</div>
+                  </div>
+                  <div class="mt-3 mt-sm-0 ml-sm-4 shrink-0">
+                    <v-btn
+                      v-if="appStore.canSuggest"
+                      color="primary"
+                      variant="flat"
+                      @click="$router.push('/caves/' + route.params.id + '/edit')"
+                    >
+                      {{ appStore.user.is_admin ? 'Edit Description' : 'Suggest Edit' }}
+                    </v-btn>
+                    <v-btn
+                      v-else
+                      color="primary"
+                      variant="flat"
+                      disabled
+                    >
+                      Suggest Edit
+                      <v-tooltip activator="parent" location="top">
+                        Your account must be approved to suggest edits
+                      </v-tooltip>
+                    </v-btn>
+                  </div>
+                </div>
+              </v-alert>
+
               <v-divider class="mb-6" />
 
               <div class="text-h6 mb-3 font-weight-bold">Access Information</div>
@@ -585,6 +615,12 @@ const cave = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeTab = ref(route.query.tab || 'overview')
+
+const isDescriptionStub = computed(() => {
+  if (!cave.value) return false
+  if (!cave.value.description) return true
+  return cave.value.description.length < 50
+})
 
 const pageTitle = computed(() => cave.value?.name)
 usePageTitle(pageTitle)

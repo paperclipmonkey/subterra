@@ -16,7 +16,7 @@ class MailRenderingTest extends TestCase
     public function test_magic_link_mail_renders_correctly()
     {
         $mail = new MagicLinkMail('http://localhost/magic/link');
-        
+
         $rendered = $mail->render();
 
         $this->assertStringContainsString('subterra-logo.png', $rendered);
@@ -27,7 +27,8 @@ class MailRenderingTest extends TestCase
     {
         $user = User::factory()->create();
         $creator = User::factory()->create();
-        $trip = Trip::factory()->create(['user_id' => $creator->id]);
+        $trip = Trip::factory()->create();
+        $trip->participants()->attach($creator);
 
         $mail = new TripTaggedMail($trip, $user, $creator);
 
