@@ -15,7 +15,7 @@ class HutController extends Controller
 
     public function index()
     {
-        return Hut::with('club')->get();
+        return Hut::associatedWithCavingClub()->with('club')->get();
     }
 
     public function store(Request $request)

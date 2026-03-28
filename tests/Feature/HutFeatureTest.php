@@ -12,11 +12,16 @@ class HutFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_list_huts(): void
+    public function test_can_list_huts_filters_those_without_clubs(): void
     {
         $user = User::factory()->create();
         $club = Club::factory()->create();
+
+        // Huts associated with a club
         Hut::factory()->count(3)->create(['club_id' => $club->id]);
+
+        // Hut NOT associated with a club (should be filtered out)
+        Hut::factory()->create(['club_id' => null]);
 
         $response = $this->actingAs($user)->getJson('/api/huts');
 

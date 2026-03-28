@@ -43,6 +43,11 @@ class Hut extends Model
         return $this->belongsToMany(Club::class, 'hut_reciprocal_club');
     }
 
+    public function scopeAssociatedWithCavingClub($query)
+    {
+        return $query->whereNotNull('club_id');
+    }
+
     public function getImageUrlAttribute(): string
     {
         if ($this->image) {
