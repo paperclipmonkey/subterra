@@ -29,6 +29,10 @@ class Hut extends Model
         'location_lng' => 'float',
     ];
 
+    protected $hidden = [
+        'image',
+    ];
+
     protected $appends = [
         'image_url',
     ];

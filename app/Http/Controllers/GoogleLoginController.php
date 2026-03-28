@@ -33,7 +33,7 @@ class GoogleLoginController extends Controller
             return redirect(config('app.url').'/login');
         }
 
-        $user = User::where('email', $googleUser->email)->first();
+        $user = User::withoutGlobalScopes()->where('email', $googleUser->email)->first();
 
         if (!$user || !$user->has_signed_up) {
             $photoUrl = null;

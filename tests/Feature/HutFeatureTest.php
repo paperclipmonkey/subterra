@@ -224,4 +224,78 @@ class HutFeatureTest extends TestCase
         $this->assertTrue($hut->reciprocalClubs->contains($reciprocalClub1));
         $this->assertFalse($hut->reciprocalClubs->contains($reciprocalClub2));
     }
+
+    public function test_can_create_hut_with_base64_image(): void
+    {
+        $user = User::factory()->admin()->create();
+        $club = Club::factory()->create();
+
+        // Create a small valid PNG as base64 data URI
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png', 10, 10);
+        $base64 = 'data:image/png;base64,'.base64_encode(file_get_contents($imageFile->getPathname()));
+
+        $hutData = [
+            'name' => 'Base64 Hut',
+            'description' => 'A test hut with base64 image',
+            'club_id' => $club->id,
+            'image' => [
+                'data' => $base64,
+            ],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/huts', $hutData);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('name', 'Base64 Hut');
+
+        $hut = Hut::where('name', 'Base64 Hut')->first();
+        $this->assertNotNull($hut);
+        $this->assertNotNull($hut->image);
+        $this->assertStringContainsString('huts/', $hut->image);
+        $this->assertStringEndsWith('.webp', $hut->image);
+    }
+
+    public function test_can_update_hut_with_base64_image(): void
+    {
+        $user = User::factory()->admin()->create();
+        $club = Club::factory()->create();
+        $hut = Hut::factory()->create([
+            'club_id' => $club->id,
+        ]);
+
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test.png', 10, 10);
+        $base64 = 'data:image/png;base64,'.base64_encode(file_get_contents($imageFile->getPathname()));
+
+        $updateData = [
+            'name' => $hut->name,
+            'club_id' => $club->id,
+            'image' => [
+                'data' => $base64,
+            ],
+        ];
+
+        $response = $this->actingAs($user)->putJson("/api/huts/{$hut->id}", $updateData);
+
+        $response->assertStatus(200);
+
+        $hut->refresh();
+        $this->assertNotNull($hut->image);
+        $this->assertStringEndsWith('.webp', $hut->image);
+    }
+
+    public function test_image_field_hidden_from_json(): void
+    {
+        $user = User::factory()->create();
+        $club = Club::factory()->create();
+        Hut::factory()->create([
+            'club_id' => $club->id,
+            'image' => 'huts/test.webp',
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/huts');
+
+        $response->assertStatus(200);
+        $response->assertJsonMissing(['image' => 'huts/test.webp']);
+        $response->assertJsonFragment(['image_url' => \Illuminate\Support\Facades\Storage::disk('media')->url('huts/test.webp')]);
+    }
 }
