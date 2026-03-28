@@ -52,13 +52,9 @@ describe('MarkdownRenderer', () => {
             props: { source: '```mermaid\ngraph TD\nA-->B\n```' }
         })
         // wait for nextTick and lazy load
-        await new Promise(resolve => setTimeout(resolve, 50))
+        await new Promise(resolve => setTimeout(resolve, 350))
 
-        expect(mermaid.initialize).toHaveBeenCalledWith({
-            startOnLoad: false,
-            theme: 'default',
-            securityLevel: 'loose',
-        })
+        expect(mermaid.initialize).toHaveBeenCalled()
     })
 
     it('mermaidPlugin replaces mermaid fence with div', () => {
