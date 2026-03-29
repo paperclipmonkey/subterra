@@ -1,5 +1,5 @@
 <template>
-  <v-card flat class="h-100 d-flex flex-column">
+  <v-card flat>
     <template #text>
       <div class="d-flex align-center">
         <v-text-field v-model="search" label="Search" :prepend-inner-icon="mdiMagnify" variant="outlined"
@@ -13,14 +13,12 @@
       <v-tab value="list">List</v-tab>
     </v-tabs>
 
-    <v-divider />
-
-    <v-tabs-window v-model="tab" class="flex-grow-1">
-      <v-tabs-window-item value="map" class="h-100">
-        <HutListMap :huts="huts" />
+    <v-tabs-window v-model="tab">
+      <v-tabs-window-item value="map">
+        <HutListMap v-if="tab === 'map'" :huts="huts" />
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="list" class="h-100 overflow-y-auto">
+      <v-tabs-window-item value="list">
         <v-container class="pb-8">
           <div v-if="loading" class="d-flex justify-center my-4">
             <v-progress-circular indeterminate color="primary" />

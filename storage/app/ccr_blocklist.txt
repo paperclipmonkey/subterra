@@ -1,12 +1,10 @@
-# Add cave names to NEVER import from the CCC registry, one per line.
+# Add cave names to NEVER import from the CCR, one per line.
 # These entries will be skipped even if they meet the minimum length threshold.
 
 # Destroyed by mining
 Barland Quarry Cave
 # permanently blocked by landowner in 2011
 Tir-Duweunydd South Sink
-# do not officially give permission to visit the site
-Llygad Llwchwr
 # not open for inspection
 Schwyll Risings
 # The Cave is no longer accessible due to quarrying.

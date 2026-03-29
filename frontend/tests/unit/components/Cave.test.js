@@ -31,11 +31,13 @@ vi.mock('@/stores/markAsDone', () => ({
 
 // Mock MapLibre (canvas dependency causes issues in jsdom)
 vi.mock('@indoorequal/vue-maplibre-gl', () => ({
-    MglMap: { template: '<div></div>' },
+    MglMap: { name: 'MglMap', template: '<div><slot /></div>' },
     MglNavigationControl: { template: '<div></div>' },
-    MglMarker: { template: '<div></div>' },
+    MglMarker: { name: 'MglMarker', template: '<div><slot /></div>', props: ['coordinates'] },
+    MglPopup: { name: 'MglPopup', template: '<div><slot /></div>' },
+    MglFullscreenControl: { template: '<div></div>' },
     MglGeolocateControl: { template: '<div></div>' },
-    MglFullscreenControl: { template: '<div></div>' }
+    useMap: () => ({ map: { fitBounds: vi.fn(), resize: vi.fn(), setCenter: vi.fn(), setZoom: vi.fn() }, isLoaded: true })
 }))
 
 // Mock API response
@@ -189,5 +191,133 @@ describe('Cave Component', () => {
         expect(wrapper.text()).toContain('Test System')
         expect(wrapper.find('.vue-markdown').exists()).toBe(false)
         expect(wrapper.text()).not.toContain('_No system description._')
+    })
+
+    it('renders descriptive call-to-action when description is a stub', async () => {
+        global.fetch = vi.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({
+                    data: {
+                        ...mockCave,
+                        description: 'Short stub' // Less than 50 chars
+                    }
+                })
+            })
+        )
+
+        const wrapper = mount(Cave, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div class="v-container"><slot /></div>' },
+                    'v-row': { template: '<div class="v-row"><slot /></div>' },
+                    'v-col': { template: '<div class="v-col"><slot /></div>' },
+                    'v-card': { template: '<div class="v-card"><slot /></div>' },
+                    'v-img': { template: '<div class="v-img"><slot /></div>' },
+                    'v-icon': true,
+                    'v-btn': true,
+                    'v-spacer': true,
+                    'v-tabs': { template: '<div class="v-tabs"><slot /></div>' },
+                    'v-tab': { template: '<div class="v-tab"><slot /></div>' },
+                    'v-badge': true,
+                    'v-divider': true,
+                    'v-window': { template: '<div class="v-window"><slot /></div>' },
+                    'v-window-item': { template: '<div class="v-window-item"><slot /></div>' },
+                    'vue-markdown': { template: '<div class="vue-markdown">MARKDOWN CONTENT</div>' },
+                    'v-alert': { template: '<div class="v-alert-stub"><slot /></div>' },
+                    'v-chip-group': true,
+                    'v-chip': true,
+                    'v-tooltip': true,
+                    'v-list': true,
+                    'v-list-item': true,
+                    'v-list-item-title': true,
+                    'CaveTripListItem': true,
+                    'v-progress-circular': true,
+                    'v-avatar': true,
+                    'v-dialog': true,
+                    'v-card-title': true,
+                    'v-card-text': true,
+                    'v-card-actions': true,
+                    'v-list-item-subtitle': true,
+                    'v-textarea': true,
+                    'v-form': true,
+                    'v-snackbar': true,
+                    'CorrectionModal': true,
+                    'CaveWeather': true,
+                    'MarkdownRenderer': true,
+                    'MediaViewModal': true
+                }
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        // Should render the call to action
+        expect(wrapper.text()).toContain("This cave's description is a stub")
+    })
+
+    it('does not render descriptive call-to-action when description is sufficiently long', async () => {
+        global.fetch = vi.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({
+                    data: {
+                        ...mockCave,
+                        description: 'This is a sufficiently long description that is over fifty characters in length, so it is not a stub.'
+                    }
+                })
+            })
+        )
+
+        const wrapper = mount(Cave, {
+            global: {
+                stubs: {
+                    'v-container': { template: '<div class="v-container"><slot /></div>' },
+                    'v-row': { template: '<div class="v-row"><slot /></div>' },
+                    'v-col': { template: '<div class="v-col"><slot /></div>' },
+                    'v-card': { template: '<div class="v-card"><slot /></div>' },
+                    'v-img': { template: '<div class="v-img"><slot /></div>' },
+                    'v-icon': true,
+                    'v-btn': true,
+                    'v-spacer': true,
+                    'v-tabs': { template: '<div class="v-tabs"><slot /></div>' },
+                    'v-tab': { template: '<div class="v-tab"><slot /></div>' },
+                    'v-badge': true,
+                    'v-divider': true,
+                    'v-window': { template: '<div class="v-window"><slot /></div>' },
+                    'v-window-item': { template: '<div class="v-window-item"><slot /></div>' },
+                    'vue-markdown': { template: '<div class="vue-markdown">MARKDOWN CONTENT</div>' },
+                    'v-alert': { template: '<div class="v-alert-stub"><slot /></div>' },
+                    'v-chip-group': true,
+                    'v-chip': true,
+                    'v-tooltip': true,
+                    'v-list': true,
+                    'v-list-item': true,
+                    'v-list-item-title': true,
+                    'CaveTripListItem': true,
+                    'v-progress-circular': true,
+                    'v-avatar': true,
+                    'v-dialog': true,
+                    'v-card-title': true,
+                    'v-card-text': true,
+                    'v-card-actions': true,
+                    'v-list-item-subtitle': true,
+                    'v-textarea': true,
+                    'v-form': true,
+                    'v-snackbar': true,
+                    'CorrectionModal': true,
+                    'CaveWeather': true,
+                    'MarkdownRenderer': true,
+                    'MediaViewModal': true
+                }
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        // Should NOT render the call to action
+        expect(wrapper.text()).not.toContain("This cave's description is a stub")
     })
 })

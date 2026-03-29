@@ -1,4 +1,4 @@
-# Add cave names to ALWAYS import from the CCC registry, one per line.
+# Add cave names to ALWAYS import from the CCR, one per line.
 # They will be imported even if they fall below the minimum length threshold.
 
 # Example:

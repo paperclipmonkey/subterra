@@ -6,10 +6,13 @@
   <v-sheet v-else-if="collection" class="position-relative">
     <v-img
       :src="collection.photo_path || 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
-      height="350" cover class="align-end" gradient="to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 60%">
+      height="350" cover :class="['align-end', { 'cursor-pointer': collection.photo_path }]" 
+      gradient="to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 60%"
+      @click="collection.photo_path ? openImage(collectionMedia) : null"
+    >
       <div class="position-absolute top-0 left-0 pa-4" style="z-index: 1;">
         <v-btn :icon="mdiArrowLeft" variant="tonal" color="white" class="backdrop-blur"
-               @click="$router.push('/collections')" />
+               @click.stop="$router.push('/collections')" />
       </div>
 
       <div class="position-absolute top-0 right-0 pa-4 d-flex align-center" style="z-index: 1;">
@@ -51,7 +54,7 @@
         </v-col>
         <v-col cols="12" md="4">
           <div class="position-sticky" style="top: 20px;">
-            <CollectionMap :collection="collection" />
+            <CollectionMap :collection="collection" :active="true" />
           </div>
         </v-col>
       </v-row>
@@ -70,7 +73,7 @@
         </v-window-item>
 
         <v-window-item value="map">
-          <CollectionMap :collection="collection" />
+          <CollectionMap v-if="tab === 'map'" :collection="collection" />
         </v-window-item>
       </v-window>
     </div>
@@ -88,6 +91,8 @@
   <v-container v-else>
     <v-alert type="error">Collection not found</v-alert>
   </v-container>
+
+  <MediaViewModal v-model="showMediaModal" :media="selectedMedia" />
 </template>
 
 <script setup>
@@ -102,6 +107,7 @@ import CollectionCaveList from '@/components/CollectionCaveList.vue'
 import CollectionMap from '@/components/CollectionMap.vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CorrectionModal from '@/components/CorrectionModal.vue'
+import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 
 const route = useRoute()
@@ -147,6 +153,25 @@ const canEdit = computed(() => {
   return userStore.user.is_admin || userStore.user.id === collection.value.user_id
 })
 
+// Media Modal State
+const showMediaModal = ref(false)
+const selectedMedia = ref({})
+
+const collectionMedia = computed(() => {
+  if (!collection.value || !collection.value.photo_path) return null
+  return {
+    url: collection.value.photo_path,
+    title: collection.value.name,
+    description: collection.value.description,
+    type: 'image'
+  }
+})
+
+const openImage = (item) => {
+  selectedMedia.value = item
+  showMediaModal.value = true
+}
+
 </script>
 
 <style scoped>
@@ -154,6 +179,10 @@ const canEdit = computed(() => {
   backdrop-filter: blur(8px);
   background-color: rgba(255, 255, 255, 0.1) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .opacity-90 {

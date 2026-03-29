@@ -26,7 +26,7 @@ class MedalAwardedMail extends Mailable implements ShouldQueue
     public function build()
     {
         return $this->subject('You have been awarded a new medal!')
-            ->view('emails.medal_awarded')
+            ->markdown('emails.medal_awarded')
             ->with([
                 'user' => $this->user,
                 'medal' => $this->medal,

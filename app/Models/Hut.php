@@ -29,6 +29,10 @@ class Hut extends Model
         'location_lng' => 'float',
     ];
 
+    protected $hidden = [
+        'image',
+    ];
+
     protected $appends = [
         'image_url',
     ];
@@ -41,6 +45,11 @@ class Hut extends Model
     public function reciprocalClubs(): BelongsToMany
     {
         return $this->belongsToMany(Club::class, 'hut_reciprocal_club');
+    }
+
+    public function scopeAssociatedWithCavingClub($query)
+    {
+        return $query->whereNotNull('club_id');
     }
 
     public function getImageUrlAttribute(): string

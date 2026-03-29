@@ -18,7 +18,7 @@ class CaveMediaResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'filename' => $this->filename,
-            'url' => $this->filename ? \Illuminate\Support\Facades\Storage::disk('media')->url($this->filename) : null,
+            'url' => $this->filename ? (str_starts_with($this->filename, 'http') ? $this->filename : \Illuminate\Support\Facades\Storage::disk('media')->url($this->filename)) : null,
             'title' => $this->title,
             'photographer' => $this->photographer,
             'copyright' => $this->copyright,

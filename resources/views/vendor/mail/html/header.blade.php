@@ -2,11 +2,7 @@
 <tr>
 <td class="header">
 <a href="{{ $url }}" style="display: inline-block;">
-@if (trim($slot) === 'Laravel')
-Subterra
-@else
-{{ $slot }}
-@endif
+<img src="{{ asset('images/subterra-logo.png') }}" class="logo" alt="Subterra Logo">
 </a>
 </td>
 </tr>

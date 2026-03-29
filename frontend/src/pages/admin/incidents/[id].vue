@@ -264,13 +264,12 @@
             Incident Locations
           </v-card-title>
           <v-card-text class="pa-0">
-            <mgl-map
-              ref="mapRef"
-              :map-style="mapStyle"
-              :center="[-2, 53]"
-              :zoom="5"
-              height="400px"
-              @load="onMapLoad"
+            <AppMap ref="mapRef"
+                    v-model="mapStyle"
+                    :center="[-2, 53]"
+                    :zoom="5"
+                    height="400px"
+                    @map:load="onMapLoad"
             >
               <!-- Cave Entrance -->
               <mgl-marker 
@@ -314,8 +313,8 @@
                 </template>
               </mgl-marker>
                             
-              <mgl-navigation-control />
-            </mgl-map>
+              
+            </AppMap>
           </v-card-text>
         </v-card>
       </v-col>
@@ -354,12 +353,14 @@ import maplibregl from 'maplibre-gl'
 export default {
   components: {
     MglMap,
-    MglNavigationControl,
+        MglNavigationControl,
     MglMarker,
     MglPopup
   },
-  setup() {
+    setup() {
+    
     return {
+
       mdiAccount,
       mdiAlert,
       mdiAlertDecagram,
@@ -451,6 +452,7 @@ export default {
       this.mapInstance = event.map
       this.mapInstance.resize()
       this.fitMapToBounds()
+
     },
     fitMapToBounds() {
       if (!this.mapInstance || !this.incident || !this.incident.callout || this.hasFittedBounds) return

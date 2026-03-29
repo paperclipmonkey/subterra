@@ -121,16 +121,10 @@ watch(internalCollection, (newVal) => {
     emit('update:modelValue', newVal)
 }, { deep: true })
 
-const onPhotoChange = async (event) => {
+const onPhotoChange = (event) => {
     const file = event.target.files[0]
     if (file) {
-        try {
-            const result = await convertFileToBase64(file)
-            internalCollection.value.photo_data = result.data // Store base64 for submission
-            photoFile.value = file // Keep file reference if needed locally
-        } catch (error) {
-            console.error('Error converting file to base64:', error)
-        }
+        internalCollection.value.photo = file // Store File object for multipart
     }
 }
 

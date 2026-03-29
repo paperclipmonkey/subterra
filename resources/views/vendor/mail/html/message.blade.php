@@ -21,7 +21,9 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-© {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
+© {{ date('Y') }} Subterra. All rights reserved.
+
+*Empowering cave explorers everywhere.*
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

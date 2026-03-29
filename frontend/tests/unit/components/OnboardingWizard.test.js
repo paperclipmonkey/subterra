@@ -154,7 +154,7 @@ describe('OnboardingWizard.vue', () => {
 
             const results = nameRules.map(rule => rule('John'))
             // The space rule should fail
-            expect(results).toContain('Please enter your full name (first and last name)')
+            expect(results).toContain('Please enter both your first and last name')
         })
 
         it('accepts a name with first and last name', () => {

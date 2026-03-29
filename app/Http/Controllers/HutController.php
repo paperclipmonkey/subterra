@@ -15,7 +15,7 @@ class HutController extends Controller
 
     public function index()
     {
-        return Hut::with('club')->get();
+        return Hut::associatedWithCavingClub()->with('club')->get();
     }
 
     public function store(Request $request)
@@ -96,13 +96,17 @@ class HutController extends Controller
 
     private function processImageField(Request $request, Hut $hut): void
     {
-        $hasField = $request->has('image');
         $imageData = $request->input('image', []);
         $fileData = $request->file('image.data');
 
         if ($fileData) {
+            // Multipart form-data upload
             $imageData['data'] = $fileData;
             $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'huts');
+            $hut->update(['image' => $filePath]);
+        } elseif (is_array($imageData) && isset($imageData['data']) && is_string($imageData['data']) && str_starts_with($imageData['data'], 'data:')) {
+            // Base64 data URI from JSON (frontend sends via mande)
+            $filePath = $this->imageProcessingService->processAndStoreBase64Image($imageData['data'], 'huts');
             $hut->update(['image' => $filePath]);
         } elseif ($request->has('image') && $request->input('image') === null) {
             // Explicitly remove image if null is passed

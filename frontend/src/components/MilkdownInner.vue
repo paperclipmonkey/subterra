@@ -4,7 +4,9 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { Crepe } from '@milkdown/crepe'
+import { Crepe, CrepeFeature } from '@milkdown/crepe'
+import { languages } from '@codemirror/language-data'
+import { LanguageDescription } from '@codemirror/language'
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
 import { Milkdown, useEditor } from '@milkdown/vue'
 import { replaceAll, getMarkdown } from '@milkdown/kit/utils'
@@ -33,6 +35,18 @@ const { get, loading } = useEditor((root) => {
         root,
         defaultValue: props.modelValue || '',
         placeholder: props.placeholder,
+        featureConfigs: {
+            [CrepeFeature.CodeMirror]: {
+                languages: [
+                    ...languages,
+                    LanguageDescription.of({
+                        name: 'Mermaid',
+                        alias: ['mermaid'],
+                        load: () => Promise.resolve()
+                    })
+                ]
+            }
+        }
     })
 
     // Configure the underlying editor

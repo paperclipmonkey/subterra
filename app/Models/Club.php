@@ -25,6 +25,7 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'website',
         'location',
         'is_active',
+        'type',
     ];
 
     /**

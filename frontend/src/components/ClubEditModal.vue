@@ -131,7 +131,7 @@
                           :icon="mdiClose"
                           :loading="pending.loading"
                           :disabled="pending.loading"
-                          @click="rejectMemberRequest(pending)"
+                          @click="openRejectDialog(pending)"
                         />
                       </template>
                     </v-list-item>
@@ -153,6 +153,25 @@
           <v-btn color="blue darken-1" text :loading="saving" @click="saveClubAndMembers">Save</v-btn>
         </template>
       </v-card-actions>
+
+      <!-- Reject Member Reason Dialog -->
+      <v-dialog v-model="rejectDialog" max-width="500px">
+        <v-card>
+          <v-card-title class="headline">Reject Membership Request</v-card-title>
+          <v-card-text>
+            <p>Please select a reason for rejecting <strong>{{ selectedRejectUser?.name }}</strong>:</p>
+            <v-radio-group v-model="rejectReason">
+              <v-radio label="Incorrect Name (Requires full legal name)" value="incorrect_name" />
+              <v-radio label="Other / No reason specified" value="" />
+            </v-radio-group>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="grey" variant="text" @click="closeRejectDialog">Cancel</v-btn>
+            <v-btn color="error" variant="text" @click="confirmReject">Reject</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-card>
   </v-dialog>
 </template>
@@ -203,6 +222,10 @@ const saving = ref(false)
 const loadingPending = ref(false)
 const router = useRouter()
 const toast = useToast()
+
+const rejectDialog = ref(false)
+const selectedRejectUser = ref(null)
+const rejectReason = ref('incorrect_name')
 
 const fetchClub = async () => {
   if (!props.clubSlug) return
@@ -273,14 +296,37 @@ const approveMemberRequest = async (pendingUser) => {
     await fetchClub()
   } finally { pendingUser.loading = false }
 }
-const rejectMemberRequest = async (pendingUser) => {
-  if (!props.clubSlug) return
-  pendingUser.loading = true
+const openRejectDialog = (pendingUser) => {
+  selectedRejectUser.value = pendingUser
+  rejectReason.value = 'incorrect_name' // Default to name error as it's the focus
+  rejectDialog.value = true
+}
+
+const closeRejectDialog = () => {
+  rejectDialog.value = false
+  selectedRejectUser.value = null
+  rejectReason.value = ''
+}
+
+const confirmReject = async () => {
+  if (!selectedRejectUser.value) return
+  const user = selectedRejectUser.value
+  user.loading = true
+  closeRejectDialog()
   try {
-    const rejectApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${pendingUser.id}/reject`)
-    await rejectApi.put()
+    const rejectApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${user.id}/reject`)
+    await rejectApi.put({}, { query: { reason: rejectReason.value } })
     await fetchPendingMembers()
-  } finally { pendingUser.loading = false }
+  } catch (e) {
+    toast.error('Failed to reject member: ' + (e.message || 'Unknown error'))
+  } finally {
+    user.loading = false
+  }
+}
+
+const rejectMemberRequest = async (pendingUser) => {
+  // Legacy or simplified method if needed, but we use dialog now
+  openRejectDialog(pendingUser)
 }
 const saveClubAndMembers = async () => {
   if (!editedClub.value.name) return

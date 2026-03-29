@@ -48,7 +48,7 @@ class SuggestionApprovedMail extends Mailable implements ShouldQueue
         $itemUrl = $path ? rtrim($base, '/').$path : null;
 
         return $this->subject('Your suggestion was approved!')
-            ->view('emails.suggestion_approved')
+            ->markdown('emails.suggestion_approved')
             ->with([
                 'suggestedEdit' => $this->suggestedEdit,
                 'type' => $type,

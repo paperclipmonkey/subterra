@@ -17,11 +17,13 @@ class ClubAccessResponded
     public $club;
     public $user;
     public $status; // 'approved' or 'rejected'
+    public $reason;
 
-    public function __construct(Club $club, User $user, string $status)
+    public function __construct(Club $club, User $user, string $status, ?string $reason = null)
     {
         $this->club = $club;
         $this->user = $user;
         $this->status = $status;
+        $this->reason = $reason;
     }
 }

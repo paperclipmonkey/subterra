@@ -242,6 +242,7 @@ class SqlBottleneckTest extends TestCase
     public function test_trip_update_query_count_with_many_participants(): void
     {
         Storage::fake('media');
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
 
         $creator = User::factory()->create();
         $originalParticipants = User::factory()->count(3)->create();

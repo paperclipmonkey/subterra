@@ -1,7 +1,7 @@
 <template>
   <v-card class="map-container">
     <v-card-text class="map-holder">
-      <mgl-map ref="map" :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
+      <AppMap ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15">
         <mgl-marker v-for="cave in caves" :key="cave.id"
                     :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
@@ -41,15 +41,17 @@
             </v-card>
           </mgl-popup>
         </mgl-marker>
-        <mgl-fullscreen-control />
-        <mgl-navigation-control />
-        <MglGeolocateControl :track-user-location="true" :show-accuracy-circle="true" />
-      </mgl-map>
+        
+        
+        
+      </AppMap>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
+import AppMap from '@/components/AppMap.vue'
+
 import { mdiApple, mdiGoogleMaps } from '@mdi/js'
 
 import {
@@ -72,20 +74,28 @@ const props = defineProps({
   }
 })
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 5
 // Default center
 const lnglat = [-2, 53]
 
-const mapOne = useMap()
 
-watch(() => mapOne.isLoaded, (isLoaded) => {
-  mapOne.map.resize()
+
+
+const mapRef = ref(null)
+
+watch(() => mapRef.value?.isLoaded, (isLoaded) => {
+  if (!isLoaded) {
+    return
+  }
+
+  mapRef.value?.map?.resize()
+
 
   watch(
     () => props.caves,
     (caves) => {
-      if (caves.length > 0 && mapOne.isLoaded) {
+      if (caves.length > 0 && mapRef.value?.isLoaded) {
         const bounds = new maplibregl.LngLatBounds()
         let hasPoints = false
         caves.forEach((cave) => {
@@ -95,7 +105,7 @@ watch(() => mapOne.isLoaded, (isLoaded) => {
           }
         })
         if (hasPoints) {
-          mapOne.map.fitBounds(bounds, { padding: 50, maxZoom: 15 })
+          mapRef.value?.map.fitBounds(bounds, { padding: 50, maxZoom: 15 })
         }
       }
     },

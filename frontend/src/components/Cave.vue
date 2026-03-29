@@ -107,6 +107,36 @@
               <div class="text-h6 mb-3 font-weight-bold display-1">Description</div>
               <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
 
+              <v-alert v-if="isDescriptionStub" type="info" variant="tonal" class="mb-6">
+                <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between w-100">
+                  <div>
+                    <div class="text-subtitle-1 font-weight-bold">Help improve this page</div>
+                    <div class="text-body-2">This cave's description is a stub. Could you write an improved description?</div>
+                  </div>
+                  <div class="mt-3 mt-sm-0 ml-sm-4 shrink-0">
+                    <v-btn
+                      v-if="appStore.canSuggest"
+                      color="primary"
+                      variant="flat"
+                      @click="$router.push('/caves/' + route.params.id + '/edit')"
+                    >
+                      {{ appStore.user.is_admin ? 'Edit Description' : 'Suggest Edit' }}
+                    </v-btn>
+                    <v-btn
+                      v-else
+                      color="primary"
+                      variant="flat"
+                      disabled
+                    >
+                      Suggest Edit
+                      <v-tooltip activator="parent" location="top">
+                        Your account must be approved to suggest edits
+                      </v-tooltip>
+                    </v-btn>
+                  </div>
+                </div>
+              </v-alert>
+
               <v-divider class="mb-6" />
 
               <div class="text-h6 mb-3 font-weight-bold">Access Information</div>
@@ -125,7 +155,9 @@
               <div v-else-if="cave.access_info">
                 <v-alert :icon="mdiLockAlert" border="start" border-color="warning" elevation="0" color="warning"
                          variant="tonal" class="mb-4">
-                  <MarkdownRenderer :source="cave.access_info" />
+                  <div class="text-high-emphasis text-body-1">
+                    <MarkdownRenderer :source="cave.access_info" />
+                  </div>
                 </v-alert>
               </div>
               <p v-else class="text-grey text-body-2">No specific access information provided.</p>
@@ -178,47 +210,45 @@
 
             <!-- Map Tab (Mobile only) -->
             <v-window-item v-if="smAndDown" value="map">
-              <v-card class="mb-4 rounded-lg" elevation="0" variant="flat">
-                <template v-if="appStore.canSuggest">
-                  <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px">
+              <div class="cave-map-mobile">
+                <template v-if="appStore.canSuggest && activeTab === 'map'">
+                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad">
                     <mgl-marker :coordinates="lnglat" color="#cc0000" />
-                    <mgl-navigation-control />
-                    <mgl-fullscreen-control />
-                  </mgl-map>
+                  </AppMap>
                 </template>
-                <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
+                <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
                   <div class="text-center pa-4">
                     <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
                     <div class="text-h6 text-grey-darken-1">Location Locked</div>
                     <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
                   </div>
                 </div>
-                <v-card-text>
-                  <div class="d-flex justify-space-between align-center">
-                    <div>
-                      <div class="text-caption text-grey">Coordinates</div>
-                      <div v-if="appStore.canSuggest && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
-                        cave.location_lng.toFixed(5) }}</div>
-                      <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
-                    </div>
-                    <div v-if="appStore.canSuggest" class="d-flex">
-                      <v-tooltip text="Copy Coordinates" location="top">
-                        <template #activator="{ props }">
-                          <v-btn :icon="mdiContentCopy" size="small" variant="text" v-bind="props"
-                                 @click="copyLatLng" />
-                        </template>
-                      </v-tooltip>
-                      <v-tooltip text="Open in Google Maps" location="top">
-                        <template #activator="{ props }">
-                          <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
-                                 :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
-                                 target="_blank" />
-                        </template>
-                      </v-tooltip>
-                    </div>
+              </div>
+              <v-card-text v-if="appStore.canSuggest">
+                <div class="d-flex justify-space-between align-center">
+                  <div>
+                    <div class="text-caption text-grey">Coordinates</div>
+                    <div v-if="cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                      cave.location_lng.toFixed(5) }}</div>
+                    <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
                   </div>
-                </v-card-text>
-              </v-card>
+                  <div class="d-flex">
+                    <v-tooltip text="Copy Coordinates" location="top">
+                      <template #activator="{ props }">
+                        <v-btn :icon="mdiContentCopy" size="small" variant="text" v-bind="props"
+                               @click="copyLatLng" />
+                      </template>
+                    </v-tooltip>
+                    <v-tooltip text="Open in Google Maps" location="top">
+                      <template #activator="{ props }">
+                        <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
+                               :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
+                               target="_blank" />
+                      </template>
+                    </v-tooltip>
+                  </div>
+                </div>
+              </v-card-text>
             </v-window-item>
 
             <!-- System Tab -->
@@ -378,6 +408,29 @@
               
               <MediaViewModal v-model="showMediaModal" :media="selectedMedia" />
             </v-window-item>
+            
+            <!-- Routes Tab -->
+            <v-window-item value="routes">
+              <template v-if="cave.system && cave.system.routes && cave.system.routes.length > 0">
+                <RouteList :routes="cave.system.routes" :cave-system-id="cave.system.id" />
+              </template>
+              <v-alert v-else-if="cave.system" type="info" variant="tonal">
+                <div class="d-flex justify-space-between align-center">
+                  <span>No specific routes defined for this system yet.</span>
+                  <v-btn
+                    v-if="appStore.user.is_admin"
+                    color="primary"
+                    size="small"
+                    variant="text"
+                    :prepend-icon="mdiPlus"
+                    :to="`/cave-systems/${cave.system.id}/routes/new`"
+                  >
+                    Add Route
+                  </v-btn>
+                </div>
+              </v-alert>
+              <v-alert v-else type="warning" variant="tonal">System information not available, cannot show routes.</v-alert>
+            </v-window-item>
 
             <!-- Collections Tab -->
             <v-window-item value="collections">
@@ -410,31 +463,6 @@
               </v-alert>
             </v-window-item>
 
-
-            
-            <!-- Routes Tab -->
-            <v-window-item value="routes">
-              <template v-if="cave.system && cave.system.routes && cave.system.routes.length > 0">
-                <RouteList :routes="cave.system.routes" :cave-system-id="cave.system.id" />
-              </template>
-              <v-alert v-else-if="cave.system" type="info" variant="tonal">
-                <div class="d-flex justify-space-between align-center">
-                  <span>No specific routes defined for this system yet.</span>
-                  <v-btn
-                    v-if="appStore.user.is_admin"
-                    color="primary"
-                    size="small"
-                    variant="text"
-                    :prepend-icon="mdiPlus"
-                    :to="`/cave-systems/${cave.system.id}/routes/new`"
-                  >
-                    Add Route
-                  </v-btn>
-                </div>
-              </v-alert>
-              <v-alert v-else type="warning" variant="tonal">System information not available, cannot show routes.</v-alert>
-            </v-window-item>
-
           </v-window>
         </v-card>
       </v-col>
@@ -444,11 +472,11 @@
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg" elevation="1">
           <template v-if="appStore.canSuggest">
-            <mgl-map :map-style="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px">
+            <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad">
               <mgl-marker :coordinates="lnglat" color="#cc0000" />
-              <mgl-navigation-control />
-              <mgl-fullscreen-control />
-            </mgl-map>
+              
+              
+            </AppMap>
           </template>
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
             <div class="text-center pa-4">
@@ -553,6 +581,8 @@
 
 
 <script setup>
+import AppMap from '@/components/AppMap.vue'
+
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useDisplay } from 'vuetify'
@@ -563,15 +593,12 @@ import { useCollectionStore } from '@/stores/collections'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
-import {
-  MglMap,
-  MglNavigationControl,
-  MglMarker,
-  MglFullscreenControl,
-} from '@indoorequal/vue-maplibre-gl'
+import { MglMarker } from '@indoorequal/vue-maplibre-gl'
 
-const style = 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge'
+const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 14
+
+
 
 const appStore = useAppStore()
 const { smAndDown } = useDisplay()
@@ -583,6 +610,12 @@ const cave = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeTab = ref(route.query.tab || 'overview')
+
+const isDescriptionStub = computed(() => {
+  if (!cave.value) return false
+  if (!cave.value.description) return true
+  return cave.value.description.length < 50
+})
 
 const pageTitle = computed(() => cave.value?.name)
 usePageTitle(pageTitle)
@@ -740,6 +773,9 @@ watch(
     }
   }
 )
+const onMapLoad = (event) => {
+
+}
 </script>
 
 <style lang="scss">
@@ -769,5 +805,10 @@ watch(
 
 .file-item:last-child {
   border-bottom: none;
+}
+
+.cave-map-mobile {
+  margin-left: -16px;
+  margin-right: -16px;
 }
 </style>

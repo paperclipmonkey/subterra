@@ -45,6 +45,7 @@ import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'
 import CollectionForm from '@/components/CollectionForm.vue'
 import { useToast } from "vue-toastification"
+import { toFormData } from '@/utilities.js'
 
 const toast = useToast()
 
@@ -117,25 +118,16 @@ const save = async () => {
 
     saving.value = true
     try {
-        // Prepare payload - CollectionForm handles internal state, we just need to send it
+        // Prepare payload
         const payload = { ...editedCollection.value }
 
-        if (payload.photo_data) {
-            payload.photo_path = payload.photo_data
-            delete payload.photo_data
-        }
-
-        // Ensure caves map correctly if needed, though form should produce correct structure
+        // Ensure caves map correctly
         if (payload.caves) {
             payload.caves = payload.caves.map(c => ({
                 id: c.id,
                 description: c.playlist_description
             }))
         }
-
-        // Handle photo upload separately if needed, or if form emits a file object
-        // CollectionForm stores file in internal state? No, it relies on parent extracting or model binding?
-        // Let's check CollectionForm again. It stores photo_data in model. Perfect.
 
         if (userStore.user?.is_admin || (props.collection && userStore.user?.id === props.collection.user_id)) {
             if (isNew.value) {
@@ -146,18 +138,21 @@ const save = async () => {
             toast.success(isNew.value ? 'Collection created successfully' : 'Collection updated successfully')
         } else {
             // Suggest Edit or Create
+            const suggestionPayload = {
+                suggestable_type: 'collection',
+                suggestable_id: props.collection?.id || null,
+                suggested_data: payload,
+                original_data: null
+            }
+
+            const formData = toFormData(suggestionPayload)
+
             const response = await fetch('/api/suggested-edits', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({
-                    suggestable_type: 'collection',
-                    suggestable_id: props.collection?.id || null,
-                    suggested_data: payload,
-                    original_data: null
-                }),
+                body: formData,
             })
 
             if (!response.ok) {

@@ -113,6 +113,13 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  if (user.email && (!user.name || user.name.trim() === '')) {
+    const isProfilePage = to.name === '/profile/[id].edit' || to.path.includes('/profile/')
+    if (!isProfilePage && to.path !== '/logout') {
+      return next({ name: '/profile/[id].edit', params: { id: user.id } })
+    }
+  }
+
   if (user.email) {
     return next()
   }

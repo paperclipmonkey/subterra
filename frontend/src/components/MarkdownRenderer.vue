@@ -4,18 +4,20 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
-import VueMarkdown from 'vue-markdown-render'
+<script>
+let mermaidInstance = null
 
-const props = defineProps({
-    source: {
-        type: String,
-        default: ''
-    }
-})
-
-const container = ref(null)
+const initMermaid = async () => {
+    if (mermaidInstance) return mermaidInstance
+    const mermaid = (await import('mermaid')).default
+    mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+    })
+    mermaidInstance = mermaid
+    return mermaid
+}
 
 /**
  * Custom markdown-it plugin that converts ```mermaid code fences
@@ -29,36 +31,68 @@ function mermaidPlugin(md) {
 
     md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         const token = tokens[idx]
-        if (token.info.trim() === 'mermaid') {
+        const info = (token.info || '').trim().toLowerCase()
+        if (info === 'mermaid' || info.startsWith('mermaid')) {
+            // Using v-pre-like behavior to ensure mermaid gets the raw text
             return `<div class="mermaid">${md.utils.escapeHtml(token.content)}</div>`
         }
         return defaultFenceRenderer(tokens, idx, options, env, self)
     }
 }
+</script>
+
+<script setup>
+import { ref, onMounted, watch, nextTick } from 'vue'
+import VueMarkdown from 'vue-markdown-render'
+
+const props = defineProps({
+    source: {
+        type: String,
+        default: ''
+    }
+})
+
+const container = ref(null)
 
 const renderMermaidDiagrams = async () => {
+    // Wait for ticks and a small delay to ensure vue-markdown-render has completed its DOM update
     await nextTick()
-    if (!container.value) return
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    if (!container.value) {
+        console.log('Mermaid: container not ready')
+        return
+    }
+
     const nodes = container.value.querySelectorAll('.mermaid')
     if (nodes.length === 0) return
 
-    // Lazy load mermaid only when needed
-    const mermaid = (await import('mermaid')).default
-
-    mermaid.initialize({
-        startOnLoad: false,
-        theme: 'default',
-        securityLevel: 'loose',
-    })
-
-    // Reset any previously-rendered diagrams so mermaid re-processes the raw text
-    nodes.forEach(node => {
-        node.removeAttribute('data-processed')
-    })
     try {
-        await mermaid.run({ nodes })
+        const mermaid = await initMermaid()
+        if (!mermaid) return
+
+        for (const node of nodes) {
+            // Skip if already processed
+            if (node.getAttribute('data-processed')) continue
+
+            // Unique ID for each diagram
+            const id = 'mermaid-svg-' + Math.random().toString(36).substring(2, 11)
+
+            // Mermaid.render expects the raw text
+            const text = node.textContent
+
+            try {
+                const { svg } = await mermaid.render(id, text)
+                node.innerHTML = svg
+                node.setAttribute('data-processed', 'true')
+            } catch (renderError) {
+                console.error('Mermaid individual render error:', renderError)
+                node.innerHTML = `<div class="text-error">Mermaid error: ${renderError.message}</div>`
+            }
+        }
     } catch (e) {
-        console.warn('Mermaid rendering error:', e)
+        console.error('Mermaid rendering loop error:', e)
     }
 }
 
@@ -68,17 +102,143 @@ onMounted(() => {
 
 watch(() => props.source, () => {
     renderMermaidDiagrams()
-})
+}, { immediate: true })
 </script>
 
-<style>
-.markdown-renderer .mermaid {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0;
+<style scoped>
+.markdown-renderer {
+  font-family: 'Roboto', sans-serif;
+  line-height: 1.75;
+  color: #374151;
+  max-width: 100%;
 }
 
-.markdown-renderer .mermaid svg {
-    max-width: 100%;
+.markdown-renderer :deep(h1),
+.markdown-renderer :deep(h2),
+.markdown-renderer :deep(h3),
+.markdown-renderer :deep(h4) {
+  color: #111827;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.markdown-renderer :deep(h1) {
+  font-size: 2.25rem;
+  border-bottom: 3px solid #4285f4;
+  padding-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+.markdown-renderer :deep(h2) {
+  font-size: 1.875rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.25rem;
+}
+
+.markdown-renderer :deep(h3) {
+  font-size: 1.5rem;
+}
+
+.markdown-renderer :deep(p) {
+  margin-bottom: 1.25rem;
+}
+
+.markdown-renderer :deep(ul),
+.markdown-renderer :deep(ol) {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-renderer :deep(li) {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-renderer :deep(blockquote) {
+  border-left: 4px solid #4285f4;
+  background: #f9fafb;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #4b5563;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.markdown-renderer :deep(pre) {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.markdown-renderer :deep(code) {
+  font-family: 'Fira Code', 'Cascadia Code', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+}
+
+.markdown-renderer :deep(:not(pre) > code) {
+  background: #f1f5f9;
+  color: #4285f4;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+}
+
+.markdown-renderer :deep(table) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.5rem 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-renderer :deep(th) {
+  background: #f8fafc;
+  text-align: left;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  color: #374151;
+}
+
+.markdown-renderer :deep(td) {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.markdown-renderer :deep(tr:last-child td) {
+  border-bottom: none;
+}
+
+.markdown-renderer :deep(tr:nth-child(even)) {
+  background: #f9fafb;
+}
+
+.markdown-renderer :deep(hr) {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 2.5rem 0;
+}
+
+.markdown-renderer :deep(.mermaid) {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.markdown-renderer :deep(.mermaid svg) {
+  max-width: 100%;
+  height: auto;
 }
 </style>

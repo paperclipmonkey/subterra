@@ -21,7 +21,7 @@ class CollectionResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'caves_count' => $this->caves_count,
-            'photo_path' => $this->photo_path ? Storage::disk('media')->url($this->photo_path) : null,
+            'photo_path' => $this->photo_path ? (str_starts_with($this->photo_path, 'http') ? $this->photo_path : Storage::disk('media')->url($this->photo_path)) : null,
             'caves' => CaveResource::collection($this->whenLoaded('caves')),
         ];
     }

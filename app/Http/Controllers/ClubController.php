@@ -241,10 +241,11 @@ class ClubController extends Controller
         return new UserDetailEmailResource($user->fresh());
     }
 
-    public function rejectMember(Club $club, User $user): JsonResponse
+    public function rejectMember(Request $request, Club $club, User $user): JsonResponse
     {
         $club->users()->detach($user->id);
-        event(new ClubAccessResponded($club, $user, 'rejected'));
+        $reason = $request->input('reason');
+        event(new ClubAccessResponded($club, $user, 'rejected', $reason));
 
         return response()->json(['message' => 'Member rejected.']);
     }

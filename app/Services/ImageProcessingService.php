@@ -6,6 +6,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
@@ -35,6 +36,38 @@ class ImageProcessingService
         Storage::disk('media')->put($filePath, (string) $image);
 
         unset($image); // Free memory immediately
+        gc_collect_cycles();
+
+        return $filePath;
+    }
+
+    public function processAndStoreBase64Image(string $base64DataUri, string $directory, string $suffix = ''): string
+    {
+        $parts = explode(',', $base64DataUri, 2);
+        if (count($parts) !== 2) {
+            throw ValidationException::withMessages([
+                'image' => 'Invalid image data.',
+            ]);
+        }
+        $binaryData = base64_decode($parts[1]);
+
+        try {
+            $image = Image::read($binaryData)->scaleDown(1500, 1500)->encode(new WebpEncoder(quality: 60));
+        } catch (\Intervention\Image\Exceptions\DecoderException $e) {
+            throw ValidationException::withMessages([
+                'image' => 'The uploaded image format is not supported. Please upload a JPEG, PNG, or WebP image.',
+            ]);
+        }
+
+        $filename = Str::uuid();
+        if ($suffix) {
+            $filename .= '_'.$suffix;
+        }
+        $filePath = $directory.'/'.$filename.'.webp';
+
+        Storage::disk('media')->put($filePath, (string) $image);
+
+        unset($image);
         gc_collect_cycles();
 
         return $filePath;

@@ -10,14 +10,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
-class SyncCccCaves extends Command
+class SyncCcrCaves extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'sync:ccc-caves 
+    protected $signature = 'sync:ccr-caves 
                             {--dry-run : Parse the file without inserting data} 
                             {--whitelist= : Comma-separated list of names to always import} 
                             {--blocklist= : Comma-separated list of names to always skip}
@@ -40,7 +40,7 @@ class SyncCccCaves extends Command
         $whitelistNames = $this->getWhitelist();
         $blocklistNames = $this->getBlocklist();
 
-        $this->info('Fetching CCC data...');
+        $this->info('Fetching CCR data...');
         $url = 'https://cambriancavingcouncil.org.uk/registry/CCR_data2.xml';
 
         try {
@@ -172,13 +172,13 @@ class SyncCccCaves extends Command
                     $descriptionParts[] = $this->xmlInnerText($entry->Desc);
                 }
 
-                $cccLink = 'https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID='.(string) $entry['id'];
-                $descriptionParts[] = '[CCC Registry]('.$cccLink.')';
+                $ccrLink = 'https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID='.(string) $entry['id'];
+                $descriptionParts[] = '[CC Registry]('.$ccrLink.')';
 
                 $description = implode("\n\n", $descriptionParts);
 
                 {
-                    $systemReferences = ['[CCC Registry]('.$cccLink.')'];
+                    $systemReferences = ['[CC Registry]('.$ccrLink.')'];
                     if (!empty($entry->Bibl)) {
                         foreach ($entry->Bibl as $bibl) {
                             $biblText = $this->xmlInnerText($bibl);
@@ -187,7 +187,7 @@ class SyncCccCaves extends Command
                             }
                         }
                     }
-                    // Deduplicate XML entries (CCC data can have duplicate Bibl elements)
+                    // Deduplicate XML entries (CCR data can have duplicate Bibl elements)
                     $systemReferences = array_values(array_unique($systemReferences));
 
                     // Format as markdown list items
@@ -290,7 +290,7 @@ class SyncCccCaves extends Command
                     // Check for differences. Round both sides before comparing floats to avoid
                     // false negatives from legacy high-precision stored values.
                     $coordKeys = ['location_lat', 'location_lng', 'location_alt'];
-                    // Large text fields: skip if CCC text is already contained in Subterra text
+                    // Large text fields: skip if CCR text is already contained in Subterra text
                     $textKeys = ['description', 'access_info'];
                     $differences = [];
                     foreach ($caveData as $key => $value) {
@@ -303,7 +303,7 @@ class SyncCccCaves extends Command
                         } elseif (in_array($key, $textKeys)) {
                             $existingText = (string) ($existingCave->$key ?? '');
                             $newText = (string) ($value ?? '');
-                            // Skip if both empty or if every paragraph of CCC text is already
+                            // Skip if both empty or if every paragraph of CCR text is already
                             // contained in Subterra text (accounts for formatting differences
                             // like angle-bracket-wrapped URLs from previous imports).
                             if (!empty($newText) && !$this->textAlreadyContained($newText, $existingText)) {
@@ -423,7 +423,7 @@ class SyncCccCaves extends Command
             $whitelist = array_map('trim', explode(',', $whitelistArg));
         }
 
-        $filePath = storage_path('app/ccc_whitelist.txt');
+        $filePath = storage_path('app/ccr_whitelist.txt');
         if (file_exists($filePath)) {
             $fileContent = file_get_contents($filePath);
             $names = array_map('trim', explode("\n", $fileContent));
@@ -449,7 +449,7 @@ class SyncCccCaves extends Command
             $blocklist = array_map('trim', explode(',', $blocklistArg));
         }
 
-        $filePath = storage_path('app/ccc_blocklist.txt');
+        $filePath = storage_path('app/ccr_blocklist.txt');
         if (file_exists($filePath)) {
             $fileContent = file_get_contents($filePath);
             $names = array_map('trim', explode("\n", $fileContent));
@@ -490,9 +490,9 @@ class SyncCccCaves extends Command
             }
 
             if (!str_contains($existingText, $part)) {
-                // For CCC Registry links, check if the ID is already referenced
+                // For CC Registry links, check if the ID is already referenced
                 // regardless of link format (markdown, angle-bracket, plain URL)
-                if (preg_match('/CCC Registry/i', $part) && preg_match('/[?&]ID=(\d+)/', $part, $idMatch)) {
+                if (preg_match('/CC Registry/i', $part) && preg_match('/[?&]ID=(\d+)/', $part, $idMatch)) {
                     if (str_contains($existingText, 'ID='.$idMatch[1])) {
                         continue;
                     }

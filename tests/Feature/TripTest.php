@@ -668,4 +668,44 @@ class TripTest extends TestCase
             'photographer' => 'New Photographer',
         ]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_dispatches_event_when_new_participant_added_on_update()
+    {
+        $user = User::factory()->create();
+        $existingParticipant = User::factory()->create();
+        $newParticipant = User::factory()->create();
+
+        $entrance = Cave::factory()->create();
+        $trip = Trip::factory()->create(['entrance_cave_id' => $entrance->id]);
+        $trip->participants()->attach([$user->id, $existingParticipant->id]);
+
+        Event::fake([\App\Events\TripParticipantTagged::class]);
+
+        $updateData = [
+            'name' => 'Updated Trip',
+            'start_time' => '2024-01-01 10:00:00',
+            'end_time' => '2024-01-02 10:00:00',
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$existingParticipant->id, $newParticipant->id],
+            '_method' => 'PUT',
+        ];
+
+        $this->actingAs($user);
+        $this->withHeaders(['Accept' => 'application/json'])
+             ->post('/api/trips/'.$trip->short_id, $updateData)
+             ->assertOk();
+
+        // The event should be dispatched for the new participant
+        Event::assertDispatched(\App\Events\TripParticipantTagged::class, function ($event) use ($newParticipant) {
+            return $event->user->id === $newParticipant->id;
+        });
+
+        // The event should NOT be dispatched for the existing participant
+        Event::assertNotDispatched(\App\Events\TripParticipantTagged::class, function ($event) use ($existingParticipant) {
+            return $event->user->id === $existingParticipant->id;
+        });
+    }
 }

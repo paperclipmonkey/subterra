@@ -103,7 +103,7 @@ Red Rose CPC,https://www.rrcpc.org.uk,20,,5,TRUE,,,54.227623,-2.518617,TRUE
 YSS,https://www.yssuk.com ,32,,5,TRUE,,,54.1210481,-2.2939627,TRUE
 Orpheus Caving Club,https://www.orpheuscavingclub.org.uk,18,,6,TRUE,,,53.162152,-1.783156,TRUE
 Technical Speleological Group,https://www.tsgcaving.co.uk,18,The Chapel,5,TRUE,,,53.343435,-1.775418,TRUE
-Chelsea Spelaelogical Society,https://www.chelseaspelaeo.org.uk/,16,Whitewalls,5,TRUE,,,51.835127,-3.156622,TRUE
+Chelsea Spelaeological Society,https://www.chelseaspelaeo.org.uk/,16,Whitewalls,5,TRUE,,,51.835127,-3.156622,TRUE
 Croydon Caving Club,https://www.croydoncavingclub.org.uk,15,Godre Pentre,5,TRUE,,,51.808993,-3.554072,TRUE
 South Wales Caving Club,https://www.swcc.org.uk,30,,9,TRUE,,"1-10 Powell St, Penwyllt, Pen-y-Cae, Swansea SA9 1GQ",51.825775,-3.661131,TRUE
 Westminster Speleological Group,https://www.wsg.org.uk,18,,4,TRUE,,,51.752367,-3.544872,TRUE
