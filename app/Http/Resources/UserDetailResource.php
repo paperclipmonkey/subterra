@@ -35,7 +35,7 @@ class UserDetailResource extends JsonResource
                     'id' => $medal->id,
                     'name' => $medal->name,
                     'description' => $medal->description,
-                    'image_url' => $medal->image_path ? Storage::disk('medals')->url($medal->image_path) : null,
+                    'image_url' => $this->getMedalUrl($medal->image_path),
                     'awarded_at' => $medal->pivot->awarded_at ?? null,
                 ];
             }),
@@ -48,5 +48,21 @@ class UserDetailResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+
+    /**
+     * Get the full URL for a medal image.
+     */
+    private function getMedalUrl(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+
+        return Storage::disk('medals')->url($path);
     }
 }
