@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Auth;
 
 class CollectionController extends Controller
 {
+    public function __construct(
+        private readonly \App\Services\ImageProcessingService $imageProcessingService
+    ) {
+    }
+
     public function index()
     {
         return CollectionResource::collection(Collection::withCount('caves')->get());
@@ -48,7 +53,9 @@ class CollectionController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'photo' => 'nullable|image|max:10485760', // 10MB
+            'photo' => 'nullable',
+            'photo_path' => 'nullable|string',
+            'photo_data' => 'nullable|string',
             'caves' => 'nullable|array',
             'caves.*.id' => 'required|exists:caves,id',
             'caves.*.description' => 'nullable|string',
@@ -56,11 +63,11 @@ class CollectionController extends Controller
 
         $validated['user_id'] = Auth::id();
 
-        if ($request->hasFile('photo')) {
-            $validated['photo_path'] = $this->processPhoto($request->file('photo'));
+        if ($photoPath = $this->processPhotoField($request)) {
+            $validated['photo_path'] = $photoPath;
         }
 
-        unset($validated['photo']);
+        unset($validated['photo'], $validated['photo_data']);
         unset($validated['caves']);
 
         $collection = Collection::create($validated);
@@ -87,17 +94,19 @@ class CollectionController extends Controller
         $validated = $request->validate([
             'name' => 'string|max:255',
             'description' => 'nullable|string',
-            'photo' => 'nullable|image|max:10485760',
+            'photo' => 'nullable',
+            'photo_path' => 'nullable|string',
+            'photo_data' => 'nullable|string',
             'caves' => 'nullable|array',
             'caves.*.id' => 'required|exists:caves,id',
             'caves.*.description' => 'nullable|string',
         ]);
 
-        if ($request->hasFile('photo')) {
-            $validated['photo_path'] = $this->processPhoto($request->file('photo'));
+        if ($photoPath = $this->processPhotoField($request)) {
+            $validated['photo_path'] = $photoPath;
         }
 
-        unset($validated['photo']);
+        unset($validated['photo'], $validated['photo_data']);
         unset($validated['caves']);
 
         $collection->update($validated);
@@ -166,20 +175,22 @@ class CollectionController extends Controller
         $collection->caves()->sync($syncData);
     }
 
-    private function processPhoto(\Illuminate\Http\UploadedFile $photo): string
+    private function processPhotoField(Request $request): ?string
     {
-        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $mimeType = $photo->getMimeType();
-
-        if (!in_array($mimeType, $allowedMimes)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'photo' => 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.',
-            ]);
+        // 1. Check for multipart file upload
+        if ($request->hasFile('photo')) {
+            return $this->imageProcessingService->processAndStoreImage(
+                ['data' => $request->file('photo')],
+                'collections'
+            );
         }
 
-        $extension = $photo->extension();
-        $filename = hash('sha256', 'collection_'.time().Auth::id()).'.'.$extension;
+        // 2. Check for base64 in photo_data or photo_path
+        $base64 = $request->input('photo_data') ?? $request->input('photo_path');
+        if (is_string($base64) && str_starts_with($base64, 'data:image')) {
+            return $this->imageProcessingService->processAndStoreBase64Image($base64, 'collections');
+        }
 
-        return $photo->storeAs('collections', $filename, 'media');
+        return null;
     }
 }

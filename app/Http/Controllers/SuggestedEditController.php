@@ -56,7 +56,7 @@ class SuggestedEditController extends Controller
                 'name', 'description', 'distance', 'grade', 'time_estimate', 'tackle',
             ],
             'collection' => [
-                'name', 'description', 'is_public', 'caves',
+                'name', 'description', 'is_public', 'caves', 'photo_path', 'photo_data',
             ],
         ];
 
