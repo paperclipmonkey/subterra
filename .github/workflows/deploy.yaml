@@ -158,6 +158,6 @@ jobs:
       - name: Set up Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy to Fly
-        run: flyctl deploy --remote-only
+        run: flyctl deploy 
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
