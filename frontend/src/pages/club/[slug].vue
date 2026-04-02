@@ -35,7 +35,7 @@
           </v-card-text>
         </v-card>
         <!-- Club Edit Modal -->
-        <ClubEditModal v-if="club" v-model="showEditClubModal" :club-slug="club.slug" :initial-tab="editClubTab"
+        <ClubEditModal v-if="club && isClubAdmin" v-model="showEditClubModal" :club-slug="club.slug" :initial-tab="editClubTab"
                        @saved="onClubEditSaved" />
         <!-- Loading/Error State for Club Info -->
         <v-container v-else-if="error" class="text-center mt-6">
