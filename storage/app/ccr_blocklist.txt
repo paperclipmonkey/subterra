@@ -19,3 +19,5 @@ Ogof Ffynnon Wyntog
 Caswell Valley Sink
 # Covered by Tunnel Cave
 Tunnel Cave Lower Cavers Entrance
+# Rarely visited
+Ogof Morloi
