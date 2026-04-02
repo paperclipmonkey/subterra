@@ -37,7 +37,7 @@ class WeatherService
         return Cache::remember($cacheKey, self::FORECAST_CACHE_TTL, function () use ($latitude, $longitude) {
             try {
                 $url = "{$this->baseUrl}/forecast/{$this->apiKey}/{$latitude},{$longitude}";
-                $response = Http::timeout(10)->get($url, [
+                $response = Http::timeout(30)->get($url, [
                     'units' => 'si',
                     'exclude' => 'minutely,alerts,flags',
                 ]);
@@ -79,33 +79,42 @@ class WeatherService
 
         $historicData = [];
         $now = now();
+        $requests = [];
+        $datesToFetch = [];
 
-        // Loop for the last 7 days
+        // Identify which days are not in cache
         for ($i = 0; $i < 7; ++$i) {
-            // For Time Machine requests, we need a specific timestamp.
-            // We'll use noon of that day to get the daily summary effectively.
             $date = $now->copy()->subDays($i + 1)->setHour(12)->setMinute(0)->setSecond(0);
-            $timestamp = $date->timestamp;
             $dateString = $date->format('Y-m-d');
-
             $cacheKey = "weather_historic_{$normalizedLatitude}_{$normalizedLongitude}_{$dateString}";
 
             $dayData = Cache::get($cacheKey);
+            if ($dayData) {
+                $historicData[$dateString] = $dayData;
+            } else {
+                $datesToFetch[$dateString] = [
+                    'url' => "https://timemachine.pirateweather.net/forecast/{$this->apiKey}/{$normalizedLatitude},{$normalizedLongitude},{$date->timestamp}",
+                    'cacheKey' => $cacheKey,
+                ];
+            }
+        }
 
-            if (!$dayData) {
-                try {
-                    // Use the dedicated Time Machine endpoint for historic data to avoid "Time is in the Past" errors
-                    $url = "https://timemachine.pirateweather.net/forecast/{$this->apiKey}/{$normalizedLatitude},{$normalizedLongitude},{$timestamp}";
-
-                    // We primarily want hourly rain data for this day
-                    $response = Http::timeout(10)->get($url, [
+        // Fetch missing days in parallel
+        if (!empty($datesToFetch)) {
+            try {
+                $responses = Http::pool(fn ($pool) => array_map(
+                    fn ($fetchInfo) => $pool->timeout(30)->get($fetchInfo['url'], [
                         'units' => 'si',
                         'exclude' => 'minutely,currently,alerts,flags',
-                    ]);
+                    ]),
+                    $datesToFetch
+                ));
+
+                foreach ($datesToFetch as $dateString => $fetchInfo) {
+                    $response = $responses[array_search($dateString, array_keys($datesToFetch))];
 
                     if ($response->successful()) {
                         $json = $response->json();
-                        // Just extract what we need: daily summary and hourly precip
                         $dayData = [
                             'day_stats' => $json['daily']['data'][0] ?? null,
                             'hourly' => array_map(function ($hour) {
@@ -117,27 +126,25 @@ class WeatherService
                             }, $json['hourly']['data'] ?? []),
                         ];
 
-                        // Cache historic data for a long time since it won't change (1 year)
-                        Cache::put($cacheKey, $dayData, 31536000);
+                        Cache::put($fetchInfo['cacheKey'], $dayData, 31536000); // 1 year
+                        $historicData[$dateString] = $dayData;
                     } else {
                         Log::error('Pirate Weather Historic API error', [
                             'status' => $response->status(),
                             'body' => $response->body(),
-                            'url' => $url,
+                            'url' => $fetchInfo['url'],
                         ]);
                     }
-                } catch (\Exception $e) {
-                    Log::error('Weather service historic exception', [
-                        'message' => $e->getMessage(),
-                    ]);
                 }
-            }
-
-            if ($dayData) {
-                // Key by date string for frontend
-                $historicData[$dateString] = $dayData;
+            } catch (\Exception $e) {
+                Log::error('Weather service historic exception', [
+                    'message' => $e->getMessage(),
+                ]);
             }
         }
+
+        // Sort by date descending (to match existing behavior of subDays order)
+        krsort($historicData);
 
         return $historicData;
     }

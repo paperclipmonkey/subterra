@@ -162,4 +162,53 @@ class CaveWeatherTest extends TestCase
         $this->assertEquals('Test Rain Gauge', $response->json('data.rain_gauges.0.name'));
         $this->assertEquals('12345', $response->json('data.rain_gauges.0.station_id'));
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_historic_rain_data()
+    {
+        $this->actingAs(User::factory()->create());
+        config(['services.pirate_weather.api_key' => 'test-key']);
+
+        $cave = Cave::factory()->create([
+            'location_lat' => 51.4545,
+            'location_lng' => -2.5879,
+        ]);
+
+        // Mock Pirate Weather Time Machine calls (7 calls for 7 days)
+        Http::fake([
+            'timemachine.pirateweather.net/*' => Http::response([
+                'daily' => [
+                    'data' => [
+                        ['time' => 1234567890, 'precipIntensity' => 0.5],
+                    ],
+                ],
+                'hourly' => [
+                    'data' => [
+                        ['time' => 1234567890, 'precipIntensity' => 0.1],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->getJson("/api/caves/{$cave->slug}/weather/historic");
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'day_stats',
+                    'hourly' => [
+                        '*' => [
+                            'time',
+                            'precipIntensity',
+                            'precipProbability',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        // Verify we got 7 days of data
+        $this->assertCount(7, $response->json('data'));
+    }
 }
