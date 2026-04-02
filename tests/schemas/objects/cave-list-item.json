@@ -32,15 +32,39 @@
             "type": "boolean"
         },
         "hero_image": {
-            "type": [
-                "object",
-                "null"
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "url": { "type": "string" }
+                    },
+                    "required": ["url"]
+                },
+                { "type": "null" }
+            ]
+        },
+        "hero_video": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "url": { "type": "string" }
+                    },
+                    "required": ["url"]
+                },
+                { "type": "null" }
             ]
         },
         "entrance_image": {
-            "type": [
-                "object",
-                "null"
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "url": { "type": "string" }
+                    },
+                    "required": ["url"]
+                },
+                { "type": "null" }
             ]
         },
         "tags": {
@@ -69,12 +93,6 @@
                 },
                 "tags": {
                     "type": "array"
-                },
-                "catchment_id": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ]
                 }
             },
             "required": [

@@ -73,10 +73,12 @@
 <script setup>
 import { mdiClose } from '@mdi/js'
 
-import { ref, defineProps, onMounted, watch } from 'vue'
+import { ref, computed, defineProps, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useTagStore } from '@/stores/tags'
 
 const route = useRoute()
+const tagStore = useTagStore()
 const emit = defineEmits(['filter', 'close'])
 
 const props = defineProps({
@@ -85,7 +87,7 @@ const props = defineProps({
   targetCategory: { type: String, default: null }
 })
 
-const tagsAvailable = ref({})
+const tagsAvailable = computed(() => tagStore.tags)
 const selectedTags = ref({})
 const categoryRefs = ref({})
 
@@ -94,8 +96,7 @@ const setCategoryRef = (el, name) => {
 }
 
 onMounted(async () => {
-  const response = await fetch('/api/tags')
-  tagsAvailable.value = await response.json()
+  await tagStore.fetchTags()
   const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : []
 
   // Initialize selectedTags with the loaded filters

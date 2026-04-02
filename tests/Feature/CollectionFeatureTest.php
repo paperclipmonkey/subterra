@@ -175,7 +175,7 @@ class CollectionFeatureTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     'caves' => [
-                        ['length', 'depth'],
+                        ['system' => ['length', 'vertical_range']],
                     ],
                 ],
             ]);

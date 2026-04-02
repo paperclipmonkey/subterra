@@ -2,7 +2,7 @@
   <v-form ref="form" v-model="valid">
     <v-row>
       <v-col cols="12">
-        <v-text-field autocomplete="off" v-model="internalCollection.name" label="Name" required :rules="[v => !!v || 'Name is required']" />
+        <v-text-field v-model="internalCollection.name" autocomplete="off" label="Name" required :rules="[v => !!v || 'Name is required']" />
       </v-col>
       <v-col cols="12">
         <div class="text-subtitle-2 mb-1">Description</div>
@@ -20,7 +20,7 @@
     <v-divider class="my-4" />
     <div class="text-h6 mb-2">Manage Caves</div>
 
-    <v-autocomplete autocomplete="off" v-model="selectedCaveToAdd" :items="allCaves" item-title="name" item-value="id"
+    <v-autocomplete v-model="selectedCaveToAdd" autocomplete="off" :items="allCaves" item-title="name" item-value="id"
                     label="Add a Cave" placeholder="Search for a cave..." return-object hide-details
                     class="mb-4" @update:model-value="addCave" />
 

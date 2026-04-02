@@ -7,11 +7,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCaveRequest;
 use App\Http\Requests\UpdateCaveRequest;
 use App\Http\Resources\CaveResource;
-use App\Http\Resources\CaveSummaryResource;
 use App\Models\Cave;
 use App\Models\Tag;
 use App\Services\ImageProcessingService;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CaveController extends Controller
@@ -21,26 +21,163 @@ class CaveController extends Controller
     ) {
     }
 
-    public function index(\Illuminate\Http\Request $request): AnonymousResourceCollection
+    public function index(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
     {
-        if ($request->user()) {
-            $request->user()->load('clubs');
+        $user = $request->user();
+        $hasApprovedClub = false;
+        if ($user) {
+            $user->load('clubs');
+            $hasApprovedClub = $user->hasApprovedClub();
         }
 
-        $query = Cave::with(['heroImage', 'entranceImage', 'heroVideo', 'tags', 'system.tags'])
-            ->orderBy('name');
-
-        if ($request->user()) {
-            $query->withExists(['trips as has_visited_system' => function ($q) use ($request) {
-                $q->whereHas('participants', function ($pq) use ($request) {
-                    $pq->where('users.id', $request->user()->id);
-                });
-            }]);
+        // Pre-fetch visited system IDs
+        $visitedSystemIds = [];
+        if ($user) {
+            $visitedSystemIds = DB::table('trip_user')
+                ->join('trips', 'trips.id', '=', 'trip_user.trip_id')
+                ->where('trip_user.user_id', $user->id)
+                ->distinct()
+                ->pluck('trips.cave_system_id')
+                ->flip();
         }
 
-        $caves = $query->get();
+        // 1. Caves as raw rows
+        $caves = DB::table('caves')
+            ->select(['id', 'slug', 'name', 'location_name', 'location_country', 'location_lat', 'location_lng', 'cave_system_id'])
+            ->orderBy('name')
+            ->get();
 
-        return CaveSummaryResource::collection($caves);
+        $caveIds = $caves->pluck('id');
+        $systemIds = $caves->pluck('cave_system_id')->unique()->filter();
+
+        // 2. Media (hero, entrance, hero_video only)
+        $mediaBycave = DB::table('cave_media')
+            ->select(['cave_id', 'type', 'filename'])
+            ->whereIn('cave_id', $caveIds)
+            ->whereIn('type', ['hero', 'entrance', 'hero_video'])
+            ->get()
+            ->groupBy('cave_id');
+
+        // 3. Cave tags via pivot
+        $caveTags = DB::table('cave_tag')
+            ->join('tags', 'tags.id', '=', 'cave_tag.tag_id')
+            ->select(['cave_tag.cave_id', 'tags.id', 'tags.tag', 'tags.category'])
+            ->whereIn('cave_tag.cave_id', $caveIds)
+            ->get()
+            ->groupBy('cave_id');
+
+        // 4. Systems
+        $systems = DB::table('cave_systems')
+            ->select(['id', 'name', 'length', 'vertical_range'])
+            ->whereIn('id', $systemIds)
+            ->get()
+            ->keyBy('id');
+
+        // 5. System tags via pivot
+        $systemTags = DB::table('cave_system_tag')
+            ->join('tags', 'tags.id', '=', 'cave_system_tag.tag_id')
+            ->select(['cave_system_tag.cave_system_id', 'tags.id', 'tags.tag', 'tags.category'])
+            ->whereIn('cave_system_tag.cave_system_id', $systemIds)
+            ->get()
+            ->groupBy('cave_system_id');
+
+        // 6. Cached special tags (Previously Done, Not Done Yet, length tags)
+        $specialTags = DB::table('tags')
+            ->select(['id', 'tag', 'category'])
+            ->whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m'])
+            ->get()
+            ->keyBy('tag');
+
+        // Media URL base
+        $mediaUrlBase = rtrim(Storage::disk('media')->url(''), '/');
+
+        // Build response directly
+        $data = $caves->map(function ($cave) use (
+            $mediaBycave,
+            $caveTags,
+            $systems,
+            $systemTags,
+            $specialTags,
+            $visitedSystemIds,
+            $hasApprovedClub,
+            $mediaUrlBase,
+        ) {
+            $hasDone = $visitedSystemIds->has($cave->cave_system_id);
+            $system = $systems->get($cave->cave_system_id);
+
+            // Tags
+            $tags = [];
+            if ($caveTags->has($cave->id)) {
+                foreach ($caveTags->get($cave->id) as $t) {
+                    $tags[] = ['id' => $t->id, 'tag' => $t->tag, 'category' => $t->category];
+                }
+            }
+
+            $doneTag = $hasDone ? $specialTags->get('Previously Done') : $specialTags->get('Not Done Yet');
+            if ($doneTag) {
+                $tags[] = ['id' => $doneTag->id, 'tag' => $doneTag->tag, 'category' => $doneTag->category];
+            }
+
+            // System length tags
+            $lengthTags = [];
+            if ($system) {
+                $length = $system->length;
+                foreach ([['> 5km', 5000], ['> 1km', 1000], ['> 500m', 500], ['> 250m', 250]] as [$label, $min]) {
+                    if ($length >= $min && ($st = $specialTags->get($label))) {
+                        $lt = ['id' => $st->id, 'tag' => $st->tag, 'category' => $st->category];
+                        $tags[] = $lt;
+                        $lengthTags[] = $lt;
+                    }
+                }
+            }
+
+            // System tags
+            $sysTagArr = [];
+            if ($system && $systemTags->has($system->id)) {
+                foreach ($systemTags->get($system->id) as $t) {
+                    $sysTagArr[] = ['id' => $t->id, 'tag' => $t->tag, 'category' => $t->category];
+                }
+            }
+
+            // Media — return object with just the url property
+            $media = $mediaBycave->get($cave->id);
+            $mediaUrl = function ($type) use ($media, $mediaUrlBase) {
+                if (!$media) {
+                    return;
+                }
+                $m = $media->firstWhere('type', $type);
+                if (!$m || !$m->filename) {
+                    return;
+                }
+                $url = str_starts_with($m->filename, 'http') ? $m->filename : $mediaUrlBase.'/'.$m->filename;
+
+                return ['url' => $url];
+            };
+
+            return [
+                'id' => $cave->id,
+                'slug' => $cave->slug,
+                'name' => $cave->name,
+                'hero_image' => $mediaUrl('hero'),
+                'hero_video' => $mediaUrl('hero_video'),
+                'entrance_image' => $mediaUrl('entrance'),
+                'tags' => $tags,
+                'location_name' => $cave->location_name,
+                'location_country' => $cave->location_country,
+                'location_lat' => $hasApprovedClub ? $cave->location_lat : null,
+                'location_lng' => $hasApprovedClub ? $cave->location_lng : null,
+                'system' => $system ? [
+                    'id' => $system->id,
+                    'name' => $system->name,
+                    'length' => $system->length,
+                    'vertical_range' => $system->vertical_range,
+                    'tags' => array_merge($sysTagArr, $lengthTags),
+                ] : null,
+                'previously_done' => $hasDone,
+            ];
+        });
+
+        return response()->json(['data' => $data]);
     }
 
     public function store(StoreCaveRequest $request): CaveResource

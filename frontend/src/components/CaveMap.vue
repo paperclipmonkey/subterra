@@ -23,7 +23,7 @@
                 </v-card-subtitle>
               </template>
               <v-card-text>
-                Depth: {{ cave.depth }}m | Length: {{ cave.length }}m
+                Depth: {{ cave.system?.vertical_range ?? '?' }}m | Length: {{ cave.system?.length ?? '?' }}m
               </v-card-text>
               <v-card-actions>
                 <v-btn :to="`/caves/${cave.slug}`">

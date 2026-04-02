@@ -101,20 +101,20 @@ class CaveResource extends JsonResource
                 'name' => $this->system->name,
                 'description' => $this->system->description ?? '',
                 'catchment_id' => $this->system->catchment_id,
-                'catchment_name' => $this->system->catchment?->name,
+                'catchment_name' => $this->system->relationLoaded('catchment') ? $this->system->catchment?->name : null,
                 'length' => $this->system->length,
                 'vertical_range' => $this->system->vertical_range,
-                'caves' => $this->system->caves->map(function ($cave) {
+                'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->map(function ($cave) {
                     return [
                         'id' => $cave->id,
                         'name' => $cave->name,
                         'slug' => $cave->slug,
                     ];
-                }),
-                'tags' => TagResource::collection($this->system->tags->merge($systemLengthTags)),
+                }) : [],
+                'tags' => $this->system->relationLoaded('tags') ? TagResource::collection($this->system->tags->merge($systemLengthTags)) : TagResource::collection($systemLengthTags),
                 'references' => $request->user()?->hasApprovedClub() ? $this->system->references : [],
-                'files' => $request->user()?->hasApprovedClub() && $this->system->files ? CaveSystemFileResource::collection($this->system->files) : [],
-                'routes' => $this->system->routes ?? [],
+                'files' => $request->user()?->hasApprovedClub() && $this->system->relationLoaded('files') && $this->system->files ? CaveSystemFileResource::collection($this->system->files) : [],
+                'routes' => $this->system->relationLoaded('routes') ? $this->system->routes : [],
             ],
             'trips' => TripSummaryResource::collection($this->whenLoaded('trips')),
             'previously_done' => optional($previoslyDoneTag)->tag === 'Previously Done',
@@ -125,8 +125,6 @@ class CaveResource extends JsonResource
                     'sort_order' => $this->pivot->sort_order,
                 ];
             }),
-            'length' => $this->system?->length,
-            'depth' => $this->system?->vertical_range,
             'is_ticked' => $this->when(isset($this->is_ticked), $this->is_ticked),
         ];
     }

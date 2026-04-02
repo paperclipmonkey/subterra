@@ -5,9 +5,12 @@ namespace App\Http\Resources;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class CaveSummaryResource extends JsonResource
 {
+    protected static ?string $mediaUrlBase = null;
+
     /**
      * Transform the resource into an array.
      *
@@ -62,9 +65,9 @@ class CaveSummaryResource extends JsonResource
             'id' => $this->id,
             'slug' => $this->slug,
             'name' => $this->name,
-            'hero_image' => new CaveMediaResource($this->whenLoaded('heroImage', $this->heroImage)),
-            'hero_video' => new CaveMediaResource($this->whenLoaded('heroVideo', $this->heroVideo)),
-            'entrance_image' => new CaveMediaResource($this->whenLoaded('entranceImage', $this->entranceImage)),
+            'hero_image' => $this->formatMedia($this->heroImage),
+            'hero_video' => $this->formatMedia($this->heroVideo),
+            'entrance_image' => $this->formatMedia($this->entranceImage),
             'tags' => $formattedTags,
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,
@@ -112,5 +115,28 @@ class CaveSummaryResource extends JsonResource
         }
 
         return array_merge($tags, $lengthTags);
+    }
+
+    private function formatMedia($media): ?array
+    {
+        if (!$media) {
+            return null;
+        }
+
+        if (self::$mediaUrlBase === null) {
+            self::$mediaUrlBase = rtrim(Storage::disk('media')->url(''), '/');
+        }
+
+        return [
+            'id' => $media->id,
+            'type' => $media->type,
+            'filename' => $media->filename,
+            'url' => $media->filename
+                ? (str_starts_with($media->filename, 'http') ? $media->filename : self::$mediaUrlBase.'/'.$media->filename)
+                : null,
+            'title' => $media->title,
+            'photographer' => $media->photographer,
+            'copyright' => $media->copyright,
+        ];
     }
 }

@@ -112,11 +112,13 @@
 import { mdiChevronDown, mdiFilterOutline, mdiFilterVariant, mdiMagnify } from '@mdi/js'
 
 import { useCaveStore } from '@/stores/caves'
+import { useTagStore } from '@/stores/tags'
 import FilterByTagModal from './FilterByTagModal.vue'
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const caveStore = useCaveStore()
+const tagStore = useTagStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -127,18 +129,9 @@ const catchmentId = ref(route.query.catchment || null)
 
 const showFilterByTagModal = ref(false)
 const targetCategory = ref(null)
-const tagsAvailable = ref({})
+const tagsAvailable = computed(() => tagStore.tags)
 
 const cachedTags = ref([])
-
-const fetchTags = async () => {
-  try {
-    const response = await fetch('/api/tags')
-    tagsAvailable.value = await response.json()
-  } catch (error) {
-    console.error('Failed to fetch tags:', error)
-  }
-}
 
 const applyFilter = (tags) => {
   cachedTags.value = tags
@@ -203,7 +196,7 @@ onMounted(async () => {
   cachedTags.value = tags
   await Promise.all([
     caveStore.getList(),
-    fetchTags()
+    tagStore.fetchTags()
   ])
 
   // Apply filters after list is loaded
