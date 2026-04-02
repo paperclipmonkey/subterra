@@ -125,6 +125,8 @@ class CaveResource extends JsonResource
                     'sort_order' => $this->pivot->sort_order,
                 ];
             }),
+            'length' => $this->system?->length,
+            'depth' => $this->system?->vertical_range,
             'is_ticked' => $this->when(isset($this->is_ticked), $this->is_ticked),
         ];
     }

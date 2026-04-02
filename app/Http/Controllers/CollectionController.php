@@ -27,7 +27,7 @@ class CollectionController extends Controller
 
         $collection->load(['caves' => function ($query) use ($user) {
             // Check if the user has visited this cave (entrance or exit in a trip)
-            $query->with(['heroImage', 'entranceImage', 'tags', 'media'])
+            $query->with(['heroImage', 'entranceImage', 'tags', 'media', 'system'])
                 ->withExists(['entranceTrips as is_entrance' => function ($q) use ($user) {
                     $q->whereHas('participants', function ($u) use ($user) {
                         $u->where('users.id', $user->id);

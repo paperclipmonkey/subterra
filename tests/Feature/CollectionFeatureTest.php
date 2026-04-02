@@ -161,4 +161,23 @@ class CollectionFeatureTest extends TestCase
             'description' => 'New Note',
         ]);
     }
+
+    public function test_collection_caves_include_length_and_depth_for_map()
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->create(['user_id' => $user->id]);
+        $cave = Cave::factory()->create();
+        $collection->caves()->attach($cave);
+
+        $response = $this->actingAs($user)->getJson("/api/collections/{$collection->slug}");
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'caves' => [
+                        ['length', 'depth'],
+                    ],
+                ],
+            ]);
+    }
 }
