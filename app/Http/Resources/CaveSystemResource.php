@@ -26,6 +26,7 @@ class CaveSystemResource extends JsonResource
             'references' => $this->references,
             'catchment_id' => $this->catchment_id,
             'files' => $this->files ? CaveSystemFileResource::collection($this->whenLoaded('files')) : [],
+            'annotation' => $this->whenLoaded('annotation'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

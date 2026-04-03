@@ -51,4 +51,9 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
     {
         return $this->hasMany(Route::class);
     }
+
+    public function annotation()
+    {
+        return $this->hasOne(CaveSystemAnnotation::class);
+    }
 }

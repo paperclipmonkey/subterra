@@ -37,6 +37,14 @@
     <v-container v-if="caveSystem">
       <v-row>
         <v-col cols="12">
+          <AnnotationMapViewer
+            :annotation="caveSystem.annotation"
+            :caves="caveSystem.caves"
+          />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
           <RouteList :routes="caveSystem.routes" :cave-system-id="caveSystem.id" />
         </v-col>
       </v-row>
@@ -50,6 +58,7 @@ import { mdiPencil, mdiPencilOff } from '@mdi/js'
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
+import AnnotationMapViewer from '@/components/cave-systems/AnnotationMapViewer.vue'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
@@ -58,23 +67,18 @@ const caveSystem = ref(null)
 
 const load = async () => {
   try {
-    const response = await fetch(`/api/cave_systems/${route.params.id}/routes`)
-    if (response.ok) {
-      // The API returns the list of routes directly?
-      // Wait, my RouteController@index returns the LIST of routes.
-      // But I want the CaveSystem ID to pass to RouteList.
-      // Actually RouteList needs routes. It also takes caveSystemId to build "Add" link.
+    const [routesResponse, systemResponse] = await Promise.all([
+      fetch(`/api/cave_systems/${route.params.id}/routes`),
+      fetch(`/api/cave_systems/${route.params.id}`),
+    ])
 
-      // Wait, I should fetch cave system routes.
-      // But I also need caveSystem ID? I have it from route.params.id.
+    const systemData = systemResponse.ok ? (await systemResponse.json()).data : {}
+    const routesData = routesResponse.ok ? await routesResponse.json() : []
 
-      // Let's refetch routes specific endpoint: /api/cave_systems/{id}/routes
-      const routesData = await response.json()
-
-      caveSystem.value = {
-        id: route.params.id,
-        routes: routesData
-      }
+    caveSystem.value = {
+      ...systemData,
+      id: route.params.id,
+      routes: routesData,
     }
   } catch (e) {
     console.error(e)

@@ -84,6 +84,11 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
     Route::post('/cave_systems_with_cave', [App\Http\Controllers\CaveSystemController::class, 'storeWithCave'])->middleware(ApiIsAdmin::class);
 
+    // Cave System Annotations
+    Route::get('/cave_systems/{cave_system}/annotations', [App\Http\Controllers\CaveSystemAnnotationController::class, 'show']);
+    Route::post('/cave_systems/{cave_system}/annotations', [App\Http\Controllers\CaveSystemAnnotationController::class, 'store'])->middleware(ApiIsAdmin::class);
+    Route::delete('/cave_systems/{cave_system}/annotations', [App\Http\Controllers\CaveSystemAnnotationController::class, 'destroy'])->middleware(ApiIsAdmin::class);
+
     Route::post('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'store'])->middleware(ApiIsAdmin::class);
     Route::put('/routes/{route}', [App\Http\Controllers\RouteController::class, 'update'])->middleware(ApiIsAdmin::class);
     Route::delete('/routes/{route}', [App\Http\Controllers\RouteController::class, 'destroy'])->middleware(ApiIsAdmin::class);

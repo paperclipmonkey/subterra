@@ -594,6 +594,7 @@ import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { MglMarker } from '@indoorequal/vue-maplibre-gl'
+import maplibregl from 'maplibre-gl'
 
 const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 14
@@ -774,7 +775,179 @@ watch(
   }
 )
 const onMapLoad = (event) => {
+  const map = event.map
 
+  // Re-render annotation overlays whenever the map style changes
+  map.on('style.load', () => {
+    renderAnnotationOverlays(map)
+  })
+
+  renderAnnotationOverlays(map)
+}
+
+function renderAnnotationOverlays (map) {
+  if (!map || !cave.value?.system?.annotation?.geojson?.features?.length) return
+
+  // Clean up any existing annotation layers/sources/images
+  const layerIds = ['annotation-lines-layer', 'annotation-lines-hit', 'annotation-parking-layer', 'annotation-houses-layer']
+  const sourceIds = ['annotation-lines', 'annotation-parking', 'annotation-houses']
+  const imageIds = ['parking-icon', 'house-icon']
+  layerIds.forEach(id => { if (map.getLayer(id)) map.removeLayer(id) })
+  sourceIds.forEach(id => { if (map.getSource(id)) map.removeSource(id) })
+  imageIds.forEach(id => { if (map.hasImage(id)) map.removeImage(id) })
+
+  // Single popup management
+  let activePopup = null
+  function showPopup (lngLat, html, offset = 16) {
+    if (activePopup) { activePopup.remove(); activePopup = null }
+    activePopup = new maplibregl.Popup({ offset, className: 'annotation-popup', maxWidth: '280px' })
+      .setLngLat(lngLat)
+      .setHTML(html)
+      .addTo(map)
+    activePopup.on('close', () => { activePopup = null })
+  }
+
+  const geojson = cave.value.system.annotation.geojson
+  const parkingFeatures = []
+  const houseFeatures = []
+  const lineFeatures = []
+
+  geojson.features.forEach(feature => {
+    const type = feature.properties?.annotation_type
+    if (feature.geometry.type === 'Point' && type === 'parking') {
+      parkingFeatures.push(feature)
+    } else if (feature.geometry.type === 'Point' && type === 'house') {
+      houseFeatures.push(feature)
+    } else if (feature.geometry.type === 'LineString') {
+      lineFeatures.push(feature)
+    }
+  })
+
+  // Walking routes
+  if (lineFeatures.length > 0) {
+    map.addSource('annotation-lines', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: lineFeatures },
+    })
+    map.addLayer({
+      id: 'annotation-lines-layer',
+      type: 'line',
+      source: 'annotation-lines',
+      paint: { 'line-color': '#ff9800', 'line-width': 4, 'line-dasharray': [2, 2] },
+    })
+    // Invisible wider hit area for easier clicking
+    map.addLayer({
+      id: 'annotation-lines-hit',
+      type: 'line',
+      source: 'annotation-lines',
+      paint: { 'line-color': 'transparent', 'line-width': 16 },
+    })
+    map.on('click', 'annotation-lines-hit', (e) => {
+      const feature = e.features[0]
+      const desc = feature.properties?.description
+      showPopup(e.lngLat, `<div style="font-family:sans-serif;max-width:240px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="display:inline-block;width:24px;height:3px;background:#ff9800;border-radius:2px;border:1px dashed #ff9800;"></span>
+          <strong>Walking Route</strong>
+        </div>
+        ${desc ? `<p style="margin:0;color:#555;">${escHtml(desc)}</p>` : '<p style="margin:0;color:#888;font-style:italic;">No description</p>'}
+      </div>`, 8)
+    })
+    map.on('mouseenter', 'annotation-lines-hit', () => { map.getCanvas().style.cursor = 'pointer' })
+    map.on('mouseleave', 'annotation-lines-hit', () => { map.getCanvas().style.cursor = '' })
+  }
+
+  const canvasToImageData = (canvas) => {
+    const ctx = canvas.getContext('2d')
+    return { width: canvas.width, height: canvas.height, data: new Uint8Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer) }
+  }
+
+  const addIconLayer = (iconData, imageId, features, sourceId, layerId, popupBuilder) => {
+    if (!map.hasImage(imageId)) map.addImage(imageId, iconData)
+    if (features.length > 0) {
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features },
+      })
+      map.addLayer({
+        id: layerId,
+        type: 'symbol',
+        source: sourceId,
+        layout: { 'icon-image': imageId, 'icon-size': 0.5, 'icon-allow-overlap': true },
+      })
+      map.on('click', layerId, (e) => {
+        const f = e.features[0]
+        const coords = f.geometry.coordinates.slice()
+        showPopup(coords, popupBuilder(f, coords))
+      })
+      map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer' })
+      map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = '' })
+    }
+  }
+
+  const escHtml = (str) => { const d = document.createElement('div'); d.textContent = str; return d.innerHTML }
+
+  // Parking icon
+  const parkingCanvas = document.createElement('canvas')
+  parkingCanvas.width = parkingCanvas.height = 64
+  const pCtx = parkingCanvas.getContext('2d')
+  pCtx.beginPath(); pCtx.arc(32, 32, 30, 0, Math.PI * 2); pCtx.fillStyle = '#1976d2'; pCtx.fill()
+  pCtx.strokeStyle = '#fff'; pCtx.lineWidth = 3; pCtx.stroke()
+  pCtx.fillStyle = '#fff'; pCtx.font = 'bold 36px Arial'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle'
+  pCtx.fillText('P', 32, 32)
+
+  addIconLayer(canvasToImageData(parkingCanvas), 'parking-icon', parkingFeatures, 'annotation-parking', 'annotation-parking-layer', (f, coords) => {
+    const desc = f.properties?.description || 'Parking'
+    const [lng, lat] = coords
+    return `<div style="font-family:sans-serif;max-width:220px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#1976d2;border-radius:50%;color:#fff;font-weight:bold;font-size:13px;">P</span>
+        <strong>Parking</strong>
+      </div>
+      <p style="margin:0 0 8px;color:#555;">${escHtml(desc)}</p>
+      <div style="display:flex;gap:8px;">
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f5;border-radius:4px;text-decoration:none;color:#333;font-size:12px;">
+          <img src="https://www.google.com/favicon.ico" width="14" height="14" alt="" style="border-radius:2px;" />Google Maps
+        </a>
+        <a href="https://maps.apple.com/?daddr=${lat},${lng}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f5;border-radius:4px;text-decoration:none;color:#333;font-size:12px;">
+          Apple Maps
+        </a>
+      </div>
+    </div>`
+  })
+
+  // House icon
+  const houseCanvas = document.createElement('canvas')
+  houseCanvas.width = houseCanvas.height = 64
+  const hCtx = houseCanvas.getContext('2d')
+  hCtx.beginPath(); hCtx.arc(32, 32, 30, 0, Math.PI * 2); hCtx.fillStyle = '#e65100'; hCtx.fill()
+  hCtx.strokeStyle = '#fff'; hCtx.lineWidth = 3; hCtx.stroke()
+  hCtx.fillStyle = '#fff'; hCtx.beginPath(); hCtx.moveTo(32, 14); hCtx.lineTo(16, 34); hCtx.lineTo(48, 34); hCtx.closePath(); hCtx.fill()
+  hCtx.fillRect(20, 32, 24, 20)
+
+  addIconLayer(canvasToImageData(houseCanvas), 'house-icon', houseFeatures, 'annotation-houses', 'annotation-houses-layer', (f) => {
+    const desc = f.properties?.description || 'Permission required'
+    return `<div style="font-family:sans-serif;max-width:220px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#e65100;border-radius:50%;font-size:14px;">🏠</span>
+        <strong style="color:#e65100;">Permission Required</strong>
+      </div>
+      <p style="margin:0;color:#555;">${escHtml(desc)}</p>
+    </div>`
+  })
+
+  // Fit bounds to include annotations
+  const bounds = new maplibregl.LngLatBounds()
+  if (cave.value.location_lng && cave.value.location_lat) {
+    bounds.extend([cave.value.location_lng, cave.value.location_lat])
+  }
+  geojson.features.forEach(f => {
+    if (f.geometry.type === 'Point') bounds.extend(f.geometry.coordinates)
+    else if (f.geometry.type === 'LineString') f.geometry.coordinates.forEach(c => bounds.extend(c))
+  })
+  if (!bounds.isEmpty()) {
+    map.fitBounds(bounds, { padding: 40, maxZoom: 15 })
+  }
 }
 </script>
 
@@ -810,5 +983,16 @@ const onMapLoad = (event) => {
 .cave-map-mobile {
   margin-left: -16px;
   margin-right: -16px;
+}
+
+.annotation-popup .maplibregl-popup-content {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.annotation-popup .maplibregl-popup-tip {
+  border-top-color: #fff;
 }
 </style>

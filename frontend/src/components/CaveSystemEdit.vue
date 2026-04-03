@@ -21,6 +21,17 @@
         </v-col>
       </v-row>
 
+      <!-- Annotation Editor (admin only) -->
+      <v-row v-if="appStore.user?.is_admin">
+        <v-col cols="12">
+          <AnnotationMapEditor
+            v-model="annotationGeojson"
+            :center="mapCenter"
+            :caves="cavesystem.caves || []"
+          />
+        </v-col>
+      </v-row>
+
       <v-row>
         <v-col>
           <v-card-text>
@@ -200,6 +211,7 @@ import { mdiArrowLeft } from '@mdi/js'
 import { ref, watch, onMounted, computed } from "vue"
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import CaveSystemForm from '@/components/CaveSystemForm.vue'
+import AnnotationMapEditor from '@/components/cave-systems/AnnotationMapEditor.vue'
 import { useAppStore } from '@/stores/app'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useToast } from "vue-toastification"
@@ -218,6 +230,10 @@ const filesToDelete = ref([])
 const newFiles = ref([])
 const updatedFiles = ref([])
 const isSaved = ref(false)
+
+// Annotation state
+const annotationGeojson = ref(null)
+const initialAnnotationState = ref(null)
 
 // Merge state
 const mergeSourceId = ref(null)
@@ -239,10 +255,13 @@ const isDirty = computed(() => {
   if (isSaved.value) return false
   if (!initialSystemState.value) return false
   // Check basic system data
-  return JSON.stringify(cavesystem.value) !== initialSystemState.value ||
+  const systemChanged = JSON.stringify(cavesystem.value) !== initialSystemState.value ||
     filesToDelete.value.length > 0 ||
     newFiles.value.length > 0 ||
     updatedFiles.value.length > 0
+  // Check annotation changes
+  const annotationChanged = JSON.stringify(annotationGeojson.value) !== initialAnnotationState.value
+  return systemChanged || annotationChanged
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -270,6 +289,15 @@ const cavesystem = ref({
   files: []
 })
 
+const mapCenter = computed(() => {
+  // Use first cave's location as map center, fallback to UK center
+  const caves = cavesystem.value.caves || []
+  if (caves.length > 0 && caves[0].location_lng && caves[0].location_lat) {
+    return [caves[0].location_lng, caves[0].location_lat]
+  }
+  return [-3.5, 54.0]
+})
+
 const load = async () => {
   try {
     const response = await fetch(`/api/cave_systems/${route.params.id}`)
@@ -280,8 +308,45 @@ const load = async () => {
     filesToDelete.value = []
     newFiles.value = []
     updatedFiles.value = []
+
+    // Load annotation data
+    if (cavesystem.value.annotation) {
+      annotationGeojson.value = cavesystem.value.annotation.geojson
+    } else {
+      annotationGeojson.value = null
+    }
+    initialAnnotationState.value = JSON.stringify(annotationGeojson.value)
   } catch (error) {
     console.error("Error loading cave system data:", error)
+  }
+}
+
+const saveAnnotation = async () => {
+  const hasAnnotation = annotationGeojson.value &&
+    annotationGeojson.value.features &&
+    annotationGeojson.value.features.length > 0
+
+  if (hasAnnotation) {
+    const response = await fetch(`/api/cave_systems/${cavesystem.value.id}/annotations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ geojson: annotationGeojson.value }),
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.message || 'Failed to save annotations')
+    }
+  } else if (cavesystem.value.annotation) {
+    const response = await fetch(`/api/cave_systems/${cavesystem.value.id}/annotations`, {
+      method: 'DELETE',
+      headers: { 'Accept': 'application/json' },
+    })
+    if (!response.ok && response.status !== 204) {
+      throw new Error('Failed to delete annotations')
+    }
   }
 }
 
@@ -333,14 +398,14 @@ const save = async () => {
       })
 
       if (response.ok) {
-        // Go back to previous page (likely the cave page)
-        isSaved.value = true
-        // Check if we have history to go back to, otherwise fallback to system page
-        if (window.history.state && window.history.state.back) {
-          router.go(-1)
-        } else {
-          router.push('/cave-systems/' + cavesystem.value.slug)
+        // Save annotation if changed
+        const annotationChanged = JSON.stringify(annotationGeojson.value) !== initialAnnotationState.value
+        if (annotationChanged) {
+          await saveAnnotation()
         }
+        isSaved.value = true
+        toast.success('Cave system saved')
+        router.push('/cave-systems/' + route.params.id)
       } else {
         const data = await response.json()
         errorMessage.value = data.message || 'Save failed'

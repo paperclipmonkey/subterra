@@ -101,6 +101,14 @@
     },
     "routes": {
       "type": "array"
+    },
+    "annotation": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "cave_system_id": { "type": "integer" },
+        "geojson": { "type": "object" }
+      }
     }
   },
   "required": [

@@ -33,7 +33,7 @@ class CaveSystemController extends Controller
 
     public function show(CaveSystem $caveSystem)
     {
-        $caveSystem->load(['files', 'caves']);
+        $caveSystem->load(['files', 'caves', 'annotation']);
 
         return new CaveSystemResource($caveSystem);
     }
