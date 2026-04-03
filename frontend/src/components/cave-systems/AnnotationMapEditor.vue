@@ -183,10 +183,54 @@ function initMap () {
     tryLoadExistingAnnotations()
   })
 
-  // Re-add cave markers after a style switch (they are HTML overlays but just in case)
+  // When the user switches map styles, setStyle() wipes all custom sources/layers.
+  // Terra-draw crashes because its internal source no longer exists.
+  // Fix: on every style.load AFTER the initial one, stop/restart terra-draw.
+  let initialStyleLoaded = false
   map.on('style.load', () => {
-    // Cave markers are DOM overlays — they survive style changes
-    // But terra-draw re-renders its own layers automatically via its adapter
+    if (!initialStyleLoaded) {
+      // First style.load fires as part of initial map load — handled by map.on('load')
+      initialStyleLoaded = true
+      return
+    }
+
+    if (!draw) return
+
+    // Capture current features before tearing down.
+    // Filter by properties.mode ('point' or 'linestring') — NOT geometry.type — because
+    // terra-draw's select mode adds internal control-handle Point features for linestrings
+    // that share geometry.type === 'Point' but must not be restored as user features.
+    const snapshot = draw.getSnapshot()
+    const savedFeatures = snapshot
+      .filter(f => f.properties?.mode === 'point' || f.properties?.mode === 'linestring')
+      .map(f => ({
+        geometry: f.geometry,
+        props: featurePropertiesMap.value.get(f.id) || {
+          annotation_type: f.properties.mode === 'linestring' ? 'walking_route' : 'parking',
+          description: '',
+        },
+      }))
+
+    // Tear down existing terra-draw instance (its sources are now gone)
+    try { draw.stop() } catch { /* already broken */ }
+    draw = null
+    featurePropertiesMap.value.clear()
+    selectedFeatureId.value = null
+    selectedFeatureProps.value = null
+
+    // Restart terra-draw — it registers fresh sources/layers on the new style
+    initTerraDraw()
+
+    // Restore saved features
+    isLoadingAnnotations = true
+    savedFeatures.forEach(({ geometry, props }) => {
+      const mode = geometry.type === 'Point' ? 'point' : 'linestring'
+      const results = draw.addFeatures([{ type: 'Feature', geometry, properties: { mode } }])
+      if (results?.[0]?.valid && results[0].id) {
+        featurePropertiesMap.value.set(results[0].id, props)
+      }
+    })
+    isLoadingAnnotations = false
   })
 }
 
@@ -310,6 +354,8 @@ function initTerraDraw () {
       featurePropertiesMap.value.set(id, { annotation_type: type, description: '' })
     }
     pendingPointType = null
+    // Explicitly emit — terra-draw may not fire a 'change' event after 'finish'
+    emitGeoJSON()
     nextTick(() => {
       activeMode.value = 'select'
     })
@@ -426,10 +472,12 @@ watch(() => props.modelValue, (val) => {
   }
 }, { deep: true })
 
-// Watch for caves changes
-watch(() => props.caves, () => {
-  if (mapLoaded) {
-    addCaveMarkers()
+// Watch for caves changes — also fit bounds when caves first load
+watch(() => props.caves, (caves) => {
+  if (!mapLoaded) return
+  addCaveMarkers()
+  if (caves?.length) {
+    fitMapToCavesAndAnnotations()
   }
 }, { deep: true })
 
