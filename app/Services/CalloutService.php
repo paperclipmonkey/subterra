@@ -29,7 +29,7 @@ class CalloutService
      */
     public function create(User $user, array $data): Callout
     {
-        $calloutTime = Carbon::parse($data['callout_time']);
+        $calloutTime = Carbon::parse($data['callout_time'])->utc();
 
         if (!OnCallShift::isCovered($calloutTime)) {
             throw new Exception('Cannot create callout: No administrator is on-call at '.$calloutTime->toDateTimeString());

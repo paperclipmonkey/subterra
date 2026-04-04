@@ -15,6 +15,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -111,6 +112,14 @@ class TripController extends Controller
     public function store(StoreTripRequest $request): TripResource
     {
         $tripData = $request->validated();
+
+        // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
+        if (!empty($tripData['start_time'])) {
+            $tripData['start_time'] = Carbon::parse($tripData['start_time'])->utc();
+        }
+        if (!empty($tripData['end_time'])) {
+            $tripData['end_time'] = Carbon::parse($tripData['end_time'])->utc();
+        }
 
         if (!isset($tripData['visibility'])) {
             $tripData['visibility'] = 'public';
@@ -215,6 +224,15 @@ class TripController extends Controller
 
         // Validate Closed Access
         $data = $request->validated();
+
+        // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
+        if (!empty($data['start_time'])) {
+            $data['start_time'] = Carbon::parse($data['start_time'])->utc();
+        }
+        if (!empty($data['end_time'])) {
+            $data['end_time'] = Carbon::parse($data['end_time'])->utc();
+        }
+
         $entranceCaveId = $data['entrance_cave_id'] ?? $trip->entrance_cave_id;
         $visibility = $data['visibility'] ?? $trip->visibility;
         $this->validateClosedAccess($entranceCaveId, $visibility);

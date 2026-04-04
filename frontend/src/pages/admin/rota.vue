@@ -169,8 +169,8 @@ export default {
       const curr = moment(start)
       while (curr.isBefore(end)) {
         const dayShifts = this.shifts.filter(s => {
-          const sStart = moment(s.start_at)
-          const sEnd = moment(s.end_at)
+          const sStart = moment.utc(s.start_at).local()
+          const sEnd = moment.utc(s.end_at).local()
           const dayStart = moment(curr).startOf('day')
           const dayEnd = moment(curr).endOf('day')
 
@@ -225,7 +225,7 @@ export default {
       }
     },
     formatDateTime(d) {
-      return moment(d).format('ddd Do MMM HH:mm')
+      return moment.utc(d).local().format('ddd Do MMM HH:mm')
     },
     prevMonth() {
       this.currentDate = moment(this.currentDate).subtract(1, 'month')
@@ -240,13 +240,22 @@ export default {
       const colors = ['#1976D2', '#388E3C', '#F57C00', '#7B1FA2', '#C2185B', '#0097A7', '#689F38']
       return colors[userId % colors.length]
     },
+    toISOWithOffset(localDatetime) {
+      // Convert a datetime-local value (no tz info) to a full ISO 8601 string with timezone offset
+      return moment(localDatetime).format()
+    },
     async addShift() {
       const { valid } = await this.$refs.form.validate()
       if (!valid) return
 
       this.processing = true
       try {
-        await axios.post('/api/admin/shifts', this.newShift)
+        const payload = {
+          ...this.newShift,
+          start_at: this.toISOWithOffset(this.newShift.start_at),
+          end_at: this.toISOWithOffset(this.newShift.end_at)
+        }
+        await axios.post('/api/admin/shifts', payload)
         this.$toast.success('Shift added successfully')
         await this.fetchShifts()
         this.newShift.user_id = null
@@ -261,15 +270,20 @@ export default {
       this.editingShift = {
         id: shift.id,
         user_id: shift.user_id,
-        start_at: moment(shift.start_at).format('YYYY-MM-DDTHH:mm'),
-        end_at: moment(shift.end_at).format('YYYY-MM-DDTHH:mm')
+        start_at: moment.utc(shift.start_at).local().format('YYYY-MM-DDTHH:mm'),
+        end_at: moment.utc(shift.end_at).local().format('YYYY-MM-DDTHH:mm')
       }
       this.editDialog = true
     },
     async saveShift() {
       this.processing = true
       try {
-        await axios.put(`/api/admin/shifts/${this.editingShift.id}`, this.editingShift)
+        const payload = {
+          ...this.editingShift,
+          start_at: this.toISOWithOffset(this.editingShift.start_at),
+          end_at: this.toISOWithOffset(this.editingShift.end_at)
+        }
+        await axios.put(`/api/admin/shifts/${this.editingShift.id}`, payload)
         this.$toast.success('Shift updated successfully')
         this.editDialog = false
         await this.fetchShifts()

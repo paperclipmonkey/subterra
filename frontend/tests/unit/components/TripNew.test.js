@@ -6,34 +6,17 @@ import { nextTick } from 'vue'
 
 // Mock moment
 vi.mock('moment', () => {
-  const mockMoment = (date) => {
-    if (!date) {
-      // Current time for default values
-      return {
-        format: (format) => {
-          if (format === 'YYYY-MM-DD') return '2024-01-15'
-          if (format === 'HH:mm') return '10:00'
-          return '2024-01-15T10:00:00'
-        },
-        clone: function () { return this },
-        add: function () { return this }
-      }
-    }
-
-    // Parse specific test dates - create a moment-like object
-    const testDate = new Date(date)
+  const createMomentObj = (testDate) => {
     const momentObj = {
       _date: testDate,
       format: (format) => {
         if (format === 'YYYY-MM-DD') {
-          // Use UTC methods to avoid timezone conversion
           const year = testDate.getUTCFullYear()
           const month = String(testDate.getUTCMonth() + 1).padStart(2, '0')
           const day = String(testDate.getUTCDate()).padStart(2, '0')
           return `${year}-${month}-${day}`
         }
         if (format === 'HH:mm') {
-          // Use UTC methods to avoid timezone conversion
           const hours = String(testDate.getUTCHours()).padStart(2, '0')
           const minutes = String(testDate.getUTCMinutes()).padStart(2, '0')
           return `${hours}:${minutes}`
@@ -54,11 +37,32 @@ vi.mock('moment', () => {
         }
         return 0
       },
-      clone: function () { return this },
-      add: function () { return this }
+      clone: function () { return createMomentObj(new Date(testDate)) },
+      add: function () { return this },
+      local: function () { return this }
+    }
+    return momentObj
+  }
+
+  const mockMoment = (date) => {
+    if (!date) {
+      return {
+        format: (format) => {
+          if (format === 'YYYY-MM-DD') return '2024-01-15'
+          if (format === 'HH:mm') return '10:00'
+          return '2024-01-15T10:00:00'
+        },
+        clone: function () { return this },
+        add: function () { return this },
+        local: function () { return this }
+      }
     }
 
-    return momentObj
+    return createMomentObj(new Date(date))
+  }
+
+  mockMoment.utc = (date) => {
+    return createMomentObj(new Date(date))
   }
 
   return { default: mockMoment }

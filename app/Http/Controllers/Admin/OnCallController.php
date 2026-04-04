@@ -50,6 +50,10 @@ class OnCallController extends Controller
             'end_at' => 'required|date|after:start_at',
         ]);
 
+        // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
+        $data['start_at'] = Carbon::parse($data['start_at'])->utc();
+        $data['end_at'] = Carbon::parse($data['end_at'])->utc();
+
         // Strict global overlap check
         // Finds any shift where:
         // Existing Start < New End  AND  Existing End > New Start
@@ -90,6 +94,10 @@ class OnCallController extends Controller
             'start_at' => 'required|date',
             'end_at' => 'required|date|after:start_at',
         ]);
+
+        // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
+        $data['start_at'] = Carbon::parse($data['start_at'])->utc();
+        $data['end_at'] = Carbon::parse($data['end_at'])->utc();
 
         // Check for overlaps with ANY other shift (global check)
         $exists = OnCallShift::where('id', '!=', $id)

@@ -654,12 +654,12 @@ onMounted(async () => {
       delete loadedTrip.system
       Object.assign(trip, loadedTrip)
 
-      tripStartDate.value = moment(loadedTrip.start_time).format('YYYY-MM-DD')
-      tripStartTime.value = moment(loadedTrip.start_time).format('HH:mm')
+      tripStartDate.value = moment.utc(loadedTrip.start_time).local().format('YYYY-MM-DD')
+      tripStartTime.value = moment.utc(loadedTrip.start_time).local().format('HH:mm')
 
       // Calculate duration from start_time and end_time
-      const startTime = moment(loadedTrip.start_time)
-      const endTime = moment(loadedTrip.end_time)
+      const startTime = moment.utc(loadedTrip.start_time).local()
+      const endTime = moment.utc(loadedTrip.end_time).local()
       const durationInMinutes = endTime.diff(startTime, 'minutes')
       tripDurationHours.value = Math.floor(durationInMinutes / 60)
       tripDurationMinutes.value = durationInMinutes % 60
@@ -794,8 +794,8 @@ const submitForm = async () => {
     if (!trip.exit_cave_id || !throughTrip.value) {
       trip.exit_cave_id = trip.entrance_cave_id
     }
-    trip.start_time = `${tripStartDate.value} ${tripStartTime.value}:00`
-    trip.end_time = end_time.value.format('YYYY-MM-DD HH:mm:ss')
+    trip.start_time = start_time.value.format()
+    trip.end_time = end_time.value.format()
     trip.cave_system_id = cave_system_id.value
     if (markdownOutput.value) {
       trip.description = markdownOutput.value

@@ -27,8 +27,8 @@ class StoreTripRequest extends FormRequest
             'cave_system_id' => 'required|exists:cave_systems,id',
             'entrance_cave_id' => 'required|exists:caves,id',
             'exit_cave_id' => 'required|exists:caves,id',
-            'start_time' => 'nullable|date_format:Y-m-d H:i:s',
-            'end_time' => 'nullable|date_format:Y-m-d H:i:s',
+            'start_time' => 'nullable|date',
+            'end_time' => 'nullable|date',
             'visibility' => 'in:public,private,club',
             'media' => 'nullable|array',
             'media.*.data' => 'required|file|max:512000|mimes:jpeg,jpg,png,gif,webp,bmp,tiff,tif', // Images only, 512MB max
