@@ -52,7 +52,7 @@
         </v-card>
 
         <!-- Process Info -->
-        <v-expansion-panels class="mb-8" flat>
+        <v-expansion-panels class="mb-6" flat>
           <v-expansion-panel>
             <v-expansion-panel-title>
               <v-icon left color="primary" class="mr-2" :icon="mdiInformationOutline" />
@@ -65,11 +65,34 @@
                 <li class="mb-2"><strong>Rescue:</strong> If we can't contact you, we initiate a Cave Rescue response.</li>
               </ol>
               <div class="caption grey--text">
-                Note: This is an automated safety backup. Always check weather and conditions yourself.
+                Note: Always check weather and conditions yourself.
               </div>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
+
+        <!-- Trust / Info links -->
+        <v-card variant="outlined" class="mb-8">
+          <v-list density="compact">
+            <v-list-item
+              :prepend-icon="mdiShieldAccount"
+              title="Duty Officers &amp; Rota"
+              subtitle="See who's on call and when"
+              to="/callout/duty-officers"
+              :append-icon="mdiChevronRight"
+            />
+            <v-divider />
+            <v-list-item
+              :prepend-icon="mdiInformationOutline"
+              title="How the callout system works"
+              subtitle="Full technical details — two independent monitoring layers, escalation process and more"
+              href="https://subterra.world/pages/callout-system"
+              target="_blank"
+              rel="noopener noreferrer"
+              :append-icon="mdiOpenInNew"
+            />
+          </v-list>
+        </v-card>
 
         <!-- Action Button -->
         <div class="text-center">
@@ -102,7 +125,7 @@
 </template>
 
 <script>
-import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRight, mdiInformationOutline } from '@mdi/js'
+import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRight, mdiChevronRight, mdiInformationOutline, mdiOpenInNew, mdiShieldAccount } from '@mdi/js'
 import axios from 'axios'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
@@ -122,7 +145,10 @@ export default {
       mdiAlert,
       mdiAlertOctagram,
       mdiArrowRight,
-      mdiInformationOutline
+      mdiChevronRight,
+      mdiInformationOutline,
+      mdiOpenInNew,
+      mdiShieldAccount,
     }
   },
   data() {

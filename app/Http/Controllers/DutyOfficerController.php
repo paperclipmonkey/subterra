@@ -70,6 +70,32 @@ class DutyOfficerController extends Controller
     }
 
     /**
+     * Get the public rota: upcoming shifts and duty officer profiles.
+     * Accessible to any authenticated user.
+     */
+    public function rotaPublic(Request $request): JsonResponse
+    {
+        $officers = User::whereHas('roles', function ($q) {
+            $q->whereIn('slug', ['duty_officer', 'platform_admin']);
+        })->with(['clubs' => function ($q) {
+            $q->wherePivot('status', 'approved')->select('clubs.id', 'clubs.name', 'clubs.slug');
+        }])->get(['id', 'name', 'photo', 'bio']);
+
+        $shifts = OnCallShift::with('user:id,name,photo')
+            ->where('end_at', '>', now())
+            ->where('start_at', '<', now()->addWeeks(1))
+            ->orderBy('start_at')
+            ->get(['id', 'user_id', 'start_at', 'end_at']);
+
+        return response()->json([
+            'data' => [
+                'officers' => $officers,
+                'shifts' => $shifts,
+            ],
+        ]);
+    }
+
+    /**
      * Get a list of potential duty officers (users with duty_officer or platform_admin role).
      */
     public function index(Request $request): JsonResponse

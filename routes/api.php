@@ -69,6 +69,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     // Users
     Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
     Route::get('/duty-officers/current', [App\Http\Controllers\DutyOfficerController::class, 'current']);
+    Route::get('/duty-officers/rota', [App\Http\Controllers\DutyOfficerController::class, 'rotaPublic']);
 
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
     Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show'])
