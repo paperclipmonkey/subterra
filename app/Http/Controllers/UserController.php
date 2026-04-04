@@ -147,6 +147,16 @@ class UserController extends Controller
         return UserDetailEmailResource::collection(User::withoutGlobalScopes()->where('is_active', true)->with('roles')->get());
     }
 
+    public function officerList(): JsonResponse
+    {
+        return response()->json(
+            User::withoutGlobalScopes()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+        );
+    }
+
     /**
      * Toggle the admin status of a user.
      */

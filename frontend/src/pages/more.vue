@@ -28,6 +28,15 @@
           </div>
         </v-card>
       </v-col>
+      <v-col v-if="userStore.user" cols="12" md="6">
+        <v-card :to="{ path: '/bookings' }" link height="150" class="d-flex align-center justify-center">
+          <div class="text-center">
+            <v-icon size="48" color="teal" class="mb-2" :icon="mdiClipboardCheck" />
+            <div class="text-h5">Permits</div>
+            <div class="text-body-2 text-medium-emphasis">Browse & apply for cave access permits</div>
+          </div>
+        </v-card>
+      </v-col>
       <v-col v-if="userStore.user.is_admin" cols="12" md="6">
         <v-card :to="{ path: '/admin' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
@@ -69,7 +78,7 @@
 </template>
 
 <script setup>
-import { mdiBookmarkBoxMultipleOutline, mdiCogs, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
+import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCogs, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 
 const userStore = useAppStore()

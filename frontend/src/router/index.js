@@ -102,6 +102,15 @@ router.beforeEach(async (to, from, next) => {
       return next({ path: '/admin' })
     }
 
+    // Access Officer Routes (Exclusive)
+    if (
+      (to.path.startsWith('/admin/permits') ||
+        to.path.startsWith('/admin/bookings')) &&
+      !hasRole('access_officer') && !hasRole('platform_admin')
+    ) {
+      return next({ path: '/admin' })
+    }
+
     // Shared Routes (Platform Admin OR Data Admin)
     if (
       (to.path.startsWith('/admin/pages') ||

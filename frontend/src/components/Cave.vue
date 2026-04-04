@@ -161,6 +161,30 @@
                 </v-alert>
               </div>
               <p v-else class="text-grey text-body-2">No specific access information provided.</p>
+
+              <!-- Permit Booking Link -->
+              <v-alert
+                v-if="cavePermit"
+                :icon="mdiCalendarCheck"
+                type="info"
+                variant="tonal"
+                class="mt-4"
+              >
+                <div class="d-flex align-center justify-space-between">
+                  <div>
+                    <div class="font-weight-bold">{{ cavePermit.name }}</div>
+                    <div class="text-body-2">This cave requires a permit. View availability and apply online.</div>
+                  </div>
+                  <v-btn
+                    color="primary"
+                    variant="flat"
+                    size="small"
+                    :to="`/caves/${route.params.id}/bookings`"
+                  >
+                    View Availability
+                  </v-btn>
+                </div>
+              </v-alert>
             </v-window-item>
 
             <!-- Trips Tab -->
@@ -583,7 +607,7 @@
 <script setup>
 import AppMap from '@/components/AppMap.vue'
 
-import { mdiAlertCircleOutline, mdiArrowLeft, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useDisplay } from 'vuetify'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
@@ -608,6 +632,7 @@ const collectionStore = useCollectionStore()
 const route = useRoute()
 const router = useRouter()
 const cave = ref(null)
+const cavePermit = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeTab = ref(route.query.tab || 'overview')
@@ -762,8 +787,21 @@ const openImage = (item) => {
   showMediaModal.value = true
 }
 
+const fetchCavePermit = async () => {
+  try {
+    const response = await fetch(`/api/caves/${route.params.id}/permit`, { headers: { 'Accept': 'application/json' } })
+    if (response.ok) {
+      const data = await response.json()
+      cavePermit.value = data.data
+    }
+  } catch (e) {
+    // permit info is optional
+  }
+}
+
 onMounted(() => {
   fetchCave()
+  fetchCavePermit()
 })
 
 watch(

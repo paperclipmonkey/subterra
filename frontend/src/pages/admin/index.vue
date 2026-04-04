@@ -154,11 +154,41 @@
         </v-col>
       </v-row>
     </section>
+
+    <!-- Access & Permits -->
+    <section v-if="isAccessOfficer || isPlatformAdmin" class="mb-10">
+      <div class="d-flex align-center mb-4">
+        <v-icon color="amber-darken-2" class="mr-3" size="32" :icon="mdiKeyVariant" />
+        <h3 class="text-h5 font-weight-bold">Access & Permits</h3>
+      </div>
+      <v-row>
+        <v-col cols="12" sm="6" md="4" lg="3">
+          <v-card to="/admin/permits" link hover class="admin-card">
+            <v-card-item title="Permits">
+              <template #prepend>
+                <v-icon color="amber-darken-2" :icon="mdiFileDocumentEdit" />
+              </template>
+              <v-card-subtitle>Manage permit schemes</v-card-subtitle>
+            </v-card-item>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="4" lg="3">
+          <v-card to="/admin/bookings" link hover class="admin-card">
+            <v-card-item title="Bookings">
+              <template #prepend>
+                <v-icon color="amber-darken-3" :icon="mdiCalendarCheck" />
+              </template>
+              <v-card-subtitle>Review & manage applications</v-card-subtitle>
+            </v-card-item>
+          </v-card>
+        </v-col>
+      </v-row>
+    </section>
   </v-container>
 </template>
 
 <script setup>
-import { mdiAccountCog, mdiAccountGroup, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiEmailMultiple, mdiFileCompare, mdiFileEdit, mdiMapMarkerPlus, mdiMonitorDashboard, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
+import { mdiAccountCog, mdiAccountGroup, mdiCalendarCheck, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiEmailMultiple, mdiFileCompare, mdiFileDocumentEdit, mdiFileEdit, mdiKeyVariant, mdiMapMarkerPlus, mdiMonitorDashboard, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 
@@ -175,6 +205,7 @@ const hasRole = (role) => {
 const isPlatformAdmin = computed(() => hasRole('platform_admin'))
 const isDutyOfficer = computed(() => hasRole('duty_officer')) // Duty Officers see their specific tools
 const isDataAdmin = computed(() => hasRole('data_admin'))
+const isAccessOfficer = computed(() => hasRole('access_officer'))
 </script>
 
 <style scoped>

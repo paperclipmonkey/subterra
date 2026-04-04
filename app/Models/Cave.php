@@ -106,6 +106,11 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->belongsToMany(Collection::class, 'cave_collection');
     }
 
+    public function permit(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Permit::class, 'cave_permit');
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';

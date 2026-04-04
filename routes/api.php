@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\ClubDataController;
 use App\Http\Controllers\CollectionController;
@@ -136,6 +137,14 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
         ->name('collections.show');
     Route::post('collections/{collection}/caves', [CollectionController::class, 'addCave']);
     Route::delete('collections/{collection}/caves/{cave}', [CollectionController::class, 'removeCave']);
+
+    // Permits & Bookings (public-facing)
+    Route::get('/permits', [BookingController::class, 'publicPermits']);
+    Route::get('/caves/{cave}/permit', [BookingController::class, 'permitForCave']);
+    Route::get('/permits/{permit}/calendar', [BookingController::class, 'calendarForPermit']);
+    Route::post('/permits/{permit}/bookings', [BookingController::class, 'store']);
+    Route::get('/bookings/mine', [BookingController::class, 'mine']);
+    Route::put('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
 });
 
 // Public Trip Access
@@ -179,6 +188,21 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::get('/cave-systems/{cave_system}/merge-preview', [App\Http\Controllers\Admin\CaveSystemController::class, 'mergePreview']);
         Route::post('/cave-systems/{cave_system}/merge', [App\Http\Controllers\Admin\CaveSystemController::class, 'merge']);
         Route::delete('/cave-systems/{cave_system}', [App\Http\Controllers\Admin\CaveSystemController::class, 'destroy']);
+    });
+
+    // Access Officer — permits, bookings
+    Route::middleware(ApiIsAdmin::class.':access_officer,platform_admin')->group(function () {
+        Route::get('/users/officer-list', [UserController::class, 'officerList'])->name('admin.users.officer-list');
+
+        Route::get('/permits', [App\Http\Controllers\Admin\PermitController::class, 'index'])->name('admin.permits.index');
+        Route::post('/permits', [App\Http\Controllers\Admin\PermitController::class, 'store'])->name('admin.permits.store');
+        Route::get('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'show'])->name('admin.permits.show');
+        Route::put('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'update'])->name('admin.permits.update');
+        Route::delete('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'destroy'])->name('admin.permits.destroy');
+
+        Route::get('/bookings', [App\Http\Controllers\Admin\BookingController::class, 'index'])->name('admin.bookings.index');
+        Route::put('/bookings/{booking}/approve', [App\Http\Controllers\Admin\BookingController::class, 'approve'])->name('admin.bookings.approve');
+        Route::put('/bookings/{booking}/reject', [App\Http\Controllers\Admin\BookingController::class, 'reject'])->name('admin.bookings.reject');
     });
 
     // Duty Officer — callouts, shifts, incidents

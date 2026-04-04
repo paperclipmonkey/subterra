@@ -104,7 +104,7 @@
 </template>
 
 <script setup>
-import { mdiDatabaseEdit, mdiDelete, mdiMagnify, mdiPhoneInTalk, mdiShieldCrown } from '@mdi/js'
+import { mdiDatabaseEdit, mdiDelete, mdiKey, mdiMagnify, mdiPhoneInTalk, mdiShieldCrown } from '@mdi/js'
 
 import moment from 'moment'
 import { ref, onMounted } from 'vue'
@@ -126,6 +126,7 @@ const allRoles = [
   { slug: 'platform_admin', label: 'Platform Admin', color: 'purple', icon: mdiShieldCrown },
   { slug: 'duty_officer', label: 'Duty Officer', color: 'blue', icon: mdiPhoneInTalk },
   { slug: 'data_admin', label: 'Data Admin', color: 'teal', icon: mdiDatabaseEdit },
+  { slug: 'access_officer', label: 'Access Officer', color: 'amber-darken-2', icon: mdiKey },
 ]
 
 const headers = [

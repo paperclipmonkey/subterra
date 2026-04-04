@@ -63,6 +63,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * State: user with access_officer role.
+     */
+    public function accessOfficer(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('access_officer');
+        });
+    }
+
+    /**
      * State: user with an approved club membership.
      */
     public function withApprovedClub(): static

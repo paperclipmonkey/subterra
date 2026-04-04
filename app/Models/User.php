@@ -214,4 +214,14 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
 
         return $this->hasApprovedClubCache = $this->clubs()->wherePivot('status', 'approved')->exists();
     }
+
+    public function bookings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function administeredPermits(): BelongsToMany
+    {
+        return $this->belongsToMany(Permit::class, 'permit_user')->withTimestamps();
+    }
 }
