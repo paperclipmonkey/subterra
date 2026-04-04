@@ -110,7 +110,9 @@
                   </template>
                   <v-list-item-title class="font-weight-medium">{{ shift.user.name }}</v-list-item-title>
                   <v-list-item-subtitle>
-                    {{ formatShift(shift.start_at, shift.end_at) }}
+                    <span>{{ formatShiftStart(shift.start_at) }}</span>
+                    <span class="mx-1">→</span>
+                    <span>{{ formatShiftEnd(shift.end_at) }}</span>
                   </v-list-item-subtitle>
                   <template #append>
                     <v-chip
@@ -186,13 +188,11 @@ export default {
       const now = moment()
       return moment(shift.start_at).isSameOrBefore(now) && moment(shift.end_at).isSameOrAfter(now)
     },
-    formatShift(start, end) {
-      const s = moment(start)
-      const e = moment(end)
-      if (s.isSame(e, 'day')) {
-        return s.format('ddd D MMM, HH:mm') + ' – ' + e.format('HH:mm')
-      }
-      return s.format('ddd D MMM HH:mm') + ' – ' + e.format('ddd D MMM HH:mm')
+    formatShiftStart(start) {
+      return moment(start).format('ddd D MMM, HH:mm')
+    },
+    formatShiftEnd(end) {
+      return moment(end).format('ddd D MMM, HH:mm')
     },
   },
 }
