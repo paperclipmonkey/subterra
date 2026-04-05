@@ -6,7 +6,7 @@
                     :coordinates="[hut.location_lng, hut.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card>
-              <v-img v-if="hut.hero_image" :src="hut.hero_image" height="80" cover class="rounded-t">
+              <v-img v-if="hut.image_url" :src="hut.image_url" height="80" cover class="rounded-t">
                 <v-card-title class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
                   {{ hut.name }}
                 </v-card-title>
