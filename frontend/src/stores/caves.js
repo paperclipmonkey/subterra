@@ -10,6 +10,7 @@ export const useCaveStore = defineStore('caves', {
     allCaves: [],
     savedFilter: [],
     savedSearch: '',
+    savedCatchmentId: null,
   }),
 
   actions: {
