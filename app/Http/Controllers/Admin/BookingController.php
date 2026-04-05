@@ -7,8 +7,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Mail\BookingApprovedMail;
+use App\Mail\BookingMessageMail;
 use App\Mail\BookingRejectedMail;
 use App\Models\Booking;
+use App\Models\Permit;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -94,6 +97,76 @@ class BookingController extends Controller
         Mail::to($booking->applicant->email)->queue(
             new BookingRejectedMail($booking)
         );
+
+        return response()->json(new BookingResource($booking));
+    }
+
+    public function adminStore(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'permit_slug' => 'required|string|exists:permits,slug',
+            'user_id' => 'nullable|integer|exists:users,id',
+            'date' => 'required|date',
+            'participants' => 'required|integer|min:1',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $data = $validator->validated();
+        $permit = Permit::where('slug', $data['permit_slug'])->firstOrFail();
+        $applicant = isset($data['user_id']) ? User::findOrFail($data['user_id']) : null;
+
+        $booking = Booking::create([
+            'permit_id' => $permit->id,
+            'user_id' => $applicant?->id,
+            'date' => $data['date'],
+            'participants' => $data['participants'],
+            'notes' => $data['notes'] ?? null,
+            'status' => 'approved',
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+            'conditions_accepted_at' => now(),
+        ]);
+
+        $booking->load(['permit.caves', 'applicant.clubs']);
+
+        if ($applicant) {
+            Mail::to($applicant->email)->queue(new BookingApprovedMail($booking));
+        }
+
+        return response()->json(new BookingResource($booking), 201);
+    }
+
+    public function message(Request $request, Booking $booking): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'message' => 'required|string|max:2000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $booking->load(['permit', 'applicant']);
+
+        Mail::to($booking->applicant->email)->queue(
+            new BookingMessageMail($booking, $validator->validated()['message'], $request->user()->name)
+        );
+
+        return response()->json(['message' => 'Message sent successfully.']);
+    }
+
+    public function cancel(Request $request, Booking $booking): JsonResponse
+    {
+        if (!in_array($booking->status, ['pending', 'approved'])) {
+            return response()->json(['error' => 'Only pending or approved bookings can be cancelled.'], 422);
+        }
+
+        $booking->update(['status' => 'cancelled']);
+        $booking->load(['permit.caves', 'applicant.clubs']);
 
         return response()->json(new BookingResource($booking));
     }

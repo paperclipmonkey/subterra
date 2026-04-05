@@ -10,6 +10,10 @@
         <v-btn value="list"><v-icon :icon="mdiViewList" /></v-btn>
         <v-btn value="calendar"><v-icon :icon="mdiCalendar" /></v-btn>
       </v-btn-toggle>
+      <v-btn color="primary" @click="openNewBookingDialog">
+        <v-icon :icon="mdiPlus" class="mr-1" />
+        New Booking
+      </v-btn>
     </div>
 
     <!-- Filters -->
@@ -227,19 +231,44 @@
           </v-list>
         </v-card-text>
 
-        <v-card-actions v-if="detailBooking.status === 'pending'">
-          <v-spacer />
-          <v-btn color="error" variant="tonal" @click="detailDialog = false; openRejectDialog(detailBooking)">
-            Reject
-          </v-btn>
-          <v-btn color="success" variant="tonal" :loading="detailBooking._approving" @click="approveBooking(detailBooking)">
-            Approve
-          </v-btn>
-        </v-card-actions>
-        <v-card-actions v-else>
-          <v-spacer />
-          <v-btn variant="text" @click="detailDialog = false">Close</v-btn>
-        </v-card-actions>
+        <v-divider />
+        <template v-if="detailBooking.status === 'pending'">
+          <v-card-actions class="flex-wrap gap-1 pa-2">
+            <v-btn color="success" variant="tonal" :loading="detailBooking._approving" @click="approveBooking(detailBooking)">
+              Approve
+            </v-btn>
+            <v-btn color="error" variant="tonal" @click="detailDialog = false; openRejectDialog(detailBooking)">
+              Reject
+            </v-btn>
+            <v-btn color="error" variant="text" @click="openCancelConfirm(detailBooking)">Cancel booking</v-btn>
+            <v-spacer />
+            <v-btn v-if="detailBooking.applicant" color="primary" variant="text" @click="openMessageDialog(detailBooking)">
+              <template #prepend><v-icon :icon="mdiEmail" /></template>
+              Message applicant
+            </v-btn>
+          </v-card-actions>
+        </template>
+        <template v-else-if="detailBooking.status === 'approved'">
+          <v-card-actions class="flex-wrap gap-1 pa-2">
+            <v-btn color="error" variant="text" @click="openCancelConfirm(detailBooking)">Cancel booking</v-btn>
+            <v-spacer />
+            <v-btn v-if="detailBooking.applicant" color="primary" variant="text" @click="openMessageDialog(detailBooking)">
+              <template #prepend><v-icon :icon="mdiEmail" /></template>
+              Message applicant
+            </v-btn>
+            <v-btn variant="text" @click="detailDialog = false">Close</v-btn>
+          </v-card-actions>
+        </template>
+        <template v-else>
+          <v-card-actions class="flex-wrap gap-1 pa-2">
+            <v-btn v-if="detailBooking.applicant" color="primary" variant="text" @click="openMessageDialog(detailBooking)">
+              <template #prepend><v-icon :icon="mdiEmail" /></template>
+              Message applicant
+            </v-btn>
+            <v-spacer />
+            <v-btn variant="text" @click="detailDialog = false">Close</v-btn>
+          </v-card-actions>
+        </template>
       </v-card>
     </v-dialog>
 
@@ -258,16 +287,145 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- New Booking Dialog -->
+    <v-dialog v-model="newBookingDialog" max-width="560" persistent>
+      <v-card>
+        <v-card-title>Add Manual Booking</v-card-title>
+        <v-card-text>
+          <v-select
+            v-model="newBookingForm.permit_slug"
+            :items="permits"
+            item-title="name"
+            item-value="slug"
+            label="Permit"
+            :rules="[v => !!v || 'Required']"
+            class="mb-2"
+          />
+          <v-autocomplete
+            v-model="newBookingForm.user_id"
+            v-model:search="userSearch"
+            :items="userSearchResults"
+            :loading="userSearchLoading"
+            item-title="name"
+            item-value="id"
+            label="Applicant (optional — leave blank if not a Subterra user)"
+            clearable
+            no-filter
+            hide-no-data
+            autocomplete="off"
+            class="mb-2"
+          >
+            <template #item="{ item, props }">
+              <v-list-item v-bind="props" :title="undefined">
+                <template #prepend>
+                  <v-avatar size="32" class="mr-2">
+                    <v-img v-if="item.raw.photo" :src="item.raw.photo" :alt="item.raw.name" />
+                    <v-icon v-else :icon="mdiAccount" />
+                  </v-avatar>
+                </template>
+                <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
+                <v-list-item-subtitle v-if="item.raw.clubs?.length">
+                  {{ item.raw.clubs.map(c => c.name).join(', ') }}
+                </v-list-item-subtitle>
+              </v-list-item>
+            </template>
+            <template #selection="{ item }">
+              <div class="d-flex align-center ga-2">
+                <v-avatar size="24">
+                  <v-img v-if="item.raw.photo" :src="item.raw.photo" :alt="item.raw.name" />
+                  <v-icon v-else :icon="mdiAccount" size="16" />
+                </v-avatar>
+                <span>{{ item.raw.name }}</span>
+              </div>
+            </template>
+            <template #no-data>
+              <v-list-item>
+                <v-list-item-title class="text-medium-emphasis">
+                  {{ userSearch?.length >= 2 ? 'No users found' : 'Type to search users…' }}
+                </v-list-item-title>
+              </v-list-item>
+            </template>
+          </v-autocomplete>
+          <v-text-field
+            v-model="newBookingForm.date"
+            label="Date"
+            type="date"
+            :rules="[v => !!v || 'Required']"
+            class="mb-2"
+          />
+          <v-text-field
+            v-model.number="newBookingForm.participants"
+            label="Participants"
+            type="number"
+            min="1"
+            :rules="[v => v >= 1 || 'Min 1']"
+            class="mb-2"
+          />
+          <v-textarea
+            v-model="newBookingForm.notes"
+            label="Notes (optional)"
+            rows="2"
+            class="mb-2"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="newBookingDialog = false">Cancel</v-btn>
+          <v-btn color="primary" :loading="newBookingLoading" @click="saveNewBooking">Add Booking</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Message Dialog -->
+    <v-dialog v-model="messageDialog" max-width="500">
+      <v-card>
+        <v-card-title>Message Applicant</v-card-title>
+        <v-card-text>
+          <p class="mb-3 text-body-2 text-medium-emphasis">
+            This will send an email to <strong>{{ messageBooking?.applicant?.name }}</strong> regarding their booking on {{ formatDate(messageBooking?.date) }}.
+          </p>
+          <v-textarea
+            v-model="messageText"
+            label="Message"
+            rows="5"
+            :rules="[v => !!v || 'Required']"
+            autofocus
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="messageDialog = false">Cancel</v-btn>
+          <v-btn color="primary" :loading="messageSending" @click="sendMessage">Send</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Cancel Booking Confirmation -->
+    <v-dialog v-model="cancelConfirmDialog" max-width="400">
+      <v-card>
+        <v-card-title>Cancel Booking</v-card-title>
+        <v-card-text>
+          Are you sure you want to cancel the booking from <strong>{{ cancellingBooking?.applicant?.name }}</strong> on {{ formatDate(cancellingBooking?.date) }}?
+          The applicant will lose their cave access.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="cancelConfirmDialog = false">No, keep it</v-btn>
+          <v-btn color="error" :loading="cancelling" @click="cancelBooking">Yes, cancel it</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import {
   mdiAccount, mdiAccountGroup, mdiArrowLeft, mdiCalendar, mdiCalendarBlank,
   mdiCheck, mdiCheckCircle, mdiChevronLeft, mdiChevronRight, mdiClipboardCheck,
-  mdiClose, mdiCloseCircle, mdiClockOutline, mdiDomain, mdiInformationOutline, mdiKey,
-  mdiNoteText, mdiViewList,
+  mdiClose, mdiCloseCircle, mdiClockOutline, mdiDomain, mdiEmail, mdiInformationOutline, mdiKey,
+  mdiNoteText, mdiPlus, mdiViewList,
 } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
@@ -287,6 +445,28 @@ const rejectionReason = ref('')
 const rejecting = ref(false)
 const detailDialog = ref(false)
 const detailBooking = ref(null)
+
+// New booking
+const newBookingDialog = ref(false)
+const newBookingLoading = ref(false)
+const newBookingForm = ref({ permit_slug: null, user_id: null, date: '', participants: 1, notes: '' })
+
+// User search (server-side, debounced — handles 1k+ users)
+const userSearch = ref('')
+const userSearchResults = ref([])
+const userSearchLoading = ref(false)
+let userSearchTimer = null
+
+// Message applicant
+const messageDialog = ref(false)
+const messageBooking = ref(null)
+const messageText = ref('')
+const messageSending = ref(false)
+
+// Admin cancel
+const cancelConfirmDialog = ref(false)
+const cancellingBooking = ref(null)
+const cancelling = ref(false)
 
 const currentMonth = ref(new Date())
 
@@ -418,11 +598,32 @@ const fetchBookings = async () => {
 const fetchPermits = async () => {
   try {
     const { data } = await api.get('/api/admin/permits')
-    permits.value = (data.data || []).map(p => ({ id: p.id, name: p.name }))
+    permits.value = (data.data || []).map(p => ({ id: p.id, name: p.name, slug: p.slug }))
   } catch (e) {
     // handled by interceptor
   }
 }
+
+const searchUsers = async (query) => {
+  if (!query || query.length < 2) {
+    userSearchResults.value = []
+    return
+  }
+  userSearchLoading.value = true
+  try {
+    const { data } = await api.get('/api/admin/users/officer-list', { params: { search: query } })
+    userSearchResults.value = data || []
+  } catch (e) {
+    // handled by interceptor
+  } finally {
+    userSearchLoading.value = false
+  }
+}
+
+watch(userSearch, (val) => {
+  clearTimeout(userSearchTimer)
+  userSearchTimer = setTimeout(() => searchUsers(val), 300)
+})
 
 const approveBooking = async (booking) => {
   booking._approving = true
@@ -465,6 +666,73 @@ const rejectBooking = async () => {
     // handled by interceptor
   } finally {
     rejecting.value = false
+  }
+}
+
+const openNewBookingDialog = () => {
+  newBookingForm.value = { permit_slug: null, user_id: null, date: '', participants: 1, notes: '' }
+  userSearch.value = ''
+  userSearchResults.value = []
+  newBookingDialog.value = true
+}
+
+const saveNewBooking = async () => {
+  const { permit_slug, date, participants } = newBookingForm.value
+  if (!permit_slug || !date || !participants) return
+  newBookingLoading.value = true
+  try {
+    const { data } = await api.post('/api/admin/bookings', newBookingForm.value)
+    bookings.value.unshift(data.data || data)
+    notificationStore.showSuccess('Booking added')
+    newBookingDialog.value = false
+  } catch (e) {
+    if (e.response?.status === 422) {
+      notificationStore.showError('Please check the form for errors.')
+    }
+  } finally {
+    newBookingLoading.value = false
+  }
+}
+
+const openMessageDialog = (booking) => {
+  messageBooking.value = booking
+  messageText.value = ''
+  messageDialog.value = true
+}
+
+const sendMessage = async () => {
+  if (!messageText.value) return
+  messageSending.value = true
+  try {
+    await api.post(`/api/admin/bookings/${messageBooking.value.id}/message`, { message: messageText.value })
+    notificationStore.showSuccess('Message sent')
+    messageDialog.value = false
+  } catch (e) {
+    // handled by interceptor
+  } finally {
+    messageSending.value = false
+  }
+}
+
+const openCancelConfirm = (booking) => {
+  cancellingBooking.value = booking
+  cancelConfirmDialog.value = true
+}
+
+const cancelBooking = async () => {
+  cancelling.value = true
+  try {
+    const { data } = await api.put(`/api/admin/bookings/${cancellingBooking.value.id}/cancel`)
+    const updated = data.data || data
+    const idx = bookings.value.findIndex(b => b.id === cancellingBooking.value.id)
+    if (idx >= 0) bookings.value[idx] = updated
+    if (detailBooking.value?.id === cancellingBooking.value.id) detailBooking.value = updated
+    notificationStore.showSuccess('Booking cancelled')
+    cancelConfirmDialog.value = false
+  } catch (e) {
+    // handled by interceptor
+  } finally {
+    cancelling.value = false
   }
 }
 

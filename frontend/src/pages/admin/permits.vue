@@ -100,6 +100,30 @@
               class="mb-2"
             />
 
+            <v-switch v-model="form.has_season" label="Restrict to a season" color="primary" class="mb-2" />
+            <v-row v-if="form.has_season" class="mb-2">
+              <v-col cols="6">
+                <v-text-field
+                  v-model="form.season_start"
+                  label="Season start (MM-DD)"
+                  placeholder="04-01"
+                  hint="e.g. 04-01 for 1st April"
+                  persistent-hint
+                  :rules="[v => !v || /^\d{2}-\d{2}$/.test(v) || 'Format: MM-DD']"
+                />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="form.season_end"
+                  label="Season end (MM-DD)"
+                  placeholder="03-10"
+                  hint="e.g. 03-10 for 10th March (can cross year)"
+                  persistent-hint
+                  :rules="[v => !v || /^\d{2}-\d{2}$/.test(v) || 'Format: MM-DD']"
+                />
+              </v-col>
+            </v-row>
+
             <v-switch v-model="form.auto_approve" label="Auto-approve bookings" color="primary" class="mb-2" />
 
             <v-textarea v-model="form.booking_info" label="Booking Information (sent on approval)" rows="3" hint="Access details, key codes, meeting points etc." persistent-hint class="mb-2" />
@@ -199,6 +223,9 @@ const defaultForm = () => ({
   max_groups_per_day: 1,
   has_max_participants: false,
   max_participants: 1,
+  has_season: false,
+  season_start: '',
+  season_end: '',
   auto_approve: false,
   booking_info: '',
   is_active: true,
@@ -252,6 +279,9 @@ const openEditDialog = (permit) => {
     max_groups_per_day: permit.max_groups_per_day || 1,
     has_max_participants: permit.has_max_participants,
     max_participants: permit.max_participants || 1,
+    has_season: permit.has_season || false,
+    season_start: permit.season_start || '',
+    season_end: permit.season_end || '',
     auto_approve: permit.auto_approve,
     booking_info: permit.booking_info || '',
     is_active: permit.is_active,

@@ -449,4 +449,331 @@ class PermitTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonCount(3, 'data');
     }
+
+    // --- Season Enforcement ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function cannot_book_outside_permit_season()
+    {
+        // Season: May–September (05-01 to 09-30), book in January
+        $permit = Permit::factory()->create([
+            'has_season' => true,
+            'season_start' => '05-01',
+            'season_end' => '09-30',
+        ]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => '2027-01-15', // January — outside season
+                'participants' => 1,
+                'conditions_accepted' => true,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson(['error' => 'This date is outside the permit season.']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function can_book_within_permit_season()
+    {
+        Mail::fake();
+
+        // Season: April–October
+        $permit = Permit::factory()->create([
+            'has_season' => true,
+            'season_start' => '04-01',
+            'season_end' => '10-31',
+        ]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => '2027-06-15', // June — inside season
+                'participants' => 1,
+                'conditions_accepted' => true,
+            ]);
+
+        $response->assertStatus(201);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function wrap_around_season_allows_booking_in_valid_months()
+    {
+        Mail::fake();
+
+        // Season: April–March (wraps around year — e.g. bat exclusion in summer)
+        // Actually this would be April through March which is almost the whole year.
+        // Let's do Oct–Mar: open winter/spring, closed summer
+        $permit = Permit::factory()->create([
+            'has_season' => true,
+            'season_start' => '10-01',
+            'season_end' => '03-31',
+        ]);
+
+        // December is within Oct–Mar wrap-around season
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => '2026-12-15',
+                'participants' => 1,
+                'conditions_accepted' => true,
+            ]);
+
+        $response->assertStatus(201);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function wrap_around_season_blocks_booking_outside_season()
+    {
+        // Season: Oct–Mar (wrap-around), July is outside
+        $permit = Permit::factory()->create([
+            'has_season' => true,
+            'season_start' => '10-01',
+            'season_end' => '03-31',
+        ]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => '2027-07-10', // July — outside season
+                'participants' => 1,
+                'conditions_accepted' => true,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson(['error' => 'This date is outside the permit season.']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function permit_without_season_allows_any_date()
+    {
+        Mail::fake();
+
+        $permit = Permit::factory()->create(['has_season' => false]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => '2027-07-10',
+                'participants' => 1,
+                'conditions_accepted' => true,
+            ]);
+
+        $response->assertStatus(201);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_create_permit_with_season()
+    {
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/permits', [
+                'name' => 'Seasonal Cave Permit',
+                'has_season' => true,
+                'season_start' => '04-01',
+                'season_end' => '10-31',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonFragment(['has_season' => true])
+            ->assertJsonFragment(['season_start' => '04-01'])
+            ->assertJsonFragment(['season_end' => '10-31']);
+
+        $this->assertDatabaseHas('permits', [
+            'name' => 'Seasonal Cave Permit',
+            'season_start' => '04-01',
+            'season_end' => '10-31',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_update_permit_season()
+    {
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/permits/{$permit->slug}", [
+                'has_season' => true,
+                'season_start' => '10-01',
+                'season_end' => '03-31',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['season_start' => '10-01'])
+            ->assertJsonFragment(['season_end' => '03-31']);
+    }
+
+    // --- Admin Manual Booking ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_manually_create_booking()
+    {
+        Mail::fake();
+
+        $permit = Permit::factory()->create();
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/bookings', [
+                'permit_slug' => $permit->slug,
+                'user_id' => $this->regularUser->id,
+                'date' => now()->addDays(5)->format('Y-m-d'),
+                'participants' => 3,
+                'notes' => 'Phone booking',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('status', 'approved');
+
+        $this->assertDatabaseHas('bookings', [
+            'permit_id' => $permit->id,
+            'user_id' => $this->regularUser->id,
+            'status' => 'approved',
+        ]);
+
+        Mail::assertQueued(BookingApprovedMail::class, function ($mail) {
+            return $mail->hasTo($this->regularUser->email);
+        });
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function regular_user_cannot_manually_create_booking()
+    {
+        $permit = Permit::factory()->create();
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson('/api/admin/bookings', [
+                'permit_slug' => $permit->slug,
+                'user_id' => $this->regularUser->id,
+                'date' => now()->addDays(5)->format('Y-m-d'),
+                'participants' => 1,
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function manual_booking_creation_validates_required_fields()
+    {
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/bookings', []);
+
+        $response->assertStatus(422)
+            ->assertJsonStructure(['permit_slug', 'date', 'participants']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_manually_create_booking_without_user()
+    {
+        $permit = Permit::factory()->create();
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/bookings', [
+                'permit_slug' => $permit->slug,
+                'date' => now()->addDays(3)->format('Y-m-d'),
+                'participants' => 2,
+                'notes' => 'Walk-in booking — no Subterra account',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('status', 'approved')
+            ->assertJsonPath('applicant', null);
+
+        $this->assertDatabaseHas('bookings', [
+            'permit_id' => $permit->id,
+            'user_id' => null,
+            'status' => 'approved',
+        ]);
+    }
+
+    // --- Admin Message Applicant ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_message_applicant()
+    {
+        Mail::fake();
+
+        $permit = Permit::factory()->create();
+        $booking = Booking::factory()->create([
+            'permit_id' => $permit->id,
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson("/api/admin/bookings/{$booking->short_id}/message", [
+                'message' => 'Please bring a wetsuit.',
+            ]);
+
+        $response->assertStatus(200);
+
+        Mail::assertQueued(\App\Mail\BookingMessageMail::class, function ($mail) {
+            return $mail->hasTo($this->regularUser->email);
+        });
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function message_requires_message_field()
+    {
+        $booking = Booking::factory()->create(['user_id' => $this->regularUser->id]);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson("/api/admin/bookings/{$booking->short_id}/message", []);
+
+        $response->assertStatus(422)
+            ->assertJsonStructure(['message']);
+    }
+
+    // --- Admin Cancel Booking ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_cancel_booking()
+    {
+        $permit = Permit::factory()->create();
+        $booking = Booking::factory()->approved()->create([
+            'permit_id' => $permit->id,
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('status', 'cancelled');
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => 'cancelled',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_cancel_pending_booking()
+    {
+        $booking = Booking::factory()->create(['status' => 'pending']);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('status', 'cancelled');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function cannot_cancel_already_rejected_booking()
+    {
+        $booking = Booking::factory()->create(['status' => 'rejected']);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
+
+        $response->assertStatus(422);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function regular_user_cannot_admin_cancel_booking()
+    {
+        $booking = Booking::factory()->approved()->create([
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
+
+        $response->assertStatus(403);
+    }
 }

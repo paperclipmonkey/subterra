@@ -122,6 +122,10 @@ class BookingController extends Controller
             return response()->json(['error' => 'This date is fully booked.'], 422);
         }
 
+        if (!$permit->isInSeason($date)) {
+            return response()->json(['error' => 'This date is outside the permit season.'], 422);
+        }
+
         $booking = Booking::create([
             'permit_id' => $permit->id,
             'user_id' => $request->user()->id,

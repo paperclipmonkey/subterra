@@ -201,8 +201,11 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::delete('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'destroy'])->name('admin.permits.destroy');
 
         Route::get('/bookings', [App\Http\Controllers\Admin\BookingController::class, 'index'])->name('admin.bookings.index');
+        Route::post('/bookings', [App\Http\Controllers\Admin\BookingController::class, 'adminStore'])->name('admin.bookings.store');
         Route::put('/bookings/{booking}/approve', [App\Http\Controllers\Admin\BookingController::class, 'approve'])->name('admin.bookings.approve');
         Route::put('/bookings/{booking}/reject', [App\Http\Controllers\Admin\BookingController::class, 'reject'])->name('admin.bookings.reject');
+        Route::put('/bookings/{booking}/cancel', [App\Http\Controllers\Admin\BookingController::class, 'cancel'])->name('admin.bookings.cancel');
+        Route::post('/bookings/{booking}/message', [App\Http\Controllers\Admin\BookingController::class, 'message'])->name('admin.bookings.message');
     });
 
     // Duty Officer — callouts, shifts, incidents

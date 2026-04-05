@@ -21,6 +21,9 @@ class PermitResource extends JsonResource
             'max_groups_per_day' => $this->max_groups_per_day,
             'has_max_participants' => $this->has_max_participants,
             'max_participants' => $this->max_participants,
+            'has_season' => $this->has_season,
+            'season_start' => $this->season_start,
+            'season_end' => $this->season_end,
             'auto_approve' => $this->auto_approve,
             'booking_info' => $this->when(
                 $request->user()?->hasRole(['access_officer', 'platform_admin']) ||

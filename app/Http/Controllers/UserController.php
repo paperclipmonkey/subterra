@@ -147,13 +147,37 @@ class UserController extends Controller
         return UserDetailEmailResource::collection(User::withoutGlobalScopes()->where('is_active', true)->with('roles')->get());
     }
 
-    public function officerList(): JsonResponse
+    public function officerList(Request $request): JsonResponse
     {
+        $search = $request->query('search');
+
+        $query = User::withoutGlobalScopes()
+            ->where('is_active', true)
+            ->orderBy('name');
+
+        if ($search) {
+            $query->where('name', 'like', '%'.$search.'%')
+                ->with(['clubs' => function ($q) {
+                    $q->wherePivot('status', 'approved');
+                }])
+                ->limit(30);
+
+            $users = $query->get(['id', 'name', 'photo']);
+
+            return response()->json($users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'photo' => $user->photo
+                        ? (str_starts_with($user->photo, 'http') ? $user->photo : \Illuminate\Support\Facades\Storage::disk('public')->url($user->photo))
+                        : null,
+                    'clubs' => $user->clubs->map(fn ($c) => ['name' => $c->name, 'slug' => $c->slug])->values(),
+                ];
+            })->values());
+        }
+
         return response()->json(
-            User::withoutGlobalScopes()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name'])
+            $query->get(['id', 'name'])
         );
     }
 

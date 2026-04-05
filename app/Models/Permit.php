@@ -25,6 +25,9 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'max_groups_per_day',
         'has_max_participants',
         'max_participants',
+        'has_season',
+        'season_start',
+        'season_end',
         'auto_approve',
         'booking_info',
         'is_active',
@@ -38,6 +41,7 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
             'max_groups_per_day' => 'integer',
             'has_max_participants' => 'boolean',
             'max_participants' => 'integer',
+            'has_season' => 'boolean',
             'auto_approve' => 'boolean',
             'is_active' => 'boolean',
         ];
@@ -72,6 +76,29 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function approvedBookingsForDate(string $date): HasMany
     {
         return $this->bookings()->where('status', 'approved')->whereDate('date', $date);
+    }
+
+    /**
+     * Check if a date falls within the permit's season.
+     * Handles wrap-around seasons (e.g. Apr–Mar).
+     */
+    public function isInSeason(string $date): bool
+    {
+        if (!$this->has_season || !$this->season_start || !$this->season_end) {
+            return true;
+        }
+
+        $md = date('m-d', strtotime($date));
+        $start = $this->season_start;
+        $end = $this->season_end;
+
+        if ($start <= $end) {
+            // Normal season: e.g. 04-01 to 10-31
+            return $md >= $start && $md <= $end;
+        }
+
+        // Wrap-around season: e.g. 04-01 to 03-10 (crosses year boundary)
+        return $md >= $start || $md <= $end;
     }
 
     /**
