@@ -214,6 +214,9 @@ const loadTrips = async () => {
 
 onMounted(loadTrips)
 watch(() => route.query, loadTrips, { deep: true })
+watch(tab, () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+})
 </script>
 
 <style scoped>
