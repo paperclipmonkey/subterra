@@ -3,8 +3,7 @@
     <template #text>
       <div class="d-flex align-center">
         <v-text-field v-model="search" label="Search" :prepend-inner-icon="mdiMagnify" variant="outlined"
-                      hide-details single-line density="compact" class="flex-grow-1 mr-4" />
-        <HutEditModal v-if="userStore.user.is_admin" />
+                      hide-details single-line density="compact" class="flex-grow-1" />
       </div>
     </template>
 
@@ -39,7 +38,6 @@ import { useAppStore } from '@/stores/app'
 import { useRoute, useRouter } from 'vue-router'
 import HutListMap from '@/components/HutListMap.vue'
 import HutListList from '@/components/HutListList.vue'
-import HutEditModal from '@/components/HutEditModal.vue'
 
 const hutStore = useHutStore()
 const userStore = useAppStore()
