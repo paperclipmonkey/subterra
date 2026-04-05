@@ -20,11 +20,11 @@
         <div class="bg-gradient-primary px-6 pt-4 pb-12 pt-sm-10 pb-sm-16" />
         <div class="px-6 pb-6 mt-n10 mt-sm-n12 d-flex flex-column flex-sm-row align-center align-sm-end">
 
-          <v-avatar size="100" class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-sm-0 d-sm-none">
+          <v-avatar size="100" class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-sm-0 d-sm-none cursor-pointer" @click="showPhotoModal = true">
             <v-img :src="profile.photo || '/default-avatar.png'" cover />
           </v-avatar>
           <v-avatar size="140"
-                    class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-sm-0 d-none d-sm-flex">
+                    class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-sm-0 d-none d-sm-flex cursor-pointer" @click="showPhotoModal = true">
             <v-img :src="profile.photo || '/default-avatar.png'" cover />
           </v-avatar>
 
@@ -280,6 +280,17 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Profile Photo Modal -->
+    <v-dialog v-model="showPhotoModal" max-width="500">
+      <v-card class="rounded-xl overflow-hidden">
+        <v-img :src="profile.photo || '/default-avatar.png'" max-height="80vh" contain class="bg-black" />
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="showPhotoModal = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -398,6 +409,7 @@ const openMedalModal = (medal) => {
 }
 const selectedMedal = ref({})
 const isMedalModalOpen = ref(false)
+const showPhotoModal = ref(false)
 
 const formatTripDateMonth = (date) => {
   const parsed = moment(date)
