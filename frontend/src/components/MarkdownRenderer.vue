@@ -134,7 +134,9 @@ watch(() => props.source, () => {
 .markdown-renderer :deep(h1),
 .markdown-renderer :deep(h2),
 .markdown-renderer :deep(h3),
-.markdown-renderer :deep(h4) {
+.markdown-renderer :deep(h4),
+.markdown-renderer :deep(h5),
+.markdown-renderer :deep(h6) {
   color: #111827;
   font-weight: 700;
   margin-top: 2rem;
@@ -157,6 +159,18 @@ watch(() => props.source, () => {
 
 .markdown-renderer :deep(h3) {
   font-size: 1.5rem;
+}
+
+.markdown-renderer :deep(h4) {
+  font-size: 1.25rem;
+}
+
+.markdown-renderer :deep(h5) {
+  font-size: 1.125rem;
+}
+
+.markdown-renderer :deep(h6) {
+  font-size: 1rem;
 }
 
 .markdown-renderer :deep(p) {
