@@ -68,7 +68,7 @@
              style="background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0)); bottom: 0; z-index: 2;">
           <div class="d-flex justify-space-between align-end">
             <div>
-              <div class="text-overline mb-1">{{ cave.system?.name || 'Unknown System' }}</div>
+              <div v-if="cave.system?.caves?.length > 1" class="text-overline mb-1">{{ cave.system?.name || 'Unknown System' }}</div>
               <h1 class="text-h3 font-weight-bold mb-2">{{ cave.name }}</h1>
               <div class="d-flex align-center">
                 <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
