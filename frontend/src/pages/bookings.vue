@@ -53,7 +53,7 @@
                   <div v-if="item.status === 'approved' && item.booking_info" class="mb-3">
                     <strong>Access Information:</strong>
                     <v-alert type="success" variant="tonal" class="mt-2">
-                      <div style="white-space: pre-line;">{{ item.booking_info }}</div>
+                      <MarkdownRenderer :source="item.booking_info" />
                     </v-alert>
                   </div>
                   <div v-if="item.status === 'rejected' && item.rejection_reason" class="mb-3">
@@ -91,7 +91,9 @@
                 {{ permit.caves.map(c => c.name).join(', ') }}
               </v-card-subtitle>
               <v-card-text>
-                <p v-if="permit.description" class="text-body-2 mb-3">{{ permit.description }}</p>
+                <div v-if="permit.description" class="text-body-2 mb-3">
+                  <MarkdownRenderer :source="permit.description" />
+                </div>
                 <div class="d-flex gap-2 flex-wrap">
                   <v-chip v-if="permit.auto_approve" color="success" size="small" variant="tonal">Auto-approved</v-chip>
                   <v-chip v-else color="warning" size="small" variant="tonal">Reviewed by officer</v-chip>
@@ -140,6 +142,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 defineOptions({ name: 'MyBookings' })
 

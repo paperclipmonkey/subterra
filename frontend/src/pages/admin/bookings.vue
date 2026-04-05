@@ -220,7 +220,9 @@
             <v-list-item v-if="detailBooking.status === 'approved' && detailBooking.booking_info">
               <template #prepend><v-icon :icon="mdiKey" color="success" class="mr-2" /></template>
               <v-list-item-title>Access Information</v-list-item-title>
-              <v-list-item-subtitle style="white-space: pre-line;">{{ detailBooking.booking_info }}</v-list-item-subtitle>
+              <v-list-item-subtitle>
+                <MarkdownRenderer :source="detailBooking.booking_info" />
+              </v-list-item-subtitle>
             </v-list-item>
 
             <v-list-item>
@@ -429,6 +431,7 @@ import {
 } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 defineOptions({ name: 'AdminBookings' })
 

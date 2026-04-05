@@ -6,7 +6,9 @@
       </v-btn>
       <div class="ml-2">
         <h2 class="text-h4 font-weight-bold">{{ permit?.name || 'Booking' }}</h2>
-        <p v-if="permit?.description" class="text-subtitle-1 text-grey-darken-1 mt-1">{{ permit.description }}</p>
+        <div v-if="permit?.description" class="text-subtitle-1 text-grey-darken-1 mt-1">
+          <MarkdownRenderer :source="permit.description" />
+        </div>
       </div>
     </div>
 
@@ -16,7 +18,7 @@
       <!-- Permit Info -->
       <v-alert v-if="permit.conditions" type="info" variant="tonal" class="mb-4">
         <div class="text-subtitle-2 font-weight-bold mb-1">Conditions</div>
-        <div style="white-space: pre-line;">{{ permit.conditions }}</div>
+        <MarkdownRenderer :source="permit.conditions" />
       </v-alert>
 
       <v-row v-if="permit.has_max_groups_per_day" class="mb-4">
@@ -139,7 +141,7 @@
 
               <v-alert v-if="permit.conditions" type="warning" variant="tonal" class="mb-4">
                 <div class="text-subtitle-2 font-weight-bold mb-1">You must agree to the following conditions:</div>
-                <div style="white-space: pre-line;" class="mb-3">{{ permit.conditions }}</div>
+                <MarkdownRenderer :source="permit.conditions" class="mb-3" />
                 <v-checkbox
                   v-model="application.conditions_accepted"
                   label="I have read and accept these conditions"
@@ -180,6 +182,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { mdiArrowLeft, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 defineOptions({ name: 'CaveBookings' })
 
