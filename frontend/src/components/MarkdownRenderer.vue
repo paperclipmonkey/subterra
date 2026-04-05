@@ -2,6 +2,16 @@
   <div ref="container" class="markdown-renderer">
     <vue-markdown :source="source" :plugins="[mermaidPlugin]" />
   </div>
+
+  <v-dialog v-model="showDiagramModal" max-width="95vw">
+    <v-card class="rounded-lg overflow-auto">
+      <v-card-text class="pa-6 d-flex justify-center" v-html="diagramSvg" />
+      <v-card-actions>
+        <v-spacer />
+        <v-btn variant="text" @click="showDiagramModal = false">Close</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -53,6 +63,8 @@ const props = defineProps({
 })
 
 const container = ref(null)
+const showDiagramModal = ref(false)
+const diagramSvg = ref('')
 
 const renderMermaidDiagrams = async () => {
     // Wait for ticks and a small delay to ensure vue-markdown-render has completed its DOM update
@@ -86,6 +98,12 @@ const renderMermaidDiagrams = async () => {
                 const { svg } = await mermaid.render(id, text)
                 node.innerHTML = svg
                 node.setAttribute('data-processed', 'true')
+                node.style.cursor = 'pointer'
+                node.title = 'Click to enlarge'
+                node.addEventListener('click', () => {
+                    diagramSvg.value = node.innerHTML
+                    showDiagramModal.value = true
+                })
             } catch (renderError) {
                 console.error('Mermaid individual render error:', renderError)
                 node.innerHTML = `<div class="text-error">Mermaid error: ${renderError.message}</div>`
