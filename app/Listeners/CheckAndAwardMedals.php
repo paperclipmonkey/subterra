@@ -179,6 +179,69 @@ class CheckAndAwardMedals implements ShouldQueue
                     });
 
                 return $srtTrips->count() >= 10;
+
+            case 'Copper Miner':
+                // Awarded for caving at the Great Orme
+                return $user->trips()
+                    ->with('entrance.tags')
+                    ->get()
+                    ->flatMap(function ($trip) {
+                        return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                    })
+                    ->contains('Great Orme');
+
+            case 'Dragon\'s Lair':
+                // Awarded for 5 trips to Welsh caves
+                $welshTrips = $user->trips()
+                    ->with('entrance.tags')
+                    ->get()
+                    ->filter(function ($trip) {
+                        return optional($trip->entrance)?->tags->where('category', 'region')->where('tag', 'Wales')->isNotEmpty();
+                    });
+
+                return $welshTrips->count() >= 5;
+
+            case 'Completionist':
+                // Awarded for completing any cave collection
+                $visitedCaveIds = $user->trips()
+                    ->pluck('entrance_cave_id')
+                    ->unique();
+
+                return \App\Models\Collection::with('caves')->get()->contains(function ($collection) use ($visitedCaveIds) {
+                    $collectionCaveIds = $collection->caves->pluck('id');
+                    return $collectionCaveIds->isNotEmpty() && $collectionCaveIds->diff($visitedCaveIds)->isEmpty();
+                });
+
+            case 'Slate Heart':
+                // Awarded for caving in North Wales
+                return $user->trips()
+                    ->with('entrance.tags')
+                    ->get()
+                    ->flatMap(function ($trip) {
+                        return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                    })
+                    ->contains('North Wales');
+
+            case 'Gower Power':
+                // Awarded for caving in Gower
+                return $user->trips()
+                    ->with('entrance.tags')
+                    ->get()
+                    ->flatMap(function ($trip) {
+                        return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                    })
+                    ->contains('Gower');
+
+            case 'Free Miner':
+                // Awarded for caving in the Forest of Dean
+                return $user->trips()
+                    ->with('entrance.tags')
+                    ->get()
+                    ->flatMap(function ($trip) {
+                        return optional($trip->entrance)?->tags->where('category', 'region')->pluck('tag') ?? collect();
+                    })
+                    ->contains('Forest of Dean');
+
             default:
                 return false;
         }

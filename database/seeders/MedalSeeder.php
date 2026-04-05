@@ -85,6 +85,36 @@ class MedalSeeder extends Seeder
                 'description' => 'For 10 trips to SRT caves',
                 'image_path' => 'string-dangler.svg',
             ],
+            [
+                'name' => 'Copper Miner',
+                'description' => 'Awarded for caving at the Great Orme',
+                'image_path' => 'copper-miner.svg',
+            ],
+            [
+                'name' => 'Dragon\'s Lair',
+                'description' => 'Awarded for 5 trips to Welsh caves',
+                'image_path' => 'dragons-lair.svg',
+            ],
+            [
+                'name' => 'Completionist',
+                'description' => 'Awarded for completing any cave collection',
+                'image_path' => 'completionist.svg',
+            ],
+            [
+                'name' => 'Slate Heart',
+                'description' => 'Awarded for caving in North Wales',
+                'image_path' => 'slate-heart.svg',
+            ],
+            [
+                'name' => 'Gower Power',
+                'description' => 'Awarded for caving in Gower',
+                'image_path' => 'gower-power.svg',
+            ],
+            [
+                'name' => 'Free Miner',
+                'description' => 'Awarded for caving in the Forest of Dean',
+                'image_path' => 'free-miner.svg',
+            ],
         ];
 
         foreach ($medals as $medal) {
