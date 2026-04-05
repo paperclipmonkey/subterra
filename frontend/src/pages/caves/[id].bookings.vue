@@ -54,6 +54,21 @@
             <v-icon :icon="mdiChevronRight" />
           </v-btn>
         </v-card-title>
+
+        <v-alert
+          v-if="calendarPermitInfo.has_season"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mx-4 mb-2"
+        >
+          This permit is only open from
+          <strong>{{ formatSeasonDate(calendarPermitInfo.season_start) }}</strong>
+          to
+          <strong>{{ formatSeasonDate(calendarPermitInfo.season_end) }}</strong>.
+          Dates outside this season cannot be booked.
+        </v-alert>
+
         <v-card-text>
           <div class="calendar-grid">
             <div v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="day" class="calendar-header">
@@ -67,16 +82,20 @@
                 'calendar-day--other': !cell.current,
                 'calendar-day--today': cell.today,
                 'calendar-day--past': cell.current && cell.past,
-                'calendar-day--full': !cell.available && cell.current && !cell.past,
-                'calendar-day--clickable': cell.available && cell.current && !cell.past,
+                'calendar-day--out-of-season': cell.current && !cell.past && cell.outOfSeason,
+                'calendar-day--full': !cell.available && cell.current && !cell.past && !cell.outOfSeason,
+                'calendar-day--clickable': cell.available && cell.current && !cell.past && !cell.outOfSeason,
               }"
-              @click="cell.available && cell.current && !cell.past ? selectDate(cell) : null"
+              @click="cell.available && cell.current && !cell.past && !cell.outOfSeason ? selectDate(cell) : null"
             >
               <div class="day-number">{{ cell.day }}</div>
-              <div v-if="cell.current && !cell.past && cell.bookingCount > 0" class="text-caption text-grey-darken-1">
+              <div v-if="cell.current && !cell.past && cell.outOfSeason" class="text-caption day-label day-label--season">
+                Out of season
+              </div>
+              <div v-else-if="cell.current && !cell.past && cell.bookingCount > 0" class="text-caption text-grey-darken-1">
                 {{ cell.bookingCount }} booked
               </div>
-              <div v-if="cell.current && !cell.past && !cell.available" class="text-caption text-error">
+              <div v-else-if="cell.current && !cell.past && !cell.available" class="text-caption text-error">
                 Full
               </div>
             </div>
@@ -171,6 +190,7 @@ const notificationStore = useNotificationStore()
 const loading = ref(true)
 const permit = ref(null)
 const calendarData = ref({})
+const calendarPermitInfo = ref({})
 const currentMonth = ref(new Date())
 const applyDialog = ref(false)
 const selectedDate = ref(null)
@@ -188,6 +208,19 @@ const caveSlug = computed(() => route.params.id)
 const calendarTitle = computed(() => {
   return currentMonth.value.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
 })
+
+const isInSeason = (dateStr) => {
+  const info = calendarPermitInfo.value
+  if (!info.has_season || !info.season_start || !info.season_end) return true
+  const md = dateStr.slice(5) // 'MM-DD'
+  const start = info.season_start
+  const end = info.season_end
+  if (start <= end) {
+    return md >= start && md <= end
+  }
+  // Wrap-around season (e.g. Oct–Mar)
+  return md >= start || md <= end
+}
 
 const calendarCells = computed(() => {
   const year = currentMonth.value.getFullYear()
@@ -210,6 +243,7 @@ const calendarCells = computed(() => {
     const dateStr = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
     const dayData = calendarData.value[dateStr]
     const isPast = d < today
+    const inSeason = isInSeason(dateStr)
 
     cells.push({
       day: i,
@@ -217,8 +251,9 @@ const calendarCells = computed(() => {
       today: d.toDateString() === today.toDateString(),
       date: dateStr,
       past: isPast,
+      outOfSeason: !inSeason,
       bookingCount: dayData?.booking_count || 0,
-      available: isPast ? false : (dayData?.available !== false),
+      available: isPast || !inSeason ? false : (dayData?.available !== false),
     })
   }
 
@@ -245,6 +280,13 @@ const nextMonth = () => {
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+// Format MM-DD season boundary as "1 April"
+const formatSeasonDate = (mmdd) => {
+  if (!mmdd) return ''
+  const [month, day] = mmdd.split('-')
+  return new Date(2000, Number(month) - 1, Number(day)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
 }
 
 const selectDate = (cell) => {
@@ -277,6 +319,7 @@ const fetchCalendar = async () => {
       params: { month: `${year}-${month}` },
     })
     calendarData.value = data.data || {}
+    calendarPermitInfo.value = data.permit || {}
   } catch (e) {
     // handled by interceptor
   }
@@ -361,6 +404,26 @@ onMounted(() => {
 
 .calendar-day--full {
   background: #ffebee;
+}
+
+.calendar-day--out-of-season {
+  background: repeating-linear-gradient(
+    135deg,
+    #f5f5f5,
+    #f5f5f5 4px,
+    #eeeeee 4px,
+    #eeeeee 8px
+  );
+  cursor: not-allowed;
+}
+
+.day-label {
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.day-label--season {
+  color: #9e9e9e;
 }
 
 .calendar-day--clickable {

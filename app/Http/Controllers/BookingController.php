@@ -87,6 +87,9 @@ class BookingController extends Controller
             'permit' => [
                 'has_max_groups_per_day' => $permit->has_max_groups_per_day,
                 'max_groups_per_day' => $permit->max_groups_per_day,
+                'has_season' => $permit->has_season,
+                'season_start' => $permit->season_start,
+                'season_end' => $permit->season_end,
             ],
         ]);
     }
