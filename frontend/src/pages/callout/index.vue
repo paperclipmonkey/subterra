@@ -18,10 +18,6 @@
           </v-alert>
           <ActiveCalloutMap :callouts="activeCallouts" />
         </v-card>
-        <v-alert v-else type="success" variant="tonal" border="start" class="mb-6">
-          <div class="text-h6">All Quiet</div>
-          <div>No open callouts at the moment. You'll be the first one down!</div>
-        </v-alert>
 
         <!-- Duty Officer Status -->
         <v-card class="mb-6" outlined :color="dutyOfficerColor">
