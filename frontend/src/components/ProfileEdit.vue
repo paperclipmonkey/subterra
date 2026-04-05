@@ -2,13 +2,18 @@
   <v-container class="pa-4">
     <v-card class="profile">
       <v-card-title>
-        <v-avatar size="64">
-          <img :src="profile.photo" alt="Profile Photo">
+        <v-avatar size="64" class="cursor-pointer" @click="triggerPhotoUpload">
+          <img :src="photoPreview || profile.photo" alt="Profile Photo">
+          <div class="avatar-overlay d-flex align-center justify-center">
+            <v-icon color="white" size="small" :icon="mdiCamera" />
+          </div>
         </v-avatar>
         <div class="profile-info">
           <h2>{{ profile.name || 'Please set your name' }}</h2>
+          <div class="text-caption text-grey mt-1">Tap photo to change</div>
         </div>
       </v-card-title>
+      <input ref="photoInput" type="file" accept="image/*" class="d-none" @change="onPhotoSelected">
       <v-divider />
       
       <!-- Name editing section -->
@@ -215,7 +220,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAlert, mdiEarth } from '@mdi/js'
+import { mdiAccountGroup, mdiAlert, mdiCamera, mdiEarth } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -250,6 +255,20 @@ const showDeleteModal = ref(false)
 const deletingAccount = ref(false)
 const showConfirmNameModal = ref(false)
 const isNameConfirmed = ref(false)
+const photoInput = ref(null)
+const photoPreview = ref(null)
+const photoFile = ref(null)
+
+const triggerPhotoUpload = () => {
+  photoInput.value?.click()
+}
+
+const onPhotoSelected = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  photoFile.value = file
+  photoPreview.value = URL.createObjectURL(file)
+}
 
 // Name validation rules
 const nameRules = [
@@ -291,14 +310,20 @@ const save = async () => {
 
   clearErrors()
   try {
-    const response = await api.put(`/api/users/me`, {
-      name: profile.value.name,
-      bio: profile.value.bio,
-      phone: profile.value.phone,
-      email_trophies: profile.value.email_trophies,
-      email_tagged: profile.value.email_tagged,
-      email_platform_news: profile.value.email_platform_news,
-      visibility_addable: profile.value.visibility_addable,
+    const formData = new FormData()
+    formData.append('name', profile.value.name || '')
+    formData.append('bio', profile.value.bio || '')
+    formData.append('phone', profile.value.phone || '')
+    formData.append('email_trophies', profile.value.email_trophies ? '1' : '0')
+    formData.append('email_tagged', profile.value.email_tagged ? '1' : '0')
+    formData.append('email_platform_news', profile.value.email_platform_news ? '1' : '0')
+    formData.append('visibility_addable', profile.value.visibility_addable || 'public')
+    formData.append('_method', 'PUT')
+    if (photoFile.value) {
+      formData.append('photo', photoFile.value)
+    }
+    const response = await api.post(`/api/users/me`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     })
 
     const updatedProfile = response.data.data
@@ -443,6 +468,24 @@ h3 {
 
 .v-chip {
   margin: 4px;
+}
+
+.v-avatar {
+  position: relative;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.v-avatar:hover .avatar-overlay {
+  opacity: 1;
+}
 }
 
 .v-card-actions {

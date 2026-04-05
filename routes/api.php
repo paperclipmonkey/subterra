@@ -46,6 +46,7 @@ Route::get('/users/me', function (Request $request) {
 })->middleware('auth:sanctum')->name('users.me');
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update');
+    Route::post('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update.post');
     Route::delete('/users/me', [App\Http\Controllers\UserController::class, 'destroyMe'])->name('users.me.destroy');
 });
 
