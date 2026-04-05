@@ -30,7 +30,7 @@
 
           <div class="ml-sm-6 mt-4 mt-sm-0 flex-grow-1 text-center text-sm-left" style="min-width: 0;">
             <h1 class="text-h5 text-sm-h4 font-weight-bold text-grey-darken-4 mb-1">{{ profile.name }}</h1>
-            <div class="d-flex align-center justify-center justify-sm-start flex-wrap gap-2">
+            <div class="d-flex flex-column align-center align-sm-start gap-2">
               <v-chip v-if="profile.clubs && profile.clubs.length > 0" color="primary" variant="flat"
                       size="small" :prepend-icon="mdiAccountGroupOutline" class="font-weight-medium">
                 {{ profile.clubs[0].name }}
