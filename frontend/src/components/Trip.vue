@@ -211,7 +211,7 @@
                 <v-list-item-title class="font-weight-bold">{{ participant.name }}</v-list-item-title>
                 <v-list-item-subtitle class="text-caption text-truncate">
                   {{ participant.clubs && participant.clubs.length ? participant.clubs.map(c =>
-                    c.name).join(',') :
+                    c.name).join(', ') :
                     'No club' }}
                 </v-list-item-subtitle>
               </v-list-item>
