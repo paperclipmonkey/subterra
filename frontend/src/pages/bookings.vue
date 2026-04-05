@@ -35,15 +35,26 @@
           </template>
 
           <template #item.actions="{ item }">
-            <v-btn
-              v-if="item.status === 'pending' || item.status === 'approved'"
-              size="small"
-              variant="text"
-              color="error"
-              @click="openCancelDialog(item)"
-            >
-              Cancel
-            </v-btn>
+            <div class="d-flex gap-1">
+              <v-btn
+                v-if="isAccessOfficer && item.permit"
+                size="small"
+                variant="text"
+                color="primary"
+                :to="`/admin/bookings?permit_id=${item.permit.id}`"
+              >
+                Manage
+              </v-btn>
+              <v-btn
+                v-if="item.status === 'pending' || item.status === 'approved'"
+                size="small"
+                variant="text"
+                color="error"
+                @click="openCancelDialog(item)"
+              >
+                Cancel
+              </v-btn>
+            </div>
           </template>
 
           <template #expanded-row="{ item, columns }">
@@ -139,14 +150,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
+import { useAppStore } from '@/stores/app'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 defineOptions({ name: 'MyBookings' })
 
 const notificationStore = useNotificationStore()
+const appStore = useAppStore()
+const isAccessOfficer = computed(() => {
+  return appStore.user?.is_admin || appStore.user?.roles?.some(r => r.slug === 'access_officer')
+})
 const tab = ref('mine')
 const loadingBookings = ref(true)
 const loadingPermits = ref(true)
