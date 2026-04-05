@@ -38,7 +38,7 @@
 
       <!-- Compact Horizontal Filter Bar -->
       <div class="filter-bar-container px-1 mt-n1">
-        <div class="d-flex align-center justify-center overflow-x-auto no-scrollbar py-0 ga-2">
+        <div class="d-flex align-center overflow-x-auto no-scrollbar py-0 ga-2">
           <!-- Active Tags -->
           <v-chip
             v-for="tag in cachedTags"
