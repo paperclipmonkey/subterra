@@ -486,7 +486,6 @@ h3 {
 .v-avatar:hover .avatar-overlay {
   opacity: 1;
 }
-}
 
 .v-card-actions {
   justify-content: flex-end;
