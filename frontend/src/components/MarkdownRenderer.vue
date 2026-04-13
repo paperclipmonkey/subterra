@@ -26,7 +26,7 @@ const initMermaid = async () => {
     mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
-        securityLevel: 'loose',
+        securityLevel: 'strict',
     })
     mermaidInstance = mermaid
     return mermaid
