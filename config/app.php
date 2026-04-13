@@ -69,6 +69,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | The timezone used when formatting dates for human-readable display in
+    | emails, Slack alerts, and SMS notifications. Storage always uses UTC;
+    | this only affects presentation. Defaults to Europe/London so that
+    | BST/GMT is handled automatically.
+    |
+    */
+
+    'display_timezone' => env('DISPLAY_TIMEZONE', 'Europe/London'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

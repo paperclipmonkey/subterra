@@ -46,7 +46,7 @@ class CalloutOverdueContactNotification extends Notification implements ShouldQu
                     ->greeting('URGENT ACTION REQUIRED')
                     ->line('Your registered callout is now OVERDUE.')
                     ->line('**Cave:** '.$caveName)
-                    ->line('**Due Time:** '.$this->callout->callout_time->format('H:i'))
+                    ->line('**Due Time:** '.$this->callout->callout_time->timezone(config('app.display_timezone'))->format('H:i'))
                     ->line('Rescue procedures are being initiated. if you are safe out of the cave, please check in IMMEDIATELY to prevent a false alarm.')
                     ->action('Open App to Check In', $url)
                     ->line('Please reply "OUT SAFE" to the SMS if you cannot access the app.');

@@ -45,7 +45,7 @@ class OverdueCalloutNotification extends Notification implements ShouldQueue
                     ->greeting('Urgent Attention Required')
                     ->line('A callout has exceeded its expected return time.')
                     ->line('**Cave:** '.($this->callout->cave?->name ?? 'Unknown Location'))
-                    ->line('**Callout Time:** '.$this->callout->callout_time->format('d/m/Y H:i'))
+                    ->line('**Callout Time:** '.$this->callout->callout_time->timezone(config('app.display_timezone'))->format('d/m/Y H:i'))
                     ->line('**Overdue By:** '.$this->callout->callout_time->diffForHumans())
                     ->action('View Incident', $url)
                     ->line('This requires immediate attention. Please follow the standard operating procedure.');
@@ -59,7 +59,7 @@ class OverdueCalloutNotification extends Notification implements ShouldQueue
         // SMS length limit is usually 160 chars.
         $caveName = $this->callout->cave?->name ?? 'Unknown Location';
 
-        return "URGENT: Callout Overdue! Cave: {$caveName}. Due: {$this->callout->callout_time->format('H:i')}. Check Dashboard immediately.";
+        return "URGENT: Callout Overdue! Cave: {$caveName}. Due: {$this->callout->callout_time->timezone(config('app.display_timezone'))->format('H:i')}. Check Dashboard immediately.";
     }
 
     /**

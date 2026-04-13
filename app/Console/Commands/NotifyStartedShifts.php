@@ -38,8 +38,8 @@ class NotifyStartedShifts extends Command
         foreach ($shifts as $shift) {
             try {
                 $user = $shift->user;
-                $start = $shift->start_at->format('d/m H:i');
-                $end = $shift->end_at->format('d/m H:i');
+                $start = $shift->start_at->timezone(config('app.display_timezone'))->format('d/m H:i');
+                $end = $shift->end_at->timezone(config('app.display_timezone'))->format('d/m H:i');
 
                 $msg = "🛡️ *DUTY OFFICER UPDATE*\n{$user->name} is now ON CALL.\nFrom: {$start}\nUntil: {$end}.";
 

@@ -27,7 +27,7 @@ class CalloutStarted extends Mailable
     public function envelope(): Envelope
     {
         $caveName = $this->callout->cave ? $this->callout->cave->name : 'Unknown Location';
-        $time = $this->callout->callout_time->format('H:i');
+        $time = $this->callout->callout_time->timezone(config('app.display_timezone'))->format('H:i');
 
         return new Envelope(
             subject: "Safety callout: {$caveName} {$time}",

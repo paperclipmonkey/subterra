@@ -45,7 +45,7 @@ class CalloutImminentContactNotification extends Notification implements ShouldQ
                     ->greeting('Hello')
                     ->line('Your registered callout is due in approximately 15 minutes.')
                     ->line('**Cave:** '.($this->callout->cave?->name ?? 'Unknown Location'))
-                    ->line('**Due Time:** '.$this->callout->callout_time->format('H:i'))
+                    ->line('**Due Time:** '.$this->callout->callout_time->timezone(config('app.display_timezone'))->format('H:i'))
                     ->line('If you are safe out of the cave, please check in IMMEDIATELY to prevent a rescue callout from being initiated.')
                     ->action('Open App to Check In', $url)
                     ->line('If you are overdue, a rescue will be initiated shortly.');
