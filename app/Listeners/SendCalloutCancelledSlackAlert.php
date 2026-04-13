@@ -24,7 +24,7 @@ class SendCalloutCancelledSlackAlert
         try {
             $callout = $event->callout;
             $user = $callout->user;
-            $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
+            $caveName = $callout->cave_name;
 
             $msg = "✅ *CALLOUT CLOSED* by {$user->name} for *{$caveName}*.\nEveryone is out safe.";
 

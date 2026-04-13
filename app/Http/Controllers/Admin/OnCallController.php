@@ -187,7 +187,7 @@ class OnCallController extends Controller
             return [
                 'id' => $callout->id,
                 'callout_time' => $callout->callout_time,
-                'cave_name' => $callout->cave?->name ?? 'Unknown Location',
+                'cave_name' => $callout->cave_name,
                 'user_name' => $callout->user?->name ?? 'Unknown User',
             ];
         });

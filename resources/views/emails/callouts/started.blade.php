@@ -3,7 +3,7 @@
 
 **{{ $callout->user->name }}** has started a safety callout.
 
-**Location:** {{ $callout->cave ? $callout->cave->name : 'Unknown' }}
+**Location:** {{ $callout->cave_name }}
 @if($callout->cave)
 <x-mail::button :url="config('app.url') . '/caves/' . $callout->cave->slug" color="primary">
    View Cave Details & Survey

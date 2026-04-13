@@ -154,7 +154,7 @@ class CheckOverdueCallouts extends Command
             }
 
             try {
-                $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
+                $caveName = $callout->cave_name;
                 $msg = "🚨 *OVERDUE CALLOUT TRIGGERED*\nLocation: *{$caveName}*\nUser: *{$callout->user->name}*\nDue: {$callout->callout_time->timezone(config('app.display_timezone'))->format('H:i')}\n<".url('/admin/incidents/'.$incident->id).'|View Incident>';
 
                 SlackAlert::to('callouts-overdue')->message("<!channel>\n".$msg);

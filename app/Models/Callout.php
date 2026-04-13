@@ -100,4 +100,9 @@ class Callout extends Model
     {
         return $query->where('callout_time', '<=', $time);
     }
+
+    public function getCaveNameAttribute(): string
+    {
+        return $this->cave?->name ?? 'Unknown Location';
+    }
 }
