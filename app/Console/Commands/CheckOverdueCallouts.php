@@ -79,17 +79,10 @@ class CheckOverdueCallouts extends Command
 
     private function checkEscalation(): void
     {
-        // Find open incidents created > 15 mins ago with NO controller
-        // We need a way to track if we already escalated.
-        // Ideally 'escalated_at' on Incident model. For now, we can check if an 'escalation' note exists?
-
         $staleIncidents = Incident::where('status', 'open')
             ->doesntHave('controller')
             ->where('created_at', '<=', now()->subMinutes(15))
-            ->whereDoesntHave('notes', function ($query) {
-                // Heuristic: check if we already logged an escalation note
-                $query->where('content', 'like', '%ESCALATED%');
-            })
+            ->whereNull('escalated_at')
             ->get();
 
         foreach ($staleIncidents as $incident) {
@@ -123,6 +116,8 @@ class CheckOverdueCallouts extends Command
             if ($admins->isNotEmpty()) {
                 Notification::send($admins, new UnmanagedIncidentNotification($incident));
             }
+
+            $incident->update(['escalated_at' => now()]);
 
             $incident->notes()->create([
                 'user_id' => null,

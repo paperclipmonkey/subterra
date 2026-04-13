@@ -247,12 +247,7 @@ class CheckOverdueCalloutsTest extends TestCase
             'callout_id' => $callout->id,
             'status' => 'open',
             'created_at' => now()->subMinutes(60), // Very old
-        ]);
-
-        // Add the system note manually
-        $incident->notes()->create([
-            'user_id' => null,
-            'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.',
+            'escalated_at' => now()->subMinutes(45), // Already escalated
         ]);
 
         $this->artisan('callouts:check-overdue');
