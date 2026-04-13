@@ -29,7 +29,9 @@ class CaveSystemController extends Controller
     public function store(StoreCaveSystemRequest $request)
     {
         $validated = $request->validated();
-        CaveSystem::create($validated);
+        $caveSystem = CaveSystem::create($validated);
+
+        return response()->json(new CaveSystemResource($caveSystem), 201);
     }
 
     public function show(CaveSystem $caveSystem)
