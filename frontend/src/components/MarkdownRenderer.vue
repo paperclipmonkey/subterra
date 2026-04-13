@@ -75,10 +75,7 @@ const renderMermaidDiagrams = async () => {
     await nextTick()
     await new Promise(resolve => setTimeout(resolve, 200))
 
-    if (!container.value) {
-        console.log('Mermaid: container not ready')
-        return
-    }
+    if (!container.value) return
 
     const nodes = container.value.querySelectorAll('.mermaid')
     if (nodes.length === 0) return

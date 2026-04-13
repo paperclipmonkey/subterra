@@ -173,7 +173,7 @@ const cancelCallout = async () => {
       })
       locationData = `${position.coords.latitude},${position.coords.longitude} (acc: ${position.coords.accuracy}m)`
     } catch (e) {
-      console.log("Could not get location for cancellation", e)
+      // Location unavailable for cancellation — non-critical
     }
   }
 

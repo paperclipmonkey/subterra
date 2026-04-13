@@ -577,7 +577,7 @@ export default {
           this.getLocation()
         }
       } catch (e) {
-        console.log("Permissions API not supported or error", e)
+        // Permissions API not supported — fall through to manual geolocation
       }
     },
     getLocation() {

@@ -269,11 +269,10 @@ onMounted(async () => {
   try {
     const userData = await userResponse.json()
     if (userData && userData.data && userData.data.email) {
-      console.log('User is logged in')
       router.push('/trips')
     }
   } catch (e) {
-    console.log('User is not logged in')
+    // Not logged in — stay on login page
   }
 })
 

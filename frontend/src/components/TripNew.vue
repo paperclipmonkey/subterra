@@ -618,7 +618,6 @@ onMounted(async () => {
               } else {
                 // If it's a manual participant (no user_id), we might need to add them manually to the trip?
                 // For now, simpler to just handle registered users or log it
-                console.log('Manual participant from callout, consider adding to description:', p.name)
                 trip.description += `\n- Guest: ${p.name}`
               }
             })
@@ -718,7 +717,6 @@ const addParticipant = (participant) => {
       const newUser = data.data
       users.value.push(newUser) // So it can be referenced with all fields
       trip.participants.push(newUser.id)
-      console.log('Participant added successfully:', newUser)
       showAddParticipant.value = false
       notificationStore.showSuccess('Participant added successfully')
     })

@@ -609,6 +609,7 @@ import AppMap from '@/components/AppMap.vue'
 
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
+import { useNotificationStore } from '@/stores/notifications'
 import { useDisplay } from 'vuetify'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -626,6 +627,7 @@ const zoom = 14
 
 
 const appStore = useAppStore()
+const notificationStore = useNotificationStore()
 const { smAndDown } = useDisplay()
 const collectionStore = useCollectionStore()
 
@@ -760,8 +762,7 @@ const copyLatLng = async () => {
     const textToCopy = `${cave.value.location_lat}, ${cave.value.location_lng}`
     try {
       await navigator.clipboard.writeText(textToCopy)
-      // TODO: Add user feedback like a snackbar message
-      console.log('Coordinates copied to clipboard:', textToCopy)
+      notificationStore.showSuccess('Coordinates copied to clipboard')
     } catch (err) {
       console.error('Failed to copy coordinates: ', err)
     }
