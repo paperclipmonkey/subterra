@@ -913,13 +913,13 @@ const saveTrip = async (formData) => {
 
 </script>
 
-<style>
+<style scoped>
 .existing_media {
   max-width: 200px;
 }
 
 /* Fun spinning animation for loading icon */
-.mdi-spin {
+:deep(.mdi-spin) {
   animation: spin 1s linear infinite;
 }
 
