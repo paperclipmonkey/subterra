@@ -1,30 +1,9 @@
 
 import { defineStore } from 'pinia'
 import { mande } from 'mande'
+import { toFormData } from '@/utilities'
 
 const api = mande('/api/collections')
-
-function toFormData(obj) {
-    const formData = new FormData()
-    for (const key in obj) {
-        if (obj[key] === null || obj[key] === undefined) continue
-
-        if (Array.isArray(obj[key])) {
-            obj[key].forEach((item, index) => {
-                if (typeof item === 'object' && !(item instanceof File)) {
-                    for (const subKey in item) {
-                        formData.append(`${key}[${index}][${subKey}]`, item[subKey] !== null && item[subKey] !== undefined ? item[subKey] : '')
-                    }
-                } else {
-                    formData.append(`${key}[${index}]`, item)
-                }
-            })
-        } else {
-            formData.append(key, obj[key])
-        }
-    }
-    return formData
-}
 
 export const useCollectionStore = defineStore('collections', {
     state: () => ({
