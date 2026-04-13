@@ -34,6 +34,15 @@ vi.mock('@/stores/app', () => ({
     })
 }))
 
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: () => ({
+        showSuccess: vi.fn(),
+        showError: vi.fn(),
+        showWarning: vi.fn(),
+        showInfo: vi.fn(),
+    })
+}))
+
 global.fetch = vi.fn(() => Promise.resolve({
     ok: true,
     json: () => Promise.resolve({ data: { caves: [] } })

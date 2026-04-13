@@ -213,11 +213,11 @@ import { mdiArrowLeft, mdiArrowRight, mdiCompare, mdiOpenInNew } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/plugins/api.js'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const notifications = useNotificationStore()
 
 const suggestion = ref(null)
 const loading = ref(true)
@@ -421,7 +421,7 @@ const approve = async () => {
             payload.fields = selectedFields.value
         }
         await api.post(`/api/admin/suggested-edits/${suggestion.value.id}/approve`, payload)
-        toast.success("Suggestion approved successfully")
+        notifications.showSuccess("Suggestion approved successfully")
         // If full approval, go back to list; if partial, reload to show remaining
         if (selectedFields.value.length >= changedFields.value.length) {
             router.push('/admin/suggested-edits')
@@ -429,7 +429,7 @@ const approve = async () => {
             fetchSuggestion()
         }
     } catch (error) {
-        toast.error("Failed to approve suggestion")
+        notifications.showError("Failed to approve suggestion")
         console.error(error)
     } finally {
         processing.value = false
@@ -442,11 +442,11 @@ const reject = async () => {
         await api.post(`/api/admin/suggested-edits/${suggestion.value.id}/reject`, {
             admin_comment: rejectReason.value
         })
-        toast.success("Suggestion rejected")
+        notifications.showSuccess("Suggestion rejected")
         rejectDialog.value = false
         router.push('/admin/suggested-edits')
     } catch (error) {
-        toast.error("Failed to reject suggestion")
+        notifications.showError("Failed to reject suggestion")
         console.error(error)
     } finally {
         processing.value = false

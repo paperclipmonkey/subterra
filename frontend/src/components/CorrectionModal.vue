@@ -72,9 +72,9 @@ import { mdiFlag, mdiFlagOff } from '@mdi/js'
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 
-const toast = useToast()
+const notifications = useNotificationStore()
 const route = useRoute()
 const userStore = useAppStore()
 const form = ref(null)
@@ -125,7 +125,7 @@ const submit = async () => {
       throw new Error('Failed to submit correction')
     }
 
-    toast.success('Thank you! Your suggestion has been submitted for review.')
+    notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
 
     // Reset form and validation state
     if (form.value) {
@@ -139,7 +139,7 @@ const submit = async () => {
 
   } catch (error) {
     console.error(error)
-    toast.error('Error submitting report. Please try again.')
+    notifications.showError('Error submitting report. Please try again.')
   } finally {
     loading.value = false
   }

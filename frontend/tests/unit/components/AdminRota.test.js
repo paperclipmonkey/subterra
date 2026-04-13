@@ -23,6 +23,16 @@ vi.mock('axios', () => {
     }
 })
 
+const mockNotificationStore = {
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+    showWarning: vi.fn(),
+    showInfo: vi.fn(),
+}
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: () => mockNotificationStore
+}))
+
 describe('Admin Rota', () => {
     beforeEach(() => {
         vi.clearAllMocks()
@@ -59,11 +69,6 @@ describe('Admin Rota', () => {
                 mocks: {
                     $router: {
                         back: vi.fn()
-                    },
-                    $toast: {
-                        success: vi.fn(),
-                        error: vi.fn(),
-                        warning: vi.fn()
                     }
                 }
             }
@@ -134,11 +139,6 @@ describe('Admin Rota', () => {
                 mocks: {
                     $router: {
                         back: vi.fn()
-                    },
-                    $toast: {
-                        success: vi.fn(),
-                        error: vi.fn(),
-                        warning: vi.fn()
                     }
                 }
             }
@@ -165,8 +165,8 @@ describe('Admin Rota', () => {
         expect(alertMessage).toContain('UNMONITORED')
 
         // Verify toast error was called with the message from API
-        expect(wrapper.vm.$toast.error).toHaveBeenCalled()
-        expect(wrapper.vm.$toast.error.mock.calls[0][0]).toContain('UNMONITORED')
+        expect(mockNotificationStore.showError).toHaveBeenCalled()
+        expect(mockNotificationStore.showError.mock.calls[0][0]).toContain('UNMONITORED')
 
         confirmSpy.mockRestore()
         alertSpy.mockRestore()
@@ -207,11 +207,6 @@ describe('Admin Rota', () => {
                 mocks: {
                     $router: {
                         back: vi.fn()
-                    },
-                    $toast: {
-                        success: vi.fn(),
-                        error: vi.fn(),
-                        warning: vi.fn()
                     }
                 }
             }
@@ -229,7 +224,7 @@ describe('Admin Rota', () => {
         expect(alertSpy).not.toHaveBeenCalled()
 
         // Verify success toast was called
-        expect(wrapper.vm.$toast.success).toHaveBeenCalledWith('Shift removed')
+        expect(mockNotificationStore.showSuccess).toHaveBeenCalledWith('Shift removed')
 
         confirmSpy.mockRestore()
         alertSpy.mockRestore()

@@ -224,14 +224,14 @@ import { mdiAccountGroup, mdiAlert, mdiCamera, mdiEarth } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { api } from '@/plugins/api'
 import { useFormErrors } from '@/composables/useFormErrors'
 
 const { setErrors, clearErrors, errorMessages } = useFormErrors()
 
 const route = useRoute()
-const toast = useToast()
+const notifications = useNotificationStore()
 
 const profile = ref({
   "name": "",
@@ -299,7 +299,7 @@ const save = async () => {
   // Validate name with rules first
   const nameError = nameRules.map(r => r(profile.value.name)).find(r => r !== true)
   if (nameError) {
-    toast.error(nameError)
+    notifications.showError(nameError)
     return
   }
 
@@ -335,13 +335,13 @@ const save = async () => {
     profile.value.email_tagged = updatedProfile.email_tagged
     profile.value.email_platform_news = updatedProfile.email_platform_news
     profile.value.visibility_addable = updatedProfile.visibility_addable
-    toast.success('Profile updated successfully!')
+    notifications.showSuccess('Profile updated successfully!')
     router.push({ name: '/profile/[id]', params: { id: route.params.id } }) // Redirect only if necessary
   } catch (error) {
     console.error("Error saving profile:", error)
     setErrors(error)
     if (error.response?.status !== 422) {
-      toast.error('Failed to save profile: ' + (error.response?.data?.message || error.message || 'Unknown error'))
+      notifications.showError('Failed to save profile: ' + (error.response?.data?.message || error.message || 'Unknown error'))
     }
   }
 }
@@ -398,7 +398,7 @@ const requestToJoinClub = async () => {
 
     // Success!
     closeJoinClubModal()
-    toast.success('Club join request submitted! Awaiting approval.')
+    notifications.showSuccess('Club join request submitted! Awaiting approval.')
     // Re-fetch profile data to show the new pending request
     await fetchProfile()
 
@@ -428,7 +428,7 @@ const deleteAccount = async () => {
   deletingAccount.value = true
   try {
     await api.delete(`/api/users/me`)
-    toast.success('Your account has been deleted successfully')
+    notifications.showSuccess('Your account has been deleted successfully')
     window.location.href = '/'
   } catch (error) {
     console.error('Error deleting account:', error)

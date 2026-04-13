@@ -117,12 +117,12 @@ import { useAppStore } from '@/stores/app'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import moment from 'moment'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 
 const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
-const toast = useToast()
+const notifications = useNotificationStore()
 
 const confirmSafe = ref(false)
 const convertToTrip = ref(false)
@@ -181,7 +181,7 @@ const cancelCallout = async () => {
     const response = await axios.post(`/api/callouts/${callout.value.id}/cancel`, {
       location: locationData
     })
-    toast.success("Callout Cancelled")
+    notifications.showSuccess("Callout Cancelled")
 
     // Store the returned trip_id for the edit action
     newTripId.value = response.data.trip_id
@@ -194,7 +194,7 @@ const cancelCallout = async () => {
     // Show convert dialog
     convertToTrip.value = true
   } catch (e) {
-    toast.error("Failed to cancel callout: " + (e.response?.data?.message || e.message))
+    notifications.showError("Failed to cancel callout: " + (e.response?.data?.message || e.message))
   }
 }
 
@@ -216,7 +216,7 @@ const fetchCallout = async (id) => {
     const res = await axios.get(`/api/callouts/${id}`)
     callout.value = res.data.data
   } catch (e) {
-    toast.error("Could not load callout details.")
+    notifications.showError("Could not load callout details.")
     console.error(e)
   } finally {
     loading.value = false
@@ -239,7 +239,7 @@ onMounted(async () => {
       loading.value = false
     } else {
       loading.value = false
-      toast.info("No active callout found.")
+      notifications.showInfo("No active callout found.")
       router.push('/callout')
     }
   }

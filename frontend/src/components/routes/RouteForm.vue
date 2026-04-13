@@ -209,10 +209,10 @@ import { ref, onMounted, computed, watch } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useAppStore } from '@/stores/app'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { onBeforeRouteLeave } from 'vue-router'
 
-const toast = useToast()
+const notifications = useNotificationStore()
 const appStore = useAppStore()
 
 const props = defineProps({
@@ -398,7 +398,7 @@ const save = async () => {
       })
 
       if (response.ok) {
-        toast.success('Thank you! Your suggestion has been submitted for review.')
+        notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
         isSaved.value = true
         emit('saved')
       } else {

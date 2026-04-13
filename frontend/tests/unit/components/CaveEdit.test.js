@@ -29,10 +29,12 @@ vi.mock('@/stores/app', () => ({
     }))
 }))
 
-vi.mock('vue-toastification', () => ({
-    useToast: vi.fn(() => ({
-        success: vi.fn(),
-        error: vi.fn()
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: vi.fn(() => ({
+        showSuccess: vi.fn(),
+        showError: vi.fn(),
+        showWarning: vi.fn(),
+        showInfo: vi.fn(),
     }))
 }))
 

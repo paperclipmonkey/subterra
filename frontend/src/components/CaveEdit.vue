@@ -63,10 +63,10 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { toFormData } from '@/utilities'
 
-const toast = useToast()
+const notifications = useNotificationStore()
 const appStore = useAppStore()
 
 const router = useRouter()
@@ -182,7 +182,7 @@ const saveCave = async () => {
 
       if (response.ok) {
         // Stay on the original cave page when suggesting edits
-        toast.success('Thank you! Your suggestion has been submitted for review.')
+        notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
         isSaved.value = true
         router.push('/caves/' + route.params.id)
       } else {

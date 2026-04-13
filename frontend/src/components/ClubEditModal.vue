@@ -184,7 +184,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { mande } from 'mande'
 import { useRouter } from 'vue-router'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
@@ -221,7 +221,7 @@ const memberDataChanged = ref(false)
 const saving = ref(false)
 const loadingPending = ref(false)
 const router = useRouter()
-const toast = useToast()
+const notifications = useNotificationStore()
 
 const rejectDialog = ref(false)
 const selectedRejectUser = ref(null)
@@ -318,7 +318,7 @@ const confirmReject = async () => {
     await rejectApi.put({}, { query: { reason: rejectReason.value } })
     await fetchPendingMembers()
   } catch (e) {
-    toast.error('Failed to reject member: ' + (e.message || 'Unknown error'))
+    notifications.showError('Failed to reject member: ' + (e.message || 'Unknown error'))
   } finally {
     user.loading = false
   }
@@ -357,10 +357,10 @@ const saveClubAndMembers = async () => {
     }
     dialogVisible.value = false
     emit('saved')
-    toast.success('Club updated successfully')
+    notifications.showSuccess('Club updated successfully')
   } catch (e) {
     console.error(e)
-    toast.error('Failed to update club: ' + (e.message || 'Unknown error'))
+    notifications.showError('Failed to update club: ' + (e.message || 'Unknown error'))
   } finally {
     saving.value = false
   }

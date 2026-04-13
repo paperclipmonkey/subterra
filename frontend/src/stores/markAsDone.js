@@ -1,7 +1,7 @@
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 
 export async function markCaveAsDone({ cave, userId }) {
-  const toast = useToast()
+  const notifications = useNotificationStore()
 
   if (!cave || !userId) return false
   const trip = {
@@ -24,14 +24,14 @@ export async function markCaveAsDone({ cave, userId }) {
     })
 
     if (response.ok) {
-      toast.success('Cave marked as done!')
+      notifications.showSuccess('Cave marked as done!')
       return true
     } else {
-      toast.error('Failed to mark cave as done')
+      notifications.showError('Failed to mark cave as done')
       return false
     }
   } catch (error) {
-    toast.error('Failed to mark cave as done: ' + (error.message || 'Unknown error'))
+    notifications.showError('Failed to mark cave as done: ' + (error.message || 'Unknown error'))
     return false
   }
 }

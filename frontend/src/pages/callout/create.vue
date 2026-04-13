@@ -218,7 +218,7 @@
 
                               <div class="d-flex flex-column align-center justify-center ml-3" style="min-width: 40px">
                                 <v-btn v-if="p.hasPhone" icon color="success" variant="text" size="small" class="mb-1"
-                                       @click="$toast.info('This user has a valid phone number saved on their profile.')">
+                                       @click="notificationStore.showInfo('This user has a valid phone number saved on their profile.')">
                                   <v-icon size="large" :icon="mdiPhoneCheck" />
                                 </v-btn>
                                 <v-btn v-if="!p.isCurrentUser" icon color="error" size="small" variant="text"
@@ -354,6 +354,7 @@
 import { mdiAccount, mdiAccountCheck, mdiAccountSearch, mdiAlert, mdiCheck, mdiClockOutline, mdiContentSave, mdiCrosshairsGps, mdiDelete, mdiPhone, mdiPhoneCheck, mdiPlus, mdiShieldCheck, mdiShieldLock } from '@mdi/js'
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
+import { useNotificationStore } from '@/stores/notifications'
 import { api } from '@/plugins/api'
 import { useFormErrors } from '@/composables/useFormErrors'
 import CalloutTimePicker from '@/components/CalloutTimePicker.vue'
@@ -387,7 +388,9 @@ export default {
   },
   setup() {
     const { setErrors, clearErrors, errorMessages, generalError } = useFormErrors()
+    const notificationStore = useNotificationStore()
     return {
+      notificationStore,
       setErrors,
       clearErrors,
       errorMessages,
@@ -722,11 +725,11 @@ export default {
         const appStore = useAppStore()
         await appStore.getUser()
 
-        this.$toast.success('Phone number saved to your profile.')
+        this.notificationStore.showSuccess('Phone number saved to your profile.')
       } catch (e) {
         console.error("Failed to save phone:", e)
         const errorMsg = e.response?.data?.message || 'Failed to save phone number.'
-        this.$toast.error(errorMsg)
+        this.notificationStore.showError(errorMsg)
       } finally {
         this.savingPhone = false
       }
@@ -756,7 +759,7 @@ export default {
         const appStore = useAppStore()
         await appStore.getUser()
 
-        this.$toast.success('Callout activated. Stay safe!')
+        this.notificationStore.showSuccess('Callout activated. Stay safe!')
 
         // Redirect to the open callout dashboard
         this.$router.push('/callout/active')
@@ -774,7 +777,7 @@ export default {
       try {
         await api.post(`/api/callouts/${this.activeCallout.id}/cancel`)
         this.showSuccessDialog = true
-        this.$toast.success('Callout cancelled.')
+        this.notificationStore.showSuccess('Callout cancelled.')
       } catch (e) {
         // Global interceptor handles this
       } finally {

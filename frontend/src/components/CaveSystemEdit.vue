@@ -214,9 +214,9 @@ import CaveSystemForm from '@/components/CaveSystemForm.vue'
 import AnnotationMapEditor from '@/components/cave-systems/AnnotationMapEditor.vue'
 import { useAppStore } from '@/stores/app'
 import { convertFileToBase64 } from '@/utilities.js'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 
-const toast = useToast()
+const notifications = useNotificationStore()
 const appStore = useAppStore()
 
 const router = useRouter()
@@ -404,7 +404,7 @@ const save = async () => {
           await saveAnnotation()
         }
         isSaved.value = true
-        toast.success('Cave system saved')
+        notifications.showSuccess('Cave system saved')
         router.push('/cave-systems/' + route.params.id)
       } else {
         const data = await response.json()
@@ -454,7 +454,7 @@ const save = async () => {
       if (response.ok) {
         // Redirect back to the original cave system page
         isSaved.value = true
-        toast.success('Thank you! Your suggestion has been submitted for review.')
+        notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
         if (window.history.state && window.history.state.back) {
           router.go(-1)
         } else {
@@ -534,7 +534,7 @@ const executeMerge = async () => {
       mergeDialog.value = false
       mergeSourceId.value = null
       mergePreview.value = null
-      toast.success(data.message)
+      notifications.showSuccess(data.message)
       load()
       loadAvailableSystems()
     } else {
@@ -563,7 +563,7 @@ const executeDelete = async () => {
     if (response.ok) {
       const data = await response.json()
       isSaved.value = true
-      toast.success(data.message)
+      notifications.showSuccess(data.message)
       router.push('/')
     } else {
       const data = await response.json()

@@ -263,13 +263,13 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { ref, computed, onMounted } from 'vue'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { usePageTitle } from '@/composables/usePageTitle'
 
 const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
-const toast = useToast()
+const notifications = useNotificationStore()
 
 const trip = ref(null)
 const loading = ref(true)
@@ -323,14 +323,14 @@ const confirmDelete = async () => {
   try {
     const response = await fetch(`/api/trips/${route.params.id}`, { method: 'DELETE', headers: { 'Accept': 'application/json' } })
     if (response.ok) {
-      toast.success('Trip deleted successfully')
+      notifications.showSuccess('Trip deleted successfully')
       router.push('/trips')
     } else {
-      toast.error('Failed to delete trip')
+      notifications.showError('Failed to delete trip')
     }
   } catch (e) {
     console.error("Failed to delete trip", e)
-    toast.error('Failed to delete trip: ' + (e.message || 'Unknown error'))
+    notifications.showError('Failed to delete trip: ' + (e.message || 'Unknown error'))
   }
 }
 

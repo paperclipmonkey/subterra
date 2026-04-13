@@ -48,6 +48,16 @@ vi.mock('@/stores/app', () => ({
     })
 }))
 
+const mockNotificationStore = {
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+    showWarning: vi.fn(),
+    showInfo: vi.fn(),
+}
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: () => mockNotificationStore
+}))
+
 describe('Callout Wizard', () => {
     beforeEach(() => {
         // Reset the default get mock between tests to avoid bleed-over
@@ -192,9 +202,6 @@ describe('Callout Wizard', () => {
                     'v-textarea': true,
                     'v-spacer': true,
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -245,9 +252,6 @@ describe('Callout Wizard', () => {
                     'v-progress-circular': true,
                     'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -295,9 +299,6 @@ describe('Callout Wizard', () => {
                     'v-progress-circular': true,
                     'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -348,9 +349,6 @@ describe('Callout Wizard', () => {
                     'v-progress-circular': true,
                     'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -400,9 +398,6 @@ describe('Callout Wizard', () => {
                     'v-progress-circular': true,
                     'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -462,9 +457,6 @@ describe('Callout Wizard', () => {
                     'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                     'v-icon': true,
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -522,9 +514,6 @@ describe('Callout Wizard', () => {
                     'v-chip': true,
                     'v-alert': { template: '<div class="v-alert"><slot /></div>' },
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -606,9 +595,6 @@ describe('Callout Wizard', () => {
                     'v-autocomplete': true,
                     'v-chip': true,
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -692,9 +678,6 @@ describe('Callout Wizard', () => {
                     'v-autocomplete': true,
                     'v-chip': true,
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -765,9 +748,6 @@ describe('Callout Wizard', () => {
                     'v-autocomplete': true,
                     'v-textarea': true,
                 },
-                mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() }
-                }
             }
         })
 
@@ -799,6 +779,6 @@ describe('Callout Wizard', () => {
         // Check if state was updated
         expect(wrapper.vm.form.participants[0].locked).toBe(true)
         expect(wrapper.vm.form.participants[0].phone).toBe('🔒 Hidden')
-        expect(wrapper.vm.$toast.success).toHaveBeenCalledWith('Phone number saved to your profile.')
+        expect(mockNotificationStore.showSuccess).toHaveBeenCalledWith('Phone number saved to your profile.')
     })
 })

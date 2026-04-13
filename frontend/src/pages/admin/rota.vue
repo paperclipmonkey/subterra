@@ -114,10 +114,13 @@
 import { mdiArrowLeft, mdiCalendar, mdiCalendarPlus, mdiChevronLeft, mdiChevronRight, mdiDelete, mdiPencil, mdiViewList } from '@mdi/js'
 import axios from 'axios'
 import moment from 'moment'
+import { useNotificationStore } from '@/stores/notifications'
 
 export default {
   setup() {
+    const notificationStore = useNotificationStore()
     return {
+      notificationStore,
       mdiArrowLeft,
       mdiCalendar,
       mdiCalendarPlus,
@@ -256,7 +259,7 @@ export default {
           end_at: this.toISOWithOffset(this.newShift.end_at)
         }
         await axios.post('/api/admin/shifts', payload)
-        this.$toast.success('Shift added successfully')
+        this.notificationStore.showSuccess('Shift added successfully')
         await this.fetchShifts()
         this.newShift.user_id = null
         this.$refs.form.resetValidation()
@@ -284,7 +287,7 @@ export default {
           end_at: this.toISOWithOffset(this.editingShift.end_at)
         }
         await axios.put(`/api/admin/shifts/${this.editingShift.id}`, payload)
-        this.$toast.success('Shift updated successfully')
+        this.notificationStore.showSuccess('Shift updated successfully')
         this.editDialog = false
         await this.fetchShifts()
       } catch (e) {
@@ -298,7 +301,7 @@ export default {
 
       try {
         await axios.delete(`/api/admin/shifts/${id}`)
-        this.$toast.success('Shift removed')
+        this.notificationStore.showSuccess('Shift removed')
         this.editDialog = false // Close dialog if open
         await this.fetchShifts()
       } catch (e) {
@@ -323,7 +326,7 @@ export default {
           alert(`${msg}\n\nExisting callouts require coverage:\n${details}`)
         }
       }
-      this.$toast.error(msg)
+      this.notificationStore.showError(msg)
     }
   }
 }
