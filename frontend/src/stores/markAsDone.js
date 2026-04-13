@@ -1,4 +1,3 @@
-import { mande } from 'mande'
 import { useToast } from "vue-toastification"
 
 export async function markCaveAsDone({ cave, userId }) {
