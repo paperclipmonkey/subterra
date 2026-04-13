@@ -64,7 +64,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
 import { useToast } from "vue-toastification"
-import { objectToFormData } from '@/utils/formData'
+import { toFormData } from '@/utilities'
 
 const toast = useToast()
 const appStore = useAppStore()
@@ -144,7 +144,7 @@ const saveCave = async () => {
     const submitData = await caveFormRef.value.prepareForSubmit()
 
     if (appStore.user?.is_admin) {
-      const formData = objectToFormData(submitData)
+      const formData = toFormData(submitData)
       formData.append('_method', 'PUT')
 
       const response = await fetch(`/api/caves/${route.params.id}`, {
@@ -165,7 +165,7 @@ const saveCave = async () => {
       }
     } else {
       // Suggest Edit
-      const formData = objectToFormData({
+      const formData = toFormData({
         suggestable_type: 'cave',
         suggestable_id: cave.value.id,
         suggested_data: submitData,

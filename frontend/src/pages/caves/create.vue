@@ -63,7 +63,7 @@ import { useRoute, useRouter } from "vue-router"
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
-import { objectToFormData } from '@/utils/formData'
+import { toFormData } from '@/utilities'
 
 const appStore = useAppStore()
 const router = useRouter()
@@ -113,7 +113,7 @@ const saveCave = async () => {
 
   loading.value = true
   try {
-    const formData = objectToFormData(cave.value)
+    const formData = toFormData(cave.value)
 
     const response = await fetch('/api/caves', {
       method: 'POST',
