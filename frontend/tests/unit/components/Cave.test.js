@@ -25,6 +25,12 @@ vi.mock('@/stores/app', () => ({
 vi.mock('@/stores/collections', () => ({
     useCollectionStore: () => ({})
 }))
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: () => ({
+        showSuccess: vi.fn(),
+        showError: vi.fn(),
+    })
+}))
 vi.mock('@/stores/markAsDone', () => ({
     markCaveAsDone: vi.fn()
 }))
