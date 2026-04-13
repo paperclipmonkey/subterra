@@ -83,9 +83,8 @@ class CalloutController extends Controller
             }
         }
 
-        // Record cancellation snapshot
+        // Record cancellation metadata snapshot
         $callout->update([
-            'status' => 'cancelled',
             'cancelled_ip' => $request->ip(),
             'cancelled_user_agent' => $request->userAgent(),
             'cancelled_location' => $request->input('location'), // Optional location from frontend
