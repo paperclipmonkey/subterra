@@ -44,11 +44,11 @@ export class TextMagicClient {
                 }
             );
 
-            console.log(`SMS sent successfully to ${phone}:`, response.data);
+            console.log('SMS sent successfully to %s:', phone, response.data);
             return true;
         } catch (error) {
             const axiosError = error as AxiosError;
-            console.error(`Failed to send SMS to ${phone}:`, axiosError.message);
+            console.error('Failed to send SMS to %s:', phone, axiosError.message);
             return false;
         }
     }
