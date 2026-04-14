@@ -79,35 +79,33 @@
             </v-avatar>
           </template>
 
-          <v-list-item-content>
-            <v-row dense>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model="file.original_filename"
-                  label="Filename"
-                  density="compact"
-                  variant="underlined"
-                  hide-details
-                  :disabled="filesToDelete.includes(file.id)"
-                  @input="markFileUpdated(file)"
-                />
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model="file.details"
-                  label="Description/Details"
-                  density="compact"
-                  variant="underlined"
-                  hide-details
-                  :disabled="filesToDelete.includes(file.id)"
-                  @input="markFileUpdated(file)"
-                />
-              </v-col>
-            </v-row>
-            <div class="text-caption text-grey mt-1">
-              {{ (file.size / 1024).toFixed(2) }} KB
-            </div>
-          </v-list-item-content>
+          <v-row dense>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="file.original_filename"
+                label="Filename"
+                density="compact"
+                variant="underlined"
+                hide-details
+                :disabled="filesToDelete.includes(file.id)"
+                @input="markFileUpdated(file)"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="file.details"
+                label="Description/Details"
+                density="compact"
+                variant="underlined"
+                hide-details
+                :disabled="filesToDelete.includes(file.id)"
+                @input="markFileUpdated(file)"
+              />
+            </v-col>
+          </v-row>
+          <div class="text-caption text-grey mt-1">
+            {{ (file.size / 1024).toFixed(2) }} KB
+          </div>
 
           <template #append>
             <v-btn
@@ -129,24 +127,22 @@
             </v-avatar>
           </template>
           
-          <v-list-item-content>
-            <v-row dense>
-              <v-col cols="12" sm="5">
-                <div class="text-subtitle-1 text-truncate">{{ item.file.name }}</div>
-                <div class="text-caption text-grey">{{ (item.file.size / 1024).toFixed(2) }} KB</div>
-              </v-col>
-              <v-col cols="12" sm="7">
-                <v-text-field
-                  v-model="item.details"
-                  label="Description/Details"
-                  density="compact"
-                  variant="underlined"
-                  hide-details
-                  placeholder="Enter file description"
-                />
-              </v-col>
-            </v-row>
-          </v-list-item-content>
+          <v-row dense>
+            <v-col cols="12" sm="5">
+              <div class="text-subtitle-1 text-truncate">{{ item.file.name }}</div>
+              <div class="text-caption text-grey">{{ (item.file.size / 1024).toFixed(2) }} KB</div>
+            </v-col>
+            <v-col cols="12" sm="7">
+              <v-text-field
+                v-model="item.details"
+                label="Description/Details"
+                density="compact"
+                variant="underlined"
+                hide-details
+                placeholder="Enter file description"
+              />
+            </v-col>
+          </v-row>
 
           <template #append>
             <v-btn
