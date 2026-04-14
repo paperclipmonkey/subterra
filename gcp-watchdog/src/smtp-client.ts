@@ -52,7 +52,7 @@ export class SMTPClient {
             console.log(`Email sent successfully to ${to}`);
             return true;
         } catch (error) {
-            console.error(`Failed to send email to ${to}:`, error);
+            console.error('Failed to send email to %s:', to, error);
             return false;
         }
     }
