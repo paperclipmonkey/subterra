@@ -120,7 +120,7 @@ app.post('/', async (req: Request, res: Response) => {
 
         return res.json({ status: 'success' });
     } catch (error) {
-        console.error(`Media processing failed for ${sourcePath}:`, error);
+        console.error('Media processing failed for %s:', sourcePath, error);
 
         try {
              if (customMetadata['media_id'] && customMetadata['media_model']) {
