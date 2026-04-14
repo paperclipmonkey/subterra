@@ -8592,10 +8592,10 @@ vue@^3.5.20, vue@^3.5.28:
     "@vue/server-renderer" "3.5.29"
     "@vue/shared" "3.5.29"
 
-vuetify@^3.11.8:
-  version "3.12.1"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.12.1.tgz#c5937d96ea5b53544d4419cd8769787b4206804f"
-  integrity sha512-JDHDzs1e195YJ9L3X4nWQySGSMyTxr0BefIY4+l/CpAgTd9pPV5F6oZzI8ZLuikMxS4HhfSGHteOAe6u/zh4vQ==
+vuetify@^4.0.5:
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-4.0.5.tgz#bcaf674d2d5c9ebb6cf0517b733bbb4922e94cb3"
+  integrity sha512-pFysKOHuY3dROTVh9PdlhVz50ZR0E5/goY5ecTXc8F8tajUA2ee3xZ8Lqs1WtEw/X3w93wx/LogyjgaQCAL/Ig==
 
 w3c-keyname@^2.2.0, w3c-keyname@^2.2.4:
   version "2.2.8"
