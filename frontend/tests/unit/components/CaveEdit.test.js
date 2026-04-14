@@ -2,6 +2,17 @@ import { mount, flushPromises } from '@vue/test-utils'
 import CaveEdit from '@/components/CaveEdit.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { api } from '@/plugins/api'
+
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 // Mock maplibre-gl
 vi.mock('maplibre-gl', () => ({
@@ -19,9 +30,6 @@ vi.mock('@indoorequal/vue-maplibre-gl', () => ({
     MglGeolocateControl: { template: '<div></div>' },
     useMap: () => ({ map: { fitBounds: vi.fn(), resize: vi.fn(), setCenter: vi.fn(), setZoom: vi.fn() }, isLoaded: true })
 }))
-
-// Mock fetch
-global.fetch = vi.fn()
 
 vi.mock('@/stores/app', () => ({
     useAppStore: vi.fn(() => ({
@@ -46,12 +54,11 @@ const router = createRouter({
 describe('CaveEdit.vue', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        // Mock fetch implementation
-        global.fetch.mockImplementation((url) => {
+        // Mock api implementation
+        api.get.mockImplementation((url) => {
             if (url.includes('/api/caves/')) {
                 return Promise.resolve({
-                    ok: true,
-                    json: () => Promise.resolve({
+                    data: {
                         data: {
                             name: 'Test Cave',
                             description: 'Cave Description',
@@ -67,19 +74,12 @@ describe('CaveEdit.vue', () => {
                             entrance_image: null,
                             slug: 'test-cave'
                         }
-                    })
-                })
-            } else if (url.includes('/api/tags')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: () => Promise.resolve({
-                        'Cave type': [{ tag: 'Cave', assignable: true }],
-                        'Other': [{ tag: 'Something', assignable: true }]
-                    })
+                    }
                 })
             }
-            return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+            return Promise.resolve({ data: {} })
         })
+        api.post.mockResolvedValue({ data: { data: { slug: 'test-cave' } } })
     })
 
     it('sends Accept: application/json header when saving', async () => {
@@ -133,11 +133,10 @@ describe('CaveEdit.vue', () => {
 
         await flushPromises()
 
-        // Check the calls
-        const postCall = global.fetch.mock.calls.find(call => call[1] && call[1].method === 'POST')
-
-        expect(postCall).toBeDefined()
-        expect(postCall[1].headers).toHaveProperty('Accept', 'application/json')
-        expect(postCall[1].body).toBeInstanceOf(FormData)
+        // Check that api.post was called with FormData and correct URL
+        expect(api.post).toHaveBeenCalled()
+        const postCall = api.post.mock.calls[0]
+        expect(postCall[0]).toContain('/api/caves/')
+        expect(postCall[1]).toBeInstanceOf(FormData)
     })
 })

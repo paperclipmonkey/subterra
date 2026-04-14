@@ -169,6 +169,7 @@ import { mdiAccountGroup, mdiArrowLeft, mdiEmailCheck, mdiEmailOutline, mdiMapSe
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'
+import { api } from '@/plugins/api'
 
 const router = useRouter()
 const store = useAppStore()
@@ -215,31 +216,16 @@ const sendMagicLink = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await fetch('/api/auth/magic-link', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email.value,
-        agreed_to_tos: agreedToToS.value
-      })
+    await api.post('/api/auth/magic-link', {
+      email: email.value,
+      agreed_to_tos: agreedToToS.value
     })
-
-    if (response.ok) {
-      emailSent.value = true
-    } else {
-      const error = await response.json()
-      console.error('Failed to send magic link:', error)
-
-      // Show user-friendly error message
-      errorMessage.value = error.message || 'Failed to send magic link. Please try again.'
-      showError.value = true
-    }
+    emailSent.value = true
   } catch (error) {
-    console.error('Error sending magic link:', error)
-    errorMessage.value = 'Network error. Please check your connection and try again.'
+    console.error('Failed to send magic link:', error)
+
+    // Show user-friendly error message
+    errorMessage.value = error.response?.data?.message || 'Failed to send magic link. Please try again.'
     showError.value = true
   } finally {
     sendingEmail.value = false
@@ -264,10 +250,10 @@ onMounted(async () => {
   }, 5000)
 
   // Load the user endpoint to check if the user is logged in
-  await fetch('/api/livez') // Warm the database
-  const userResponse = await fetch('/api/users/me')
+  await api.get('/api/livez') // Warm the database
   try {
-    const userData = await userResponse.json()
+    const userResponse = await api.get('/api/users/me')
+    const userData = userResponse.data
     if (userData && userData.data && userData.data.email) {
       router.push('/trips')
     }

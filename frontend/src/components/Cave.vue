@@ -606,7 +606,7 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-
+import { api } from '@/plugins/api'
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
@@ -725,29 +725,25 @@ const fetchCave = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await fetch(`/api/caves/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
-    if (response.status === 404) {
-      error.value = "Cave not found. It may have been deleted or you may have the wrong link."
-    } else if (!response.ok) {
-      error.value = "Failed to load cave. Please try again later."
-    } else {
-      const responseData = await response.json()
-      cave.value = responseData.data
+    const response = await api.get(`/api/caves/${route.params.id}`)
+    cave.value = response.data.data
 
-      if (cave.value && cave.value.system) {
-        cave.value.system.files = cave.value.system.files || []
-        cave.value.system.caves = cave.value.system.caves || []
-      } else if (cave.value) {
-        cave.value.system = { files: [], caves: [] }
-      }
-      if (!cave.value.trips) {
-        cave.value.trips = []
-      }
+    if (cave.value && cave.value.system) {
+      cave.value.system.files = cave.value.system.files || []
+      cave.value.system.caves = cave.value.system.caves || []
+    } else if (cave.value) {
+      cave.value.system = { files: [], caves: [] }
     }
-
+    if (!cave.value.trips) {
+      cave.value.trips = []
+    }
   } catch (e) {
-    console.error("Failed to fetch cave data:", e)
-    error.value = "An unexpected error occurred."
+    if (e.response?.status === 404) {
+      error.value = "Cave not found. It may have been deleted or you may have the wrong link."
+    } else {
+      console.error("Failed to fetch cave data:", e)
+      error.value = "Failed to load cave. Please try again later."
+    }
   } finally {
     loading.value = false
   }
@@ -790,11 +786,8 @@ const openImage = (item) => {
 
 const fetchCavePermit = async () => {
   try {
-    const response = await fetch(`/api/caves/${route.params.id}/permit`, { headers: { 'Accept': 'application/json' } })
-    if (response.ok) {
-      const data = await response.json()
-      cavePermit.value = data.data
-    }
+    const response = await api.get(`/api/caves/${route.params.id}/permit`)
+    cavePermit.value = response.data.data
   } catch (e) {
     // permit info is optional
   }

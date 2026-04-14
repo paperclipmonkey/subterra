@@ -123,6 +123,7 @@
 import { mdiAccountClock, mdiShieldCheck } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import moment from 'moment'
+import { api } from '@/plugins/api'
 const props = defineProps({
   pendingClubs: {
     type: Array,
@@ -163,15 +164,7 @@ const saveName = async () => {
   if (!fullName.value) return
   savingName.value = true
   try {
-    const response = await fetch(`/api/users/${props.user.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ name: fullName.value })
-    })
-    if (!response.ok) throw new Error('Failed to update name')
+    await api.put(`/api/users/${props.user.id}`, { name: fullName.value })
     step.value = 2 // Proceed to next step
   } catch (e) {
     error.value = "Failed to save name. Please try again."
@@ -183,9 +176,8 @@ const saveName = async () => {
 const fetchAllClubs = async () => {
   loadingClubs.value = true
   try {
-    const response = await fetch('/api/clubs')
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-    availableClubs.value = (await response.json()).data
+    const response = await api.get('/api/clubs')
+    availableClubs.value = response.data.data
   } catch (e) {
     availableClubs.value = []
   } finally {
@@ -209,23 +201,12 @@ const submit = async () => {
     for (const clubId of selectedClub.value) {
       const club = availableClubs.value.find(c => c.id === clubId)
       if (!club) continue
-      const response = await fetch(`/api/clubs/${club.slug}/join`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ club_id: club.id }),
-      })
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-      }
+      await api.post(`/api/clubs/${club.slug}/join`, { club_id: club.id })
     }
     success.value = true
     emit('membershipConfirmed')
   } catch (e) {
-    error.value = e.message || 'An error occurred.'
+    error.value = e.response?.data?.message || e.message || 'An error occurred.'
   } finally {
     loading.value = false
   }

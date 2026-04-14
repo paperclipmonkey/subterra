@@ -51,7 +51,7 @@
 <script setup>
 import { mdiChartLine, mdiTrendingUp } from '@mdi/js'
 import { ref, onMounted } from 'vue'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -73,9 +73,6 @@ ChartJS.register(
   Tooltip,
   Legend
 )
-
-const popularApi = mande('/api/admin/dashboard/popular-records')
-const growthApi = mande('/api/admin/dashboard/metrics-overview')
 
 const popularLoading = ref(false)
 const growthLoading = ref(false)
@@ -165,7 +162,7 @@ const fetchPopularRecords = async () => {
   popularError.value = null
 
   try {
-    const response = await popularApi.get()
+    const response = (await api.get('/api/admin/dashboard/popular-records')).data
 
     const datasets = response.data.map((record, index) => {
       const color = colors[index % colors.length]
@@ -197,7 +194,7 @@ const fetchGrowthMetrics = async () => {
   growthError.value = null
 
   try {
-    const response = await growthApi.get()
+    const response = (await api.get('/api/admin/dashboard/metrics-overview')).data
 
     const datasets = response.data.map((record) => {
       const color = growthColors[record.label] || '#9e9e9e'

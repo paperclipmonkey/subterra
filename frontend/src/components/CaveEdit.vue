@@ -65,6 +65,7 @@ import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { toFormData } from '@/utilities'
+import { api } from '@/plugins/api'
 
 const notifications = useNotificationStore()
 const appStore = useAppStore()
@@ -124,12 +125,9 @@ const cave = ref({
 
 const fetchCave = async () => {
   try {
-    const response = await fetch(`/api/caves/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
-    if (response.ok) {
-      const data = (await response.json()).data
-      cave.value = data
-      initialCaveState.value = JSON.stringify(data)
-    }
+    const response = await api.get(`/api/caves/${route.params.id}`)
+    cave.value = response.data.data
+    initialCaveState.value = JSON.stringify(response.data.data)
   } catch (error) {
     console.error("Error fetching cave:", error)
   }
@@ -147,20 +145,15 @@ const saveCave = async () => {
       const formData = toFormData(submitData)
       formData.append('_method', 'PUT')
 
-      const response = await fetch(`/api/caves/${route.params.id}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-        },
-        body: formData,
-      })
-
-      if (response.ok) {
+      try {
+        await api.post(`/api/caves/${route.params.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
         isSaved.value = true
         router.push('/caves/' + cave.value.slug)
-      } else {
-        const data = await response.json()
-        errorMessage.value = data.message || 'Failed to save cave'
+      } catch (err) {
+        const data = err.response?.data
+        errorMessage.value = data?.message || 'Failed to save cave'
         errorSnackbar.value = true
       }
     } else {
@@ -172,22 +165,17 @@ const saveCave = async () => {
         original_data: null
       })
 
-      const response = await fetch('/api/suggested-edits', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-        },
-        body: formData,
-      })
-
-      if (response.ok) {
+      try {
+        await api.post('/api/suggested-edits', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
         // Stay on the original cave page when suggesting edits
         notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
         isSaved.value = true
         router.push('/caves/' + route.params.id)
-      } else {
-        const data = await response.json()
-        errorMessage.value = data.message || 'Failed to submit suggestion'
+      } catch (err) {
+        const data = err.response?.data
+        errorMessage.value = data?.message || 'Failed to submit suggestion'
         errorSnackbar.value = true
       }
     }

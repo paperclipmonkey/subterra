@@ -1,9 +1,7 @@
 
 import { defineStore } from 'pinia'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import { toFormData } from '@/utilities'
-
-const api = mande('/api/collections')
 
 export const useCollectionStore = defineStore('collections', {
     state: () => ({
@@ -17,8 +15,8 @@ export const useCollectionStore = defineStore('collections', {
             this.loading = true
             this.error = null
             try {
-                const response = await api.get()
-                this.collections = response.data || response // Fallback in case wrapped or not
+                const response = await api.get('/api/collections')
+                this.collections = response.data.data || response.data // Fallback in case wrapped or not
             } catch (err) {
                 this.error = err.message
             } finally {
@@ -30,8 +28,8 @@ export const useCollectionStore = defineStore('collections', {
             this.error = null
             this.currentCollection = null
             try {
-                const response = await api.get(id)
-                this.currentCollection = response.data || response
+                const response = await api.get(`/api/collections/${id}`)
+                this.currentCollection = response.data.data || response.data
             } catch (err) {
                 if (err.response && err.response.status === 404) {
                     this.error = "Collection not found. It may have been deleted or you may have the wrong link."
@@ -45,7 +43,7 @@ export const useCollectionStore = defineStore('collections', {
         async addCaveToCollection(collectionId, caveId) {
             // Deprecated in UI but kept for compatibility or manual calls
             try {
-                await api.post(`${collectionId}/caves`, { cave_id: caveId })
+                await api.post(`/api/collections/${collectionId}/caves`, { cave_id: caveId })
                 await this.fetchCollection(collectionId) // Refresh
             } catch (err) {
                 this.error = err.message
@@ -55,7 +53,7 @@ export const useCollectionStore = defineStore('collections', {
         async removeCaveFromCollection(collectionId, caveId) {
             // Deprecated in UI but kept for compatibility
             try {
-                await api.delete(`${collectionId}/caves/${caveId}`)
+                await api.delete(`/api/collections/${collectionId}/caves/${caveId}`)
                 await this.fetchCollection(collectionId) // Refresh
             } catch (err) {
                 this.error = err.message
@@ -74,10 +72,9 @@ export const useCollectionStore = defineStore('collections', {
                 if (isFormData) {
                     const formData = toFormData(collection)
                     formData.append('_method', 'PUT')
-                    // mande handles FormData but likely keeps JSON header, ensuring it's cleared
-                    await api.post(identifier, formData, { headers: { 'Content-Type': null } })
+                    await api.post(`/api/collections/${identifier}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
                 } else {
-                    await api.put(identifier, collection)
+                    await api.put(`/api/collections/${identifier}`, collection)
                 }
 
                 // Fetch using slug as well to be consistent
@@ -94,9 +91,9 @@ export const useCollectionStore = defineStore('collections', {
 
                 if (isFormData) {
                     const formData = toFormData(collection)
-                    return await api.post('/', formData, { headers: { 'Content-Type': null } })
+                    return (await api.post('/api/collections', formData, { headers: { 'Content-Type': 'multipart/form-data' } })).data
                 } else {
-                    return await api.post(collection)
+                    return (await api.post('/api/collections', collection)).data
                 }
             } catch (err) {
                 this.error = err.message

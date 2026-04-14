@@ -1,7 +1,6 @@
 // Utilities
 import { defineStore } from 'pinia'
-import { mande } from 'mande'
-const api = mande('/api/caves')
+import { api } from '@/plugins/api'
 
 export const useCaveStore = defineStore('caves', {
   state: () => ({
@@ -17,7 +16,7 @@ export const useCaveStore = defineStore('caves', {
     async getList() {
       try {
         this.loading = true
-        this.caves = (await api.get()).data
+        this.caves = (await api.get('/api/caves')).data.data
         this.allCaves = this.caves
         this.loading = false
 

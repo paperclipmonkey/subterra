@@ -4,12 +4,12 @@ import { mount } from '@vue/test-utils'
 import Dashboard from '@/pages/admin/dashboard.vue'
 import { Line } from 'vue-chartjs'
 
-// Mock mande
+// Mock api plugin
 const mockGet = vi.fn()
-vi.mock('mande', () => ({
-    mande: () => ({
-        get: mockGet
-    })
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: (...args) => mockGet(...args)
+    }
 }))
 
 // Mock Chart.js register globally to avoid errors during test setup
@@ -47,8 +47,10 @@ describe('Dashboard.vue', () => {
         const mockLabels = ['2023-01-01', '2023-01-02', '2023-01-03']
 
         mockGet.mockResolvedValue({
-            labels: mockLabels,
-            data: mockData
+            data: {
+                labels: mockLabels,
+                data: mockData
+            }
         })
 
         const wrapper = mount(Dashboard, {
@@ -90,8 +92,10 @@ describe('Dashboard.vue', () => {
 
     it('shows "No interactions" message when empty', async () => {
         mockGet.mockResolvedValue({
-            labels: [],
-            data: []
+            data: {
+                labels: [],
+                data: []
+            }
         })
 
         const wrapper = mount(Dashboard, {

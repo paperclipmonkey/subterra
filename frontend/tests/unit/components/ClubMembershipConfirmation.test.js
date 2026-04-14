@@ -1,22 +1,29 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ClubMembershipConfirmation from '../../../src/components/ClubMembershipConfirmation.vue'
+import { api } from '@/plugins/api'
 
-// Mock fetch globally
-global.fetch = vi.fn()
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 describe('ClubMembershipConfirmation', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        // Default fetch mock for fetching clubs (onMounted)
-        global.fetch.mockResolvedValue({
-            ok: true,
-            json: async () => ({
+        // Default api mock for fetching clubs (onMounted)
+        api.get.mockResolvedValue({
+            data: {
                 data: [
                     { id: 1, name: 'Club Alpha', slug: 'club-alpha' },
                     { id: 2, name: 'Club Beta', slug: 'club-beta' },
                 ],
-            }),
+            },
         })
     })
 
@@ -79,23 +86,15 @@ describe('ClubMembershipConfirmation', () => {
         // Set selected club
         wrapper.vm.selectedClub = [1] // Select "Club Alpha" (id: 1)
 
-        // Override fetch mock for the submit action
-        global.fetch.mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({ message: 'Join request sent successfully.' })
+        // Override api mock for the submit action
+        api.post.mockResolvedValueOnce({
+            data: { message: 'Join request sent successfully.' }
         })
 
         await wrapper.vm.submit()
 
         // Assert that the join endpoint was called
-        expect(global.fetch).toHaveBeenCalledWith('/api/clubs/club-alpha/join', expect.objectContaining({
-            method: 'POST',
-            body: JSON.stringify({ club_id: 1 }),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            }
-        }))
+        expect(api.post).toHaveBeenCalledWith('/api/clubs/club-alpha/join', { club_id: 1 })
 
         // Assert event was emitted
         expect(wrapper.emitted()).toHaveProperty('membershipConfirmed')

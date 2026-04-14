@@ -38,9 +38,8 @@
 import { mdiDelete, mdiMagnify, mdiOpenInNew, mdiPencil, mdiPlus } from '@mdi/js'
 
 import { ref, onMounted } from 'vue'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 
-const pagesApi = mande('/api/admin/pages')
 const pages = ref([])
 const loading = ref(false)
 const search = ref('')
@@ -56,7 +55,7 @@ const headers = [
 const fetchPages = async () => {
   loading.value = true
   try {
-    pages.value = (await pagesApi.get()).data
+    pages.value = (await api.get('/api/admin/pages')).data.data
   } catch (e) {
     console.error(e)
   } finally {
@@ -67,7 +66,7 @@ const fetchPages = async () => {
 const deletePage = async (page) => {
   if (!confirm('Are you sure you want to delete this page?')) return
   try {
-    await pagesApi.delete(page.id)
+    await api.delete(`/api/admin/pages/${page.id}`)
     await fetchPages()
   } catch (e) {
     console.error(e)

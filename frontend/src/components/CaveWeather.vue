@@ -179,6 +179,7 @@ import { Bar, Line } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale } from 'chart.js'
 import 'chartjs-adapter-moment'
 import moment from 'moment'
+import { api } from '@/plugins/api'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale)
 
@@ -474,13 +475,8 @@ const fetchWeatherData = async () => {
 
   try {
     // Fetch current and forecast
-    const forecastResponse = await fetch(`/api/caves/${props.caveId}/weather/forecast`)
-    if (!forecastResponse.ok) {
-      // ... error handling
-      throw new Error(`Failed to fetch weather`)
-    }
-    const forecastJson = await forecastResponse.json()
-    weatherData.value = forecastJson.data
+    const forecastResponse = await api.get(`/api/caves/${props.caveId}/weather/forecast`)
+    weatherData.value = forecastResponse.data.data
 
     if (weatherData.value) {
       location.value = {
@@ -502,11 +498,8 @@ const fetchWeatherData = async () => {
 
 const fetchHistoricData = async () => {
   try {
-    const response = await fetch(`/api/caves/${props.caveId}/weather/historic`)
-    if (response.ok) {
-      const json = await response.json()
-      historicData.value = json.data
-    }
+    const response = await api.get(`/api/caves/${props.caveId}/weather/historic`)
+    historicData.value = response.data.data
   } catch (e) {
     console.error("Failed to fetch historic weather", e)
   }

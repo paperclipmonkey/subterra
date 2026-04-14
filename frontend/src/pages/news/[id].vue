@@ -37,6 +37,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import moment from 'moment'
+import { api } from '@/plugins/api'
 
 const route = useRoute()
 const article = ref(null)
@@ -45,9 +46,8 @@ const error = ref(false)
 
 onMounted(async () => {
   try {
-    const res = await fetch(`/api/news/${route.params.id}`)
-    if (!res.ok) throw new Error('Failed to fetch')
-    article.value = await res.json()
+    const res = await api.get(`/api/news/${route.params.id}`)
+    article.value = res.data
   } catch (e) {
     error.value = true
     console.error(e)

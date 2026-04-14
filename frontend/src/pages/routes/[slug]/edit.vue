@@ -36,6 +36,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RouteForm from '@/components/routes/RouteForm.vue'
 import { useAppStore } from '@/stores/app'
+import { api } from '@/plugins/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -47,12 +48,8 @@ const routeData = ref(null)
 const load = async () => {
   loading.value = true
   try {
-    const response = await fetch(`/api/routes/${route.params.slug}`)
-    if (response.ok) {
-      routeData.value = await response.json()
-    } else {
-      // TODO Handle error, maybe redirect
-    }
+    const response = await api.get(`/api/routes/${route.params.slug}`)
+    routeData.value = response.data
   } catch (e) {
     console.error(e)
   } finally {

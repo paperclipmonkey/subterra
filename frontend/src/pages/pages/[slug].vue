@@ -30,6 +30,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import moment from 'moment'
+import { api } from '@/plugins/api'
 
 const route = useRoute()
 const page = ref(null)
@@ -40,17 +41,15 @@ const fetchPage = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch(`/api/pages/${route.params.slug}`)
-    if (res.status === 404) {
-      error.value = "Page not found."
-    } else if (!res.ok) {
-      error.value = "Failed to load page. Please try again later."
-    } else {
-      page.value = (await res.json()).data
-    }
+    const res = await api.get(`/api/pages/${route.params.slug}`)
+    page.value = res.data.data
   } catch (e) {
     console.error(e)
-    error.value = "An unexpected error occurred."
+    if (e.response?.status === 404) {
+      error.value = "Page not found."
+    } else {
+      error.value = "Failed to load page. Please try again later."
+    }
   } finally {
     loading.value = false
   }

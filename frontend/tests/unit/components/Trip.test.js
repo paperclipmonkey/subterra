@@ -1,8 +1,19 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Trip from '@/components/Trip.vue'
+import { api } from '@/plugins/api'
 
 // ... (existing mocks remain same)
+
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 // Mock vue-markdown-render
 vi.mock('vue-markdown-render', () => ({
@@ -34,7 +45,7 @@ vi.mock('moment', () => {
 })
 
 // Mock fetch
-global.fetch = vi.fn()
+// (replaced by api mock above)
 
 // Mock the stores
 vi.mock('@/stores/app', () => ({
@@ -98,14 +109,11 @@ const getStubsConfig = () => ({
 describe('Trip', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    global.fetch.mockReset()
+    vi.clearAllMocks()
   })
 
   it('formatDate handles valid dates correctly', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ data: mockTrip })
-    })
+    api.get.mockResolvedValueOnce({ data: { data: mockTrip } })
 
     const wrapper = mount(Trip, {
       global: {
@@ -121,10 +129,7 @@ describe('Trip', () => {
   })
 
   it('formatDate returns "-" for invalid dates', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ data: mockTrip })
-    })
+    api.get.mockResolvedValueOnce({ data: { data: mockTrip } })
 
     const wrapper = mount(Trip, {
       global: {
@@ -140,10 +145,7 @@ describe('Trip', () => {
   })
 
   it('formatDate returns "-" for null dates', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ data: mockTrip })
-    })
+    api.get.mockResolvedValueOnce({ data: { data: mockTrip } })
 
     const wrapper = mount(Trip, {
       global: {
@@ -159,10 +161,7 @@ describe('Trip', () => {
   })
 
   it('formatTime returns "-" for invalid dates', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ data: mockTrip })
-    })
+    api.get.mockResolvedValueOnce({ data: { data: mockTrip } })
 
     const wrapper = mount(Trip, {
       global: {
@@ -178,10 +177,8 @@ describe('Trip', () => {
   })
 
   it('displays error message on 404', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      json: async () => ({})
+    api.get.mockRejectedValueOnce({
+      response: { status: 404 }
     })
 
     const wrapper = mount(Trip, {
@@ -197,10 +194,8 @@ describe('Trip', () => {
   })
 
   it('displays generic error message on other errors', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      json: async () => ({})
+    api.get.mockRejectedValueOnce({
+      response: { status: 500 }
     })
 
     const wrapper = mount(Trip, {

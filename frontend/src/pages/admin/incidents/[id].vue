@@ -340,7 +340,7 @@
 
 <script>
 import { mdiAccount, mdiAlert, mdiAlertDecagram, mdiCheckCircle, mdiCheckDecagram, mdiContentCopy, mdiInformation, mdiMap, mdiMapMarker, mdiMapMarkerPath, mdiMapMarkerRadius, mdiPhone, mdiSend, mdiShieldCheck } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 import { useNotificationStore } from '@/stores/notifications'
 import {
@@ -438,7 +438,7 @@ export default {
 
     async fetchIncident() {
       try {
-        const res = await axios.get(`/api/admin/incidents/${this.$route.params.id}`)
+        const res = await api.get(`/api/admin/incidents/${this.$route.params.id}`)
         this.incident = res.data.data
 
         // Check if protocol has been dismissed via note
@@ -500,7 +500,7 @@ export default {
     async dismissProtocol() {
       try {
         const note = "Police have been contacted and they're waiting to hear from cave rescue."
-        await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: note })
+        await api.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: note })
         this.notificationStore.showSuccess('Protocol dismissed and logged.')
         this.dismissedProtocol = true
         this.fetchIncident()
@@ -533,7 +533,7 @@ export default {
     async acknowledge() {
       this.processing = true
       try {
-        await axios.post(`/api/admin/incidents/${this.incident.id}/acknowledge`)
+        await api.post(`/api/admin/incidents/${this.incident.id}/acknowledge`)
         this.notificationStore.showSuccess('You have assumed control of this incident.')
         // Immediately refresh to update UI
         await this.fetchIncident()
@@ -546,7 +546,7 @@ export default {
     async addNote() {
       if (!this.newNote.trim()) return
       try {
-        await axios.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: this.newNote })
+        await api.post(`/api/admin/incidents/${this.incident.id}/notes`, { content: this.newNote })
         this.newNote = ''
         this.fetchIncident()
       } catch (e) {
@@ -556,7 +556,7 @@ export default {
 
     async resolveIncident() {
       try {
-        await axios.post(`/api/admin/incidents/${this.incident.id}/resolve`, { notes: this.resolveNotes })
+        await api.post(`/api/admin/incidents/${this.incident.id}/resolve`, { notes: this.resolveNotes })
         this.showResolveDialog = false
         this.notificationStore.showSuccess('Incident Resolved.')
         this.$router.push('/admin/callout')

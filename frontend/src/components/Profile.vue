@@ -298,7 +298,7 @@
 import { mdiAccountGroup, mdiAccountGroupOutline, mdiAlertCircleOutline, mdiArrowLeft, mdiArrowRight, mdiChevronRight, mdiClockTimeFourOutline, mdiDatabaseExport, mdiDownload, mdiFileExport, mdiFire, mdiFlashlight, mdiHiking, mdiHistory, mdiLogout, mdiMagnify, mdiMapMarker, mdiMedalOutline, mdiPencil, mdiShieldAccount } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import { CalendarHeatmap } from "vue3-calendar-heatmap"
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
@@ -351,10 +351,9 @@ const loadProfile = async (id) => {
   loading.value = true
   error.value = null
   try {
-    const userApi = mande(`/api/users/${id}`)
-    const response = await userApi.get()
+    const response = await api.get(`/api/users/${id}`)
     user.value = await useAppStore().getUser() || {} // Ensure valid object
-    profile.value = response.data || response
+    profile.value = response.data.data || response.data
     // Ensure stats object exists
     if (!profile.value.stats) profile.value.stats = { caves: 0, trips: 0, duration: 0 }
 
@@ -363,19 +362,20 @@ const loadProfile = async (id) => {
     // Fetch recent trips and heatmap data
     // Use Promise.allSettled to ensure one failure doesn't break the whole page
     const [recentTripsResult, heatmapResult] = await Promise.allSettled([
-      mande(`/api/users/${id}/recent-trips`).get(),
-      mande(`/api/users/${id}/activity-heatmap`).get()
+      api.get(`/api/users/${id}/recent-trips`),
+      api.get(`/api/users/${id}/activity-heatmap`)
     ])
 
     if (recentTripsResult.status === 'fulfilled') {
-      recentTrips.value = recentTripsResult.value.data || recentTripsResult.value
+      const body = recentTripsResult.value.data
+      recentTrips.value = body.data || body
     } else {
       console.warn(`Failed to load recent trips for user ${id}:`, recentTripsResult.reason)
       recentTrips.value = []
     }
 
     if (heatmapResult.status === 'fulfilled') {
-      heatmapData.value = heatmapResult.value || []
+      heatmapData.value = heatmapResult.value.data || []
     } else {
       console.warn(`Failed to load heatmap for user ${id}:`, heatmapResult.reason)
       heatmapData.value = []

@@ -45,6 +45,7 @@ import { mdiArrowRight, mdiCalendar } from '@mdi/js'
 
 import { ref, onMounted } from 'vue'
 import moment from 'moment'
+import { api } from '@/plugins/api'
 
 const news = ref([])
 const loading = ref(true)
@@ -67,8 +68,8 @@ const getExcerpt = (markdown) => {
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/news')
-    news.value = await res.json()
+    const res = await api.get('/api/news')
+    news.value = res.data
   } finally {
     loading.value = false
   }

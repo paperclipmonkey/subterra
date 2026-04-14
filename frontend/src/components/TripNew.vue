@@ -293,6 +293,7 @@ import MilkdownEditor from './MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
+import { api } from '@/plugins/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -418,8 +419,8 @@ const onUserSearch = (val) => {
   isSearching.value = true
   searchTimeout = setTimeout(async () => {
     try {
-      const response = await fetch(`/api/users?search=${encodeURIComponent(val)}`)
-      const matches = (await response.json()).data
+      const response = await api.get(`/api/users?search=${encodeURIComponent(val)}`)
+      const matches = response.data.data
 
       // Merge matches with existing users (to keep selected ones visible)
       const existingIds = users.value.map(u => u.id)
@@ -538,15 +539,15 @@ const rules = {
 onMounted(async () => {
   try {
     // Load caves
-    let response = await fetch('/api/caves')
-    caves.value = (await response.json()).data
+    let response = await api.get('/api/caves')
+    caves.value = response.data.data
 
     // Load users (Removed full load)
-    const userResonse = await fetch('/api/users/me')
-    const userData = await userResonse.json()
+    const userResponse = await api.get('/api/users/me')
+    const userData = userResponse.data
     userId.value = userData.data.id
-    // response = await fetch('/api/users')
-    // users.value = (await response.json()).data
+    // response = await api.get('/api/users')
+    // users.value = response.data.data
 
     // Add self to users list so it displays correctly
     const me = userData.data
@@ -580,8 +581,8 @@ onMounted(async () => {
 
     if (route.query.callout_id) {
       try {
-        const res = await fetch(`/api/callouts/${route.query.callout_id}`)
-        const calloutData = (await res.json()).data
+        const res = await api.get(`/api/callouts/${route.query.callout_id}`)
+        const calloutData = res.data.data
         if (calloutData) {
           // Pre-fill plan/description
           trip.description = `**Originally a Callout:**\n\n${calloutData.trip_plan}`
@@ -598,8 +599,8 @@ onMounted(async () => {
               .map(p => p.user_id)
             if (userIdsToFetch.length > 0) {
               try {
-                const userResponse = await fetch(`/api/users?ids=${userIdsToFetch.join(',')}`)
-                const fetchedUsers = (await userResponse.json()).data
+                const userResponse = await api.get(`/api/users?ids=${userIdsToFetch.join(',')}`)
+                const fetchedUsers = userResponse.data.data
                 fetchedUsers.forEach(u => {
                   if (!users.value.some(existing => existing.id === u.id)) {
                     users.value.push(u)
@@ -630,8 +631,8 @@ onMounted(async () => {
 
     // Load existing trip
     if (route.params.id) {
-      const response = await fetch(`/api/trips/${route.params.id}`)
-      let loadedTrip = (await response.json()).data
+      const response = await api.get(`/api/trips/${route.params.id}`)
+      let loadedTrip = response.data.data
 
       loadedTrip.existing_media = loadedTrip.media
       loadedTrip.media = []
@@ -696,25 +697,10 @@ const addParticipant = (participant) => {
   addParticipantError.value = null
 
   // Add the user using an api endpoint
-  fetch('/api/users', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify(participant),
-  })
+  api.post('/api/users', participant)
     .then(response => {
-      if (!response.ok) {
-        return response.json().then(data => {
-          throw new Error(data.message || 'Failed to add participant')
-        })
-      }
-      return response.json()
-    })
-    .then(data => {
       // Use the full user object returned from the API
-      const newUser = data.data
+      const newUser = response.data.data
       users.value.push(newUser) // So it can be referenced with all fields
       trip.participants.push(newUser.id)
       showAddParticipant.value = false
@@ -722,7 +708,7 @@ const addParticipant = (participant) => {
     })
     .catch(error => {
       console.error('Error adding participant:', error)
-      addParticipantError.value = error.message
+      addParticipantError.value = error.response?.data?.message || error.message
     })
     .finally(() => {
       isAddingParticipant.value = false
@@ -845,9 +831,16 @@ const submitForm = async () => {
   }
 }
 
-const handleApiError = async (response) => {
+const handleApiError = async (error) => {
+  const response = error.response
+  if (!response) {
+    console.error('Network error:', error)
+    notificationStore.showError('Failed to save trip. Please check your connection and try again.')
+    return
+  }
+
   if (response.status === 422) {
-    const errorData = await response.json()
+    const errorData = response.data
 
     // Map wildcard media errors (media.0.data) back to the base 'media' field for the UI
     const mediaErrors = []
@@ -875,39 +868,31 @@ const handleApiError = async (response) => {
 }
 
 const updateTrip = async (formData, id) => {
-  const response = await fetch(`/api/trips/${id}`, {
-    method: 'POST', // Use POST with _method=PUT in the FormData body
-    headers: {
-      'Accept': 'application/json'
-    },
-    body: formData
-  })
-  if (response.ok) {
+  try {
+    await api.post(`/api/trips/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     isSaved.value = true
     validationErrors.value = {}
     notificationStore.showSuccess('Trip updated successfully! 🎉')
     router.push('/trips/' + id)
-  } else {
-    await handleApiError(response)
+  } catch (error) {
+    await handleApiError(error)
   }
 }
 
 const saveTrip = async (formData) => {
-  const response = await fetch('/api/trips', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json'
-    },
-    body: formData
-  })
-  if (response.ok) {
+  try {
+    const response = await api.post('/api/trips', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     isSaved.value = true
     validationErrors.value = {}
-    const savedTrip = (await response.json()).data
+    const savedTrip = response.data.data
     notificationStore.showSuccess('Trip saved successfully! 🚀')
     router.push('/trips/' + savedTrip.id)
-  } else {
-    await handleApiError(response)
+  } catch (error) {
+    await handleApiError(error)
   }
 }
 

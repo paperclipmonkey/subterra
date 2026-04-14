@@ -47,12 +47,9 @@
 <script setup>
 import { mdiCheckCircle, mdiCloseCircle, mdiMagnify, mdiPlus } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import { useRouter } from 'vue-router'
 import CreateClubDialog from '@/components/admin/CreateClubDialog.vue'
-
-// --- API Setup ---
-const clubsApi = mande('/api/admin/clubs')
 
 // --- Data Fetching ---
 const clubs = ref([])
@@ -74,10 +71,8 @@ const headers = [
 const fetchClubs = async () => {
   loading.value = true
   try {
-    // Use actual API
-    const response = await clubsApi.get()
-    // Adjust based on actual API response structure (e.g., response.data if nested)
-    clubs.value = (response.data || response).map(club => ({
+    const response = await api.get('/api/admin/clubs')
+    clubs.value = (response.data.data || response.data).map(club => ({
       ...club,
       loadingEnabled: false, // Initialize loading flag for UI
     }))
@@ -121,10 +116,8 @@ const updateClubInList = (updatedClub) => {
 const toggleEnabled = async (club) => {
   club.loadingEnabled = true
   try {
-    // Use slug instead of id
-    const toggleApi = mande(`/api/admin/clubs/${club.slug}/toggle-active`)
-    const updatedClub = await toggleApi.put()
-    updateClubInList(updatedClub) // Update list with response data
+    const response = await api.put(`/api/admin/clubs/${club.slug}/toggle-active`)
+    updateClubInList(response.data)
   } catch (error) {
     console.error(`Error toggling enabled status for club ${club.slug}:`, error)
     club.loadingEnabled = false // Reset loading on error

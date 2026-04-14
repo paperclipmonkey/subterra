@@ -44,7 +44,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -52,7 +52,6 @@ const route = useRoute()
 const router = useRouter()
 const notificationStore = useNotificationStore()
 
-const pagesApi = mande('/api/admin/pages')
 const isEditing = ref(false)
 const saving = ref(false)
 
@@ -81,10 +80,10 @@ const savePage = async () => {
   saving.value = true
   try {
     if (isEditing.value) {
-      await pagesApi.put(page.id, page)
+      await api.put(`/api/admin/pages/${page.id}`, page)
       notificationStore.showSuccess('Page updated successfully')
     } else {
-      await pagesApi.post(page)
+      await api.post('/api/admin/pages', page)
       notificationStore.showSuccess('Page created successfully')
     }
     router.push('/admin/pages')
@@ -103,8 +102,8 @@ onMounted(async () => {
       // Fetch specific page via ID. 
       // Note: The Admin Controller resource usually supports GET /admin/pages/{id}
       // If mande works with `.get(id)`, it appends /id
-      const { data } = await pagesApi.get(route.query.id)
-      Object.assign(page, data)
+      const { data } = await api.get(`/api/admin/pages/${route.query.id}`)
+      Object.assign(page, data.data)
     } catch (error) {
       console.error('Error loading page', error)
       notificationStore.showError('Failed to load page')

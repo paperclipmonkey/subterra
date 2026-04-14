@@ -3,6 +3,15 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import RouteForm from '@/components/routes/RouteForm.vue'
 
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(() => Promise.resolve({ data: { data: { caves: [] } } })),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 // Mock dependencies
 vi.mock('@/components/MilkdownEditor.vue', () => ({
@@ -41,11 +50,6 @@ vi.mock('@/stores/notifications', () => ({
         showWarning: vi.fn(),
         showInfo: vi.fn(),
     })
-}))
-
-global.fetch = vi.fn(() => Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve({ data: { caves: [] } })
 }))
 
 describe('RouteForm.vue', () => {

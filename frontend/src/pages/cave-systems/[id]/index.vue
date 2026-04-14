@@ -60,6 +60,7 @@ import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
 import AnnotationMapViewer from '@/components/cave-systems/AnnotationMapViewer.vue'
 import { useAppStore } from '@/stores/app'
+import { api } from '@/plugins/api'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -68,12 +69,12 @@ const caveSystem = ref(null)
 const load = async () => {
   try {
     const [routesResponse, systemResponse] = await Promise.all([
-      fetch(`/api/cave_systems/${route.params.id}/routes`),
-      fetch(`/api/cave_systems/${route.params.id}`),
+      api.get(`/api/cave_systems/${route.params.id}/routes`),
+      api.get(`/api/cave_systems/${route.params.id}`),
     ])
 
-    const systemData = systemResponse.ok ? (await systemResponse.json()).data : {}
-    const routesData = routesResponse.ok ? await routesResponse.json() : []
+    const systemData = systemResponse.data.data
+    const routesData = routesResponse.data
 
     caveSystem.value = {
       ...systemData,

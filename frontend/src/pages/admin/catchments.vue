@@ -148,6 +148,7 @@
 <script setup>
 import { mdiDelete, mdiPencil, mdiPlus } from '@mdi/js'
 import { ref, reactive, onMounted, computed } from 'vue'
+import { api } from '@/plugins/api'
 
 const loading = ref(false)
 const catchments = ref([])
@@ -186,13 +187,8 @@ const generateReferenceId = () => {
 const fetchCatchments = async () => {
   loading.value = true
   try {
-    const response = await fetch('/api/admin/catchments')
-    if (response.ok) {
-      const json = await response.json()
-      catchments.value = json.data
-    } else {
-      showSnackbar('Failed to fetch catchments', 'error')
-    }
+    const response = await api.get('/api/admin/catchments')
+    catchments.value = response.data.data
   } catch (error) {
     console.error(error)
     showSnackbar('Error fetching catchments', 'error')
@@ -224,23 +220,12 @@ const deleteItem = (item) => {
 
 const deleteItemConfirm = async () => {
   try {
-    const response = await fetch(`/api/admin/catchments/${editedItem.value.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      }
-    })
-
-    if (response.ok) {
-      catchments.value.splice(editedIndex.value, 1)
-      showSnackbar('Catchment deleted successfully')
-    } else {
-      const data = await response.json()
-      showSnackbar(data.message || 'Failed to delete catchment', 'error')
-    }
+    await api.delete(`/api/admin/catchments/${editedItem.value.id}`)
+    catchments.value.splice(editedIndex.value, 1)
+    showSnackbar('Catchment deleted successfully')
   } catch (e) {
-    showSnackbar('Error deleting catchment', 'error')
+    const message = e.response?.data?.message || 'Error deleting catchment'
+    showSnackbar(message, 'error')
   }
   closeDelete()
 }
@@ -258,38 +243,26 @@ const closeDelete = () => {
 }
 
 const save = async () => {
-  const method = editedIndex.value > -1 ? 'PUT' : 'POST'
+  const method = editedIndex.value > -1 ? 'put' : 'post'
   const url = editedIndex.value > -1
     ? `/api/admin/catchments/${editedItem.value.id}`
     : '/api/admin/catchments'
 
   try {
-    const response = await fetch(url, {
-      method: method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(editedItem.value)
-    })
-
-    if (response.ok) {
-      const json = await response.json()
-      if (editedIndex.value > -1) {
-        Object.assign(catchments.value[editedIndex.value], json.data)
-      } else {
-        // For new items, we might need a refresh to get the count or just push 
-        json.data.cave_systems_count = 0
-        catchments.value.push(json.data)
-      }
-      showSnackbar('Catchment saved successfully')
-      close()
+    const response = await api[method](url, editedItem.value)
+    const json = response.data
+    if (editedIndex.value > -1) {
+      Object.assign(catchments.value[editedIndex.value], json.data)
     } else {
-      const data = await response.json()
-      showSnackbar(data.message || 'Failed to save', 'error')
+      // For new items, we might need a refresh to get the count or just push 
+      json.data.cave_systems_count = 0
+      catchments.value.push(json.data)
     }
+    showSnackbar('Catchment saved successfully')
+    close()
   } catch (e) {
-    showSnackbar('Error saving catchment', 'error')
+    const message = e.response?.data?.message || 'Error saving catchment'
+    showSnackbar(message, 'error')
   }
 }
 

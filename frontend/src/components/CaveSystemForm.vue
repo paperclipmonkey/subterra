@@ -187,6 +187,7 @@
 import { mdiClose, mdiDelete, mdiFile, mdiFilePlus, mdiPaperclip } from '@mdi/js'
 
 import { ref, watch, onMounted } from 'vue'
+import { api } from '@/plugins/api'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
 const props = defineProps({
@@ -293,11 +294,8 @@ const catchments = ref([])
 
 onMounted(async () => {
   try {
-    const response = await fetch('/api/admin/catchments')
-    if (response.ok) {
-      const json = await response.json()
-      catchments.value = json.data
-    }
+    const response = await api.get('/api/admin/catchments')
+    catchments.value = response.data.data
   } catch (e) {
     console.error('Failed to fetch catchments', e)
   }

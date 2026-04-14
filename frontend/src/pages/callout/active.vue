@@ -115,7 +115,7 @@ import { mdiAlertOctagram, mdiCheckCircle, mdiMapMarker, mdiPartyPopper } from '
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -178,7 +178,7 @@ const cancelCallout = async () => {
   }
 
   try {
-    const response = await axios.post(`/api/callouts/${callout.value.id}/cancel`, {
+    const response = await api.post(`/api/callouts/${callout.value.id}/cancel`, {
       location: locationData
     })
     notifications.showSuccess("Callout Cancelled")
@@ -213,7 +213,7 @@ const editTrip = () => {
 
 const fetchCallout = async (id) => {
   try {
-    const res = await axios.get(`/api/callouts/${id}`)
+    const res = await api.get(`/api/callouts/${id}`)
     callout.value = res.data.data
   } catch (e) {
     notifications.showError("Could not load callout details.")

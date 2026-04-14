@@ -73,6 +73,7 @@ import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
+import { api } from '@/plugins/api'
 
 const notifications = useNotificationStore()
 const route = useRoute()
@@ -105,25 +106,13 @@ const submit = async () => {
   loading.value = true
 
   try {
-    const response = await fetch('/api/corrections', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        // 'X-XSRF-TOKEN': ... handled by browser cookies usually with Sanctum
-      },
-      body: JSON.stringify({
-        correction: correction.value,
-        entity_name: props.entityName,
-        entity_type: props.entityType,
-        entity_id: props.entityId,
-        url: window.location.href
-      })
+    const response = await api.post('/api/corrections', {
+      correction: correction.value,
+      entity_name: props.entityName,
+      entity_type: props.entityType,
+      entity_id: props.entityId,
+      url: window.location.href
     })
-
-    if (!response.ok) {
-      throw new Error('Failed to submit correction')
-    }
 
     notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
 

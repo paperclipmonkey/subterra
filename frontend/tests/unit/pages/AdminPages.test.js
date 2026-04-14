@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AdminPagesIndex from '@/pages/admin/pages/index.vue'
 
-// Mock mande
+// Mock api plugin
 const mockGet = vi.fn()
 const mockDelete = vi.fn()
-vi.mock('mande', () => ({
-    mande: () => ({
-        get: mockGet,
-        delete: mockDelete,
-    })
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: (...args) => mockGet(...args),
+        delete: (...args) => mockDelete(...args),
+    }
 }))
 
 describe('AdminPagesIndex.vue', () => {
@@ -19,10 +19,12 @@ describe('AdminPagesIndex.vue', () => {
 
     it('fetches and displays pages', async () => {
         mockGet.mockResolvedValue({
-            data: [
-                { id: 1, title: 'Page 1', slug: 'page-1', access_count: 10 },
-                { id: 2, title: 'Page 2', slug: 'page-2', access_count: 5 },
-            ]
+            data: {
+                data: [
+                    { id: 1, title: 'Page 1', slug: 'page-1', access_count: 10 },
+                    { id: 2, title: 'Page 2', slug: 'page-2', access_count: 5 },
+                ]
+            }
         })
 
         const wrapper = mount(AdminPagesIndex, {

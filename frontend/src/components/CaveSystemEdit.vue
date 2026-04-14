@@ -215,6 +215,7 @@ import AnnotationMapEditor from '@/components/cave-systems/AnnotationMapEditor.v
 import { useAppStore } from '@/stores/app'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useNotificationStore } from '@/stores/notifications'
+import { api } from '@/plugins/api'
 
 const notifications = useNotificationStore()
 const appStore = useAppStore()
@@ -300,9 +301,8 @@ const mapCenter = computed(() => {
 
 const load = async () => {
   try {
-    const response = await fetch(`/api/cave_systems/${route.params.id}`)
-    if (!response.ok) throw new Error('Failed to load cave system')
-    cavesystem.value = (await response.json()).data
+    const response = await api.get(`/api/cave_systems/${route.params.id}`)
+    cavesystem.value = response.data.data
     cavesystem.value.files = cavesystem.value.files || []
     initialSystemState.value = JSON.stringify(cavesystem.value)
     filesToDelete.value = []
@@ -327,26 +327,11 @@ const saveAnnotation = async () => {
     annotationGeojson.value.features.length > 0
 
   if (hasAnnotation) {
-    const response = await fetch(`/api/cave_systems/${cavesystem.value.id}/annotations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ geojson: annotationGeojson.value }),
+    await api.post(`/api/cave_systems/${cavesystem.value.id}/annotations`, {
+      geojson: annotationGeojson.value
     })
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      throw new Error(data.message || 'Failed to save annotations')
-    }
   } else if (cavesystem.value.annotation) {
-    const response = await fetch(`/api/cave_systems/${cavesystem.value.id}/annotations`, {
-      method: 'DELETE',
-      headers: { 'Accept': 'application/json' },
-    })
-    if (!response.ok && response.status !== 204) {
-      throw new Error('Failed to delete annotations')
-    }
+    await api.delete(`/api/cave_systems/${cavesystem.value.id}/annotations`)
   }
 }
 
@@ -389,30 +374,21 @@ const save = async () => {
     })
 
     try {
-      const response = await fetch(`/api/cave_systems/${route.params.id}`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'application/json',
-        }
+      await api.post(`/api/cave_systems/${route.params.id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
 
-      if (response.ok) {
-        // Save annotation if changed
-        const annotationChanged = JSON.stringify(annotationGeojson.value) !== initialAnnotationState.value
-        if (annotationChanged) {
-          await saveAnnotation()
-        }
-        isSaved.value = true
-        notifications.showSuccess('Cave system saved')
-        router.push('/cave-systems/' + route.params.id)
-      } else {
-        const data = await response.json()
-        errorMessage.value = data.message || 'Save failed'
-        errorSnackbar.value = true
+      // Save annotation if changed
+      const annotationChanged = JSON.stringify(annotationGeojson.value) !== initialAnnotationState.value
+      if (annotationChanged) {
+        await saveAnnotation()
       }
+      isSaved.value = true
+      notifications.showSuccess('Cave system saved')
+      router.push('/cave-systems/' + route.params.id)
     } catch (error) {
-      errorMessage.value = error.message
+      const data = error.response?.data
+      errorMessage.value = data?.message || error.message || 'Save failed'
       errorSnackbar.value = true
     } finally {
       loading.value = false
@@ -433,13 +409,7 @@ const save = async () => {
         })
       )
 
-      const response = await fetch('/api/suggested-edits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await api.post('/api/suggested-edits', {
           suggestable_type: 'cave_system',
           suggestable_id: cavesystem.value.id,
           suggested_data: {
@@ -448,22 +418,15 @@ const save = async () => {
             deleted_files: filesToDelete.value
           },
           original_data: null
-        }),
-      })
+        })
 
-      if (response.ok) {
-        // Redirect back to the original cave system page
-        isSaved.value = true
-        notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
-        if (window.history.state && window.history.state.back) {
-          router.go(-1)
-        } else {
-          router.push('/cave-systems/' + route.params.id)
-        }
+      // Redirect back to the original cave system page
+      isSaved.value = true
+      notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
+      if (window.history.state && window.history.state.back) {
+        router.go(-1)
       } else {
-        const data = await response.json()
-        errorMessage.value = data.message || 'Failed to submit suggestion'
-        errorSnackbar.value = true
+        router.push('/cave-systems/' + route.params.id)
       }
     } catch (error) {
       errorMessage.value = error.message
@@ -477,9 +440,8 @@ const save = async () => {
 const loadAvailableSystems = async () => {
   systemsLoading.value = true
   try {
-    const response = await fetch('/api/cave_systems')
-    if (!response.ok) return
-    const data = await response.json()
+    const response = await api.get('/api/cave_systems')
+    const data = response.data
     // Filter out the current system
     availableSystems.value = (data.data || data).filter(
       s => s.id !== cavesystem.value.id
@@ -495,20 +457,15 @@ const loadMergePreview = async () => {
   if (!mergeSourceId.value) return
   mergePreviewLoading.value = true
   try {
-    const response = await fetch(
+    const response = await api.get(
       `/api/admin/cave-systems/${cavesystem.value.id}/merge-preview?source_id=${mergeSourceId.value}`
     )
-    if (response.ok) {
-      mergePreview.value = await response.json()
-      mergeSelectDialog.value = false
-      mergeDialog.value = true
-    } else {
-      const data = await response.json()
-      errorMessage.value = data.error || 'Failed to load merge preview'
-      errorSnackbar.value = true
-    }
+    mergePreview.value = response.data
+    mergeSelectDialog.value = false
+    mergeDialog.value = true
   } catch (error) {
-    errorMessage.value = error.message
+    const data = error.response?.data
+    errorMessage.value = data?.error || 'Failed to load merge preview'
     errorSnackbar.value = true
   } finally {
     mergePreviewLoading.value = false
@@ -518,32 +475,19 @@ const loadMergePreview = async () => {
 const executeMerge = async () => {
   mergeLoading.value = true
   try {
-    const response = await fetch(
+    const response = await api.post(
       `/api/admin/cave-systems/${cavesystem.value.id}/merge`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ source_id: mergeSourceId.value }),
-      }
+      { source_id: mergeSourceId.value }
     )
-    if (response.ok) {
-      const data = await response.json()
-      mergeDialog.value = false
-      mergeSourceId.value = null
-      mergePreview.value = null
-      notifications.showSuccess(data.message)
-      load()
-      loadAvailableSystems()
-    } else {
-      const data = await response.json()
-      errorMessage.value = data.error || 'Merge failed'
-      errorSnackbar.value = true
-    }
+    mergeDialog.value = false
+    mergeSourceId.value = null
+    mergePreview.value = null
+    notifications.showSuccess(response.data.message)
+    load()
+    loadAvailableSystems()
   } catch (error) {
-    errorMessage.value = error.message
+    const data = error.response?.data
+    errorMessage.value = data?.error || 'Merge failed'
     errorSnackbar.value = true
   } finally {
     mergeLoading.value = false
@@ -553,25 +497,15 @@ const executeMerge = async () => {
 const executeDelete = async () => {
   deleteLoading.value = true
   try {
-    const response = await fetch(
-      `/api/admin/cave-systems/${cavesystem.value.id}`,
-      {
-        method: 'DELETE',
-        headers: { 'Accept': 'application/json' },
-      }
+    const response = await api.delete(
+      `/api/admin/cave-systems/${cavesystem.value.id}`
     )
-    if (response.ok) {
-      const data = await response.json()
-      isSaved.value = true
-      notifications.showSuccess(data.message)
-      router.push('/')
-    } else {
-      const data = await response.json()
-      errorMessage.value = data.error || 'Delete failed'
-      errorSnackbar.value = true
-    }
+    isSaved.value = true
+    notifications.showSuccess(response.data.message)
+    router.push('/')
   } catch (error) {
-    errorMessage.value = error.message
+    const data = error.response?.data
+    errorMessage.value = data?.error || 'Delete failed'
     errorSnackbar.value = true
   } finally {
     deleteLoading.value = false

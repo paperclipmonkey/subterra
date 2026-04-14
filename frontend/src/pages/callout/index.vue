@@ -122,7 +122,7 @@
 
 <script>
 import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRight, mdiChevronRight, mdiInformationOutline, mdiOpenInNew, mdiShieldAccount } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
 import { useAppStore } from '@/stores/app'
@@ -171,7 +171,7 @@ export default {
   methods: {
     async fetchActiveCallouts() {
       try {
-        const res = await axios.get('/api/callouts/active')
+        const res = await api.get('/api/callouts/active')
         this.activeCallouts = res.data.data
       } catch (e) {
         console.error("Failed to fetch open callouts", e)
@@ -179,7 +179,7 @@ export default {
     },
     async fetchDutyOfficer() {
       try {
-        const res = await axios.get('/api/duty-officers/current')
+        const res = await api.get('/api/duty-officers/current')
         const data = res.data.data
 
         if (data.is_covered) {

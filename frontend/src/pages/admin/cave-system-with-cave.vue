@@ -45,6 +45,7 @@ import { useRouter } from 'vue-router'
 import CaveSystemForm from '@/components/CaveSystemForm.vue'
 import CaveForm from '@/components/CaveForm.vue'
 import { toFormData } from '@/utilities'
+import { api } from '@/plugins/api'
 
 const router = useRouter()
 const form = ref(null)
@@ -83,24 +84,13 @@ const submit = async () => {
   try {
     const formData = toFormData({ system: system.value, cave: cave.value })
 
-    const response = await fetch('/api/cave_systems_with_cave', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json'
-      },
-      body: formData
+    const response = await api.post('/api/cave_systems_with_cave', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
-
-    if (response.ok) {
-      const data = await response.json()
-      router.push({ name: '/caves/[id]', params: { id: data.cave.slug } })
-    } else {
-      const data = await response.json()
-      errorMessage.value = data.message || 'Failed to create cave system and cave'
-      errorSnackbar.value = true
-    }
+    router.push({ name: '/caves/[id]', params: { id: response.data.cave.slug } })
   } catch (error) {
-    errorMessage.value = 'An unexpected error occurred'
+    const data = error.response?.data
+    errorMessage.value = data?.message || 'Failed to create cave system and cave'
     errorSnackbar.value = true
   } finally {
     loading.value = false

@@ -4,6 +4,16 @@ import Login from '@/components/Login.vue'
 
 const pushMock = vi.fn()
 
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
+
 // Mock vue-router
 vi.mock('vue-router', () => ({
     useRouter: () => ({ push: vi.fn() }),
@@ -15,14 +25,6 @@ vi.mock('vue-router', () => ({
 vi.mock('@/stores/app', () => ({
     useAppStore: () => ({})
 }))
-
-// Mock fetch
-global.fetch = vi.fn(() =>
-    Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ data: {} })
-    })
-)
 
 describe('Login Component', () => {
     it('renders correctly', () => {

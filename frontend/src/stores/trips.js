@@ -1,7 +1,6 @@
 // Utilities
 import { defineStore } from 'pinia'
-import { mande } from 'mande'
-const tripsApi = mande('/api/trips')
+import { api } from '@/plugins/api'
 
 export const useTripStore = defineStore('trips', {
   state: () => ({
@@ -14,8 +13,8 @@ export const useTripStore = defineStore('trips', {
     async getTrips(filters = {}) {
       this.loading = true
       try {
-        const response = await tripsApi.get({ query: filters })
-        this.trips = response.data || response
+        const response = await api.get('/api/trips', { params: filters })
+        this.trips = response.data.data || response.data
       } catch (e) {
         console.error(e)
       } finally {

@@ -108,12 +108,11 @@ import { mdiDatabaseEdit, mdiDelete, mdiKey, mdiMagnify, mdiPhoneInTalk, mdiShie
 
 import moment from 'moment'
 import { ref, onMounted } from 'vue'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 
-const usersApi = mande('/api/admin/users')
 const users = ref([])
 const loading = ref(false)
 const search = ref('')
@@ -149,8 +148,8 @@ const hasRole = (user, slug) => {
 const fetchUsers = async () => {
   loading.value = true
   try {
-    const response = await usersApi.get()
-    users.value = (response.data || response).map(user => ({
+    const response = await api.get('/api/admin/users')
+    users.value = (response.data.data || response.data).map(user => ({
       ...user,
       loadingRole: null,
       loadingDelete: false,
@@ -184,8 +183,7 @@ const executeDelete = async () => {
   deleteDialog.value = false
 
   try {
-    const deleteApi = mande(`/api/users/${user.id}`)
-    await deleteApi.delete()
+    await api.delete(`/api/users/${user.id}`)
     users.value = users.value.filter(u => u.id !== user.id)
   } catch (error) {
     console.error(`Error deleting user ${user.id}:`, error)
@@ -210,9 +208,8 @@ const toggleRole = async (user, roleSlug) => {
   if (isSelf(user)) return
   user.loadingRole = roleSlug
   try {
-    const toggleApi = mande(`/api/admin/users/${user.id}/toggle-role/${roleSlug}`)
-    const updatedUser = await toggleApi.put()
-    updateUserInList(updatedUser.data || updatedUser)
+    const response = await api.put(`/api/admin/users/${user.id}/toggle-role/${roleSlug}`)
+    updateUserInList(response.data.data || response.data)
   } catch (error) {
     console.error(`Error toggling role ${roleSlug} for user ${user.id}:`, error)
 
@@ -235,9 +232,8 @@ const toggleRole = async (user, roleSlug) => {
 const approveMembership = async (user, club) => {
   loading.value = true
   try {
-    const approveApi = mande(`/api/admin/clubs/${club.slug}/members/${user.id}/approve`)
-    const updatedUser = await approveApi.put()
-    updateUserInList(updatedUser.data || updatedUser)
+    const response = await api.put(`/api/admin/clubs/${club.slug}/members/${user.id}/approve`)
+    updateUserInList(response.data.data || response.data)
   } catch (error) {
     console.error(`Error approving membership for user ${user.id} in club ${club.slug}:`, error)
 

@@ -46,6 +46,7 @@ import { useCollectionStore } from '@/stores/collections'
 import CollectionForm from '@/components/CollectionForm.vue'
 import { useNotificationStore } from '@/stores/notifications'
 import { toFormData } from '@/utilities.js'
+import { api } from '@/plugins/api'
 
 const notifications = useNotificationStore()
 
@@ -147,18 +148,9 @@ const save = async () => {
 
             const formData = toFormData(suggestionPayload)
 
-            const response = await fetch('/api/suggested-edits', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: formData,
+            await api.post('/api/suggested-edits', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             })
-
-            if (!response.ok) {
-                const data = await response.json()
-                throw new Error(data.message || 'Failed to submit suggestion')
-            }
             notifications.showSuccess('Suggestion submitted for review')
             dialog.value = false
         }

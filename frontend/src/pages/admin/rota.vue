@@ -112,7 +112,7 @@
 
 <script>
 import { mdiArrowLeft, mdiCalendar, mdiCalendarPlus, mdiChevronLeft, mdiChevronRight, mdiDelete, mdiPencil, mdiViewList } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -207,7 +207,7 @@ export default {
   methods: {
     async fetchUsers() {
       try {
-        const res = await axios.get('/api/admin/duty-officers')
+        const res = await api.get('/api/admin/duty-officers')
         this.users = res.data.data
       } catch (e) {
         console.error("Error fetching users", e)
@@ -219,7 +219,7 @@ export default {
         // Fetch a range for the calendar
         const start = moment(this.currentDate).startOf('month').subtract(7, 'days').format('YYYY-MM-DD')
         const end = moment(this.currentDate).endOf('month').add(7, 'days').format('YYYY-MM-DD')
-        const res = await axios.get(`/api/admin/shifts?start=${start}&end=${end}`)
+        const res = await api.get(`/api/admin/shifts?start=${start}&end=${end}`)
         this.shifts = res.data.data
       } catch (e) {
         console.error("Error fetching shifts", e)
@@ -258,7 +258,7 @@ export default {
           start_at: this.toISOWithOffset(this.newShift.start_at),
           end_at: this.toISOWithOffset(this.newShift.end_at)
         }
-        await axios.post('/api/admin/shifts', payload)
+        await api.post('/api/admin/shifts', payload)
         this.notificationStore.showSuccess('Shift added successfully')
         await this.fetchShifts()
         this.newShift.user_id = null
@@ -286,7 +286,7 @@ export default {
           start_at: this.toISOWithOffset(this.editingShift.start_at),
           end_at: this.toISOWithOffset(this.editingShift.end_at)
         }
-        await axios.put(`/api/admin/shifts/${this.editingShift.id}`, payload)
+        await api.put(`/api/admin/shifts/${this.editingShift.id}`, payload)
         this.notificationStore.showSuccess('Shift updated successfully')
         this.editDialog = false
         await this.fetchShifts()
@@ -300,7 +300,7 @@ export default {
       if (!confirm("Remove this shift?")) return
 
       try {
-        await axios.delete(`/api/admin/shifts/${id}`)
+        await api.delete(`/api/admin/shifts/${id}`)
         this.notificationStore.showSuccess('Shift removed')
         this.editDialog = false // Close dialog if open
         await this.fetchShifts()

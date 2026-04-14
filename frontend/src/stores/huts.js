@@ -1,8 +1,6 @@
 
 import { defineStore } from 'pinia'
-import { mande } from 'mande'
-
-const api = mande('/api/huts')
+import { api } from '@/plugins/api'
 
 export const useHutStore = defineStore('huts', {
     state: () => ({
@@ -15,7 +13,7 @@ export const useHutStore = defineStore('huts', {
         async fetchHuts() {
             this.loading = true
             try {
-                this.huts = await api.get()
+                this.huts = (await api.get('/api/huts')).data
             } catch (err) {
                 this.error = err.message
             } finally {
@@ -27,7 +25,7 @@ export const useHutStore = defineStore('huts', {
             this.error = null
             this.currentHut = null
             try {
-                this.currentHut = await api.get(id)
+                this.currentHut = (await api.get(`/api/huts/${id}`)).data
             } catch (err) {
                 if (err.response && err.response.status === 404) {
                     this.error = "Hut not found. It may have been deleted or you may have the wrong link."
@@ -40,7 +38,7 @@ export const useHutStore = defineStore('huts', {
         },
         async createHut(hut) {
             try {
-                return await api.post(hut)
+                return (await api.post('/api/huts', hut)).data
             } catch (err) {
                 this.error = err.message
                 throw err
@@ -48,7 +46,7 @@ export const useHutStore = defineStore('huts', {
         },
         async updateHut(hut) {
             try {
-                return await api.put(hut.id, hut)
+                return (await api.put(`/api/huts/${hut.id}`, hut)).data
             } catch (err) {
                 this.error = err.message
                 throw err
@@ -56,7 +54,7 @@ export const useHutStore = defineStore('huts', {
         },
         async deleteHut(id) {
             try {
-                return await api.delete(id)
+                return (await api.delete(`/api/huts/${id}`)).data
             } catch (err) {
                 this.error = err.message
                 throw err
