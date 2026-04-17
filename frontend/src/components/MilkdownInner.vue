@@ -10,7 +10,19 @@ import { LanguageDescription } from '@codemirror/language'
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
 import { Milkdown, useEditor } from '@milkdown/vue'
 import { replaceAll, getMarkdown } from '@milkdown/kit/utils'
-import '@milkdown/crepe/theme/common/style.css'
+// Import individual theme CSS files instead of the bundle to avoid pulling in
+// latex.css (which imports all KaTeX fonts) since we have Latex feature disabled.
+import '@milkdown/crepe/theme/common/prosemirror.css'
+import '@milkdown/crepe/theme/common/reset.css'
+import '@milkdown/crepe/theme/common/block-edit.css'
+import '@milkdown/crepe/theme/common/code-mirror.css'
+import '@milkdown/crepe/theme/common/cursor.css'
+import '@milkdown/crepe/theme/common/image-block.css'
+import '@milkdown/crepe/theme/common/link-tooltip.css'
+import '@milkdown/crepe/theme/common/list-item.css'
+import '@milkdown/crepe/theme/common/placeholder.css'
+import '@milkdown/crepe/theme/common/toolbar.css'
+import '@milkdown/crepe/theme/common/table.css'
 import '@milkdown/crepe/theme/frame.css'
 
 const props = defineProps({
