@@ -35,6 +35,9 @@ const { get, loading } = useEditor((root) => {
         root,
         defaultValue: props.modelValue || '',
         placeholder: props.placeholder,
+        features: {
+            [CrepeFeature.Latex]: false,
+        },
         featureConfigs: {
             [CrepeFeature.CodeMirror]: {
                 languages: [
