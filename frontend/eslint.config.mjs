@@ -32,6 +32,6 @@ export default [
         }
     },
     {
-        ignores: ["dist/**", "node_modules/**", "coverage/**", "playwright-report/**", "test-results/**"]
+        ignores: ["dist/**", "node_modules/**", "coverage/**", "playwright-report/**", "test-results/**", "dev-dist/**"]
     }
 ]
