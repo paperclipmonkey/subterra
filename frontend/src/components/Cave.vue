@@ -586,6 +586,18 @@
           </v-list>
         </v-card>
 
+        <!-- Offline Download Card -->
+        <v-card class="mb-4 rounded-lg pa-4" elevation="1">
+          <div class="d-flex align-center mb-2">
+            <v-icon :icon="mdiCloudDownload" size="small" class="mr-2" color="primary" />
+            <span class="text-subtitle-2 font-weight-bold">Offline Access</span>
+          </div>
+          <p class="text-caption text-medium-emphasis mb-3">
+            Save this cave for use underground without internet.
+          </p>
+          <CaveDownloadButton :cave-id="cave.id" block />
+        </v-card>
+
       </v-col>
     </v-row>
   </v-container>
@@ -607,14 +619,16 @@
 <script setup>
 import AppMap from '@/components/AppMap.vue'
 import { api } from '@/plugins/api'
-import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { useDisplay } from 'vuetify'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import CaveDownloadButton from '@/components/CaveDownloadButton.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { markCaveAsDone } from '@/stores/markAsDone'
 import { useCollectionStore } from '@/stores/collections'
+import { useOfflineStore } from '@/stores/offline'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -738,7 +752,27 @@ const fetchCave = async () => {
       cave.value.trips = []
     }
   } catch (e) {
-    if (e.response?.status === 404) {
+    // Try offline fallback
+    if (!navigator.onLine || !e.response) {
+      const offlineStore = useOfflineStore()
+      const offlineCave = await offlineStore.getOfflineCave(Number(route.params.id))
+        || await offlineStore.getOfflineCave(route.params.id)
+      if (offlineCave) {
+        cave.value = offlineCave
+        if (cave.value && cave.value.system) {
+          cave.value.system.files = cave.value.system.files || []
+          cave.value.system.caves = cave.value.system.caves || []
+        } else if (cave.value) {
+          cave.value.system = { files: [], caves: [] }
+        }
+        if (!cave.value.trips) {
+          cave.value.trips = []
+        }
+        loading.value = false
+        return
+      }
+      error.value = "You are offline and this cave has not been downloaded. Go to your offline caves to see what's available."
+    } else if (e.response?.status === 404) {
       error.value = "Cave not found. It may have been deleted or you may have the wrong link."
     } else {
       console.error("Failed to fetch cave data:", e)

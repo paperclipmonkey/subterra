@@ -37,6 +37,17 @@
           </div>
         </v-card>
       </v-col>
+      <v-col cols="12" md="6">
+        <v-card :to="{ path: '/offline' }" link height="150" class="d-flex align-center justify-center">
+          <div class="text-center">
+            <v-icon size="48" color="grey-darken-1" class="mb-2" :icon="mdiCloudDownload" />
+            <div class="text-h5">Offline Caves</div>
+            <div class="text-body-2 text-medium-emphasis">
+              {{ offlineCount > 0 ? `${offlineCount} cave(s) saved` : 'Download caves for underground use' }}
+            </div>
+          </div>
+        </v-card>
+      </v-col>
       <v-col v-if="userStore.user.is_admin" cols="12" md="6">
         <v-card :to="{ path: '/admin' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
@@ -78,8 +89,12 @@
 </template>
 
 <script setup>
-import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCogs, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
+import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
+import { useOfflineStore } from '@/stores/offline'
+import { computed } from 'vue'
 
 const userStore = useAppStore()
+const offlineStore = useOfflineStore()
+const offlineCount = computed(() => offlineStore.downloadedCaveCount)
 </script>

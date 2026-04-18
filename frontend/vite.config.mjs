@@ -18,31 +18,103 @@ export default defineConfig(({ mode }) => {
   const isTest = mode === 'test'
   return {
     plugins: [
-      // VitePWA({
-      //   registerType: 'autoUpdate',
-      //   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
-      //   devOptions: {
-      //     enabled: true
-      //   },
-      //   manifest: {
-      //     name: 'Subterra.world',
-      //     short_name: 'Subterra',
-      //     description: 'Plan your next adventure with Subterra.world',
-      //     theme_color: '#ffffff',
-      //     icons: [
-      //       {
-      //         src: 'pwa-192x192.png',
-      //         sizes: '192x192',
-      //         type: 'image/png'
-      //       },
-      //       {
-      //         src: 'pwa-512x512.png',
-      //         sizes: '512x512',
-      //         type: 'image/png'
-      //       }
-      //     ]
-      //   }
-      // }),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        devOptions: {
+          enabled: true,
+          type: 'module',
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api\//, /^\/storage\//, /^\/media\//],
+          cleanupOutdatedCaches: true,
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'gstatic-fonts-cache',
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              urlPattern: /\/api\/users\/me$/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'user-api-cache',
+                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 7 },
+                cacheableResponse: { statuses: [0, 200] },
+                networkTimeoutSeconds: 3,
+              },
+            },
+            {
+              urlPattern: /\/api\/caves$/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'caves-list-cache',
+                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 },
+                cacheableResponse: { statuses: [0, 200] },
+                networkTimeoutSeconds: 5,
+              },
+            },
+            {
+              urlPattern: /\/api\/tags$/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'tags-cache',
+                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 },
+                cacheableResponse: { statuses: [0, 200] },
+                networkTimeoutSeconds: 3,
+              },
+            },
+          ],
+          skipWaiting: true,
+          clientsClaim: true,
+        },
+        manifest: {
+          name: 'Subterra.world',
+          short_name: 'Subterra',
+          description: 'Plan your next adventure with Subterra.world',
+          theme_color: '#000000',
+          background_color: '#ffffff',
+          display: 'standalone',
+          orientation: 'portrait-primary',
+          scope: '/',
+          start_url: '/',
+          categories: ['sports', 'navigation', 'utilities'],
+          icons: [
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+          ],
+        },
+      }),
       VueRouter(),
       Layouts(),
       Vue({

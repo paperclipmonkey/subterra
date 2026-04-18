@@ -1,5 +1,8 @@
 <template>
   <v-app>
+    <!-- Offline Banner - always on top -->
+    <OfflineBanner />
+
     <!-- Content moves down if banner is present? v-system-bar app fixes to top -->
     <v-system-bar v-if="showActiveCalloutBanner" :color="calloutBannerColor"
                   class="text-white cursor-pointer px-4" height="40" style="cursor: pointer; z-index: 9999;"
@@ -7,6 +10,9 @@
       <v-icon color="white" class="mr-2">{{ calloutBannerIcon }}</v-icon>
       <span class="font-weight-bold">OPEN CALLOUT IN PROGRESS</span>
       <v-spacer />
+      <span v-if="!offlineStore.isOnline" class="d-none d-sm-flex mr-2">
+        <v-icon size="x-small" class="mr-1" :icon="mdiWifiOff" /> OFFLINE ·
+      </span>
       <span class="d-none d-sm-flex">
         EXPECTED: {{ formatTime(appStore.user.active_callout.callout_time) }}
       </span>
@@ -57,23 +63,33 @@
 
     <!-- GDPR Privacy & Cookie Notice Banner -->
     <PrivacyNotice />
+
+    <!-- Service Worker Update Prompt -->
+    <SwUpdatePrompt />
   </v-app>
 </template>
 
 <script setup>
-import { mdiAccountClock, mdiAccountPlus, mdiAlert, mdiAlertCircle, mdiAlertOutline, mdiCheckCircle, mdiChevronRight, mdiClose, mdiInformation, mdiShieldCheck } from '@mdi/js'
+import { mdiAccountClock, mdiAccountPlus, mdiAlert, mdiAlertCircle, mdiAlertOutline, mdiCheckCircle, mdiChevronRight, mdiClose, mdiInformation, mdiShieldCheck, mdiWifiOff } from '@mdi/js'
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
 import PrivacyNotice from '@/components/PrivacyNotice.vue'
 import OnboardingWizard from '@/components/OnboardingWizard.vue'
+import OfflineBanner from '@/components/OfflineBanner.vue'
+import SwUpdatePrompt from '@/components/SwUpdatePrompt.vue'
+import { useOfflineStore } from '@/stores/offline'
 import moment from 'moment'
 
 const notificationStore = useNotificationStore()
 const appStore = useAppStore()
+const offlineStore = useOfflineStore()
 const router = useRouter()
 const route = useRoute()
+
+// Initialize offline detection
+offlineStore.init()
 
 const showActiveCalloutBanner = computed(() => {
   return appStore.user && appStore.user.active_callout && route.path !== '/callout/active'

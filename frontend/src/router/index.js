@@ -40,6 +40,11 @@ router.beforeEach(async (to, from, next) => {
     return next()
   }
 
+  // Allow offline caves page when offline
+  if (to.path === '/offline') {
+    return next()
+  }
+
   let forceRefresh = false
   if (to.path.startsWith('/profile') || to.path.startsWith('/callout')) {
     forceRefresh = true
@@ -132,6 +137,23 @@ router.beforeEach(async (to, from, next) => {
   if (user.email) {
     return next()
   }
+
+  // When offline and there's no cached user session, redirect unauthenticated users
+  // to the offline caves page instead of the login page.
+  // Authenticated users (caught by user.email check above) navigate freely —
+  // individual pages are responsible for showing appropriate offline state.
+  if (!navigator.onLine) {
+    if (
+      to.path === '/offline' ||
+      to.path === '/callout/active' ||
+      to.path.startsWith('/caves') ||
+      to.path.startsWith('/pages/')
+    ) {
+      return next()
+    }
+    return next({ path: '/offline' })
+  }
+
   return next({ path: '/' })
 })
 

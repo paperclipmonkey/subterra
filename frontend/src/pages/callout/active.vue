@@ -15,6 +15,19 @@
           </div>
         </v-alert>
 
+        <!-- Offline Warning for Active Callout -->
+        <v-alert v-if="isOffline" type="warning" prominent class="mb-6 elevation-3"
+                 :icon="mdiWifiOff">
+          <div class="text-h6 font-weight-bold">YOU ARE OFFLINE</div>
+          <div class="mb-2">
+            Your callout timer is still counting down, but you cannot cancel it until you have internet access.
+          </div>
+          <div class="text-body-2">
+            <strong>To cancel your callout:</strong> reconnect to data/WiFi, or text
+            <strong>"SAFE"</strong> to your duty officer's phone number.
+          </div>
+        </v-alert>
+
         <v-card class="mb-6 elevation-10" :color="cardColor" dark>
           <v-card-text class="text-center pa-6">
             <div class="text-h6 mb-2">{{ callout.incident ? 'RESCUE ACTIVATED' : 'RESCUE WILL BE ACTIVATED IN' }}</div>
@@ -67,11 +80,23 @@
           </v-card-text>
         </v-card>
 
-        <v-btn block x-large color="success" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
+        <v-btn v-if="!isOffline" block x-large color="success" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
                @click="confirmSafe = true">
           <v-icon left size="large" :icon="mdiCheckCircle" />
           I AM SAFE
         </v-btn>
+
+        <v-btn v-else block x-large color="grey" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
+               disabled>
+          <v-icon left size="large" :icon="mdiWifiOff" />
+          CONNECT TO CANCEL
+        </v-btn>
+
+        <v-alert v-if="isOffline" type="info" variant="tonal" density="compact" class="mb-4">
+          <div class="text-body-2">
+            You need internet access to cancel the callout through the app. Alternatively, send a text message to your duty officer.
+          </div>
+        </v-alert>
       </v-col>
     </v-row>
 
@@ -111,7 +136,7 @@
 </template>
 
 <script setup>
-import { mdiAlertOctagram, mdiCheckCircle, mdiMapMarker, mdiPartyPopper } from '@mdi/js'
+import { mdiAlertOctagram, mdiCheckCircle, mdiMapMarker, mdiPartyPopper, mdiWifiOff } from '@mdi/js'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter, useRoute } from 'vue-router'
@@ -124,6 +149,7 @@ const router = useRouter()
 const route = useRoute()
 const notifications = useNotificationStore()
 
+const isOffline = ref(!navigator.onLine)
 const confirmSafe = ref(false)
 const convertToTrip = ref(false)
 const newTripId = ref(null)
@@ -216,6 +242,13 @@ const fetchCallout = async (id) => {
     const res = await api.get(`/api/callouts/${id}`)
     callout.value = res.data.data
   } catch (e) {
+    // If offline and we have cached callout data from the user store, use it
+    if (!navigator.onLine || !e.response) {
+      if (appStore.user.active_callout) {
+        callout.value = appStore.user.active_callout
+        return
+      }
+    }
     notifications.showError("Could not load callout details.")
     console.error(e)
   } finally {
@@ -247,9 +280,18 @@ onMounted(async () => {
   timer = setInterval(() => {
     now.value = moment()
   }, 1000)
+
+  // Listen for online/offline changes
+  window.addEventListener('online', onOnline)
+  window.addEventListener('offline', onOffline)
 })
+
+const onOnline = () => { isOffline.value = false }
+const onOffline = () => { isOffline.value = true }
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  window.removeEventListener('online', onOnline)
+  window.removeEventListener('offline', onOffline)
 })
 </script>

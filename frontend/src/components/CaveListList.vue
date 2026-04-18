@@ -40,6 +40,9 @@
                   <div v-if="cave.previously_done" class="d-flex justify-end pa-2 position-relative" style="z-index: 2;">
                     <v-chip color="success" size="small" variant="elevated" :prepend-icon="mdiCheck">Done</v-chip>
                   </div>
+                  <div v-if="offlineStore.isCaveDownloaded(cave.id)" class="position-absolute pa-2" style="z-index: 2; top: 0; left: 0;">
+                    <v-chip color="grey-darken-3" size="x-small" variant="elevated" :prepend-icon="mdiCloudDownload">Offline</v-chip>
+                  </div>
                 </v-img>
               </div>
 
@@ -120,14 +123,17 @@
   </v-container>
 </template>
 <script setup>
-import { mdiCheck, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
+import { mdiCheck, mdiCloudDownload, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
 import { ref, defineEmits } from 'vue'
 
 const emit = defineEmits(['tag-click'])
 import { useCaveStore } from '@/stores/caves'
 import { useAppStore } from '@/stores/app'
+import { useOfflineStore } from '@/stores/offline'
 import { markCaveAsDone } from '@/stores/markAsDone'
 import { useDisplay } from 'vuetify'
+
+const offlineStore = useOfflineStore()
 
 const caveStore = useCaveStore()
 const appStore = useAppStore()

@@ -82,6 +82,13 @@
       </div>
     </template>
 
+    <!-- Offline data notice -->
+    <v-alert v-if="caveStore.isOfflineData" type="info" variant="tonal" density="compact" class="mx-4 mb-2">
+      <div class="d-flex align-center">
+        <span class="text-body-2">Showing {{ caveStore.caves.length }} downloaded cave(s). <router-link to="/offline" class="text-decoration-none font-weight-bold">Manage offline data</router-link></span>
+      </div>
+    </v-alert>
+
     <v-tabs
       v-model="tab"
       align-tabs="center"
