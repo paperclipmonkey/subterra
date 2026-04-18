@@ -85,6 +85,20 @@
     </v-card>
 
     <v-row>
+      <!-- Mobile-only offline download card (desktop version is in sidebar) -->
+      <v-col v-if="smAndDown && offlineStore.isPwa" cols="12">
+        <v-card class="rounded-lg pa-4" elevation="1">
+          <div class="d-flex align-center mb-2">
+            <v-icon :icon="mdiCloudDownload" size="small" class="mr-2" color="primary" />
+            <span class="text-subtitle-2 font-weight-bold">Offline Access</span>
+          </div>
+          <p class="text-caption text-medium-emphasis mb-3">
+            Save this cave for use underground without internet.
+          </p>
+          <CaveDownloadButton :cave-id="cave.id" block />
+        </v-card>
+      </v-col>
+
       <!-- Main Column -->
       <v-col cols="12" md="8">
         <v-card class="fill-height rounded-lg" elevation="1">
@@ -587,7 +601,7 @@
         </v-card>
 
         <!-- Offline Download Card -->
-        <v-card class="mb-4 rounded-lg pa-4" elevation="1">
+        <v-card v-if="offlineStore.isPwa" class="mb-4 rounded-lg pa-4" elevation="1">
           <div class="d-flex align-center mb-2">
             <v-icon :icon="mdiCloudDownload" size="small" class="mr-2" color="primary" />
             <span class="text-subtitle-2 font-weight-bold">Offline Access</span>
@@ -609,9 +623,14 @@
     <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
     <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
     <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-    <v-btn color="primary" variant="flat" to="/caves" :prepend-icon="mdiArrowLeft">
-      Back to Caves
-    </v-btn>
+    <div class="d-flex gap-3">
+      <v-btn color="primary" variant="flat" :prepend-icon="mdiRefresh" @click="fetchCave">
+        Try again
+      </v-btn>
+      <v-btn variant="text" to="/caves" :prepend-icon="mdiArrowLeft">
+        Back to Caves
+      </v-btn>
+    </div>
   </v-container>
 </template>
 
@@ -619,7 +638,7 @@
 <script setup>
 import AppMap from '@/components/AppMap.vue'
 import { api } from '@/plugins/api'
-import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiRefresh, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { useDisplay } from 'vuetify'
@@ -642,6 +661,7 @@ const zoom = 14
 
 const appStore = useAppStore()
 const notificationStore = useNotificationStore()
+const offlineStore = useOfflineStore()
 const { smAndDown } = useDisplay()
 const collectionStore = useCollectionStore()
 
@@ -752,9 +772,11 @@ const fetchCave = async () => {
       cave.value.trips = []
     }
   } catch (e) {
-    // Try offline fallback
-    if (!navigator.onLine || !e.response) {
-      const offlineStore = useOfflineStore()
+    const trulyOffline = !navigator.onLine
+    const noResponse = !e.response
+
+    // Try offline fallback whenever we have no network response
+    if (noResponse) {
       const offlineCave = await offlineStore.getOfflineCave(Number(route.params.id))
         || await offlineStore.getOfflineCave(route.params.id)
       if (offlineCave) {
@@ -771,9 +793,21 @@ const fetchCave = async () => {
         loading.value = false
         return
       }
-      error.value = "You are offline and this cave has not been downloaded. Go to your offline caves to see what's available."
-    } else if (e.response?.status === 404) {
+    }
+
+    if (e.response?.status === 404) {
       error.value = "Cave not found. It may have been deleted or you may have the wrong link."
+    } else if (trulyOffline) {
+      error.value = "You are offline and this cave has not been downloaded. Go to your offline caves to see what's available."
+      // Auto-retry when connection is restored
+      const onOnline = async () => {
+        window.removeEventListener('online', onOnline)
+        await fetchCave()
+      }
+      window.addEventListener('online', onOnline, { once: true })
+    } else if (noResponse) {
+      // Network error but browser thinks we're online (transient failure)
+      error.value = "Connection error. Please check your signal and try again."
     } else {
       console.error("Failed to fetch cave data:", e)
       error.value = "Failed to load cave. Please try again later."

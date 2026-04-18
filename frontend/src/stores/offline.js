@@ -117,9 +117,18 @@ async function cacheImageAsBlob(url) {
   }
 }
 
+function detectPwa() {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    window.navigator.standalone === true
+  )
+}
+
 export const useOfflineStore = defineStore('offline', {
   state: () => ({
     isOnline: navigator.onLine,
+    isPwa: detectPwa(),
     downloadedCaveIds: [],
     downloadingCaveId: null,
     downloadProgress: 0,
@@ -138,6 +147,8 @@ export const useOfflineStore = defineStore('offline', {
     init() {
       window.addEventListener('online', () => { this.isOnline = true })
       window.addEventListener('offline', () => { this.isOnline = false })
+      const mq = window.matchMedia('(display-mode: standalone)')
+      mq.addEventListener('change', (e) => { this.isPwa = e.matches || window.navigator.standalone === true })
       this.loadDownloadedCaveIds()
     },
 

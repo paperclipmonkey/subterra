@@ -37,7 +37,7 @@
           </div>
         </v-card>
       </v-col>
-      <v-col cols="12" md="6">
+      <v-col v-if="offlineStore.isPwa" cols="12" md="6">
         <v-card :to="{ path: '/offline' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="grey-darken-1" class="mb-2" :icon="mdiCloudDownload" />

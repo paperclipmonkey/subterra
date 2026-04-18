@@ -40,7 +40,7 @@
                   <div v-if="cave.previously_done" class="d-flex justify-end pa-2 position-relative" style="z-index: 2;">
                     <v-chip color="success" size="small" variant="elevated" :prepend-icon="mdiCheck">Done</v-chip>
                   </div>
-                  <div v-if="offlineStore.isCaveDownloaded(cave.id)" class="position-absolute pa-2" style="z-index: 2; top: 0; left: 0;">
+                  <div v-if="offlineStore.isPwa && offlineStore.isCaveDownloaded(cave.id)" class="position-absolute pa-2" style="z-index: 2; top: 0; left: 0;">
                     <v-chip color="grey-darken-3" size="x-small" variant="elevated" :prepend-icon="mdiCloudDownload">Offline</v-chip>
                   </div>
                 </v-img>
