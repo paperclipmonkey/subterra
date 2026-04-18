@@ -45,6 +45,18 @@ vi.mock('@/stores/notifications', () => ({
 vi.mock('@/stores/markAsDone', () => ({
     markCaveAsDone: vi.fn()
 }))
+vi.mock('@/stores/offline', () => ({
+    useOfflineStore: () => ({
+        isOnline: true,
+        isPwa: false,
+        downloadedCaveIds: [],
+        downloadingCaveId: null,
+        downloadProgress: 0,
+        isCaveDownloaded: vi.fn(() => false),
+        downloadedCaveCount: 0,
+        getOfflineCave: vi.fn(() => Promise.resolve(null)),
+    })
+}))
 
 // Mock MapLibre (canvas dependency causes issues in jsdom)
 vi.mock('@indoorequal/vue-maplibre-gl', () => ({
