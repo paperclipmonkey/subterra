@@ -26,12 +26,25 @@ export default defineConfig(({ mode }) => {
           type: 'module',
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,gif,webp,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [/^\/api\//, /^\/storage\//, /^\/media\//],
           cleanupOutdatedCaches: true,
           runtimeCaching: [
+            {
+              // Belt-and-suspenders cache for app JS/CSS chunks.
+              // If the precache ever misses (e.g. SW version race), serve stale
+              // from this cache and revalidate in the background.
+              urlPattern: ({ request }) =>
+                request.destination === 'script' || request.destination === 'style',
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'app-chunks-runtime',
+                expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: 'CacheFirst',

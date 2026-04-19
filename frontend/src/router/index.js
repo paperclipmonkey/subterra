@@ -40,8 +40,10 @@ router.beforeEach(async (to, from, next) => {
     return next()
   }
 
-  // Allow offline caves page when offline
+  // Allow offline caves page — still warm the user cache in the background
+  // so components don't render with empty user state after a hard refresh.
   if (to.path === '/offline') {
+    useAppStore().getUser().catch(() => {})
     return next()
   }
 
@@ -157,10 +159,12 @@ router.beforeEach(async (to, from, next) => {
   return next({ path: '/' })
 })
 
-// Scroll to top after each navigation
+// Scroll to top after each navigation, and clear the dynamic-reload retry flag
+// so any subsequent chunk-load failure can trigger another reload.
 router.afterEach(() => {
   document.title = 'subterra.world'
   window.scrollTo(0, 0)
+  localStorage.removeItem('vuetify:dynamic-reload')
 })
 
 router.isReady().then(() => {
