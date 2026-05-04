@@ -102,6 +102,7 @@ const defaultStubs = {
   'v-form': { template: '<div><slot /></div>' },
   'v-stepper': { template: '<div><slot /></div>' },
   'v-autocomplete': { template: '<div></div>' },
+  'CaveSearchAutocomplete': { template: '<div></div>', props: ['modelValue', 'items', 'loading', 'rules', 'errorMessages', 'hint', 'persistentHint', 'inputName', 'label'] },
   'v-checkbox': { template: '<div></div>' },
   'v-text-field': { template: '<div></div>' },
   'v-select': { template: '<div></div>' },
@@ -134,11 +135,11 @@ describe('TripNew - Duration Loading', () => {
 
     // Mock successful API responses
     api.get.mockImplementation((url) => {
-      if (url === '/api/caves') {
+      if (url === '/api/caves/search') {
         return Promise.resolve({
           data: {
             data: [
-              { id: 1, name: 'Test Cave', system: { id: 1 }, location_name: 'Test Location', location_country: 'Test Country' }
+              { id: 1, name: 'Test Cave', cave_system_id: 1, location_name: 'Test Location', location_country: 'Test Country', is_curated: false, is_closed: false }
             ]
           }
         })
@@ -237,11 +238,11 @@ describe('TripNew - Duration Loading', () => {
   it('populates users array with all participants when editing a trip', async () => {
     // Override fetch to return a trip with multiple participants including ones not in the initial users list
     api.get.mockImplementation((url) => {
-      if (url === '/api/caves') {
+      if (url === '/api/caves/search') {
         return Promise.resolve({
           data: {
             data: [
-              { id: 1, name: 'Test Cave', system: { id: 1 }, location_name: 'Test Location', location_country: 'Test Country' }
+              { id: 1, name: 'Test Cave', cave_system_id: 1, location_name: 'Test Location', location_country: 'Test Country', is_curated: false, is_closed: false }
             ]
           }
         })

@@ -109,7 +109,16 @@ config.global.stubs = {
   'v-window-item': true,
   'MilkdownEditor': true,
   'MilkdownInner': true,
-  'ClubMembershipConfirmation': true
+  'ClubMembershipConfirmation': true,
+  'CaveSearchAutocomplete': true
+}
+
+// Mock IntersectionObserver (not available in jsdom)
+global.IntersectionObserver = class IntersectionObserver {
+  constructor(callback) { this.callback = callback }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
 }
 
 // Mock window.location for navigation tests

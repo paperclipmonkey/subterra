@@ -5,13 +5,12 @@ use App\Models\Tag;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         $curatedTag = Tag::where('tag', 'Curated')->where('category', 'curated')->first();
 
-        if (! $curatedTag) {
+        if (!$curatedTag) {
             return;
         }
 
@@ -27,7 +26,7 @@ return new class extends Migration
     {
         $curatedTag = Tag::where('tag', 'Curated')->where('category', 'curated')->first();
 
-        if (! $curatedTag) {
+        if (!$curatedTag) {
             return;
         }
 

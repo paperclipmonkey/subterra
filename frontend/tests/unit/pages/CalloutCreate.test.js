@@ -11,14 +11,14 @@ vi.mock('vue-router', () => ({
 }))
 
 // Mock Axios
-const mockCaves = [{ id: 1, name: 'Alum Pot', location_name: 'Yorkshire', system: { id: 10 } }]
+const mockCaves = [{ id: 1, name: 'Alum Pot', location_name: 'Yorkshire', cave_system_id: 10, is_curated: true, is_closed: false }]
 const mockUsers = [{ id: 2, name: 'Alice' }, { id: 3, name: 'Bob' }]
 const mockUserMe = { id: 1, name: 'Test User', email: 'test@example.com', clubs: [{ status: 'approved' }] }
 
 vi.mock('axios', () => {
     const mock = {
         get: vi.fn((url) => {
-            if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
+            if (url === '/api/caves/search') return Promise.resolve({ data: { data: mockCaves } })
             if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
             if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
             if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: 'Officer Jenny', photo: null, is_covered: true } } })
@@ -62,7 +62,7 @@ describe('Callout Wizard', () => {
     beforeEach(() => {
         // Reset the default get mock between tests to avoid bleed-over
         axios.get.mockImplementation((url) => {
-            if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
+            if (url === '/api/caves/search') return Promise.resolve({ data: { data: mockCaves } })
             if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
             if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
             if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: 'Officer Jenny', photo: null, is_covered: true } } })
@@ -168,7 +168,7 @@ describe('Callout Wizard', () => {
         // Override the default mock for this specific test
         const axios = await import('axios')
         axios.default.get.mockImplementation((url) => {
-            if (url === '/api/caves') return Promise.resolve({ data: { data: mockCaves } })
+            if (url === '/api/caves/search') return Promise.resolve({ data: { data: mockCaves } })
             if (url === '/api/users') return Promise.resolve({ data: { data: mockUsers } })
             if (url === '/api/users/me') return Promise.resolve({ data: { data: mockUserMe } })
             if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: null, photo: null, is_covered: false } } })
