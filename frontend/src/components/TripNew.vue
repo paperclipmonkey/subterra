@@ -12,27 +12,32 @@
         <v-col cols="12" md="6">
           <v-card title="Where" class="mb-4">
             <v-card-text>
-              <v-autocomplete v-model="trip.entrance_cave_id" label="Location" :items="caves" item-title="name" :rules="rules.location"
-                              item-value="id" :error-messages="validationErrors.entrance_cave_id"
-                              hint="Select the cave entrance where the trip started." persistent-hint variant="outlined"
-                              autocomplete="off" name="random_unique_cave_search_field">
-                <template #item="{ props, item }">
-                  <v-list-item v-bind="props" :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
-                               :title="item.raw.name" />
-                </template>
-              </v-autocomplete>
+              <CaveSearchAutocomplete
+                v-model="trip.entrance_cave_id"
+                label="Location"
+                :items="caves"
+                :loading="loading"
+                :rules="rules.location"
+                :error-messages="validationErrors.entrance_cave_id"
+                hint="Select the cave entrance where the trip started."
+                :persistent-hint="true"
+                input-name="random_unique_cave_search_field"
+              />
               <template v-if="system_entrances_count > 1">
                 <v-checkbox v-model="throughTrip" label="Through trip"
                             hint="Tick if you exited from a different entrance." persistent-hint class="mt-2" />
                 <v-expand-transition>
                   <div v-if="throughTrip">
-                    <v-autocomplete v-model="trip.exit_cave_id"
-                                    label="Exit"
-                                    :items="caves.filter(cave => cave.system.id === cave_system_id && cave.id !== trip.entrance_cave_id)" item-title="name" item-value="id"
-                                    :error-messages="validationErrors.exit_cave_id"
-                                    hint="Select the cave entrance where the trip ended." persistent-hint variant="outlined"
-                                    autocomplete="off" name="random_unique_exit_search_field"
-                                    class="mt-2" />
+                    <CaveSearchAutocomplete
+                      v-model="trip.exit_cave_id"
+                      label="Exit"
+                      :items="caves.filter(cave => cave.cave_system_id === cave_system_id && cave.id !== trip.entrance_cave_id)"
+                      :error-messages="validationErrors.exit_cave_id"
+                      hint="Select the cave entrance where the trip ended."
+                      :persistent-hint="true"
+                      input-name="random_unique_exit_search_field"
+                      class="mt-2"
+                    />
                   </div>
                 </v-expand-transition>
               </template>
@@ -289,6 +294,7 @@ import { mdiAccountSearch, mdiCamera, mdiClose, mdiContentSave, mdiDelete, mdiPl
 import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'
+import CaveSearchAutocomplete from './CaveSearchAutocomplete.vue'
 import MilkdownEditor from './MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
@@ -467,13 +473,7 @@ const copyrightOptions = [
 const isClosed = computed(() => {
   if (!trip.entrance_cave_id) return false
   const cave = caves.value.find(c => c.id === trip.entrance_cave_id)
-  // Check direct tags or system tags if applicable
-  const hasClosedTag = (entity) => entity?.tags?.some(t => t.tag === 'Closed')
-
-  if (hasClosedTag(cave)) return true
-  if (cave?.system && hasClosedTag(cave.system)) return true
-
-  return false
+  return cave?.is_closed ?? false
 })
 
 watch(isClosed, (newVal) => {
@@ -539,7 +539,7 @@ const rules = {
 onMounted(async () => {
   try {
     // Load caves
-    let response = await api.get('/api/caves')
+    let response = await api.get('/api/caves/search')
     caves.value = response.data.data
 
     // Load users (Removed full load)
@@ -564,7 +564,7 @@ onMounted(async () => {
         return
       }
       trip.entrance_cave_id = foundCave.id
-      trip.cave_system_id = foundCave.system.id
+      trip.cave_system_id = foundCave.cave_system_id
     }
 
     if (route.query.date) {
@@ -717,20 +717,20 @@ const addParticipant = (participant) => {
 
 const cave_system_id = computed(() => {
   const found = caves.value.find(cave => cave.id === trip.entrance_cave_id)
-  return found ? found.system.id : null
+  return found ? found.cave_system_id : null
 })
 
 const system_entrances_count = computed(() => {
   if (!cave_system_id.value) return 0
-  return caves.value.filter((cave => cave.system.id === cave_system_id.value)).length
+  return caves.value.filter((cave => cave.cave_system_id === cave_system_id.value)).length
 })
 
 watch(() => trip.entrance_cave_id, (cave_id) => {
   if (!cave_id) return
   if (throughTrip.value) { // Currently set as through trip
     const currentSystem = caves.value.find(cave => cave.id === trip.entrance_cave_id)
-    const multipleEntrances = caves.value.filter((cave => cave.system.id == currentSystem.id))
-    throughTrip.value = !!multipleEntrances
+    const multipleEntrances = caves.value.filter((cave => cave.cave_system_id == currentSystem?.cave_system_id))
+    throughTrip.value = multipleEntrances.length > 1
   }
 })
 
@@ -780,7 +780,7 @@ const submitForm = async () => {
     }
     trip.start_time = start_time.value.format()
     trip.end_time = end_time.value.format()
-    trip.cave_system_id = cave_system_id.value
+      trip.cave_system_id = cave_system_id.value ?? null
     if (markdownOutput.value) {
       trip.description = markdownOutput.value
     }

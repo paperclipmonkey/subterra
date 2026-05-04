@@ -225,4 +225,74 @@ class CaveTest extends TestCase
         $response->assertOk();
         $response->assertJsonFragment(['id' => $privateTrip->short_id]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_only_curated_caves_when_curated_filter_is_applied()
+    {
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+
+        $curatedTag = Tag::where('tag', 'Curated')->where('category', 'curated')->firstOrFail();
+
+        $curated = Cave::factory()->create(['name' => 'Curated Cave']);
+        $curated->tags()->attach($curatedTag->id);
+
+        Cave::factory()->create(['name' => 'Non Curated Cave']);
+
+        $response = $this->getJson('/api/caves?curated=1');
+
+        $response->assertOk();
+
+        $data = $response->json('data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('Curated Cave', $data[0]['name']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_all_caves_when_curated_filter_is_not_applied()
+    {
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+
+        $curatedTag = Tag::where('tag', 'Curated')->where('category', 'curated')->firstOrFail();
+
+        $curated = Cave::factory()->create(['name' => 'Curated Cave']);
+        $curated->tags()->attach($curatedTag->id);
+
+        Cave::factory()->create(['name' => 'Non Curated Cave']);
+
+        $response = $this->getJson('/api/caves');
+
+        $response->assertOk();
+
+        $data = $response->json('data');
+        $this->assertCount(2, $data);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_empty_array_when_curated_filter_applied_but_no_curated_caves_exist()
+    {
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+
+        Cave::factory()->count(3)->create();
+
+        $response = $this->getJson('/api/caves?curated=1');
+
+        $response->assertOk()
+            ->assertJson(['data' => []]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function curated_filter_response_matches_schema()
+    {
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+
+        $curatedTag = Tag::where('tag', 'Curated')->where('category', 'curated')->firstOrFail();
+
+        $cave = Cave::factory()->create();
+        $cave->tags()->attach($curatedTag->id);
+
+        $response = $this->getJson('/api/caves?curated=1');
+
+        $response->assertOk();
+        $this->assertResponseMatchesSchema($response, 'endpoints/caves-index');
+    }
 }

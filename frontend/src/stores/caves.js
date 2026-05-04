@@ -8,6 +8,7 @@ export const useCaveStore = defineStore('caves', {
     caves: [],
     loading: false,
     allCaves: [],
+    allCavesLoaded: false,  // true once the full (non-curated) list has been fetched
     savedFilter: [],
     savedSearch: '',
     savedCatchmentId: null,
@@ -19,7 +20,9 @@ export const useCaveStore = defineStore('caves', {
       try {
         this.loading = true
         this.isOfflineData = false
-        this.caves = (await api.get('/api/caves')).data.data
+        this.allCavesLoaded = false
+        // Fetch curated caves only — fast default payload
+        this.caves = (await api.get('/api/caves?curated=1')).data.data
         this.allCaves = this.caves
         this.loading = false
 
@@ -35,6 +38,25 @@ export const useCaveStore = defineStore('caves', {
           await this.loadOfflineCaves()
         }
 
+        return error
+      }
+    },
+
+    // Lazily fetch the full cave list (called when user removes the Curated filter)
+    async loadAllCaves(tags, search, catchmentId = null) {
+      if (this.allCavesLoaded) {
+        this.applyFilters(tags ?? this.savedFilter, search ?? this.savedSearch, catchmentId ?? this.savedCatchmentId)
+        return
+      }
+      try {
+        this.loading = true
+        this.caves = (await api.get('/api/caves')).data.data
+        this.allCaves = this.caves
+        this.allCavesLoaded = true
+        this.loading = false
+        this.applyFilters(tags ?? this.savedFilter, search ?? this.savedSearch, catchmentId ?? this.savedCatchmentId)
+      } catch (error) {
+        this.loading = false
         return error
       }
     },

@@ -74,6 +74,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/duty-officers/rota', [App\Http\Controllers\DutyOfficerController::class, 'rotaPublic']);
 
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
+    Route::get('/caves/search', [App\Http\Controllers\CaveController::class, 'search']);
     Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show'])
         ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Cave::class);
     Route::get('/caves/{cave}/weather/forecast', [App\Http\Controllers\CaveWeatherController::class, 'forecast']);

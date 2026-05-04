@@ -14,7 +14,7 @@
       </div>
 
       <v-row v-else class="px-2">
-        <v-col v-for="cave in caveStore.caves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
+        <v-col v-for="cave in displayedCaves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
           <v-hover v-slot="{ isHovering, props }">
             <v-card v-bind="props" elevation="2" class="fill-height d-flex flex-column cave-card"
                     :to="'/caves/' + cave.slug">
@@ -105,6 +105,14 @@
           </v-hover>
         </v-col>
       </v-row>
+
+      <!-- Infinite scroll sentinel -->
+      <div ref="sentinel" class="py-6 d-flex justify-center">
+        <v-progress-circular v-if="hasMore" indeterminate color="grey-lighten-2" size="28" />
+        <p v-else-if="caveStore.caves.length > PAGE_SIZE" class="text-caption text-grey">
+          All {{ caveStore.caves.length }} caves shown
+        </p>
+      </div>
     </template>
 
     <v-dialog v-model="showConfirmModal" max-width="400">
@@ -124,7 +132,7 @@
 </template>
 <script setup>
 import { mdiCheck, mdiCloudDownload, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
-import { ref, defineEmits } from 'vue'
+import { ref, computed, watch, onUnmounted, defineEmits } from 'vue'
 
 const emit = defineEmits(['tag-click'])
 import { useCaveStore } from '@/stores/caves'
@@ -141,6 +149,40 @@ const { mobile } = useDisplay()
 const showConfirmModal = ref(false)
 const caveToMark = ref(null)
 const videoRefs = ref({})
+
+const PAGE_SIZE = 24
+const displayCount = ref(PAGE_SIZE)
+const sentinel = ref(null)
+
+const displayedCaves = computed(() => caveStore.caves.slice(0, displayCount.value))
+const hasMore = computed(() => displayCount.value < caveStore.caves.length)
+
+// Reset pagination whenever the filtered cave list changes
+watch(() => caveStore.caves, () => {
+  displayCount.value = PAGE_SIZE
+})
+
+let observer = null
+
+const attachObserver = (el) => {
+  observer?.disconnect()
+  if (!el) return
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && hasMore.value) {
+      displayCount.value += PAGE_SIZE
+    }
+  }, { rootMargin: '200px' })
+  observer.observe(el)
+}
+
+// Watch the sentinel ref — it only appears after caves load (v-else block)
+watch(sentinel, (el) => {
+  attachObserver(el)
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
+})
 
 const markAsDone = async (cave) => {
   if (!cave) return

@@ -136,7 +136,7 @@ watch(() => props.isActive, (active) => {
 })
 
 const isSingleSelect = (groupName) => {
-  const singleSelectGroups = ['region', 'access', 'previously done']
+  const singleSelectGroups = ['curated', 'region', 'access', 'previously done']
   return singleSelectGroups.includes(groupName.toLowerCase())
 }
 

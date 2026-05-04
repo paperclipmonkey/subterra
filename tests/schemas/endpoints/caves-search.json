@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "location_name": { "type": ["string", "null"] },
+          "location_country": { "type": ["string", "null"] },
+          "cave_system_id": { "type": ["integer", "null"] },
+          "is_curated": { "type": "boolean" },
+          "is_closed": { "type": "boolean" }
+        },
+        "required": ["id", "name", "location_name", "location_country", "cave_system_id", "is_curated", "is_closed"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["data"],
+  "additionalProperties": false
+}
