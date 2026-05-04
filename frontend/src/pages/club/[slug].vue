@@ -128,7 +128,6 @@
         <v-col cols="12">
           <v-alert type="info" variant="tonal">
             You must be an approved member to see club activity and member details.
-            <!-- TODO: Add join/request access button if applicable -->
           </v-alert>
         </v-col>
       </v-row>

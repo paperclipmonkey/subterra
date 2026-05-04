@@ -66,7 +66,7 @@ onMounted(async () => {
 
   // Simple client-side check, backend enforces properly
   if (!appStore.user.is_admin) {
-    // TODO router.push('/') // Or handle as needed
+    router.push('/')
   }
 })
 </script>
