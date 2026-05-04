@@ -132,7 +132,7 @@
 </template>
 <script setup>
 import { mdiCheck, mdiCloudDownload, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
-import { ref, computed, watch, onUnmounted, defineEmits } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 
 const emit = defineEmits(['tag-click'])
 import { useCaveStore } from '@/stores/caves'

@@ -73,7 +73,7 @@
 <script setup>
 import { mdiClose } from '@mdi/js'
 
-import { ref, computed, defineProps, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTagStore } from '@/stores/tags'
 

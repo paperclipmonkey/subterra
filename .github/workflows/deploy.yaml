@@ -96,6 +96,7 @@ jobs:
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
       GCP_REGION: europe-west2
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
