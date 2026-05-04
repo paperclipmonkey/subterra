@@ -33,7 +33,7 @@ const updateSW = registerSW({
     offlineStore.setSwUpdateAvailable(true)
   },
   onOfflineReady() {
-    console.log('Subterra is ready for offline use')
+    // Service worker installed, app is ready for offline use
   },
   // Check for updates every 60 minutes
   onRegisteredSW(swUrl, registration) {

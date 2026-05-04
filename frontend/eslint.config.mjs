@@ -29,6 +29,7 @@ export default [
             'vue/valid-v-slot': 'off',
             'vue/no-unused-components': 'off',
             'semi': ['error', 'never'],
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
         }
     },
     {
