@@ -36,8 +36,14 @@ RUN apt-get update \
                                                   imagemagick ghostscript \
     && ln -sf /usr/bin/vim.tiny /etc/alternatives/vim \
     && ln -sf /etc/alternatives/vim /usr/bin/vim \
-    && LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php \
-    && apt-get -y --no-install-recommends install $(cat /tmp/php-packages.txt) \
+    && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ noble main" > /etc/apt/sources.list.d/php.list \
+    && apt-get update \
+    && apt-get -y --no-install-recommends install $(cat /tmp/php-packages.txt) libmagickwand-dev php-pear build-essential \
+    && printf "\n" | pecl install imagick \
+    && echo "extension=imagick.so" > /etc/php/${PHP_VERSION}/mods-available/imagick.ini \
+    && phpenmod -v ${PHP_VERSION} imagick \
+    && apt-get remove -y php8.4-dev php-pear \
     && ln -sf /usr/sbin/php-fpm${PHP_VERSION} /usr/sbin/php-fpm \
     && mkdir -p /var/www/html/public && echo "index" > /var/www/html/public/index.php \
     && sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml \
