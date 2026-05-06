@@ -508,7 +508,7 @@
       <!-- Sidebar Column -->
       <v-col v-if="!smAndDown" cols="12" md="4">
         <!-- Location Card -->
-        <v-card class="mb-4 rounded-lg" elevation="1">
+        <v-card class="mb-4 rounded-lg overflow-hidden" elevation="2">
           <template v-if="appStore.canSuggest">
             <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad">
               <mgl-marker :coordinates="lnglat" color="#cc0000" />
@@ -945,12 +945,12 @@ function renderAnnotationOverlays (map) {
     map.on('click', 'annotation-lines-hit', (e) => {
       const feature = e.features[0]
       const desc = feature.properties?.description
-      showPopup(e.lngLat, `<div style="font-family:sans-serif;max-width:240px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span style="display:inline-block;width:24px;height:3px;background:#ff9800;border-radius:2px;border:1px dashed #ff9800;"></span>
+      showPopup(e.lngLat, `<div class="anno-popup">
+        <div class="anno-popup__header" style="border-left:4px solid #ff9800;">
+          <span class="anno-popup__route-line"></span>
           <strong>Walking Route</strong>
         </div>
-        ${desc ? `<p style="margin:0;color:#555;">${escHtml(desc)}</p>` : '<p style="margin:0;color:#888;font-style:italic;">No description</p>'}
+        ${desc ? `<p class="anno-popup__body">${escHtml(desc)}</p>` : '<p class="anno-popup__body anno-popup__body--muted">No description</p>'}
       </div>`, 8)
     })
     map.on('mouseenter', 'annotation-lines-hit', () => { map.getCanvas().style.cursor = 'pointer' })
@@ -999,17 +999,17 @@ function renderAnnotationOverlays (map) {
   addIconLayer(canvasToImageData(parkingCanvas), 'parking-icon', parkingFeatures, 'annotation-parking', 'annotation-parking-layer', (f, coords) => {
     const desc = f.properties?.description || 'Parking'
     const [lng, lat] = coords
-    return `<div style="font-family:sans-serif;max-width:220px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#1976d2;border-radius:50%;color:#fff;font-weight:bold;font-size:13px;">P</span>
+    return `<div class="anno-popup">
+      <div class="anno-popup__header" style="border-left:4px solid #1976d2;">
+        <span class="anno-popup__icon" style="background:#1976d2;">P</span>
         <strong>Parking</strong>
       </div>
-      <p style="margin:0 0 8px;color:#555;">${escHtml(desc)}</p>
-      <div style="display:flex;gap:8px;">
-        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f5;border-radius:4px;text-decoration:none;color:#333;font-size:12px;">
-          <img src="https://www.google.com/favicon.ico" width="14" height="14" alt="" style="border-radius:2px;" />Google Maps
+      <p class="anno-popup__body">${escHtml(desc)}</p>
+      <div class="anno-popup__actions">
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener" class="anno-popup__action-btn">
+          Google Maps
         </a>
-        <a href="https://maps.apple.com/?daddr=${lat},${lng}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f5;border-radius:4px;text-decoration:none;color:#333;font-size:12px;">
+        <a href="https://maps.apple.com/?daddr=${lat},${lng}" target="_blank" rel="noopener" class="anno-popup__action-btn">
           Apple Maps
         </a>
       </div>
@@ -1027,12 +1027,12 @@ function renderAnnotationOverlays (map) {
 
   addIconLayer(canvasToImageData(houseCanvas), 'house-icon', houseFeatures, 'annotation-houses', 'annotation-houses-layer', (f) => {
     const desc = f.properties?.description || 'Permission required'
-    return `<div style="font-family:sans-serif;max-width:220px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#e65100;border-radius:50%;font-size:14px;">🏠</span>
+    return `<div class="anno-popup">
+      <div class="anno-popup__header" style="border-left:4px solid #e65100;">
+        <span class="anno-popup__icon" style="background:#e65100;">🏠</span>
         <strong style="color:#e65100;">Permission Required</strong>
       </div>
-      <p style="margin:0;color:#555;">${escHtml(desc)}</p>
+      <p class="anno-popup__body">${escHtml(desc)}</p>
     </div>`
   })
 
@@ -1087,12 +1087,113 @@ function renderAnnotationOverlays (map) {
 
 .annotation-popup .maplibregl-popup-content {
   background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  min-width: 200px;
+  max-width: 280px;
 }
 
 .annotation-popup .maplibregl-popup-tip {
   border-top-color: #fff;
+}
+
+.annotation-popup .maplibregl-popup-close-button {
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 28px;
+  color: #666;
+  top: 4px;
+  right: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #333;
+  }
+}
+
+.anno-popup {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.anno-popup__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 36px 10px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.anno-popup__route-line {
+  display: inline-block;
+  width: 28px;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ff9800 0,
+    #ff9800 6px,
+    transparent 6px,
+    transparent 10px
+  );
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.anno-popup__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: bold;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.anno-popup__body {
+  margin: 0;
+  padding: 10px 14px 12px;
+  color: #444;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.anno-popup__body--muted {
+  color: #999;
+  font-style: italic;
+}
+
+.anno-popup__actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.anno-popup__action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #e0e0e0;
+  }
 }
 </style>
