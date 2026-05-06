@@ -283,7 +283,9 @@ class SyncCcrCaves extends Command
                     'access_info' => $accessInfo ?: null,
                 ];
 
-                $existingCave = Cave::where('name', $name)->first()
+                $ccrId = (string) $entry['id'];
+                $existingCave = Cave::where('registry', 'ccr')->where('registry_id', $ccrId)->first()
+                    ?? Cave::where('name', $name)->first()
                     ?? Cave::where('slug', $baseSlug)->first();
 
                 if ($existingCave) {
@@ -350,12 +352,20 @@ class SyncCcrCaves extends Command
                         $this->line("<fg=blue>  ⊘ No changes:</> {$name}");
                         ++$noOpCount;
                     }
+                    // Persist registry tracking so future syncs can match by ID
+                    if (empty($existingCave->registry) || empty($existingCave->registry_id)) {
+                        $existingCave->registry = 'ccr';
+                        $existingCave->registry_id = $ccrId;
+                        $existingCave->save();
+                    }
                     $cave = $existingCave;
                 } else {
                     $cave = Cave::create(array_merge([
                         'name' => $name,
                         'slug' => $this->uniqueSlug($baseSlug, 'caves'),
                         'cave_system_id' => $caveSystemId,
+                        'registry' => 'ccr',
+                        'registry_id' => $ccrId,
                     ], $caveData));
                     $this->line("<fg=green>  ✚ New cave created:</> {$name}");
                     ++$newCaveCount;
