@@ -37,6 +37,8 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'location_lat',
         'location_lng',
         'location_alt',
+        'registry',
+        'registry_id',
         'cave_system_id',
         'slug',
         'access_info',
