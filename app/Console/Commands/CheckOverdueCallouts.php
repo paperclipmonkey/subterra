@@ -11,6 +11,7 @@ use App\Notifications\CalloutImminentNotification;
 use App\Notifications\CalloutOverdueContactNotification;
 use App\Notifications\OverdueCalloutNotification;
 use App\Notifications\UnmanagedIncidentNotification;
+use App\Services\GcpWatchdogService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -162,6 +163,14 @@ class CheckOverdueCallouts extends Command
                 Log::error('Failed to send Overdue Slack Alert: '.$e->getMessage());
             }
         });
+
+        // Cancel the GCP watchdog now that Laravel has handled this callout.
+        // Do this outside the transaction so a watchdog failure doesn't roll back the incident.
+        try {
+            app(GcpWatchdogService::class)->cancel($callout);
+        } catch (\Exception $e) {
+            Log::error("Failed to cancel GCP watchdog for callout {$callout->id}: {$e->getMessage()}");
+        }
     }
 
     /**
