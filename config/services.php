@@ -31,6 +31,10 @@ return [
         'webhook_secret' => env('CLICKSEND_WEBHOOK_SECRET'),
     ],
 
+    'betterstack' => [
+        'heartbeat_url' => env('CRON_HEARTBEAT_URL'),
+    ],
+
     'gcp_watchdog' => [
         'url' => env('GCP_WATCHDOG_URL'),
         'api_key' => env('GCP_WATCHDOG_API_KEY'),
