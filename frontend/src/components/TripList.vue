@@ -196,6 +196,11 @@ const loadTrips = async () => {
 
   const query = { ...route.query }
 
+  // Guard against non-numeric user_id (e.g. the string "undefined" from a stale link)
+  if (query.user_id && !/^\d+$/.test(String(query.user_id))) {
+    delete query.user_id
+  }
+
   if (query.user_id) {
     try {
       const response = await api.get(`/api/users/${query.user_id}`)

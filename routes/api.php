@@ -111,16 +111,16 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
     Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
 
-    Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
-    Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');
-    Route::get('/users/{user}/medals', [UserController::class, 'medals'])->name('users.medals');
+    Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->where('user', '[0-9]+')->name('users.recent-trips');
+    Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->where('user', '[0-9]+')->name('users.activity-heatmap');
+    Route::get('/users/{user}/medals', [UserController::class, 'medals'])->where('user', '[0-9]+')->name('users.medals');
 
     Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
 
     // User Management
     Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
-    Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
-    Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
+    Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->where('user', '[0-9]+')->name('users.show');
+    Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->where('user', '[0-9]+')->middleware(CurrentUserOrAdmin::class)->name('users.store');
     Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
     Route::delete('/users/{user_without_scopes}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
 
