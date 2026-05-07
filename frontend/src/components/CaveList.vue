@@ -108,6 +108,7 @@
     </v-tabs-window>
     <FilterByTagModal 
       :is-active="showFilterByTagModal" 
+      :loaded-filters="cachedTags"
       :target-category="targetCategory"
       @close="closeModal" 
       @filter="applyFilter" 

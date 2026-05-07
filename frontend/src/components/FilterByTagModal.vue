@@ -95,33 +95,29 @@ const setCategoryRef = (el, name) => {
   if (el) categoryRefs.value[name] = el
 }
 
-onMounted(async () => {
-  await tagStore.fetchTags()
-  const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : []
-
-  // Initialize selectedTags with the loaded filters
+const initFromFilters = (activeTags) => {
   for (const group in tagsAvailable.value) {
-    const groupTags = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag)
+    const groupTags = tagsAvailable.value[group].filter(tag => activeTags.includes(tag.tag)).map(tag => tag.tag)
     if (isSingleSelect(group)) {
       selectedTags.value[group] = groupTags[0] || null
     } else {
       selectedTags.value[group] = groupTags
     }
   }
+}
+
+onMounted(async () => {
+  await tagStore.fetchTags()
+  initFromFilters(props.loadedFilters.length ? props.loadedFilters : (route.query.tags ? route.query.tags.split(',') : []))
 })
 
 watch(() => props.isActive, (active) => {
   if (active) {
-    // Sync state from URL whenever modal opens
-    const pageLoadedTags = route.query.tags ? route.query.tags.split(',') : []
-    for (const group in tagsAvailable.value) {
-      const groupTags = tagsAvailable.value[group].filter(tag => pageLoadedTags.includes(tag.tag)).map(tag => tag.tag)
-      if (isSingleSelect(group)) {
-        selectedTags.value[group] = groupTags[0] || null
-      } else {
-        selectedTags.value[group] = groupTags
-      }
-    }
+    // Prefer loadedFilters (passed from parent) over URL query param
+    const activeTags = props.loadedFilters.length
+      ? props.loadedFilters
+      : (route.query.tags ? route.query.tags.split(',') : [])
+    initFromFilters(activeTags)
 
     if (props.targetCategory) {
       // Small timeout to ensure DOM is ready and modal animation finished
