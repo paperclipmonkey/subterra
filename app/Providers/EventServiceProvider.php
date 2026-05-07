@@ -27,6 +27,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\TripCreated::class => [
             \App\Listeners\SendTripCreatedSlackAlert::class,
+            \App\Listeners\SendTripStartedDONotification::class,
         ],
     ];
 

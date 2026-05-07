@@ -28,6 +28,9 @@
               <v-text-field v-model="newShift.end_at" type="datetime-local" label="End" outlined dense
                             :rules="[v => !!v || 'End time is required']" required />
 
+              <v-checkbox v-model="newShift.notify_do" label="Email me when a trip is started during this shift"
+                          density="compact" hide-details class="mb-3" />
+
               <v-btn block color="primary" type="submit" :loading="processing"
                      :disabled="!valid">Add Shift</v-btn>
             </v-form>
@@ -97,6 +100,9 @@
             <v-text-field v-model="editingShift.start_at" type="datetime-local" label="Start" outlined dense required />
 
             <v-text-field v-model="editingShift.end_at" type="datetime-local" label="End" outlined dense required />
+
+            <v-checkbox v-model="editingShift.notify_do" label="Email me when a trip is started during this shift"
+                        density="compact" hide-details />
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -144,7 +150,8 @@ export default {
       newShift: {
         user_id: null,
         start_at: '',
-        end_at: ''
+        end_at: '',
+        notify_do: false
       },
       editDialog: false,
       editingShift: null,
@@ -274,7 +281,8 @@ export default {
         id: shift.id,
         user_id: shift.user_id,
         start_at: moment.utc(shift.start_at).local().format('YYYY-MM-DDTHH:mm'),
-        end_at: moment.utc(shift.end_at).local().format('YYYY-MM-DDTHH:mm')
+        end_at: moment.utc(shift.end_at).local().format('YYYY-MM-DDTHH:mm'),
+        notify_do: shift.notify_do ?? false
       }
       this.editDialog = true
     },

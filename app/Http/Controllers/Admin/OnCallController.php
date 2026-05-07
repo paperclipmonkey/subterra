@@ -48,6 +48,7 @@ class OnCallController extends Controller
             ],
             'start_at' => 'required|date',
             'end_at' => 'required|date|after:start_at',
+            'notify_do' => 'boolean',
         ]);
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
@@ -93,6 +94,7 @@ class OnCallController extends Controller
             ],
             'start_at' => 'required|date',
             'end_at' => 'required|date|after:start_at',
+            'notify_do' => 'boolean',
         ]);
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
