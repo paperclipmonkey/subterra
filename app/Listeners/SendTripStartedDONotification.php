@@ -28,7 +28,7 @@ class SendTripStartedDONotification
         try {
             Mail::to($shift->user->email)->send(new TripStartedDONotification($trip, $creator));
         } catch (\Exception $e) {
-            Log::error('Failed to send trip DO notification: ' . $e->getMessage());
+            Log::error('Failed to send trip DO notification: '.$e->getMessage());
         }
     }
 }
