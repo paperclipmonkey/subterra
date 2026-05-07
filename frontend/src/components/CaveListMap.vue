@@ -138,7 +138,7 @@ const setupLayers = async () => {
     type: 'geojson',
     data: buildGeoJSON(caveStore.caves),
     cluster: true,
-    clusterMaxZoom: 9,
+    clusterMaxZoom: 10,
     clusterRadius: 30,
   })
 
