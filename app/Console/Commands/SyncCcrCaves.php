@@ -19,7 +19,6 @@ class SyncCcrCaves extends Command
      */
     protected $signature = 'sync:ccr-caves 
                             {--dry-run : Parse the file without inserting data} 
-                            {--whitelist= : Comma-separated list of names to always import} 
                             {--blocklist= : Comma-separated list of names to always skip}
                             {--min-length=250 : Minimum length in meters to import}';
 
@@ -37,7 +36,6 @@ class SyncCcrCaves extends Command
     {
         $dryRun = $this->option('dry-run');
         $minLength = (float) $this->option('min-length');
-        $whitelistNames = $this->getWhitelist();
         $blocklistNames = $this->getBlocklist();
 
         $this->info('Fetching CCR data...');
@@ -93,7 +91,6 @@ class SyncCcrCaves extends Command
                 $depth = (float) ($entry['dep'] ?? 0);
 
                 // Apply Filters
-                $isWhitelisted = in_array(strtolower($name), array_map('strtolower', $whitelistNames));
                 $isBlocklisted = in_array(strtolower($name), array_map('strtolower', $blocklistNames));
                 $isLongEnough = $length >= $minLength;
 
@@ -102,12 +99,12 @@ class SyncCcrCaves extends Command
                     continue;
                 }
 
-                if (!$isWhitelisted && !$isLongEnough) {
+                if (!$isLongEnough) {
                     ++$skippedCount;
                     continue;
                 }
 
-                $this->line("Processing: {$name} <fg=gray>(".($isWhitelisted ? 'Whitelisted' : 'Length: '.$length.' m').')</>');
+                $this->line("Processing: {$name} <fg=gray>(Length: {$length} m)</>");
                 ++$importedCount;
 
                 if ($dryRun) {
@@ -417,32 +414,6 @@ class SyncCcrCaves extends Command
         }
 
         return 0;
-    }
-
-    /**
-     * Get list of whitelisted names from option or file.
-     *
-     * @return array
-     */
-    private function getWhitelist(): array
-    {
-        $whitelist = [];
-        $whitelistArg = $this->option('whitelist');
-
-        if (!empty($whitelistArg)) {
-            $whitelist = array_map('trim', explode(',', $whitelistArg));
-        }
-
-        $filePath = storage_path('app/ccr_whitelist.txt');
-        if (file_exists($filePath)) {
-            $fileContent = file_get_contents($filePath);
-            $names = array_map('trim', explode("\n", $fileContent));
-            // Filter empty lines and comments
-            $names = array_filter($names, fn ($name) => !empty($name) && !str_starts_with($name, '#'));
-            $whitelist = array_merge($whitelist, array_values($names));
-        }
-
-        return $whitelist;
     }
 
     /**

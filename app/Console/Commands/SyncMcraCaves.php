@@ -20,7 +20,6 @@ class SyncMcraCaves extends Command
      */
     protected $signature = 'sync:mcra-caves
                             {--dry-run : Parse the file without inserting data}
-                            {--whitelist= : Comma-separated list of names to always import}
                             {--blocklist= : Comma-separated list of names to always skip}
                             {--min-length=0 : Minimum length in meters to import (0 = all)}';
 
@@ -48,7 +47,6 @@ class SyncMcraCaves extends Command
     {
         $dryRun = $this->option('dry-run');
         $minLength = (float) $this->option('min-length');
-        $whitelistNames = $this->getWhitelist();
         $blocklistNames = $this->getBlocklist();
 
         $this->info('Fetching MCRA cave placemarks...');
@@ -112,8 +110,6 @@ class SyncMcraCaves extends Command
                     continue;
                 }
 
-                $isWhitelisted = in_array(strtolower($name), array_map('strtolower', $whitelistNames));
-
                 // Fetch per-cave details (length, depth, altitude, location name)
                 $siteDetails = $this->fetchSiteDetails($mcraId);
                 // Brief pause to be respectful to the MCRA server (skipped in testing)
@@ -128,12 +124,12 @@ class SyncMcraCaves extends Command
                 // Apply min-length filter (only if we have length data)
                 $isLongEnough = $minLength <= 0 || ($length > 0 && $length >= $minLength);
 
-                if (!$isWhitelisted && !$isLongEnough) {
+                if (!$isLongEnough) {
                     ++$skippedCount;
                     continue;
                 }
 
-                $this->line("Processing: {$name} <fg=gray>(".($isWhitelisted ? 'Whitelisted' : 'Length: '.$length.' m').')</>');
+                $this->line("Processing: {$name} <fg=gray>(Length: {$length} m)</>");
                 ++$importedCount;
 
                 if ($dryRun) {
@@ -558,29 +554,6 @@ class SyncMcraCaves extends Command
         }
 
         return $slug;
-    }
-
-    /**
-     * Get the list of whitelisted cave names from the option or file.
-     *
-     * @return array<string>
-     */
-    private function getWhitelist(): array
-    {
-        $whitelist = [];
-        $whitelistArg = $this->option('whitelist');
-        if (!empty($whitelistArg)) {
-            $whitelist = array_map('trim', explode(',', $whitelistArg));
-        }
-
-        $filePath = storage_path('app/mcra_whitelist.txt');
-        if (file_exists($filePath)) {
-            $names = array_map('trim', explode("\n", file_get_contents($filePath)));
-            $names = array_filter($names, fn ($n) => !empty($n) && !str_starts_with($n, '#'));
-            $whitelist = array_merge($whitelist, array_values($names));
-        }
-
-        return $whitelist;
     }
 
     /**
