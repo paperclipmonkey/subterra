@@ -9,8 +9,17 @@
     <template v-else>
       <div v-if="caveStore.caves.length === 0" class="text-center py-8">
         <v-icon size="64" color="grey lighten-10" :icon="mdiMapMarkerOff" class="mb-4" />
-        <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found</h3>
-        <p class="text-body-2 text-grey-darken-1">Try adjusting your filters or search.</p>
+        <template v-if="hasFilters">
+          <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found with these filters</h3>
+          <p class="text-body-2 text-grey-darken-1 mb-4">The cave you're looking for may be in another region.</p>
+          <v-btn color="primary" variant="tonal" @click="emit('clear-filters')">
+            Remove All Filters
+          </v-btn>
+        </template>
+        <template v-else>
+          <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found</h3>
+          <p class="text-body-2 text-grey-darken-1">Try adjusting your search.</p>
+        </template>
       </div>
 
       <v-row v-else class="px-2">
@@ -134,7 +143,12 @@
 import { mdiCheck, mdiCloudDownload, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
 import { ref, computed, watch, onUnmounted } from 'vue'
 
-const emit = defineEmits(['tag-click'])
+const emit = defineEmits(['tag-click', 'clear-filters'])
+
+const props = defineProps({
+  hasFilters: { type: Boolean, default: false },
+})
+
 import { useCaveStore } from '@/stores/caves'
 import { useAppStore } from '@/stores/app'
 import { useOfflineStore } from '@/stores/offline'

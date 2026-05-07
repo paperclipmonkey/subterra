@@ -100,7 +100,7 @@
     </v-tabs>
     <v-tabs-window v-model="tab">
       <v-tabs-window-item value="list">
-        <CaveListList @tag-click="toggleTag" />
+        <CaveListList :has-filters="cachedTags.length > 0 || !!search" @tag-click="toggleTag" @clear-filters="clearAllFilters" />
       </v-tabs-window-item>
       <v-tabs-window-item value="map">
         <CaveListMap v-if="tab === 'map'" />
