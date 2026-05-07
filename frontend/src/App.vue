@@ -71,7 +71,7 @@
 
 <script setup>
 import { mdiAccountClock, mdiAccountPlus, mdiAlert, mdiAlertCircle, mdiAlertOutline, mdiCheckCircle, mdiChevronRight, mdiClose, mdiInformation, mdiShieldCheck, mdiWifiOff } from '@mdi/js'
-import { computed } from 'vue'
+import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
@@ -90,6 +90,35 @@ const route = useRoute()
 
 // Initialize offline detection
 offlineStore.init()
+
+// Poll user data every 30s when user is on-call to keep callout count fresh
+let calloutPollInterval = null
+
+const startCalloutPolling = () => {
+  if (calloutPollInterval) return
+  calloutPollInterval = setInterval(() => {
+    appStore.getUser(true)
+  }, 30000)
+}
+
+const stopCalloutPolling = () => {
+  if (calloutPollInterval) {
+    clearInterval(calloutPollInterval)
+    calloutPollInterval = null
+  }
+}
+
+watch(() => appStore.user?.on_call, (onCall) => {
+  if (onCall) {
+    startCalloutPolling()
+  } else {
+    stopCalloutPolling()
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  stopCalloutPolling()
+})
 
 const showActiveCalloutBanner = computed(() => {
   return appStore.user && appStore.user.active_callout && route.path !== '/callout/active'
