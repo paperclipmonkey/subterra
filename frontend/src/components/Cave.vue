@@ -251,7 +251,6 @@
               <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
                   <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad">
-                    <mgl-marker :coordinates="lnglat" color="#cc0000" />
                   </AppMap>
                 </template>
                 <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
@@ -511,9 +510,6 @@
         <v-card class="mb-4 rounded-lg overflow-hidden" elevation="2">
           <template v-if="appStore.canSuggest">
             <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad">
-              <mgl-marker :coordinates="lnglat" color="#cc0000" />
-              
-              
             </AppMap>
           </template>
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
@@ -651,7 +647,6 @@ import { useOfflineStore } from '@/stores/offline'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
-import { MglMarker } from '@indoorequal/vue-maplibre-gl'
 import maplibregl from 'maplibre-gl'
 
 const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
@@ -876,6 +871,28 @@ watch(
 )
 const onMapLoad = (event) => {
   const map = event.map
+
+  // Add marker with popup for Google/Apple Maps links
+  const mapsPopup = new maplibregl.Popup({ offset: 30, closeButton: false })
+    .setHTML(`
+      <div style="padding:10px 12px;font-family:sans-serif;text-align:center;min-width:140px;">
+        <a href="https://www.google.com/maps?q=${cave.value.location_lat},${cave.value.location_lng}"
+           target="_blank"
+           style="display:block;margin-bottom:6px;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">
+          Open in Google Maps
+        </a>
+        <a href="https://maps.apple.com/?q=${cave.value.location_lat},${cave.value.location_lng}"
+           target="_blank"
+           style="display:block;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">
+          Open in Apple Maps
+        </a>
+      </div>
+    `)
+
+  new maplibregl.Marker({ color: '#cc0000' })
+    .setLngLat(lnglat.value)
+    .setPopup(mapsPopup)
+    .addTo(map)
 
   // Re-render annotation overlays whenever the map style changes
   map.on('style.load', () => {
