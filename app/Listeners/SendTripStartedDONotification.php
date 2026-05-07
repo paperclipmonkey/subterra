@@ -15,6 +15,10 @@ class SendTripStartedDONotification
         $trip = $event->trip;
         $creator = $event->user;
 
+        if (!$trip->start_time) {
+            return;
+        }
+
         // Find the on-call shift covering the trip start time
         $shift = OnCallShift::with('user')
             ->where('notify_do', true)
