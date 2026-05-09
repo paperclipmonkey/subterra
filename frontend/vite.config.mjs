@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         devOptions: {
-          enabled: true,
+          enabled: false,
           type: 'module',
         },
         workbox: {
