@@ -2,6 +2,17 @@
   <div>
     <div class="d-flex justify-end pa-4">
       <v-btn
+        v-if="appStore.user && appStore.user.is_admin && caveSystem"
+        color="deep-purple"
+        variant="text"
+        size="small"
+        :prepend-icon="mdiRobotOutline"
+        :to="`/admin/assistant?context=${encodeURIComponent('Tell me about ' + caveSystem.name + '. What should I know before visiting?')}`"
+        class="mr-2"
+      >
+        Ask Vern
+      </v-btn>
+      <v-btn
         v-if="appStore.user && (appStore.user.is_admin || appStore.canSuggest)"
         color="primary"
         variant="text"
@@ -53,7 +64,7 @@
 </template>
 
 <script setup>
-import { mdiPencil, mdiPencilOff } from '@mdi/js'
+import { mdiPencil, mdiPencilOff, mdiRobotOutline } from '@mdi/js'
 
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'

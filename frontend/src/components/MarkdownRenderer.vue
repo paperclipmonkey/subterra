@@ -1,6 +1,6 @@
 <template>
   <div ref="container" class="markdown-renderer">
-    <vue-markdown :source="source" :plugins="[mermaidPlugin]" />
+    <vue-markdown :source="source" :plugins="[geojsonPlugin, mermaidPlugin]" />
 
     <v-dialog v-model="showDiagramModal" max-width="95vw">
       <v-card class="rounded-lg overflow-auto">
@@ -52,11 +52,42 @@ function mermaidPlugin(md) {
         return defaultFenceRenderer(tokens, idx, options, env, self)
     }
 }
+
+/**
+ * Custom markdown-it plugin that converts ```geojson code fences
+ * into a placeholder div that renderGeoJSONMaps() will hydrate with a real MapLibre map.
+ * The raw GeoJSON is stored as a percent-encoded data attribute to survive HTML serialisation.
+ */
+function geojsonPlugin(md) {
+    const defaultFenceRenderer = md.renderer.rules.fence ||
+        function (tokens, idx, options, env, self) {
+            return self.renderToken(tokens, idx, options)
+        }
+
+    md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const token = tokens[idx]
+        const info = (token.info || '').trim().toLowerCase()
+
+        // Defer mermaid to mermaidPlugin if it's chained
+        if (info === 'mermaid' || info.startsWith('mermaid')) {
+            return defaultFenceRenderer(tokens, idx, options, env, self)
+        }
+
+        if (info === 'geojson') {
+            // Encode the raw JSON so it survives being placed inside an HTML attribute
+            const encoded = encodeURIComponent(token.content.trim())
+            return `<div class="geojson-map" data-geojson="${encoded}"><div class="geojson-placeholder">Loading map…</div></div>`
+        }
+        return defaultFenceRenderer(tokens, idx, options, env, self)
+    }
+}
 </script>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import VueMarkdown from 'vue-markdown-render'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 const props = defineProps({
     source: {
@@ -65,9 +96,39 @@ const props = defineProps({
     }
 })
 
+const router = useRouter()
 const container = ref(null)
 const showDiagramModal = ref(false)
 const diagramSvg = ref('')
+
+// Track MapLibre instances so we can destroy them when the component unmounts
+const mapInstances = []
+
+// Expose router to MapLibre popup click handlers via a module-level ref
+// (popup HTML is raw DOM, outside Vue's reactivity — window bridge is simplest)
+const installNavBridge = () => {
+    window.__vern_nav = (path) => router.push(path)
+}
+
+/**
+ * Intercept clicks on relative links inside the rendered markdown and use
+ * Vue Router's push() instead of a full page reload.
+ */
+const attachSpaLinks = () => {
+    if (!container.value) return
+    container.value.querySelectorAll('a[href]').forEach(el => {
+        const href = el.getAttribute('href')
+        if (!href) return
+        // Only intercept relative paths (starts with / but not //)
+        if (href.startsWith('/') && !href.startsWith('//')) {
+            el.addEventListener('click', (e) => {
+                e.preventDefault()
+                router.push(href)
+            }, { once: false })
+            el.classList.add('spa-link')
+        }
+    })
+}
 
 const renderMermaidDiagrams = async () => {
     // Wait for ticks and a small delay to ensure vue-markdown-render has completed its DOM update
@@ -115,11 +176,168 @@ const renderMermaidDiagrams = async () => {
 }
 
 onMounted(() => {
+    installNavBridge()
     renderMermaidDiagrams()
+    attachSpaLinks()
 })
 
+onBeforeUnmount(() => {
+    // Clean up all MapLibre map instances to free WebGL contexts
+    mapInstances.forEach(m => m.remove())
+    mapInstances.length = 0
+    delete window.__vern_nav
+})
+
+const MAPTILER_STYLE = 'https://api.maptiler.com/maps/outdoor/style.json?key=0gGMv4po9Mjrpd64A528'
+
+const renderGeoJSONMaps = async () => {
+    await nextTick()
+    await nextTick()
+
+    if (!container.value) return
+
+    const nodes = container.value.querySelectorAll('.geojson-map:not([data-map-init])')
+    if (nodes.length === 0) return
+
+    const maplibre = (await import('maplibre-gl')).default
+
+    for (const node of nodes) {
+        node.setAttribute('data-map-init', 'true')
+        node.style.height = '320px'
+        node.style.borderRadius = '12px'
+        node.style.overflow = 'hidden'
+        node.style.marginBottom = '1rem'
+
+        let geojson
+        try {
+            geojson = JSON.parse(decodeURIComponent(node.getAttribute('data-geojson') || ''))
+        } catch {
+            node.innerHTML = '<div class="pa-4 text-error">Invalid GeoJSON</div>'
+            continue
+        }
+
+        // Clear the placeholder text
+        node.innerHTML = ''
+
+        const map = new maplibre.Map({
+            container: node,
+            style: MAPTILER_STYLE,
+            center: [-2, 53.5],
+            zoom: 6,
+            attributionControl: false,
+        })
+
+        mapInstances.push(map)
+
+        map.addControl(new maplibre.AttributionControl({ compact: true }))
+        map.addControl(new maplibre.NavigationControl({ showCompass: false }))
+
+        map.on('load', () => {
+            map.addSource('vern-data', { type: 'geojson', data: geojson })
+
+            // Glow halo beneath each pin
+            map.addLayer({
+                id: 'vern-halo',
+                type: 'circle',
+                source: 'vern-data',
+                filter: ['==', ['geometry-type'], 'Point'],
+                paint: {
+                    'circle-radius': 14,
+                    'circle-color': '#1867c0',
+                    'circle-opacity': 0.2,
+                    'circle-stroke-width': 0,
+                },
+            })
+
+            // Main pin circle
+            map.addLayer({
+                id: 'vern-points',
+                type: 'circle',
+                source: 'vern-data',
+                filter: ['==', ['geometry-type'], 'Point'],
+                paint: {
+                    'circle-radius': 8,
+                    'circle-color': '#1867c0',
+                    'circle-stroke-width': 2.5,
+                    'circle-stroke-color': '#fff',
+                },
+            })
+
+            // Cave name labels
+            map.addLayer({
+                id: 'vern-labels',
+                type: 'symbol',
+                source: 'vern-data',
+                filter: ['==', ['geometry-type'], 'Point'],
+                layout: {
+                    'text-field': ['coalesce', ['get', 'name'], ''],
+                    'text-offset': [0, 1.4],
+                    'text-anchor': 'top',
+                    'text-size': 12,
+                    'text-font': ['Open Sans SemiBold', 'Arial Unicode MS Bold'],
+                    'text-max-width': 10,
+                },
+                paint: {
+                    'text-color': '#111827',
+                    'text-halo-color': 'rgba(255,255,255,0.95)',
+                    'text-halo-width': 2,
+                },
+            })
+
+            // Fit map to feature bounds
+            const coords = []
+            const collectCoords = (geom) => {
+                if (!geom) return
+                if (geom.type === 'Point') coords.push(geom.coordinates)
+                else if (geom.type === 'LineString') coords.push(...geom.coordinates)
+                else if (geom.type === 'Polygon') geom.coordinates.forEach(ring => coords.push(...ring))
+                else if (geom.type === 'MultiPoint') coords.push(...geom.coordinates)
+                else if (['MultiLineString', 'MultiPolygon'].includes(geom.type))
+                    geom.coordinates.forEach(g => collectCoords({ type: geom.type.replace('Multi', ''), coordinates: g }))
+            }
+
+            if (geojson.type === 'FeatureCollection') geojson.features.forEach(f => collectCoords(f.geometry))
+            else if (geojson.geometry) collectCoords(geojson.geometry)
+
+            if (coords.length === 1) {
+                map.flyTo({ center: coords[0], zoom: 11 })
+            } else if (coords.length > 1) {
+                const bounds = coords.reduce(
+                    (b, c) => b.extend(c),
+                    new maplibre.LngLatBounds(coords[0], coords[0])
+                )
+                map.fitBounds(bounds, { padding: 60, maxZoom: 12, duration: 0 })
+            }
+
+            // Click → popup with link to cave system
+            map.on('click', 'vern-points', (e) => {
+                const props = e.features[0].properties
+                const name = props.name || 'Cave'
+                const slug = props.slug
+                const linkHtml = slug
+                    ? `<br><a href="/cave-systems/${slug}" style="color:#1867c0;font-weight:600;cursor:pointer" onclick="event.preventDefault();window.__vern_nav('/cave-systems/${slug}')">View system →</a>`
+                    : ''
+                new maplibre.Popup({ closeButton: true, maxWidth: '220px' })
+                    .setLngLat(e.lngLat)
+                    .setHTML(`<div style="font-family:Roboto,sans-serif;font-size:14px"><strong>${name}</strong>${linkHtml}</div>`)
+                    .addTo(map)
+            })
+
+            map.on('mouseenter', 'vern-points', () => { map.getCanvas().style.cursor = 'pointer' })
+            map.on('mouseleave', 'vern-points', () => { map.getCanvas().style.cursor = '' })
+        })
+
+        map.on('error', (e) => {
+            console.error('Vern map error:', e)
+        })
+    }
+}
+
+// Watch must be declared AFTER renderGeoJSONMaps to avoid temporal dead zone errors
 watch(() => props.source, () => {
     renderMermaidDiagrams()
+    renderGeoJSONMaps()
+    nextTick(attachSpaLinks)
 }, { immediate: true })
 </script>
 
@@ -272,5 +490,44 @@ watch(() => props.source, () => {
 .markdown-renderer :deep(.mermaid svg) {
   max-width: 100%;
   height: auto;
+}
+
+/* Internal SPA links — styled to match Vuetify's primary colour */
+.markdown-renderer :deep(a.spa-link) {
+  color: #1867c0;
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.markdown-renderer :deep(a.spa-link:hover) {
+  border-bottom-color: #1867c0;
+}
+
+/* GeoJSON map placeholder shown before MapLibre loads */
+.markdown-renderer :deep(.geojson-map) {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  min-height: 320px;
+}
+
+.markdown-renderer :deep(.geojson-placeholder) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 320px;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* MapLibre GL popup tweaks */
+.markdown-renderer :deep(.maplibregl-popup-content) {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 10px 14px;
 }
 </style>

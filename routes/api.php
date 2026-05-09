@@ -153,6 +153,13 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
     ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
 
+// --- AI Assistant (admin-only preview) ---
+// Restricted to platform_admin for Phase 1. Rate-limited to 50 requests per day (1440 min).
+Route::post('/assistant/chat', [App\Http\Controllers\AssistantController::class, 'chat'])
+    ->middleware([ApiIsAuthenticated::class, ApiIsAdmin::class])
+    ->middleware('throttle:50,1440')
+    ->name('assistant.chat');
+
 // --- Admin Routes ---
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     // Platform Admin — users, clubs, pages, comms, tasks, dashboard, suggested edits
