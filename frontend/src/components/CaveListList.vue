@@ -202,7 +202,9 @@ const markAsDone = async (cave) => {
   if (!cave) return
   const ok = await markCaveAsDone({ cave, userId: appStore.user.id })
   if (ok) {
-    await caveStore.getList()
+    // Refresh whichever dataset is currently active (curated or full) so the
+    // user keeps the filter view they were on, with the cave now marked done.
+    await caveStore.refresh()
     showConfirmModal.value = false
     caveToMark.value = null
   } else {

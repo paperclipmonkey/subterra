@@ -42,6 +42,21 @@ export const useCaveStore = defineStore('caves', {
       }
     },
 
+    /**
+     * Re-fetch whichever dataset is currently active (curated or full), preserving
+     * applied filters. Use after a mutation that should reflect new data — e.g.
+     * marking a cave as done — without forcing the user back to the curated list.
+     */
+    async refresh() {
+      if (this.allCavesLoaded) {
+        // Force a re-fetch of the full list, then re-apply the current filters
+        this.allCavesLoaded = false
+        await this.loadAllCaves(this.savedFilter, this.savedSearch, this.savedCatchmentId)
+      } else {
+        await this.getList()
+      }
+    },
+
     // Lazily fetch the full cave list (called when user removes the Curated filter)
     async loadAllCaves(tags, search, catchmentId = null) {
       if (this.allCavesLoaded) {
