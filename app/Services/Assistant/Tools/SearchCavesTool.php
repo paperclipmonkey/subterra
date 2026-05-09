@@ -16,10 +16,14 @@ class SearchCavesTool implements AssistantTool
             'type'     => 'function',
             'function' => [
                 'name'        => 'search_caves',
-                'description' => 'Search for cave systems matching criteria. Use this to find options to recommend. Returns up to 10 results with name, slug, length, grades, and tags.',
+                'description' => 'Search for cave systems matching criteria. Use this to find options to recommend, or to look up a specific system by name. Returns up to 10 results with slugs, primary entrance link, length, grades, and tags.',
                 'parameters'  => [
                     'type'       => 'object',
                     'properties' => [
+                        'name' => [
+                            'type'        => 'string',
+                            'description' => 'Partial name match for a specific cave or system, e.g. "Ogof Draenen", "Swildon\'s". Use this when the user names a specific cave so you can fetch its ID without retrieving a long list.',
+                        ],
                         'region' => [
                             'type'        => 'string',
                             'description' => 'Location name or region to search within, e.g. "Yorkshire Dales", "South Wales", "Derbyshire". Matched against cave location names.',
@@ -59,6 +63,20 @@ class SearchCavesTool implements AssistantTool
                 'cave_systems.vertical_range',
                 'cave_systems.description',
             ]);
+
+        // Name filter — match either system name or any of its caves
+        if (!empty($arguments['name'])) {
+            $name = (string) $arguments['name'];
+            $query->where(function ($q) use ($name) {
+                $q->where('cave_systems.name', 'like', "%{$name}%")
+                    ->orWhereExists(function ($sub) use ($name) {
+                        $sub->select(DB::raw(1))
+                            ->from('caves')
+                            ->whereColumn('caves.cave_system_id', 'cave_systems.id')
+                            ->where('caves.name', 'like', "%{$name}%");
+                    });
+            });
+        }
 
         // Region filter — join caves for location_name
         if (!empty($arguments['region'])) {
@@ -113,15 +131,25 @@ class SearchCavesTool implements AssistantTool
             ->get()
             ->groupBy('cave_system_id');
 
-        // Representative coordinates — first entrance with valid lat/lng per system
-        $coordsBySystem = DB::table('caves')
-            ->select(['cave_system_id', 'location_lat', 'location_lng'])
+        // Representative entrance — first cave with valid lat/lng per system
+        // (used both for coordinates and for cave-level deep-linking when there's a clear primary)
+        $primaryCaveBySystem = DB::table('caves')
+            ->select(['cave_system_id', 'id', 'name', 'slug', 'location_lat', 'location_lng', 'location_name'])
             ->whereIn('cave_system_id', $systemIds)
             ->whereNotNull('location_lat')
             ->whereNotNull('location_lng')
             ->orderBy('id')
             ->get()
             ->unique('cave_system_id')
+            ->keyBy('cave_system_id');
+
+        // Total entrance count — needed so the model can decide whether to deep-link
+        // to the cave page (single-entrance system) or the system page (multi-entrance).
+        $entranceCountBySystem = DB::table('caves')
+            ->select(['cave_system_id', DB::raw('COUNT(*) as cnt')])
+            ->whereIn('cave_system_id', $systemIds)
+            ->groupBy('cave_system_id')
+            ->get()
             ->keyBy('cave_system_id');
 
         // Route grades summary per system — done in PHP to keep the query cross-compatible
@@ -139,27 +167,41 @@ class SearchCavesTool implements AssistantTool
                 ->map(fn ($rows) => $rows->pluck('grade')->join(', '));
         }
 
-        $mapped = $systems->map(function ($system) use ($tagsBySystem, $gradesBySystem, $coordsBySystem) {
-            $tags   = ($tagsBySystem[$system->id] ?? collect())->map(fn ($t) => $t->tag)->values();
-            $grades = $gradesBySystem[$system->id] ?? null;
-            $coords = $coordsBySystem[$system->id] ?? null;
+        $mapped = $systems->map(function ($system) use ($tagsBySystem, $gradesBySystem, $primaryCaveBySystem, $entranceCountBySystem) {
+            $tags    = ($tagsBySystem[$system->id] ?? collect())->map(fn ($t) => $t->tag)->values();
+            $grades  = $gradesBySystem[$system->id] ?? null;
+            $primary = $primaryCaveBySystem[$system->id] ?? null;
+            $count   = (int) ($entranceCountBySystem[$system->id]->cnt ?? 0);
 
             $excerpt = null;
             if ($system->description) {
                 $excerpt = mb_substr(strip_tags($system->description), 0, 200);
             }
 
+            // When a system has a single entrance, the cave page is the better landing page
+            // (the system page would mostly duplicate the cave content).
+            $preferredLink = ($count === 1 && $primary?->slug)
+                ? "/caves/{$primary->slug}"
+                : "/cave-systems/{$system->slug}";
+
             return [
-                'id'               => $system->id,
-                'name'             => $system->name,
-                'slug'             => $system->slug,
-                'length_m'         => $system->length,
-                'vertical_range_m' => $system->vertical_range,
-                'grades'           => $grades,
-                'tags'             => $tags,
-                'description'      => $excerpt,
-                'latitude'         => $coords ? (float) $coords->location_lat : null,
-                'longitude'        => $coords ? (float) $coords->location_lng : null,
+                'id'                  => $system->id,
+                'name'                => $system->name,
+                'slug'                => $system->slug,
+                'system_url'          => "/cave-systems/{$system->slug}",
+                'preferred_link'      => $preferredLink,
+                'length_m'            => $system->length,
+                'vertical_range_m'    => $system->vertical_range,
+                'grades'              => $grades,
+                'tags'                => $tags,
+                'description'         => $excerpt,
+                'entrance_count'      => $count,
+                'primary_cave_name'   => $primary?->name,
+                'primary_cave_slug'   => $primary?->slug,
+                'primary_cave_url'    => $primary?->slug ? "/caves/{$primary->slug}" : null,
+                'location_name'       => $primary?->location_name,
+                'latitude'            => $primary ? (float) $primary->location_lat : null,
+                'longitude'           => $primary ? (float) $primary->location_lng : null,
             ];
         });
 

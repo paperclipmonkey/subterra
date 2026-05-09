@@ -78,6 +78,15 @@ class AssistantService
         /** @var string[] $toolsUsed Names of all tools dispatched during this turn */
         $toolsUsed = [];
 
+        /** @var array<string, array<string, mixed>> $caveCardBuffer Indexed by slug; emitted at end if mentioned */
+        $caveCardBuffer = [];
+
+        /** @var array<string, mixed>|null $hutCardsBuffer Most recent hut search result */
+        $hutCardsBuffer = null;
+
+        /** @var array<int, array<string, mixed>> $tripReportBuffer Recent trip reports from any tool call */
+        $tripReportBuffer = [];
+
         /** @var array{prompt_tokens: int, completion_tokens: int} */
         $totalUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0];
 
@@ -145,21 +154,42 @@ class AssistantService
 
                     $result = $this->dispatchTool($name, $args, $user);
 
-                    // Emit rich cave cards only for genuine recommendation results (3+ systems).
-                    // Single/dual results are likely ID lookups used as stepping stones to another tool.
-                    if ($name === 'search_caves' && $onEvent) {
-                        $systems = $result['cave_systems'] ?? [];
-                        if (count($systems) >= 3) {
-                            $onEvent('cave_cards', array_slice($systems, 0, 8));
+                    // Buffer cave system results from search_caves; emit cards at the end
+                    // for only those systems the model actually mentions in its final reply.
+                    // This avoids spamming cards for ID-lookup searches.
+                    if ($name === 'search_caves') {
+                        foreach ($result['cave_systems'] ?? [] as $sys) {
+                            $slug = $sys['slug'] ?? null;
+                            if ($slug && !isset($caveCardBuffer[$slug])) {
+                                $caveCardBuffer[$slug] = $sys;
+                            }
                         }
                     }
 
-                    // Emit trip report cards when activity tool returns reports
-                    if ($name === 'get_cave_system_activity' && $onEvent) {
-                        $reports = $result['recent_reports'] ?? [];
-                        if (count($reports) > 0) {
-                            $onEvent('trip_report_cards', $reports);
+                    // Buffer the cave system if get_cave_details was called — the user is clearly
+                    // interested in this specific system, so we want to surface its card.
+                    if ($name === 'get_cave_details' && empty($result['error'])) {
+                        $slug = $result['slug'] ?? null;
+                        if ($slug && !isset($caveCardBuffer[$slug])) {
+                            $caveCardBuffer[$slug] = $this->compactSystemForCard($result);
                         }
+
+                        // Also collect any recent reports returned alongside the details
+                        foreach ($result['recent_reports'] ?? [] as $r) {
+                            $tripReportBuffer[$r['short_id'] ?? $r['url'] ?? uniqid()] = $r;
+                        }
+                    }
+
+                    // Buffer reports from cave system activity tool
+                    if ($name === 'get_cave_system_activity') {
+                        foreach ($result['recent_reports'] ?? [] as $r) {
+                            $tripReportBuffer[$r['short_id'] ?? $r['url'] ?? uniqid()] = $r;
+                        }
+                    }
+
+                    // Capture latest hut search — emitted at end as a single card group
+                    if ($name === 'find_nearby_huts' && empty($result['error'])) {
+                        $hutCardsBuffer = $result;
                     }
 
                     // Safety injection: if a river gauge is High, add a mandatory warning context
@@ -181,6 +211,30 @@ class AssistantService
 
             $iterations++;
         } while ($hasToolCalls && $iterations < $maxIterations);
+
+        // Emit cards: only the systems the model explicitly mentioned in the final reply.
+        // This stops the UI from being flooded with cards for incidental ID-lookup searches.
+        if ($onEvent && !empty($caveCardBuffer)) {
+            $mentioned = $this->filterMentionedSystems($caveCardBuffer, $lastContent);
+            if (!empty($mentioned)) {
+                $onEvent('cave_cards', array_slice($mentioned, 0, 8));
+            }
+        }
+
+        // Emit hut cards alongside the cave context if the user asked about huts/accommodation
+        if ($onEvent && $hutCardsBuffer !== null && !empty($hutCardsBuffer['huts'])) {
+            $onEvent('hut_cards', $hutCardsBuffer);
+        }
+
+        // Emit trip report cards (deduped) — only those mentioned by the model OR
+        // when the user clearly asked about recent trips/conditions.
+        if ($onEvent && !empty($tripReportBuffer)) {
+            $reports = array_values($tripReportBuffer);
+            $relevant = $this->filterMentionedReports($reports, $lastContent);
+            if (!empty($relevant)) {
+                $onEvent('trip_report_cards', array_slice($relevant, 0, 5));
+            }
+        }
 
         // Emit contextual follow-up suggestions based on what was discussed
         if ($onEvent && !empty($toolsUsed)) {
@@ -472,6 +526,120 @@ class AssistantService
     }
 
     /**
+     * Reduce a get_cave_details payload to the same shape as a search_caves card entry,
+     * so we can emit it as a cave card.
+     *
+     * @param  array<string, mixed>  $details
+     * @return array<string, mixed>
+     */
+    private function compactSystemForCard(array $details): array
+    {
+        $entrances = $details['entrances'] ?? [];
+        $primary = $entrances[0] ?? null;
+        $count = is_countable($entrances) ? count($entrances) : 0;
+
+        // Combine route grades into a single label
+        $grades = collect($details['routes'] ?? [])
+            ->pluck('grade')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->implode(', ');
+
+        $tags = collect($details['tags'] ?? [])
+            ->pluck('tag')
+            ->filter()
+            ->values()
+            ->all();
+
+        return [
+            'id'                => $details['id'] ?? null,
+            'name'              => $details['name'] ?? null,
+            'slug'              => $details['slug'] ?? null,
+            'system_url'        => $details['system_url'] ?? ('/cave-systems/' . ($details['slug'] ?? '')),
+            'preferred_link'    => $details['preferred_link'] ?? null,
+            'length_m'          => $details['length_m'] ?? null,
+            'vertical_range_m'  => $details['vertical_range_m'] ?? null,
+            'grades'            => $grades !== '' ? $grades : null,
+            'tags'              => $tags,
+            'entrance_count'    => $count,
+            'primary_cave_name' => $primary['name'] ?? null,
+            'primary_cave_slug' => $primary['slug'] ?? null,
+            'primary_cave_url'  => isset($primary['slug']) ? "/caves/{$primary['slug']}" : null,
+            'location_name'     => $primary['location_name'] ?? null,
+            'latitude'          => $primary['latitude'] ?? null,
+            'longitude'         => $primary['longitude'] ?? null,
+        ];
+    }
+
+    /**
+     * Return only those systems whose name or slug appears in the final assistant reply.
+     * Falls back to all buffered systems if the reply is empty (e.g. tool-only turn).
+     *
+     * @param  array<string, array<string, mixed>>  $buffer  slug => system
+     * @param  string  $reply
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterMentionedSystems(array $buffer, string $reply): array
+    {
+        if ($reply === '') {
+            return array_values($buffer);
+        }
+
+        $matches = [];
+        foreach ($buffer as $slug => $sys) {
+            $name = (string) ($sys['name'] ?? '');
+            if (
+                ($slug !== '' && str_contains($reply, $slug))
+                || ($name !== '' && stripos($reply, $name) !== false)
+            ) {
+                $matches[] = $sys;
+            }
+        }
+
+        return $matches;
+    }
+
+    /**
+     * Surface trip reports when the model's reply talks about recent trips, conditions,
+     * water levels, or links to a /trips/ short_id.
+     *
+     * @param  array<int, array<string, mixed>>  $reports
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterMentionedReports(array $reports, string $reply): array
+    {
+        if ($reply === '') {
+            return $reports;
+        }
+
+        $lower = strtolower($reply);
+
+        // If the model linked to a /trips/ short_id, prioritise those reports
+        $linked = [];
+        foreach ($reports as $r) {
+            $sid = (string) ($r['short_id'] ?? '');
+            if ($sid !== '' && str_contains($reply, $sid)) {
+                $linked[] = $r;
+            }
+        }
+        if (!empty($linked)) {
+            return $linked;
+        }
+
+        // Otherwise, surface reports when the reply discusses recent activity / conditions
+        $signals = ['recent trip', 'recent visit', 'last visit', 'trip report', 'water level', 'flood', 'condition', 'visited recently', 'community', 'last seen'];
+        foreach ($signals as $signal) {
+            if (str_contains($lower, $signal)) {
+                return $reports;
+            }
+        }
+
+        return [];
+    }
+
+    /**
      * If any river gauge is High, inject a mandatory safety alert into the context
      * so the model cannot be prompted to ignore it.
      *
@@ -553,17 +721,31 @@ Clubs: {$clubs}
 
 ## Your Guidelines
 
-**Know the user.** Always call get_user_experience before making recommendations so you can match
-suggestions to their background and avoid recommending caves they have already visited.
+**Know the user — but only when relevant.** Call get_user_experience before personalised trip
+recommendations (e.g. "what should I try next"), but DO NOT call it for accommodation queries,
+weather/condition checks, or factual questions about a specific named cave. Do not call it twice
+in the same turn.
 
 **Be accurate.** Only describe caves using data returned by your tools. Do not use your general
 knowledge to invent details, grades, lengths, or hazard information about specific caves.
 
-**Recent trips and activity.** When a user asks about recent trips, recent visits, recent activity,
-or who has been to a specific cave system, use get_cave_system_activity (not search_caves).
-Only use search_caves to find or filter cave systems — not to look up visit history.
-When using search_caves solely to retrieve a cave system's ID for use with another tool, always
-provide a specific name or region filter to avoid returning large unrelated result sets.
+**Recent trips and activity.** When a user asks about recent trips, conditions, or who has been to
+a specific cave system, use get_cave_system_activity. Read the trip-report descriptions in
+recent_reports and pull out concrete observations the user would care about — water levels,
+collapses, blockages, gear comments, route notes — and quote a short, specific phrase if useful.
+Don't just report the trip count and date.
+
+**Cave-vs-system links — pick the better page.** Each search_caves and get_cave_details result
+includes a `preferred_link` field. Use that exact URL in markdown links rather than always linking
+to /cave-systems/. When entrance_count is 1, link to /caves/{primary_cave_slug} (the cave page is
+richer and avoids a redundant click). When entrance_count > 1 (a multi-entrance system), link to
+/cave-systems/{slug}. When a user is clearly asking about a single named entrance (e.g. "OFD1"),
+link to that specific cave page.
+
+**Tag search links.** When you mention a type of cave (e.g. streamway, sporting, through trip,
+beginner, SRT), link to the filtered search so the user can browse all matching caves:
+[streamway caves](/caves?tags=streamway&view=list). You may use any tag you have seen in tool
+results.
 
 **Safety first.** For any cave that is a streamway, sump, rising phreatic, or has known flood
 potential, you MUST call get_weather_forecast before recommending it. If river gauge state is
@@ -573,33 +755,25 @@ looks dry.
 **Always mention access.** If a cave's access_info field is populated, or if get_upcoming_permits
 returns has_permit: true, always surface this before the user commits to the trip.
 
-**Link cave systems.** When you reference a specific cave system, format it as a markdown link:
-[System Name](/cave-systems/{slug}). The app will render this as a clickable in-app navigation link.
-
-**Tag search links.** When you mention a type of cave (e.g. streamway, sporting, through trip, beginner,
-SRT), link to the filtered search so the user can browse all matching caves:
-[streamway caves](/caves?tags=streamway&view=list). You may use any tag you have seen in tool results.
-
-**Show locations on a map.** When you return multiple cave systems that have coordinates, include a
-GeoJSON code block so the user sees them plotted on an interactive map. Only use coordinates that
-appear in tool results — never fabricate them. Format:
+**Accommodation and weekend planning.** When the user asks where to stay or about huts near a
+cave, call find_nearby_huts ONCE (after a single search_caves to resolve the cave's ID by name).
+Do NOT call get_user_experience or get_weather_forecast for a pure accommodation question.
+Always render a geojson map containing both the cave entrance and the returned huts so the user
+sees their relative positions. Use the latitude/longitude fields from the tool result. Example:
 
 \`\`\`geojson
 {
   "type": "FeatureCollection",
   "features": [
-    {
-      "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [longitude, latitude] },
-      "properties": { "name": "Cave System Name", "slug": "cave-system-slug" }
-    }
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [reference_lng, reference_lat]}, "properties": {"name": "Cave Name", "slug": "cave-slug"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [hut1_lng, hut1_lat]}, "properties": {"name": "Hut Name"}}
   ]
 }
 \`\`\`
 
-**Weekend planning.** When asked to plan a weekend, collect the target region, dates, and group
-size (ask if not given). Use search_caves, get_cave_details, get_weather_forecast, find_nearby_huts,
-and get_upcoming_permits together. Present a structured itinerary in markdown.
+**Show locations on a map.** When you return multiple cave systems that have coordinates, include
+a geojson code block as above so the user sees them plotted. Only use coordinates that appear in
+tool results — never fabricate them.
 
 **Be conversational.** Ask one clarifying question at a time if needed. Keep responses focused
 and practical — cavers want useful information, not essays.

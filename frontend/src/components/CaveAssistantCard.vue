@@ -2,8 +2,8 @@
   <v-card
     variant="flat"
     class="cave-assistant-card"
-    :to="`/cave-systems/${system.slug}`"
-    style="border-radius: 14px; text-decoration: none; min-width: 175px; max-width: 210px; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);"
+    :to="cardLink"
+    style="border-radius: 14px; text-decoration: none; min-width: 200px; max-width: 220px; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);"
   >
     <!-- Gradient header -->
     <div class="card-header" :style="{ background: headerGradient }">
@@ -12,6 +12,9 @@
         <span class="card-grade" v-if="system.grades">{{ system.grades }}</span>
       </div>
       <div class="card-name">{{ system.name }}</div>
+      <div v-if="system.location_name" class="card-location">
+        <v-icon :icon="mdiMapMarkerOutline" size="10" class="mr-1" />{{ system.location_name }}
+      </div>
     </div>
 
     <!-- Stats + tags -->
@@ -22,6 +25,9 @@
         </span>
         <span v-if="system.vertical_range_m" class="stat-pill">
           <v-icon :icon="mdiArrowUpDown" size="11" class="mr-1" />{{ system.vertical_range_m }}m
+        </span>
+        <span v-if="system.entrance_count > 1" class="stat-pill">
+          <v-icon :icon="mdiDoorOpen" size="11" class="mr-1" />{{ system.entrance_count }}
         </span>
       </div>
 
@@ -45,13 +51,22 @@
 
 <script setup>
 import { computed } from 'vue'
-import { mdiArrowLeftRight, mdiArrowUpDown, mdiTerrain } from '@mdi/js'
+import { mdiArrowLeftRight, mdiArrowUpDown, mdiDoorOpen, mdiMapMarkerOutline, mdiTerrain } from '@mdi/js'
 
 const props = defineProps({
   system: {
     type: Object,
     required: true,
   },
+})
+
+// Single-entrance systems: link to the cave page (richer content). Otherwise the system page.
+const cardLink = computed(() => {
+  if (props.system.preferred_link) return props.system.preferred_link
+  if (props.system.entrance_count === 1 && props.system.primary_cave_slug) {
+    return `/caves/${props.system.primary_cave_slug}`
+  }
+  return `/cave-systems/${props.system.slug}`
 })
 
 const GRADE_GRADIENTS = {
@@ -118,6 +133,18 @@ function formatLength(metres) {
   line-height: 1.25;
   letter-spacing: -0.01em;
   text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.card-location {
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-pill {

@@ -4,8 +4,8 @@
     <div class="d-flex align-center mb-5">
       <v-icon color="primary" class="mr-3" :icon="mdiRobotOutline" size="32" />
       <div>
-        <h2 class="text-h5 font-weight-bold">AI Trip Assistant</h2>
-        <p class="text-body-2 text-grey-darken-1 mb-0">Powered by OpenRouter · Admin preview only</p>
+        <h2 class="text-h5 font-weight-bold">Vern · Trip Assistant</h2>
+        <p class="text-body-2 text-grey-darken-1 mb-0">Caving recommendations, conditions and weekend planning</p>
       </div>
       <v-spacer />
       <v-chip color="warning" variant="tonal" size="small" class="mr-2">
@@ -39,14 +39,16 @@
     >
       <v-card-text class="pa-4">
         <!-- Welcome screen -->
-        <div v-if="!store.hasMessages && !store.error" class="text-center py-10">
-          <v-icon :icon="mdiChatOutline" size="64" color="grey-lighten-2" />
-          <p class="text-h6 font-weight-medium mt-4 mb-1">Ask me about caving trips</p>
-          <p class="text-body-2 text-grey-darken-1 mb-6">
-            I can recommend caves based on your experience, check weather and river conditions,
-            and help plan a caving weekend.
+        <div v-if="!store.hasMessages && !store.error" class="text-center py-8">
+          <v-avatar color="primary" size="64" class="mb-4 welcome-avatar">
+            <v-icon :icon="mdiRobotOutline" size="36" color="white" />
+          </v-avatar>
+          <p class="text-h6 font-weight-medium mb-1">Hi, I'm Vern</p>
+          <p class="text-body-2 text-grey-darken-1 mb-6 mx-auto" style="max-width: 460px">
+            I can recommend caves based on your experience, summarise recent trip reports,
+            check weather and river conditions, and help you plan a caving weekend.
           </p>
-          <div class="d-flex flex-wrap justify-center ga-2">
+          <div class="d-flex flex-wrap justify-center ga-2" style="max-width: 720px; margin: 0 auto">
             <v-chip
               v-for="suggestion in welcomeSuggestions"
               :key="suggestion.text"
@@ -138,16 +140,56 @@
                 </v-chip>
               </div>
 
-              <!-- Cave system result cards (from search_caves) -->
+              <!-- Cave system result cards (from search_caves / get_cave_details) -->
               <div
                 v-if="!msg.pending && msg.cards && msg.cards.length"
-                class="cave-cards-row mt-2"
+                class="cards-row mt-2"
               >
                 <CaveAssistantCard
                   v-for="sys in msg.cards"
                   :key="sys.id || sys.slug"
                   :system="sys"
                 />
+              </div>
+
+              <!-- Hut cards (from find_nearby_huts) -->
+              <div
+                v-if="!msg.pending && msg.huts && msg.huts.huts && msg.huts.huts.length"
+                class="mt-3"
+              >
+                <div class="d-flex align-center mb-1 px-1">
+                  <v-icon :icon="mdiHomeRoof" size="14" class="mr-1" color="grey-darken-1" />
+                  <span class="text-caption text-grey-darken-1 font-weight-medium">
+                    {{ msg.huts.count || msg.huts.huts.length }} huts within {{ msg.huts.max_distance_km || 50 }}km<span v-if="msg.huts.reference_cave"> of {{ msg.huts.reference_cave }}</span>
+                  </span>
+                </div>
+                <div class="cards-row">
+                  <HutAssistantCard
+                    v-for="hut in msg.huts.huts"
+                    :key="hut.id"
+                    :hut="hut"
+                  />
+                </div>
+              </div>
+
+              <!-- Trip report cards -->
+              <div
+                v-if="!msg.pending && msg.reports && msg.reports.length"
+                class="mt-3"
+              >
+                <div class="d-flex align-center mb-1 px-1">
+                  <v-icon :icon="mdiNotebookOutline" size="14" class="mr-1" color="grey-darken-1" />
+                  <span class="text-caption text-grey-darken-1 font-weight-medium">
+                    Recent trip reports
+                  </span>
+                </div>
+                <div class="cards-row">
+                  <TripReportAssistantCard
+                    v-for="report in msg.reports"
+                    :key="report.short_id || report.url"
+                    :report="report"
+                  />
+                </div>
               </div>
 
               <!-- Contextual follow-up suggestion chips -->
@@ -291,21 +333,24 @@
 import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  mdiChatOutline,
   mdiCheck,
   mdiClockOutline,
   mdiClose,
   mdiContentCopy,
   mdiDelete,
   mdiHistory,
+  mdiHomeRoof,
   mdiMicrophone,
   mdiMicrophoneOff,
+  mdiNotebookOutline,
   mdiRobotOutline,
   mdiSend,
 } from '@mdi/js'
 import { useAssistantStore } from '@/stores/assistant'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveAssistantCard from '@/components/CaveAssistantCard.vue'
+import HutAssistantCard from '@/components/HutAssistantCard.vue'
+import TripReportAssistantCard from '@/components/TripReportAssistantCard.vue'
 
 defineOptions({ name: 'AdminAssistant' })
 
@@ -367,6 +412,8 @@ const welcomeSuggestions = [
   { label: 'Plan a Yorkshire weekend', text: 'Can you plan me a caving weekend in the Yorkshire Dales? I\'d like two caves across the weekend.' },
   { label: 'Unvisited sporting caves', text: 'What sporting caves haven\'t I done yet? I\'m happy with anything up to a hard grade.' },
   { label: 'Beginner-friendly caves', text: 'What\'s a good cave system to take someone new to caving?' },
+  { label: 'Recent OFD trips', text: 'What have people been saying in recent trip reports for Ogof Ffynnon Ddu?' },
+  { label: 'Huts near Swildon\'s', text: 'What caving huts are near Swildon\'s Hole that I could stay at for a weekend?' },
 ]
 
 function send() {
@@ -439,13 +486,17 @@ onMounted(() => {
   animation: blink 1s step-end infinite;
 }
 
+.welcome-avatar {
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.25);
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
 
-/* Horizontal scrolling row of cave result cards */
-.cave-cards-row {
+/* Horizontal scrolling row of cards (caves, huts, trip reports) */
+.cards-row {
   display: flex;
   flex-direction: row;
   gap: 12px;
@@ -456,11 +507,11 @@ onMounted(() => {
   scrollbar-width: thin;
 }
 
-.cave-cards-row::-webkit-scrollbar {
+.cards-row::-webkit-scrollbar {
   height: 4px;
 }
 
-.cave-cards-row::-webkit-scrollbar-thumb {
+.cards-row::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.15);
   border-radius: 4px;
 }

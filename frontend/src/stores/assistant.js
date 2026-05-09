@@ -16,6 +16,18 @@ const HISTORY_KEY = 'vern_conversation_history_v1'
 const MAX_PERSISTED = 50
 const MAX_HISTORY = 15
 
+function persistableShape(m) {
+  return {
+    role: m.role,
+    content: m.content,
+    suggestions: m.suggestions ?? [],
+    cards: m.cards ?? [],
+    huts: m.huts ?? null,
+    reports: m.reports ?? [],
+    elapsedMs: m.elapsedMs ?? null,
+  }
+}
+
 function loadPersistedMessages() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -25,7 +37,7 @@ function loadPersistedMessages() {
     // Strip transient UI state from persisted messages
     return parsed
       .filter(m => !m.pending && m.content)
-      .map(m => ({ role: m.role, content: m.content, suggestions: m.suggestions ?? [], cards: m.cards ?? [], elapsedMs: m.elapsedMs ?? null }))
+      .map(persistableShape)
   } catch {
     return []
   }
@@ -36,7 +48,7 @@ function persistMessages(messages) {
     const toSave = messages
       .filter(m => !m.pending && m.content)
       .slice(-MAX_PERSISTED)
-      .map(m => ({ role: m.role, content: m.content, suggestions: m.suggestions ?? [], cards: m.cards ?? [], elapsedMs: m.elapsedMs ?? null }))
+      .map(persistableShape)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
   } catch {
     // Storage unavailable or quota exceeded — silently ignore
@@ -91,7 +103,16 @@ export const useAssistantStore = defineStore('assistant', {
       this.error = null
 
       // Placeholder while we wait for the stream
-      this.messages.push({ role: 'assistant', content: '', pending: true, streaming: false, suggestions: [] })
+      this.messages.push({
+        role: 'assistant',
+        content: '',
+        pending: true,
+        streaming: false,
+        suggestions: [],
+        cards: [],
+        huts: null,
+        reports: [],
+      })
 
       const history = this.messages
         .filter(m => !m.pending && m.content && m.content.trim())
@@ -218,6 +239,24 @@ export const useAssistantStore = defineStore('assistant', {
           break
         }
 
+        case 'hut_cards': {
+          // Hut payload from find_nearby_huts: { cave_system, reference_*, huts: [...] }
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.huts = event.data || null
+          }
+          break
+        }
+
+        case 'trip_report_cards': {
+          // Recent trip reports relevant to the current discussion
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.reports = (pending.reports || []).concat(event.data || [])
+          }
+          break
+        }
+
         case 'thinking_elapsed': {
           // Total elapsed time for thinking + tool calls
           const pending = this.messages.findLast(m => m.pending)
@@ -294,7 +333,7 @@ export const useAssistantStore = defineStore('assistant', {
           messages: this.messages
             .filter(m => !m.pending && m.content)
             .slice(-MAX_PERSISTED)
-            .map(m => ({ role: m.role, content: m.content, suggestions: m.suggestions ?? [], cards: m.cards ?? [], elapsedMs: m.elapsedMs ?? null })),
+            .map(persistableShape),
         })
         saveHistory(history)
         this.savedConversations = history.slice(-MAX_HISTORY)
