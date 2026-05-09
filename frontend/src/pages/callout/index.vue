@@ -104,10 +104,6 @@
           </div>
                     
           <div v-else>
-            <v-alert v-if="!onCallOfficer" type="warning" variant="tonal" class="mb-4" border="start">
-              <div class="text-h6">Callouts Not Available</div>
-              <div>There is no Duty Officer on call at this time. Please ensure you leave callout details with a trusted friend before heading underground.</div>
-            </v-alert>
             <v-btn x-large color="warning" size="x-large" block to="/callout/create" class="mb-4 font-weight-bold elevation-4" :disabled="!onCallOfficer">
               START CALLOUT
               <v-icon right class="ml-2" :icon="mdiArrowRight" />

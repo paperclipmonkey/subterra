@@ -122,8 +122,8 @@ describe('Callout Index Page', () => {
         expect(startButton.attributes('disabled')).toBeDefined()
 
         // Verify warning alert is shown
-        expect(wrapper.text()).toContain('Callouts Not Available')
-        expect(wrapper.text()).toContain('There is no Duty Officer on call at this time')
+        expect(wrapper.text()).toContain('No Officer On Call')
+        expect(wrapper.text()).toContain('Callouts cannot be created at this time')
     })
 
     it('displays "No Officer On Call" message without using "unmonitored"', async () => {
