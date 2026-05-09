@@ -25,7 +25,7 @@ class AssistantController extends Controller
      */
     public function chat(AssistantChatRequest $request): StreamedResponse|JsonResponse
     {
-        $user     = $request->user();
+        $user = $request->user();
         $messages = $request->validated()['messages'];
 
         return response()->stream(function () use ($messages, $user) {
@@ -38,7 +38,7 @@ class AssistantController extends Controller
             }
 
             $emit = function (string $type, mixed $data): void {
-                echo 'data: ' . json_encode(['type' => $type, 'data' => $data]) . "\n\n";
+                echo 'data: '.json_encode(['type' => $type, 'data' => $data])."\n\n";
 
                 if (ob_get_level()) {
                     ob_flush();
@@ -63,10 +63,10 @@ class AssistantController extends Controller
                 $emit('error', ['message' => 'An unexpected error occurred. Please try again.']);
             }
         }, 200, [
-            'Content-Type'      => 'text/event-stream',
-            'Cache-Control'     => 'no-cache',
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
-            'Connection'        => 'keep-alive',
+            'Connection' => 'keep-alive',
         ]);
     }
 }

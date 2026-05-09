@@ -34,14 +34,14 @@ class AssistantService
         GetCaveSystemActivityTool $caveSystemActivityTool,
     ) {
         $this->tools = [
-            'get_user_experience'       => $userExperienceTool,
-            'search_caves'              => $searchCavesTool,
-            'get_cave_details'          => $caveDetailsTool,
-            'get_weather_forecast'      => $weatherForecastTool,
-            'get_upcoming_permits'      => $upcomingPermitsTool,
-            'list_routes'               => $listRoutesTool,
-            'find_nearby_huts'          => $findNearbyHutsTool,
-            'get_cave_system_activity'  => $caveSystemActivityTool,
+            'get_user_experience' => $userExperienceTool,
+            'search_caves' => $searchCavesTool,
+            'get_cave_details' => $caveDetailsTool,
+            'get_weather_forecast' => $weatherForecastTool,
+            'get_upcoming_permits' => $upcomingPermitsTool,
+            'list_routes' => $listRoutesTool,
+            'find_nearby_huts' => $findNearbyHutsTool,
+            'get_cave_system_activity' => $caveSystemActivityTool,
         ];
     }
 
@@ -60,7 +60,7 @@ class AssistantService
         }
 
         $systemMessage = [
-            'role'    => 'system',
+            'role' => 'system',
             'content' => $this->buildSystemPrompt($user),
         ];
 
@@ -110,13 +110,13 @@ class AssistantService
                 $response = $this->callOpenRouter($context, $toolDefinitions, $apiKey);
             }
 
-            $choice       = $response['choices'][0] ?? [];
-            $message      = $choice['message'] ?? [];
-            $lastContent  = $message['content'] ?? '';
+            $choice = $response['choices'][0] ?? [];
+            $message = $choice['message'] ?? [];
+            $lastContent = $message['content'] ?? '';
             $finishReason = $choice['finish_reason'] ?? null;
 
             // Accumulate token usage across all iterations
-            $totalUsage['prompt_tokens']     += (int) ($response['usage']['prompt_tokens'] ?? 0);
+            $totalUsage['prompt_tokens'] += (int) ($response['usage']['prompt_tokens'] ?? 0);
             $totalUsage['completion_tokens'] += (int) ($response['usage']['completion_tokens'] ?? 0);
 
             // Model hit the token limit — partial response is not useful
@@ -130,12 +130,12 @@ class AssistantService
             // Append assistant turn to context (may include tool_calls)
             $context[] = $message;
 
-            $toolCalls    = $message['tool_calls'] ?? [];
+            $toolCalls = $message['tool_calls'] ?? [];
             $hasToolCalls = !empty($toolCalls);
 
             if ($hasToolCalls) {
                 foreach ($toolCalls as $toolCall) {
-                    $name    = $toolCall['function']['name'] ?? '';
+                    $name = $toolCall['function']['name'] ?? '';
                     $rawArgs = $toolCall['function']['arguments'] ?? '{}';
 
                     // Arguments may arrive as a pre-decoded array or as a JSON string
@@ -143,13 +143,17 @@ class AssistantService
                         $args = $rawArgs;
                     } else {
                         $decoded = json_decode((string) $rawArgs, true);
-                        $args    = is_array($decoded) ? $decoded : [];
+                        $args = is_array($decoded) ? $decoded : [];
                     }
 
                     $toolsUsed[] = $name;
 
                     if ($onEvent) {
-                        $onEvent('tool_call', ['name' => $name, 'status' => 'running']);
+                        $onEvent('tool_call', [
+                            'name' => $name,
+                            'status' => 'running',
+                            'args' => $args,
+                        ]);
                     }
 
                     $result = $this->dispatchTool($name, $args, $user);
@@ -202,15 +206,54 @@ class AssistantService
                     }
 
                     $context[] = [
-                        'role'         => 'tool',
+                        'role' => 'tool',
                         'tool_call_id' => $toolCall['id'] ?? '',
-                        'content'      => json_encode($result),
+                        'content' => json_encode($result),
                     ];
                 }
             }
 
-            $iterations++;
+            ++$iterations;
         } while ($hasToolCalls && $iterations < $maxIterations);
+
+        // If we exited the loop while still in tool-calling mode (iter cap reached
+        // without a final assistant message), force one more call with tools disabled
+        // so the model has to produce a textual answer. Otherwise the user gets
+        // either an empty response or a generic "I was unable…" which is the worst UX.
+        if ($hasToolCalls) {
+            Log::warning('AssistantService: tool iteration cap hit, forcing a final text answer', [
+                'iterations' => $iterations,
+            ]);
+
+            $context[] = [
+                'role' => 'system',
+                'content' => 'You have reached the tool-call limit for this turn. '
+                    .'Stop calling tools. Using ONLY the data returned so far, write a '
+                    .'final answer to the user. If the data is insufficient, say so '
+                    .'clearly and suggest a more specific question they could ask. '
+                    .'Do not call any more tools.',
+            ];
+
+            try {
+                $finalResponse = $this->callOpenRouter($context, [], $apiKey);
+                $finalChoice = $finalResponse['choices'][0] ?? [];
+                $finalMessage = $finalChoice['message'] ?? [];
+                $finalText = (string) ($finalMessage['content'] ?? '');
+
+                if ($finalText !== '') {
+                    $lastContent = $finalText;
+                }
+
+                $totalUsage['prompt_tokens'] += (int) ($finalResponse['usage']['prompt_tokens'] ?? 0);
+                $totalUsage['completion_tokens'] += (int) ($finalResponse['usage']['completion_tokens'] ?? 0);
+
+                if ($onEvent && $finalText !== '') {
+                    $onEvent('content_chunk', ['text' => $finalText]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('AssistantService: forced final answer failed', ['error' => $e->getMessage()]);
+            }
+        }
 
         // Emit cards: only the systems the model explicitly mentioned in the final reply.
         // This stops the UI from being flooded with cards for incidental ID-lookup searches.
@@ -287,23 +330,15 @@ class AssistantService
         $client = new GuzzleClient(['timeout' => 60]);
 
         try {
-            $httpResponse = $client->post(config('assistant.openrouter.base_url') . '/chat/completions', [
+            $httpResponse = $client->post(config('assistant.openrouter.base_url').'/chat/completions', [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'HTTP-Referer'  => config('app.url', 'https://subterra.world'),
-                    'X-Title'       => 'Subterra',
-                    'Accept'        => 'text/event-stream',
-                    'Content-Type'  => 'application/json',
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'HTTP-Referer' => config('app.url', 'https://subterra.world'),
+                    'X-Title' => 'Subterra',
+                    'Accept' => 'text/event-stream',
+                    'Content-Type' => 'application/json',
                 ],
-                'json' => [
-                    'model'       => config('assistant.openrouter.model'),
-                    'messages'    => $messages,
-                    'tools'       => $tools,
-                    'tool_choice' => 'auto',
-                    'max_tokens'  => (int) config('assistant.openrouter.max_tokens', 2048),
-                    'temperature' => (float) config('assistant.openrouter.temperature', 0.7),
-                    'stream'      => true,
-                ],
+                'json' => $this->buildOpenRouterPayload($messages, $tools, true),
                 'stream' => true,
             ]);
         } catch (\GuzzleHttp\Exception\ClientException $e) {
@@ -322,20 +357,20 @@ class AssistantService
             throw new \RuntimeException('The AI service is temporarily unavailable. Please try again.');
         }
 
-        $body         = $httpResponse->getBody();
-        $buffer       = '';
-        $content      = '';
+        $body = $httpResponse->getBody();
+        $buffer = '';
+        $content = '';
         $toolCallsMap = [];
         $finishReason = null;
         $toolCallsSeen = false;
-        $usage        = null;
+        $usage = null;
 
         while (!$body->eof()) {
             $buffer .= $body->read(128);
 
             // Process all complete SSE lines in the buffer
             while (($pos = strpos($buffer, "\n")) !== false) {
-                $line   = substr($buffer, 0, $pos);
+                $line = substr($buffer, 0, $pos);
                 $buffer = substr($buffer, $pos + 1);
 
                 $line = trim($line);
@@ -353,8 +388,8 @@ class AssistantService
                     continue;
                 }
 
-                $choice       = $chunk['choices'][0] ?? [];
-                $delta        = $choice['delta'] ?? [];
+                $choice = $chunk['choices'][0] ?? [];
+                $delta = $choice['delta'] ?? [];
                 $finishReason = $choice['finish_reason'] ?? $finishReason;
 
                 // Capture usage when provider includes it in a chunk (e.g. OpenRouter final chunk)
@@ -377,8 +412,8 @@ class AssistantService
                         $idx = $tcChunk['index'] ?? 0;
                         if (!isset($toolCallsMap[$idx])) {
                             $toolCallsMap[$idx] = [
-                                'id'       => '',
-                                'type'     => 'function',
+                                'id' => '',
+                                'type' => 'function',
                                 'function' => ['name' => '', 'arguments' => ''],
                             ];
                         }
@@ -404,7 +439,7 @@ class AssistantService
 
         return [
             'choices' => [[
-                'message'       => $assistantMessage,
+                'message' => $assistantMessage,
                 'finish_reason' => $finishReason,
             ]],
             'usage' => $usage,
@@ -462,6 +497,41 @@ class AssistantService
     }
 
     /**
+     * Build the JSON body for an OpenRouter chat completion request, including
+     * optional `provider` routing pulled from config.
+     *
+     * @param  array<int, mixed>  $messages
+     * @param  array<int, array<string, mixed>>  $tools
+     * @return array<string, mixed>
+     */
+    private function buildOpenRouterPayload(array $messages, array $tools, bool $stream): array
+    {
+        $payload = [
+            'model' => config('assistant.openrouter.model'),
+            'messages' => $messages,
+            'tools' => $tools,
+            'tool_choice' => 'auto',
+            'max_tokens' => (int) config('assistant.openrouter.max_tokens', 2048),
+            'temperature' => (float) config('assistant.openrouter.temperature', 0.7),
+        ];
+
+        if ($stream) {
+            $payload['stream'] = true;
+        }
+
+        $providerOrder = (array) config('assistant.provider.order', []);
+        if (!empty($providerOrder)) {
+            $payload['provider'] = [
+                'order' => $providerOrder,
+                'allow_fallbacks' => (bool) config('assistant.provider.allow_fallbacks', true),
+                'require_parameters' => (bool) config('assistant.provider.require_parameters', true),
+            ];
+        }
+
+        return $payload;
+    }
+
+    /**
      * @param  array<string, mixed>  $messages
      * @param  array<int, array<string, mixed>>  $tools
      * @return array<string, mixed>
@@ -469,19 +539,15 @@ class AssistantService
     private function callOpenRouter(array $messages, array $tools, string $apiKey): array
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $apiKey,
-            'HTTP-Referer'  => config('app.url', 'https://subterra.world'),
-            'X-Title'       => 'Subterra',
+            'Authorization' => 'Bearer '.$apiKey,
+            'HTTP-Referer' => config('app.url', 'https://subterra.world'),
+            'X-Title' => 'Subterra',
         ])
             ->timeout(60)
-            ->post(config('assistant.openrouter.base_url') . '/chat/completions', [
-                'model'       => config('assistant.openrouter.model'),
-                'messages'    => $messages,
-                'tools'       => $tools,
-                'tool_choice' => 'auto',
-                'max_tokens'  => (int) config('assistant.openrouter.max_tokens', 2048),
-                'temperature' => (float) config('assistant.openrouter.temperature', 0.7),
-            ]);
+            ->post(
+                config('assistant.openrouter.base_url').'/chat/completions',
+                $this->buildOpenRouterPayload($messages, $tools, false)
+            );
 
         if ($response->status() === 429) {
             Log::warning('AssistantService: OpenRouter rate limit reached');
@@ -493,7 +559,7 @@ class AssistantService
         if (!$response->successful()) {
             Log::error('AssistantService: OpenRouter API error', [
                 'status' => $response->status(),
-                'body'   => $response->body(),
+                'body' => $response->body(),
             ]);
             throw new \RuntimeException('The AI service is temporarily unavailable. Please try again.');
         }
@@ -517,11 +583,11 @@ class AssistantService
             return $this->tools[$name]->handle($arguments, $user);
         } catch (\Throwable $e) {
             Log::error('AssistantService: tool dispatch error', [
-                'tool'  => $name,
+                'tool' => $name,
                 'error' => $e->getMessage(),
             ]);
 
-            return ['error' => "Tool {$name} encountered an error: " . $e->getMessage()];
+            return ['error' => "Tool {$name} encountered an error: ".$e->getMessage()];
         }
     }
 
@@ -554,22 +620,22 @@ class AssistantService
             ->all();
 
         return [
-            'id'                => $details['id'] ?? null,
-            'name'              => $details['name'] ?? null,
-            'slug'              => $details['slug'] ?? null,
-            'system_url'        => $details['system_url'] ?? ('/cave-systems/' . ($details['slug'] ?? '')),
-            'preferred_link'    => $details['preferred_link'] ?? null,
-            'length_m'          => $details['length_m'] ?? null,
-            'vertical_range_m'  => $details['vertical_range_m'] ?? null,
-            'grades'            => $grades !== '' ? $grades : null,
-            'tags'              => $tags,
-            'entrance_count'    => $count,
+            'id' => $details['id'] ?? null,
+            'name' => $details['name'] ?? null,
+            'slug' => $details['slug'] ?? null,
+            'system_url' => $details['system_url'] ?? ('/cave-systems/'.($details['slug'] ?? '')),
+            'preferred_link' => $details['preferred_link'] ?? null,
+            'length_m' => $details['length_m'] ?? null,
+            'vertical_range_m' => $details['vertical_range_m'] ?? null,
+            'grades' => $grades !== '' ? $grades : null,
+            'tags' => $tags,
+            'entrance_count' => $count,
             'primary_cave_name' => $primary['name'] ?? null,
             'primary_cave_slug' => $primary['slug'] ?? null,
-            'primary_cave_url'  => isset($primary['slug']) ? "/caves/{$primary['slug']}" : null,
-            'location_name'     => $primary['location_name'] ?? null,
-            'latitude'          => $primary['latitude'] ?? null,
-            'longitude'         => $primary['longitude'] ?? null,
+            'primary_cave_url' => isset($primary['slug']) ? "/caves/{$primary['slug']}" : null,
+            'location_name' => $primary['location_name'] ?? null,
+            'latitude' => $primary['latitude'] ?? null,
+            'longitude' => $primary['longitude'] ?? null,
         ];
     }
 
@@ -661,11 +727,11 @@ class AssistantService
         $caveName = $weatherResult['cave_name'] ?? 'this cave';
 
         $context[] = [
-            'role'    => 'system',
+            'role' => 'system',
             'content' => "[SAFETY ALERT] River gauge(s) [{$gaugeNames}] are currently HIGH near {$caveName}. "
-                . "You MUST warn the user clearly about serious flood risk before recommending this cave. "
-                . "High antecedent rainfall can keep streamway caves flooded for 24-48 hours after rain stops, "
-                . "even when today's forecast appears dry. Do not downplay this risk.",
+                .'You MUST warn the user clearly about serious flood risk before recommending this cave. '
+                .'High antecedent rainfall can keep streamway caves flooded for 24-48 hours after rain stops, '
+                ."even when today's forecast appears dry. Do not downplay this risk.",
         ];
     }
 
@@ -681,29 +747,25 @@ class AssistantService
         $month = (int) now()->format('n');
 
         $seasonalContext = match (true) {
-            in_array($month, [12, 1, 2], true)  =>
-                "It is currently winter in the UK. Many upland caves (Dales, Brecon, Mendip) will "
-                . "have elevated water levels from heavy rainfall and snowmelt. Conditions in streamway "
-                . "caves such as Lancaster Hole, Kingsdale Master Cave, and Dan-yr-Ogof are particularly "
-                . "affected. Dry caves and show caves remain accessible year-round.",
+            in_array($month, [12, 1, 2], true) => 'It is currently winter in the UK. Many upland caves (Dales, Brecon, Mendip) will '
+                .'have elevated water levels from heavy rainfall and snowmelt. Conditions in streamway '
+                .'caves such as Lancaster Hole, Kingsdale Master Cave, and Dan-yr-Ogof are particularly '
+                .'affected. Dry caves and show caves remain accessible year-round.',
 
-            in_array($month, [3, 4, 5], true)   =>
-                "It is currently spring in the UK. Conditions are transitioning — early spring often "
-                . "brings high antecedent rainfall; late spring usually dries out. Snowmelt in March/April "
-                . "can cause sudden rises in Yorkshire and Scottish cave streams. Always check gauge levels "
-                . "before entering any streamway.",
+            in_array($month, [3, 4, 5], true) => 'It is currently spring in the UK. Conditions are transitioning — early spring often '
+                .'brings high antecedent rainfall; late spring usually dries out. Snowmelt in March/April '
+                .'can cause sudden rises in Yorkshire and Scottish cave streams. Always check gauge levels '
+                .'before entering any streamway.',
 
-            in_array($month, [6, 7, 8], true)   =>
-                "It is currently summer in the UK. Cave conditions are generally at their best — lower "
-                . "water levels make streamway systems like Lancaster Hole, Pippikin Pot, and Swildon's Hole "
-                . "more accessible. However, summer thunderstorms can cause rapid flooding with little warning; "
-                . "always check the forecast and have an escape plan.",
+            in_array($month, [6, 7, 8], true) => 'It is currently summer in the UK. Cave conditions are generally at their best — lower '
+                ."water levels make streamway systems like Lancaster Hole, Pippikin Pot, and Swildon's Hole "
+                .'more accessible. However, summer thunderstorms can cause rapid flooding with little warning; '
+                .'always check the forecast and have an escape plan.',
 
-            in_array($month, [9, 10, 11], true) =>
-                "It is currently autumn in the UK. Conditions deteriorate as rainfall increases through "
-                . "October and November. Early autumn is often still good caving weather, but from mid-October "
-                . "onwards streamway caves carry more water. Check antecedent rainfall carefully — heavy rain "
-                . "24-48 hours prior significantly raises flood risk in phreatic and streamway systems.",
+            in_array($month, [9, 10, 11], true) => 'It is currently autumn in the UK. Conditions deteriorate as rainfall increases through '
+                .'October and November. Early autumn is often still good caving weather, but from mid-October '
+                .'onwards streamway caves carry more water. Check antecedent rainfall carefully — heavy rain '
+                .'24-48 hours prior significantly raises flood risk in phreatic and streamway systems.',
 
             default => '',
         };
@@ -720,6 +782,12 @@ Clubs: {$clubs}
 {$seasonalContext}
 
 ## Your Guidelines
+
+**Tool budget is small.** You may make at most 4 tool calls per turn — usually 2-3 is plenty.
+Plan before calling. Do NOT call the same tool repeatedly hoping for a better result. If a search
+returns 0 results or unhelpful results, accept that, tell the user the data isn't in Subterra, and
+suggest they try a different region/tag/name. Searching again with variations is almost always
+the wrong move.
 
 **Know the user — but only when relevant.** Call get_user_experience before personalised trip
 recommendations (e.g. "what should I try next"), but DO NOT call it for accommodation queries,

@@ -14,15 +14,15 @@ class GetCaveSystemActivityTool implements AssistantTool
     public static function definition(): array
     {
         return [
-            'type'     => 'function',
+            'type' => 'function',
             'function' => [
-                'name'        => 'get_cave_system_activity',
+                'name' => 'get_cave_system_activity',
                 'description' => 'Get recent community trip activity for a cave system: trip counts, the most recent trip date, the most popular entrance, average duration, and up to 5 recent trip reports with descriptions. Use this when asked about recent trips, conditions, or community activity for a specific system.',
-                'parameters'  => [
-                    'type'       => 'object',
+                'parameters' => [
+                    'type' => 'object',
                     'properties' => [
                         'cave_system_id' => [
-                            'type'        => 'integer',
+                            'type' => 'integer',
                             'description' => 'The numeric ID of the cave system.',
                         ],
                     ],
@@ -78,11 +78,11 @@ class GetCaveSystemActivityTool implements AssistantTool
             ->limit(5)
             ->get(['short_id', 'name', 'description', 'start_time'])
             ->map(fn ($t) => [
-                'short_id'    => $t->short_id,
-                'title'       => $t->name ?: 'Trip report',
-                'date'        => $t->start_time ? $t->start_time->format('Y-m-d') : null,
+                'short_id' => $t->short_id,
+                'title' => $t->name ?: 'Trip report',
+                'date' => $t->start_time ? $t->start_time->format('Y-m-d') : null,
                 'description' => mb_substr($t->description, 0, 400),
-                'url'         => "/trips/{$t->short_id}",
+                'url' => "/trips/{$t->short_id}",
             ])
             ->values()
             ->all();
@@ -98,13 +98,13 @@ class GetCaveSystemActivityTool implements AssistantTool
         }
 
         return [
-            'cave_system_id'         => $systemId,
-            'trips_last_90_days'     => (int) ($stats->trip_count_90d ?? 0),
-            'total_trips_logged'     => (int) ($allTime->total_trips ?? 0),
-            'last_trip_date'         => $lastTripDate,
-            'most_popular_entrance'  => $popularEntrance ? $popularEntrance->name : null,
+            'cave_system_id' => $systemId,
+            'trips_last_90_days' => (int) ($stats->trip_count_90d ?? 0),
+            'total_trips_logged' => (int) ($allTime->total_trips ?? 0),
+            'last_trip_date' => $lastTripDate,
+            'most_popular_entrance' => $popularEntrance ? $popularEntrance->name : null,
             'avg_trip_duration_mins' => $avgDuration,
-            'recent_reports'         => $recentReports,
+            'recent_reports' => $recentReports,
         ];
     }
 }

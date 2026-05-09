@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             CatchmentSeeder::class,
             RouteSeeder::class,
             SuggestedEditSeeder::class,
+            AssistantDemoSeeder::class,
         ]);
     }
 }

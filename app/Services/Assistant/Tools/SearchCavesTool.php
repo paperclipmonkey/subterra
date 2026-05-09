@@ -13,36 +13,36 @@ class SearchCavesTool implements AssistantTool
     public static function definition(): array
     {
         return [
-            'type'     => 'function',
+            'type' => 'function',
             'function' => [
-                'name'        => 'search_caves',
-                'description' => 'Search for cave systems matching criteria. Use this to find options to recommend, or to look up a specific system by name. Returns up to 10 results with slugs, primary entrance link, length, grades, and tags.',
-                'parameters'  => [
-                    'type'       => 'object',
+                'name' => 'search_caves',
+                'description' => 'Search for cave systems matching criteria. Use this to find options to recommend, or to look up a specific system by name. Returns up to 10 results with slugs, primary entrance link, length, grades, and tags. IMPORTANT: if a search returns no results or 0 matches, do NOT call this tool again with variations — instead, tell the user the data is not in Subterra and suggest they try a different region or name. Repeated searches waste your limited tool-call budget.',
+                'parameters' => [
+                    'type' => 'object',
                     'properties' => [
                         'name' => [
-                            'type'        => 'string',
+                            'type' => 'string',
                             'description' => 'Partial name match for a specific cave or system, e.g. "Ogof Draenen", "Swildon\'s". Use this when the user names a specific cave so you can fetch its ID without retrieving a long list.',
                         ],
                         'region' => [
-                            'type'        => 'string',
-                            'description' => 'Location name or region to search within, e.g. "Yorkshire Dales", "South Wales", "Derbyshire". Matched against cave location names.',
+                            'type' => 'string',
+                            'description' => 'UK/Ireland region. Accepts any of: Yorkshire / Yorkshire Dales / Dales, Mendip / Mendips, South Wales / Brecon Beacons, North Wales / Snowdonia, Peak District / Derbyshire, Forest of Dean, Devon, Portland, Assynt / Scottish Highlands. Matches both cave location names AND tags, so use the natural region name.',
                         ],
                         'tags' => [
-                            'type'        => 'array',
-                            'items'       => ['type' => 'string'],
+                            'type' => 'array',
+                            'items' => ['type' => 'string'],
                             'description' => 'Tags the cave system must have, e.g. ["streamway"], ["through trip"], ["sporting"]. Each tag must match.',
                         ],
                         'min_length' => [
-                            'type'        => 'number',
+                            'type' => 'number',
                             'description' => 'Minimum cave system length in metres.',
                         ],
                         'max_length' => [
-                            'type'        => 'number',
+                            'type' => 'number',
                             'description' => 'Maximum cave system length in metres.',
                         ],
                         'not_visited' => [
-                            'type'        => 'boolean',
+                            'type' => 'boolean',
                             'description' => 'If true, only return systems the user has not yet visited.',
                         ],
                     ],
@@ -78,12 +78,30 @@ class SearchCavesTool implements AssistantTool
             });
         }
 
-        // Region filter — join caves for location_name
+        // Region filter — match caves' location_name OR system/cave tags.
+        // Most regional context (Yorkshire, Mendip, South Wales) lives in tags
+        // rather than location_name (which holds specific village/quarry names).
         if (!empty($arguments['region'])) {
-            $region = $arguments['region'];
-            $query->join('caves as region_caves', 'region_caves.cave_system_id', '=', 'cave_systems.id')
-                ->where('region_caves.location_name', 'like', "%{$region}%")
-                ->groupBy('cave_systems.id', 'cave_systems.name', 'cave_systems.slug', 'cave_systems.length', 'cave_systems.vertical_range', 'cave_systems.description');
+            $region = (string) $arguments['region'];
+            $aliases = $this->expandRegionSearchTerms($region);
+
+            $query->where(function ($outer) use ($aliases) {
+                foreach ($aliases as $term) {
+                    $outer->orWhereExists(function ($sub) use ($term) {
+                        $sub->select(DB::raw(1))
+                            ->from('caves as region_caves')
+                            ->whereColumn('region_caves.cave_system_id', 'cave_systems.id')
+                            ->where('region_caves.location_name', 'like', "%{$term}%");
+                    });
+                    $outer->orWhereExists(function ($sub) use ($term) {
+                        $sub->select(DB::raw(1))
+                            ->from('cave_system_tag')
+                            ->join('tags', 'tags.id', '=', 'cave_system_tag.tag_id')
+                            ->whereColumn('cave_system_tag.cave_system_id', 'cave_systems.id')
+                            ->where('tags.tag', 'like', "%{$term}%");
+                    });
+                }
+            });
         }
 
         // Length filters
@@ -168,10 +186,10 @@ class SearchCavesTool implements AssistantTool
         }
 
         $mapped = $systems->map(function ($system) use ($tagsBySystem, $gradesBySystem, $primaryCaveBySystem, $entranceCountBySystem) {
-            $tags    = ($tagsBySystem[$system->id] ?? collect())->map(fn ($t) => $t->tag)->values();
-            $grades  = $gradesBySystem[$system->id] ?? null;
+            $tags = ($tagsBySystem[$system->id] ?? collect())->map(fn ($t) => $t->tag)->values();
+            $grades = $gradesBySystem[$system->id] ?? null;
             $primary = $primaryCaveBySystem[$system->id] ?? null;
-            $count   = (int) ($entranceCountBySystem[$system->id]->cnt ?? 0);
+            $count = (int) ($entranceCountBySystem[$system->id]->cnt ?? 0);
 
             $excerpt = null;
             if ($system->description) {
@@ -185,29 +203,66 @@ class SearchCavesTool implements AssistantTool
                 : "/cave-systems/{$system->slug}";
 
             return [
-                'id'                  => $system->id,
-                'name'                => $system->name,
-                'slug'                => $system->slug,
-                'system_url'          => "/cave-systems/{$system->slug}",
-                'preferred_link'      => $preferredLink,
-                'length_m'            => $system->length,
-                'vertical_range_m'    => $system->vertical_range,
-                'grades'              => $grades,
-                'tags'                => $tags,
-                'description'         => $excerpt,
-                'entrance_count'      => $count,
-                'primary_cave_name'   => $primary?->name,
-                'primary_cave_slug'   => $primary?->slug,
-                'primary_cave_url'    => $primary?->slug ? "/caves/{$primary->slug}" : null,
-                'location_name'       => $primary?->location_name,
-                'latitude'            => $primary ? (float) $primary->location_lat : null,
-                'longitude'           => $primary ? (float) $primary->location_lng : null,
+                'id' => $system->id,
+                'name' => $system->name,
+                'slug' => $system->slug,
+                'system_url' => "/cave-systems/{$system->slug}",
+                'preferred_link' => $preferredLink,
+                'length_m' => $system->length,
+                'vertical_range_m' => $system->vertical_range,
+                'grades' => $grades,
+                'tags' => $tags,
+                'description' => $excerpt,
+                'entrance_count' => $count,
+                'primary_cave_name' => $primary?->name,
+                'primary_cave_slug' => $primary?->slug,
+                'primary_cave_url' => $primary?->slug ? "/caves/{$primary->slug}" : null,
+                'location_name' => $primary?->location_name,
+                'latitude' => $primary ? (float) $primary->location_lat : null,
+                'longitude' => $primary ? (float) $primary->location_lng : null,
             ];
         });
 
         return [
-            'count'        => $mapped->count(),
+            'count' => $mapped->count(),
             'cave_systems' => $mapped->values()->toArray(),
         ];
+    }
+
+    /**
+     * Expand a region term to an array of search terms covering common synonyms,
+     * so that "Yorkshire Dales" also matches the "Yorkshire" tag and "Brecon
+     * Beacons" matches "South Wales", etc.
+     *
+     * @return string[]
+     */
+    private function expandRegionSearchTerms(string $region): array
+    {
+        $lower = strtolower(trim($region));
+        $terms = [$region];
+
+        $synonyms = [
+            'yorkshire dales' => ['Yorkshire'],
+            'dales' => ['Yorkshire'],
+            'brecon beacons' => ['South Wales', 'Brecon'],
+            'snowdonia' => ['North Wales'],
+            'south wales' => ['South Wales'],
+            'north wales' => ['North Wales'],
+            'mendip hills' => ['Mendip'],
+            'mendips' => ['Mendip'],
+            'peak district' => ['Peak District', 'Derbyshire'],
+            'derbyshire' => ['Peak District', 'Derbyshire'],
+            'forest of dean' => ['Forest of Dean'],
+            'highlands' => ['Assynt', 'Scotland'],
+            'scottish highlands' => ['Assynt', 'Scotland'],
+        ];
+
+        foreach ($synonyms as $key => $extras) {
+            if (str_contains($lower, $key)) {
+                $terms = array_merge($terms, $extras);
+            }
+        }
+
+        return array_values(array_unique($terms));
     }
 }

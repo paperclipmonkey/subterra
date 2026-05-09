@@ -13,14 +13,14 @@ class GetUserExperienceTool implements AssistantTool
     public static function definition(): array
     {
         return [
-            'type'     => 'function',
+            'type' => 'function',
             'function' => [
-                'name'        => 'get_user_experience',
+                'name' => 'get_user_experience',
                 'description' => 'Get the current user\'s caving experience: recent trips, medals awarded, club memberships, and a count of unique cave systems visited. Always call this first before making recommendations so you can match suggestions to their background.',
-                'parameters'  => [
-                    'type'       => 'object',
+                'parameters' => [
+                    'type' => 'object',
                     'properties' => new \stdClass(),
-                    'required'   => [],
+                    'required' => [],
                 ],
             ],
         ];
@@ -55,10 +55,10 @@ class GetUserExperienceTool implements AssistantTool
                 }
 
                 return [
-                    'trip_name'        => $trip->trip_name,
-                    'cave_system'      => $trip->cave_system,
-                    'entrance'         => $trip->entrance,
-                    'date'             => $trip->start_time ? date('Y-m-d', strtotime($trip->start_time)) : null,
+                    'trip_name' => $trip->trip_name,
+                    'cave_system' => $trip->cave_system,
+                    'entrance' => $trip->entrance,
+                    'date' => $trip->start_time ? date('Y-m-d', strtotime($trip->start_time)) : null,
                     'duration_minutes' => $duration,
                 ];
             });
@@ -78,16 +78,16 @@ class GetUserExperienceTool implements AssistantTool
             ->values();
 
         $medals = $user->medals->map(fn ($m) => [
-            'name'        => $m->name,
+            'name' => $m->name,
             'description' => $m->description,
         ])->values();
 
         return [
-            'total_trips'              => $totalTrips,
-            'unique_systems_visited'   => $uniqueSystems,
-            'clubs'                    => $approvedClubs,
-            'medals'                   => $medals,
-            'recent_trips'             => $recentTrips->values(),
+            'total_trips' => $totalTrips,
+            'unique_systems_visited' => $uniqueSystems,
+            'clubs' => $approvedClubs,
+            'medals' => $medals,
+            'recent_trips' => $recentTrips->values(),
         ];
     }
 }

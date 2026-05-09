@@ -16,19 +16,19 @@ class AssistantChatRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'messages'              => ['required', 'array', 'min:1', 'max:20'],
-            'messages.*.role'       => ['required', 'string', 'in:user,assistant'],
-            'messages.*.content'    => ['required', 'string', 'max:4000'],
+            'messages' => ['required', 'array', 'min:1', 'max:20'],
+            'messages.*.role' => ['required', 'string', 'in:user,assistant'],
+            'messages.*.content' => ['required', 'string', 'max:4000'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'messages.required'           => 'At least one message is required.',
-            'messages.max'                => 'Conversation history is limited to 20 messages.',
-            'messages.*.role.in'          => 'Message role must be "user" or "assistant".',
-            'messages.*.content.max'      => 'Each message may not exceed 4000 characters.',
+            'messages.required' => 'At least one message is required.',
+            'messages.max' => 'Conversation history is limited to 20 messages.',
+            'messages.*.role.in' => 'Message role must be "user" or "assistant".',
+            'messages.*.content.max' => 'Each message may not exceed 4000 characters.',
         ];
     }
 }

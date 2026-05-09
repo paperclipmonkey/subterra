@@ -104,12 +104,6 @@ const diagramSvg = ref('')
 // Track MapLibre instances so we can destroy them when the component unmounts
 const mapInstances = []
 
-// Expose router to MapLibre popup click handlers via a module-level ref
-// (popup HTML is raw DOM, outside Vue's reactivity — window bridge is simplest)
-const installNavBridge = () => {
-    window.__vern_nav = (path) => router.push(path)
-}
-
 /**
  * Intercept clicks on relative links inside the rendered markdown and use
  * Vue Router's push() instead of a full page reload.
@@ -176,7 +170,6 @@ const renderMermaidDiagrams = async () => {
 }
 
 onMounted(() => {
-    installNavBridge()
     renderMermaidDiagrams()
     attachSpaLinks()
 })
@@ -185,7 +178,6 @@ onBeforeUnmount(() => {
     // Clean up all MapLibre map instances to free WebGL contexts
     mapInstances.forEach(m => m.remove())
     mapInstances.length = 0
-    delete window.__vern_nav
 })
 
 const MAPTILER_STYLE = 'https://api.maptiler.com/maps/outdoor/style.json?key=0gGMv4po9Mjrpd64A528'
@@ -309,17 +301,42 @@ const renderGeoJSONMaps = async () => {
                 map.fitBounds(bounds, { padding: 60, maxZoom: 12, duration: 0 })
             }
 
-            // Click → popup with link to cave system
+            // Click → popup with link to cave system. Build the DOM with
+            // textContent / setAttribute so LLM-generated property values can
+            // never reach an HTML or JS sink. The slug is also validated as a
+            // safe URL slug before being placed in the href.
             map.on('click', 'vern-points', (e) => {
                 const props = e.features[0].properties
                 const name = props.name || 'Cave'
-                const slug = props.slug
-                const linkHtml = slug
-                    ? `<br><a href="/cave-systems/${slug}" style="color:#1867c0;font-weight:600;cursor:pointer" onclick="event.preventDefault();window.__vern_nav('/cave-systems/${slug}')">View system →</a>`
-                    : ''
+                const rawSlug = props.slug
+                const safeSlug = typeof rawSlug === 'string' && /^[a-z0-9-]+$/i.test(rawSlug) ? rawSlug : null
+
+                const root = document.createElement('div')
+                root.style.fontFamily = 'Roboto, sans-serif'
+                root.style.fontSize = '14px'
+
+                const title = document.createElement('strong')
+                title.textContent = String(name)
+                root.appendChild(title)
+
+                if (safeSlug) {
+                    root.appendChild(document.createElement('br'))
+                    const link = document.createElement('a')
+                    link.href = `/cave-systems/${safeSlug}`
+                    link.textContent = 'View system →'
+                    link.style.color = '#1867c0'
+                    link.style.fontWeight = '600'
+                    link.style.cursor = 'pointer'
+                    link.addEventListener('click', (ev) => {
+                        ev.preventDefault()
+                        router.push(`/cave-systems/${safeSlug}`)
+                    })
+                    root.appendChild(link)
+                }
+
                 new maplibre.Popup({ closeButton: true, maxWidth: '220px' })
                     .setLngLat(e.lngLat)
-                    .setHTML(`<div style="font-family:Roboto,sans-serif;font-size:14px"><strong>${name}</strong>${linkHtml}</div>`)
+                    .setDOMContent(root)
                     .addTo(map)
             })
 

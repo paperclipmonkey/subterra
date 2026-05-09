@@ -23,13 +23,13 @@ class AssistantServiceTest extends TestCase
     {
         parent::setUp();
         config([
-            'assistant.openrouter.api_key'      => 'test-key',
-            'assistant.openrouter.base_url'     => 'https://openrouter.ai/api/v1',
-            'assistant.openrouter.model'        => 'anthropic/claude-3-5-haiku',
-            'assistant.openrouter.max_tokens'   => 2048,
-            'assistant.openrouter.temperature'  => 0.7,
+            'assistant.openrouter.api_key' => 'test-key',
+            'assistant.openrouter.base_url' => 'https://openrouter.ai/api/v1',
+            'assistant.openrouter.model' => 'anthropic/claude-3-5-haiku',
+            'assistant.openrouter.max_tokens' => 2048,
+            'assistant.openrouter.temperature' => 0.7,
             'assistant.limits.max_history_messages' => 20,
-            'assistant.limits.max_tool_iterations'  => 5,
+            'assistant.limits.max_tool_iterations' => 5,
         ]);
 
         $this->service = $this->app->make(AssistantService::class);
@@ -51,10 +51,10 @@ class AssistantServiceTest extends TestCase
     private function toolCallEntry(string $id, string $name, array $args = []): array
     {
         return [
-            'id'       => $id,
-            'type'     => 'function',
+            'id' => $id,
+            'type' => 'function',
             'function' => [
-                'name'      => $name,
+                'name' => $name,
                 'arguments' => json_encode($args),
             ],
         ];
@@ -177,7 +177,7 @@ class AssistantServiceTest extends TestCase
 
         // Send 10 user messages (exceeds the limit of 4)
         $messages = [];
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 10; ++$i) {
             $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
         }
 
@@ -185,8 +185,9 @@ class AssistantServiceTest extends TestCase
 
         // The system prompt is always prepended (+1), then at most 4 history messages
         Http::assertSent(function ($request) {
-            $body     = json_decode($request->body(), true);
+            $body = json_decode($request->body(), true);
             $messages = $body['messages'] ?? [];
+
             // System message + max 4 history = 5 total
             return count($messages) <= 5;
         });
@@ -199,7 +200,7 @@ class AssistantServiceTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function dispatches_tool_calls_and_returns_final_content(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $system = CaveSystem::factory()->create(['name' => 'Gaping Gill', 'slug' => 'gaping-gill']);
 
         Http::fake([
@@ -246,7 +247,7 @@ class AssistantServiceTest extends TestCase
 
         // Verify a tool role message was added to the context (error result)
         Http::assertSent(function ($request) {
-            $body     = json_decode($request->body(), true);
+            $body = json_decode($request->body(), true);
             $messages = $body['messages'] ?? [];
             foreach ($messages as $msg) {
                 if (($msg['role'] ?? '') === 'tool') {
@@ -277,14 +278,58 @@ class AssistantServiceTest extends TestCase
             ),
         ]);
 
-        // Should stop after 2 iterations and return whatever content it has (empty → fallback)
+        // Should stop after 2 iterations and then make one extra call with no tools
+        // to force a final text answer for the user (3 calls total).
         $result = $this->service->chat(
             [['role' => 'user', 'content' => 'Suggest something']],
             $user
         );
 
         $this->assertIsString($result);
+        Http::assertSentCount(3);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function forces_final_answer_when_iteration_cap_hit(): void
+    {
+        config(['assistant.limits.max_tool_iterations' => 1]);
+
+        $user = User::factory()->create();
+
+        // Model returns a tool call on the first call, then a final text answer
+        // when called a second time (with no tools available).
+        $callCount = 0;
+        Http::fake([
+            self::OPENROUTER_URL => function () use (&$callCount) {
+                ++$callCount;
+                if ($callCount === 1) {
+                    // First call: model wants to use a tool
+                    return Http::response($this->openRouterReply('', [
+                        $this->toolCallEntry('call_x', 'get_user_experience', []),
+                    ]), 200);
+                }
+
+                // Second call (forced): model writes a final answer
+                return Http::response($this->openRouterReply(
+                    "I don't have enough data to answer that — try giving me a specific cave name."
+                ), 200);
+            },
+        ]);
+
+        $result = $this->service->chat(
+            [['role' => 'user', 'content' => 'Suggest something']],
+            $user
+        );
+
+        $this->assertStringContainsString("don't have enough data", $result);
         Http::assertSentCount(2);
+
+        // The second (forced) call must NOT include any tools
+        Http::assertSent(function ($request) {
+            $body = json_decode($request->body(), true);
+
+            return isset($body['tools']) && $body['tools'] === [];
+        });
     }
 
     // -------------------------------------------------------------------------
@@ -339,7 +384,7 @@ class AssistantServiceTest extends TestCase
         );
 
         $toolEvents = array_filter($events, fn ($e) => $e['type'] === 'tool_call');
-        $statuses   = array_column(array_column(array_values($toolEvents), 'data'), 'status');
+        $statuses = array_column(array_column(array_values($toolEvents), 'data'), 'status');
 
         $this->assertContains('running', $statuses);
         $this->assertContains('done', $statuses);
@@ -355,7 +400,7 @@ class AssistantServiceTest extends TestCase
         $user = User::factory()->create();
 
         $weatherToolResult = [
-            'cave_name'    => 'Bull Pot of the Witches',
+            'cave_name' => 'Bull Pot of the Witches',
             'river_gauges' => [
                 ['name' => 'River Ribble at Settle', 'state' => 'High', 'latest_value' => 1.8],
             ],
@@ -371,7 +416,8 @@ class AssistantServiceTest extends TestCase
 
         // Use an anonymous subclass override so definition() remains callable as static
         $fakeWeatherTool = new class ($weatherToolResult) extends \App\Services\Assistant\Tools\GetWeatherForecastTool {
-            public function __construct(private readonly array $fakeResult) {
+            public function __construct(private readonly array $fakeResult)
+            {
                 // Skip parent DI
             }
 
@@ -409,7 +455,7 @@ class AssistantServiceTest extends TestCase
         $user = User::factory()->create();
 
         $weatherToolResult = [
-            'cave_name'    => 'Swildon\'s Hole',
+            'cave_name' => 'Swildon\'s Hole',
             'river_gauges' => [
                 ['name' => 'River Mells', 'state' => 'Normal', 'latest_value' => 0.4],
             ],
@@ -424,7 +470,9 @@ class AssistantServiceTest extends TestCase
         ]);
 
         $fakeWeatherTool = new class ($weatherToolResult) extends \App\Services\Assistant\Tools\GetWeatherForecastTool {
-            public function __construct(private readonly array $fakeResult) {}
+            public function __construct(private readonly array $fakeResult)
+            {
+            }
 
             public function handle(array $arguments, \App\Models\User $user): array
             {
@@ -499,9 +547,9 @@ class AssistantServiceTest extends TestCase
         );
 
         Http::assertSent(function ($request) {
-            $body     = json_decode($request->body(), true);
+            $body = json_decode($request->body(), true);
             $messages = $body['messages'] ?? [];
-            $first    = $messages[0] ?? [];
+            $first = $messages[0] ?? [];
 
             return ($first['role'] ?? '') === 'system'
                 && str_contains($first['content'] ?? '', 'Vern')
@@ -527,7 +575,7 @@ class AssistantServiceTest extends TestCase
         );
 
         Http::assertSent(function ($request) {
-            $body  = json_decode($request->body(), true);
+            $body = json_decode($request->body(), true);
             $tools = $body['tools'] ?? [];
 
             $names = array_column(array_column($tools, 'function'), 'name');

@@ -167,7 +167,7 @@ class AssistantTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $messages = [];
-        for ($i = 0; $i < 21; $i++) {
+        for ($i = 0; $i < 21; ++$i) {
             $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
         }
 
@@ -234,7 +234,7 @@ class AssistantTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, $this->validPayload());
 
-        $body   = $this->captureStream($response);
+        $body = $this->captureStream($response);
         $events = $this->parseSseContent($body);
 
         $types = array_column($events, 'type');
@@ -266,9 +266,9 @@ class AssistantTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, $this->validPayload());
 
-        $body   = $this->captureStream($response);
+        $body = $this->captureStream($response);
         $events = $this->parseSseContent($body);
-        $types  = array_column($events, 'type');
+        $types = array_column($events, 'type');
 
         $this->assertContains('thinking', $types);
         $this->assertContains('tool_call', $types);
@@ -302,9 +302,9 @@ class AssistantTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, $this->validPayload());
 
-        $body   = $this->captureStream($response);
+        $body = $this->captureStream($response);
         $events = $this->parseSseContent($body);
-        $types  = array_column($events, 'type');
+        $types = array_column($events, 'type');
 
         $this->assertContains('cave_cards', $types, 'Stream must emit a cave_cards event');
 
@@ -333,9 +333,9 @@ class AssistantTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, $this->validPayload());
 
-        $body   = $this->captureStream($response);
+        $body = $this->captureStream($response);
         $events = $this->parseSseContent($body);
-        $types  = array_column($events, 'type');
+        $types = array_column($events, 'type');
 
         $this->assertContains('thinking_elapsed', $types, 'Stream must emit a thinking_elapsed event');
 
@@ -359,9 +359,9 @@ class AssistantTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, $this->validPayload());
 
-        $body   = $this->captureStream($response);
+        $body = $this->captureStream($response);
         $events = $this->parseSseContent($body);
-        $types  = array_column($events, 'type');
+        $types = array_column($events, 'type');
 
         $this->assertContains('error', $types, 'Missing API key must emit an error event');
         $this->assertNotContains('done', $types);
@@ -383,9 +383,9 @@ class AssistantTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, $this->validPayload());
 
-        $body   = $this->captureStream($response);
+        $body = $this->captureStream($response);
         $events = $this->parseSseContent($body);
-        $types  = array_column($events, 'type');
+        $types = array_column($events, 'type');
 
         $this->assertContains('error', $types, 'OpenRouter 500 must emit an error event');
     }
@@ -404,7 +404,7 @@ class AssistantTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, $this->validPayload());
 
-        $body   = $this->captureStream($response);
+        $body = $this->captureStream($response);
         $events = $this->parseSseContent($body);
 
         $errorEvent = collect($events)->firstWhere('type', 'error');

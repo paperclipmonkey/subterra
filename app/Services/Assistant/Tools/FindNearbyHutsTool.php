@@ -14,19 +14,19 @@ class FindNearbyHutsTool implements AssistantTool
     public static function definition(): array
     {
         return [
-            'type'     => 'function',
+            'type' => 'function',
             'function' => [
-                'name'        => 'find_nearby_huts',
+                'name' => 'find_nearby_huts',
                 'description' => 'Find caving huts and accommodation near a cave system, sorted by distance. Returns up to 8 closest huts with coordinates suitable for plotting alongside the cave on a geojson map. Use this when the user asks about accommodation, where to stay, or is planning a weekend away.',
-                'parameters'  => [
-                    'type'       => 'object',
+                'parameters' => [
+                    'type' => 'object',
                     'properties' => [
                         'cave_system_id' => [
-                            'type'        => 'integer',
+                            'type' => 'integer',
                             'description' => 'The numeric ID of the cave system to find huts near.',
                         ],
                         'max_distance_km' => [
-                            'type'        => 'number',
+                            'type' => 'number',
                             'description' => 'Optional maximum great-circle distance in km. Defaults to 50km.',
                         ],
                     ],
@@ -38,7 +38,7 @@ class FindNearbyHutsTool implements AssistantTool
 
     public function handle(array $arguments, User $user): array
     {
-        $systemId    = (int) ($arguments['cave_system_id'] ?? 0);
+        $systemId = (int) ($arguments['cave_system_id'] ?? 0);
         $maxDistance = isset($arguments['max_distance_km'])
             ? (float) $arguments['max_distance_km']
             : 50.0;
@@ -72,16 +72,16 @@ class FindNearbyHutsTool implements AssistantTool
                 }
 
                 return [
-                    'id'           => $hut->id,
-                    'name'         => $hut->name,
-                    'club'         => $hut->club?->name,
-                    'distance_km'  => $distanceKm,
-                    'amenities'    => $hut->amenities ?? [],
+                    'id' => $hut->id,
+                    'name' => $hut->name,
+                    'club' => $hut->club?->name,
+                    'distance_km' => $distanceKm,
+                    'amenities' => $hut->amenities ?? [],
                     'booking_info' => $hut->booking_info,
                     'external_url' => $hut->external_url,
-                    'hut_url'      => "/huts/{$hut->id}",
-                    'latitude'     => (float) $hut->location_lat,
-                    'longitude'    => (float) $hut->location_lng,
+                    'hut_url' => "/huts/{$hut->id}",
+                    'latitude' => (float) $hut->location_lat,
+                    'longitude' => (float) $hut->location_lng,
                 ];
             });
 
@@ -97,16 +97,16 @@ class FindNearbyHutsTool implements AssistantTool
         }
 
         return [
-            'cave_system'        => $system->name,
-            'cave_system_slug'   => $system->slug,
-            'reference_cave'     => $referenceCave?->name,
+            'cave_system' => $system->name,
+            'cave_system_slug' => $system->slug,
+            'reference_cave' => $referenceCave?->name,
             'reference_cave_url' => $referenceCave ? "/caves/{$referenceCave->slug}" : null,
-            'reference_lat'      => $referenceCave?->location_lat,
-            'reference_lng'      => $referenceCave?->location_lng,
-            'max_distance_km'    => $maxDistance,
-            'count'              => $huts->count(),
-            'huts'               => $huts,
-            'note'               => $referenceCave
+            'reference_lat' => $referenceCave?->location_lat,
+            'reference_lng' => $referenceCave?->location_lng,
+            'max_distance_km' => $maxDistance,
+            'count' => $huts->count(),
+            'huts' => $huts,
+            'note' => $referenceCave
                 ? null
                 : 'No entrance coordinates found for this system — huts are listed without distance ordering.',
         ];
@@ -114,10 +114,10 @@ class FindNearbyHutsTool implements AssistantTool
 
     private function haversine(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
-        $R    = 6371.0;
+        $R = 6371.0;
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
-        $a    = sin($dLat / 2) ** 2
+        $a = sin($dLat / 2) ** 2
             + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
 
         return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));

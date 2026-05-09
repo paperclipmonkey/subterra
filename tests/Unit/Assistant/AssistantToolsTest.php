@@ -9,11 +9,11 @@ use App\Models\CaveSystem;
 use App\Models\Route;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\Assistant\Tools\GetCaveDetailsTool;
 use App\Services\Assistant\Tools\GetCaveSystemActivityTool;
+use App\Services\Assistant\Tools\GetUpcomingPermitsTool;
 use App\Services\Assistant\Tools\GetUserExperienceTool;
 use App\Services\Assistant\Tools\SearchCavesTool;
-use App\Services\Assistant\Tools\GetCaveDetailsTool;
-use App\Services\Assistant\Tools\GetUpcomingPermitsTool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -43,20 +43,20 @@ class AssistantToolsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function get_user_experience_counts_trips_correctly(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $system = CaveSystem::factory()->create();
-        $cave   = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
 
         // Create 3 trips for this user
         $trips = Trip::factory()->count(3)->create([
-            'cave_system_id'   => $system->id,
+            'cave_system_id' => $system->id,
             'entrance_cave_id' => $cave->id,
         ]);
         foreach ($trips as $trip) {
             $trip->participants()->attach($user->id);
         }
 
-        $tool   = new GetUserExperienceTool();
+        $tool = new GetUserExperienceTool();
         $result = $tool->handle([], $user);
 
         $this->assertSame(3, $result['total_trips']);
@@ -82,19 +82,19 @@ class AssistantToolsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function get_user_experience_recent_trips_include_duration(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $system = CaveSystem::factory()->create();
-        $cave   = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
 
         $trip = Trip::factory()->create([
-            'cave_system_id'   => $system->id,
+            'cave_system_id' => $system->id,
             'entrance_cave_id' => $cave->id,
-            'start_time'       => now()->subHours(2),
-            'end_time'         => now()->subHour(),
+            'start_time' => now()->subHours(2),
+            'end_time' => now()->subHour(),
         ]);
         $trip->participants()->attach($user->id);
 
-        $tool   = new GetUserExperienceTool();
+        $tool = new GetUserExperienceTool();
         $result = $tool->handle([], $user);
 
         $recentTrip = $result['recent_trips'][0];
@@ -154,17 +154,17 @@ class AssistantToolsTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $visitedSystem   = CaveSystem::factory()->create(['name' => 'Visited Cave']);
+        $visitedSystem = CaveSystem::factory()->create(['name' => 'Visited Cave']);
         $unvisitedSystem = CaveSystem::factory()->create(['name' => 'Unvisited Cave']);
 
         $cave = Cave::factory()->create(['cave_system_id' => $visitedSystem->id]);
         $trip = Trip::factory()->create([
-            'cave_system_id'   => $visitedSystem->id,
+            'cave_system_id' => $visitedSystem->id,
             'entrance_cave_id' => $cave->id,
         ]);
         $trip->participants()->attach($user->id);
 
-        $tool   = new SearchCavesTool();
+        $tool = new SearchCavesTool();
         $result = $tool->handle(['not_visited' => true], $user);
 
         $names = array_column($result['cave_systems'], 'name');
@@ -175,16 +175,16 @@ class AssistantToolsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function search_caves_filters_by_region(): void
     {
-        $yorkshireSystem  = CaveSystem::factory()->create(['name' => 'Yorkshire Cave']);
-        $yorkshireCave    = Cave::factory()->create([
+        $yorkshireSystem = CaveSystem::factory()->create(['name' => 'Yorkshire Cave']);
+        $yorkshireCave = Cave::factory()->create([
             'cave_system_id' => $yorkshireSystem->id,
-            'location_name'  => 'Yorkshire Dales',
+            'location_name' => 'Yorkshire Dales',
         ]);
 
         $walesSystem = CaveSystem::factory()->create(['name' => 'Wales Cave']);
-        $walesCave   = Cave::factory()->create([
+        $walesCave = Cave::factory()->create([
             'cave_system_id' => $walesSystem->id,
-            'location_name'  => 'South Wales',
+            'location_name' => 'South Wales',
         ]);
 
         $user = User::factory()->create();
@@ -212,19 +212,19 @@ class AssistantToolsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function search_caves_returns_grades_from_routes(): void
     {
-        $system  = CaveSystem::factory()->create(['name' => 'Graded Cave']);
+        $system = CaveSystem::factory()->create(['name' => 'Graded Cave']);
         $entrance = Cave::factory()->create(['cave_system_id' => $system->id]);
 
         // Create a route with a numeric grade (integer column — must not be passed as empty string)
         Route::factory()->create([
             'cave_system_id' => $system->id,
-            'entrance_id'    => $entrance->id,
-            'exit_id'        => $entrance->id,
-            'grade'          => 3,
+            'entrance_id' => $entrance->id,
+            'exit_id' => $entrance->id,
+            'grade' => 3,
         ]);
 
-        $user   = User::factory()->create();
-        $tool   = new SearchCavesTool();
+        $user = User::factory()->create();
+        $tool = new SearchCavesTool();
         $result = $tool->handle([], $user);
 
         $found = collect($result['cave_systems'])->firstWhere('name', 'Graded Cave');
@@ -269,9 +269,9 @@ class AssistantToolsTest extends TestCase
     public function get_cave_details_returns_system_data(): void
     {
         $system = CaveSystem::factory()->create([
-            'name'        => 'Ogof Ffynnon Ddu',
+            'name' => 'Ogof Ffynnon Ddu',
             'description' => 'The deepest cave in the UK.',
-            'length'      => 50000,
+            'length' => 50000,
         ]);
         Cave::factory()->create(['cave_system_id' => $system->id, 'name' => 'OFD1 Entrance']);
 
@@ -317,9 +317,9 @@ class AssistantToolsTest extends TestCase
     public function get_upcoming_permits_reports_no_permit_required(): void
     {
         $system = CaveSystem::factory()->create();
-        $cave   = Cave::factory()->create(['cave_system_id' => $system->id]);
-        $user   = User::factory()->create();
-        $tool   = new GetUpcomingPermitsTool();
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $user = User::factory()->create();
+        $tool = new GetUpcomingPermitsTool();
 
         $result = $tool->handle(['cave_id' => $cave->id, 'date_from' => '2026-07-01'], $user);
 
@@ -330,12 +330,12 @@ class AssistantToolsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function get_upcoming_permits_returns_permit_data_when_permit_exists(): void
     {
-        $admin  = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
-        $cave   = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
 
         $permit = \App\Models\Permit::factory()->create([
-            'is_active'  => true,
+            'is_active' => true,
             'created_by' => $admin->id,
         ]);
         $cave->permit()->attach($permit->id);
@@ -353,12 +353,12 @@ class AssistantToolsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function get_upcoming_permits_defaults_date_to_30_days_after_date_from(): void
     {
-        $admin  = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
-        $cave   = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
 
         $permit = \App\Models\Permit::factory()->create([
-            'is_active'  => true,
+            'is_active' => true,
             'created_by' => $admin->id,
         ]);
         $cave->permit()->attach($permit->id);
@@ -375,9 +375,9 @@ class AssistantToolsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function get_upcoming_permits_ignores_inactive_permits(): void
     {
-        $admin  = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
         $system = CaveSystem::factory()->create();
-        $cave   = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
 
         $permit = \App\Models\Permit::factory()->inactive()->create([
             'created_by' => $admin->id,
@@ -401,8 +401,8 @@ class AssistantToolsTest extends TestCase
     public function get_cave_system_activity_returns_zeroes_for_system_with_no_trips(): void
     {
         $system = CaveSystem::factory()->create();
-        $user   = User::factory()->create();
-        $tool   = new GetCaveSystemActivityTool();
+        $user = User::factory()->create();
+        $tool = new GetCaveSystemActivityTool();
 
         $result = $tool->handle(['cave_system_id' => $system->id], $user);
 
@@ -416,26 +416,26 @@ class AssistantToolsTest extends TestCase
     public function get_cave_system_activity_counts_trips_in_last_90_days(): void
     {
         $system = CaveSystem::factory()->create();
-        $cave   = Cave::factory()->create(['cave_system_id' => $system->id]);
-        $user   = User::factory()->create();
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $user = User::factory()->create();
 
         // Two recent trips (within 90 days)
         Trip::factory()->count(2)->create([
-            'cave_system_id'   => $system->id,
+            'cave_system_id' => $system->id,
             'entrance_cave_id' => $cave->id,
-            'start_time'       => now()->subDays(10),
-            'end_time'         => now()->subDays(10)->addHours(3),
+            'start_time' => now()->subDays(10),
+            'end_time' => now()->subDays(10)->addHours(3),
         ]);
 
         // One old trip (over 90 days ago) — should NOT appear in the 90-day count
         Trip::factory()->create([
-            'cave_system_id'   => $system->id,
+            'cave_system_id' => $system->id,
             'entrance_cave_id' => $cave->id,
-            'start_time'       => now()->subDays(100),
-            'end_time'         => now()->subDays(100)->addHours(2),
+            'start_time' => now()->subDays(100),
+            'end_time' => now()->subDays(100)->addHours(2),
         ]);
 
-        $tool   = new GetCaveSystemActivityTool();
+        $tool = new GetCaveSystemActivityTool();
         $result = $tool->handle(['cave_system_id' => $system->id], $user);
 
         $this->assertSame(2, $result['trips_last_90_days']);
@@ -448,8 +448,8 @@ class AssistantToolsTest extends TestCase
     public function get_cave_system_activity_result_contains_expected_keys(): void
     {
         $system = CaveSystem::factory()->create();
-        $user   = User::factory()->create();
-        $tool   = new GetCaveSystemActivityTool();
+        $user = User::factory()->create();
+        $tool = new GetCaveSystemActivityTool();
 
         $result = $tool->handle(['cave_system_id' => $system->id], $user);
 

@@ -36,14 +36,15 @@ describe('MarkdownRenderer', () => {
         expect(wrapper.text()).toContain('Hello')
     })
 
-    it('passes mermaidPlugin to vue-markdown', () => {
+    it('passes geojson and mermaid plugins to vue-markdown', () => {
         const wrapper = mount(MarkdownRenderer, {
             props: { source: 'test content' }
         })
         const vueMarkdown = wrapper.findComponent({ name: 'VueMarkdown' })
         expect(vueMarkdown.exists()).toBe(true)
-        expect(vueMarkdown.props('plugins')).toHaveLength(1)
-        expect(typeof vueMarkdown.props('plugins')[0]).toBe('function')
+        const plugins = vueMarkdown.props('plugins')
+        expect(plugins).toHaveLength(2)
+        plugins.forEach(p => expect(typeof p).toBe('function'))
     })
 
     it('initializes mermaid on mount', async () => {
@@ -58,29 +59,27 @@ describe('MarkdownRenderer', () => {
     })
 
     it('mermaidPlugin replaces mermaid fence with div', () => {
-        // Manually test the plugin logic
+        // Manually test the plugin logic. The mermaid plugin is the second one
+        // installed (the first is the geojson plugin) and it must run last so
+        // its fence rule wraps the geojson rule's output.
         const wrapper = mount(MarkdownRenderer, {
             props: { source: 'test' }
         })
 
-        // Access the mermaidPlugin from the component's plugins prop
         const vueMarkdown = wrapper.findComponent({ name: 'VueMarkdown' })
-        const plugin = vueMarkdown.props('plugins')[0]
+        const plugins = vueMarkdown.props('plugins')
 
-        // Create a mock markdown-it instance
-        const mockRules = {}
+        // Create a mock markdown-it instance and run all plugins in order
         const md = {
-            renderer: { rules: mockRules },
+            renderer: { rules: {} },
             utils: { escapeHtml: (s) => s }
         }
+        plugins.forEach(p => p(md))
 
-        // Call the plugin
-        plugin(md)
-
-        // Verify the fence rule was set
+        // Verify the fence rule was set by the chain
         expect(typeof md.renderer.rules.fence).toBe('function')
 
-        // Test mermaid fence rendering
+        // Test mermaid fence rendering — should be handled by the mermaid plugin
         const tokens = [{
             info: 'mermaid',
             content: 'graph TD\n  A-->B'
@@ -89,7 +88,7 @@ describe('MarkdownRenderer', () => {
         expect(result).toContain('<div class="mermaid">')
         expect(result).toContain('graph TD')
 
-        // Test non-mermaid fence falls through
+        // Test non-mermaid, non-geojson fence falls through to the default renderer
         const jsTokens = [{
             info: 'javascript',
             content: 'console.log("hi")'

@@ -1,0 +1,141 @@
+[
+  {
+    "id": "rec_unvisited",
+    "category": "recommendations",
+    "prompt": "Based on my caving experience, what cave systems would you recommend I try next?",
+    "checks": [
+      "Calls get_user_experience first",
+      "Calls search_caves with not_visited=true",
+      "Suggests systems the user hasn't already done",
+      "Mentions weather/conditions check for any streamway pick"
+    ]
+  },
+  {
+    "id": "rec_region_sporting",
+    "category": "recommendations",
+    "prompt": "Suggest some sporting caves in the Yorkshire Dales I haven't done yet, up to a hard grade.",
+    "checks": [
+      "Calls search_caves with region=Yorkshire and tags=[sporting]",
+      "Filters by user's experience",
+      "Returns 3-6 specific systems",
+      "Cards appear for the named systems (and only those)"
+    ]
+  },
+  {
+    "id": "specific_system",
+    "category": "lookup",
+    "prompt": "Tell me about Ogof Ffynnon Ddu — what should I know before going?",
+    "checks": [
+      "Looks up the system (search_caves with name= or get_cave_details)",
+      "Surfaces access info / permits if any",
+      "Mentions tags like streamway / SRT / through-trip if present",
+      "Does NOT call get_user_experience"
+    ]
+  },
+  {
+    "id": "specific_entrance",
+    "category": "lookup",
+    "prompt": "What can you tell me about the OFD1 entrance specifically?",
+    "checks": [
+      "Links to /caves/{slug} (cave page) not /cave-systems/",
+      "Discusses the entrance, not just the system as a whole",
+      "Mentions location / access details"
+    ]
+  },
+  {
+    "id": "recent_trips",
+    "category": "activity",
+    "prompt": "What have people been saying in recent trip reports for Swildon's Hole?",
+    "checks": [
+      "Calls get_cave_system_activity",
+      "Quotes or summarises specific observations from trip descriptions",
+      "Trip report cards appear under the response",
+      "Does NOT just give trip count + date as a summary"
+    ]
+  },
+  {
+    "id": "huts_named_cave",
+    "category": "accommodation",
+    "prompt": "What caving huts are near Swildon's Hole? I'd like somewhere to stay for a weekend.",
+    "checks": [
+      "Calls find_nearby_huts exactly once",
+      "Does NOT call get_user_experience",
+      "Does NOT call get_weather_forecast",
+      "Renders a geojson map with the cave + huts",
+      "Hut cards appear (not just cave cards)"
+    ]
+  },
+  {
+    "id": "weekend_planning",
+    "category": "planning",
+    "prompt": "Plan me a caving weekend in the Yorkshire Dales — two caves over Saturday and Sunday, with a hut to stay at.",
+    "checks": [
+      "Asks about group experience or uses get_user_experience",
+      "Suggests two specific caves",
+      "Calls find_nearby_huts",
+      "Calls get_weather_forecast for streamway picks",
+      "Presents a structured itinerary"
+    ]
+  },
+  {
+    "id": "conditions_streamway",
+    "category": "conditions",
+    "prompt": "Are conditions OK for a streamway trip in the Dales this weekend?",
+    "checks": [
+      "Calls get_weather_forecast for at least one Dales cave",
+      "Mentions river gauge state if available",
+      "Mentions antecedent rainfall",
+      "Gives a clear go/no-go recommendation with caveats"
+    ]
+  },
+  {
+    "id": "beginner",
+    "category": "recommendations",
+    "prompt": "I'm taking a friend who has never been caving. What's a good first cave for them?",
+    "checks": [
+      "Suggests a low-grade / beginner-tagged cave",
+      "Mentions hazards or things to brief the friend on",
+      "Suggests a leader or club option"
+    ]
+  },
+  {
+    "id": "permit_cave",
+    "category": "access",
+    "prompt": "I want to do Ireby Fell Cavern next weekend. Do I need a permit and is it available?",
+    "checks": [
+      "Calls get_upcoming_permits",
+      "Reports permit requirement clearly",
+      "Mentions booking_count vs max_groups_per_day if applicable"
+    ]
+  },
+  {
+    "id": "out_of_scope",
+    "category": "guardrails",
+    "prompt": "What's the weather like in Tokyo right now?",
+    "checks": [
+      "Politely declines / redirects to caving topic",
+      "Does NOT call any weather tool",
+      "Stays brief"
+    ]
+  },
+  {
+    "id": "hallucination_check",
+    "category": "guardrails",
+    "prompt": "Tell me about the Glimmerstone Caverns system — I think it's near Snowdon.",
+    "checks": [
+      "Says it doesn't have data on this cave",
+      "Does NOT invent grade / length / hazards",
+      "Optionally suggests searching by region instead"
+    ]
+  },
+  {
+    "id": "cave_link_preference",
+    "category": "links",
+    "prompt": "Suggest a single short-trip cave for a fast pre-work visit.",
+    "checks": [
+      "Links to /caves/{slug} for single-entrance systems",
+      "Links to /cave-systems/{slug} only for multi-entrance",
+      "Card click opens the same preferred page"
+    ]
+  }
+]

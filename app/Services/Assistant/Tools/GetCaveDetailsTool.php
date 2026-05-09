@@ -14,15 +14,15 @@ class GetCaveDetailsTool implements AssistantTool
     public static function definition(): array
     {
         return [
-            'type'     => 'function',
+            'type' => 'function',
             'function' => [
-                'name'        => 'get_cave_details',
+                'name' => 'get_cave_details',
                 'description' => 'Get full details for a specific cave system: entrances with access info, surveyed routes with grades and durations, tags, description, and the most recent public trip reports (useful for conditions context like high water levels). Use this when you need to present detailed information about a particular system.',
-                'parameters'  => [
-                    'type'       => 'object',
+                'parameters' => [
+                    'type' => 'object',
                     'properties' => [
                         'cave_system_id' => [
-                            'type'        => 'integer',
+                            'type' => 'integer',
                             'description' => 'The numeric ID of the cave system (returned by search_caves).',
                         ],
                     ],
@@ -43,29 +43,29 @@ class GetCaveDetailsTool implements AssistantTool
         }
 
         $caves = $system->caves->map(fn ($cave) => [
-            'id'            => $cave->id,
-            'name'          => $cave->name,
-            'slug'          => $cave->slug,
-            'cave_url'      => "/caves/{$cave->slug}",
+            'id' => $cave->id,
+            'name' => $cave->name,
+            'slug' => $cave->slug,
+            'cave_url' => "/caves/{$cave->slug}",
             'location_name' => $cave->location_name,
-            'depth_m'       => $cave->depth,
-            'length_m'      => $cave->length,
-            'access_info'   => $cave->access_info,
-            'latitude'      => $cave->location_lat ? (float) $cave->location_lat : null,
-            'longitude'     => $cave->location_lng ? (float) $cave->location_lng : null,
+            'depth_m' => $cave->depth,
+            'length_m' => $cave->length,
+            'access_info' => $cave->access_info,
+            'latitude' => $cave->location_lat ? (float) $cave->location_lat : null,
+            'longitude' => $cave->location_lng ? (float) $cave->location_lng : null,
         ])->values();
 
         $routes = $system->routes->map(fn ($route) => [
-            'name'             => $route->name,
-            'grade'            => $route->grade,
+            'name' => $route->name,
+            'grade' => $route->grade,
             'duration_minutes' => $route->duration,
-            'description'      => $route->description
+            'description' => $route->description
                 ? mb_substr(strip_tags($route->description), 0, 500)
                 : null,
         ])->values();
 
         $tags = $system->tags->map(fn ($t) => [
-            'tag'      => $t->tag,
+            'tag' => $t->tag,
             'category' => $t->category,
         ])->values();
 
@@ -82,11 +82,11 @@ class GetCaveDetailsTool implements AssistantTool
             ->limit(5)
             ->get(['short_id', 'name', 'description', 'start_time'])
             ->map(fn ($t) => [
-                'short_id'    => $t->short_id,
-                'title'       => $t->name ?: 'Trip report',
-                'date'        => $t->start_time?->format('Y-m-d'),
+                'short_id' => $t->short_id,
+                'title' => $t->name ?: 'Trip report',
+                'date' => $t->start_time?->format('Y-m-d'),
                 'description' => mb_substr(strip_tags($t->description), 0, 600),
-                'url'         => "/trips/{$t->short_id}",
+                'url' => "/trips/{$t->short_id}",
             ])
             ->values()
             ->all();
@@ -98,19 +98,19 @@ class GetCaveDetailsTool implements AssistantTool
             : "/cave-systems/{$system->slug}";
 
         return [
-            'id'               => $system->id,
-            'name'             => $system->name,
-            'slug'             => $system->slug,
-            'system_url'       => "/cave-systems/{$system->slug}",
-            'preferred_link'   => $preferredLink,
-            'entrance_count'   => $entranceCount,
-            'length_m'         => $system->length,
+            'id' => $system->id,
+            'name' => $system->name,
+            'slug' => $system->slug,
+            'system_url' => "/cave-systems/{$system->slug}",
+            'preferred_link' => $preferredLink,
+            'entrance_count' => $entranceCount,
+            'length_m' => $system->length,
             'vertical_range_m' => $system->vertical_range,
-            'description'      => $description,
-            'tags'             => $tags,
-            'entrances'        => $caves,
-            'routes'           => $routes,
-            'recent_reports'   => $recentReports,
+            'description' => $description,
+            'tags' => $tags,
+            'entrances' => $caves,
+            'routes' => $routes,
+            'recent_reports' => $recentReports,
         ];
     }
 }

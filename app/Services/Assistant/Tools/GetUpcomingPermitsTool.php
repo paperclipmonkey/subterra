@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Assistant\Tools;
 
 use App\Models\Cave;
-use App\Models\Permit;
 use App\Models\User;
 use App\Services\Assistant\AssistantTool;
 
@@ -14,23 +13,23 @@ class GetUpcomingPermitsTool implements AssistantTool
     public static function definition(): array
     {
         return [
-            'type'     => 'function',
+            'type' => 'function',
             'function' => [
-                'name'        => 'get_upcoming_permits',
+                'name' => 'get_upcoming_permits',
                 'description' => 'Check whether a cave requires a permit and how many bookings are already made on specific dates. Use this when the user is planning a trip on particular dates and the cave has access restrictions.',
-                'parameters'  => [
-                    'type'       => 'object',
+                'parameters' => [
+                    'type' => 'object',
                     'properties' => [
                         'cave_id' => [
-                            'type'        => 'integer',
+                            'type' => 'integer',
                             'description' => 'The numeric ID of the cave entrance (from get_cave_details entrances array).',
                         ],
                         'date_from' => [
-                            'type'        => 'string',
+                            'type' => 'string',
                             'description' => 'Start of the date range to check, format Y-m-d.',
                         ],
                         'date_to' => [
-                            'type'        => 'string',
+                            'type' => 'string',
                             'description' => 'End of the date range to check, format Y-m-d. Defaults to 30 days after date_from.',
                         ],
                     ],
@@ -53,14 +52,14 @@ class GetUpcomingPermitsTool implements AssistantTool
 
         if (!$permit) {
             return [
-                'has_permit'  => false,
-                'cave_name'   => $cave->name,
-                'message'     => 'No active permit scheme is required for this cave.',
+                'has_permit' => false,
+                'cave_name' => $cave->name,
+                'message' => 'No active permit scheme is required for this cave.',
             ];
         }
 
         $dateFrom = $arguments['date_from'];
-        $dateTo   = $arguments['date_to'] ?? date('Y-m-d', strtotime($dateFrom . ' +30 days'));
+        $dateTo = $arguments['date_to'] ?? date('Y-m-d', strtotime($dateFrom.' +30 days'));
 
         $bookings = $permit->bookings()
             ->where('status', 'approved')
@@ -76,15 +75,15 @@ class GetUpcomingPermitsTool implements AssistantTool
         ]);
 
         return [
-            'has_permit'           => true,
-            'cave_name'            => $cave->name,
-            'permit_name'          => $permit->name,
-            'has_max_groups'       => (bool) ($permit->has_max_groups_per_day ?? false),
-            'max_groups_per_day'   => $permit->max_groups_per_day ?? null,
-            'date_from'            => $dateFrom,
-            'date_to'              => $dateTo,
-            'bookings_by_date'     => $bookingsByDate,
-            'note'                 => 'A booking_count equal to max_groups_per_day means the date is fully booked.',
+            'has_permit' => true,
+            'cave_name' => $cave->name,
+            'permit_name' => $permit->name,
+            'has_max_groups' => (bool) ($permit->has_max_groups_per_day ?? false),
+            'max_groups_per_day' => $permit->max_groups_per_day ?? null,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'bookings_by_date' => $bookingsByDate,
+            'note' => 'A booking_count equal to max_groups_per_day means the date is fully booked.',
         ];
     }
 }

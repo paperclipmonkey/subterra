@@ -9,7 +9,7 @@
     <div class="card-header" :style="{ background: headerGradient }">
       <div class="card-title-row">
         <v-icon :icon="mdiTerrain" size="14" color="white" style="opacity:0.85" />
-        <span class="card-grade" v-if="system.grades">{{ system.grades }}</span>
+        <span v-if="system.grades" class="card-grade">{{ system.grades }}</span>
       </div>
       <div class="card-name">{{ system.name }}</div>
       <div v-if="system.location_name" class="card-location">
