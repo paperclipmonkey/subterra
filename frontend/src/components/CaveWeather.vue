@@ -174,7 +174,7 @@
 <script setup>
 import { mdiArrowBottomRight, mdiArrowTopRight, mdiMinus, mdiOpenInNew, mdiWeatherCloudy, mdiWeatherCloudyClock, mdiWeatherFog, mdiWeatherLightning, mdiWeatherNight, mdiWeatherNightPartlyCloudy, mdiWeatherPartlyCloudy, mdiWeatherRainy, mdiWeatherSnowy, mdiWeatherSnowyRainy, mdiWeatherSunny, mdiWeatherTornado, mdiWeatherWindy } from '@mdi/js'
 
-import { ref, onMounted, computed, defineProps } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, TimeScale } from 'chart.js'
 import 'chartjs-adapter-moment'
