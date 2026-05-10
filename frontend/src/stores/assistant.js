@@ -227,11 +227,32 @@ export const useAssistantStore = defineStore('assistant', {
           break
         }
 
-        case 'content': {
-          // Full content replacement (non-streaming fallback)
+        case 'content_reset': {
+          // Server detected the model gave up mid-thought (filler narration like
+          // "let me look that up directly") and is about to retry with a forced
+          // final answer. Wipe what we streamed so the user only sees the real
+          // reply that's about to follow.
           const pending = this.messages.findLast(m => m.pending)
           if (pending) {
-            pending.content = event.data?.text ?? ''
+            pending.content = ''
+          }
+          break
+        }
+
+        case 'content': {
+          // The server emits this as a "this is the final string" signal at the
+          // end of every turn. In streaming mode the bubble is already fully
+          // populated from content_chunk events — overwriting it here would
+          // throw away every iteration except the last (which is often a
+          // give-up sentence like "That's odd, let me look that up directly").
+          //
+          // So we only replace when nothing has streamed (non-streaming clients
+          // or an early failure). Otherwise we just mark the message finalised.
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            if (!pending.content) {
+              pending.content = event.data?.text ?? ''
+            }
             pending.pending = false
             pending.streaming = false
           }

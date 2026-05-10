@@ -276,12 +276,19 @@ class AssistantService
             ++$iterations;
         } while ($hasToolCalls && $iterations < $maxIterations);
 
-        // If we exited the loop while still in tool-calling mode (iter cap reached
-        // without a final assistant message), force one more call with tools disabled
-        // so the model has to produce a textual answer. Otherwise the user gets
-        // either an empty response or a generic "I was unable…" which is the worst UX.
-        if ($hasToolCalls) {
-            Log::warning('AssistantService: tool iteration cap hit, forcing a final text answer', [
+        // We force a final-answer call in two situations:
+        //   1. Iter cap reached while still calling tools (the model would have
+        //      kept going forever).
+        //   2. The loop exited cleanly but the model's last reply is filler
+        //      narration ("Let me look that up directly", "That's odd…") — i.e.
+        //      it gave up halfway through reasoning. Without this guard the user
+        //      would just see the give-up sentence as their entire answer.
+        $needsFinalAnswer = $hasToolCalls
+            || ($iterations > 1 && $this->looksLikeFiller($lastContent));
+
+        if ($needsFinalAnswer) {
+            Log::warning('AssistantService: forcing a final text answer', [
+                'reason' => $hasToolCalls ? 'iter_cap' : 'filler_response',
                 'iterations' => $iterations,
             ]);
 
@@ -304,14 +311,19 @@ class AssistantService
 
                 if ($finalText !== '') {
                     $lastContent = $finalText;
+
+                    // Tell the client to drop any partially-streamed content
+                    // and start the bubble fresh from the forced answer. Without
+                    // this the user would see "Let me look that up directly…"
+                    // followed by the actual reply.
+                    if ($onEvent) {
+                        $onEvent('content_reset', null);
+                        $onEvent('content_chunk', ['text' => $finalText]);
+                    }
                 }
 
                 $totalUsage['prompt_tokens'] += (int) ($finalResponse['usage']['prompt_tokens'] ?? 0);
                 $totalUsage['completion_tokens'] += (int) ($finalResponse['usage']['completion_tokens'] ?? 0);
-
-                if ($onEvent && $finalText !== '') {
-                    $onEvent('content_chunk', ['text' => $finalText]);
-                }
             } catch (\Throwable $e) {
                 Log::error('AssistantService: forced final answer failed', ['error' => $e->getMessage()]);
             }
@@ -698,6 +710,51 @@ class AssistantService
      * output is markup, replace it with a friendly fallback so the user sees
      * something useful instead of garbage.
      */
+    /**
+     * Detect when a model has written intent narration ("let me look that up
+     * directly", "that's odd, let me try…") instead of an actual answer. We
+     * see this from small models that get blocked by the duplicate-call guard
+     * and then write a plan they can no longer execute. If the whole reply
+     * looks like filler we re-call with tools disabled to force a real answer.
+     */
+    private function looksLikeFiller(string $text): bool
+    {
+        $t = strtolower(trim($text));
+        if ($t === '') {
+            return false;
+        }
+        // Substantive replies ramble too — only flag *short* messages.
+        if (mb_strlen($t) > 240) {
+            return false;
+        }
+        $patterns = [
+            'let me check',
+            'let me look',
+            'let me try',
+            'let me search',
+            'let me pull',
+            'let me see',
+            "let me find",
+            "i'll check",
+            "i'll look",
+            "i'll search",
+            "i'll pull",
+            "i'll find",
+            "let me have",
+            "that's odd",
+            "that's strange",
+            'one moment',
+            'hold on',
+        ];
+        foreach ($patterns as $p) {
+            if (str_contains($t, $p)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function sanitiseAssistantText(string $text): string
     {
         if ($text === '') {
