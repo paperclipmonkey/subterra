@@ -32,5 +32,8 @@
     },
     "engines": {
         "node": ">=24.0.0"
+    },
+    "overrides": {
+        "teeny-request": "^10.1.2"
     }
 }
