@@ -254,6 +254,33 @@ class AssistantService
                                 'user_progress' => $result['user_progress'] ?? null,
                             ];
                         }
+
+                        // Caves inside a collection are also valid card candidates —
+                        // when the model says "the one you're missing is White Pit"
+                        // we want a White Pit card, even if search_caves was never
+                        // called for it directly.
+                        foreach ($result['caves'] ?? [] as $cave) {
+                            $caveSlug = $cave['slug'] ?? null;
+                            if (!$caveSlug || isset($caveCardBuffer[$caveSlug])) {
+                                continue;
+                            }
+                            $caveCardBuffer[$caveSlug] = [
+                                'id'                => $cave['cave_id'] ?? null,
+                                'name'              => $cave['name'] ?? null,
+                                'slug'              => $caveSlug,
+                                'system_url'        => isset($cave['system_slug'])
+                                    ? "/cave-systems/{$cave['system_slug']}"
+                                    : null,
+                                'preferred_link'    => $cave['preferred_link']
+                                    ?? $cave['cave_url']
+                                    ?? null,
+                                'primary_cave_slug' => $caveSlug,
+                                'primary_cave_url'  => $cave['cave_url'] ?? null,
+                                'location_name'     => $cave['system_name'] ?? null,
+                                'tags'              => [],
+                                'entrance_count'    => 1,
+                            ];
+                        }
                     }
 
                     // Safety injection: if a river gauge is High, add a mandatory warning context
@@ -1111,6 +1138,12 @@ report observations. A recommendation without those details is not useful.
 recommendations (e.g. "what should I try next"), but DO NOT call it for accommodation queries,
 weather/condition checks, or factual questions about a specific named cave. Do not call it twice
 in the same turn.
+
+**Don't recommend caves the user has already done.** When suggesting trips, check
+`all_visited_systems` (every system they've EVER visited, with slugs) — the user has logged
+many trips, not just the last 10 you see in `recent_trips`. Pair with `search_caves(not_visited=true)`
+to filter at query time. Recommending Attborough Swallet to someone who did it 4 years ago is
+exactly what the user notices.
 
 **Be accurate.** Only describe caves using data returned by your tools. Do not use your general
 knowledge to invent details, grades, lengths, or hazard information about specific caves.

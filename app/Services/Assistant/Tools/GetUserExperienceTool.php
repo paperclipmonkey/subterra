@@ -16,7 +16,7 @@ class GetUserExperienceTool implements AssistantTool
             'type' => 'function',
             'function' => [
                 'name' => 'get_user_experience',
-                'description' => 'Get the current user\'s caving experience: recent trips, medals awarded, club memberships, and a count of unique cave systems visited. Always call this first before making recommendations so you can match suggestions to their background.',
+                'description' => "Get the current user's caving experience: recent trips, medals, club memberships, and the FULL list of every cave system they've ever visited (all_visited_systems — name + slug). Use all_visited_systems to filter out already-done caves when recommending — recent_trips only shows the last 10. Always call this first before making personalised recommendations.",
                 'parameters' => [
                     'type' => 'object',
                     'properties' => new \stdClass(),
@@ -65,12 +65,32 @@ class GetUserExperienceTool implements AssistantTool
 
         $totalTrips = DB::table('trip_user')->where('user_id', $user->id)->count();
 
-        $uniqueSystems = DB::table('trip_user')
+        // Full all-time list of systems the user has visited — names + slugs.
+        // Without this the model only sees the last 10 trips and would happily
+        // recommend caves the user did 4 years ago. Capped at 200 to keep the
+        // tool result a reasonable size; users with longer histories will still
+        // get the most recent 200.
+        $visitedSystems = DB::table('trip_user')
             ->join('trips', 'trips.id', '=', 'trip_user.trip_id')
+            ->join('cave_systems', 'cave_systems.id', '=', 'trips.cave_system_id')
             ->where('trip_user.user_id', $user->id)
             ->whereNotNull('trips.cave_system_id')
-            ->distinct()
-            ->count('trips.cave_system_id');
+            ->select([
+                'cave_systems.name as name',
+                'cave_systems.slug as slug',
+                DB::raw('MAX(trips.start_time) as last_visit'),
+                DB::raw('COUNT(*) as visit_count'),
+            ])
+            ->groupBy('cave_systems.id', 'cave_systems.name', 'cave_systems.slug')
+            ->orderByDesc('last_visit')
+            ->limit(200)
+            ->get()
+            ->map(fn ($s) => [
+                'name'        => $s->name,
+                'slug'        => $s->slug,
+                'visit_count' => (int) $s->visit_count,
+                'last_visit'  => $s->last_visit ? date('Y-m-d', strtotime($s->last_visit)) : null,
+            ]);
 
         $approvedClubs = $user->clubs
             ->filter(fn ($c) => $c->pivot->status === 'approved')
@@ -83,11 +103,16 @@ class GetUserExperienceTool implements AssistantTool
         ])->values();
 
         return [
-            'total_trips' => $totalTrips,
-            'unique_systems_visited' => $uniqueSystems,
-            'clubs' => $approvedClubs,
-            'medals' => $medals,
-            'recent_trips' => $recentTrips->values(),
+            'total_trips'             => $totalTrips,
+            'unique_systems_visited'  => $visitedSystems->count(),
+            'clubs'                   => $approvedClubs,
+            'medals'                  => $medals,
+            'recent_trips'            => $recentTrips->values(),
+            'all_visited_systems'     => $visitedSystems->values(),
+            'visited_systems_note'    => 'all_visited_systems lists every cave system the user has '
+                .'EVER visited (most recent first, capped at 200). Check this list before recommending '
+                .'a cave — anything in it is already done. Pair with search_caves(not_visited=true) for '
+                .'truly fresh suggestions.',
         ];
     }
 }

@@ -27,16 +27,20 @@ class GetWeatherForecastTool implements AssistantTool
             'type' => 'function',
             'function' => [
                 'name' => 'get_weather_forecast',
-                'description' => 'Get the weather forecast and live river/rain gauge readings for a cave. ALWAYS call this before recommending any streamway, rising phreatic, or sump-containing cave. High river levels or recent heavy rainfall indicate serious flood risk.',
+                'description' => 'Get the weather forecast and live river/rain gauge readings for a cave. ALWAYS call this before recommending any streamway, rising phreatic, or sump-containing cave. High river levels or recent heavy rainfall indicate serious flood risk. Pass either cave_id (a specific entrance) or cave_system_id (the system, in which case its primary entrance is used) — do NOT pass raw lat/lng.',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [
                         'cave_id' => [
                             'type' => 'integer',
-                            'description' => 'The numeric ID of the cave entrance to check (returned in the "entrances" array from get_cave_details).',
+                            'description' => 'The numeric ID of the cave entrance to check (from the "entrances" array of get_cave_details).',
+                        ],
+                        'cave_system_id' => [
+                            'type' => 'integer',
+                            'description' => 'Alternatively, the cave system ID. The first entrance with coordinates will be used.',
                         ],
                     ],
-                    'required' => ['cave_id'],
+                    'required' => [],
                 ],
             ],
         ];
@@ -44,11 +48,27 @@ class GetWeatherForecastTool implements AssistantTool
 
     public function handle(array $arguments, User $user): array
     {
-        $caveId = (int) ($arguments['cave_id'] ?? 0);
-        $cave = Cave::with('system.catchment')->find($caveId);
+        $caveId       = (int) ($arguments['cave_id'] ?? 0);
+        $caveSystemId = (int) ($arguments['cave_system_id'] ?? 0);
+
+        // Prefer a specific cave; fall back to the system's first entrance with
+        // coordinates so the model has two valid call shapes.
+        $cave = null;
+        if ($caveId > 0) {
+            $cave = Cave::with('system.catchment')->find($caveId);
+        } elseif ($caveSystemId > 0) {
+            $cave = Cave::with('system.catchment')
+                ->where('cave_system_id', $caveSystemId)
+                ->whereNotNull('location_lat')
+                ->whereNotNull('location_lng')
+                ->orderBy('id')
+                ->first();
+        }
 
         if (!$cave) {
-            return ['error' => "Cave with ID {$caveId} not found."];
+            $idLabel = $caveId > 0 ? "cave_id={$caveId}" : ($caveSystemId > 0 ? "cave_system_id={$caveSystemId}" : '(none)');
+
+            return ['error' => "No cave with coordinates found for {$idLabel}. Pass either cave_id (an entrance from get_cave_details) or cave_system_id."];
         }
 
         if (!$cave->location_lat || !$cave->location_lng) {
