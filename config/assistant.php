@@ -43,9 +43,12 @@ return [
         // Maximum conversation turns sent to the model in one request
         'max_history_messages' => 20,
         // Maximum LLM→tool→LLM iterations before forcing a final text answer.
-        // 4 is enough for typical multi-tool flows (e.g. user_exp → search → details → weather)
-        // and prevents the model from spending its whole budget retrying a failed search.
-        'max_tool_iterations' => 4,
+        // 6 covers richer planning flows (user_exp → search → details →
+        // weather → huts → routes) plus a little slack for the model to
+        // recover from a 0-result hint. Anything higher and small models
+        // spiral on duplicate searches; anything lower and good answers get
+        // truncated mid-thought.
+        'max_tool_iterations' => 6,
     ],
 
 ];

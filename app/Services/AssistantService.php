@@ -397,15 +397,24 @@ class AssistantService
                 ]);
 
                 if ($finalText !== '') {
-                    $lastContent = $finalText;
+                    // Append the forced answer to whatever has already been
+                    // streamed. We deliberately do NOT wipe the bubble —
+                    // earlier iterations often contain real, useful reasoning
+                    // (e.g. "you've done 5/6 of Mendip Classics, the missing
+                    // one is White Pit") and replacing them with just the
+                    // forced answer threw that work away. The forced text is
+                    // typically sharp enough to act as a clean wrap-up.
+                    $lastContent = trim($lastContent) === ''
+                        ? $finalText
+                        : trim($lastContent) . "\n\n" . $finalText;
 
-                    // Tell the client to drop any partially-streamed content
-                    // and start the bubble fresh from the forced answer. Without
-                    // this the user would see "Let me look that up directly…"
-                    // followed by the actual reply.
                     if ($onEvent) {
-                        $onEvent('content_reset', null);
-                        $onEvent('content_chunk', ['text' => $finalText]);
+                        // If the streamed bubble is already non-empty, separate
+                        // the forced answer with a blank line so it reads as a
+                        // distinct paragraph rather than running into the prior
+                        // content mid-sentence.
+                        $separator = $iterations > 0 ? "\n\n" : '';
+                        $onEvent('content_chunk', ['text' => $separator . $finalText]);
                     }
                 }
 

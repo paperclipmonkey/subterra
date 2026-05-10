@@ -227,18 +227,6 @@ export const useAssistantStore = defineStore('assistant', {
           break
         }
 
-        case 'content_reset': {
-          // Server detected the model gave up mid-thought (filler narration like
-          // "let me look that up directly") and is about to retry with a forced
-          // final answer. Wipe what we streamed so the user only sees the real
-          // reply that's about to follow.
-          const pending = this.messages.findLast(m => m.pending)
-          if (pending) {
-            pending.content = ''
-          }
-          break
-        }
-
         case 'content': {
           // The server emits this as a "this is the final string" signal at the
           // end of every turn. In streaming mode the bubble is already fully
