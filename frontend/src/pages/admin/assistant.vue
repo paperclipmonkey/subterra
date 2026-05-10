@@ -70,28 +70,35 @@
               <v-icon :icon="mdiCompassOutline" size="16" color="white" />
             </v-avatar>
             <div class="pip-msg-body">
-              <!-- Tool status (only while pending and no streamed content yet) -->
-              <div v-if="msg.pending && !msg.content" class="pip-tool-row">
-                <template v-if="store.activeToolCalls.length">
-                  <span
-                    v-for="tool in store.activeToolCalls"
-                    :key="tool"
-                    class="pip-tool-chip"
-                  >
-                    <v-progress-circular size="10" width="2" indeterminate class="mr-1" />
-                    {{ store.toolLabel(tool) }}
-                  </span>
-                </template>
-                <span v-else class="pip-tool-chip pip-tool-chip--idle">
+              <!-- Initial idle indicator: only before any content has streamed -->
+              <div v-if="msg.pending && !msg.content && !store.activeToolCalls.length" class="pip-tool-row">
+                <span class="pip-tool-chip pip-tool-chip--idle">
                   <v-progress-circular size="10" width="2" indeterminate class="mr-1" />
                   Thinking…
                 </span>
               </div>
 
-              <!-- Rendered reply -->
+              <!-- Rendered reply: keeps growing across iterations. Mid-iteration
+                   reasoning ("you've done lots of Mendip…") is preserved instead
+                   of being wiped when a tool starts. -->
               <div v-if="msg.content" class="pip-bubble pip-bubble--assistant">
                 <MarkdownRenderer :source="msg.content" />
                 <span v-if="msg.streaming" class="pip-cursor" />
+              </div>
+
+              <!-- Active tool-call chips: shown alongside the bubble while a tool
+                   is running. They appear above the bubble before any content is
+                   streamed, and below it after content has begun streaming, so the
+                   user always sees what's happening. -->
+              <div v-if="msg.pending && store.activeToolCalls.length" class="pip-tool-row">
+                <span
+                  v-for="tool in store.activeToolCalls"
+                  :key="tool"
+                  class="pip-tool-chip"
+                >
+                  <v-progress-circular size="10" width="2" indeterminate class="mr-1" />
+                  {{ store.toolLabel(tool) }}
+                </span>
               </div>
 
               <!-- Meta row: elapsed time + copy -->

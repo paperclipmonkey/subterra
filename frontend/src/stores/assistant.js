@@ -198,10 +198,14 @@ export const useAssistantStore = defineStore('assistant', {
         case 'tool_call': {
           const { name, status } = event.data || {}
           if (status === 'running') {
-            // Clear any partial streamed content — we're now in tool-calling mode
+            // Pause the streaming cursor while a tool runs, but KEEP any content
+            // the model has already written. With modern tool-calling models the
+            // text before a tool call is real reasoning ("you've done lots of
+            // Mendip caves, let me see what's nearby…") that's useful to the user.
+            // Wiping it on every tool call meant the user saw text flash in and
+            // disappear.
             const pending = this.messages.findLast(m => m.pending)
             if (pending) {
-              pending.content = ''
               pending.streaming = false
             }
             if (!this.activeToolCalls.includes(name)) {

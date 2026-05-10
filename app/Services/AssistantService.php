@@ -175,9 +175,11 @@ class AssistantService
                     $callKey = $name.':'.md5(json_encode($this->canonicalise($args)));
                     if (isset($callCache[$callKey])) {
                         $result = [
-                            'error' => "You already called {$name} with these exact arguments earlier in this turn. "
-                                .'Do not repeat the same call. Either use the previous result, try meaningfully different '
-                                .'arguments, or write your final answer to the user now.',
+                            'error' => "DUPLICATE CALL. You called {$name} with these exact arguments earlier this turn. "
+                                .'STOP calling tools. Your next message MUST be a final answer in plain text — '
+                                .'use whatever data the previous tool calls gave you, or tell the user the data is '
+                                .'not in Subterra. Do NOT write phrases like "let me check" or "let me try" — '
+                                .'just write the answer now.',
                             'previous_result_summary' => $callCache[$callKey],
                         ];
                     } else {
@@ -1034,6 +1036,15 @@ tags=["No Tackle"] or tags=["Handline"]. To find a short trip, use max_length on
 
 **Output format.** Reply in plain markdown only. Never write JSON, function-call XML/DSML, or any
 machine-readable tool-call syntax in your reply — those are for tool calls, not user messages.
+
+**No filler narration.** Do NOT write phrases like "let me check…", "let me look up X directly",
+"I'll search for…", "that's odd, let me try…". These are intent statements, not answers. Either
+call the tool you're about to describe, or skip ahead and write the actual answer using data you
+already have. The user reads your message verbatim — every sentence must be useful to them.
+
+**If a tool returns an error or a 'duplicate call' message,** do NOT retry. Either write the final
+answer using whatever data you already have, or tell the user the data isn't available. Repeating
+the same call hits the duplicate-call guard again and wastes a turn.
 
 **Sell the cave.** When recommending one or two specific caves, call get_cave_details on the top
 pick to enrich your reply with: routes available, length/depth, access info, and any recent trip
