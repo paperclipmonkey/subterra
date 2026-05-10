@@ -86,10 +86,10 @@ class GetUserExperienceTool implements AssistantTool
             ->limit(200)
             ->get()
             ->map(fn ($s) => [
-                'name'        => $s->name,
-                'slug'        => $s->slug,
+                'name' => $s->name,
+                'slug' => $s->slug,
                 'visit_count' => (int) $s->visit_count,
-                'last_visit'  => $s->last_visit ? date('Y-m-d', strtotime($s->last_visit)) : null,
+                'last_visit' => $s->last_visit ? date('Y-m-d', strtotime($s->last_visit)) : null,
             ]);
 
         $approvedClubs = $user->clubs
@@ -103,13 +103,13 @@ class GetUserExperienceTool implements AssistantTool
         ])->values();
 
         return [
-            'total_trips'             => $totalTrips,
-            'unique_systems_visited'  => $visitedSystems->count(),
-            'clubs'                   => $approvedClubs,
-            'medals'                  => $medals,
-            'recent_trips'            => $recentTrips->values(),
-            'all_visited_systems'     => $visitedSystems->values(),
-            'visited_systems_note'    => 'all_visited_systems lists every cave system the user has '
+            'total_trips' => $totalTrips,
+            'unique_systems_visited' => $visitedSystems->count(),
+            'clubs' => $approvedClubs,
+            'medals' => $medals,
+            'recent_trips' => $recentTrips->values(),
+            'all_visited_systems' => $visitedSystems->values(),
+            'visited_systems_note' => 'all_visited_systems lists every cave system the user has '
                 .'EVER visited (most recent first, capped at 200). Check this list before recommending '
                 .'a cave — anything in it is already done. Pair with search_caves(not_visited=true) for '
                 .'truly fresh suggestions.',

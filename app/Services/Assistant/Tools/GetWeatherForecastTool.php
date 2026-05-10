@@ -48,7 +48,7 @@ class GetWeatherForecastTool implements AssistantTool
 
     public function handle(array $arguments, User $user): array
     {
-        $caveId       = (int) ($arguments['cave_id'] ?? 0);
+        $caveId = (int) ($arguments['cave_id'] ?? 0);
         $caveSystemId = (int) ($arguments['cave_system_id'] ?? 0);
 
         // Prefer a specific cave; fall back to the system's first entrance with

@@ -313,20 +313,20 @@ class AssistantService
                                 continue;
                             }
                             $caveCardBuffer[$caveSlug] = [
-                                'id'                => $cave['cave_id'] ?? null,
-                                'name'              => $cave['name'] ?? null,
-                                'slug'              => $caveSlug,
-                                'system_url'        => isset($cave['system_slug'])
+                                'id' => $cave['cave_id'] ?? null,
+                                'name' => $cave['name'] ?? null,
+                                'slug' => $caveSlug,
+                                'system_url' => isset($cave['system_slug'])
                                     ? "/cave-systems/{$cave['system_slug']}"
                                     : null,
-                                'preferred_link'    => $cave['preferred_link']
+                                'preferred_link' => $cave['preferred_link']
                                     ?? $cave['cave_url']
                                     ?? null,
                                 'primary_cave_slug' => $caveSlug,
-                                'primary_cave_url'  => $cave['cave_url'] ?? null,
-                                'location_name'     => $cave['system_name'] ?? null,
-                                'tags'              => [],
-                                'entrance_count'    => 1,
+                                'primary_cave_url' => $cave['cave_url'] ?? null,
+                                'location_name' => $cave['system_name'] ?? null,
+                                'tags' => [],
+                                'entrance_count' => 1,
                             ];
                         }
                     }
@@ -849,13 +849,13 @@ class AssistantService
             'let me search',
             'let me pull',
             'let me see',
-            "let me find",
+            'let me find',
             "i'll check",
             "i'll look",
             "i'll search",
             "i'll pull",
             "i'll find",
-            "let me have",
+            'let me have',
             "that's odd",
             "that's strange",
             'one moment',
