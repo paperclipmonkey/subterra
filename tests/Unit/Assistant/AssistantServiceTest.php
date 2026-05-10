@@ -136,7 +136,9 @@ class AssistantServiceTest extends TestCase
             $user
         );
 
-        $this->assertStringContainsString('unable to generate', $result);
+        // Fallback now invites the user to rephrase rather than the older
+        // "unable to generate" wording — that one read like a hard error.
+        $this->assertStringContainsString('rephrase your question', $result);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

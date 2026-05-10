@@ -28,6 +28,7 @@ class AssistantDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->cleanupFabricatedTags();
         $this->seedCuratedCaves();
         $this->seedYorkshireHuts();
         $this->seedPermitWithBookings();
@@ -35,8 +36,38 @@ class AssistantDemoSeeder extends Seeder
         $demoCaver = $this->seedDemoCaver();
         $this->seedCollections($demoCaver);
 
+        // Tag taxonomy is cached for 10 minutes in the assistant service — bust
+        // it now so the next chat turn picks up the fresh state.
+        \Illuminate\Support\Facades\Cache::forget('assistant.tag_taxonomy.v1');
+
         $this->command->info('Seeded curated caves, Yorkshire huts, permit + bookings, trip reports, demo caver, and collections.');
         $this->command->info("Demo caver user ID: {$demoCaver->id}  (use --user={$demoCaver->id} for assistant evals)");
+    }
+
+    /**
+     * Earlier versions of this seeder attached fabricated difficulty/style tags
+     * (Sporting, Beginner, Hard, Severe, Streamway, Through Trip, Showcave) to
+     * the curated demo caves. We've since established those aren't real
+     * Subterra tags — but `syncWithoutDetaching` never removed them, so they
+     * persisted in databases that ran the older seeder. Detach them now and
+     * delete the orphaned tag rows so the assistant's live taxonomy view is
+     * accurate.
+     */
+    private function cleanupFabricatedTags(): void
+    {
+        $fabricated = ['Sporting', 'Beginner', 'Hard', 'Severe', 'Streamway', 'Through Trip', 'Showcave'];
+
+        $tagIds = \App\Models\Tag::whereIn('tag', $fabricated)
+            ->whereIn('category', ['difficulty', 'style'])
+            ->pluck('id');
+
+        if ($tagIds->isEmpty()) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\DB::table('cave_system_tag')->whereIn('tag_id', $tagIds)->delete();
+        \Illuminate\Support\Facades\DB::table('cave_tag')->whereIn('tag_id', $tagIds)->delete();
+        \App\Models\Tag::whereIn('id', $tagIds)->delete();
     }
 
     /**

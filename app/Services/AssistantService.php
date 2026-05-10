@@ -89,8 +89,14 @@ class AssistantService
         ]);
 
         $maxIterations = (int) config('assistant.limits.max_tool_iterations', 5);
+        // Hard cap on TOTAL tool dispatches (vs iterations) — some models batch
+        // 4-5 parallel tool calls per iteration, so the iter cap alone lets a
+        // turn balloon to 12+ tool calls (and 200s of latency) before forced
+        // recovery. This stops that.
+        $maxTotalToolCalls = (int) config('assistant.limits.max_total_tool_calls', 10);
         $iterations = 0;
         $lastContent = '';
+        $toolCallsThisTurn = 0;
 
         /** @var string[] $toolsUsed Names of all tools dispatched during this turn */
         $toolsUsed = [];
@@ -192,6 +198,7 @@ class AssistantService
                     }
 
                     $toolsUsed[] = $name;
+                    $toolCallsThisTurn++;
 
                     if ($onEvent) {
                         $onEvent('tool_call', [
@@ -349,7 +356,7 @@ class AssistantService
             }
 
             ++$iterations;
-        } while ($hasToolCalls && $iterations < $maxIterations);
+        } while ($hasToolCalls && $iterations < $maxIterations && $toolCallsThisTurn < $maxTotalToolCalls);
 
         // We force a final-answer call in two situations:
         //   1. Iter cap reached while still calling tools (the model would have
@@ -480,7 +487,9 @@ class AssistantService
             $onEvent('usage', $totalUsage);
         }
 
-        $finalContent = $lastContent ?: 'I was unable to generate a response. Please try again.';
+        $finalContent = $lastContent ?: "I wasn't able to put together a clear answer this time — the "
+            ."model didn't return useful text. Could you rephrase your question, or try asking about "
+            .'a specific cave by name?';
 
         $this->logVerbose('turn.end', [
             'turn_id' => $turnId,
@@ -1157,6 +1166,53 @@ class AssistantService
         ];
     }
 
+    /**
+     * Build a live, grouped taxonomy of tags actually present in the database,
+     * with cave-system usage counts. Injected into the system prompt so the
+     * model sees what's truly searchable rather than a hard-coded list that
+     * can drift from reality.
+     *
+     * Cached for a few minutes — tag counts don't change often and the prompt
+     * runs on every chat turn.
+     */
+    private function buildTagTaxonomy(): string
+    {
+        return \Illuminate\Support\Facades\Cache::remember(
+            'assistant.tag_taxonomy.v1',
+            now()->addMinutes(10),
+            function (): string {
+                $rows = \Illuminate\Support\Facades\DB::table('tags')
+                    ->leftJoin('cave_system_tag', 'cave_system_tag.tag_id', '=', 'tags.id')
+                    ->select([
+                        'tags.tag',
+                        'tags.category',
+                        \Illuminate\Support\Facades\DB::raw('COUNT(cave_system_tag.cave_system_id) as system_count'),
+                    ])
+                    ->where('tags.type', 'cave')
+                    ->whereNotIn('tags.category', ['previously done'])
+                    ->groupBy('tags.id', 'tags.tag', 'tags.category')
+                    ->orderBy('tags.category')
+                    ->orderByDesc(\Illuminate\Support\Facades\DB::raw('COUNT(cave_system_tag.cave_system_id)'))
+                    ->orderBy('tags.tag')
+                    ->get();
+
+                if ($rows->isEmpty()) {
+                    return '(no tags currently defined)';
+                }
+
+                $byCategory = $rows->groupBy(fn ($r) => $r->category ?: 'other');
+
+                $lines = [];
+                foreach ($byCategory as $category => $categoryRows) {
+                    $entries = $categoryRows->map(fn ($r) => $r->tag.' ('.$r->system_count.')')->implode(', ');
+                    $lines[] = "- {$category}: {$entries}";
+                }
+
+                return implode("\n", $lines);
+            }
+        );
+    }
+
     private function buildSystemPrompt(User $user): string
     {
         $user->loadMissing('clubs');
@@ -1167,6 +1223,7 @@ class AssistantService
 
         $date = now()->format('l, j F Y');
         $month = (int) now()->format('n');
+        $tagTaxonomy = $this->buildTagTaxonomy();
 
         $seasonalContext = match (true) {
             in_array($month, [12, 1, 2], true) => 'It is currently winter in the UK. Many upland caves (Dales, Brecon, Mendip) will '
@@ -1205,28 +1262,36 @@ Clubs: {$clubs}
 
 ## Your Guidelines
 
-**Tool budget is small.** You may make at most 4 tool calls per turn — usually 2-3 is plenty.
-Plan before calling. Do NOT call the same tool repeatedly hoping for a better result. If a search
-returns 0 results or unhelpful results, accept that, tell the user the data isn't in Subterra, and
-suggest they try a different region/tag/name. Searching again with variations is almost always
-the wrong move.
+**Tool budget is small.** You have a hard limit of about 10 total tool dispatches per turn,
+across 6 LLM round-trips. Plan before calling. Do NOT call the same tool repeatedly hoping for a
+better result. If a search returns 0 results or unhelpful results, accept that, tell the user the
+data isn't in Subterra, and suggest they try a different region/tag/name. Searching again with
+variations is almost always the wrong move.
 
-**Valid tag values.** Only use tags from this taxonomy — anything else returns 0 results:
-- region: Yorkshire, Mendip, South Wales, North Wales, Peak District, Forest of Dean, Devon, Portland, Assynt
-- tackle: SRT, Ladder, Handline, No Tackle
-- access: Open, Permit, Padlocked, Warden, Keycode, Closed
+**Commit, don't browse.** For broad "what should I try / recommend something" queries: do at
+most ONE round of searches across regions, pick the best candidate from what came back, optionally
+call get_cave_details on JUST THAT candidate, then write the answer. Do NOT search every region in
+parallel, then list_collections, then get_cave_details on three options — that blows the budget
+and produces a paralysed response. One candidate, recommended confidently, beats five alternatives
+hedged. The user can always ask for more.
 
-Subterra does NOT have free-form difficulty tags like "Beginner", "Sporting", "Hard", "Severe",
-"Streamway", "Through Trip", or "Showcave" — those are NOT real tags and will return 0 results.
+**Valid tag values.** This is the complete real tag taxonomy in Subterra, computed live from
+the database. The number after each tag is how many cave systems carry it — tags with low
+counts are barely populated, so a search filter against them is unlikely to return much.
+Only use tags that appear in this list. Anything else returns 0 results.
 
-To gauge difficulty / character, instead use:
+{$tagTaxonomy}
+
+Tags like "Beginner", "Sporting", "Hard", "Severe", "Streamway", "Through Trip", or "Showcave"
+are NOT real tags in Subterra (the user's vocabulary doesn't always match the data). To gauge
+difficulty / character, instead use:
 - the cave system's `length` and `vertical_range` (via min_length / max_length on search_caves)
 - the routes returned by list_routes — each carries a `grade` field
 - tackle tags (SRT, Ladder, Handline, No Tackle) as a rough proxy for technicality
 - the system's description and any recent trip reports for prose hints
 
-If a user asks for "sporting Mendip caves", search by region=Mendip and use length/grade in your
-judgement when summarising — do not pass tags=["Sporting"].
+If a user asks for "sporting Mendip caves", search by region=Mendip and judge from
+length/vertical_range/route grades — do not invent a "Sporting" tag.
 
 **Curated by default.** search_caves only returns curated (well-documented, worth-visiting) cave
 systems unless you pass include_obscure=true. Subterra also catalogues thousands of minor

@@ -49,6 +49,11 @@ return [
         // spiral on duplicate searches; anything lower and good answers get
         // truncated mid-thought.
         'max_tool_iterations' => 6,
+        // Hard cap on TOTAL individual tool dispatches in one turn (vs the
+        // iter cap, which limits LLM round-trips). Without this, models that
+        // batch many parallel calls per iteration can blow past the iter cap
+        // in 1-2 rounds and rack up 200s+ of latency before forced recovery.
+        'max_total_tool_calls' => 10,
     ],
 
 ];
