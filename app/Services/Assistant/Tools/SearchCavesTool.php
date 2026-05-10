@@ -89,20 +89,33 @@ class SearchCavesTool implements AssistantTool
             $region = (string) $arguments['region'];
             $aliases = $this->expandRegionSearchTerms($region);
 
+            // Case-insensitive match — PostgreSQL's `LIKE` is case-sensitive by
+            // default, which meant region="Mendips" missed tags spelled "Mendip"
+            // and slugs spelled "mendips_*". LOWER() works on both PG and SQLite.
             $query->where(function ($outer) use ($aliases) {
                 foreach ($aliases as $term) {
-                    $outer->orWhereExists(function ($sub) use ($term) {
+                    $needle = '%'.strtolower($term).'%';
+                    $outer->orWhereExists(function ($sub) use ($needle) {
                         $sub->select(DB::raw(1))
                             ->from('caves as region_caves')
                             ->whereColumn('region_caves.cave_system_id', 'cave_systems.id')
-                            ->where('region_caves.location_name', 'like', "%{$term}%");
+                            ->whereRaw('LOWER(region_caves.location_name) LIKE ?', [$needle]);
                     });
-                    $outer->orWhereExists(function ($sub) use ($term) {
+                    $outer->orWhereExists(function ($sub) use ($needle) {
                         $sub->select(DB::raw(1))
                             ->from('cave_system_tag')
                             ->join('tags', 'tags.id', '=', 'cave_system_tag.tag_id')
                             ->whereColumn('cave_system_tag.cave_system_id', 'cave_systems.id')
-                            ->where('tags.tag', 'like', "%{$term}%");
+                            ->whereRaw('LOWER(tags.tag) LIKE ?', [$needle]);
+                    });
+                    // Also match the cave slug prefix (e.g. `mendips_*`) so we catch
+                    // systems whose data uses a regional slug convention even when
+                    // the tag isn't applied.
+                    $outer->orWhereExists(function ($sub) use ($needle) {
+                        $sub->select(DB::raw(1))
+                            ->from('caves as slug_caves')
+                            ->whereColumn('slug_caves.cave_system_id', 'cave_systems.id')
+                            ->whereRaw('LOWER(slug_caves.slug) LIKE ?', [$needle]);
                     });
                 }
             });

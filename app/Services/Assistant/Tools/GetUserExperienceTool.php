@@ -76,6 +76,7 @@ class GetUserExperienceTool implements AssistantTool
             ->where('trip_user.user_id', $user->id)
             ->whereNotNull('trips.cave_system_id')
             ->select([
+                'cave_systems.id as system_id',
                 'cave_systems.name as name',
                 'cave_systems.slug as slug',
                 DB::raw('MAX(trips.start_time) as last_visit'),
@@ -84,13 +85,33 @@ class GetUserExperienceTool implements AssistantTool
             ->groupBy('cave_systems.id', 'cave_systems.name', 'cave_systems.slug')
             ->orderByDesc('last_visit')
             ->limit(200)
-            ->get()
-            ->map(fn ($s) => [
-                'name' => $s->name,
-                'slug' => $s->slug,
-                'visit_count' => (int) $s->visit_count,
-                'last_visit' => $s->last_visit ? date('Y-m-d', strtotime($s->last_visit)) : null,
-            ]);
+            ->get();
+
+        // Pull region tags for each visited system in a single query so we can
+        // annotate the response. Without this the model can't tell that
+        // "Ogof Draenen" is South Wales not Mendip — it just guesses from the
+        // name and sometimes gets it wrong.
+        $systemIds = $visitedSystems->pluck('system_id')->all();
+        $regionsBySystem = [];
+        if (!empty($systemIds)) {
+            $regionsBySystem = DB::table('cave_system_tag')
+                ->join('tags', 'tags.id', '=', 'cave_system_tag.tag_id')
+                ->whereIn('cave_system_tag.cave_system_id', $systemIds)
+                ->where('tags.category', 'region')
+                ->select(['cave_system_tag.cave_system_id', 'tags.tag'])
+                ->get()
+                ->groupBy('cave_system_id')
+                ->map(fn ($rows) => $rows->pluck('tag')->unique()->values()->all())
+                ->all();
+        }
+
+        $visitedSystems = $visitedSystems->map(fn ($s) => [
+            'name' => $s->name,
+            'slug' => $s->slug,
+            'regions' => $regionsBySystem[$s->system_id] ?? [],
+            'visit_count' => (int) $s->visit_count,
+            'last_visit' => $s->last_visit ? date('Y-m-d', strtotime($s->last_visit)) : null,
+        ]);
 
         $approvedClubs = $user->clubs
             ->filter(fn ($c) => $c->pivot->status === 'approved')
