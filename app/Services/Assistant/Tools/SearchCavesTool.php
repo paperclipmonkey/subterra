@@ -45,6 +45,10 @@ class SearchCavesTool implements AssistantTool
                             'type' => 'boolean',
                             'description' => 'If true, only return systems the user has not yet visited.',
                         ],
+                        'include_obscure' => [
+                            'type' => 'boolean',
+                            'description' => 'Default false. By default this tool returns only "curated" cave systems — well-documented caves worth visiting. Subterra also catalogues thousands of minor sinkholes and uncurated entries that are noise for most queries; set this to true ONLY if the user explicitly asks for obscure / minor / dig-site caves.',
+                        ],
                     ],
                     'required' => [],
                 ],
@@ -136,6 +140,38 @@ class SearchCavesTool implements AssistantTool
                 ->pluck('trips.cave_system_id');
 
             $query->whereNotIn('cave_systems.id', $visitedIds);
+        }
+
+        // Default to "curated" caves only — Subterra's database includes thousands
+        // of minor sinkholes and uncurated entries that are noise for most queries.
+        // Caller can pass include_obscure=true to opt into the long tail.
+        // The exception: a name= search bypasses the curated filter, since the
+        // user has named a specific cave and expects to find it whether or not
+        // it's been blessed as curated.
+        $includeObscure = !empty($arguments['include_obscure']);
+        $hasName = !empty($arguments['name']);
+        if (!$includeObscure && !$hasName) {
+            // Wrap the OR in a where-group so it doesn't bleed into earlier
+            // top-level WHERE conditions (e.g. min_length, region).
+            $query->where(function ($outer) {
+                $outer->whereExists(function ($sub) {
+                    $sub->select(DB::raw(1))
+                        ->from('cave_system_tag')
+                        ->join('tags', 'tags.id', '=', 'cave_system_tag.tag_id')
+                        ->whereColumn('cave_system_tag.cave_system_id', 'cave_systems.id')
+                        ->where('tags.tag', 'Curated');
+                })
+                    // Some legacy data lives on caves rather than systems — accept
+                    // either side being tagged Curated.
+                    ->orWhereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('cave_tag')
+                            ->join('caves', 'caves.id', '=', 'cave_tag.cave_id')
+                            ->join('tags', 'tags.id', '=', 'cave_tag.tag_id')
+                            ->whereColumn('caves.cave_system_id', 'cave_systems.id')
+                            ->where('tags.tag', 'Curated');
+                    });
+            });
         }
 
         $systems = $query->orderBy('cave_systems.name')->limit(10)->get();

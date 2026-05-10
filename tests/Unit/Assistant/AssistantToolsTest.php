@@ -113,10 +113,34 @@ class AssistantToolsTest extends TestCase
         $user = User::factory()->create();
         $tool = new SearchCavesTool();
 
-        $result = $tool->handle([], $user);
+        // include_obscure bypasses the curated filter so this test stays focused
+        // on the "no filter = no exclusion" semantics rather than the curated default.
+        $result = $tool->handle(['include_obscure' => true], $user);
 
         $this->assertArrayHasKey('cave_systems', $result);
         $this->assertCount(3, $result['cave_systems']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function search_caves_filters_to_curated_only_by_default(): void
+    {
+        $curatedTag = \App\Models\Tag::firstOrCreate(
+            ['tag' => 'Curated', 'type' => 'cave', 'category' => 'curated']
+        );
+
+        $curated = CaveSystem::factory()->create(['name' => 'Curated Cave']);
+        $curated->tags()->attach($curatedTag->id);
+
+        CaveSystem::factory()->create(['name' => 'Uncurated Sinkhole']);
+
+        $user = User::factory()->create();
+        $tool = new SearchCavesTool();
+
+        $result = $tool->handle([], $user);
+
+        $names = array_column($result['cave_systems'], 'name');
+        $this->assertContains('Curated Cave', $names);
+        $this->assertNotContains('Uncurated Sinkhole', $names);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -127,7 +151,7 @@ class AssistantToolsTest extends TestCase
         $user = User::factory()->create();
         $tool = new SearchCavesTool();
 
-        $result = $tool->handle(['min_length' => 1000], $user);
+        $result = $tool->handle(['min_length' => 1000, 'include_obscure' => true], $user);
 
         $names = array_column($result['cave_systems'], 'name');
         $this->assertContains('Long Cave', $names);
@@ -142,7 +166,7 @@ class AssistantToolsTest extends TestCase
         $user = User::factory()->create();
         $tool = new SearchCavesTool();
 
-        $result = $tool->handle(['max_length' => 500], $user);
+        $result = $tool->handle(['max_length' => 500, 'include_obscure' => true], $user);
 
         $names = array_column($result['cave_systems'], 'name');
         $this->assertContains('Short Cave', $names);
@@ -165,7 +189,7 @@ class AssistantToolsTest extends TestCase
         $trip->participants()->attach($user->id);
 
         $tool = new SearchCavesTool();
-        $result = $tool->handle(['not_visited' => true], $user);
+        $result = $tool->handle(['not_visited' => true, 'include_obscure' => true], $user);
 
         $names = array_column($result['cave_systems'], 'name');
         $this->assertContains('Unvisited Cave', $names);
@@ -190,7 +214,7 @@ class AssistantToolsTest extends TestCase
         $user = User::factory()->create();
         $tool = new SearchCavesTool();
 
-        $result = $tool->handle(['region' => 'Yorkshire'], $user);
+        $result = $tool->handle(['region' => 'Yorkshire', 'include_obscure' => true], $user);
 
         $names = array_column($result['cave_systems'], 'name');
         $this->assertContains('Yorkshire Cave', $names);
@@ -204,7 +228,7 @@ class AssistantToolsTest extends TestCase
         $user = User::factory()->create();
         $tool = new SearchCavesTool();
 
-        $result = $tool->handle([], $user);
+        $result = $tool->handle(['include_obscure' => true], $user);
 
         $this->assertLessThanOrEqual(10, count($result['cave_systems']));
     }
@@ -225,7 +249,7 @@ class AssistantToolsTest extends TestCase
 
         $user = User::factory()->create();
         $tool = new SearchCavesTool();
-        $result = $tool->handle([], $user);
+        $result = $tool->handle(['include_obscure' => true], $user);
 
         $found = collect($result['cave_systems'])->firstWhere('name', 'Graded Cave');
         $this->assertNotNull($found, 'Graded Cave should appear in results');
@@ -243,7 +267,7 @@ class AssistantToolsTest extends TestCase
         $tool = new SearchCavesTool();
 
         // min_length is larger than every cave — result set is empty
-        $result = $tool->handle(['min_length' => 999999], $user);
+        $result = $tool->handle(['min_length' => 999999, 'include_obscure' => true], $user);
 
         $this->assertSame(0, $result['count']);
         $this->assertEmpty($result['cave_systems']);

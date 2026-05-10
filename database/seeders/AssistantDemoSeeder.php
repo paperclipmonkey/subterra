@@ -154,7 +154,11 @@ class AssistantDemoSeeder extends Seeder
                 ]
             );
 
-            $tagIds = Tag::whereIn('tag', $entry['tags'])->pluck('id')->all();
+            // Always include the Curated tag — these are well-known UK caves,
+            // not minor sinkholes. The assistant's search_caves tool defaults to
+            // Curated-only results, so without this they'd be filtered out.
+            $tagNames = array_unique(array_merge($entry['tags'], ['Curated']));
+            $tagIds = Tag::whereIn('tag', $tagNames)->pluck('id')->all();
             $system->tags()->syncWithoutDetaching($tagIds);
 
             foreach ($entry['entrances'] as $cave) {
@@ -170,6 +174,7 @@ class AssistantDemoSeeder extends Seeder
                         'access_info' => $cave['access_info'] ?? null,
                     ]
                 );
+                // tagIds already contains Curated from the system loop above
                 $caveModel->tags()->syncWithoutDetaching($tagIds);
             }
         }

@@ -4,7 +4,7 @@
       <v-col v-if="isPlatformAdmin" cols="12" md="6">
         <v-card :to="{ path: '/admin/assistant' }" link height="150" class="d-flex align-center justify-center pip-tile">
           <div class="text-center">
-            <v-icon size="48" color="primary" class="mb-2" :icon="mdiCompassOutline" />
+            <img src="/pip.png" alt="Pip" class="pip-tile-avatar mb-2">
             <div class="text-h5">
               Pip
               <v-chip color="warning" variant="tonal" size="x-small" class="ml-1">Preview</v-chip>
@@ -101,7 +101,7 @@
 </template>
 
 <script setup>
-import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiCompassOutline, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
+import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useOfflineStore } from '@/stores/offline'
 import { computed } from 'vue'
@@ -116,3 +116,13 @@ const isPlatformAdmin = computed(
   () => userStore.user?.roles?.some(r => r.slug === 'platform_admin') ?? false
 )
 </script>
+
+<style scoped>
+.pip-tile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+}
+</style>

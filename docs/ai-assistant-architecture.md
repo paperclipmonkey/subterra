@@ -336,8 +336,31 @@ Most behaviour can be tuned without touching code. The interesting ones in
 | `openrouter.temperature`             | 0.0 = deterministic, 1.0 = creative                                   |
 | `provider.order`                     | Comma-list of preferred providers (`ASSISTANT_PROVIDER_ORDER`)        |
 | `streaming`                          | `false` disables SSE — useful for tests, eval CLI                     |
+| `verbose_logging`                    | `true` writes full request/response trace to laravel.log (`ASSISTANT_VERBOSE_LOGGING`) |
 | `limits.max_history_messages`        | How many prior messages to send to the model (default 20)             |
 | `limits.max_tool_iterations`         | Tool-call rounds per turn before forced final answer (default 4)      |
+
+### Debugging with verbose logging
+
+Set `ASSISTANT_VERBOSE_LOGGING=true` in `.env` and tail the log:
+
+```bash
+tail -f storage/logs/laravel.log | grep '\[Pip\]'
+```
+
+You'll see a turn unfold across these events, every line tagged with the
+turn id so you can filter to a single conversation:
+
+| Event                    | What it logs                                          |
+| ------------------------ | ----------------------------------------------------- |
+| `[Pip] turn.start`       | User, model, system-prompt size, incoming messages    |
+| `[Pip] llm.request`      | Iteration number, context size, # tools offered       |
+| `[Pip] llm.response`     | Finish reason, full content, tool calls + args, usage |
+| `[Pip] tool.dispatch`    | Tool name + args before it runs                       |
+| `[Pip] tool.result`      | Full tool result                                      |
+| `[Pip] tool.duplicate`   | Dedup blocked an identical retry                      |
+| `[Pip] forced_final.*`   | The forced-final-answer pass (if it fired)            |
+| `[Pip] turn.end`         | Total tokens, tools used, elapsed ms, final content   |
 
 The route itself in `routes/api.php` controls auth and rate-limit:
 

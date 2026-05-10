@@ -32,6 +32,13 @@ return [
     // Enable SSE token streaming for the final response. Set to false in test environments.
     'streaming' => env('ASSISTANT_STREAMING', true),
 
+    // Verbose request/response logging to the standard Laravel log channel
+    // (storage/logs/laravel.log). Every entry is prefixed `[Pip]` so you can
+    // tail and grep, e.g. `tail -f storage/logs/laravel.log | grep '\[Pip\]'`.
+    // Off by default — turn on for dev debugging only; logs include user
+    // messages, model output, and tool args/results.
+    'verbose_logging' => env('ASSISTANT_VERBOSE_LOGGING', false),
+
     'limits' => [
         // Maximum conversation turns sent to the model in one request
         'max_history_messages' => 20,

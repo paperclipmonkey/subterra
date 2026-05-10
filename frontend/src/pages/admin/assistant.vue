@@ -3,9 +3,8 @@
     <!-- Header -->
     <header class="pip-header">
       <div class="pip-header-inner">
-        <v-avatar size="36" class="pip-avatar mr-3">
-          <v-icon :icon="mdiCompassOutline" size="20" color="white" />
-        </v-avatar>
+        <v-avatar size="36" class="pip-avatar mr-3" image="/pip.png" alt="Pip" />
+
         <div class="flex-grow-1 min-width-0">
           <div class="d-flex align-center ga-2">
             <h2 class="pip-title">Pip</h2>
@@ -36,9 +35,8 @@
     <div ref="streamEl" class="pip-stream">
       <!-- Welcome screen -->
       <div v-if="!store.hasMessages && !store.error" class="pip-welcome">
-        <div class="pip-welcome-avatar">
-          <v-icon :icon="mdiCompassOutline" size="44" color="white" />
-        </div>
+        <img src="/pip.png" alt="Pip" class="pip-welcome-avatar">
+
         <h3 class="pip-welcome-title">Hi, I'm Pip</h3>
         <p class="pip-welcome-tagline">
           Cave recommendations, conditions, trip reports and weekend planning — pick a starter or just ask.
@@ -66,12 +64,16 @@
 
           <!-- Assistant message -->
           <div v-else class="pip-row pip-row--assistant">
-            <v-avatar size="28" class="pip-msg-avatar">
-              <v-icon :icon="mdiCompassOutline" size="16" color="white" />
-            </v-avatar>
+            <v-avatar size="28" class="pip-msg-avatar" image="/pip.png" alt="Pip" />
+
             <div class="pip-msg-body">
-              <!-- Initial idle indicator: only before any content has streamed -->
-              <div v-if="msg.pending && !msg.content && !store.activeToolCalls.length" class="pip-tool-row">
+              <!-- Initial idle indicator. Shown when the message is pending,
+                   no tools are running, AND nothing meaningful has streamed.
+                   We use msg.content?.trim() because some models (Kimi K2.6)
+                   return whitespace-only content alongside a tool call, which
+                   would otherwise hide this chip and leave the user staring at
+                   an empty bubble. -->
+              <div v-if="msg.pending && !msg.content?.trim() && !store.activeToolCalls.length" class="pip-tool-row">
                 <span class="pip-tool-chip pip-tool-chip--idle">
                   <v-progress-circular size="10" width="2" indeterminate class="mr-1" />
                   Thinking…
@@ -80,8 +82,9 @@
 
               <!-- Rendered reply: keeps growing across iterations. Mid-iteration
                    reasoning ("you've done lots of Mendip…") is preserved instead
-                   of being wiped when a tool starts. -->
-              <div v-if="msg.content" class="pip-bubble pip-bubble--assistant">
+                   of being wiped when a tool starts. Whitespace-only content is
+                   treated as no content. -->
+              <div v-if="msg.content?.trim()" class="pip-bubble pip-bubble--assistant">
                 <MarkdownRenderer :source="msg.content" />
                 <span v-if="msg.streaming" class="pip-cursor" />
               </div>
@@ -102,7 +105,7 @@
               </div>
 
               <!-- Meta row: elapsed time + copy -->
-              <div v-if="!msg.pending && !msg.streaming && msg.content" class="pip-meta">
+              <div v-if="!msg.pending && !msg.streaming && msg.content?.trim()" class="pip-meta">
                 <span v-if="msg.elapsedMs" class="pip-meta-time">
                   <v-icon :icon="mdiClockOutline" size="11" class="mr-1" />
                   {{ formatElapsed(msg.elapsedMs) }}
@@ -486,7 +489,7 @@ onMounted(() => {
   padding: 12px var(--pip-gutter);
 }
 .pip-avatar {
-  background: linear-gradient(135deg, #1867c0 0%, #5b9bff 100%);
+  background: #fff;
   box-shadow: 0 2px 8px rgba(24, 103, 192, 0.25);
 }
 .pip-title {
@@ -524,14 +527,13 @@ onMounted(() => {
   text-align: center;
 }
 .pip-welcome-avatar {
-  width: 76px;
-  height: 76px;
+  display: block;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1867c0 0%, #5b9bff 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   margin: 0 auto 18px;
+  object-fit: cover;
+  background: #fff;
   box-shadow: 0 12px 32px rgba(24, 103, 192, 0.3);
 }
 .pip-welcome-title {
@@ -590,9 +592,10 @@ onMounted(() => {
   gap: 10px;
 }
 .pip-msg-avatar {
-  background: linear-gradient(135deg, #1867c0 0%, #5b9bff 100%);
+  background: #fff;
   flex-shrink: 0;
   margin-top: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 .pip-msg-body {
   flex: 1 1 auto;

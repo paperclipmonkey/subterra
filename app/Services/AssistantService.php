@@ -77,6 +77,17 @@ class AssistantService
         $context = array_merge([$systemMessage], $cappedMessages);
         $toolDefinitions = $this->getToolDefinitions();
 
+        $turnId = uniqid('pip_', true);
+        $this->logVerbose('turn.start', [
+            'turn_id' => $turnId,
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'model' => config('assistant.openrouter.model'),
+            'provider_order' => (array) config('assistant.provider.order', []),
+            'incoming_messages' => $cappedMessages,
+            'system_prompt_chars' => mb_strlen($systemMessage['content']),
+        ]);
+
         $maxIterations = (int) config('assistant.limits.max_tool_iterations', 5);
         $iterations = 0;
         $lastContent = '';
@@ -111,6 +122,14 @@ class AssistantService
         $useStreaming = config('assistant.streaming', true) && $onEvent !== null;
 
         do {
+            $this->logVerbose('llm.request', [
+                'turn_id' => $turnId,
+                'iteration' => $iterations + 1,
+                'streaming' => $useStreaming,
+                'context_messages' => count($context),
+                'tools_offered' => count($toolDefinitions),
+            ]);
+
             if ($useStreaming) {
                 $response = $this->callOpenRouterStreaming(
                     $context,
@@ -126,6 +145,20 @@ class AssistantService
             $message = $choice['message'] ?? [];
             $lastContent = $message['content'] ?? '';
             $finishReason = $choice['finish_reason'] ?? null;
+
+            $this->logVerbose('llm.response', [
+                'turn_id' => $turnId,
+                'iteration' => $iterations + 1,
+                'finish_reason' => $finishReason,
+                'content' => $lastContent,
+                'tool_calls' => collect($message['tool_calls'] ?? [])
+                    ->map(fn ($tc) => [
+                        'name' => $tc['function']['name'] ?? null,
+                        'arguments' => $tc['function']['arguments'] ?? null,
+                    ])
+                    ->all(),
+                'usage' => $response['usage'] ?? null,
+            ]);
 
             // Accumulate token usage across all iterations
             $totalUsage['prompt_tokens'] += (int) ($response['usage']['prompt_tokens'] ?? 0);
@@ -182,8 +215,23 @@ class AssistantService
                                 .'just write the answer now.',
                             'previous_result_summary' => $callCache[$callKey],
                         ];
+                        $this->logVerbose('tool.duplicate', [
+                            'turn_id' => $turnId,
+                            'name' => $name,
+                            'args' => $args,
+                        ]);
                     } else {
+                        $this->logVerbose('tool.dispatch', [
+                            'turn_id' => $turnId,
+                            'name' => $name,
+                            'args' => $args,
+                        ]);
                         $result = $this->dispatchTool($name, $args, $user);
+                        $this->logVerbose('tool.result', [
+                            'turn_id' => $turnId,
+                            'name' => $name,
+                            'result' => $result,
+                        ]);
                         // Cache a small fingerprint, not the full result — just enough
                         // to remind the model what came back.
                         $callCache[$callKey] = $this->summariseResult($name, $result);
@@ -331,10 +379,22 @@ class AssistantService
             ];
 
             try {
+                $this->logVerbose('forced_final.request', [
+                    'turn_id' => $turnId,
+                    'reason' => $hasToolCalls ? 'iter_cap' : 'filler_response',
+                    'context_messages' => count($context),
+                ]);
                 $finalResponse = $this->callOpenRouterFinalAnswer($context, $apiKey);
                 $finalChoice = $finalResponse['choices'][0] ?? [];
                 $finalMessage = $finalChoice['message'] ?? [];
-                $finalText = $this->sanitiseAssistantText((string) ($finalMessage['content'] ?? ''));
+                $finalRaw = (string) ($finalMessage['content'] ?? '');
+                $finalText = $this->sanitiseAssistantText($finalRaw);
+                $this->logVerbose('forced_final.response', [
+                    'turn_id' => $turnId,
+                    'raw' => $finalRaw,
+                    'sanitised' => $finalText,
+                    'usage' => $finalResponse['usage'] ?? null,
+                ]);
 
                 if ($finalText !== '') {
                     $lastContent = $finalText;
@@ -411,7 +471,35 @@ class AssistantService
             $onEvent('usage', $totalUsage);
         }
 
-        return $lastContent ?: 'I was unable to generate a response. Please try again.';
+        $finalContent = $lastContent ?: 'I was unable to generate a response. Please try again.';
+
+        $this->logVerbose('turn.end', [
+            'turn_id' => $turnId,
+            'iterations' => $iterations,
+            'tools_used' => $toolsUsed,
+            'usage' => $totalUsage,
+            'elapsed_ms' => (int) round((microtime(true) - $thinkingStart) * 1000),
+            'final_content' => $finalContent,
+        ]);
+
+        return $finalContent;
+    }
+
+    /**
+     * Verbose request/response logging gated by config('assistant.verbose_logging').
+     * Every entry is prefixed `[Pip]` so you can grep:
+     *
+     *   tail -f storage/logs/laravel.log | grep '\[Pip\]'
+     *
+     * @param  array<string, mixed>  $context
+     */
+    private function logVerbose(string $event, array $context = []): void
+    {
+        if (!config('assistant.verbose_logging', false)) {
+            return;
+        }
+
+        Log::info("[Pip] {$event}", $context);
     }
 
     /**
@@ -1117,6 +1205,11 @@ the wrong move.
 
 There is no "short", "long", "non-SRT", or other free-form tag. To find a non-SRT cave, use
 tags=["No Tackle"] or tags=["Handline"]. To find a short trip, use max_length on search_caves.
+
+**Curated by default.** search_caves only returns curated (well-documented, worth-visiting) cave
+systems unless you pass include_obscure=true. Subterra also catalogues thousands of minor
+sinkholes and dig sites — they're noise for almost every user query. ONLY pass include_obscure=true
+if the user explicitly asks for obscure / minor / dig caves, or says they want to see "everything".
 
 **Output format.** Reply in plain markdown only. Never write JSON, function-call XML/DSML, or any
 machine-readable tool-call syntax in your reply — those are for tool calls, not user messages.
