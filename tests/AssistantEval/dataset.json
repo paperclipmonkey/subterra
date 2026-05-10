@@ -5,8 +5,8 @@
     "prompt": "Based on my caving experience, what cave systems would you recommend I try next?",
     "checks": [
       "Calls get_user_experience first",
-      "Calls search_caves with not_visited=true",
-      "Suggests systems the user hasn't already done",
+      "References specific systems the user HAS done (Long Churn, GB, Gaping Gill, Lancaster Hole)",
+      "Suggests systems they HAVEN'T done (e.g. Dan-yr-Ogof, Peak Cavern, Ireby Fell)",
       "Mentions weather/conditions check for any streamway pick"
     ]
   },
@@ -15,40 +15,61 @@
     "category": "recommendations",
     "prompt": "Suggest some sporting caves in the Yorkshire Dales I haven't done yet, up to a hard grade.",
     "checks": [
-      "Calls search_caves with region=Yorkshire and tags=[sporting]",
-      "Filters by user's experience",
-      "Returns 3-6 specific systems",
-      "Cards appear for the named systems (and only those)"
+      "Calls search_caves with region=Yorkshire and tags including sporting/hard",
+      "Excludes systems the user has visited (Gaping Gill, Lancaster Hole, Long Churn)",
+      "Returns concrete suggestions with cards",
+      "Does not retry the same search multiple times"
+    ]
+  },
+  {
+    "id": "rec_no_srt",
+    "category": "recommendations",
+    "prompt": "I haven't done any SRT yet. What's a good non-SRT cave for a sporting trip?",
+    "checks": [
+      "Honours the SRT exclusion (filters by tackle: No Tackle, Handline, or Ladder; not SRT)",
+      "Suggests something at sporting grade",
+      "Does not include SRT-tagged systems"
+    ]
+  },
+  {
+    "id": "rec_through_trip",
+    "category": "recommendations",
+    "prompt": "I'd like to do a through-trip — entrance and exit at different caves. What are my options?",
+    "checks": [
+      "Filters by tags=[Through Trip]",
+      "Suggests Lancaster Hole/Easegill or Gaping Gill",
+      "Mentions which entrances/exits go together"
     ]
   },
   {
     "id": "specific_system",
     "category": "lookup",
-    "prompt": "Tell me about Ogof Ffynnon Ddu — what should I know before going?",
+    "prompt": "Tell me about Dan-yr-Ogof — what should I know before going?",
     "checks": [
-      "Looks up the system (search_caves with name= or get_cave_details)",
-      "Surfaces access info / permits if any",
-      "Mentions tags like streamway / SRT / through-trip if present",
-      "Does NOT call get_user_experience"
+      "Looks up the system efficiently (search_caves name= or get_cave_details)",
+      "Mentions it's a showcave with longer wild parts beyond",
+      "Mentions tags like streamway / hard if present",
+      "Does NOT call get_user_experience",
+      "Stops after 1-2 tool calls"
     ]
   },
   {
     "id": "specific_entrance",
     "category": "lookup",
-    "prompt": "What can you tell me about the OFD1 entrance specifically?",
+    "prompt": "What can you tell me about Bar Pot specifically?",
     "checks": [
-      "Links to /caves/{slug} (cave page) not /cave-systems/",
-      "Discusses the entrance, not just the system as a whole",
-      "Mentions location / access details"
+      "Identifies Bar Pot as an entrance to Gaping Gill",
+      "Links to /caves/bar-pot (the cave page) not the system page",
+      "Discusses the entrance, not just the system as a whole"
     ]
   },
   {
     "id": "recent_trips",
     "category": "activity",
-    "prompt": "What have people been saying in recent trip reports for Swildon's Hole?",
+    "prompt": "What have people been saying in recent trip reports for Lancaster Hole?",
     "checks": [
       "Calls get_cave_system_activity",
-      "Quotes or summarises specific observations from trip descriptions",
+      "Quotes specific observations from descriptions (water levels, gear notes, route advice)",
       "Trip report cards appear under the response",
       "Does NOT just give trip count + date as a summary"
     ]
@@ -56,13 +77,12 @@
   {
     "id": "huts_named_cave",
     "category": "accommodation",
-    "prompt": "What caving huts are near Swildon's Hole? I'd like somewhere to stay for a weekend.",
+    "prompt": "What caving huts are near Lancaster Hole? I'd like somewhere to stay for a weekend.",
     "checks": [
       "Calls find_nearby_huts exactly once",
-      "Does NOT call get_user_experience",
-      "Does NOT call get_weather_forecast",
+      "Does NOT call get_user_experience or get_weather_forecast",
       "Renders a geojson map with the cave + huts",
-      "Hut cards appear (not just cave cards)"
+      "Hut cards appear (Bull Pot Farm, Greenclose, Inglesport)"
     ]
   },
   {
@@ -70,8 +90,8 @@
     "category": "planning",
     "prompt": "Plan me a caving weekend in the Yorkshire Dales — two caves over Saturday and Sunday, with a hut to stay at.",
     "checks": [
-      "Asks about group experience or uses get_user_experience",
-      "Suggests two specific caves",
+      "Uses get_user_experience to match caves to ability",
+      "Suggests two specific caves (varied difficulty)",
       "Calls find_nearby_huts",
       "Calls get_weather_forecast for streamway picks",
       "Presents a structured itinerary"
@@ -82,7 +102,7 @@
     "category": "conditions",
     "prompt": "Are conditions OK for a streamway trip in the Dales this weekend?",
     "checks": [
-      "Calls get_weather_forecast for at least one Dales cave",
+      "Calls get_weather_forecast for at least one Dales streamway cave",
       "Mentions river gauge state if available",
       "Mentions antecedent rainfall",
       "Gives a clear go/no-go recommendation with caveats"
@@ -93,7 +113,7 @@
     "category": "recommendations",
     "prompt": "I'm taking a friend who has never been caving. What's a good first cave for them?",
     "checks": [
-      "Suggests a low-grade / beginner-tagged cave",
+      "Suggests a low-grade / beginner-tagged cave (Long Churn is the obvious match)",
       "Mentions hazards or things to brief the friend on",
       "Suggests a leader or club option"
     ]
@@ -104,8 +124,31 @@
     "prompt": "I want to do Ireby Fell Cavern next weekend. Do I need a permit and is it available?",
     "checks": [
       "Calls get_upcoming_permits",
-      "Reports permit requirement clearly",
-      "Mentions booking_count vs max_groups_per_day if applicable"
+      "Reports permit requirement (CNCC) clearly",
+      "References per-day booking counts vs max_groups_per_day",
+      "Identifies any fully-booked dates"
+    ]
+  },
+  {
+    "id": "collections_overview",
+    "category": "collections",
+    "prompt": "Are there any classic cave 'tick lists' or collections I could work through?",
+    "checks": [
+      "Calls list_collections",
+      "Names the collections (Yorkshire Big Three, Mendip Classics, etc.)",
+      "Quotes the user's progress on each (e.g. 2/3, 2/3)",
+      "Collection cards appear under the response"
+    ]
+  },
+  {
+    "id": "collection_progress",
+    "category": "collections",
+    "prompt": "How am I doing on the Yorkshire Big Three?",
+    "checks": [
+      "Calls get_collection_details for the Yorkshire Big Three (or list_collections then details)",
+      "Lists the three caves and which the user has/hasn't done",
+      "Reports user_progress fraction explicitly",
+      "Suggests the next cave in the list"
     ]
   },
   {
@@ -131,11 +174,12 @@
   {
     "id": "cave_link_preference",
     "category": "links",
-    "prompt": "Suggest a single short-trip cave for a fast pre-work visit.",
+    "prompt": "I have a couple of free hours. Recommend a single beginner-friendly cave for a short trip.",
     "checks": [
+      "Suggests a Beginner-tagged cave (Long Churn fits)",
       "Links to /caves/{slug} for single-entrance systems",
       "Links to /cave-systems/{slug} only for multi-entrance",
-      "Card click opens the same preferred page"
+      "Stops after 2-3 tool calls"
     ]
   }
 ]

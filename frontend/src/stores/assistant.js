@@ -9,6 +9,8 @@ const TOOL_LABELS = {
   list_routes: 'Loading routes',
   find_nearby_huts: 'Finding nearby huts',
   get_cave_system_activity: 'Checking community activity',
+  list_collections: 'Browsing collections',
+  get_collection_details: 'Loading collection',
 }
 
 const STORAGE_KEY = 'vern_conversation_v1'
@@ -24,6 +26,7 @@ function persistableShape(m) {
     cards: m.cards ?? [],
     huts: m.huts ?? null,
     reports: m.reports ?? [],
+    collections: m.collections ?? [],
     elapsedMs: m.elapsedMs ?? null,
   }
 }
@@ -112,6 +115,7 @@ export const useAssistantStore = defineStore('assistant', {
         cards: [],
         huts: null,
         reports: [],
+        collections: [],
       })
 
       const history = this.messages
@@ -253,6 +257,15 @@ export const useAssistantStore = defineStore('assistant', {
           const pending = this.messages.findLast(m => m.pending)
           if (pending) {
             pending.reports = (pending.reports || []).concat(event.data || [])
+          }
+          break
+        }
+
+        case 'collection_cards': {
+          // Curated cave collections the model surfaced
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.collections = (pending.collections || []).concat(event.data || [])
           }
           break
         }

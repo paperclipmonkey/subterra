@@ -170,6 +170,22 @@ class SearchCavesTool implements AssistantTool
             ->get()
             ->keyBy('cave_system_id');
 
+        // Hero image URL per system — looked up via Eloquent so the CaveMedia
+        // model's URL accessor (which reads the configured storage disk) runs.
+        // First hero, then entrance, then nothing.
+        $imageBySystem = [];
+        if ($systemIds->isNotEmpty()) {
+            $primaryCaveIds = collect($primaryCaveBySystem)->pluck('id')->all();
+            $caves = \App\Models\Cave::with(['heroImage', 'entranceImage'])
+                ->whereIn('id', $primaryCaveIds)
+                ->get();
+            foreach ($caves as $cave) {
+                $imageBySystem[$cave->cave_system_id] = $cave->heroImage?->url
+                    ?? $cave->entranceImage?->url
+                    ?? null;
+            }
+        }
+
         // Route grades summary per system — done in PHP to keep the query cross-compatible
         // with both MySQL (production) and SQLite (tests).
         $gradesBySystem = collect();
@@ -185,11 +201,12 @@ class SearchCavesTool implements AssistantTool
                 ->map(fn ($rows) => $rows->pluck('grade')->join(', '));
         }
 
-        $mapped = $systems->map(function ($system) use ($tagsBySystem, $gradesBySystem, $primaryCaveBySystem, $entranceCountBySystem) {
+        $mapped = $systems->map(function ($system) use ($tagsBySystem, $gradesBySystem, $primaryCaveBySystem, $entranceCountBySystem, $imageBySystem) {
             $tags = ($tagsBySystem[$system->id] ?? collect())->map(fn ($t) => $t->tag)->values();
             $grades = $gradesBySystem[$system->id] ?? null;
             $primary = $primaryCaveBySystem[$system->id] ?? null;
             $count = (int) ($entranceCountBySystem[$system->id]->cnt ?? 0);
+            $imageUrl = $imageBySystem[$system->id] ?? null;
 
             $excerpt = null;
             if ($system->description) {
@@ -220,13 +237,41 @@ class SearchCavesTool implements AssistantTool
                 'location_name' => $primary?->location_name,
                 'latitude' => $primary ? (float) $primary->location_lat : null,
                 'longitude' => $primary ? (float) $primary->location_lng : null,
+                'image_url' => $imageUrl,
             ];
         });
 
-        return [
+        $result = [
             'count' => $mapped->count(),
             'cave_systems' => $mapped->values()->toArray(),
         ];
+
+        // When no caves match, surface what filters were tried plus the documented
+        // tag taxonomy so the model has a clear next move (or can tell the user
+        // there's no data). The strongest signal here is "stop retrying with
+        // variations" — small models tend to spam search_caves otherwise.
+        if ($mapped->isEmpty()) {
+            $result['hint'] = 'No caves matched these filters. Do NOT retry this tool with variations — '
+                .'the data simply isn\'t in Subterra. Either tell the user no matches were found and '
+                .'suggest they widen their search, or use list_collections / get_user_experience instead.';
+            $result['filters_tried'] = array_filter([
+                'name' => $arguments['name'] ?? null,
+                'region' => $arguments['region'] ?? null,
+                'tags' => $arguments['tags'] ?? null,
+                'min_length' => $arguments['min_length'] ?? null,
+                'max_length' => $arguments['max_length'] ?? null,
+                'not_visited' => $arguments['not_visited'] ?? null,
+            ], fn ($v) => $v !== null);
+            $result['valid_tags_reference'] = [
+                'region' => ['Yorkshire', 'Mendip', 'South Wales', 'North Wales', 'Peak District', 'Forest of Dean', 'Devon', 'Portland', 'Assynt'],
+                'difficulty' => ['Beginner', 'Sporting', 'Hard', 'Severe'],
+                'style' => ['Streamway', 'Through Trip', 'Showcave'],
+                'tackle' => ['SRT', 'Ladder', 'Handline', 'No Tackle'],
+                'access' => ['Open', 'Permit', 'Padlocked', 'Warden', 'Keycode', 'Closed'],
+            ];
+        }
+
+        return $result;
     }
 
     /**

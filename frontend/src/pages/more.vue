@@ -1,6 +1,18 @@
 <template>
   <v-container>
     <v-row>
+      <v-col v-if="isPlatformAdmin" cols="12" md="6">
+        <v-card :to="{ path: '/admin/assistant' }" link height="150" class="d-flex align-center justify-center pip-tile">
+          <div class="text-center">
+            <v-icon size="48" color="primary" class="mb-2" :icon="mdiCompassOutline" />
+            <div class="text-h5">
+              Pip
+              <v-chip color="warning" variant="tonal" size="x-small" class="ml-1">Preview</v-chip>
+            </div>
+            <div class="text-body-2 text-medium-emphasis">Caving recommendations & trip planning</div>
+          </div>
+        </v-card>
+      </v-col>
       <v-col cols="12" md="6">
         <v-card :to="{ path: '/huts' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
@@ -89,7 +101,7 @@
 </template>
 
 <script setup>
-import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
+import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiCompassOutline, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useOfflineStore } from '@/stores/offline'
 import { computed } from 'vue'
@@ -97,4 +109,10 @@ import { computed } from 'vue'
 const userStore = useAppStore()
 const offlineStore = useOfflineStore()
 const offlineCount = computed(() => offlineStore.downloadedCaveCount)
+
+// Mirror the gate on the /api/assistant/chat route — only platform_admins
+// can actually use Pip during the preview, so don't tease the tile to others.
+const isPlatformAdmin = computed(
+  () => userStore.user?.roles?.some(r => r.slug === 'platform_admin') ?? false
+)
 </script>

@@ -17,6 +17,11 @@ services:
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
+            # Make `php artisan serve` (PHP's built-in dev server) handle concurrent
+            # connections. Without this it's strictly sequential, so a long SSE
+            # response (e.g. the assistant streaming) blocks every other request,
+            # including /api/users/me from another tab.
+            PHP_CLI_SERVER_WORKERS: '8'
         volumes:
             - '.:/var/www/html'
         networks:

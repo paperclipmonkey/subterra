@@ -155,27 +155,6 @@
       </v-row>
     </section>
 
-    <!-- AI & Recommendations -->
-    <section v-if="isPlatformAdmin" class="mb-10">
-      <div class="d-flex align-center mb-4">
-        <v-icon color="deep-purple" class="mr-3" size="32" :icon="mdiRobotOutline" />
-        <h3 class="text-h5 font-weight-bold">AI & Recommendations</h3>
-        <v-chip color="warning" variant="tonal" size="x-small" class="ml-2">Preview</v-chip>
-      </div>
-      <v-row>
-        <v-col cols="12" sm="6" md="4" lg="3">
-          <v-card to="/admin/assistant" link hover class="admin-card">
-            <v-card-item title="Trip Assistant">
-              <template #prepend>
-                <v-icon color="deep-purple" :icon="mdiRobotOutline" />
-              </template>
-              <v-card-subtitle>AI-powered trip recommendations</v-card-subtitle>
-            </v-card-item>
-          </v-card>
-        </v-col>
-      </v-row>
-    </section>
-
     <!-- Access & Permits -->
     <section v-if="isAccessOfficer || isPlatformAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
@@ -209,7 +188,7 @@
 </template>
 
 <script setup>
-import { mdiAccountCog, mdiAccountGroup, mdiCalendarCheck, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiEmailMultiple, mdiFileCompare, mdiFileDocumentEdit, mdiFileEdit, mdiKeyVariant, mdiMapMarkerPlus, mdiMonitorDashboard, mdiRobotOutline, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
+import { mdiAccountCog, mdiAccountGroup, mdiCalendarCheck, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiEmailMultiple, mdiFileCompare, mdiFileDocumentEdit, mdiFileEdit, mdiKeyVariant, mdiMapMarkerPlus, mdiMonitorDashboard, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 

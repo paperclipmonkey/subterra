@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Booking;
 use App\Models\Cave;
 use App\Models\CaveSystem;
+use App\Models\Collection;
 use App\Models\Hut;
 use App\Models\Permit;
 use App\Models\Tag;
@@ -31,8 +32,11 @@ class AssistantDemoSeeder extends Seeder
         $this->seedYorkshireHuts();
         $this->seedPermitWithBookings();
         $this->seedTripReports();
+        $demoCaver = $this->seedDemoCaver();
+        $this->seedCollections($demoCaver);
 
-        $this->command->info('Seeded curated caves, Yorkshire huts, permit + bookings, and trip reports.');
+        $this->command->info('Seeded curated caves, Yorkshire huts, permit + bookings, trip reports, demo caver, and collections.');
+        $this->command->info("Demo caver user ID: {$demoCaver->id}  (use --user={$demoCaver->id} for assistant evals)");
     }
 
     /**
@@ -390,6 +394,134 @@ class AssistantDemoSeeder extends Seeder
                     'visibility' => 'public',
                 ]
             );
+        }
+    }
+
+    /**
+     * Create or refresh "Demo Caver" — a user with a realistic mix of trip
+     * history across difficulty levels and regions. The assistant uses this
+     * via get_user_experience to make personalised recommendations, so a thin
+     * trip log gives generic advice. The trips here are private to this user
+     * and won't pollute the public trip-report stream.
+     */
+    private function seedDemoCaver(): User
+    {
+        $user = User::withoutGlobalScopes()->firstOrCreate(
+            ['email' => 'demo-caver@example.com'],
+            ['name' => 'Demo Caver', 'is_active' => true]
+        );
+
+        // Each entry: cave system slug, days ago (relative), duration in hours,
+        // optional name. Mix chosen to give the assistant clear signal:
+        //   - Done plenty of intro / sporting Mendip & Yorkshire trips
+        //   - Has SRT exposure (Lancaster Hole, Bar Pot)
+        //   - Has not yet done the very hard trips (Dan-yr-Ogof wild, Ireby Fell)
+        //   - Has not yet visited Peak District or South Wales
+        $tripLog = [
+            ['system' => 'long-churn-caves',          'days' => 540, 'hours' => 2,  'name' => 'First-ever caving trip'],
+            ['system' => 'long-churn-caves',          'days' => 510, 'hours' => 2,  'name' => 'Long Churn with new club members'],
+            ['system' => 'gb-cave',                   'days' => 460, 'hours' => 4,  'name' => 'GB Cave Bridge route'],
+            ['system' => 'wookey-hole',               'days' => 420, 'hours' => 1,  'name' => 'Wookey Hole showcave visit'],
+            ['system' => 'gaping-gill',               'days' => 360, 'hours' => 6,  'name' => 'Gaping Gill via Bar Pot — first SRT'],
+            ['system' => 'long-churn-caves',          'days' => 320, 'hours' => 2,  'name' => 'Cheese Press round trip'],
+            ['system' => 'gb-cave',                   'days' => 280, 'hours' => 5,  'name' => 'GB Cave round trip + Loop'],
+            ['system' => 'gaping-gill',               'days' => 220, 'hours' => 7,  'name' => 'Gaping Gill via Flood Entrance'],
+            ['system' => 'lancaster-hole-easegill',   'days' => 180, 'hours' => 8,  'name' => 'Lancaster Hole — first sporting through-trip'],
+            ['system' => 'gb-cave',                   'days' => 130, 'hours' => 4,  'name' => 'GB Cave with visiting club'],
+            ['system' => 'lancaster-hole-easegill',   'days' => 95,  'hours' => 6,  'name' => 'County Pot bounce trip'],
+            ['system' => 'gaping-gill',               'days' => 60,  'hours' => 7,  'name' => 'Gaping Gill main winch meet'],
+            ['system' => 'long-churn-caves',          'days' => 30,  'hours' => 2,  'name' => 'Took friends down Long Churn'],
+        ];
+
+        foreach ($tripLog as $entry) {
+            $system = CaveSystem::where('slug', $entry['system'])->first();
+            if (!$system) {
+                continue;
+            }
+            $entrance = $system->caves()->whereNotNull('location_lat')->first();
+            $start = now()->subDays($entry['days'])->setTime(10, 0);
+            $end = $start->copy()->addHours($entry['hours']);
+
+            $trip = Trip::firstOrCreate(
+                [
+                    'cave_system_id' => $system->id,
+                    'name' => $entry['name'],
+                    'start_time' => $start,
+                ],
+                [
+                    'description' => null,
+                    'end_time' => $end,
+                    'entrance_cave_id' => $entrance?->id,
+                    'exit_cave_id' => $entrance?->id,
+                    'visibility' => 'private',
+                ]
+            );
+
+            // Attach the demo caver as a participant (idempotent)
+            $trip->participants()->syncWithoutDetaching([$user->id]);
+        }
+
+        return $user;
+    }
+
+    /**
+     * Curated collections users can browse and tick off as goals. The assistant
+     * surfaces these via list_collections / get_collection_details and reports
+     * the user's progress (visited / total).
+     */
+    private function seedCollections(User $owner): void
+    {
+        $collections = [
+            [
+                'slug' => 'yorkshire-big-three',
+                'name' => 'Yorkshire Big Three',
+                'description' => "Three classic Yorkshire systems every caver should aim for: Gaping Gill's Main Chamber, the through-trip into Easegill from Lancaster Hole, and a sporting bounce down Pippikin Pot.",
+                'caves' => ['gaping-gill-main-shaft', 'lancaster-hole', 'pippikin-pot'],
+            ],
+            [
+                'slug' => 'mendip-classics',
+                'name' => 'Mendip Classics',
+                'description' => "The defining Mendip trips: Swildon's streamway, GB Cave's sporting round trip, and the famous resurgence at Wookey Hole.",
+                'caves' => ['swildons-hole', 'gb-cave', 'wookey-hole'],
+            ],
+            [
+                'slug' => 'first-caves-underground',
+                'name' => 'First Caves Underground',
+                'description' => 'Excellent introductory trips for cavers new to the sport. Walking-sized passage, simple navigation, and very low commitment — perfect for building confidence with a leader.',
+                'caves' => ['upper-long-churn', 'lower-long-churn'],
+            ],
+            [
+                'slug' => 'south-wales-streamways',
+                'name' => 'South Wales Streamways',
+                'description' => "South Wales' two giants — Ogof Ffynnon Ddu (the deepest in the UK) and Dan-yr-Ogof — each with classic streamway sections that demand respect for water levels.",
+                'caves' => ['dan-yr-ogof'],
+            ],
+        ];
+
+        foreach ($collections as $entry) {
+            $collection = Collection::firstOrCreate(
+                ['slug' => $entry['slug']],
+                [
+                    'name' => $entry['name'],
+                    'description' => $entry['description'],
+                    'user_id' => $owner->id,
+                ]
+            );
+
+            $caveIds = Cave::whereIn('slug', $entry['caves'])
+                ->pluck('id', 'slug');
+
+            // Preserve the order from the entry list via sort_order
+            $sync = [];
+            foreach ($entry['caves'] as $idx => $caveSlug) {
+                if (isset($caveIds[$caveSlug])) {
+                    $sync[$caveIds[$caveSlug]] = ['sort_order' => $idx];
+                }
+            }
+
+            if (!empty($sync)) {
+                $collection->caves()->syncWithoutDetaching($sync);
+            }
         }
     }
 }

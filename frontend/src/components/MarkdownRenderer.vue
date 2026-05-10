@@ -345,7 +345,7 @@ const renderGeoJSONMaps = async () => {
         })
 
         map.on('error', (e) => {
-            console.error('Vern map error:', e)
+            console.error('Pip map error:', e)
         })
     }
 }

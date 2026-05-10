@@ -9,9 +9,11 @@ use App\Services\Assistant\AssistantTool;
 use App\Services\Assistant\Tools\FindNearbyHutsTool;
 use App\Services\Assistant\Tools\GetCaveDetailsTool;
 use App\Services\Assistant\Tools\GetCaveSystemActivityTool;
+use App\Services\Assistant\Tools\GetCollectionDetailsTool;
 use App\Services\Assistant\Tools\GetUpcomingPermitsTool;
 use App\Services\Assistant\Tools\GetUserExperienceTool;
 use App\Services\Assistant\Tools\GetWeatherForecastTool;
+use App\Services\Assistant\Tools\ListCollectionsTool;
 use App\Services\Assistant\Tools\ListRoutesTool;
 use App\Services\Assistant\Tools\SearchCavesTool;
 use GuzzleHttp\Client as GuzzleClient;
@@ -32,6 +34,8 @@ class AssistantService
         ListRoutesTool $listRoutesTool,
         FindNearbyHutsTool $findNearbyHutsTool,
         GetCaveSystemActivityTool $caveSystemActivityTool,
+        ListCollectionsTool $listCollectionsTool,
+        GetCollectionDetailsTool $collectionDetailsTool,
     ) {
         $this->tools = [
             'get_user_experience' => $userExperienceTool,
@@ -42,6 +46,8 @@ class AssistantService
             'list_routes' => $listRoutesTool,
             'find_nearby_huts' => $findNearbyHutsTool,
             'get_cave_system_activity' => $caveSystemActivityTool,
+            'list_collections' => $listCollectionsTool,
+            'get_collection_details' => $collectionDetailsTool,
         ];
     }
 
@@ -78,6 +84,9 @@ class AssistantService
         /** @var string[] $toolsUsed Names of all tools dispatched during this turn */
         $toolsUsed = [];
 
+        /** @var array<string, array<string, mixed>> $callCache Per-turn dedup of tool calls keyed by name+args */
+        $callCache = [];
+
         /** @var array<string, array<string, mixed>> $caveCardBuffer Indexed by slug; emitted at end if mentioned */
         $caveCardBuffer = [];
 
@@ -86,6 +95,9 @@ class AssistantService
 
         /** @var array<int, array<string, mixed>> $tripReportBuffer Recent trip reports from any tool call */
         $tripReportBuffer = [];
+
+        /** @var array<string, array<string, mixed>> $collectionCardBuffer Indexed by slug; emitted at end if mentioned */
+        $collectionCardBuffer = [];
 
         /** @var array{prompt_tokens: int, completion_tokens: int} */
         $totalUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0];
@@ -156,7 +168,24 @@ class AssistantService
                         ]);
                     }
 
-                    $result = $this->dispatchTool($name, $args, $user);
+                    // Per-turn dedup: identical (name, args) calls return a sharp
+                    // "you already asked this" message instead of re-running. This
+                    // stops small models from spamming search_caves with tag/region
+                    // variations after a 0-result response.
+                    $callKey = $name.':'.md5(json_encode($this->canonicalise($args)));
+                    if (isset($callCache[$callKey])) {
+                        $result = [
+                            'error' => "You already called {$name} with these exact arguments earlier in this turn. "
+                                .'Do not repeat the same call. Either use the previous result, try meaningfully different '
+                                .'arguments, or write your final answer to the user now.',
+                            'previous_result_summary' => $callCache[$callKey],
+                        ];
+                    } else {
+                        $result = $this->dispatchTool($name, $args, $user);
+                        // Cache a small fingerprint, not the full result — just enough
+                        // to remind the model what came back.
+                        $callCache[$callKey] = $this->summariseResult($name, $result);
+                    }
 
                     // Buffer cave system results from search_caves; emit cards at the end
                     // for only those systems the model actually mentions in its final reply.
@@ -196,6 +225,35 @@ class AssistantService
                         $hutCardsBuffer = $result;
                     }
 
+                    // Buffer collections from list_collections; emit cards at the end
+                    // for the ones the model actually mentions in its reply.
+                    if ($name === 'list_collections') {
+                        foreach ($result['collections'] ?? [] as $coll) {
+                            $slug = $coll['slug'] ?? null;
+                            if ($slug && !isset($collectionCardBuffer[$slug])) {
+                                $collectionCardBuffer[$slug] = $coll;
+                            }
+                        }
+                    }
+
+                    // get_collection_details: surface its summary card unconditionally
+                    if ($name === 'get_collection_details' && empty($result['error'])) {
+                        $slug = $result['slug'] ?? null;
+                        if ($slug && !isset($collectionCardBuffer[$slug])) {
+                            $collectionCardBuffer[$slug] = [
+                                'id' => $result['id'] ?? null,
+                                'name' => $result['name'] ?? null,
+                                'slug' => $slug,
+                                'url' => $result['url'] ?? "/collections/{$slug}",
+                                'description' => $result['description'] ?? null,
+                                'image_url' => $result['image_url'] ?? null,
+                                'cave_count' => $result['cave_count'] ?? 0,
+                                'user_visited_count' => $result['user_visited_count'] ?? 0,
+                                'user_progress' => $result['user_progress'] ?? null,
+                            ];
+                        }
+                    }
+
                     // Safety injection: if a river gauge is High, add a mandatory warning context
                     if ($name === 'get_weather_forecast') {
                         $this->injectSafetyAlert($result, $context, $message['content'] ?? '');
@@ -227,18 +285,20 @@ class AssistantService
 
             $context[] = [
                 'role' => 'system',
-                'content' => 'You have reached the tool-call limit for this turn. '
-                    .'Stop calling tools. Using ONLY the data returned so far, write a '
-                    .'final answer to the user. If the data is insufficient, say so '
-                    .'clearly and suggest a more specific question they could ask. '
-                    .'Do not call any more tools.',
+                'content' => 'STOP. You have used your tool-call budget for this turn. '
+                    .'Tools are now disabled. You MUST respond with plain text only — '
+                    ."no JSON, no tool-call syntax, no DSML, no XML.\n\n"
+                    .'Using only the data the tools have already returned above, write a '
+                    ."concise, friendly answer to the user's original question. If the data "
+                    .'is incomplete, say so honestly in one sentence and suggest one specific '
+                    .'follow-up the user could ask.',
             ];
 
             try {
-                $finalResponse = $this->callOpenRouter($context, [], $apiKey);
+                $finalResponse = $this->callOpenRouterFinalAnswer($context, $apiKey);
                 $finalChoice = $finalResponse['choices'][0] ?? [];
                 $finalMessage = $finalChoice['message'] ?? [];
-                $finalText = (string) ($finalMessage['content'] ?? '');
+                $finalText = $this->sanitiseAssistantText((string) ($finalMessage['content'] ?? ''));
 
                 if ($finalText !== '') {
                     $lastContent = $finalText;
@@ -254,6 +314,10 @@ class AssistantService
                 Log::error('AssistantService: forced final answer failed', ['error' => $e->getMessage()]);
             }
         }
+
+        // Apply the same sanitiser to the regular response path so we never ship
+        // tool-call markup to the user even if the model produces it inline.
+        $lastContent = $this->sanitiseAssistantText($lastContent);
 
         // Emit cards: only the systems the model explicitly mentioned in the final reply.
         // This stops the UI from being flooded with cards for incidental ID-lookup searches.
@@ -276,6 +340,14 @@ class AssistantService
             $relevant = $this->filterMentionedReports($reports, $lastContent);
             if (!empty($relevant)) {
                 $onEvent('trip_report_cards', array_slice($relevant, 0, 5));
+            }
+        }
+
+        // Emit collection cards: only those the model explicitly named in its reply.
+        if ($onEvent && !empty($collectionCardBuffer)) {
+            $mentioned = $this->filterMentionedSystems($collectionCardBuffer, $lastContent);
+            if (!empty($mentioned)) {
+                $onEvent('collection_cards', array_slice($mentioned, 0, 6));
             }
         }
 
@@ -568,9 +640,169 @@ class AssistantService
     }
 
     /**
+     * Final-answer call after the tool budget is spent. We deliberately omit the
+     * `tools` field entirely (some small models still emit fake tool-call syntax
+     * when they see tools in the payload, even with tool_choice=none) and lower
+     * the temperature so the response is direct and grounded.
+     *
+     * @param  array<int, mixed>  $messages
+     * @return array<string, mixed>
+     */
+    private function callOpenRouterFinalAnswer(array $messages, string $apiKey): array
+    {
+        $payload = [
+            'model' => config('assistant.openrouter.model'),
+            'messages' => $messages,
+            'tool_choice' => 'none',
+            'max_tokens' => (int) config('assistant.openrouter.max_tokens', 2048),
+            'temperature' => 0.3,
+        ];
+
+        $providerOrder = (array) config('assistant.provider.order', []);
+        if (!empty($providerOrder)) {
+            $payload['provider'] = [
+                'order' => $providerOrder,
+                'allow_fallbacks' => (bool) config('assistant.provider.allow_fallbacks', true),
+                'require_parameters' => (bool) config('assistant.provider.require_parameters', true),
+            ];
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.$apiKey,
+            'HTTP-Referer' => config('app.url', 'https://subterra.world'),
+            'X-Title' => 'Subterra',
+        ])
+            ->timeout(60)
+            ->post(config('assistant.openrouter.base_url').'/chat/completions', $payload);
+
+        if (!$response->successful()) {
+            Log::error('AssistantService: OpenRouter final-answer error', [
+                'status' => $response->status(),
+            ]);
+            throw new \RuntimeException('The AI service is temporarily unavailable.');
+        }
+
+        return $response->json();
+    }
+
+    /**
      * @param  array<string, mixed>  $arguments
      * @return array<string, mixed>
      */
+    /**
+     * Strip tool-call markup that some small models (DeepSeek, certain Llama
+     * variants) leak into their content output. We've seen DSML-style fences,
+     * raw JSON tool-call blocks, and `<function_call>` XML tags. If the entire
+     * output is markup, replace it with a friendly fallback so the user sees
+     * something useful instead of garbage.
+     */
+    private function sanitiseAssistantText(string $text): string
+    {
+        if ($text === '') {
+            return $text;
+        }
+
+        $original = $text;
+
+        // DSML-style tool-call leakage (deepseek). The first DSML token marks
+        // the point where the model stopped writing text and started emitting
+        // tool-call syntax — drop everything from there onwards. Catches both
+        // opening and orphaned closing tags. The pipe character is U+FF5C.
+        $dsmlPos = mb_strpos($text, '<｜');
+        if ($dsmlPos !== false) {
+            $text = mb_substr($text, 0, $dsmlPos);
+        }
+
+        // OpenAI-style function-call XML: <function_call>...</function_call>
+        $text = preg_replace('#<function[_\- ]calls?>.*?</function[_\- ]calls?>#si', '', $text) ?? $text;
+        $text = preg_replace('#<function[_\- ]calls?[^>]*>#i', '', $text) ?? $text;
+        $text = preg_replace('#</function[_\- ]calls?>#i', '', $text) ?? $text;
+
+        // Raw tool-call JSON dumped into content: a leading {"name":"...","arguments":...}
+        $trimmed = trim($text);
+        if (
+            str_starts_with($trimmed, '{')
+            && str_contains($trimmed, '"name"')
+            && (str_contains($trimmed, '"arguments"') || str_contains($trimmed, '"parameters"'))
+            && json_decode($trimmed, true) !== null
+        ) {
+            $text = '';
+        }
+
+        $text = trim($text);
+
+        // If sanitisation stripped everything, surface a friendly fallback so
+        // the user gets a real reply rather than empty whitespace.
+        if ($text === '' && $original !== '') {
+            Log::warning('AssistantService: response was entirely tool-call markup, replacing with fallback', [
+                'sample' => mb_substr($original, 0, 200),
+            ]);
+
+            return "I wasn't able to put together a clear answer this time. Could you rephrase your question, or ask about a specific cave or region?";
+        }
+
+        return $text;
+    }
+
+    /**
+     * Recursively normalise tool arguments so semantically-identical calls hash
+     * to the same key (sorted keys, lowercased strings, sorted tag arrays).
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */
+    private function canonicalise(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            $out = [];
+            foreach ($value as $k => $v) {
+                $out[$k] = $this->canonicalise($v);
+            }
+            // Sort tag arrays so [a,b] and [b,a] hash the same
+            if (array_is_list($out)) {
+                $strs = array_map(fn ($x) => is_string($x) ? strtolower(trim($x)) : $x, $out);
+                sort($strs);
+
+                return $strs;
+            }
+            ksort($out);
+
+            return $out;
+        }
+        if (is_string($value)) {
+            return strtolower(trim($value));
+        }
+
+        return $value;
+    }
+
+    /**
+     * Compact summary of a tool result, used to remind the model what it got
+     * back the first time when it tries the same call again.
+     *
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
+    private function summariseResult(string $name, array $result): array
+    {
+        return match ($name) {
+            'search_caves' => [
+                'count' => $result['count'] ?? 0,
+                'cave_systems' => collect($result['cave_systems'] ?? [])
+                    ->take(5)
+                    ->map(fn ($s) => ['name' => $s['name'] ?? null, 'slug' => $s['slug'] ?? null])
+                    ->all(),
+            ],
+            'list_collections' => [
+                'count' => $result['count'] ?? 0,
+                'collections' => collect($result['collections'] ?? [])
+                    ->map(fn ($c) => ['name' => $c['name'] ?? null, 'slug' => $c['slug'] ?? null, 'progress' => $c['user_progress'] ?? null])
+                    ->all(),
+            ],
+            default => ['note' => 'see earlier tool result'],
+        };
+    }
+
     private function dispatchTool(string $name, array $arguments, User $user): array
     {
         if (!isset($this->tools[$name])) {
@@ -636,6 +868,7 @@ class AssistantService
             'location_name' => $primary['location_name'] ?? null,
             'latitude' => $primary['latitude'] ?? null,
             'longitude' => $primary['longitude'] ?? null,
+            'image_url' => $details['image_url'] ?? ($primary['image_url'] ?? null),
         ];
     }
 
@@ -771,7 +1004,7 @@ class AssistantService
         };
 
         return <<<PROMPT
-You are Vern, a knowledgeable caving assistant for the Subterra platform (subterra.world).
+You are Pip, a knowledgeable caving assistant for the Subterra platform (subterra.world).
 You help cavers in the UK and Ireland choose appropriate trips and plan caving weekends.
 
 Current date: {$date}
@@ -788,6 +1021,23 @@ Plan before calling. Do NOT call the same tool repeatedly hoping for a better re
 returns 0 results or unhelpful results, accept that, tell the user the data isn't in Subterra, and
 suggest they try a different region/tag/name. Searching again with variations is almost always
 the wrong move.
+
+**Valid tag values.** Only use tags from this taxonomy — anything else returns 0 results:
+- region: Yorkshire, Mendip, South Wales, North Wales, Peak District, Forest of Dean, Devon, Portland, Assynt
+- difficulty: Beginner, Sporting, Hard, Severe
+- style: Streamway, Through Trip, Showcave
+- tackle: SRT, Ladder, Handline, No Tackle
+- access: Open, Permit, Padlocked, Warden, Keycode, Closed
+
+There is no "short", "long", "non-SRT", or other free-form tag. To find a non-SRT cave, use
+tags=["No Tackle"] or tags=["Handline"]. To find a short trip, use max_length on search_caves.
+
+**Output format.** Reply in plain markdown only. Never write JSON, function-call XML/DSML, or any
+machine-readable tool-call syntax in your reply — those are for tool calls, not user messages.
+
+**Sell the cave.** When recommending one or two specific caves, call get_cave_details on the top
+pick to enrich your reply with: routes available, length/depth, access info, and any recent trip
+report observations. A recommendation without those details is not useful.
 
 **Know the user — but only when relevant.** Call get_user_experience before personalised trip
 recommendations (e.g. "what should I try next"), but DO NOT call it for accommodation queries,
@@ -814,6 +1064,13 @@ link to that specific cave page.
 beginner, SRT), link to the filtered search so the user can browse all matching caves:
 [streamway caves](/caves?tags=streamway&view=list). You may use any tag you have seen in tool
 results.
+
+**Collections.** Subterra supports curated collections — themed lists of caves users can work
+through (e.g. "Yorkshire Big Three", "Mendip Classics"). Use list_collections when the user asks
+about classic trips, goal lists, or what to aim for. Use get_collection_details to expand a
+specific collection. Always quote the user's progress — e.g. "you've done 2/3 of the Yorkshire
+Big Three" — when reporting on a collection, since the tool returns user_progress directly.
+Link to /collections/{slug} when naming a collection.
 
 **Safety first.** For any cave that is a streamway, sump, rising phreatic, or has known flood
 potential, you MUST call get_weather_forecast before recommending it. If river gauge state is

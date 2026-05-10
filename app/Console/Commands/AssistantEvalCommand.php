@@ -329,7 +329,7 @@ MD;
 
         // Cards/maps emitted
         $cardEvents = collect($r['events'])
-            ->whereIn('type', ['cave_cards', 'hut_cards', 'trip_report_cards'])
+            ->whereIn('type', ['cave_cards', 'hut_cards', 'trip_report_cards', 'collection_cards'])
             ->all();
 
         if (!empty($cardEvents)) {
@@ -345,6 +345,12 @@ MD;
                 } elseif ($ev['type'] === 'trip_report_cards' && is_array($ev['data'])) {
                     $titles = collect($ev['data'])->pluck('title')->take(5)->implode(', ');
                     $md .= '('.count($ev['data'])."): {$titles}";
+                } elseif ($ev['type'] === 'collection_cards' && is_array($ev['data'])) {
+                    $names = collect($ev['data'])
+                        ->map(fn ($c) => ($c['name'] ?? '').' ('.($c['user_progress'] ?? '').')')
+                        ->take(5)
+                        ->implode(', ');
+                    $md .= '('.count($ev['data'])."): {$names}";
                 }
                 $md .= "\n";
             }

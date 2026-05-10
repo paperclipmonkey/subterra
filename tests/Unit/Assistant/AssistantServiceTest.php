@@ -324,11 +324,14 @@ class AssistantServiceTest extends TestCase
         $this->assertStringContainsString("don't have enough data", $result);
         Http::assertSentCount(2);
 
-        // The second (forced) call must NOT include any tools
+        // The second (forced) call must NOT include any tools and must explicitly
+        // disable tool selection. Some small models still emit fake tool-call
+        // syntax when they see tools at all, so we omit the field entirely.
         Http::assertSent(function ($request) {
             $body = json_decode($request->body(), true);
 
-            return isset($body['tools']) && $body['tools'] === [];
+            return !array_key_exists('tools', $body)
+                && ($body['tool_choice'] ?? null) === 'none';
         });
     }
 
@@ -552,7 +555,7 @@ class AssistantServiceTest extends TestCase
             $first = $messages[0] ?? [];
 
             return ($first['role'] ?? '') === 'system'
-                && str_contains($first['content'] ?? '', 'Vern')
+                && str_contains($first['content'] ?? '', 'Pip')
                 && str_contains($first['content'] ?? '', 'Alice Caver');
         });
     }

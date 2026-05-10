@@ -36,7 +36,7 @@ class GetCaveDetailsTool implements AssistantTool
     {
         $systemId = (int) ($arguments['cave_system_id'] ?? 0);
 
-        $system = CaveSystem::with(['caves', 'tags', 'routes'])->find($systemId);
+        $system = CaveSystem::with(['caves.heroImage', 'caves.entranceImage', 'tags', 'routes'])->find($systemId);
 
         if (!$system) {
             return ['error' => "Cave system with ID {$systemId} not found."];
@@ -53,7 +53,11 @@ class GetCaveDetailsTool implements AssistantTool
             'access_info' => $cave->access_info,
             'latitude' => $cave->location_lat ? (float) $cave->location_lat : null,
             'longitude' => $cave->location_lng ? (float) $cave->location_lng : null,
+            'image_url' => $cave->heroImage?->url ?? $cave->entranceImage?->url ?? null,
         ])->values();
+
+        // System-level hero image — first cave's hero, then any cave's entrance image
+        $systemImage = $caves->pluck('image_url')->first(fn ($u) => !empty($u));
 
         $routes = $system->routes->map(fn ($route) => [
             'name' => $route->name,
@@ -107,6 +111,7 @@ class GetCaveDetailsTool implements AssistantTool
             'length_m' => $system->length,
             'vertical_range_m' => $system->vertical_range,
             'description' => $description,
+            'image_url' => $systemImage,
             'tags' => $tags,
             'entrances' => $caves,
             'routes' => $routes,

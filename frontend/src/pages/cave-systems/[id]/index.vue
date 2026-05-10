@@ -10,7 +10,7 @@
         :to="`/admin/assistant?context=${encodeURIComponent('Tell me about ' + caveSystem.name + '. What should I know before visiting?')}`"
         class="mr-2"
       >
-        Ask Vern
+        Ask Pip
       </v-btn>
       <v-btn
         v-if="appStore.user && (appStore.user.is_admin || appStore.canSuggest)"

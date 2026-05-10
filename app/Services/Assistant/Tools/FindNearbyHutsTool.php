@@ -80,6 +80,7 @@ class FindNearbyHutsTool implements AssistantTool
                     'booking_info' => $hut->booking_info,
                     'external_url' => $hut->external_url,
                     'hut_url' => "/huts/{$hut->id}",
+                    'image_url' => $hut->image_url,
                     'latitude' => (float) $hut->location_lat,
                     'longitude' => (float) $hut->location_lng,
                 ];
