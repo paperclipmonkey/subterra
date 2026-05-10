@@ -102,9 +102,18 @@ class GetUserExperienceTool implements AssistantTool
             'description' => $m->description,
         ])->values();
 
+        $uniqueSystemsCount = $visitedSystems->count();
+
+        // Pre-built sentence the model can quote verbatim. We've seen small
+        // models conflate `total_trips` with `unique_systems_visited` (e.g. a
+        // user with 47 unique systems across 68 trips gets reported as "68
+        // systems"). Giving them a ready-made phrase removes the math.
+        $summary = "{$totalTrips} trips logged across {$uniqueSystemsCount} unique cave systems.";
+
         return [
             'total_trips' => $totalTrips,
-            'unique_systems_visited' => $visitedSystems->count(),
+            'unique_systems_visited' => $uniqueSystemsCount,
+            'experience_summary' => $summary,
             'clubs' => $approvedClubs,
             'medals' => $medals,
             'recent_trips' => $recentTrips->values(),
@@ -112,7 +121,9 @@ class GetUserExperienceTool implements AssistantTool
             'visited_systems_note' => 'all_visited_systems lists every cave system the user has '
                 .'EVER visited (most recent first, capped at 200). Check this list before recommending '
                 .'a cave — anything in it is already done. Pair with search_caves(not_visited=true) for '
-                .'truly fresh suggestions.',
+                .'truly fresh suggestions. When mentioning the user\'s scale, quote experience_summary '
+                .'verbatim — do not reword it. total_trips and unique_systems_visited are different '
+                .'numbers (a user can visit the same system multiple times).',
         ];
     }
 }

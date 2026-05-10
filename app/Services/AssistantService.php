@@ -1069,12 +1069,18 @@ class AssistantService
             return array_values($buffer);
         }
 
+        // Strip fenced code blocks before matching. Geojson maps emitted by the
+        // model contain slugs/names for every pin so they show up as "mentions"
+        // even though the user only sees points on a map, not a recommendation.
+        // The prose text is the real signal for what the model is suggesting.
+        $prose = preg_replace('/```[\s\S]*?```/', '', $reply) ?? $reply;
+
         $matches = [];
         foreach ($buffer as $slug => $sys) {
             $name = (string) ($sys['name'] ?? '');
             if (
-                ($slug !== '' && str_contains($reply, $slug))
-                || ($name !== '' && stripos($reply, $name) !== false)
+                ($slug !== '' && str_contains($prose, $slug))
+                || ($name !== '' && stripos($prose, $name) !== false)
             ) {
                 $matches[] = $sys;
             }
