@@ -201,64 +201,6 @@ class TagSeeder extends Seeder
             'description' => 'A cave that requires a handline to descend.',
         ]);
 
-        // - - - - - - - - - Trip style
-        Tag::updateOrCreate([
-            'tag' => 'Streamway',
-            'type' => 'cave',
-            'category' => 'style',
-        ], [
-            'description' => 'A cave with a significant streamway — flood-prone in wet weather.',
-        ]);
-
-        Tag::updateOrCreate([
-            'tag' => 'Through Trip',
-            'type' => 'cave',
-            'category' => 'style',
-        ], [
-            'description' => 'A cave traversed in one direction (different entrance and exit).',
-        ]);
-
-        Tag::updateOrCreate([
-            'tag' => 'Showcave',
-            'type' => 'cave',
-            'category' => 'style',
-        ], [
-            'description' => 'A commercial showcave with formed paths and lighting.',
-        ]);
-
-        // - - - - - - - - - Difficulty (a hint to the assistant; routes carry the formal grade)
-        Tag::updateOrCreate([
-            'tag' => 'Beginner',
-            'type' => 'cave',
-            'category' => 'difficulty',
-        ], [
-            'description' => 'Suitable for newcomers — short trip, walking-sized passages, no SRT or significant water.',
-        ]);
-
-        Tag::updateOrCreate([
-            'tag' => 'Sporting',
-            'type' => 'cave',
-            'category' => 'difficulty',
-        ], [
-            'description' => 'A sporting trip — committing, physical, but well within the reach of a competent recreational caver.',
-        ]);
-
-        Tag::updateOrCreate([
-            'tag' => 'Hard',
-            'type' => 'cave',
-            'category' => 'difficulty',
-        ], [
-            'description' => 'Hard — long, sustained, or technical. Expect SRT, wet sections, or tight passages.',
-        ]);
-
-        Tag::updateOrCreate([
-            'tag' => 'Severe',
-            'type' => 'cave',
-            'category' => 'difficulty',
-        ], [
-            'description' => 'Severe — committing, expedition-grade. Only for experienced cavers, often requires support.',
-        ]);
-
         Tag::updateOrCreate([
             'tag' => 'Not Done Yet',
             'type' => 'cave',

@@ -11,23 +11,23 @@
     ]
   },
   {
-    "id": "rec_region_sporting",
+    "id": "rec_region_unvisited",
     "category": "recommendations",
-    "prompt": "Suggest some sporting caves in the Yorkshire Dales I haven't done yet, up to a hard grade.",
+    "prompt": "Suggest some caves in the Yorkshire Dales I haven't done yet — something with a bit of pitch work.",
     "checks": [
-      "Calls search_caves with region=Yorkshire and tags including sporting/hard",
+      "Calls search_caves with region=Yorkshire, not_visited=true, and tags=[\"SRT\"] (or similar tackle filter)",
       "Excludes systems the user has visited (Gaping Gill, Lancaster Hole, Long Churn)",
-      "Returns concrete suggestions with cards",
-      "Does not retry the same search multiple times"
+      "Uses min_length / vertical_range or route grades to judge difficulty (not a fake \"Sporting\" tag)",
+      "Returns concrete suggestions with cards"
     ]
   },
   {
     "id": "rec_no_srt",
     "category": "recommendations",
-    "prompt": "I haven't done any SRT yet. What's a good non-SRT cave for a sporting trip?",
+    "prompt": "I haven't done any SRT yet. What's a good non-SRT cave for an adventurous day out?",
     "checks": [
       "Honours the SRT exclusion (filters by tackle: No Tackle, Handline, or Ladder; not SRT)",
-      "Suggests something at sporting grade",
+      "Uses cave length / route grade as a proxy for adventurousness (not a fake \"Sporting\" tag)",
       "Does not include SRT-tagged systems"
     ]
   },
@@ -36,7 +36,7 @@
     "category": "recommendations",
     "prompt": "I'd like to do a through-trip — entrance and exit at different caves. What are my options?",
     "checks": [
-      "Filters by tags=[Through Trip]",
+      "Uses get_cave_details on multi-entrance systems (entrance_count > 1) to identify candidates",
       "Suggests Lancaster Hole/Easegill or Gaping Gill",
       "Mentions which entrances/exits go together"
     ]
@@ -47,8 +47,7 @@
     "prompt": "Tell me about Dan-yr-Ogof — what should I know before going?",
     "checks": [
       "Looks up the system efficiently (search_caves name= or get_cave_details)",
-      "Mentions it's a showcave with longer wild parts beyond",
-      "Mentions tags like streamway / hard if present",
+      "Mentions the access info and length / vertical range from tool data",
       "Does NOT call get_user_experience",
       "Stops after 1-2 tool calls"
     ]

@@ -54,7 +54,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => "One of the UK's most famous and largest cave systems, with a 110m main shaft and the iconic Main Chamber. Multi-entrance system on the southern flank of Ingleborough — through-trips between Bar Pot, Flood Entrance, and Gaping Gill itself are classic Yorkshire SRT outings.",
                 'length' => 16500,
                 'vertical_range' => 195,
-                'tags' => ['Yorkshire', 'SRT', 'Sporting', 'Hard', 'Through Trip'],
+                'tags' => ['Yorkshire', 'SRT'],
                 'entrances' => [
                     ['name' => 'Gaping Gill Main Shaft', 'lat' => 54.1543, 'lng' => -2.3736, 'location_name' => 'Ingleborough, Yorkshire Dales'],
                     ['name' => 'Bar Pot',                 'lat' => 54.1521, 'lng' => -2.3728, 'location_name' => 'Ingleborough, Yorkshire Dales'],
@@ -67,7 +67,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'The longest cave system in the UK at over 90km of surveyed passage. The Easegill catchment links Lancaster Hole, County Pot, Pippikin Pot, and many more entrances across Casterton Fell. Outstanding sporting through-trips — but the streamway floods rapidly.',
                 'length' => 90000,
                 'vertical_range' => 211,
-                'tags' => ['Yorkshire', 'SRT', 'Sporting', 'Hard', 'Through Trip', 'Streamway'],
+                'tags' => ['Yorkshire', 'SRT'],
                 'entrances' => [
                     ['name' => 'Lancaster Hole', 'lat' => 54.2156, 'lng' => -2.5042, 'location_name' => 'Casterton Fell, Yorkshire Dales'],
                     ['name' => 'County Pot',     'lat' => 54.2192, 'lng' => -2.4969, 'location_name' => 'Casterton Fell, Yorkshire Dales'],
@@ -80,7 +80,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'A classic Yorkshire SRT trip with a series of fine pitches into a sporting streamway. CNCC permit required.',
                 'length' => 1900,
                 'vertical_range' => 130,
-                'tags' => ['Yorkshire', 'SRT', 'Sporting', 'Streamway', 'Permit'],
+                'tags' => ['Yorkshire', 'SRT', 'Permit'],
                 'entrances' => [
                     ['name' => 'Ireby Fell Cavern', 'lat' => 54.2103, 'lng' => -2.4503, 'location_name' => 'Ireby Fell, Yorkshire Dales', 'access_info' => 'Access via CNCC permit only. Apply through cncc.org.uk before the trip.'],
                 ],
@@ -91,7 +91,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'The classic introductory caving trip on Selside. Walking-sized streamway, the famous Cheese Press squeeze (optional), and a connection to Diccan Pot for the bold. Perfect for beginners with a leader.',
                 'length' => 1100,
                 'vertical_range' => 35,
-                'tags' => ['Yorkshire', 'Beginner', 'Streamway', 'No Tackle'],
+                'tags' => ['Yorkshire', 'No Tackle'],
                 'entrances' => [
                     ['name' => 'Upper Long Churn',  'lat' => 54.1745, 'lng' => -2.3268, 'location_name' => 'Selside, Yorkshire Dales'],
                     ['name' => 'Lower Long Churn',  'lat' => 54.1757, 'lng' => -2.3252, 'location_name' => 'Selside, Yorkshire Dales'],
@@ -103,7 +103,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'A Mendip classic — a single-entrance sporting trip down the Bridge, around the Loop, with the option of the Rift to the bottom. CSCC permit; landowner restrictions in spring.',
                 'length' => 2300,
                 'vertical_range' => 130,
-                'tags' => ['Mendip', 'Sporting', 'Permit', 'Streamway'],
+                'tags' => ['Mendip', 'Permit'],
                 'entrances' => [
                     ['name' => 'GB Cave', 'lat' => 51.2838, 'lng' => -2.7541, 'location_name' => 'Charterhouse, Mendip', 'access_info' => 'CSCC permit required. Closed during the lambing season.'],
                 ],
@@ -114,7 +114,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'The famous Mendip resurgence — a showcave for tourists and a long sumped system for divers. The dry portion is restricted to the showcave.',
                 'length' => 4000,
                 'vertical_range' => 70,
-                'tags' => ['Mendip', 'Showcave', 'Streamway'],
+                'tags' => ['Mendip'],
                 'entrances' => [
                     ['name' => 'Wookey Hole', 'lat' => 51.2270, 'lng' => -2.6773, 'location_name' => 'Wookey Hole, Mendip'],
                 ],
@@ -125,7 +125,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => "South Wales' famous showcave. The wild parts beyond the show route are some of the longest passages in the UK and require advanced caving with a guide.",
                 'length' => 17000,
                 'vertical_range' => 80,
-                'tags' => ['South Wales', 'Showcave', 'Streamway', 'Hard'],
+                'tags' => ['South Wales'],
                 'entrances' => [
                     ['name' => 'Dan-yr-Ogof', 'lat' => 51.8294, 'lng' => -3.6753, 'location_name' => 'Upper Swansea Valley, Brecon Beacons'],
                 ],
@@ -136,7 +136,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'The Devil\'s Arse — Castleton\'s classic Peak District showcave with sporting wild trips beyond, including the Far Sump bypass and the long crawl into Ink Sump.',
                 'length' => 16000,
                 'vertical_range' => 95,
-                'tags' => ['Peak District', 'Showcave', 'Sporting', 'Streamway'],
+                'tags' => ['Peak District'],
                 'entrances' => [
                     ['name' => 'Peak Cavern', 'lat' => 53.3429, 'lng' => -1.7775, 'location_name' => 'Castleton, Peak District'],
                 ],

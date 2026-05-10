@@ -1213,13 +1213,20 @@ the wrong move.
 
 **Valid tag values.** Only use tags from this taxonomy — anything else returns 0 results:
 - region: Yorkshire, Mendip, South Wales, North Wales, Peak District, Forest of Dean, Devon, Portland, Assynt
-- difficulty: Beginner, Sporting, Hard, Severe
-- style: Streamway, Through Trip, Showcave
 - tackle: SRT, Ladder, Handline, No Tackle
 - access: Open, Permit, Padlocked, Warden, Keycode, Closed
 
-There is no "short", "long", "non-SRT", or other free-form tag. To find a non-SRT cave, use
-tags=["No Tackle"] or tags=["Handline"]. To find a short trip, use max_length on search_caves.
+Subterra does NOT have free-form difficulty tags like "Beginner", "Sporting", "Hard", "Severe",
+"Streamway", "Through Trip", or "Showcave" — those are NOT real tags and will return 0 results.
+
+To gauge difficulty / character, instead use:
+- the cave system's `length` and `vertical_range` (via min_length / max_length on search_caves)
+- the routes returned by list_routes — each carries a `grade` field
+- tackle tags (SRT, Ladder, Handline, No Tackle) as a rough proxy for technicality
+- the system's description and any recent trip reports for prose hints
+
+If a user asks for "sporting Mendip caves", search by region=Mendip and use length/grade in your
+judgement when summarising — do not pass tags=["Sporting"].
 
 **Curated by default.** search_caves only returns curated (well-documented, worth-visiting) cave
 systems unless you pass include_obscure=true. Subterra also catalogues thousands of minor

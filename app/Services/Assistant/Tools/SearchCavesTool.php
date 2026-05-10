@@ -300,11 +300,12 @@ class SearchCavesTool implements AssistantTool
             ], fn ($v) => $v !== null);
             $result['valid_tags_reference'] = [
                 'region' => ['Yorkshire', 'Mendip', 'South Wales', 'North Wales', 'Peak District', 'Forest of Dean', 'Devon', 'Portland', 'Assynt'],
-                'difficulty' => ['Beginner', 'Sporting', 'Hard', 'Severe'],
-                'style' => ['Streamway', 'Through Trip', 'Showcave'],
                 'tackle' => ['SRT', 'Ladder', 'Handline', 'No Tackle'],
                 'access' => ['Open', 'Permit', 'Padlocked', 'Warden', 'Keycode', 'Closed'],
             ];
+            $result['note_on_difficulty'] = 'Subterra has no "Sporting" / "Beginner" / "Hard" / '
+                .'"Streamway" / "Through Trip" / "Showcave" tags. Do NOT retry with those — use '
+                .'min_length / max_length, list_routes for route grades, or tackle tags as proxies.';
         }
 
         return $result;
