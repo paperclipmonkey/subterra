@@ -416,24 +416,31 @@ MD;
     }
 
     /**
-     * Look for tool names invoked more than once in a single turn — usually a
-     * symptom of the model failing to converge and retrying the same call.
+     * Look for tool calls invoked more than once with similar shapes in a
+     * single turn — usually a symptom of the model failing to converge and
+     * retrying. We compare on name + sorted-arg-keys, NOT raw arg values,
+     * so e.g. three weather forecasts for different caves don't count as
+     * repeats (they're parallel queries, not retries) but three searches
+     * with shifting region names do.
      *
      * @param  array<int, array{name: string, args: array<string, mixed>|null}>  $toolCalls
-     * @return array<int, string>  e.g. ["search_caves×3"]
+     * @return array<int, string>  e.g. ["search_caves×3 with same arg keys"]
      */
     private function detectRepeats(array $toolCalls): array
     {
         $counts = [];
         foreach ($toolCalls as $tc) {
             $name = $tc['name'];
-            $counts[$name] = ($counts[$name] ?? 0) + 1;
+            $argKeys = is_array($tc['args']) ? array_keys($tc['args']) : [];
+            sort($argKeys);
+            $shape = $name . '(' . implode(',', $argKeys) . ')';
+            $counts[$shape] = ($counts[$shape] ?? 0) + 1;
         }
 
         $repeats = [];
-        foreach ($counts as $name => $n) {
+        foreach ($counts as $shape => $n) {
             if ($n > 1) {
-                $repeats[] = "{$name}×{$n}";
+                $repeats[] = "{$shape}×{$n}";
             }
         }
 
