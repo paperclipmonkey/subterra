@@ -176,6 +176,69 @@ export const useAssistantStore = defineStore('assistant', {
     },
 
     /**
+     * Submit a thumbs-up/down rating for a specific assistant message.
+     * Sends the full transcript up to and including that reply so reviewers
+     * can audit it later.
+     *
+     * @param {number} messageIndex  Index into this.messages of the assistant reply being rated
+     * @param {1 | -1} rating
+     * @param {string} [comment]
+     * @returns {Promise<boolean>} true on success
+     */
+    async submitFeedback(messageIndex, rating, comment = null) {
+      const msg = this.messages[messageIndex]
+      if (!msg || msg.role !== 'assistant' || msg.pending) return false
+
+      // Build the transcript up to and including the rated reply.
+      const transcript = this.messages
+        .slice(0, messageIndex + 1)
+        .filter(m => m.content && m.content.trim())
+        .map(m => ({ role: m.role, content: m.content.trim() }))
+
+      // Optimistically mark so the UI can prevent re-submission.
+      const previous = msg.feedback || null
+      msg.feedback = { rating, pending: true }
+
+      try {
+        const response = await fetch('/api/assistant/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ rating, comment, messages: transcript }),
+        })
+        if (!response.ok) throw new Error(`status ${response.status}`)
+        msg.feedback = { rating, pending: false }
+        return true
+      } catch (err) {
+        msg.feedback = previous
+        return false
+      }
+    },
+
+    /**
+     * Record the user's acceptance of the Pip terms.
+     */
+    async acceptPipAgreement() {
+      const response = await fetch('/api/assistant/agreement', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+      })
+      if (!response.ok) {
+        throw new Error(`Failed to record agreement (${response.status}).`)
+      }
+      return response.json()
+    },
+
+    /**
      * Retry by re-sending the last user message.
      */
     retry() {

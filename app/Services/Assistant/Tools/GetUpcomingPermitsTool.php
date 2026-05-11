@@ -45,7 +45,7 @@ class GetUpcomingPermitsTool implements AssistantTool
 
     public function handle(array $arguments, User $user): array
     {
-        $caveId       = (int) ($arguments['cave_id'] ?? 0);
+        $caveId = (int) ($arguments['cave_id'] ?? 0);
         $caveSystemId = (int) ($arguments['cave_system_id'] ?? 0);
 
         // Try the specific cave first; fall back to scanning the system's

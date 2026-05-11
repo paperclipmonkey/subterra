@@ -12,6 +12,7 @@ use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ClubAdminOrAdmin;
 use App\Http\Middleware\CurrentUserOrAdmin;
+use App\Http\Middleware\PipAccess;
 use App\Http\Resources\UserDetailEmailResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -153,12 +154,22 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
     ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
 
-// --- AI Assistant (admin-only preview) ---
-// Restricted to platform_admin for Phase 1. Rate-limited to 50 requests per day (1440 min).
+// --- AI Assistant (Pip) ---
+// Open to platform_admin OR users granted the `pip_access` role explicitly.
+// Rate-limited to 50 requests per day (1440 min).
 Route::post('/assistant/chat', [App\Http\Controllers\AssistantController::class, 'chat'])
-    ->middleware([ApiIsAuthenticated::class, ApiIsAdmin::class])
+    ->middleware([ApiIsAuthenticated::class, PipAccess::class])
     ->middleware('throttle:50,1440')
     ->name('assistant.chat');
+
+Route::post('/assistant/agreement', [App\Http\Controllers\AssistantController::class, 'acceptAgreement'])
+    ->middleware([ApiIsAuthenticated::class, PipAccess::class])
+    ->name('assistant.agreement');
+
+Route::post('/assistant/feedback', [App\Http\Controllers\AssistantController::class, 'feedback'])
+    ->middleware([ApiIsAuthenticated::class, PipAccess::class])
+    ->middleware('throttle:60,60')
+    ->name('assistant.feedback');
 
 // --- Admin Routes ---
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
@@ -171,6 +182,11 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::put('/users/{user_without_scopes}/toggle-role/{role}', [UserController::class, 'toggleRole'])
             ->withoutScopedBindings()
             ->name('admin.users.toggle-role');
+
+        // Pip feedback (flagged conversations) review UI
+        Route::get('/pip-feedback', [App\Http\Controllers\Admin\PipFeedbackController::class, 'index'])->name('admin.pip-feedback.index');
+        Route::get('/pip-feedback/{feedback}', [App\Http\Controllers\Admin\PipFeedbackController::class, 'show'])->name('admin.pip-feedback.show');
+        Route::put('/pip-feedback/{feedback}/reviewed', [App\Http\Controllers\Admin\PipFeedbackController::class, 'markReviewed'])->name('admin.pip-feedback.reviewed');
 
         Route::get('/clubs', [ClubController::class, 'adminIndex'])->name('admin.clubs.index');
         Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');

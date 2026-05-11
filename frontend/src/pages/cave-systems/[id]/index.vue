@@ -2,12 +2,12 @@
   <div>
     <div class="d-flex justify-end pa-4">
       <v-btn
-        v-if="appStore.user && appStore.user.is_admin && caveSystem"
+        v-if="canUsePip && caveSystem"
         color="deep-purple"
         variant="text"
         size="small"
         :prepend-icon="mdiRobotOutline"
-        :to="`/admin/assistant?context=${encodeURIComponent('Tell me about ' + caveSystem.name + '. What should I know before visiting?')}`"
+        :to="`/pip?context=${encodeURIComponent('Tell me about ' + caveSystem.name + '. What should I know before visiting?')}`"
         class="mr-2"
       >
         Ask Pip
@@ -66,7 +66,7 @@
 <script setup>
 import { mdiPencil, mdiPencilOff, mdiRobotOutline } from '@mdi/js'
 
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
 import AnnotationMapViewer from '@/components/cave-systems/AnnotationMapViewer.vue'
@@ -76,6 +76,11 @@ import { api } from '@/plugins/api'
 const appStore = useAppStore()
 const route = useRoute()
 const caveSystem = ref(null)
+
+const canUsePip = computed(() => {
+  const roles = appStore.user?.roles ?? []
+  return roles.some(r => r.slug === 'platform_admin' || r.slug === 'pip_access')
+})
 
 const load = async () => {
   try {

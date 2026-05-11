@@ -129,6 +129,14 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  // Pip access — platform_admin OR pip_access role explicitly granted.
+  if (to.path.startsWith('/pip')) {
+    const hasRoleSlug = (slug) => user.roles && user.roles.some(r => r.slug === slug)
+    if (!hasRoleSlug('platform_admin') && !hasRoleSlug('pip_access')) {
+      return next({ path: '/trips' })
+    }
+  }
+
   if (user.email && (!user.name || user.name.trim() === '')) {
     const isProfilePage = to.name === '/profile/[id].edit' || to.path.includes('/profile/')
     if (!isProfilePage && to.path !== '/logout') {

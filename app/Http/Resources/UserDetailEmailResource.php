@@ -64,6 +64,7 @@ class UserDetailEmailResource extends JsonResource
             'open_callouts_count' => Callout::whereIn('status', ['active', 'triggered'])->count(),
             'tos_agreed_at' => $this->tos_agreed_at,
             'privacy_policy_agreed_at' => $this->privacy_policy_agreed_at,
+            'pip_agreement_signed_at' => $this->pip_agreement_signed_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'onboarding_completed_at' => $this->onboarding_completed_at,

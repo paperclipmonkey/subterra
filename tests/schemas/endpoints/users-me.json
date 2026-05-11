@@ -231,6 +231,13 @@
           ],
           "format": "date-time"
         },
+        "pip_agreement_signed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "on_call": {
           "type": "boolean"
         },
@@ -262,6 +269,7 @@
         "stats",
         "tos_agreed_at",
         "privacy_policy_agreed_at",
+        "pip_agreement_signed_at",
         "onboarding_completed_at",
         "phone",
         "email_trophies",

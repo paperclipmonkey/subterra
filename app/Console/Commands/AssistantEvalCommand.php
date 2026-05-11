@@ -433,7 +433,7 @@ MD;
             $name = $tc['name'];
             $argKeys = is_array($tc['args']) ? array_keys($tc['args']) : [];
             sort($argKeys);
-            $shape = $name . '(' . implode(',', $argKeys) . ')';
+            $shape = $name.'('.implode(',', $argKeys).')';
             $counts[$shape] = ($counts[$shape] ?? 0) + 1;
         }
 

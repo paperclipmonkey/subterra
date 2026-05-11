@@ -198,7 +198,7 @@ class AssistantService
                     }
 
                     $toolsUsed[] = $name;
-                    $toolCallsThisTurn++;
+                    ++$toolCallsThisTurn;
 
                     if ($onEvent) {
                         $onEvent('tool_call', [
@@ -413,7 +413,7 @@ class AssistantService
                     // typically sharp enough to act as a clean wrap-up.
                     $lastContent = trim($lastContent) === ''
                         ? $finalText
-                        : trim($lastContent) . "\n\n" . $finalText;
+                        : trim($lastContent)."\n\n".$finalText;
 
                     if ($onEvent) {
                         // If the streamed bubble is already non-empty, separate
@@ -421,7 +421,7 @@ class AssistantService
                         // distinct paragraph rather than running into the prior
                         // content mid-sentence.
                         $separator = $iterations > 0 ? "\n\n" : '';
-                        $onEvent('content_chunk', ['text' => $separator . $finalText]);
+                        $onEvent('content_chunk', ['text' => $separator.$finalText]);
                     }
                 }
 

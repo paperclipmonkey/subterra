@@ -61,6 +61,30 @@
               </v-chip>
             </div>
           </template>
+          <template #item.pip="{ item }">
+            <div @click.stop>
+              <v-tooltip location="top">
+                <template #activator="{ props }">
+                  <div v-bind="props" style="display:inline-flex">
+                    <v-checkbox
+                      :model-value="hasRole(item, 'platform_admin') || hasRole(item, 'pip_access')"
+                      :disabled="isSelf(item) || hasRole(item, 'platform_admin') || item.loadingRole === 'pip_access'"
+                      :loading="item.loadingRole === 'pip_access'"
+                      density="compact"
+                      hide-details
+                      color="deep-purple"
+                      :prepend-icon="mdiRobotOutline"
+                      @update:model-value="toggleRole(item, 'pip_access')"
+                    />
+                  </div>
+                </template>
+                <span v-if="hasRole(item, 'platform_admin')">Platform admins always have Pip access.</span>
+                <span v-else-if="isSelf(item)">Cannot modify your own roles.</span>
+                <span v-else-if="hasRole(item, 'pip_access')">Revoke Pip access</span>
+                <span v-else>Grant Pip access (opt-in beta)</span>
+              </v-tooltip>
+            </div>
+          </template>
           <template #item.created_at="{ item }">
             {{ moment(item.created_at).format('DD/MM/YYYY') }}
           </template>
@@ -104,7 +128,7 @@
 </template>
 
 <script setup>
-import { mdiDatabaseEdit, mdiDelete, mdiKey, mdiMagnify, mdiPhoneInTalk, mdiShieldCrown } from '@mdi/js'
+import { mdiDatabaseEdit, mdiDelete, mdiKey, mdiMagnify, mdiPhoneInTalk, mdiRobotOutline, mdiShieldCrown } from '@mdi/js'
 
 import moment from 'moment'
 import { ref, onMounted } from 'vue'
@@ -132,6 +156,7 @@ const headers = [
   { title: 'Name', key: 'name', sortable: true },
   { title: 'Email', key: 'email', sortable: true },
   { title: 'Roles', key: 'roles', sortable: false, align: 'start' },
+  { title: 'Pip', key: 'pip', sortable: false, align: 'center' },
   { title: 'Clubs', key: 'clubs', sortable: true },
   { title: 'Joined', key: 'created_at', sortable: true },
   { title: 'Actions', key: 'actions', sortable: false, align: 'center' },

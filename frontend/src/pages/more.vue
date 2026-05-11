@@ -1,8 +1,8 @@
 <template>
   <v-container>
     <v-row>
-      <v-col v-if="isPlatformAdmin" cols="12" md="6">
-        <v-card :to="{ path: '/admin/assistant' }" link height="150" class="d-flex align-center justify-center pip-tile">
+      <v-col v-if="canUsePip" cols="12" md="6">
+        <v-card :to="{ path: '/pip' }" link height="150" class="d-flex align-center justify-center pip-tile">
           <div class="text-center">
             <img src="/pip.png" alt="Pip" class="pip-tile-avatar mb-2">
             <div class="text-h5">
@@ -110,11 +110,12 @@ const userStore = useAppStore()
 const offlineStore = useOfflineStore()
 const offlineCount = computed(() => offlineStore.downloadedCaveCount)
 
-// Mirror the gate on the /api/assistant/chat route — only platform_admins
-// can actually use Pip during the preview, so don't tease the tile to others.
-const isPlatformAdmin = computed(
-  () => userStore.user?.roles?.some(r => r.slug === 'platform_admin') ?? false
-)
+// Mirror the gate on the /api/assistant/chat route — platform_admins always
+// have access, and other users can be opted in via the `pip_access` role.
+const canUsePip = computed(() => {
+  const roles = userStore.user?.roles ?? []
+  return roles.some(r => r.slug === 'platform_admin' || r.slug === 'pip_access')
+})
 </script>
 
 <style scoped>

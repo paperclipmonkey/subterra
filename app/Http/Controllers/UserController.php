@@ -201,7 +201,7 @@ class UserController extends Controller
     public function toggleRole(User $user, string $role): UserDetailEmailResource
     {
         // Whitelist of roles that can be assigned via the admin panel
-        $allowedRoles = ['platform_admin', 'data_admin', 'duty_officer'];
+        $allowedRoles = ['platform_admin', 'data_admin', 'duty_officer', 'pip_access'];
         if (!in_array($role, $allowedRoles, true)) {
             abort(422, 'Invalid role.');
         }

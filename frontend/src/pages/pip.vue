@@ -104,7 +104,7 @@
                 </span>
               </div>
 
-              <!-- Meta row: elapsed time + copy -->
+              <!-- Meta row: elapsed time + copy + rate -->
               <div v-if="!msg.pending && !msg.streaming && msg.content?.trim()" class="pip-meta">
                 <span v-if="msg.elapsedMs" class="pip-meta-time">
                   <v-icon :icon="mdiClockOutline" size="11" class="mr-1" />
@@ -119,6 +119,32 @@
                     :icon="copiedIndex === index ? mdiCheck : mdiContentCopy"
                     size="12"
                     :color="copiedIndex === index ? 'success' : undefined"
+                  />
+                </button>
+                <button
+                  class="pip-meta-btn"
+                  :class="{ 'pip-meta-btn--active': msg.feedback?.rating === 1 }"
+                  :title="msg.feedback?.rating === 1 ? 'Thanks for the feedback' : 'Good response'"
+                  :disabled="msg.feedback?.pending"
+                  @click="rateMessage(index, 1)"
+                >
+                  <v-icon
+                    :icon="msg.feedback?.rating === 1 ? mdiThumbUp : mdiThumbUpOutline"
+                    size="12"
+                    :color="msg.feedback?.rating === 1 ? 'success' : undefined"
+                  />
+                </button>
+                <button
+                  class="pip-meta-btn"
+                  :class="{ 'pip-meta-btn--active': msg.feedback?.rating === -1 }"
+                  :title="msg.feedback?.rating === -1 ? 'Thanks for the feedback' : 'Flag this response'"
+                  :disabled="msg.feedback?.pending"
+                  @click="rateMessage(index, -1)"
+                >
+                  <v-icon
+                    :icon="msg.feedback?.rating === -1 ? mdiThumbDown : mdiThumbDownOutline"
+                    size="12"
+                    :color="msg.feedback?.rating === -1 ? 'error' : undefined"
                   />
                 </button>
               </div>
@@ -261,6 +287,60 @@
       </p>
     </div>
 
+    <!-- First-run agreement dialog -->
+    <v-dialog v-model="agreementDialog" max-width="540" persistent>
+      <v-card>
+        <v-card-title class="d-flex align-center pa-4 pb-2">
+          <v-avatar size="32" class="mr-3" image="/pip.png" alt="Pip" />
+          <span>Welcome to Pip</span>
+          <v-chip color="warning" variant="tonal" size="x-small" class="ml-2">Beta</v-chip>
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-4" style="font-size: 14px; line-height: 1.6;">
+          <p class="mb-3">
+            Before you start, please read and agree to the following:
+          </p>
+          <ul class="mb-3" style="padding-left: 18px;">
+            <li class="mb-2">
+              Pip is a <strong>beta product</strong> and may make mistakes.
+            </li>
+            <li class="mb-2">
+              Pip provides <strong>general advice only</strong>. Always use your own
+              judgement — verify conditions, access, gear and any safety-critical
+              information before relying on it.
+            </li>
+            <li class="mb-2">
+              Conversations may be used to <strong>improve and continue training</strong>
+              the assistant. Avoid sharing personal information you don't want
+              retained for that purpose.
+            </li>
+            <li class="mb-2">
+              You can flag bad responses with the thumbs-down button — flagged
+              conversations are sent to administrators for review.
+            </li>
+          </ul>
+          <p class="mb-0 text-medium-emphasis" style="font-size: 12px;">
+            By clicking "I agree" you confirm you have read and accept the above.
+          </p>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-3">
+          <v-btn variant="text" :to="{ path: '/trips' }">
+            No thanks
+          </v-btn>
+          <v-spacer />
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="acceptingAgreement"
+            @click="acceptAgreement"
+          >
+            I agree
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Conversation history dialog -->
     <v-dialog v-model="store.historyDrawerOpen" max-width="520" scrollable>
       <v-card>
@@ -307,7 +387,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   mdiBroom,
@@ -326,23 +406,63 @@ import {
   mdiNotebookOutline,
   mdiSchoolOutline,
   mdiSend,
+  mdiThumbDown,
+  mdiThumbDownOutline,
+  mdiThumbUp,
+  mdiThumbUpOutline,
   mdiWeatherCloudy,
 } from '@mdi/js'
 import { useAssistantStore } from '@/stores/assistant'
+import { useAppStore } from '@/stores/app'
+import { useNotificationStore } from '@/stores/notifications'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveAssistantCard from '@/components/CaveAssistantCard.vue'
 import CollectionAssistantCard from '@/components/CollectionAssistantCard.vue'
 import HutAssistantCard from '@/components/HutAssistantCard.vue'
 import TripReportAssistantCard from '@/components/TripReportAssistantCard.vue'
 
-defineOptions({ name: 'AdminAssistant' })
+defineOptions({ name: 'Pip' })
 
 const store = useAssistantStore()
+const appStore = useAppStore()
+const notificationStore = useNotificationStore()
 const route = useRoute()
 const inputText = ref('')
 const inputEl = ref(null)
 const streamEl = ref(null)
 const copiedIndex = ref(null)
+
+// ── Agreement gate ───────────────────────────────────────────────────────────
+const hasAgreed = computed(() => !!appStore.user?.pip_agreement_signed_at)
+const agreementDialog = ref(false)
+const acceptingAgreement = ref(false)
+
+async function acceptAgreement() {
+  acceptingAgreement.value = true
+  try {
+    const result = await store.acceptPipAgreement()
+    if (appStore.user) {
+      appStore.user.pip_agreement_signed_at = result.pip_agreement_signed_at
+    }
+    agreementDialog.value = false
+  } catch (e) {
+    notificationStore.showError('Could not record agreement. Please try again.')
+  } finally {
+    acceptingAgreement.value = false
+  }
+}
+
+async function rateMessage(index, rating) {
+  if (rating === -1) {
+    notificationStore.showInfo('Thanks — this conversation will be reviewed.')
+  } else {
+    notificationStore.showSuccess('Thanks for the feedback!')
+  }
+  const ok = await store.submitFeedback(index, rating)
+  if (!ok) {
+    notificationStore.showError('Could not record your feedback. Please try again.')
+  }
+}
 
 // ── Voice input ──────────────────────────────────────────────────────────────
 const SpeechRecognition = typeof window !== 'undefined'
@@ -413,6 +533,10 @@ const welcomeSuggestions = [
 function send() {
   const text = inputText.value.trim()
   if (!text || store.isLoading) return
+  if (!hasAgreed.value) {
+    agreementDialog.value = true
+    return
+  }
   inputText.value = ''
   nextTick(autosize)
   store.sendMessage(text)
@@ -420,6 +544,10 @@ function send() {
 
 function sendSuggestion(text) {
   if (store.isLoading) return
+  if (!hasAgreed.value) {
+    agreementDialog.value = true
+    return
+  }
   inputText.value = text
   send()
 }
@@ -445,11 +573,16 @@ watch(
 )
 
 onMounted(() => {
+  // Show the agreement dialog immediately on first arrival if not yet signed.
+  if (!hasAgreed.value) {
+    agreementDialog.value = true
+  }
+
   // Pre-populate from ?context= query param (e.g. deep link from a cave system page)
   const context = route.query.context
   if (context && typeof context === 'string' && !store.hasMessages) {
     inputText.value = context
-    send()
+    if (hasAgreed.value) send()
   }
   nextTick(autosize)
 })
@@ -698,6 +831,13 @@ onMounted(() => {
 .pip-meta-btn:hover {
   background: rgba(0, 0, 0, 0.05);
   color: #1f2937;
+}
+.pip-meta-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.pip-meta-btn--active {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 /* ── Card rows: full-bleed horizontal scroll on mobile ────────────────── */

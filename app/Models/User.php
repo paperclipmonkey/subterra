@@ -38,6 +38,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'email_platform_news',
         'visibility_addable',
         'onboarding_completed_at',
+        'pip_agreement_signed_at',
     ];
 
     /**
@@ -79,7 +80,18 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
             'email_tagged' => 'boolean',
             'email_platform_news' => 'boolean',
             'onboarding_completed_at' => 'datetime',
+            'pip_agreement_signed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether the user is allowed to use the Pip AI assistant.
+     * Platform admins always have access; other users must be explicitly opted in
+     * via the `pip_access` role by an admin.
+     */
+    public function canUsePip(): bool
+    {
+        return $this->hasRole(['platform_admin', 'pip_access']);
     }
 
     public function trips(): BelongsToMany
@@ -188,11 +200,12 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
 
     /**
      * Returns true if the user has any admin role.
-     * Used to gate access to the admin panel.
+     * Used to gate access to the admin panel. `pip_access` is a feature flag,
+     * not an admin role, so it must not count here.
      */
     public function getIsAdminAttribute(): bool
     {
-        return $this->roles()->exists();
+        return $this->roles()->where('slug', '!=', 'pip_access')->exists();
     }
 
     /**

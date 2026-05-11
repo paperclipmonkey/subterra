@@ -124,7 +124,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function missing_messages_field_returns_unprocessable(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, []);
@@ -136,7 +136,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function empty_messages_array_returns_unprocessable(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, ['messages' => []]);
@@ -148,7 +148,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function invalid_role_in_message_returns_unprocessable(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, [
@@ -164,7 +164,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function too_many_messages_returns_unprocessable(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $messages = [];
         for ($i = 0; $i < 21; ++$i) {
@@ -181,7 +181,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function message_content_too_long_returns_unprocessable(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $response = $this->actingAs($admin)
             ->postJson(self::ENDPOINT, [
@@ -201,7 +201,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function admin_receives_sse_stream_with_correct_headers(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         // The StreamedResponse callback is never invoked during header-only tests
         // (sendContent() is never called by the test runner). The service is not
@@ -223,7 +223,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function stream_emits_content_and_done_events(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $this->mock(AssistantService::class, function ($mock) {
             $mock->shouldReceive('chat')
@@ -249,7 +249,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function stream_emits_thinking_and_tool_call_events(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $this->mock(AssistantService::class, function ($mock) {
             $mock->shouldReceive('chat')
@@ -279,7 +279,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function stream_emits_cave_cards_event_when_search_caves_is_called(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $fakeSystems = [
             ['id' => 1, 'name' => 'Ogof Draenen', 'slug' => 'ogof-draenen', 'grades' => 'Moderate', 'tags' => ['sporting']],
@@ -317,7 +317,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function stream_emits_thinking_elapsed_event(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $this->mock(AssistantService::class, function ($mock) {
             $mock->shouldReceive('chat')
@@ -350,7 +350,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function missing_api_key_emits_error_event(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         // Ensure no API key is set
         config(['assistant.openrouter.api_key' => null]);
@@ -373,7 +373,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function openrouter_failure_emits_error_event(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
         config(['assistant.openrouter.api_key' => 'test-key']);
 
         Http::fake([
@@ -393,7 +393,7 @@ class AssistantTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function unexpected_exception_emits_generic_error_event(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->pipAgreed()->create();
 
         $this->mock(AssistantService::class, function ($mock) {
             $mock->shouldReceive('chat')
