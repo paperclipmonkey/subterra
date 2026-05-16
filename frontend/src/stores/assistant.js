@@ -27,6 +27,7 @@ function persistableShape(m) {
     huts: m.huts ?? null,
     reports: m.reports ?? [],
     collections: m.collections ?? [],
+    weather_charts: m.weather_charts ?? null,
     elapsedMs: m.elapsedMs ?? null,
   }
 }
@@ -116,6 +117,7 @@ export const useAssistantStore = defineStore('assistant', {
         huts: null,
         reports: [],
         collections: [],
+        weather_charts: null,
       })
 
       const history = this.messages
@@ -342,6 +344,15 @@ export const useAssistantStore = defineStore('assistant', {
           const pending = this.messages.findLast(m => m.pending)
           if (pending) {
             pending.collections = (pending.collections || []).concat(event.data || [])
+          }
+          break
+        }
+
+        case 'weather_charts': {
+          // Weather gauge data (rain and river levels)
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.weather_charts = event.data || null
           }
           break
         }

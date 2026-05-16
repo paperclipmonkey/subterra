@@ -173,6 +173,13 @@
               </div>
 
               <div
+                v-if="!msg.pending && msg.weather_charts"
+                class="pip-cardrow-wrap"
+              >
+                <WeatherChartCard :data="msg.weather_charts" />
+              </div>
+
+              <div
                 v-if="!msg.pending && msg.huts && msg.huts.huts && msg.huts.huts.length"
                 class="pip-cardrow-wrap"
               >
@@ -420,6 +427,7 @@ import CaveAssistantCard from '@/components/CaveAssistantCard.vue'
 import CollectionAssistantCard from '@/components/CollectionAssistantCard.vue'
 import HutAssistantCard from '@/components/HutAssistantCard.vue'
 import TripReportAssistantCard from '@/components/TripReportAssistantCard.vue'
+import WeatherChartCard from '@/components/WeatherChartCard.vue'
 
 defineOptions({ name: 'Pip' })
 

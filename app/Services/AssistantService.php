@@ -116,6 +116,9 @@ class AssistantService
         /** @var array<string, array<string, mixed>> $collectionCardBuffer Indexed by slug; emitted at end if mentioned */
         $collectionCardBuffer = [];
 
+        /** @var array<string, mixed>|null $weatherChartsBuffer Most recent weather forecast data with gauges */
+        $weatherChartsBuffer = null;
+
         /** @var array{prompt_tokens: int, completion_tokens: int} */
         $totalUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0];
 
@@ -338,9 +341,33 @@ class AssistantService
                         }
                     }
 
+                    // Capture weather data (gauges + forecast) for visualization
+                    if ($name === 'get_weather_forecast' && empty($result['error'])) {
+                        $weatherChartsBuffer = [
+                            'cave_id' => $result['cave_id'] ?? null,
+                            'cave_name' => $result['cave_name'] ?? null,
+                            'cave_slug' => $result['cave_slug'] ?? null,
+                            'currently' => $result['currently'] ?? null,
+                            'daily_forecast' => $result['daily_forecast'] ?? [],
+                            'antecedent_rain_7d_mm' => $result['antecedent_rain_7d_mm'] ?? null,
+                            'rain_gauges' => $result['rain_gauges'] ?? [],
+                            'river_gauges' => $result['river_gauges'] ?? [],
+                        ];
+                    }
+
                     // Safety injection: if a river gauge is High, add a mandatory warning context
                     if ($name === 'get_weather_forecast') {
                         $this->injectSafetyAlert($result, $context, $message['content'] ?? '');
+                    }
+
+                    // Strip raw readings from the LLM context to avoid token waste;
+                    // they are already captured in $weatherChartsBuffer for the UI.
+                    if ($name === 'get_weather_forecast' && !empty($result['river_gauges'])) {
+                        $result['river_gauges'] = array_map(function (array $g): array {
+                            unset($g['readings']);
+
+                            return $g;
+                        }, $result['river_gauges']);
                     }
 
                     if ($onEvent) {
@@ -466,6 +493,11 @@ class AssistantService
             if (!empty($mentioned)) {
                 $onEvent('collection_cards', array_slice($mentioned, 0, 6));
             }
+        }
+
+        // Emit weather charts (rain/river gauges + forecast) if available
+        if ($onEvent && $weatherChartsBuffer !== null) {
+            $onEvent('weather_charts', $weatherChartsBuffer);
         }
 
         // Emit contextual follow-up suggestions based on what was discussed
@@ -1330,12 +1362,14 @@ and which are visited) — NOT `list_collections` (which only returns progress f
 user wants to see WHICH caves are missing, not just "2 out of 3".
 
 **Curated by default — but escalate on 0 results.** search_caves only returns curated
-(well-documented) cave systems unless you pass include_obscure=true. For experienced users
-who've visited 30+ systems, the curated set in a region is often fully exhausted: if your first
-search_caves(region=X, not_visited=true) returns 0 results AND the user has lots of trips, retry
-ONCE with include_obscure=true to surface non-curated options. Do NOT just tell an experienced
-caver "you've done everything" — that's almost always wrong; there are thousands of less-famous
-caves Subterra catalogues. Only fall back to "the data isn't here" if both passes return nothing.
+(well-documented) cave systems unless you pass include_obscure=true. If a user names a specific
+cave (e.g. "Swildon's Hole", "Swildons"), ALWAYS use the name= parameter (which bypasses the
+curated filter). If a name search returns 0 results, try common name variations:
+  - Remove or add apostrophes (Swildons ↔ Swildon's)
+  - Try the system name without the entrance (e.g., search "Ogof Ffynnon" not "Ogof Ffynnon Ddu")
+  - Trim whitespace
+If name variations still return nothing AND the user is asking about a real cave, retry ONCE with
+include_obscure=true. Only tell the user "it's not in Subterra" after both strategies fail.
 
 **Output format.** Reply in plain markdown only. Never write JSON, function-call XML/DSML, or any
 machine-readable tool-call syntax in your reply — those are for tool calls, not user messages.

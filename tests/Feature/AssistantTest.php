@@ -315,6 +315,81 @@ class AssistantTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function stream_emits_weather_charts_event_when_weather_data_available(): void
+    {
+        $admin = User::factory()->admin()->pipAgreed()->create();
+
+        $weatherData = [
+            'cave_id' => 42,
+            'cave_name' => 'Mammoth Cave',
+            'rain_gauges' => [
+                ['name' => 'Rain Station A', 'readings_24h_mm' => 12.5],
+            ],
+            'river_gauges' => [
+                ['name' => 'River Gauge B', 'state' => 'Normal', 'trend' => 'falling', 'latest_value' => '0.85 m'],
+            ],
+        ];
+
+        $this->mock(AssistantService::class, function ($mock) use ($weatherData) {
+            $mock->shouldReceive('chat')
+                ->once()
+                ->andReturnUsing(function ($messages, $user, $onEvent) use ($weatherData) {
+                    $onEvent('thinking', null);
+                    $onEvent('tool_call', ['name' => 'get_weather_forecast', 'status' => 'running']);
+                    $onEvent('weather_charts', $weatherData);
+                    $onEvent('tool_call', ['name' => 'get_weather_forecast', 'status' => 'done']);
+
+                    return 'Weather looks stable with recent rainfall.';
+                });
+        });
+
+        $response = $this->actingAs($admin)
+            ->postJson(self::ENDPOINT, $this->validPayload());
+
+        $body = $this->captureStream($response);
+        $events = $this->parseSseContent($body);
+        $types = array_column($events, 'type');
+
+        $this->assertContains('weather_charts', $types, 'Stream must emit a weather_charts event');
+
+        $weatherEvent = collect($events)->firstWhere('type', 'weather_charts');
+        $this->assertIsArray($weatherEvent['data']);
+        $this->assertSame(42, $weatherEvent['data']['cave_id']);
+        $this->assertSame('Mammoth Cave', $weatherEvent['data']['cave_name']);
+        $this->assertCount(1, $weatherEvent['data']['rain_gauges']);
+        $this->assertCount(1, $weatherEvent['data']['river_gauges']);
+        $this->assertSame('Rain Station A', $weatherEvent['data']['rain_gauges'][0]['name']);
+        $this->assertSame(12.5, $weatherEvent['data']['rain_gauges'][0]['readings_24h_mm']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function stream_does_not_emit_weather_charts_when_no_gauge_data(): void
+    {
+        $admin = User::factory()->admin()->pipAgreed()->create();
+
+        $this->mock(AssistantService::class, function ($mock) {
+            $mock->shouldReceive('chat')
+                ->once()
+                ->andReturnUsing(function ($messages, $user, $onEvent) {
+                    $onEvent('thinking', null);
+                    $onEvent('tool_call', ['name' => 'get_weather_forecast', 'status' => 'running']);
+                    $onEvent('tool_call', ['name' => 'get_weather_forecast', 'status' => 'done']);
+
+                    return 'Weather data not available for this location.';
+                });
+        });
+
+        $response = $this->actingAs($admin)
+            ->postJson(self::ENDPOINT, $this->validPayload());
+
+        $body = $this->captureStream($response);
+        $events = $this->parseSseContent($body);
+        $types = array_column($events, 'type');
+
+        $this->assertNotContains('weather_charts', $types, 'Stream should not emit weather_charts when no gauge data exists');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function stream_emits_thinking_elapsed_event(): void
     {
         $admin = User::factory()->admin()->pipAgreed()->create();

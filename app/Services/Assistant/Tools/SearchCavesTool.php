@@ -22,7 +22,7 @@ class SearchCavesTool implements AssistantTool
                     'properties' => [
                         'name' => [
                             'type' => 'string',
-                            'description' => 'Partial name match for a specific cave or system, e.g. "Ogof Draenen", "Swildon\'s". Use this when the user names a specific cave so you can fetch its ID without retrieving a long list.',
+                            'description' => 'Partial name match for a specific cave or system, e.g. "Ogof Draenen", "Swildon\'s". The search is fuzzy and handles apostrophes, spacing, and case variations. If your first search for a specific name returns no results, try removing or adding apostrophes (e.g., "Swildons" if "Swildon\'s" failed, or vice versa). This bypasses the curated filter.',
                         ],
                         'region' => [
                             'type' => 'string',
@@ -69,15 +69,30 @@ class SearchCavesTool implements AssistantTool
             ]);
 
         // Name filter — match either system name or any of its caves
+        // Normalize the search term by removing apostrophes and normalizing spaces
         if (!empty($arguments['name'])) {
             $name = (string) $arguments['name'];
-            $query->where(function ($q) use ($name) {
+            // Create a normalized version for fuzzy matching: remove apostrophes, normalize spaces
+            $normalized = str_replace("'", '', $name);
+            $normalized = preg_replace('/\s+/', ' ', trim($normalized));
+
+            $query->where(function ($q) use ($name, $normalized) {
+                // Exact LIKE match on original name
                 $q->where('cave_systems.name', 'like', "%{$name}%")
+                    // Also match normalized version (handles apostrophe and space variations)
+                    // Chain REPLACE calls to remove apostrophes and normalize multiple spaces to single space
+                    ->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(LOWER(cave_systems.name), '''', ''), '  ', ' '), '  ', ' '), '  ', ' ') LIKE LOWER(?)", ["%{$normalized}%"])
                     ->orWhereExists(function ($sub) use ($name) {
                         $sub->select(DB::raw(1))
                             ->from('caves')
                             ->whereColumn('caves.cave_system_id', 'cave_systems.id')
                             ->where('caves.name', 'like', "%{$name}%");
+                    })
+                    ->orWhereExists(function ($sub) use ($normalized) {
+                        $sub->select(DB::raw(1))
+                            ->from('caves')
+                            ->whereColumn('caves.cave_system_id', 'cave_systems.id')
+                            ->whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(LOWER(caves.name), '''', ''), '  ', ' '), '  ', ' '), '  ', ' ') LIKE LOWER(?)", ["%{$normalized}%"]);
                     });
             });
         }

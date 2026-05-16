@@ -122,12 +122,25 @@ class GetWeatherForecastTool implements AssistantTool
                     try {
                         $reading = $this->riverLevelService->getEnhancedReading((string) $gauge['rloi_id']);
                         if ($reading) {
+                            // Last 96 readings (24 h at 15-min intervals), chronological order
+                            $rawReadings = array_slice($reading['reading'], 0, 96);
+                            $chronReadings = array_map(
+                                fn ($r) => ['t' => $r['dateTime'], 'v' => (float) $r['value']],
+                                array_reverse($rawReadings)
+                            );
                             $riverGauges[] = [
                                 'name' => $gauge['name'] ?? 'River gauge',
                                 'state' => $reading['state'],
                                 'trend' => $reading['trend'],
                                 'latest_value' => $reading['latest_value'],
                                 'latest_time' => $reading['latest_time'],
+                                'readings' => $chronReadings,
+                                'typical_range_high' => isset($reading['metadata']['typicalRangeHigh'])
+                                    ? (float) $reading['metadata']['typicalRangeHigh']
+                                    : null,
+                                'typical_range_low' => isset($reading['metadata']['typicalRangeLow'])
+                                    ? (float) $reading['metadata']['typicalRangeLow']
+                                    : null,
                             ];
                         }
                     } catch (\Throwable $e) {
@@ -152,11 +165,27 @@ class GetWeatherForecastTool implements AssistantTool
             }
         }
 
+        $currently = null;
+        if ($forecast && isset($forecast['currently'])) {
+            $c = $forecast['currently'];
+            $currently = [
+                'temperature' => isset($c['temperature']) ? round((float) $c['temperature'], 1) : null,
+                'summary' => $c['summary'] ?? null,
+                'icon' => $c['icon'] ?? null,
+                'windSpeed' => isset($c['windSpeed']) ? round((float) $c['windSpeed']) : null,
+                'humidity' => isset($c['humidity']) ? round((float) $c['humidity'] * 100) : null,
+                'precipProbability' => isset($c['precipProbability']) ? round((float) $c['precipProbability'] * 100) : null,
+            ];
+        }
+
         return [
             'cave_name' => $cave->name,
+            'cave_id' => $cave->id,
+            'cave_slug' => $cave->slug,
             'cave_system' => $cave->system?->name,
             'location' => ['lat' => $cave->location_lat, 'lng' => $cave->location_lng],
             'forecast_available' => !empty($dailyForecast),
+            'currently' => $currently,
             'daily_forecast' => $dailyForecast,
             'antecedent_rain_7d_mm' => $antecedentMm,
             'river_gauges' => $riverGauges,
