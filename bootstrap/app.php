@@ -12,7 +12,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->trustProxies(at: '*');
+        // Trust only Fly.io's private network and standard private ranges.
+        // See App\Http\Middleware\TrustFlyProxies for details.
+        $middleware->trustProxies(
+            at: [
+                '127.0.0.1',
+                '::1',
+                '10.0.0.0/8',
+                '172.16.0.0/12',
+                '192.168.0.0/16',
+                'fdaa::/16', // Fly.io private machine network (6PN)
+            ]
+        );
+        $middleware->prepend(\App\Http\Middleware\SetClientIpFromFly::class);
         $middleware->statefulApi();
         $middleware->redirectGuestsTo('/login');
     })
