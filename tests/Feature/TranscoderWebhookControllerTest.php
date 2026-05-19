@@ -13,12 +13,14 @@ class TranscoderWebhookControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const WEBHOOK_SECRET = 'test-webhook-secret';
+
     protected function setUp(): void
     {
         parent::setUp();
         Storage::fake('s3_clone');
         Storage::fake('gcs_staging');
-        config(['services.gcp.webhook_secret' => null]);
+        config(['services.gcp.webhook_secret' => self::WEBHOOK_SECRET]);
     }
 
     private function buildPubSubPayload(array $notificationData): array
@@ -37,7 +39,7 @@ class TranscoderWebhookControllerTest extends TestCase
     {
         $payload = $this->buildPubSubPayload(['state' => 'RUNNING']);
 
-        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
 
         $response->assertOk()->assertJson(['status' => 'ignored']);
     }
@@ -45,7 +47,7 @@ class TranscoderWebhookControllerTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_200_when_message_data_is_missing(): void
     {
-        $response = $this->postJson('/api/webhooks/gcp/media', [
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, [
             'message' => ['attributes' => []],
         ]);
 
@@ -78,7 +80,7 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
 
         $response->assertOk()->assertJson(['status' => 'ok']);
 
@@ -112,7 +114,7 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
 
         $response->assertOk()->assertJson(['status' => 'ok']);
 
@@ -131,7 +133,7 @@ class TranscoderWebhookControllerTest extends TestCase
             'labels' => [], // No labels
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
 
         // Returns 200 to acknowledge — invalid labels will never succeed on retry
         $response->assertOk()->assertJson(['status' => 'ignored']);
@@ -150,7 +152,7 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
 
         // Returns 200 to acknowledge — unknown models will never succeed on retry
         $response->assertOk()->assertJson(['status' => 'ignored']);
@@ -173,7 +175,7 @@ class TranscoderWebhookControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson('/api/webhooks/gcp/media', $payload);
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
 
         $response->assertOk()->assertJson(['status' => 'ignored']);
     }
