@@ -104,7 +104,7 @@ class ClubTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function show_returns_404_for_non_existent_club()
     {
-        $response = $this->getJson('/api/clubs/non-existent-slug');
+        $response = $this->actingAs($this->regularUser, 'sanctum')->getJson('/api/clubs/non-existent-slug');
         $response->assertStatus(404);
     }
 

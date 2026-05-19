@@ -156,7 +156,7 @@ class MagicLinkController extends Controller
         } catch (\Exception $e) {
             Log::error('Magic link callback error', [
                 'error' => $e->getMessage(),
-                'request' => $request->all(),
+                'request' => $request->except('token'),
             ]);
 
             return response()->json([
@@ -181,7 +181,7 @@ class MagicLinkController extends Controller
         } catch (\Exception $e) {
             Log::error('Magic link web callback error', [
                 'error' => $e->getMessage(),
-                'request' => $request->all(),
+                'request' => $request->except('token'),
             ]);
 
             // Redirect to frontend with error

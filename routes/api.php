@@ -63,7 +63,7 @@ Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'public
 Route::get('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'index']);
 Route::get('/routes/{route}', [App\Http\Controllers\RouteController::class, 'show']);
 
-Route::middleware(ApiIsAuthenticated::class)->group(function () {
+Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
 
     Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
@@ -119,7 +119,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
 
     // User Management
-    Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
+    Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->middleware('throttle:10,1')->name('users.create');
     Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->where('user', '[0-9]+')->name('users.show');
     Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->where('user', '[0-9]+')->middleware(CurrentUserOrAdmin::class)->name('users.store');
     Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
@@ -158,16 +158,16 @@ Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']
 // Open to platform_admin OR users granted the `pip_access` role explicitly.
 // Rate-limited to 50 requests per day (1440 min).
 Route::post('/assistant/chat', [App\Http\Controllers\AssistantController::class, 'chat'])
-    ->middleware([ApiIsAuthenticated::class, PipAccess::class])
+    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
     ->middleware('throttle:50,1440')
     ->name('assistant.chat');
 
 Route::post('/assistant/agreement', [App\Http\Controllers\AssistantController::class, 'acceptAgreement'])
-    ->middleware([ApiIsAuthenticated::class, PipAccess::class])
+    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
     ->name('assistant.agreement');
 
 Route::post('/assistant/feedback', [App\Http\Controllers\AssistantController::class, 'feedback'])
-    ->middleware([ApiIsAuthenticated::class, PipAccess::class])
+    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
     ->middleware('throttle:60,60')
     ->name('assistant.feedback');
 
