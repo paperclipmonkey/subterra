@@ -121,6 +121,13 @@ class ImageProcessingService
         /** @var \Illuminate\Http\UploadedFile $file */
         $file = $videoData['data'];
 
+        $allowedMimeTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+        if (!in_array($file->getMimeType(), $allowedMimeTypes, true)) {
+            throw ValidationException::withMessages([
+                'video' => 'Unsupported video format. Allowed formats: MP4, QuickTime, WebM.',
+            ]);
+        }
+
         $filename = Str::uuid();
         if ($suffix) {
             $filename .= '_'.$suffix;

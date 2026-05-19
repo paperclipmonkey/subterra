@@ -43,7 +43,7 @@ class StoreCaveRequest extends FormRequest
             'entrance_image.photographer' => ['nullable', 'string', 'max:255'],
             'entrance_image.copyright' => ['nullable', 'string', 'max:255'],
             'hero_video' => ['nullable', 'array'],
-            'hero_video.data' => ['nullable', 'file', 'max:512000'],
+            'hero_video.data' => ['nullable', 'file', 'max:512000', 'mimetypes:video/mp4,video/quicktime,video/webm'],
             'hero_video.title' => ['nullable', 'string', 'max:255'],
             'hero_video.photographer' => ['nullable', 'string', 'max:255'],
             'hero_video.copyright' => ['nullable', 'string', 'max:255'],

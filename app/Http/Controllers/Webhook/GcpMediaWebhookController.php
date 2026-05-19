@@ -23,7 +23,7 @@ class GcpMediaWebhookController extends Controller
         $token = $request->query('token');
         $secret = config('services.gcp.webhook_secret');
 
-        if ($secret && $token !== $secret) {
+        if (empty($secret) || !hash_equals($secret, (string) $token)) {
             Log::warning('GcpMediaWebhook: unauthorized access attempted');
 
             return response()->json(['status' => 'unauthorized'], 401);
