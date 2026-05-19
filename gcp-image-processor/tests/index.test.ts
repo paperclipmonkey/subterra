@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../src/index';
 import { Storage } from '@google-cloud/storage';
 import sharp from 'sharp';
+import * as secrets from '../src/secrets';
 var mockDownload: any = jest.fn();
 var mockSave: any = jest.fn();
 var mockGetMetadata: any = jest.fn();
@@ -9,6 +10,8 @@ var mockPublishMessage: any = jest.fn().mockResolvedValue('msg-id');
 var mockTopic: any = jest.fn(() => ({
     publishMessage: (payload: any) => mockPublishMessage(payload)
 }));
+
+jest.mock('../src/secrets');
 
 jest.mock('@google-cloud/storage', () => ({
     Storage: jest.fn(() => ({
@@ -52,6 +55,8 @@ describe('POST / GCS Trigger Execution', () => {
     beforeEach(() => {
         jest.clearAllMocks();
 
+        jest.spyOn(secrets, 'getSecret').mockReturnValue('test-api-key');
+
         mockDownload.mockResolvedValue([Buffer.from('fake-original-image')]);
         mockSave.mockResolvedValue({});
 
@@ -73,6 +78,7 @@ describe('POST / GCS Trigger Execution', () => {
 
         const response = await request(app)
             .post('/')
+            .set('Authorization', 'Bearer test-api-key')
             .send(payload);
 
         expect(response.status).toBe(200);
@@ -110,6 +116,7 @@ describe('POST / GCS Trigger Execution', () => {
 
         const response = await request(app)
             .post('/')
+            .set('Authorization', 'Bearer test-api-key')
             .send(payload);
 
         expect(response.status).toBe(200); // Catches and acknowledges to ignored failure delivery loop
@@ -137,6 +144,7 @@ describe('POST / GCS Trigger Execution', () => {
 
         const response = await request(app)
             .post('/')
+            .set('Authorization', 'Bearer test-api-key')
             .send(payload);
 
         expect(response.status).toBe(200);
@@ -176,7 +184,7 @@ describe('POST / GCS Trigger Execution', () => {
         // if the stream-sharing bug were present (6 × 3 upload streams = 18 potential listeners).
         const responses = await Promise.all(
             Array.from({ length: 6 }, () =>
-                request(app).post('/').send(payload)
+                request(app).post('/').set('Authorization', 'Bearer test-api-key').send(payload)
             )
         );
 

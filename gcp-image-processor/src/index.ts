@@ -34,8 +34,10 @@ const checkApiKey = (req: Request, res: Response, next: () => void) => {
     const apiKey = getSecret('IMAGE_PROCESSOR_API_KEY');
 
     if (!apiKey) {
-        console.warn('IMAGE_PROCESSOR_API_KEY not configured. Endpoints are unprotected.');
-        return next();
+        // Fail closed: if no key is configured, deny all access to prevent
+        // accidental exposure of this endpoint in misconfigured environments.
+        console.error('IMAGE_PROCESSOR_API_KEY not configured. Refusing access.');
+        return res.status(401).json({ error: 'Unauthorized: Service not configured' });
     }
 
     const providedKey = req.header('Authorization')?.replace('Bearer ', '');
@@ -60,7 +62,7 @@ app.get('/health', (_req: Request, res: Response) => {
  * POST /
  * Eventarc GCS Trigger handler.
  */
-app.post('/', async (req: Request, res: Response) => {
+app.post('/', checkApiKey, async (req: Request, res: Response) => {
     // Eventarc deliveries CloudEvent containing target Object notifications
     const data = req.body;
     const bucketName = data.bucket;

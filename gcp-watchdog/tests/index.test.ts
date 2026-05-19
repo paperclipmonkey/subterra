@@ -64,14 +64,14 @@ describe('Watchdog API', () => {
             expect(response.body.error).toContain('Unauthorized');
         });
 
-        it('should bypass auth if WATCHDOG_API_KEY is not configured', async () => {
+        it('should reject requests if WATCHDOG_API_KEY is not configured', async () => {
             jest.spyOn(secrets, 'getSecret').mockReturnValue('');
             const response = await request(app).post('/watchdog').send({
                 callout_id: 'test123',
                 callout_time: '2026-01-30T10:00:00Z',
             });
-            // Should get to 200 or 400 (if body bad), but not 401
-            expect(response.status).not.toBe(401);
+            // Should get 401 when no key is configured (fail-closed)
+            expect(response.status).toBe(401);
         });
     });
 
@@ -133,7 +133,9 @@ describe('Watchdog API', () => {
         it('should return no overdue callouts when none exist', async () => {
             mockFirestore.getOverdueCallouts = jest.fn().mockResolvedValue([]);
 
-            const response = await request(app).post('/check');
+            const response = await request(app)
+                .post('/check')
+                .set('X-Watchdog-Key', 'test-api-key');
 
             expect(response.status).toBe(200);
             expect(response.body.message).toBe('No overdue callouts');
@@ -155,7 +157,9 @@ describe('Watchdog API', () => {
             mockEmail.sendAlertEmail = jest.fn().mockResolvedValue(true);
             mockFirestore.markAsAlerted = jest.fn().mockResolvedValue(undefined);
 
-            const response = await request(app).post('/check');
+            const response = await request(app)
+                .post('/check')
+                .set('X-Watchdog-Key', 'test-api-key');
 
             expect(response.status).toBe(200);
             expect(response.body.message).toContain('Processed 1 overdue callout');
