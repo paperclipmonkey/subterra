@@ -144,4 +144,49 @@ describe('POST / GCS Trigger Execution', () => {
         
         expect(mockGetMetadata).not.toHaveBeenCalled();
     });
+
+    /**
+     * Regression test: processing multiple images concurrently must not trigger
+     * the MaxListenersExceededWarning on a shared PassThrough stream.
+     *
+     * Root cause: the `teeny-request` override to ^10.x caused @google-cloud/storage
+     * to use an incompatible stream implementation. teeny-request 10.x wraps the
+     * node-fetch response body in a PassThrough, and the storage library then set up
+     * a second pipeline from that same stream object, adding duplicate error/close
+     * listeners. Under concurrent load the 10-listener limit was exceeded.
+     *
+     * Fix: removed the `overrides: { teeny-request: ^10.1.2 }` from package.json so
+     * that @google-cloud/storage resolves to its intended teeny-request@^9.x.
+     */
+    it('processes multiple concurrent image requests without MaxListeners warnings', async () => {
+        const warnings: string[] = [];
+        const warningListener = (warning: Error) => {
+            if (warning.name === 'MaxListenersExceededWarning') {
+                warnings.push(warning.message);
+            }
+        };
+        process.on('warning', warningListener);
+
+        const payload = {
+            bucket: 'subterra-test-bucket',
+            name: 'input/some-uuid/original-image.png',
+        };
+
+        // Fire 6 concurrent requests to push well past the default 10-listener limit
+        // if the stream-sharing bug were present (6 × 3 upload streams = 18 potential listeners).
+        const responses = await Promise.all(
+            Array.from({ length: 6 }, () =>
+                request(app).post('/').send(payload)
+            )
+        );
+
+        process.off('warning', warningListener);
+
+        for (const response of responses) {
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('status', 'success');
+        }
+
+        expect(warnings).toHaveLength(0);
+    });
 });
