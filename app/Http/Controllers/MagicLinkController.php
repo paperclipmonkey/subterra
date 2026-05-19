@@ -47,7 +47,14 @@ class MagicLinkController extends Controller
 
                 event(new \App\Events\UserCreated($user));
             } else {
-                // If user exists but is inactive, reactivate them
+                // If user exists but is inactive, reactivate them.
+                //
+                // This is intentional behaviour: users can be created in a deactivated state
+                // when another member tags them in a trip (creating a placeholder account).
+                // The first time they request a magic link, they are reactivated — this is
+                // their implicit "sign up" action. Admins cannot permanently block a user
+                // via the is_active flag alone; the expectation is that account removal is
+                // handled separately if required.
                 if (!$user->is_active) {
                     $user->is_active = true;
                     $user->save();

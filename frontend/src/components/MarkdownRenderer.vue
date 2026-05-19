@@ -180,6 +180,10 @@ onBeforeUnmount(() => {
     mapInstances.length = 0
 })
 
+// This API key is intentionally included in the frontend bundle. MapTiler keys are
+// designed to be public-facing; this one is domain-restricted via the MapTiler
+// dashboard so it can only be used from this application's origin, limiting any
+// abuse potential even if the key is extracted from the bundle.
 const MAPTILER_STYLE = 'https://api.maptiler.com/maps/outdoor/style.json?key=0gGMv4po9Mjrpd64A528'
 
 const renderGeoJSONMaps = async () => {
