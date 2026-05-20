@@ -105,7 +105,7 @@ class BookingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'permit_slug' => 'required|string|exists:permits,slug',
-            'user_id' => 'nullable|integer|exists:users,id',
+            'user_id' => 'nullable|string|exists:users,id',
             'date' => 'required|date',
             'participants' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:1000',

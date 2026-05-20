@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable;
 
 #[ScopedBy([IsActiveScope::class])]
@@ -50,6 +51,24 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     protected $guarded = [
         'is_active',
     ];
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
+    /**
+     * Auto-generate a random 16-character string ID for new users.
+     * Using a non-sequential primary key prevents IDOR / enumeration attacks.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $user): void {
+            if (empty($user->id)) {
+                $user->id = Str::random(7);
+            }
+        });
+    }
+
 
     /**
      * The attributes that should be hidden for serialization.
