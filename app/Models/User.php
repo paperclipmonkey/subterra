@@ -94,6 +94,16 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         return $this->hasRole(['platform_admin', 'pip_access']);
     }
 
+    /**
+     * Whether the user is allowed to create and manage callouts.
+     * Platform admins and duty officers always have access; other users must be
+     * explicitly opted in via the `callout_access` role by an admin.
+     */
+    public function canUseCallout(): bool
+    {
+        return $this->hasRole(['platform_admin', 'duty_officer', 'callout_access']);
+    }
+
     public function trips(): BelongsToMany
     {
         return $this->belongsToMany(Trip::class);
@@ -200,12 +210,12 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
 
     /**
      * Returns true if the user has any admin role.
-     * Used to gate access to the admin panel. `pip_access` is a feature flag,
-     * not an admin role, so it must not count here.
+     * Used to gate access to the admin panel. `pip_access` and `callout_access`
+     * are feature flags, not admin roles, so they must not count here.
      */
     public function getIsAdminAttribute(): bool
     {
-        return $this->roles()->where('slug', '!=', 'pip_access')->exists();
+        return $this->roles()->whereNotIn('slug', ['pip_access', 'callout_access'])->exists();
     }
 
     /**

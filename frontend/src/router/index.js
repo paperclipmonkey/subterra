@@ -137,6 +137,14 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  // Callout access — platform_admin OR duty_officer OR callout_access role explicitly granted.
+  if (to.path.startsWith('/callout') && to.path !== '/callout/active') {
+    const hasRoleSlug = (slug) => user.roles && user.roles.some(r => r.slug === slug)
+    if (!hasRoleSlug('platform_admin') && !hasRoleSlug('duty_officer') && !hasRoleSlug('callout_access')) {
+      return next({ path: '/trips' })
+    }
+  }
+
   if (user.email && (!user.name || user.name.trim() === '')) {
     const isProfilePage = to.name === '/profile/[id].edit' || to.path.includes('/profile/')
     if (!isProfilePage && to.path !== '/logout') {

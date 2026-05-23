@@ -85,6 +85,30 @@
               </v-tooltip>
             </div>
           </template>
+          <template #item.callout="{ item }">
+            <div @click.stop>
+              <v-tooltip location="top">
+                <template #activator="{ props }">
+                  <div v-bind="props" style="display:inline-flex">
+                    <v-checkbox
+                      :model-value="hasRole(item, 'platform_admin') || hasRole(item, 'duty_officer') || hasRole(item, 'callout_access')"
+                      :disabled="isSelf(item) || hasRole(item, 'platform_admin') || hasRole(item, 'duty_officer') || item.loadingRole === 'callout_access'"
+                      :loading="item.loadingRole === 'callout_access'"
+                      density="compact"
+                      hide-details
+                      color="warning"
+                      :prepend-icon="mdiAlertOctagram"
+                      @update:model-value="toggleRole(item, 'callout_access')"
+                    />
+                  </div>
+                </template>
+                <span v-if="hasRole(item, 'platform_admin') || hasRole(item, 'duty_officer')">Admins and duty officers always have callout access.</span>
+                <span v-else-if="isSelf(item)">Cannot modify your own roles.</span>
+                <span v-else-if="hasRole(item, 'callout_access')">Revoke callout access</span>
+                <span v-else>Grant callout access</span>
+              </v-tooltip>
+            </div>
+          </template>
           <template #item.created_at="{ item }">
             {{ moment(item.created_at).format('DD/MM/YYYY') }}
           </template>
@@ -128,7 +152,7 @@
 </template>
 
 <script setup>
-import { mdiDatabaseEdit, mdiDelete, mdiKey, mdiMagnify, mdiPhoneInTalk, mdiRobotOutline, mdiShieldCrown } from '@mdi/js'
+import { mdiAlertOctagram, mdiDatabaseEdit, mdiDelete, mdiKey, mdiMagnify, mdiPhoneInTalk, mdiRobotOutline, mdiShieldCrown } from '@mdi/js'
 
 import moment from 'moment'
 import { ref, onMounted } from 'vue'
@@ -157,6 +181,7 @@ const headers = [
   { title: 'Email', key: 'email', sortable: true },
   { title: 'Roles', key: 'roles', sortable: false, align: 'start' },
   { title: 'Pip', key: 'pip', sortable: false, align: 'center' },
+  { title: 'Callout', key: 'callout', sortable: false, align: 'center' },
   { title: 'Clubs', key: 'clubs', sortable: true },
   { title: 'Joined', key: 'created_at', sortable: true },
   { title: 'Actions', key: 'actions', sortable: false, align: 'center' },

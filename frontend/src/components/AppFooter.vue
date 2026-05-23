@@ -26,39 +26,55 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { mdiAccount, mdiAlertOctagram, mdiDotsHorizontal, mdiEarth, mdiLogin, mdiNotebookOutline } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 
 const userStore = useAppStore()
 
-const items = [
-  {
-    title: 'My Trips',
-    icon: mdiNotebookOutline,
-    href: '/trips',
-  },
-  {
-    title: 'Caves',
-    icon: mdiEarth,
-    href: '/caves',
-  },
-  {
-    title: 'Callout',
-    icon: mdiAlertOctagram,
-    href: '/callout',
-    class: 'v-btn--active-warning'
-  },
-  {
-    title: 'Profile',
-    icon: mdiAccount,
-    href: '/profile/' + userStore.user.id,
-  },
-  {
-    title: 'More',
-    icon: mdiDotsHorizontal,
-    href: '/more',
-  },
-]
+const canUseCallout = computed(() => {
+  const roles = userStore.user?.roles ?? []
+  return roles.some(r => r.slug === 'platform_admin' || r.slug === 'duty_officer' || r.slug === 'callout_access')
+})
+
+const items = computed(() => {
+  const nav = [
+    {
+      title: 'My Trips',
+      icon: mdiNotebookOutline,
+      href: '/trips',
+    },
+    {
+      title: 'Caves',
+      icon: mdiEarth,
+      href: '/caves',
+    },
+  ]
+
+  if (canUseCallout.value) {
+    nav.push({
+      title: 'Callout',
+      icon: mdiAlertOctagram,
+      href: '/callout',
+      class: 'v-btn--active-warning',
+    })
+  }
+
+  nav.push(
+    {
+      title: 'Profile',
+      icon: mdiAccount,
+      href: '/profile/' + userStore.user.id,
+    },
+    {
+      title: 'More',
+      icon: mdiDotsHorizontal,
+      href: '/more',
+    },
+  )
+
+  return nav
+})
 </script>
 
 <style scoped lang="scss">
