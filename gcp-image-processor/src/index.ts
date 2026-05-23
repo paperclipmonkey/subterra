@@ -61,8 +61,10 @@ app.get('/health', (_req: Request, res: Response) => {
 /**
  * POST /
  * Eventarc GCS Trigger handler.
+ * Authentication is enforced at the Cloud Run IAM level — only the Eventarc
+ * trigger service account is granted the Cloud Run Invoker role.
  */
-app.post('/', checkApiKey, async (req: Request, res: Response) => {
+app.post('/', async (req: Request, res: Response) => {
     // Eventarc deliveries CloudEvent containing target Object notifications
     const data = req.body;
     const bucketName = data.bucket;

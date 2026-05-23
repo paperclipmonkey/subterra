@@ -26,6 +26,10 @@ resource "google_cloud_scheduler_job" "watchdog_checker" {
     http_method = "POST"
     uri         = "${google_cloud_run_v2_service.watchdog.uri}/check"
 
+    headers = {
+      "X-Watchdog-Key" = var.watchdog_api_key
+    }
+
     oidc_token {
       service_account_email = google_service_account.scheduler.email
       audience              = google_cloud_run_v2_service.watchdog.uri

@@ -91,12 +91,14 @@ resource "google_cloud_run_v2_service" "image_processor" {
   ]
 }
 
-# Allow unauthenticated invocations (protected by API key in app)
-resource "google_cloud_run_v2_service_iam_member" "image_processor_public_access" {
+# Grant the Eventarc trigger service account Cloud Run Invoker access.
+# The service is NOT open to allUsers — IAM enforces that only the trigger SA
+# (which Eventarc impersonates) can invoke the endpoint.
+resource "google_cloud_run_v2_service_iam_member" "image_processor_eventarc_invoker" {
   name     = google_cloud_run_v2_service.image_processor.name
   location = google_cloud_run_v2_service.image_processor.location
   role     = "roles/run.invoker"
-  member   = "allUsers"
+  member   = "serviceAccount:${google_service_account.image_processor_service.email}"
 }
 
 # Secrets for the image processor
