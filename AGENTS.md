@@ -12,19 +12,28 @@ Subterra is a cave management and trip logging platform. It consists of:
 
 ## Development Environment
 
-The backend runs inside Docker via Laravel Sail. The Sail container is named `subterra-laravel.test-1`.
+The project ships with a **devcontainer** (`.devcontainer/devcontainer.json`) that reuses the existing `docker-compose.yml`. Opening the repo in VS Code and choosing **Reopen in Container** is the recommended way to develop — it gives a consistent PHP 8.4 + Node environment with no local dependencies required.
+
+When running **inside the devcontainer** all commands work directly:
 
 ```sh
-# Start the dev environment
-./vendor/bin/sail up -d
+# PHP / Laravel
+php artisan migrate
+php artisan migrate:fresh --seed
+php artisan tinker
 
-# Run any Laravel/PHP command inside the container
+# Frontend
+cd frontend && npm run dev
+
+# Code quality
+./vendor/bin/pint
+./vendor/bin/phpstan analyse
+```
+
+If you are working **outside the devcontainer** (plain Docker), start the stack with `./vendor/bin/sail up -d` and prefix PHP commands:
+
+```sh
 docker exec -it subterra-laravel.test-1 php artisan <command>
-
-# Examples
-docker exec -it subterra-laravel.test-1 php artisan migrate
-docker exec -it subterra-laravel.test-1 php artisan migrate:fresh --seed
-docker exec -it subterra-laravel.test-1 php artisan tinker
 ```
 
 Services defined in `docker-compose.yml`:
@@ -37,12 +46,12 @@ Services defined in `docker-compose.yml`:
 
 ### Running Tests
 
-Tests **must** be run inside the Docker container:
+Inside the devcontainer (or any shell inside the `laravel.test` container):
 
 ```sh
-docker exec -it subterra-laravel.test-1 php artisan test
-docker exec -it subterra-laravel.test-1 php artisan test --filter=CaveTest
-docker exec -it subterra-laravel.test-1 php artisan test tests/Feature/CaveTest.php
+php artisan test
+php artisan test --filter=CaveTest
+php artisan test tests/Feature/CaveTest.php
 ```
 
 Or via the VS Code task: **php: test**
@@ -94,14 +103,14 @@ Authentication uses **Laravel Sanctum** with magic-link login (no passwords). Ma
 
 ### Code Style
 
-Run Pint (PHP formatter) inside the container:
+Run Pint (PHP formatter) inside the devcontainer:
 ```sh
-docker exec -it subterra-laravel.test-1 ./vendor/bin/pint
+./vendor/bin/pint
 ```
 
 Run PHPStan static analysis:
 ```sh
-docker exec -it subterra-laravel.test-1 ./vendor/bin/phpstan analyse
+./vendor/bin/phpstan analyse
 ```
 
 ---
