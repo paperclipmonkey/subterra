@@ -14,7 +14,7 @@
     "initializeCommand": "[ -f .env ] || cp .env.example .env",
 
     // Install dependencies on first container creation / rebuild.
-    "postCreateCommand": "composer install && cd frontend && npm install",
+    "postCreateCommand": "composer install && cd frontend && yarn install",
 
     "customizations": {
         "vscode": {

@@ -23,7 +23,7 @@ php artisan migrate:fresh --seed
 php artisan tinker
 
 # Frontend
-cd frontend && npm run dev
+cd frontend && yarn dev
 
 # Code quality
 ./vendor/bin/pint
@@ -37,6 +37,7 @@ docker exec -it subterra-laravel.test-1 php artisan <command>
 ```
 
 Services defined in `docker-compose.yml`:
+
 - `laravel.test` — PHP 8.4 app server on port 80, Vite on port 5173
 - `postgres` — PostgreSQL 17 database on port 5432
 
@@ -79,6 +80,7 @@ User::factory()->withPipAccess()->create() // pip_access role (AI assistant)
 ```
 
 Roles relevant to API middleware:
+
 - `platform_admin` — full admin access
 - `data_admin` — cave/system data editing
 - `pip_access` — Pip AI assistant access
@@ -87,13 +89,13 @@ Roles relevant to API middleware:
 
 Routes are in `routes/api.php`. Key groups:
 
-| Group | Middleware | Notes |
-|---|---|---|
-| Public | none | `/auth/magic-link`, `/pages/{page}`, `/trips/{trip}` (public read) |
-| Authenticated | `auth:sanctum` | Most CRUD endpoints |
-| Data Admin | `auth:sanctum` + `ApiIsAdmin:data_admin` | Cave/system create & update |
-| Platform Admin | `auth:sanctum` + `ApiIsAdmin:platform_admin` | User mgmt, clubs, pages, tasks |
-| AI Assistant | `auth:sanctum` + `PipAccess` | `/api/assistant/*`, rate-limited 50/day |
+| Group          | Middleware                                   | Notes                                                              |
+| -------------- | -------------------------------------------- | ------------------------------------------------------------------ |
+| Public         | none                                         | `/auth/magic-link`, `/pages/{page}`, `/trips/{trip}` (public read) |
+| Authenticated  | `auth:sanctum`                               | Most CRUD endpoints                                                |
+| Data Admin     | `auth:sanctum` + `ApiIsAdmin:data_admin`     | Cave/system create & update                                        |
+| Platform Admin | `auth:sanctum` + `ApiIsAdmin:platform_admin` | User mgmt, clubs, pages, tasks                                     |
+| AI Assistant   | `auth:sanctum` + `PipAccess`                 | `/api/assistant/*`, rate-limited 50/day                            |
 
 Authentication uses **Laravel Sanctum** with magic-link login (no passwords). Magic links are provided by the `cesargb/laravel-magiclink` package.
 
@@ -104,11 +106,13 @@ Authentication uses **Laravel Sanctum** with magic-link login (no passwords). Ma
 ### Code Style
 
 Run Pint (PHP formatter) inside the devcontainer:
+
 ```sh
 ./vendor/bin/pint
 ```
 
 Run PHPStan static analysis:
+
 ```sh
 ./vendor/bin/phpstan analyse
 ```
@@ -117,15 +121,15 @@ Run PHPStan static analysis:
 
 ## Frontend (Vue.js)
 
-Located in `frontend/`. Uses **npm** (not Yarn) for package management.
+Located in `frontend/`. Uses **Yarn** for package management.
 
 ### Running the Dev Server
 
 ```sh
 cd frontend
-npm run dev        # Vite dev server on port 5173
-npm run build      # Production build
-npm run lint       # ESLint auto-fix
+yarn dev           # Vite dev server on port 5173
+yarn build         # Production build
+yarn lint          # ESLint auto-fix
 ```
 
 ### Frontend Tests (Vitest)
@@ -134,12 +138,13 @@ The frontend uses **Vitest** with `@vue/test-utils` and a `jsdom` environment.
 
 ```sh
 cd frontend
-npm run test        # Watch mode
-npm run test:run    # Single run (CI-friendly)
-npm run test:ui     # Vitest browser UI dashboard
+yarn test           # Watch mode
+yarn test:run       # Single run (CI-friendly)
+yarn test:ui        # Vitest browser UI dashboard
 ```
 
 **Test file locations:**
+
 - `frontend/tests/unit/components/` — Vue component tests
 - `frontend/tests/unit/pages/` — Page-level component tests
 - `frontend/tests/unit/stores/` — Pinia store tests
@@ -150,9 +155,9 @@ npm run test:ui     # Vitest browser UI dashboard
 **Writing component tests:**
 
 ```js
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
-import MyComponent from '@/components/MyComponent.vue'
+import { mount } from "@vue/test-utils";
+import { describe, it, expect, vi } from "vitest";
+import MyComponent from "@/components/MyComponent.vue";
 
 // Vuetify components need to be globally installed or stubbed
 // Most tests use stubs or createVuetify() — check existing tests for the pattern used
@@ -178,8 +183,8 @@ import MyComponent from '@/components/MyComponent.vue'
 Both services are TypeScript Node.js apps with their own Jest test suites:
 
 ```sh
-cd gcp-image-processor && npm test
-cd gcp-watchdog && npm test
+cd gcp-image-processor && yarn test
+cd gcp-watchdog && yarn test
 ```
 
 ---
