@@ -20,6 +20,8 @@ resource "google_sql_database_instance" "postgres" {
   deletion_protection = true
 
   settings {
+    edition = "ENTERPRISE"
+
     # db-f1-micro: shared vCPU, 0.6 GB RAM — lowest-cost Cloud SQL tier.
     # Hard limit of 25 connections; add PgBouncer if you need more.
     tier = "db-f1-micro"
