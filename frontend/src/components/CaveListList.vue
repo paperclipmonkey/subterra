@@ -9,12 +9,21 @@
     <template v-else>
       <div v-if="caveStore.caves.length === 0" class="text-center py-8">
         <v-icon size="64" color="grey lighten-10" :icon="mdiMapMarkerOff" class="mb-4" />
-        <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found</h3>
-        <p class="text-body-2 text-grey-darken-1">Try adjusting your filters or search.</p>
+        <template v-if="hasFilters">
+          <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found with these filters</h3>
+          <p class="text-body-2 text-grey-darken-1 mb-4">The cave you're looking for may be in another region.</p>
+          <v-btn color="primary" variant="tonal" @click="emit('clear-filters')">
+            Remove All Filters
+          </v-btn>
+        </template>
+        <template v-else>
+          <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found</h3>
+          <p class="text-body-2 text-grey-darken-1">Try adjusting your search.</p>
+        </template>
       </div>
 
       <v-row v-else class="px-2">
-        <v-col v-for="cave in caveStore.caves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
+        <v-col v-for="cave in displayedCaves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
           <v-hover v-slot="{ isHovering, props }">
             <v-card v-bind="props" elevation="2" class="fill-height d-flex flex-column cave-card"
                     :to="'/caves/' + cave.slug">
@@ -39,6 +48,9 @@
                   </template>
                   <div v-if="cave.previously_done" class="d-flex justify-end pa-2 position-relative" style="z-index: 2;">
                     <v-chip color="success" size="small" variant="elevated" :prepend-icon="mdiCheck">Done</v-chip>
+                  </div>
+                  <div v-if="offlineStore.isPwa && offlineStore.isCaveDownloaded(cave.id)" class="position-absolute pa-2" style="z-index: 2; top: 0; left: 0;">
+                    <v-chip color="grey-darken-3" size="x-small" variant="elevated" :prepend-icon="mdiCloudDownload">Offline</v-chip>
                   </div>
                 </v-img>
               </div>
@@ -102,6 +114,14 @@
           </v-hover>
         </v-col>
       </v-row>
+
+      <!-- Infinite scroll sentinel -->
+      <div ref="sentinel" class="py-6 d-flex justify-center">
+        <v-progress-circular v-if="hasMore" indeterminate color="grey-lighten-2" size="28" />
+        <p v-else-if="caveStore.caves.length > PAGE_SIZE" class="text-caption text-grey">
+          All {{ caveStore.caves.length }} caves shown
+        </p>
+      </div>
     </template>
 
     <v-dialog v-model="showConfirmModal" max-width="400">
@@ -120,14 +140,22 @@
   </v-container>
 </template>
 <script setup>
-import { mdiCheck, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
-import { ref, defineEmits } from 'vue'
+import { mdiCheck, mdiCloudDownload, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
+import { ref, computed, watch, onUnmounted } from 'vue'
 
-const emit = defineEmits(['tag-click'])
+const emit = defineEmits(['tag-click', 'clear-filters'])
+
+const props = defineProps({
+  hasFilters: { type: Boolean, default: false },
+})
+
 import { useCaveStore } from '@/stores/caves'
 import { useAppStore } from '@/stores/app'
+import { useOfflineStore } from '@/stores/offline'
 import { markCaveAsDone } from '@/stores/markAsDone'
 import { useDisplay } from 'vuetify'
+
+const offlineStore = useOfflineStore()
 
 const caveStore = useCaveStore()
 const appStore = useAppStore()
@@ -136,11 +164,47 @@ const showConfirmModal = ref(false)
 const caveToMark = ref(null)
 const videoRefs = ref({})
 
+const PAGE_SIZE = 24
+const displayCount = ref(PAGE_SIZE)
+const sentinel = ref(null)
+
+const displayedCaves = computed(() => caveStore.caves.slice(0, displayCount.value))
+const hasMore = computed(() => displayCount.value < caveStore.caves.length)
+
+// Reset pagination whenever the filtered cave list changes
+watch(() => caveStore.caves, () => {
+  displayCount.value = PAGE_SIZE
+})
+
+let observer = null
+
+const attachObserver = (el) => {
+  observer?.disconnect()
+  if (!el) return
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && hasMore.value) {
+      displayCount.value += PAGE_SIZE
+    }
+  }, { rootMargin: '200px' })
+  observer.observe(el)
+}
+
+// Watch the sentinel ref — it only appears after caves load (v-else block)
+watch(sentinel, (el) => {
+  attachObserver(el)
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
+})
+
 const markAsDone = async (cave) => {
   if (!cave) return
   const ok = await markCaveAsDone({ cave, userId: appStore.user.id })
   if (ok) {
-    await caveStore.getList()
+    // Refresh whichever dataset is currently active (curated or full) so the
+    // user keeps the filter view they were on, with the cave now marked done.
+    await caveStore.refresh()
     showConfirmModal.value = false
     caveToMark.value = null
   } else {

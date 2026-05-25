@@ -36,7 +36,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
 const props = defineProps({
@@ -50,9 +50,6 @@ const clubName = ref('')
 const clubSlug = ref('')
 const clubDescription = ref('')
 const loading = ref(false)
-
-// API instance for clubs
-const clubsApi = mande('/api/admin/clubs')
 
 watch(() => props.modelValue, (newValue) => {
   dialog.value = newValue
@@ -80,8 +77,8 @@ async function saveClub() {
     if (clubDescription.value) {
       payload.description = clubDescription.value
     }
-    const response = await clubsApi.post(payload)
-    emit('clubCreated', response)
+    const response = await api.post('/api/admin/clubs', payload)
+    emit('clubCreated', response.data)
     closeDialog()
   } catch (error) {
     console.error('Error creating club:', error)

@@ -28,6 +28,9 @@
               <v-text-field v-model="newShift.end_at" type="datetime-local" label="End" outlined dense
                             :rules="[v => !!v || 'End time is required']" required />
 
+              <v-checkbox v-model="newShift.notify_do" label="Email me when a trip is started during this shift"
+                          density="compact" hide-details class="mb-3" />
+
               <v-btn block color="primary" type="submit" :loading="processing"
                      :disabled="!valid">Add Shift</v-btn>
             </v-form>
@@ -97,6 +100,9 @@
             <v-text-field v-model="editingShift.start_at" type="datetime-local" label="Start" outlined dense required />
 
             <v-text-field v-model="editingShift.end_at" type="datetime-local" label="End" outlined dense required />
+
+            <v-checkbox v-model="editingShift.notify_do" label="Email me when a trip is started during this shift"
+                        density="compact" hide-details />
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -112,12 +118,15 @@
 
 <script>
 import { mdiArrowLeft, mdiCalendar, mdiCalendarPlus, mdiChevronLeft, mdiChevronRight, mdiDelete, mdiPencil, mdiViewList } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
+import { useNotificationStore } from '@/stores/notifications'
 
 export default {
   setup() {
+    const notificationStore = useNotificationStore()
     return {
+      notificationStore,
       mdiArrowLeft,
       mdiCalendar,
       mdiCalendarPlus,
@@ -141,7 +150,8 @@ export default {
       newShift: {
         user_id: null,
         start_at: '',
-        end_at: ''
+        end_at: '',
+        notify_do: false
       },
       editDialog: false,
       editingShift: null,
@@ -204,7 +214,7 @@ export default {
   methods: {
     async fetchUsers() {
       try {
-        const res = await axios.get('/api/admin/duty-officers')
+        const res = await api.get('/api/admin/duty-officers')
         this.users = res.data.data
       } catch (e) {
         console.error("Error fetching users", e)
@@ -216,7 +226,7 @@ export default {
         // Fetch a range for the calendar
         const start = moment(this.currentDate).startOf('month').subtract(7, 'days').format('YYYY-MM-DD')
         const end = moment(this.currentDate).endOf('month').add(7, 'days').format('YYYY-MM-DD')
-        const res = await axios.get(`/api/admin/shifts?start=${start}&end=${end}`)
+        const res = await api.get(`/api/admin/shifts?start=${start}&end=${end}`)
         this.shifts = res.data.data
       } catch (e) {
         console.error("Error fetching shifts", e)
@@ -255,8 +265,8 @@ export default {
           start_at: this.toISOWithOffset(this.newShift.start_at),
           end_at: this.toISOWithOffset(this.newShift.end_at)
         }
-        await axios.post('/api/admin/shifts', payload)
-        this.$toast.success('Shift added successfully')
+        await api.post('/api/admin/shifts', payload)
+        this.notificationStore.showSuccess('Shift added successfully')
         await this.fetchShifts()
         this.newShift.user_id = null
         this.$refs.form.resetValidation()
@@ -271,7 +281,8 @@ export default {
         id: shift.id,
         user_id: shift.user_id,
         start_at: moment.utc(shift.start_at).local().format('YYYY-MM-DDTHH:mm'),
-        end_at: moment.utc(shift.end_at).local().format('YYYY-MM-DDTHH:mm')
+        end_at: moment.utc(shift.end_at).local().format('YYYY-MM-DDTHH:mm'),
+        notify_do: shift.notify_do ?? false
       }
       this.editDialog = true
     },
@@ -283,8 +294,8 @@ export default {
           start_at: this.toISOWithOffset(this.editingShift.start_at),
           end_at: this.toISOWithOffset(this.editingShift.end_at)
         }
-        await axios.put(`/api/admin/shifts/${this.editingShift.id}`, payload)
-        this.$toast.success('Shift updated successfully')
+        await api.put(`/api/admin/shifts/${this.editingShift.id}`, payload)
+        this.notificationStore.showSuccess('Shift updated successfully')
         this.editDialog = false
         await this.fetchShifts()
       } catch (e) {
@@ -297,8 +308,8 @@ export default {
       if (!confirm("Remove this shift?")) return
 
       try {
-        await axios.delete(`/api/admin/shifts/${id}`)
-        this.$toast.success('Shift removed')
+        await api.delete(`/api/admin/shifts/${id}`)
+        this.notificationStore.showSuccess('Shift removed')
         this.editDialog = false // Close dialog if open
         await this.fetchShifts()
       } catch (e) {
@@ -323,7 +334,7 @@ export default {
           alert(`${msg}\n\nExisting callouts require coverage:\n${details}`)
         }
       }
-      this.$toast.error(msg)
+      this.notificationStore.showError(msg)
     }
   }
 }

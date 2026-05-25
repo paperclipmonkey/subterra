@@ -1,23 +1,29 @@
 // Utilities
 import { defineStore } from 'pinia'
-import { mande } from 'mande'
-const tripsApi = mande('/api/trips')
+import { api } from '@/plugins/api'
+import { useNotificationStore } from '@/stores/notifications'
 
 export const useTripStore = defineStore('trips', {
   state: () => ({
     trips: [],
     loading: false,
-    //
+    isOfflineError: false,
   }),
 
   actions: {
     async getTrips(filters = {}) {
       this.loading = true
+      this.isOfflineError = false
       try {
-        const response = await tripsApi.get({ query: filters })
-        this.trips = response.data || response
+        const response = await api.get('/api/trips', { params: filters })
+        this.trips = response.data.data || response.data
       } catch (e) {
         console.error(e)
+        if (!navigator.onLine || !e.response) {
+          this.isOfflineError = true
+          const notificationStore = useNotificationStore()
+          notificationStore.showWarning('You are offline. Trips require an internet connection to load.')
+        }
       } finally {
         this.loading = false
       }

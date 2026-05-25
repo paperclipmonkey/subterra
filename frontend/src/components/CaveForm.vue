@@ -362,6 +362,7 @@ import {
 import { LngLat } from 'maplibre-gl'
 import { convertFileToBase64 } from '@/utilities.js'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
+import { api } from '@/plugins/api'
 
 const props = defineProps({
   modelValue: {
@@ -417,8 +418,8 @@ const mediaData = ref({
 
 // Initialize tags
 const fetchTags = async () => {
-  const response = await fetch('/api/tags', { headers: { 'Accept': 'application/json' } })
-  tagsAvailable.value = await response.json()
+  const response = await api.get('/api/tags')
+  tagsAvailable.value = response.data
   syncTagsFromModel()
 }
 

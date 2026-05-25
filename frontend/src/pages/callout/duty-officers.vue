@@ -151,7 +151,7 @@ import {
   mdiOpenInNew,
   mdiArrowLeft,
 } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 
 export default {
@@ -174,7 +174,7 @@ export default {
   },
   async mounted() {
     try {
-      const res = await axios.get('/api/duty-officers/rota')
+      const res = await api.get('/api/duty-officers/rota')
       this.officers = res.data.data.officers
       this.shifts = res.data.data.shifts
     } catch (e) {

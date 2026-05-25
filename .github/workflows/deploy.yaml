@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+permissions:
+  contents: read
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
@@ -14,7 +16,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
           extensions: mbstring, bcmath, sqlite3
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
@@ -41,8 +43,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '24'
-          cache: 'yarn'
+          node-version: "24"
+          cache: "yarn"
           cache-dependency-path: frontend/yarn.lock
       - name: Install frontend dependencies
         run: cd frontend && yarn install --frozen-lockfile
@@ -61,13 +63,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: gcp-watchdog/package-lock.json
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: gcp-watchdog/yarn.lock
       - name: Install watchdog dependencies
-        run: cd gcp-watchdog && npm install
+        run: cd gcp-watchdog && yarn install --frozen-lockfile
       - name: Run watchdog tests
-        run: cd gcp-watchdog && npm test
+        run: cd gcp-watchdog && yarn test
 
   image-processor-tests:
     runs-on: ubuntu-latest
@@ -79,58 +81,60 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: gcp-image-processor/package.json
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: gcp-image-processor/yarn.lock
       - name: Install image processor dependencies
-        run: cd gcp-image-processor && npm install
+        run: cd gcp-image-processor && yarn install --frozen-lockfile
       - name: Run image processor tests
-        run: cd gcp-image-processor && npm test
+        run: cd gcp-image-processor && yarn test
 
   deploy-gcp:
-    needs: [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
+    needs:
+      [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
     runs-on: ubuntu-latest
     concurrency: deploy-gcp-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
       GCP_REGION: europe-west2
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-      
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-      
+
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker europe-west2-docker.pkg.dev
-      
+
       - name: Build and push Watchdog image
         run: |
           cd gcp-watchdog
           docker build -t europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog/subterra-watchdog:${{ github.sha }} .
           docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog/subterra-watchdog:${{ github.sha }} || echo "Image already exists, skipping push"
-      
+
       - name: Build and push Image Processor image
         run: |
           cd gcp-image-processor
           docker build -t europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-image-processor/subterra-image-processor:${{ github.sha }} .
           docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-image-processor/subterra-image-processor:${{ github.sha }} || echo "Image already exists, skipping push"
-      
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.6.0
-      
+          terraform_version: 1.10.5
+
       - name: Terraform Init
         run: |
           cd terraform/gcp
           terraform init
-      
+
       - name: Terraform Apply
         run: |
           cd terraform/gcp
@@ -141,10 +145,12 @@ jobs:
             -var="image_processor_image_tag=${{ github.sha }}" \
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}" \
-            -var="webhook_secret=${{ secrets.WEBHOOK_SECRET }}"
+            -var="webhook_secret=${{ secrets.WEBHOOK_SECRET }}" \
+            -var="watchdog_api_key=${{ secrets.WATCHDOG_API_KEY }}"
 
   deploy-fly:
-    needs: [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
+    needs:
+      [backend-tests, frontend-tests, watchdog-tests, image-processor-tests]
     runs-on: ubuntu-latest
     concurrency: deploy-fly-group
     env:

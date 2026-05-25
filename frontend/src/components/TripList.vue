@@ -112,7 +112,7 @@
 import { mdiCheck, mdiChevronRight, mdiCompassOutline, mdiDotsVertical, mdiDownload, mdiInformationOutline, mdiMagnify, mdiMapSearch, mdiPlus } from '@mdi/js'
 
 import { useRoute } from 'vue-router'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
 import { useTripStore } from '@/stores/trips'
@@ -196,11 +196,15 @@ const loadTrips = async () => {
 
   const query = { ...route.query }
 
+  // Guard against non-numeric user_id (e.g. the string "undefined" from a stale link)
+  if (query.user_id && !/^\d+$/.test(String(query.user_id))) {
+    delete query.user_id
+  }
+
   if (query.user_id) {
     try {
-      const userApi = mande(`/api/users/${query.user_id}`)
-      const response = await userApi.get()
-      tripsUser.value = response.data ?? response
+      const response = await api.get(`/api/users/${query.user_id}`)
+      tripsUser.value = response.data.data ?? response.data
     } catch (e) {
       console.error('Failed to load user', e)
     }

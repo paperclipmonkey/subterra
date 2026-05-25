@@ -93,10 +93,13 @@ export class FirestoreClient {
 
     async getOverdueCallouts(): Promise<CalloutDocument[]> {
         const now = Timestamp.now();
+        // Only alert if the callout is still unacknowledged 15+ minutes after callout_time.
+        // This gives the Laravel scheduler time to handle it first.
+        const fifteenMinutesAgo = Timestamp.fromMillis(now.toMillis() - 15 * 60 * 1000);
 
         const snapshot = await this.collection
             .where('status', '==', 'active')
-            .where('callout_time', '<=', now)
+            .where('callout_time', '<=', fifteenMinutesAgo)
             .get();
 
         const results: CalloutDocument[] = [];

@@ -21,9 +21,11 @@ class DatabaseSeeder extends Seeder
             HutSeeder::class,
             PageSeeder::class,
             PrivacyPolicySeeder::class,
+            OfflineModeCmsPageSeeder::class,
             CatchmentSeeder::class,
             RouteSeeder::class,
             SuggestedEditSeeder::class,
+            AssistantDemoSeeder::class,
         ]);
     }
 }

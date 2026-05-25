@@ -188,6 +188,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useAppStore } from '@/stores/app'
+import { api } from '@/plugins/api'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -197,10 +198,8 @@ const routeDetail = ref(null)
 const load = async () => {
   loading.value = true
   try {
-    const response = await fetch(`/api/routes/${route.params.slug}`)
-    if (response.ok) {
-      routeDetail.value = await response.json()
-    }
+    const response = await api.get(`/api/routes/${route.params.slug}`)
+    routeDetail.value = response.data
   } catch (e) {
     console.error(e)
   } finally {

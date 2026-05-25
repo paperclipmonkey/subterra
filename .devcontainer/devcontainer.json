@@ -1,0 +1,59 @@
+{
+    "name": "Subterra",
+
+    // Reuse the existing Sail docker-compose setup.
+    // VS Code attaches to the laravel.test service which already has
+    // PHP 8.4, Node, Composer, and the app volume mounted at /var/www/html.
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "laravel.test",
+    "workspaceFolder": "/var/www/html",
+    "remoteUser": "sail",
+    "shutdownAction": "stopCompose",
+
+    // Ensure .env exists before the containers start (runs on host).
+    "initializeCommand": "[ -f .env ] || cp .env.example .env",
+
+    // Install dependencies on first container creation / rebuild.
+    "postCreateCommand": "composer install && cd frontend && yarn install",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // PHP
+                "bmewburn.vscode-intelephense-client",
+                "amiralizadeh9480.laravel-extra-intellisense",
+                "ryannaddy.laravel-artisan",
+                "shufo.vscode-blade-formatter",
+                // Vue / JS
+                "vue.volar",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                // DB
+                "mtxr.sqltools",
+                "mtxr.sqltools-driver-pg",
+                // AI
+                "github.copilot",
+                "github.copilot-chat"
+            ],
+            "settings": {
+                "intelephense.environment.phpVersion": "8.4.0",
+                "php.validate.executablePath": "/usr/bin/php",
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "editor.formatOnSave": true
+            }
+        }
+    },
+
+    // Expose the API and Vite dev server in VS Code's PORTS panel.
+    "forwardPorts": [80, 5173],
+    "portsAttributes": {
+        "80": {
+            "label": "Laravel API",
+            "onAutoForward": "notify"
+        },
+        "5173": {
+            "label": "Vite Dev Server",
+            "onAutoForward": "notify"
+        }
+    }
+}

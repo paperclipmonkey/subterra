@@ -3,7 +3,7 @@
 
 **{{ $callout->user->name }}** has started a safety callout.
 
-**Location:** {{ $callout->cave ? $callout->cave->name : 'Unknown' }}
+**Location:** {{ $callout->cave_name }}
 @if($callout->cave)
 <x-mail::button :url="config('app.url') . '/caves/' . $callout->cave->slug" color="primary">
    View Cave Details & Survey
@@ -11,7 +11,7 @@
 @endif
 
 <br>
-**Rescue Activation Time:** {{ $callout->callout_time->format('H:i, D jS M') }}
+**Rescue Activation Time:** {{ $callout->callout_time->timezone(config('app.display_timezone'))->format('H:i, D jS M') }}
 
 ## Plan
 <x-mail::panel>

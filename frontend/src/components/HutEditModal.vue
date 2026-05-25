@@ -87,7 +87,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useHutStore } from '@/stores/huts'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import { convertFileToBase64 } from '@/utilities.js'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
@@ -102,7 +102,6 @@ const props = defineProps({
 const userStore = useAppStore()
 const hutStore = useHutStore()
 const router = useRouter()
-const clubsApi = mande('/api/admin/clubs')
 
 const dialog = ref(false)
 const valid = ref(false)
@@ -172,8 +171,8 @@ onMounted(async () => {
 const fetchClubs = async () => {
   loadingClubs.value = true
   try {
-    const response = await clubsApi.get()
-    clubs.value = response.data || response
+    const response = await api.get('/api/admin/clubs')
+    clubs.value = response.data.data || response.data
   } catch (e) {
     console.error('Error fetching clubs', e)
   } finally {

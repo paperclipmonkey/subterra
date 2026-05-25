@@ -34,8 +34,10 @@ const checkApiKey = (req: Request, res: Response, next: () => void) => {
     const apiKey = getSecret('IMAGE_PROCESSOR_API_KEY');
 
     if (!apiKey) {
-        console.warn('IMAGE_PROCESSOR_API_KEY not configured. Endpoints are unprotected.');
-        return next();
+        // Fail closed: if no key is configured, deny all access to prevent
+        // accidental exposure of this endpoint in misconfigured environments.
+        console.error('IMAGE_PROCESSOR_API_KEY not configured. Refusing access.');
+        return res.status(401).json({ error: 'Unauthorized: Service not configured' });
     }
 
     const providedKey = req.header('Authorization')?.replace('Bearer ', '');
@@ -59,6 +61,8 @@ app.get('/health', (_req: Request, res: Response) => {
 /**
  * POST /
  * Eventarc GCS Trigger handler.
+ * Authentication is enforced at the Cloud Run IAM level — only the Eventarc
+ * trigger service account is granted the Cloud Run Invoker role.
  */
 app.post('/', async (req: Request, res: Response) => {
     // Eventarc deliveries CloudEvent containing target Object notifications
@@ -120,7 +124,7 @@ app.post('/', async (req: Request, res: Response) => {
 
         return res.json({ status: 'success' });
     } catch (error) {
-        console.error(`Media processing failed for ${sourcePath}:`, error);
+        console.error('Media processing failed for %s:', sourcePath, error);
 
         try {
              if (customMetadata['media_id'] && customMetadata['media_model']) {

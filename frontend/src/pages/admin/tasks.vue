@@ -166,7 +166,7 @@
 
 <script>
 import { mdiBookOpenPageVariant, mdiTunnel, mdiCheckAll, mdiFamilyTree, mdiFileFind, mdiImageOff, mdiOpenInNew, mdiTagOutline, mdiFileQuestion } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 
 export default {
   setup() {
@@ -204,7 +204,7 @@ export default {
     async fetchTasks() {
       this.loading = true
       try {
-        const res = await axios.get('/api/admin/tasks')
+        const res = await api.get('/api/admin/tasks')
         this.tasks = res.data
       } catch (e) {
         console.error(e)

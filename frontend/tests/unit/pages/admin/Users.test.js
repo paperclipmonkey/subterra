@@ -13,17 +13,17 @@ vi.mock('vue-router', () => ({
 
 import Users from '@/pages/admin/users.vue'
 
-// Mock mande
+// Mock api plugin
 const mockGet = vi.fn()
 const mockPut = vi.fn()
 const mockDelete = vi.fn()
 
-vi.mock('mande', () => ({
-    mande: vi.fn(() => ({
-        get: mockGet,
-        put: mockPut,
-        delete: mockDelete
-    }))
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: (...args) => mockGet(...args),
+        put: (...args) => mockPut(...args),
+        delete: (...args) => mockDelete(...args),
+    }
 }))
 
 // Mock app store
@@ -49,7 +49,7 @@ const mockUsers = [
 describe('Admin Users Page', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockGet.mockResolvedValue({ data: mockUsers })
+        mockGet.mockResolvedValue({ data: { data: mockUsers } })
     })
 
     it('renders user list and handles deletion', async () => {

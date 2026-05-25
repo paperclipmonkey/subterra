@@ -46,10 +46,12 @@ class Callout extends Model
         'cancelled_ip',
         'cancelled_user_agent',
         'cancelled_location',
+        'warned_at',
     ];
 
     protected $casts = [
         'callout_time' => 'datetime',
+        'warned_at' => 'datetime',
         'location_data' => 'array',
         'request_data' => 'array',
     ];
@@ -97,5 +99,10 @@ class Callout extends Model
     public function scopeDueBefore(Builder $query, Carbon|string $time): Builder
     {
         return $query->where('callout_time', '<=', $time);
+    }
+
+    public function getCaveNameAttribute(): string
+    {
+        return $this->cave?->name ?? 'Unknown Location';
     }
 }

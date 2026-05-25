@@ -89,6 +89,8 @@ After setting up the application:
    ```php
    // Make yourself an admin and approve your account
    $user = User::where('email', 'your@email.com')->first();
+   // Or to get the last signed up user after seeding and logging in
+   // $user = User::all()->last();
    $user->assignRole('platform_admin');
    $user->assignRole('duty_officer');
    $user->assignRole('data_admin');

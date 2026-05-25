@@ -44,10 +44,11 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'
 import CollectionForm from '@/components/CollectionForm.vue'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { toFormData } from '@/utilities.js'
+import { api } from '@/plugins/api'
 
-const toast = useToast()
+const notifications = useNotificationStore()
 
 const props = defineProps({
     collection: {
@@ -135,7 +136,7 @@ const save = async () => {
             } else {
                 await collectionStore.updateCollection(payload)
             }
-            toast.success(isNew.value ? 'Collection created successfully' : 'Collection updated successfully')
+            notifications.showSuccess(isNew.value ? 'Collection created successfully' : 'Collection updated successfully')
         } else {
             // Suggest Edit or Create
             const suggestionPayload = {
@@ -147,19 +148,10 @@ const save = async () => {
 
             const formData = toFormData(suggestionPayload)
 
-            const response = await fetch('/api/suggested-edits', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: formData,
+            await api.post('/api/suggested-edits', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             })
-
-            if (!response.ok) {
-                const data = await response.json()
-                throw new Error(data.message || 'Failed to submit suggestion')
-            }
-            toast.success('Suggestion submitted for review')
+            notifications.showSuccess('Suggestion submitted for review')
             dialog.value = false
         }
     } catch (e) {
@@ -176,7 +168,7 @@ const save = async () => {
             errorMessage = e.message
         }
         console.error(e)
-        toast.error(errorMessage)
+        notifications.showError(errorMessage)
     } finally {
         saving.value = false
     }

@@ -247,12 +247,7 @@ class CheckOverdueCalloutsTest extends TestCase
             'callout_id' => $callout->id,
             'status' => 'open',
             'created_at' => now()->subMinutes(60), // Very old
-        ]);
-
-        // Add the system note manually
-        $incident->notes()->create([
-            'user_id' => null,
-            'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.',
+            'escalated_at' => now()->subMinutes(45), // Already escalated
         ]);
 
         $this->artisan('callouts:check-overdue');
@@ -282,5 +277,53 @@ class CheckOverdueCalloutsTest extends TestCase
             [$do],
             OverdueCalloutNotification::class
         );
+    }
+
+    public function test_does_not_duplicate_imminent_warning_if_already_warned()
+    {
+        Notification::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $do = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $do->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->endOfDay(),
+        ]);
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->addMinutes(15),
+            'status' => 'active',
+            'warned_at' => now()->subMinute(), // Already warned
+        ]);
+
+        $this->artisan('callouts:check-overdue');
+
+        Notification::assertNotSentTo([$do], CalloutImminentNotification::class);
+    }
+
+    public function test_imminent_warning_sets_warned_at()
+    {
+        Notification::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $do = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $do->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->endOfDay(),
+        ]);
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->addMinutes(15),
+            'status' => 'active',
+        ]);
+
+        $this->assertNull($callout->warned_at);
+
+        $this->artisan('callouts:check-overdue');
+
+        $callout->refresh();
+        $this->assertNotNull($callout->warned_at);
     }
 }

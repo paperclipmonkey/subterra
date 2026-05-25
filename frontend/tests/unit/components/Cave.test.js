@@ -1,6 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Cave from '@/components/Cave.vue'
+import { api } from '@/plugins/api'
+
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 // Mock dependencies
 const pushMock = vi.fn()
@@ -25,8 +36,26 @@ vi.mock('@/stores/app', () => ({
 vi.mock('@/stores/collections', () => ({
     useCollectionStore: () => ({})
 }))
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: () => ({
+        showSuccess: vi.fn(),
+        showError: vi.fn(),
+    })
+}))
 vi.mock('@/stores/markAsDone', () => ({
     markCaveAsDone: vi.fn()
+}))
+vi.mock('@/stores/offline', () => ({
+    useOfflineStore: () => ({
+        isOnline: true,
+        isPwa: false,
+        downloadedCaveIds: [],
+        downloadingCaveId: null,
+        downloadProgress: 0,
+        isCaveDownloaded: vi.fn(() => false),
+        downloadedCaveCount: 0,
+        getOfflineCave: vi.fn(() => Promise.resolve(null)),
+    })
 }))
 
 // Mock MapLibre (canvas dependency causes issues in jsdom)
@@ -57,15 +86,9 @@ const mockCave = {
     ]
 }
 
-global.fetch = vi.fn(() =>
-    Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ data: mockCave })
-    })
-)
-
 describe('Cave Component', () => {
     it('renders collections tab', async () => {
+        api.get.mockResolvedValue({ data: { data: mockCave } })
         const wrapper = mount(Cave, {
             global: {
                 stubs: {
@@ -123,21 +146,18 @@ describe('Cave Component', () => {
 
     it('does not render system description if missing', async () => {
         // Mock API response with empty system description
-        global.fetch = vi.fn(() =>
-            Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({
-                    data: {
-                        ...mockCave,
-                        system: {
-                            id: 1,
-                            name: 'Test System',
-                            description: '' // Empty description
-                        }
+        api.get.mockResolvedValue({
+            data: {
+                data: {
+                    ...mockCave,
+                    system: {
+                        id: 1,
+                        name: 'Test System',
+                        description: '' // Empty description
                     }
-                })
-            })
-        )
+                }
+            }
+        })
 
         const wrapper = mount(Cave, {
             global: {
@@ -194,17 +214,14 @@ describe('Cave Component', () => {
     })
 
     it('renders descriptive call-to-action when description is a stub', async () => {
-        global.fetch = vi.fn(() =>
-            Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({
-                    data: {
-                        ...mockCave,
-                        description: 'Short stub' // Less than 50 chars
-                    }
-                })
-            })
-        )
+        api.get.mockResolvedValue({
+            data: {
+                data: {
+                    ...mockCave,
+                    description: 'Short stub' // Less than 50 chars
+                }
+            }
+        })
 
         const wrapper = mount(Cave, {
             global: {
@@ -258,17 +275,14 @@ describe('Cave Component', () => {
     })
 
     it('does not render descriptive call-to-action when description is sufficiently long', async () => {
-        global.fetch = vi.fn(() =>
-            Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({
-                    data: {
-                        ...mockCave,
-                        description: 'This is a sufficiently long description that is over fifty characters in length, so it is not a stub.'
-                    }
-                })
-            })
-        )
+        api.get.mockResolvedValue({
+            data: {
+                data: {
+                    ...mockCave,
+                    description: 'This is a sufficiently long description that is over fifty characters in length, so it is not a stub.'
+                }
+            }
+        })
 
         const wrapper = mount(Cave, {
             global: {

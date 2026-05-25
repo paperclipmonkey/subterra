@@ -2,6 +2,17 @@
   <div>
     <div class="d-flex justify-end pa-4">
       <v-btn
+        v-if="canUsePip && caveSystem"
+        color="deep-purple"
+        variant="text"
+        size="small"
+        :prepend-icon="mdiRobotOutline"
+        :to="`/pip?context=${encodeURIComponent('Tell me about ' + caveSystem.name + '. What should I know before visiting?')}`"
+        class="mr-2"
+      >
+        Ask Pip
+      </v-btn>
+      <v-btn
         v-if="appStore.user && (appStore.user.is_admin || appStore.canSuggest)"
         color="primary"
         variant="text"
@@ -53,27 +64,33 @@
 </template>
 
 <script setup>
-import { mdiPencil, mdiPencilOff } from '@mdi/js'
+import { mdiPencil, mdiPencilOff, mdiRobotOutline } from '@mdi/js'
 
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
 import AnnotationMapViewer from '@/components/cave-systems/AnnotationMapViewer.vue'
 import { useAppStore } from '@/stores/app'
+import { api } from '@/plugins/api'
 
 const appStore = useAppStore()
 const route = useRoute()
 const caveSystem = ref(null)
 
+const canUsePip = computed(() => {
+  const roles = appStore.user?.roles ?? []
+  return roles.some(r => r.slug === 'platform_admin' || r.slug === 'pip_access')
+})
+
 const load = async () => {
   try {
     const [routesResponse, systemResponse] = await Promise.all([
-      fetch(`/api/cave_systems/${route.params.id}/routes`),
-      fetch(`/api/cave_systems/${route.params.id}`),
+      api.get(`/api/cave_systems/${route.params.id}/routes`),
+      api.get(`/api/cave_systems/${route.params.id}`),
     ])
 
-    const systemData = systemResponse.ok ? (await systemResponse.json()).data : {}
-    const routesData = routesResponse.ok ? await routesResponse.json() : []
+    const systemData = systemResponse.data.data
+    const routesData = routesResponse.data
 
     caveSystem.value = {
       ...systemData,

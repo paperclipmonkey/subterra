@@ -56,6 +56,7 @@ import { mdiAlertCircle, mdiCheckCircle } from '@mdi/js'
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { api } from '@/plugins/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -75,28 +76,22 @@ onMounted(async () => {
     }
 
     // Make a request to verify the magic link
-    const response = await fetch(`/api/auth/magic-link-callback?${new URLSearchParams(route.query)}`)
+    const response = await api.get(`/api/auth/magic-link-callback?${new URLSearchParams(route.query)}`)
+    const data = response.data
+    success.value = true
     
-    if (response.ok) {
-      const data = await response.json()
-      success.value = true
-      
-      // Refresh user data in store
-      await store.getUser(true)
-      
-      // Check if user needs to complete their profile
-      if (data.data.needs_profile) {
-        setTimeout(() => {
-          router.push({ name: '/profile/[id].edit', params: { id: store.user.id } })
-        }, 2000)
-      } else {
-        setTimeout(() => {
-          router.push({ name: '/trips' })
-        }, 2000)
-      }
+    // Refresh user data in store
+    await store.getUser(true)
+    
+    // Check if user needs to complete their profile
+    if (data.data.needs_profile) {
+      setTimeout(() => {
+        router.push({ name: '/profile/[id].edit', params: { id: store.user.id } })
+      }, 2000)
     } else {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Authentication failed')
+      setTimeout(() => {
+        router.push({ name: '/trips' })
+      }, 2000)
     }
   } catch (error) {
     console.error('Magic link authentication error:', error)

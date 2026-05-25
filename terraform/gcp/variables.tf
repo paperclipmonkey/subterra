@@ -55,6 +55,12 @@ variable "webhook_secret" {
   sensitive   = true
 }
 
+variable "watchdog_api_key" {
+  description = "API key used by Cloud Scheduler to authenticate against the watchdog /check endpoint"
+  type        = string
+  sensitive   = true
+}
+
 variable "app_url" {
   description = "Domain (with https://) of the Laravel application to send webhooks back to"
   type        = string

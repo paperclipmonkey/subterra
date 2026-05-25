@@ -369,7 +369,7 @@
 
 <script>
 import { mdiAccountHardHat, mdiAccountStar, mdiAlert, mdiAlertCircle, mdiAlertDecagram, mdiAlertOctagram, mdiArrowRight, mdiBellRing, mdiBugPlay, mdiCheckCircle, mdiCheckCircleOutline, mdiClockOutline, mdiCogOff, mdiEye, mdiHistory, mdiLanDisconnect, mdiMap, mdiPoliceBadge, mdiRun, mdiWatch } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
 
@@ -483,7 +483,7 @@ export default {
   methods: {
     async fetchIncidents() {
       try {
-        const res = await axios.get('/api/admin/incidents')
+        const res = await api.get('/api/admin/incidents')
         this.incidents = res.data.data
       } catch (e) {
         console.error(e)
@@ -491,7 +491,7 @@ export default {
     },
     async fetchCallouts() {
       try {
-        const res = await axios.get('/api/admin/callouts')
+        const res = await api.get('/api/admin/callouts')
         this.callouts = res.data.data
         this.watchdogCount = res.data.watchdog_count
         this.systemCount = res.data.system_count
@@ -504,7 +504,7 @@ export default {
     },
     async fetchDutyOfficer() {
       try {
-        const res = await axios.get('/api/duty-officers/current')
+        const res = await api.get('/api/duty-officers/current')
         const data = res.data.data
 
         if (data.is_covered) {
@@ -594,7 +594,7 @@ export default {
     async sendTestCallout() {
       this.testingWatchdog = true
       try {
-        await axios.post('/api/admin/callouts/test-watchdog')
+        await api.post('/api/admin/callouts/test-watchdog')
         this.testWatchdogDialog = false
         // Show success snackbar if available, or just alert
         alert('Test callout triggered successfully! Check your SMS/Email.')

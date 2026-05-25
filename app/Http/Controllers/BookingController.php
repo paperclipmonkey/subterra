@@ -15,6 +15,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -121,43 +122,48 @@ class BookingController extends Controller
 
         $date = $request->input('date');
 
-        if (!$permit->isDateAvailable($date)) {
-            return response()->json(['error' => 'This date is fully booked.'], 422);
-        }
+        return DB::transaction(function () use ($request, $permit, $date) {
+            // Lock the permit row to prevent concurrent bookings from overbooking
+            $permit = Permit::lockForUpdate()->find($permit->id);
 
-        if (!$permit->isInSeason($date)) {
-            return response()->json(['error' => 'This date is outside the permit season.'], 422);
-        }
+            if (!$permit->isDateAvailable($date)) {
+                return response()->json(['error' => 'This date is fully booked.'], 422);
+            }
 
-        $booking = Booking::create([
-            'permit_id' => $permit->id,
-            'user_id' => $request->user()->id,
-            'date' => $date,
-            'participants' => $request->input('participants'),
-            'notes' => $request->input('notes'),
-            'status' => $permit->auto_approve ? 'approved' : 'pending',
-            'approved_at' => $permit->auto_approve ? now() : null,
-            'conditions_accepted_at' => now(),
-        ]);
+            if (!$permit->isInSeason($date)) {
+                return response()->json(['error' => 'This date is outside the permit season.'], 422);
+            }
 
-        $booking->load(['permit', 'applicant']);
+            $booking = Booking::create([
+                'permit_id' => $permit->id,
+                'user_id' => $request->user()->id,
+                'date' => $date,
+                'participants' => $request->input('participants'),
+                'notes' => $request->input('notes'),
+                'status' => $permit->auto_approve ? 'approved' : 'pending',
+                'approved_at' => $permit->auto_approve ? now() : null,
+                'conditions_accepted_at' => now(),
+            ]);
 
-        // Notify officers
-        $officers = $permit->officers;
-        foreach ($officers as $officer) {
-            Mail::to($officer->email)->queue(
-                new BookingSubmittedMail($booking, $officer)
-            );
-        }
+            $booking->load(['permit', 'applicant']);
 
-        // If auto-approved, also send approval email to applicant
-        if ($permit->auto_approve) {
-            Mail::to($booking->applicant->email)->queue(
-                new BookingApprovedMail($booking)
-            );
-        }
+            // Notify officers
+            $officers = $permit->officers;
+            foreach ($officers as $officer) {
+                Mail::to($officer->email)->queue(
+                    new BookingSubmittedMail($booking, $officer)
+                );
+            }
 
-        return response()->json(new BookingResource($booking), 201);
+            // If auto-approved, also send approval email to applicant
+            if ($permit->auto_approve) {
+                Mail::to($booking->applicant->email)->queue(
+                    new BookingApprovedMail($booking)
+                );
+            }
+
+            return response()->json(new BookingResource($booking), 201);
+        });
     }
 
     /**

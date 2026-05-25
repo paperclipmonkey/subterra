@@ -73,6 +73,24 @@ class UserFactory extends Factory
     }
 
     /**
+     * State: user explicitly granted pip_access (Pip AI assistant).
+     */
+    public function pipAccess(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('pip_access');
+        });
+    }
+
+    /**
+     * State: user has accepted the Pip agreement.
+     */
+    public function pipAgreed(): static
+    {
+        return $this->state(fn () => ['pip_agreement_signed_at' => now()]);
+    }
+
+    /**
      * State: user with an approved club membership.
      */
     public function withApprovedClub(): static

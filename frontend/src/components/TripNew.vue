@@ -12,27 +12,32 @@
         <v-col cols="12" md="6">
           <v-card title="Where" class="mb-4">
             <v-card-text>
-              <v-autocomplete v-model="trip.entrance_cave_id" label="Location" :items="caves" item-title="name" :rules="rules.location"
-                              item-value="id" :error-messages="validationErrors.entrance_cave_id"
-                              hint="Select the cave entrance where the trip started." persistent-hint variant="outlined"
-                              autocomplete="off" name="random_unique_cave_search_field">
-                <template #item="{ props, item }">
-                  <v-list-item v-bind="props" :subtitle="item.raw.location_name + ', ' + item.raw.location_country"
-                               :title="item.raw.name" />
-                </template>
-              </v-autocomplete>
+              <CaveSearchAutocomplete
+                v-model="trip.entrance_cave_id"
+                label="Location"
+                :items="caves"
+                :loading="loading"
+                :rules="rules.location"
+                :error-messages="validationErrors.entrance_cave_id"
+                hint="Select the cave entrance where the trip started."
+                :persistent-hint="true"
+                input-name="random_unique_cave_search_field"
+              />
               <template v-if="system_entrances_count > 1">
                 <v-checkbox v-model="throughTrip" label="Through trip"
                             hint="Tick if you exited from a different entrance." persistent-hint class="mt-2" />
                 <v-expand-transition>
                   <div v-if="throughTrip">
-                    <v-autocomplete v-model="trip.exit_cave_id"
-                                    label="Exit"
-                                    :items="caves.filter(cave => cave.system.id === cave_system_id && cave.id !== trip.entrance_cave_id)" item-title="name" item-value="id"
-                                    :error-messages="validationErrors.exit_cave_id"
-                                    hint="Select the cave entrance where the trip ended." persistent-hint variant="outlined"
-                                    autocomplete="off" name="random_unique_exit_search_field"
-                                    class="mt-2" />
+                    <CaveSearchAutocomplete
+                      v-model="trip.exit_cave_id"
+                      label="Exit"
+                      :items="caves.filter(cave => cave.cave_system_id === cave_system_id && cave.id !== trip.entrance_cave_id)"
+                      :error-messages="validationErrors.exit_cave_id"
+                      hint="Select the cave entrance where the trip ended."
+                      :persistent-hint="true"
+                      input-name="random_unique_exit_search_field"
+                      class="mt-2"
+                    />
                   </div>
                 </v-expand-transition>
               </template>
@@ -257,6 +262,15 @@
             </v-card-text>
             <v-divider />
             <v-card-actions class="pa-4">
+              <v-btn
+                v-if="route.params.id"
+                color="error"
+                variant="text"
+                :prepend-icon="mdiDelete"
+                @click="showDeleteDialog = true"
+              >
+                Delete Trip
+              </v-btn>
               <v-spacer />
               <v-btn text="Cancel" variant="text" @click="router.back()" />
               <v-btn color="primary" size="large" elevation="2" :loading="isSaving" :disabled="isSaving"
@@ -281,6 +295,19 @@
       @close="closeAddParticipant"
       @add="addParticipant"
     />
+
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="showDeleteDialog" persistent max-width="400">
+      <v-card class="rounded-lg">
+        <v-card-title class="text-h6 pa-4">Delete Trip?</v-card-title>
+        <v-card-text class="pt-0 pb-4">Are you sure you want to delete this trip report? This action cannot be undone.</v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showDeleteDialog = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" @click="confirmDelete">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -289,10 +316,12 @@ import { mdiAccountSearch, mdiCamera, mdiClose, mdiContentSave, mdiDelete, mdiPl
 import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'
+import CaveSearchAutocomplete from './CaveSearchAutocomplete.vue'
 import MilkdownEditor from './MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
+import { api } from '@/plugins/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -303,6 +332,7 @@ const markdownOutput = ref('')
 const showAddParticipant = ref(false)
 const isSaved = ref(false)
 const isSaving = ref(false)
+const showDeleteDialog = ref(false)
 const isAddingParticipant = ref(false)
 const isSearching = ref(false)
 const addParticipantError = ref(null)
@@ -418,8 +448,8 @@ const onUserSearch = (val) => {
   isSearching.value = true
   searchTimeout = setTimeout(async () => {
     try {
-      const response = await fetch(`/api/users?search=${encodeURIComponent(val)}`)
-      const matches = (await response.json()).data
+      const response = await api.get(`/api/users?search=${encodeURIComponent(val)}`)
+      const matches = response.data.data
 
       // Merge matches with existing users (to keep selected ones visible)
       const existingIds = users.value.map(u => u.id)
@@ -466,13 +496,7 @@ const copyrightOptions = [
 const isClosed = computed(() => {
   if (!trip.entrance_cave_id) return false
   const cave = caves.value.find(c => c.id === trip.entrance_cave_id)
-  // Check direct tags or system tags if applicable
-  const hasClosedTag = (entity) => entity?.tags?.some(t => t.tag === 'Closed')
-
-  if (hasClosedTag(cave)) return true
-  if (cave?.system && hasClosedTag(cave.system)) return true
-
-  return false
+  return cave?.is_closed ?? false
 })
 
 watch(isClosed, (newVal) => {
@@ -538,15 +562,15 @@ const rules = {
 onMounted(async () => {
   try {
     // Load caves
-    let response = await fetch('/api/caves')
-    caves.value = (await response.json()).data
+    let response = await api.get('/api/caves/search')
+    caves.value = response.data.data
 
     // Load users (Removed full load)
-    const userResonse = await fetch('/api/users/me')
-    const userData = await userResonse.json()
+    const userResponse = await api.get('/api/users/me')
+    const userData = userResponse.data
     userId.value = userData.data.id
-    // response = await fetch('/api/users')
-    // users.value = (await response.json()).data
+    // response = await api.get('/api/users')
+    // users.value = response.data.data
 
     // Add self to users list so it displays correctly
     const me = userData.data
@@ -563,7 +587,7 @@ onMounted(async () => {
         return
       }
       trip.entrance_cave_id = foundCave.id
-      trip.cave_system_id = foundCave.system.id
+      trip.cave_system_id = foundCave.cave_system_id
     }
 
     if (route.query.date) {
@@ -580,8 +604,8 @@ onMounted(async () => {
 
     if (route.query.callout_id) {
       try {
-        const res = await fetch(`/api/callouts/${route.query.callout_id}`)
-        const calloutData = (await res.json()).data
+        const res = await api.get(`/api/callouts/${route.query.callout_id}`)
+        const calloutData = res.data.data
         if (calloutData) {
           // Pre-fill plan/description
           trip.description = `**Originally a Callout:**\n\n${calloutData.trip_plan}`
@@ -598,8 +622,8 @@ onMounted(async () => {
               .map(p => p.user_id)
             if (userIdsToFetch.length > 0) {
               try {
-                const userResponse = await fetch(`/api/users?ids=${userIdsToFetch.join(',')}`)
-                const fetchedUsers = (await userResponse.json()).data
+                const userResponse = await api.get(`/api/users?ids=${userIdsToFetch.join(',')}`)
+                const fetchedUsers = userResponse.data.data
                 fetchedUsers.forEach(u => {
                   if (!users.value.some(existing => existing.id === u.id)) {
                     users.value.push(u)
@@ -618,7 +642,6 @@ onMounted(async () => {
               } else {
                 // If it's a manual participant (no user_id), we might need to add them manually to the trip?
                 // For now, simpler to just handle registered users or log it
-                console.log('Manual participant from callout, consider adding to description:', p.name)
                 trip.description += `\n- Guest: ${p.name}`
               }
             })
@@ -631,8 +654,8 @@ onMounted(async () => {
 
     // Load existing trip
     if (route.params.id) {
-      const response = await fetch(`/api/trips/${route.params.id}`)
-      let loadedTrip = (await response.json()).data
+      const response = await api.get(`/api/trips/${route.params.id}`)
+      let loadedTrip = response.data.data
 
       loadedTrip.existing_media = loadedTrip.media
       loadedTrip.media = []
@@ -697,34 +720,18 @@ const addParticipant = (participant) => {
   addParticipantError.value = null
 
   // Add the user using an api endpoint
-  fetch('/api/users', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify(participant),
-  })
+  api.post('/api/users', participant)
     .then(response => {
-      if (!response.ok) {
-        return response.json().then(data => {
-          throw new Error(data.message || 'Failed to add participant')
-        })
-      }
-      return response.json()
-    })
-    .then(data => {
       // Use the full user object returned from the API
-      const newUser = data.data
+      const newUser = response.data.data
       users.value.push(newUser) // So it can be referenced with all fields
       trip.participants.push(newUser.id)
-      console.log('Participant added successfully:', newUser)
       showAddParticipant.value = false
       notificationStore.showSuccess('Participant added successfully')
     })
     .catch(error => {
       console.error('Error adding participant:', error)
-      addParticipantError.value = error.message
+      addParticipantError.value = error.response?.data?.message || error.message
     })
     .finally(() => {
       isAddingParticipant.value = false
@@ -733,20 +740,20 @@ const addParticipant = (participant) => {
 
 const cave_system_id = computed(() => {
   const found = caves.value.find(cave => cave.id === trip.entrance_cave_id)
-  return found ? found.system.id : null
+  return found ? found.cave_system_id : null
 })
 
 const system_entrances_count = computed(() => {
   if (!cave_system_id.value) return 0
-  return caves.value.filter((cave => cave.system.id === cave_system_id.value)).length
+  return caves.value.filter((cave => cave.cave_system_id === cave_system_id.value)).length
 })
 
 watch(() => trip.entrance_cave_id, (cave_id) => {
   if (!cave_id) return
   if (throughTrip.value) { // Currently set as through trip
     const currentSystem = caves.value.find(cave => cave.id === trip.entrance_cave_id)
-    const multipleEntrances = caves.value.filter((cave => cave.system.id == currentSystem.id))
-    throughTrip.value = !!multipleEntrances
+    const multipleEntrances = caves.value.filter((cave => cave.cave_system_id == currentSystem?.cave_system_id))
+    throughTrip.value = multipleEntrances.length > 1
   }
 })
 
@@ -786,6 +793,19 @@ const removePendingMedia = (index) => {
   pendingMedia.value.splice(index, 1)
 }
 
+const confirmDelete = async () => {
+  showDeleteDialog.value = false
+  try {
+    await api.delete(`/api/trips/${route.params.id}`)
+    isSaved.value = true
+    notificationStore.showSuccess('Trip deleted successfully')
+    router.push('/trips')
+  } catch (e) {
+    console.error('Failed to delete trip', e)
+    notificationStore.showError('Failed to delete trip: ' + (e.message || 'Unknown error'))
+  }
+}
+
 const submitForm = async () => {
   validationErrors.value = {}
   isSaving.value = true
@@ -796,7 +816,7 @@ const submitForm = async () => {
     }
     trip.start_time = start_time.value.format()
     trip.end_time = end_time.value.format()
-    trip.cave_system_id = cave_system_id.value
+      trip.cave_system_id = cave_system_id.value ?? null
     if (markdownOutput.value) {
       trip.description = markdownOutput.value
     }
@@ -847,9 +867,16 @@ const submitForm = async () => {
   }
 }
 
-const handleApiError = async (response) => {
+const handleApiError = async (error) => {
+  const response = error.response
+  if (!response) {
+    console.error('Network error:', error)
+    notificationStore.showError('Failed to save trip. Please check your connection and try again.')
+    return
+  }
+
   if (response.status === 422) {
-    const errorData = await response.json()
+    const errorData = response.data
 
     // Map wildcard media errors (media.0.data) back to the base 'media' field for the UI
     const mediaErrors = []
@@ -877,51 +904,43 @@ const handleApiError = async (response) => {
 }
 
 const updateTrip = async (formData, id) => {
-  const response = await fetch(`/api/trips/${id}`, {
-    method: 'POST', // Use POST with _method=PUT in the FormData body
-    headers: {
-      'Accept': 'application/json'
-    },
-    body: formData
-  })
-  if (response.ok) {
+  try {
+    await api.post(`/api/trips/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     isSaved.value = true
     validationErrors.value = {}
     notificationStore.showSuccess('Trip updated successfully! 🎉')
     router.push('/trips/' + id)
-  } else {
-    await handleApiError(response)
+  } catch (error) {
+    await handleApiError(error)
   }
 }
 
 const saveTrip = async (formData) => {
-  const response = await fetch('/api/trips', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json'
-    },
-    body: formData
-  })
-  if (response.ok) {
+  try {
+    const response = await api.post('/api/trips', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     isSaved.value = true
     validationErrors.value = {}
-    const savedTrip = (await response.json()).data
+    const savedTrip = response.data.data
     notificationStore.showSuccess('Trip saved successfully! 🚀')
     router.push('/trips/' + savedTrip.id)
-  } else {
-    await handleApiError(response)
+  } catch (error) {
+    await handleApiError(error)
   }
 }
 
 </script>
 
-<style>
+<style scoped>
 .existing_media {
   max-width: 200px;
 }
 
 /* Fun spinning animation for loading icon */
-.mdi-spin {
+:deep(.mdi-spin) {
   animation: spin 1s linear infinite;
 }
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Tasks from '@/pages/admin/tasks.vue'
 
-// Mock axios
+// Mock data
 const mockTasks = {
     caves_no_photo: [
         { id: 1, name: 'Cave One', slug: 'cave-one', location_name: 'Loc A' }
@@ -17,9 +17,13 @@ const mockTasks = {
     systems_no_files: []
 }
 
-vi.mock('axios', () => ({
-    default: {
-        get: vi.fn(() => Promise.resolve({ data: mockTasks }))
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(() => Promise.resolve({ data: mockTasks })),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
     }
 }))
 

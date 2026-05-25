@@ -14,6 +14,15 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
 
     public $timestamps = false;
 
+    public function resolveRouteBinding($value, $field = null): static
+    {
+        if (is_numeric($value)) {
+            return $this->where('id', $value)->firstOrFail();
+        }
+
+        return $this->where('slug', $value)->firstOrFail();
+    }
+
     protected $fillable = [
         'name',
         'description',

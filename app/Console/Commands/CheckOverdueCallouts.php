@@ -11,6 +11,7 @@ use App\Notifications\CalloutImminentNotification;
 use App\Notifications\CalloutOverdueContactNotification;
 use App\Notifications\OverdueCalloutNotification;
 use App\Notifications\UnmanagedIncidentNotification;
+use App\Services\GcpWatchdogService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -62,38 +63,27 @@ class CheckOverdueCallouts extends Command
 
     private function checkImminent(): void
     {
-        // Check for callouts due between 14 and 16 minutes from now (fuzzy match for cron)
-        // Ensure we haven't already warned (maybe add 'warned_at' column? or cache?)
-        // For simplicity in this iteration without schema changes, we rely on the 1-minute cron
-        // and a slightly wider window, but ideally we need a flag to prevent double alert.
-        // Let's assume we run every minute. We check [now+15m, now+16m).
-
         $startWindow = now()->addMinutes(14);
-        $endWindow = now()->addMinutes(15);
+        $endWindow = now()->addMinutes(16);
 
         $imminentCallouts = Callout::active()
+            ->whereNull('warned_at')
             ->where('callout_time', '>', $startWindow)
             ->where('callout_time', '<=', $endWindow)
             ->get();
 
         foreach ($imminentCallouts as $callout) {
             $this->warnDutyOfficer($callout);
+            $callout->update(['warned_at' => now()]);
         }
     }
 
     private function checkEscalation(): void
     {
-        // Find open incidents created > 15 mins ago with NO controller
-        // We need a way to track if we already escalated.
-        // Ideally 'escalated_at' on Incident model. For now, we can check if an 'escalation' note exists?
-
         $staleIncidents = Incident::where('status', 'open')
             ->doesntHave('controller')
             ->where('created_at', '<=', now()->subMinutes(15))
-            ->whereDoesntHave('notes', function ($query) {
-                // Heuristic: check if we already logged an escalation note
-                $query->where('content', 'like', '%ESCALATED%');
-            })
+            ->whereNull('escalated_at')
             ->get();
 
         foreach ($staleIncidents as $incident) {
@@ -127,6 +117,8 @@ class CheckOverdueCallouts extends Command
             if ($admins->isNotEmpty()) {
                 Notification::send($admins, new UnmanagedIncidentNotification($incident));
             }
+
+            $incident->update(['escalated_at' => now()]);
 
             $incident->notes()->create([
                 'user_id' => null,
@@ -163,14 +155,22 @@ class CheckOverdueCallouts extends Command
             }
 
             try {
-                $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
-                $msg = "🚨 *OVERDUE CALLOUT TRIGGERED*\nLocation: *{$caveName}*\nUser: *{$callout->user->name}*\nDue: {$callout->callout_time->format('H:i')}\n<".url('/admin/incidents/'.$incident->id).'|View Incident>';
+                $caveName = $callout->cave_name;
+                $msg = "🚨 *OVERDUE CALLOUT TRIGGERED*\nLocation: *{$caveName}*\nUser: *{$callout->user->name}*\nDue: {$callout->callout_time->timezone(config('app.display_timezone'))->format('H:i')}\n<".url('/admin/incidents/'.$incident->id).'|View Incident>';
 
                 SlackAlert::to('callouts-overdue')->message("<!channel>\n".$msg);
             } catch (\Exception $e) {
                 Log::error('Failed to send Overdue Slack Alert: '.$e->getMessage());
             }
         });
+
+        // Cancel the GCP watchdog now that Laravel has handled this callout.
+        // Do this outside the transaction so a watchdog failure doesn't roll back the incident.
+        try {
+            app(GcpWatchdogService::class)->cancel($callout);
+        } catch (\Exception $e) {
+            Log::error("Failed to cancel GCP watchdog for callout {$callout->id}: {$e->getMessage()}");
+        }
     }
 
     /**

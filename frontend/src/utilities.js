@@ -20,9 +20,11 @@ const toFormData = (obj, formData = new FormData(), parentKey = '') => {
             const value = obj[key]
             const formKey = parentKey ? `${parentKey}[${key}]` : key
 
-            if (value === null || value === undefined) continue
+            if (value === undefined) continue
 
-            if (value instanceof File || value instanceof Blob) {
+            if (value === null) {
+                formData.append(formKey, '')
+            } else if (value instanceof File || value instanceof Blob) {
                 formData.append(formKey, value)
             } else if (Array.isArray(value)) {
                 value.forEach((item, index) => {

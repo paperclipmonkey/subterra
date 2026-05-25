@@ -2,17 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Profile from '@/components/Profile.vue'
 
-// Mock mande
+// Mock api plugin
 const mockGet = vi.fn()
 const mockRecentTrips = vi.fn()
-vi.mock('mande', () => ({
-    mande: (url) => ({
-        get: () => {
-            if (url.includes('/activity-heatmap')) return Promise.resolve([])
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: (url) => {
+            if (url.includes('/activity-heatmap')) return Promise.resolve({ data: [] })
             if (url.includes('/recent-trips')) return mockRecentTrips()
             return mockGet()
         },
-    })
+    }
 }))
 
 // Mock App Store
@@ -53,8 +53,8 @@ describe('Profile.vue', () => {
             medals: [],
             stats: { caves: 5, trips: 10, duration: 100 }
         }
-        mockGet.mockResolvedValue(mockProfile)
-        mockRecentTrips.mockResolvedValue([])
+        mockGet.mockResolvedValue({ data: mockProfile })
+        mockRecentTrips.mockResolvedValue({ data: [] })
 
         const wrapper = mount(Profile, {
             global: {
@@ -115,8 +115,8 @@ describe('Profile.vue', () => {
             medals: [],
             stats: { caves: 5, trips: 10, duration: 100 }
         }
-        mockGet.mockResolvedValue(mockProfile)
-        mockRecentTrips.mockResolvedValue([])
+        mockGet.mockResolvedValue({ data: mockProfile })
+        mockRecentTrips.mockResolvedValue({ data: [] })
 
         const wrapper = mount(Profile, {
             global: {
@@ -173,8 +173,8 @@ describe('Profile.vue', () => {
             }
         ]
 
-        mockGet.mockResolvedValue(mockProfile)
-        mockRecentTrips.mockResolvedValue(trips)
+        mockGet.mockResolvedValue({ data: mockProfile })
+        mockRecentTrips.mockResolvedValue({ data: trips })
 
         const wrapper = mount(Profile, {
             global: {
@@ -225,8 +225,8 @@ describe('Profile.vue', () => {
             medals: [],
             stats: { caves: 0, trips: 0, duration: 0 }
         }
-        mockGet.mockResolvedValue(mockProfile)
-        mockRecentTrips.mockResolvedValue([])
+        mockGet.mockResolvedValue({ data: mockProfile })
+        mockRecentTrips.mockResolvedValue({ data: [] })
 
         const wrapper = mount(Profile, {
             global: {
@@ -273,8 +273,8 @@ describe('Profile.vue', () => {
             medals: [],
             stats: { caves: 0, trips: 0, duration: 0 }
         }
-        mockGet.mockResolvedValue(mockProfile)
-        mockRecentTrips.mockResolvedValue([])
+        mockGet.mockResolvedValue({ data: mockProfile })
+        mockRecentTrips.mockResolvedValue({ data: [] })
 
         const wrapper = mount(Profile, {
             global: {
@@ -320,8 +320,8 @@ describe('Profile.vue', () => {
             ],
             stats: { caves: 1, trips: 1, duration: 60 }
         }
-        mockGet.mockResolvedValue(mockProfile)
-        mockRecentTrips.mockResolvedValue([])
+        mockGet.mockResolvedValue({ data: mockProfile })
+        mockRecentTrips.mockResolvedValue({ data: [] })
 
         const wrapper = mount(Profile, {
             global: {

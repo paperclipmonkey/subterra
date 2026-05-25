@@ -17,12 +17,14 @@ class OnCallShift extends Model
         'start_at',
         'end_at',
         'notified_at',
+        'notify_do',
     ];
 
     protected $casts = [
         'start_at' => 'datetime',
         'end_at' => 'datetime',
         'notified_at' => 'datetime',
+        'notify_do' => 'boolean',
     ];
 
     public function user(): BelongsTo

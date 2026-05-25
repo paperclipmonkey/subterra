@@ -12,6 +12,7 @@ use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\ClubAdminOrAdmin;
 use App\Http\Middleware\CurrentUserOrAdmin;
+use App\Http\Middleware\PipAccess;
 use App\Http\Resources\UserDetailEmailResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,6 +47,7 @@ Route::get('/users/me', function (Request $request) {
 })->middleware('auth:sanctum')->name('users.me');
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update');
+    Route::post('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update.post');
     Route::delete('/users/me', [App\Http\Controllers\UserController::class, 'destroyMe'])->name('users.me.destroy');
 });
 
@@ -61,7 +63,7 @@ Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'public
 Route::get('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'index']);
 Route::get('/routes/{route}', [App\Http\Controllers\RouteController::class, 'show']);
 
-Route::middleware(ApiIsAuthenticated::class)->group(function () {
+Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
 
     Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
@@ -73,6 +75,7 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/duty-officers/rota', [App\Http\Controllers\DutyOfficerController::class, 'rotaPublic']);
 
     Route::get('/caves', [App\Http\Controllers\CaveController::class, 'index']);
+    Route::get('/caves/search', [App\Http\Controllers\CaveController::class, 'search']);
     Route::get('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'show'])
         ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Cave::class);
     Route::get('/caves/{cave}/weather/forecast', [App\Http\Controllers\CaveWeatherController::class, 'forecast']);
@@ -109,16 +112,16 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
     Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
     Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');
 
-    Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->name('users.recent-trips');
-    Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->name('users.activity-heatmap');
-    Route::get('/users/{user}/medals', [UserController::class, 'medals'])->name('users.medals');
+    Route::get('/users/{user}/recent-trips', [UserController::class, 'recentTrips'])->where('user', '[0-9]+')->name('users.recent-trips');
+    Route::get('/users/{user}/activity-heatmap', [UserController::class, 'activityHeatmap'])->where('user', '[0-9]+')->name('users.activity-heatmap');
+    Route::get('/users/{user}/medals', [UserController::class, 'medals'])->where('user', '[0-9]+')->name('users.medals');
 
     Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
 
     // User Management
-    Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
-    Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
-    Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
+    Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->middleware('throttle:10,1')->name('users.create');
+    Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->where('user', '[0-9]+')->name('users.show');
+    Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->where('user', '[0-9]+')->middleware(CurrentUserOrAdmin::class)->name('users.store');
     Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
     Route::delete('/users/{user_without_scopes}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
 
@@ -151,6 +154,23 @@ Route::middleware(ApiIsAuthenticated::class)->group(function () {
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
     ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
 
+// --- AI Assistant (Pip) ---
+// Open to platform_admin OR users granted the `pip_access` role explicitly.
+// Rate-limited to 50 requests per day (1440 min).
+Route::post('/assistant/chat', [App\Http\Controllers\AssistantController::class, 'chat'])
+    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
+    ->middleware('throttle:50,1440')
+    ->name('assistant.chat');
+
+Route::post('/assistant/agreement', [App\Http\Controllers\AssistantController::class, 'acceptAgreement'])
+    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
+    ->name('assistant.agreement');
+
+Route::post('/assistant/feedback', [App\Http\Controllers\AssistantController::class, 'feedback'])
+    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
+    ->middleware('throttle:60,60')
+    ->name('assistant.feedback');
+
 // --- Admin Routes ---
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     // Platform Admin — users, clubs, pages, comms, tasks, dashboard, suggested edits
@@ -162,6 +182,11 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::put('/users/{user_without_scopes}/toggle-role/{role}', [UserController::class, 'toggleRole'])
             ->withoutScopedBindings()
             ->name('admin.users.toggle-role');
+
+        // Pip feedback (flagged conversations) review UI
+        Route::get('/pip-feedback', [App\Http\Controllers\Admin\PipFeedbackController::class, 'index'])->name('admin.pip-feedback.index');
+        Route::get('/pip-feedback/{feedback}', [App\Http\Controllers\Admin\PipFeedbackController::class, 'show'])->name('admin.pip-feedback.show');
+        Route::put('/pip-feedback/{feedback}/reviewed', [App\Http\Controllers\Admin\PipFeedbackController::class, 'markReviewed'])->name('admin.pip-feedback.reviewed');
 
         Route::get('/clubs', [ClubController::class, 'adminIndex'])->name('admin.clubs.index');
         Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');

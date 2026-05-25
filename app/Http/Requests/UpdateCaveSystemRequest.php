@@ -19,7 +19,13 @@ class UpdateCaveSystemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'length' => 'nullable|integer|min:0',
+            'vertical_range' => 'nullable|integer',
+            'slug' => 'nullable|string|max:255|unique:cave_systems,slug,'.$this->route('cave_system')->id,
+            'references' => 'nullable|string',
+            'catchment_id' => 'nullable|exists:catchments,id',
         ];
     }
 }

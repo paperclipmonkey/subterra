@@ -54,10 +54,11 @@ export const setClients = (
 const checkApiKey = (req: Request, res: Response, next: () => void) => {
     const apiKey = getSecret('WATCHDOG_API_KEY');
 
-    // If no API key is configured, allow all (for initial setup/local dev if key is missing)
+    // Fail closed: if no key is configured, deny all access to prevent
+    // accidental exposure of emergency alert endpoints in misconfigured environments.
     if (!apiKey) {
-        console.warn('WATCHDOG_API_KEY not configured. Endpoints are unprotected.');
-        return next();
+        console.error('WATCHDOG_API_KEY not configured. Refusing access.');
+        return res.status(401).json({ error: 'Unauthorized: Service not configured' });
     }
 
     const providedKey = req.header('X-Watchdog-Key');
@@ -78,8 +79,8 @@ app.get('/health', (req: Request, res: Response) => {
     });
 });
 
-// Protected routes (Creation, Deletion, Listing, Testing)
-app.use(['/watchdog'], checkApiKey);
+// Protected routes (Creation, Deletion, Listing, Testing, and Scheduler check)
+app.use(['/watchdog', '/check'], checkApiKey);
 
 // Register a new watchdog
 app.post('/watchdog', async (req: Request, res: Response) => {

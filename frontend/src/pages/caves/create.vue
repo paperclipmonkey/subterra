@@ -63,7 +63,8 @@ import { useRoute, useRouter } from "vue-router"
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveForm from '@/components/CaveForm.vue'
 import { useAppStore } from '@/stores/app'
-import { objectToFormData } from '@/utils/formData'
+import { toFormData } from '@/utilities'
+import { api } from '@/plugins/api'
 
 const appStore = useAppStore()
 const router = useRouter()
@@ -94,14 +95,8 @@ const fetchSystem = async () => {
   if (!cave.value.cave_system_id) return
 
   try {
-    const response = await fetch(`/api/cave_systems/${cave.value.cave_system_id}`, { headers: { 'Accept': 'application/json' } })
-    if (response.ok) {
-      const data = (await response.json()).data
-      system.value = data
-
-      // Inherit location from system caves if available (optional UX improvement)
-      // For now, simpler is better as requested.
-    }
+    const response = await api.get(`/api/cave_systems/${cave.value.cave_system_id}`)
+    system.value = response.data.data
   } catch (error) {
     console.error("Error fetching system:", error)
   }
@@ -113,26 +108,15 @@ const saveCave = async () => {
 
   loading.value = true
   try {
-    const formData = objectToFormData(cave.value)
+    const formData = toFormData(cave.value)
 
-    const response = await fetch('/api/caves', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-      },
-      body: formData,
+    const response = await api.post('/api/caves', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
-
-    if (response.ok) {
-      const data = (await response.json()).data
-      router.push('/caves/' + data.slug)
-    } else {
-      const data = await response.json()
-      errorMessage.value = data.message || 'Failed to create cave'
-      errorSnackbar.value = true
-    }
+    router.push('/caves/' + response.data.data.slug)
   } catch (error) {
-    errorMessage.value = 'An unexpected error occurred'
+    const data = error.response?.data
+    errorMessage.value = data?.message || 'Failed to create cave'
     errorSnackbar.value = true
   } finally {
     loading.value = false

@@ -128,7 +128,6 @@
         <v-col cols="12">
           <v-alert type="info" variant="tonal">
             You must be an approved member to see club activity and member details.
-            <!-- TODO: Add join/request access button if applicable -->
           </v-alert>
         </v-col>
       </v-row>
@@ -141,7 +140,7 @@
 import { mdiAccountClock, mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiMapMarker, mdiPencil, mdiWeb } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { CalendarHeatmap } from "vue3-calendar-heatmap"
 import ClubEditModal from '@/components/ClubEditModal.vue'
@@ -198,20 +197,18 @@ async function fetchClubData() {
   members.value = []
   heatmapData.value = []
   try {
-    const clubApi = mande(`/api/clubs/${clubSlug}`)
-    const clubResponse = await clubApi.get()
-    club.value = clubResponse.data || clubResponse
+    const clubResponse = await api.get(`/api/clubs/${clubSlug}`)
+    club.value = clubResponse.data.data || clubResponse.data
     // Attempt to load member-specific data ONLY if club loaded
     try {
-      const dataApi = mande(`/api/clubs/${clubSlug}`)
       const [tripsResponse, membersResponse, heatmapResponse] = await Promise.all([
-        dataApi.get('recent-trips'),
-        dataApi.get('members'),
-        dataApi.get('activity-heatmap')
+        api.get(`/api/clubs/${clubSlug}/recent-trips`),
+        api.get(`/api/clubs/${clubSlug}/members`),
+        api.get(`/api/clubs/${clubSlug}/activity-heatmap`)
       ])
-      recentTrips.value = tripsResponse.data || tripsResponse
-      members.value = membersResponse.data || membersResponse
-      heatmapData.value = heatmapResponse || []
+      recentTrips.value = tripsResponse.data.data || tripsResponse.data
+      members.value = membersResponse.data.data || membersResponse.data
+      heatmapData.value = heatmapResponse.data || []
       isApprovedMember.value = true
     } catch (memberDataError) {
       isApprovedMember.value = false

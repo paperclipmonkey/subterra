@@ -181,10 +181,10 @@ import { mdiCheck, mdiClose, mdiDelete } from '@mdi/js'
 
 // This script is adapted from the admin/clubs.vue modal logic, but expects props for clubSlug and visibility
 import { ref, computed, watch, onMounted } from 'vue'
-import { mande } from 'mande'
+import { api } from '@/plugins/api'
 import { useRouter } from 'vue-router'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
@@ -221,7 +221,7 @@ const memberDataChanged = ref(false)
 const saving = ref(false)
 const loadingPending = ref(false)
 const router = useRouter()
-const toast = useToast()
+const notifications = useNotificationStore()
 
 const rejectDialog = ref(false)
 const selectedRejectUser = ref(null)
@@ -229,15 +229,13 @@ const rejectReason = ref('incorrect_name')
 
 const fetchClub = async () => {
   if (!props.clubSlug) return
-  const clubApi = mande(`/api/clubs/${props.clubSlug}`)
-  const clubResponse = await clubApi.get()
-  editedClub.value = clubResponse.data || clubResponse
+  const clubResponse = await api.get(`/api/clubs/${props.clubSlug}`)
+  editedClub.value = clubResponse.data.data || clubResponse.data
 }
 const fetchAvailableUsers = async () => {
   try {
-    const usersApi = mande('/api/admin/users')
-    const response = await usersApi.get()
-    availableUsers.value = response.data || response
+    const response = await api.get('/api/admin/users')
+    availableUsers.value = response.data.data || response.data
   } catch (e) {
     // If not super-admin, this might fail, but we shouldn't block the modal
     console.warn('Could not fetch all users (likely not platform admin)')
@@ -248,11 +246,10 @@ const fetchClubMembers = async () => {
   if (!props.clubSlug) return
   // Use the public (but auth-guarded) endpoint which now includes is_club_admin info
   // This allows Club Admins to see members without needing full platform admin rights
-  const membersApi = mande(`/api/clubs/${props.clubSlug}/members`)
-  const response = await membersApi.get()
+  const response = await api.get(`/api/clubs/${props.clubSlug}/members`)
 
   // Map the response to the format expected by the template
-  const members = response.data || response
+  const members = response.data.data || response.data
   clubMembers.value = members.map(m => ({
     id: m.id,
     name: m.name,
@@ -266,9 +263,9 @@ const fetchPendingMembers = async () => {
   if (!props.clubSlug) return
   loadingPending.value = true
   try {
-    const pendingApi = mande(`/api/admin/clubs/${props.clubSlug}/pending-members`)
-    const response = await pendingApi.get()
-    pendingMembers.value = (response.data || response).map(user => ({ ...user, loading: false }))
+    const response = await api.get(`/api/admin/clubs/${props.clubSlug}/pending-members`)
+    const body = response.data
+    pendingMembers.value = (body.data || body).map(user => ({ ...user, loading: false }))
   } finally {
     loadingPending.value = false
   }
@@ -289,8 +286,7 @@ const approveMemberRequest = async (pendingUser) => {
   if (!props.clubSlug) return
   pendingUser.loading = true
   try {
-    const approveApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${pendingUser.id}/approve`)
-    await approveApi.put()
+    await api.put(`/api/admin/clubs/${props.clubSlug}/members/${pendingUser.id}/approve`)
     await fetchPendingMembers()
     await fetchClubMembers()
     await fetchClub()
@@ -314,11 +310,10 @@ const confirmReject = async () => {
   user.loading = true
   closeRejectDialog()
   try {
-    const rejectApi = mande(`/api/admin/clubs/${props.clubSlug}/members/${user.id}/reject`)
-    await rejectApi.put({}, { query: { reason: rejectReason.value } })
+    await api.put(`/api/admin/clubs/${props.clubSlug}/members/${user.id}/reject`, {}, { params: { reason: rejectReason.value } })
     await fetchPendingMembers()
   } catch (e) {
-    toast.error('Failed to reject member: ' + (e.message || 'Unknown error'))
+    notifications.showError('Failed to reject member: ' + (e.message || 'Unknown error'))
   } finally {
     user.loading = false
   }
@@ -337,8 +332,7 @@ const saveClubAndMembers = async () => {
   saving.value = true
   try {
     // Save club details
-    const updateApi = mande(`/api/admin/clubs/${props.clubSlug}`)
-    await updateApi.put({
+    await api.put(`/api/admin/clubs/${props.clubSlug}`, {
       name: editedClub.value.name,
       slug: editedClub.value.slug,
       description: editedClub.value.description,
@@ -351,16 +345,15 @@ const saveClubAndMembers = async () => {
       const membersPayload = {
         members: clubMembers.value.map(m => ({ id: m.id, is_admin: m.is_club_admin, status: 'approved' }))
       }
-      const membersApi = mande(`/api/admin/clubs/${props.clubSlug}/members`)
-      await membersApi.put(membersPayload)
+      await api.put(`/api/admin/clubs/${props.clubSlug}/members`, membersPayload)
       memberDataChanged.value = false
     }
     dialogVisible.value = false
     emit('saved')
-    toast.success('Club updated successfully')
+    notifications.showSuccess('Club updated successfully')
   } catch (e) {
     console.error(e)
-    toast.error('Failed to update club: ' + (e.message || 'Unknown error'))
+    notifications.showError('Failed to update club: ' + (e.message || 'Unknown error'))
   } finally {
     saving.value = false
   }

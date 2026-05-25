@@ -22,6 +22,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ClubMembershipConfirmation from './ClubMembershipConfirmation.vue'
+import { api } from '@/plugins/api'
 
 const router = useRouter()
 const pendingClubs = ref([])
@@ -29,9 +30,8 @@ const user = ref({})
 
 const fetchPendingClubs = async () => {
   try {
-    const response = await fetch('/api/users/me')
-    if (!response.ok) throw new Error('Failed to fetch user clubs')
-    const userData = (await response.json()).data
+    const response = await api.get('/api/users/me')
+    const userData = response.data.data
     user.value = userData
     // Filter clubs with status 'pending'
     pendingClubs.value = (userData.clubs || []).filter(c => c.status === 'pending')

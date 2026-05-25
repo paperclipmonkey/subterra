@@ -2,10 +2,13 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AdminIndex from '@/pages/admin/callout/index.vue'
 
-// Mock axios
-vi.mock('axios', () => ({
-  default: {
-    get: vi.fn(() => Promise.resolve({ data: { data: [] } }))
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+  api: {
+    get: vi.fn(() => Promise.resolve({ data: { data: [] } })),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
   }
 }))
 

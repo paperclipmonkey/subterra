@@ -3,6 +3,17 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Trip from '@/components/Trip.vue'
 import { useRouter, useRoute } from 'vue-router'
+import { api } from '@/plugins/api'
+
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 // Mock dependencies
 vi.mock('@/stores/app', () => ({
@@ -44,7 +55,6 @@ vi.mock('vue-markdown-render', () => ({
 
 describe('Trip.vue', () => {
     let mockRouterPush
-    let mockFetch
 
     const mockTrip = {
         id: 123,
@@ -69,17 +79,9 @@ describe('Trip.vue', () => {
             params: { id: '123' }
         })
 
-        // Mock fetch for trip data and delete action
-        mockFetch = vi.fn((url, options) => {
-            if (options && options.method === 'DELETE') {
-                return Promise.resolve({ ok: true })
-            }
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({ data: mockTrip })
-            })
-        })
-        vi.stubGlobal('fetch', mockFetch)
+        // Mock api for trip data and delete action
+        api.get.mockResolvedValue({ data: { data: mockTrip } })
+        api.delete.mockResolvedValue({ data: {} })
     })
 
     it('redirects to /trips after successful deletion', async () => {
@@ -121,7 +123,7 @@ describe('Trip.vue', () => {
         await wrapper.vm.$nextTick()
 
         // Assert GET fetch was called
-        expect(mockFetch).toHaveBeenCalledWith('/api/trips/123', { headers: { 'Accept': 'application/json' } })
+        expect(api.get).toHaveBeenCalledWith('/api/trips/123')
 
         // Verify trip loaded
         expect(wrapper.text()).toContain('Test Trip')
@@ -137,11 +139,8 @@ describe('Trip.vue', () => {
         // Wait for delete promise
         await flushPromises()
 
-        // Assert fetch DELETE was called
-        expect(mockFetch).toHaveBeenCalledWith('/api/trips/123', {
-            method: 'DELETE',
-            headers: { 'Accept': 'application/json' }
-        })
+        // Assert api.delete was called
+        expect(api.delete).toHaveBeenCalledWith('/api/trips/123')
 
         // Assert router push was called with Correct path
         expect(mockRouterPush).toHaveBeenCalledWith('/trips')

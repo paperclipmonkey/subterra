@@ -85,6 +85,20 @@
     </v-card>
 
     <v-row>
+      <!-- Mobile-only offline download card (desktop version is in sidebar) -->
+      <v-col v-if="smAndDown && offlineStore.isPwa" cols="12">
+        <v-card class="rounded-lg pa-4" elevation="1">
+          <div class="d-flex align-center mb-2">
+            <v-icon :icon="mdiCloudDownload" size="small" class="mr-2" color="primary" />
+            <span class="text-subtitle-2 font-weight-bold">Offline Access</span>
+          </div>
+          <p class="text-caption text-medium-emphasis mb-3">
+            Save this cave for use underground without internet.
+          </p>
+          <CaveDownloadButton :cave-id="cave.id" block />
+        </v-card>
+      </v-col>
+
       <!-- Main Column -->
       <v-col cols="12" md="8">
         <v-card class="fill-height rounded-lg" elevation="1">
@@ -236,9 +250,7 @@
             <v-window-item v-if="smAndDown" value="map">
               <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
-                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad">
-                    <mgl-marker :coordinates="lnglat" color="#cc0000" />
-                  </AppMap>
+                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad" />
                 </template>
                 <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
                   <div class="text-center pa-4">
@@ -494,13 +506,9 @@
       <!-- Sidebar Column -->
       <v-col v-if="!smAndDown" cols="12" md="4">
         <!-- Location Card -->
-        <v-card class="mb-4 rounded-lg" elevation="1">
+        <v-card class="mb-4 rounded-lg overflow-hidden" elevation="2">
           <template v-if="appStore.canSuggest">
-            <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad">
-              <mgl-marker :coordinates="lnglat" color="#cc0000" />
-              
-              
-            </AppMap>
+            <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad" />
           </template>
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
             <div class="text-center pa-4">
@@ -586,6 +594,18 @@
           </v-list>
         </v-card>
 
+        <!-- Offline Download Card -->
+        <v-card v-if="offlineStore.isPwa" class="mb-4 rounded-lg pa-4" elevation="1">
+          <div class="d-flex align-center mb-2">
+            <v-icon :icon="mdiCloudDownload" size="small" class="mr-2" color="primary" />
+            <span class="text-subtitle-2 font-weight-bold">Offline Access</span>
+          </div>
+          <p class="text-caption text-medium-emphasis mb-3">
+            Save this cave for use underground without internet.
+          </p>
+          <CaveDownloadButton :cave-id="cave.id" block />
+        </v-card>
+
       </v-col>
     </v-row>
   </v-container>
@@ -597,27 +617,34 @@
     <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
     <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
     <p class="text-body-1 text-grey mb-6">{{ error }}</p>
-    <v-btn color="primary" variant="flat" to="/caves" :prepend-icon="mdiArrowLeft">
-      Back to Caves
-    </v-btn>
+    <div class="d-flex gap-3">
+      <v-btn color="primary" variant="flat" :prepend-icon="mdiRefresh" @click="fetchCave">
+        Try again
+      </v-btn>
+      <v-btn variant="text" to="/caves" :prepend-icon="mdiArrowLeft">
+        Back to Caves
+      </v-btn>
+    </div>
   </v-container>
 </template>
 
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-
-import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiShieldLockOutline, mdiWater } from '@mdi/js'
+import { api } from '@/plugins/api'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiRefresh, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
+import { useNotificationStore } from '@/stores/notifications'
 import { useDisplay } from 'vuetify'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import CaveDownloadButton from '@/components/CaveDownloadButton.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { markCaveAsDone } from '@/stores/markAsDone'
 import { useCollectionStore } from '@/stores/collections'
+import { useOfflineStore } from '@/stores/offline'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
-import { MglMarker } from '@indoorequal/vue-maplibre-gl'
 import maplibregl from 'maplibre-gl'
 
 const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
@@ -626,6 +653,8 @@ const zoom = 14
 
 
 const appStore = useAppStore()
+const notificationStore = useNotificationStore()
+const offlineStore = useOfflineStore()
 const { smAndDown } = useDisplay()
 const collectionStore = useCollectionStore()
 
@@ -723,29 +752,59 @@ const fetchCave = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await fetch(`/api/caves/${route.params.id}`, { headers: { 'Accept': 'application/json' } })
-    if (response.status === 404) {
-      error.value = "Cave not found. It may have been deleted or you may have the wrong link."
-    } else if (!response.ok) {
-      error.value = "Failed to load cave. Please try again later."
-    } else {
-      const responseData = await response.json()
-      cave.value = responseData.data
+    const response = await api.get(`/api/caves/${route.params.id}`)
+    cave.value = response.data.data
 
-      if (cave.value && cave.value.system) {
-        cave.value.system.files = cave.value.system.files || []
-        cave.value.system.caves = cave.value.system.caves || []
-      } else if (cave.value) {
-        cave.value.system = { files: [], caves: [] }
-      }
-      if (!cave.value.trips) {
-        cave.value.trips = []
+    if (cave.value && cave.value.system) {
+      cave.value.system.files = cave.value.system.files || []
+      cave.value.system.caves = cave.value.system.caves || []
+    } else if (cave.value) {
+      cave.value.system = { files: [], caves: [] }
+    }
+    if (!cave.value.trips) {
+      cave.value.trips = []
+    }
+  } catch (e) {
+    const trulyOffline = !navigator.onLine
+    const noResponse = !e.response
+
+    // Try offline fallback whenever we have no network response
+    if (noResponse) {
+      const offlineCave = await offlineStore.getOfflineCave(Number(route.params.id))
+        || await offlineStore.getOfflineCave(route.params.id)
+      if (offlineCave) {
+        cave.value = offlineCave
+        if (cave.value && cave.value.system) {
+          cave.value.system.files = cave.value.system.files || []
+          cave.value.system.caves = cave.value.system.caves || []
+        } else if (cave.value) {
+          cave.value.system = { files: [], caves: [] }
+        }
+        if (!cave.value.trips) {
+          cave.value.trips = []
+        }
+        loading.value = false
+        return
       }
     }
 
-  } catch (e) {
-    console.error("Failed to fetch cave data:", e)
-    error.value = "An unexpected error occurred."
+    if (e.response?.status === 404) {
+      error.value = "Cave not found. It may have been deleted or you may have the wrong link."
+    } else if (trulyOffline) {
+      error.value = "You are offline and this cave has not been downloaded. Go to your offline caves to see what's available."
+      // Auto-retry when connection is restored
+      const onOnline = async () => {
+        window.removeEventListener('online', onOnline)
+        await fetchCave()
+      }
+      window.addEventListener('online', onOnline, { once: true })
+    } else if (noResponse) {
+      // Network error but browser thinks we're online (transient failure)
+      error.value = "Connection error. Please check your signal and try again."
+    } else {
+      console.error("Failed to fetch cave data:", e)
+      error.value = "Failed to load cave. Please try again later."
+    }
   } finally {
     loading.value = false
   }
@@ -760,8 +819,7 @@ const copyLatLng = async () => {
     const textToCopy = `${cave.value.location_lat}, ${cave.value.location_lng}`
     try {
       await navigator.clipboard.writeText(textToCopy)
-      // TODO: Add user feedback like a snackbar message
-      console.log('Coordinates copied to clipboard:', textToCopy)
+      notificationStore.showSuccess('Coordinates copied to clipboard')
     } catch (err) {
       console.error('Failed to copy coordinates: ', err)
     }
@@ -789,11 +847,8 @@ const openImage = (item) => {
 
 const fetchCavePermit = async () => {
   try {
-    const response = await fetch(`/api/caves/${route.params.id}/permit`, { headers: { 'Accept': 'application/json' } })
-    if (response.ok) {
-      const data = await response.json()
-      cavePermit.value = data.data
-    }
+    const response = await api.get(`/api/caves/${route.params.id}/permit`)
+    cavePermit.value = response.data.data
   } catch (e) {
     // permit info is optional
   }
@@ -814,6 +869,28 @@ watch(
 )
 const onMapLoad = (event) => {
   const map = event.map
+
+  // Add marker with popup for Google/Apple Maps links
+  const mapsPopup = new maplibregl.Popup({ offset: 30, closeButton: false })
+    .setHTML(`
+      <div style="padding:10px 12px;font-family:sans-serif;text-align:center;min-width:140px;">
+        <a href="https://www.google.com/maps?q=${cave.value.location_lat},${cave.value.location_lng}"
+           target="_blank"
+           style="display:block;margin-bottom:6px;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">
+          Open in Google Maps
+        </a>
+        <a href="https://maps.apple.com/?q=${cave.value.location_lat},${cave.value.location_lng}"
+           target="_blank"
+           style="display:block;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">
+          Open in Apple Maps
+        </a>
+      </div>
+    `)
+
+  new maplibregl.Marker({ color: '#cc0000' })
+    .setLngLat(lnglat.value)
+    .setPopup(mapsPopup)
+    .addTo(map)
 
   // Re-render annotation overlays whenever the map style changes
   map.on('style.load', () => {
@@ -883,12 +960,12 @@ function renderAnnotationOverlays (map) {
     map.on('click', 'annotation-lines-hit', (e) => {
       const feature = e.features[0]
       const desc = feature.properties?.description
-      showPopup(e.lngLat, `<div style="font-family:sans-serif;max-width:240px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span style="display:inline-block;width:24px;height:3px;background:#ff9800;border-radius:2px;border:1px dashed #ff9800;"></span>
+      showPopup(e.lngLat, `<div class="anno-popup">
+        <div class="anno-popup__header" style="border-left:4px solid #ff9800;">
+          <span class="anno-popup__route-line"></span>
           <strong>Walking Route</strong>
         </div>
-        ${desc ? `<p style="margin:0;color:#555;">${escHtml(desc)}</p>` : '<p style="margin:0;color:#888;font-style:italic;">No description</p>'}
+        ${desc ? `<p class="anno-popup__body">${escHtml(desc)}</p>` : '<p class="anno-popup__body anno-popup__body--muted">No description</p>'}
       </div>`, 8)
     })
     map.on('mouseenter', 'annotation-lines-hit', () => { map.getCanvas().style.cursor = 'pointer' })
@@ -937,17 +1014,17 @@ function renderAnnotationOverlays (map) {
   addIconLayer(canvasToImageData(parkingCanvas), 'parking-icon', parkingFeatures, 'annotation-parking', 'annotation-parking-layer', (f, coords) => {
     const desc = f.properties?.description || 'Parking'
     const [lng, lat] = coords
-    return `<div style="font-family:sans-serif;max-width:220px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#1976d2;border-radius:50%;color:#fff;font-weight:bold;font-size:13px;">P</span>
+    return `<div class="anno-popup">
+      <div class="anno-popup__header" style="border-left:4px solid #1976d2;">
+        <span class="anno-popup__icon" style="background:#1976d2;">P</span>
         <strong>Parking</strong>
       </div>
-      <p style="margin:0 0 8px;color:#555;">${escHtml(desc)}</p>
-      <div style="display:flex;gap:8px;">
-        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f5;border-radius:4px;text-decoration:none;color:#333;font-size:12px;">
-          <img src="https://www.google.com/favicon.ico" width="14" height="14" alt="" style="border-radius:2px;" />Google Maps
+      <p class="anno-popup__body">${escHtml(desc)}</p>
+      <div class="anno-popup__actions">
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener" class="anno-popup__action-btn">
+          Google Maps
         </a>
-        <a href="https://maps.apple.com/?daddr=${lat},${lng}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f5;border-radius:4px;text-decoration:none;color:#333;font-size:12px;">
+        <a href="https://maps.apple.com/?daddr=${lat},${lng}" target="_blank" rel="noopener" class="anno-popup__action-btn">
           Apple Maps
         </a>
       </div>
@@ -965,12 +1042,12 @@ function renderAnnotationOverlays (map) {
 
   addIconLayer(canvasToImageData(houseCanvas), 'house-icon', houseFeatures, 'annotation-houses', 'annotation-houses-layer', (f) => {
     const desc = f.properties?.description || 'Permission required'
-    return `<div style="font-family:sans-serif;max-width:220px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#e65100;border-radius:50%;font-size:14px;">🏠</span>
+    return `<div class="anno-popup">
+      <div class="anno-popup__header" style="border-left:4px solid #e65100;">
+        <span class="anno-popup__icon" style="background:#e65100;">🏠</span>
         <strong style="color:#e65100;">Permission Required</strong>
       </div>
-      <p style="margin:0;color:#555;">${escHtml(desc)}</p>
+      <p class="anno-popup__body">${escHtml(desc)}</p>
     </div>`
   })
 
@@ -1025,12 +1102,113 @@ function renderAnnotationOverlays (map) {
 
 .annotation-popup .maplibregl-popup-content {
   background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  min-width: 200px;
+  max-width: 280px;
 }
 
 .annotation-popup .maplibregl-popup-tip {
   border-top-color: #fff;
+}
+
+.annotation-popup .maplibregl-popup-close-button {
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 28px;
+  color: #666;
+  top: 4px;
+  right: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #333;
+  }
+}
+
+.anno-popup {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.anno-popup__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 36px 10px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.anno-popup__route-line {
+  display: inline-block;
+  width: 28px;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ff9800 0,
+    #ff9800 6px,
+    transparent 6px,
+    transparent 10px
+  );
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.anno-popup__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: bold;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.anno-popup__body {
+  margin: 0;
+  padding: 10px 14px 12px;
+  color: #444;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.anno-popup__body--muted {
+  color: #999;
+  font-style: italic;
+}
+
+.anno-popup__actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.anno-popup__action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #e0e0e0;
+  }
 }
 </style>

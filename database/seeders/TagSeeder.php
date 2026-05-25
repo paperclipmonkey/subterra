@@ -12,6 +12,16 @@ class TagSeeder extends Seeder
      */
     public function run(): void
     {
+        // - - - - - - -- - - - - - Curated
+        Tag::updateOrCreate([
+            'tag' => 'Curated',
+            'type' => 'cave',
+            'category' => 'curated',
+        ], [
+            'description' => 'A well-documented cave worth visiting. Caves without this tag are smaller or less notable systems.',
+            'assignable' => true,
+        ]);
+
         Tag::updateOrCreate([
             'tag' => 'Mendip',
             'type' => 'cave',

@@ -72,6 +72,16 @@
             </v-card-item>
           </v-card>
         </v-col>
+        <v-col cols="12" sm="6" md="4" lg="3">
+          <v-card to="/admin/pip-feedback" link hover class="admin-card">
+            <v-card-item title="Pip Feedback">
+              <template #prepend>
+                <v-icon color="deep-purple" :icon="mdiRobotOutline" />
+              </template>
+              <v-card-subtitle>Review flagged Pip conversations</v-card-subtitle>
+            </v-card-item>
+          </v-card>
+        </v-col>
       </v-row>
     </section>
 
@@ -188,7 +198,7 @@
 </template>
 
 <script setup>
-import { mdiAccountCog, mdiAccountGroup, mdiCalendarCheck, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiEmailMultiple, mdiFileCompare, mdiFileDocumentEdit, mdiFileEdit, mdiKeyVariant, mdiMapMarkerPlus, mdiMonitorDashboard, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
+import { mdiAccountCog, mdiAccountGroup, mdiCalendarCheck, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiEmailMultiple, mdiFileCompare, mdiFileDocumentEdit, mdiFileEdit, mdiKeyVariant, mdiMapMarkerPlus, mdiMonitorDashboard, mdiRobotOutline, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 

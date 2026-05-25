@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCaveSystemRequest;
+use App\Http\Requests\UpdateCaveSystemRequest;
 use App\Http\Resources\CaveResource;
 use App\Http\Resources\CaveSystemResource;
 use App\Models\Cave;
@@ -28,7 +29,9 @@ class CaveSystemController extends Controller
     public function store(StoreCaveSystemRequest $request)
     {
         $validated = $request->validated();
-        CaveSystem::create($validated);
+        $caveSystem = CaveSystem::create($validated);
+
+        return response()->json(new CaveSystemResource($caveSystem), 201);
     }
 
     public function show(CaveSystem $caveSystem)
@@ -38,20 +41,9 @@ class CaveSystemController extends Controller
         return new CaveSystemResource($caveSystem);
     }
 
-    public function update(Request $request, CaveSystem $caveSystem)
+    public function update(UpdateCaveSystemRequest $request, CaveSystem $caveSystem)
     {
-        $data = $request->except(['new_files', 'new_file_details', 'deleted_files']);
-
-        // Ensure description is handled correctly if it's an empty string
-        if ($request->has('description')) {
-            $data['description'] = $request->input('description');
-        }
-
-        if ($request->has('references')) {
-            $data['references'] = $request->input('references');
-        }
-
-        $caveSystem->update($data);
+        $caveSystem->update($request->validated());
 
         // Handle file deletions first
         if ($request->filled('deleted_files') && is_array($request->input('deleted_files'))) {

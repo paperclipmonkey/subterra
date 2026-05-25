@@ -19,15 +19,19 @@ vi.mock('@indoorequal/vue-maplibre-gl', () => ({
     useMap: () => ({ map: { fitBounds: vi.fn(), resize: vi.fn(), setCenter: vi.fn(), setZoom: vi.fn() }, isLoaded: true })
 }))
 
-// Mock fetch for tags
-global.fetch = vi.fn(() =>
-    Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({
-            'Cave type': [{ tag: 'Cave', assignable: true }]
-        })
-    })
-)
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(() => Promise.resolve({
+            data: {
+                'Cave type': [{ tag: 'Cave', assignable: true }]
+            }
+        })),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 describe('CaveForm.vue', () => {
     const cave = {

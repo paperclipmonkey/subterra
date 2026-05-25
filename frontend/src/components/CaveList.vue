@@ -82,6 +82,13 @@
       </div>
     </template>
 
+    <!-- Offline data notice -->
+    <v-alert v-if="caveStore.isOfflineData" type="info" variant="tonal" density="compact" class="mx-4 mb-2">
+      <div class="d-flex align-center">
+        <span class="text-body-2">Showing {{ caveStore.caves.length }} downloaded cave(s). <router-link to="/offline" class="text-decoration-none font-weight-bold">Manage offline data</router-link></span>
+      </div>
+    </v-alert>
+
     <v-tabs
       v-model="tab"
       align-tabs="center"
@@ -93,7 +100,7 @@
     </v-tabs>
     <v-tabs-window v-model="tab">
       <v-tabs-window-item value="list">
-        <CaveListList @tag-click="toggleTag" />
+        <CaveListList :has-filters="cachedTags.length > 0 || !!search" @tag-click="toggleTag" @clear-filters="clearTagsOnly" />
       </v-tabs-window-item>
       <v-tabs-window-item value="map">
         <CaveListMap v-if="tab === 'map'" />
@@ -101,6 +108,7 @@
     </v-tabs-window>
     <FilterByTagModal 
       :is-active="showFilterByTagModal" 
+      :loaded-filters="cachedTags"
       :target-category="targetCategory"
       @close="closeModal" 
       @filter="applyFilter" 
@@ -133,15 +141,22 @@ const tagsAvailable = computed(() => tagStore.tags)
 
 const cachedTags = ref([])
 
-const applyFilter = (tags) => {
+const needsFullLoad = (tags) => !tags.includes('Curated') && !caveStore.allCavesLoaded
+
+const applyFilter = async (tags) => {
   cachedTags.value = tags
-  caveStore.applyFilters(tags, search.value, catchmentId.value)
-  // Update URL with tags as a comma-separated string
-  router.replace({ query: { ...route.query, tags: tags.length ? tags.join(',') : undefined } })
+  if (needsFullLoad(tags)) {
+    await caveStore.loadAllCaves(tags, search.value, catchmentId.value)
+  } else {
+    caveStore.applyFilters(tags, search.value, catchmentId.value)
+  }
+  // Update URL with tags as a comma-separated string.
+  // Use an empty string ('') when explicitly clearing to distinguish from the default (Curated) state.
+  router.replace({ query: { ...route.query, tags: tags.length ? tags.join(',') : '' } })
   showFilterByTagModal.value = false
 }
 
-const toggleTag = (tag) => {
+const toggleTag = async (tag) => {
   const tags = [...cachedTags.value]
   const index = tags.indexOf(tag)
   if (index >= 0) {
@@ -149,7 +164,7 @@ const toggleTag = (tag) => {
   } else {
     tags.push(tag)
   }
-  applyFilter(tags)
+  await applyFilter(tags)
 }
 
 const openCategoryFilter = (category) => {
@@ -162,13 +177,22 @@ const closeModal = () => {
   targetCategory.value = null
 }
 
-const clearAllFilters = () => {
+const clearAllFilters = async () => {
   search.value = ''
-  applyFilter([])
+  await applyFilter([])
 }
 
-watch(search, (newSearch) => {
-  caveStore.applyFilters(cachedTags.value, newSearch, catchmentId.value)
+// Used by the empty-state button — clears tags only, keeps the search term
+const clearTagsOnly = async () => {
+  await applyFilter([])
+}
+
+watch(search, async (newSearch) => {
+  if (needsFullLoad(cachedTags.value)) {
+    await caveStore.loadAllCaves(cachedTags.value, newSearch, catchmentId.value)
+  } else {
+    caveStore.applyFilters(cachedTags.value, newSearch, catchmentId.value)
+  }
   // Update URL with current search
   router.replace({ query: { ...route.query, search: newSearch || undefined } })
 })
@@ -181,26 +205,35 @@ watch(tab, (newTab) => {
 })
 
 // Watch for route query changes for catchment (deep linking support)
-watch(() => route.query.catchment, (newCatchment) => {
+watch(() => route.query.catchment, async (newCatchment) => {
   catchmentId.value = newCatchment
-  caveStore.applyFilters(cachedTags.value, search.value, newCatchment)
+  if (needsFullLoad(cachedTags.value)) {
+    await caveStore.loadAllCaves(cachedTags.value, search.value, newCatchment)
+  } else {
+    caveStore.applyFilters(cachedTags.value, search.value, newCatchment)
+  }
 })
 
 onMounted(async () => {
   // Ensure search and view parameters are applied on reload
   search.value = route.query.search || ''
   tab.value = route.query.view || 'list'
-  const tags = route.query.tags ? route.query.tags.split(',') : []
+  // Default to the Curated filter when no tags are specified in the URL
+  const tags = route.query.tags !== undefined ? route.query.tags.split(',').filter(Boolean) : ['Curated']
   catchmentId.value = route.query.catchment || null
 
   cachedTags.value = tags
   await Promise.all([
-    caveStore.getList(),
+    caveStore.getList(),   // always loads curated first (fast)
     tagStore.fetchTags()
   ])
 
-  // Apply filters after list is loaded
-  caveStore.applyFilters(tags, search.value, catchmentId.value)
+  // If initial URL has no curated filter, also load the full list
+  if (needsFullLoad(tags)) {
+    await caveStore.loadAllCaves(tags, search.value, catchmentId.value)
+  } else {
+    caveStore.applyFilters(tags, search.value, catchmentId.value)
+  }
 })
 </script>
 

@@ -29,9 +29,10 @@ export default [
             'vue/valid-v-slot': 'off',
             'vue/no-unused-components': 'off',
             'semi': ['error', 'never'],
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
         }
     },
     {
-        ignores: ["dist/**", "node_modules/**", "coverage/**", "playwright-report/**", "test-results/**"]
+        ignores: ["dist/**", "node_modules/**", "coverage/**", "playwright-report/**", "test-results/**", "dev-dist/**"]
     }
 ]

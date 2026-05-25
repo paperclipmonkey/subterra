@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Webhook;
 use App\Http\Controllers\Controller;
 use App\Models\Callout;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ class ClickSendController extends Controller
      */
     public function handleSms(Request $request)
     {
-        Log::info('ClickSend Webhook Received', $request->all());
+        Log::info('ClickSend Webhook Received', Arr::except($request->all(), ['secret']));
 
         $from = $request->input('from'); // Sender's phone number
         $body = $request->input('body'); // Message body

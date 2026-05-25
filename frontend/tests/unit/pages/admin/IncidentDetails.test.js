@@ -45,6 +45,16 @@ vi.mock('maplibre-gl', () => ({
     }
 }))
 
+const mockNotificationStore = {
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+    showWarning: vi.fn(),
+    showInfo: vi.fn(),
+}
+vi.mock('@/stores/notifications', () => ({
+    useNotificationStore: () => mockNotificationStore
+}))
+
 describe('IncidentDetails.vue', () => {
     let wrapper
     const mockIncident = {
@@ -102,7 +112,7 @@ describe('IncidentDetails.vue', () => {
                     'MglPopup': { template: '<div class="mgl-popup-stub"><slot /></div>' },
                 },
                 mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() },
+
                     $route: { params: { id: '1' } },
                     $router: { push: vi.fn() }
                 }
@@ -151,7 +161,6 @@ describe('IncidentDetails.vue', () => {
                     'MglPopup': true,
                 },
                 mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() },
                     $route: { params: { id: '1' } },
                     $router: { push: vi.fn() }
                 }
@@ -201,7 +210,6 @@ describe('IncidentDetails.vue', () => {
                     'MglPopup': true,
                 },
                 mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() },
                     $route: { params: { id: '1' } },
                     $router: { push: vi.fn() }
                 }
@@ -262,7 +270,6 @@ describe('IncidentDetails.vue', () => {
                     'MglPopup': true,
                 },
                 mocks: {
-                    $toast: { success: vi.fn(), error: vi.fn() },
                     $route: { params: { id: '1' } },
                     $router: { push: vi.fn() }
                 }

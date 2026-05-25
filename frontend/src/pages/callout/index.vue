@@ -104,10 +104,6 @@
           </div>
                     
           <div v-else>
-            <v-alert v-if="!onCallOfficer" type="warning" variant="tonal" class="mb-4" border="start">
-              <div class="text-h6">Callouts Not Available</div>
-              <div>There is no Duty Officer on call at this time. Please ensure you leave callout details with a trusted friend before heading underground.</div>
-            </v-alert>
             <v-btn x-large color="warning" size="x-large" block to="/callout/create" class="mb-4 font-weight-bold elevation-4" :disabled="!onCallOfficer">
               START CALLOUT
               <v-icon right class="ml-2" :icon="mdiArrowRight" />
@@ -122,7 +118,7 @@
 
 <script>
 import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRight, mdiChevronRight, mdiInformationOutline, mdiOpenInNew, mdiShieldAccount } from '@mdi/js'
-import axios from 'axios'
+import { api } from '@/plugins/api'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
 import { useAppStore } from '@/stores/app'
@@ -171,7 +167,7 @@ export default {
   methods: {
     async fetchActiveCallouts() {
       try {
-        const res = await axios.get('/api/callouts/active')
+        const res = await api.get('/api/callouts/active')
         this.activeCallouts = res.data.data
       } catch (e) {
         console.error("Failed to fetch open callouts", e)
@@ -179,7 +175,7 @@ export default {
     },
     async fetchDutyOfficer() {
       try {
-        const res = await axios.get('/api/duty-officers/current')
+        const res = await api.get('/api/duty-officers/current')
         const data = res.data.data
 
         if (data.is_covered) {

@@ -24,8 +24,8 @@ class SendCalloutCreatedSlackAlert
         try {
             $callout = $event->callout;
             $user = $callout->user; // Helper relation
-            $caveName = $callout->cave ? $callout->cave->name : 'Unknown Location';
-            $time = $callout->callout_time->format('d/m H:i');
+            $caveName = $callout->cave_name;
+            $time = $callout->callout_time->timezone(config('app.display_timezone'))->format('d/m H:i');
 
             $pCount = $callout->participants()->count();
             $creatorIsParticipant = $callout->participants()->where('user_id', $user->id)->exists();

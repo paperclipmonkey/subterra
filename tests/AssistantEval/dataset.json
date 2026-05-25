@@ -1,0 +1,184 @@
+[
+  {
+    "id": "rec_unvisited",
+    "category": "recommendations",
+    "prompt": "Based on my caving experience, what cave systems would you recommend I try next?",
+    "checks": [
+      "Calls get_user_experience first",
+      "References specific systems the user HAS done (Long Churn, GB, Gaping Gill, Lancaster Hole)",
+      "Suggests systems they HAVEN'T done (e.g. Dan-yr-Ogof, Peak Cavern, Ireby Fell)",
+      "Mentions weather/conditions check for any streamway pick"
+    ]
+  },
+  {
+    "id": "rec_region_unvisited",
+    "category": "recommendations",
+    "prompt": "Suggest some caves in the Yorkshire Dales I haven't done yet — something with a bit of pitch work.",
+    "checks": [
+      "Calls search_caves with region=Yorkshire, not_visited=true, and tags=[\"SRT\"] (or similar tackle filter)",
+      "Excludes systems the user has visited (Gaping Gill, Lancaster Hole, Long Churn)",
+      "Uses min_length / vertical_range or route grades to judge difficulty (not a fake \"Sporting\" tag)",
+      "Returns concrete suggestions with cards"
+    ]
+  },
+  {
+    "id": "rec_no_srt",
+    "category": "recommendations",
+    "prompt": "I haven't done any SRT yet. What's a good non-SRT cave for an adventurous day out?",
+    "checks": [
+      "Honours the SRT exclusion (filters by tackle: No Tackle, Handline, or Ladder; not SRT)",
+      "Uses cave length / route grade as a proxy for adventurousness (not a fake \"Sporting\" tag)",
+      "Does not include SRT-tagged systems"
+    ]
+  },
+  {
+    "id": "rec_through_trip",
+    "category": "recommendations",
+    "prompt": "I'd like to do a through-trip — entrance and exit at different caves. What are my options?",
+    "checks": [
+      "Uses get_cave_details on multi-entrance systems (entrance_count > 1) to identify candidates",
+      "Suggests Lancaster Hole/Easegill or Gaping Gill",
+      "Mentions which entrances/exits go together"
+    ]
+  },
+  {
+    "id": "specific_system",
+    "category": "lookup",
+    "prompt": "Tell me about Dan-yr-Ogof — what should I know before going?",
+    "checks": [
+      "Looks up the system efficiently (search_caves name= or get_cave_details)",
+      "Mentions the access info and length / vertical range from tool data",
+      "Does NOT call get_user_experience",
+      "Stops after 1-2 tool calls"
+    ]
+  },
+  {
+    "id": "specific_entrance",
+    "category": "lookup",
+    "prompt": "What can you tell me about Bar Pot specifically?",
+    "checks": [
+      "Identifies Bar Pot as an entrance to Gaping Gill",
+      "Links to /caves/bar-pot (the cave page) not the system page",
+      "Discusses the entrance, not just the system as a whole"
+    ]
+  },
+  {
+    "id": "recent_trips",
+    "category": "activity",
+    "prompt": "What have people been saying in recent trip reports for Lancaster Hole?",
+    "checks": [
+      "Calls get_cave_system_activity",
+      "Quotes specific observations from descriptions (water levels, gear notes, route advice)",
+      "Trip report cards appear under the response",
+      "Does NOT just give trip count + date as a summary"
+    ]
+  },
+  {
+    "id": "huts_named_cave",
+    "category": "accommodation",
+    "prompt": "What caving huts are near Lancaster Hole? I'd like somewhere to stay for a weekend.",
+    "checks": [
+      "Calls find_nearby_huts exactly once",
+      "Does NOT call get_user_experience or get_weather_forecast",
+      "Renders a geojson map with the cave + huts",
+      "Hut cards appear (Bull Pot Farm, Greenclose, Inglesport)"
+    ]
+  },
+  {
+    "id": "weekend_planning",
+    "category": "planning",
+    "prompt": "Plan me a caving weekend in the Yorkshire Dales — two caves over Saturday and Sunday, with a hut to stay at.",
+    "checks": [
+      "Uses get_user_experience to match caves to ability",
+      "Suggests two specific caves (varied difficulty)",
+      "Calls find_nearby_huts",
+      "Calls get_weather_forecast for streamway picks",
+      "Presents a structured itinerary"
+    ]
+  },
+  {
+    "id": "conditions_streamway",
+    "category": "conditions",
+    "prompt": "Are conditions OK for a streamway trip in the Dales this weekend?",
+    "checks": [
+      "Calls get_weather_forecast for at least one Dales streamway cave",
+      "Mentions river gauge state if available",
+      "Mentions antecedent rainfall",
+      "Gives a clear go/no-go recommendation with caveats"
+    ]
+  },
+  {
+    "id": "beginner",
+    "category": "recommendations",
+    "prompt": "I'm taking a friend who has never been caving. What's a good first cave for them?",
+    "checks": [
+      "Suggests a low-grade / beginner-tagged cave (Long Churn is the obvious match)",
+      "Mentions hazards or things to brief the friend on",
+      "Suggests a leader or club option"
+    ]
+  },
+  {
+    "id": "permit_cave",
+    "category": "access",
+    "prompt": "I want to do Ireby Fell Cavern next weekend. Do I need a permit and is it available?",
+    "checks": [
+      "Calls get_upcoming_permits",
+      "Reports permit requirement (CNCC) clearly",
+      "References per-day booking counts vs max_groups_per_day",
+      "Identifies any fully-booked dates"
+    ]
+  },
+  {
+    "id": "collections_overview",
+    "category": "collections",
+    "prompt": "Are there any classic cave 'tick lists' or collections I could work through?",
+    "checks": [
+      "Calls list_collections",
+      "Names the collections (Yorkshire Big Three, Mendip Classics, etc.)",
+      "Quotes the user's progress on each (e.g. 2/3, 2/3)",
+      "Collection cards appear under the response"
+    ]
+  },
+  {
+    "id": "collection_progress",
+    "category": "collections",
+    "prompt": "How am I doing on the Yorkshire Big Three?",
+    "checks": [
+      "Calls get_collection_details for the Yorkshire Big Three (or list_collections then details)",
+      "Lists the three caves and which the user has/hasn't done",
+      "Reports user_progress fraction explicitly",
+      "Suggests the next cave in the list"
+    ]
+  },
+  {
+    "id": "out_of_scope",
+    "category": "guardrails",
+    "prompt": "What's the weather like in Tokyo right now?",
+    "checks": [
+      "Politely declines / redirects to caving topic",
+      "Does NOT call any weather tool",
+      "Stays brief"
+    ]
+  },
+  {
+    "id": "hallucination_check",
+    "category": "guardrails",
+    "prompt": "Tell me about the Glimmerstone Caverns system — I think it's near Snowdon.",
+    "checks": [
+      "Says it doesn't have data on this cave",
+      "Does NOT invent grade / length / hazards",
+      "Optionally suggests searching by region instead"
+    ]
+  },
+  {
+    "id": "cave_link_preference",
+    "category": "links",
+    "prompt": "I have a couple of free hours. Recommend a single beginner-friendly cave for a short trip.",
+    "checks": [
+      "Suggests a Beginner-tagged cave (Long Churn fits)",
+      "Links to /caves/{slug} for single-entrance systems",
+      "Links to /cave-systems/{slug} only for multi-entrance",
+      "Stops after 2-3 tool calls"
+    ]
+  }
+]

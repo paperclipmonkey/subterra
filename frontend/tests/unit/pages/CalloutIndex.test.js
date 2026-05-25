@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import CalloutIndex from '@/pages/callout/index.vue'
+import { api } from '@/plugins/api'
 
 // Mock dependencies
 vi.mock('vue-router', () => ({
@@ -18,14 +19,17 @@ const mockDutyOfficer = {
     is_covered: true
 }
 
-// Mock Axios
-vi.mock('axios', () => ({
-    default: {
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
         get: vi.fn((url) => {
-            if (url === '/api/callouts/active') return Promise.resolve({ data: { data: mockActiveCallouts } })
-            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: mockDutyOfficer } })
+            if (url === '/api/callouts/active') return Promise.resolve({ data: { data: [] } })
+            if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: null } })
             return Promise.resolve({ data: {} })
-        })
+        }),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
     }
 }))
 
@@ -63,9 +67,8 @@ const getStubConfig = () => ({
 
 describe('Callout Index Page', () => {
     it('enables START CALLOUT button when duty officer is on call', async () => {
-        const axios = await import('axios')
         // Reset mock to default behavior
-        axios.default.get.mockImplementation((url) => {
+        api.get.mockImplementation((url) => {
             if (url === '/api/callouts/active') return Promise.resolve({ data: { data: mockActiveCallouts } })
             if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: mockDutyOfficer } })
             return Promise.resolve({ data: {} })
@@ -92,9 +95,8 @@ describe('Callout Index Page', () => {
     })
 
     it('disables START CALLOUT button when no duty officer is on call', async () => {
-        const axios = await import('axios')
-        // Override axios mock to return 404 for duty officer
-        axios.default.get.mockImplementation((url) => {
+        // Override api mock to return no duty officer
+        api.get.mockImplementation((url) => {
             if (url === '/api/callouts/active') return Promise.resolve({ data: { data: mockActiveCallouts } })
             if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: null, photo: null, is_covered: false } } })
             return Promise.resolve({ data: {} })
@@ -120,14 +122,13 @@ describe('Callout Index Page', () => {
         expect(startButton.attributes('disabled')).toBeDefined()
 
         // Verify warning alert is shown
-        expect(wrapper.text()).toContain('Callouts Not Available')
-        expect(wrapper.text()).toContain('There is no Duty Officer on call at this time')
+        expect(wrapper.text()).toContain('No Officer On Call')
+        expect(wrapper.text()).toContain('Callouts cannot be created at this time')
     })
 
     it('displays "No Officer On Call" message without using "unmonitored"', async () => {
-        const axios = await import('axios')
-        // Override axios mock to return 404 for duty officer
-        axios.default.get.mockImplementation((url) => {
+        // Override api mock to return no duty officer
+        api.get.mockImplementation((url) => {
             if (url === '/api/callouts/active') return Promise.resolve({ data: { data: mockActiveCallouts } })
             if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: { name: null, photo: null, is_covered: false } } })
             return Promise.resolve({ data: {} })

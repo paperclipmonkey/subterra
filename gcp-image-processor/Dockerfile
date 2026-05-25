@@ -8,17 +8,17 @@ RUN apk add --no-cache python3 make g++ vips-dev
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 COPY tsconfig.json ./
 
 # Install ALL dependencies (including devDependencies for TypeScript)
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY src/ ./src/
 
 # Build TypeScript
-RUN npm run build
+RUN yarn build
 
 # Production stage
 FROM node:24-alpine
@@ -30,10 +30,10 @@ RUN apk add --no-cache vips
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+RUN yarn install --frozen-lockfile --production
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist

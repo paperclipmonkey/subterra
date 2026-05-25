@@ -68,17 +68,14 @@
                     <div class="pa-4">
                       <p class="text-body-1 mb-4">Where are you going and where are you parking?</p>
 
-                      <v-autocomplete v-model="form.cave_id" label="Cave Entrance" :items="caves"
-                                      item-title="name" item-value="id" variant="outlined"
-                                      placeholder="Search for a cave..."
-                                      autocomplete="off"
-                                      :error-messages="errorMessages('cave_id')"
-                                      name="cave_search_no_autofill">
-                        <template #item="{ props, item }">
-                          <v-list-item v-bind="props" :subtitle="item.raw.location_name"
-                                       :title="item.raw.name" />
-                        </template>
-                      </v-autocomplete>
+                      <CaveSearchAutocomplete
+                        v-model="form.cave_id"
+                        label="Cave Entrance"
+                        :items="caves"
+                        placeholder="Search for a cave..."
+                        :error-messages="errorMessages('cave_id')"
+                        input-name="cave_search_no_autofill"
+                      />
 
                       <!-- Through Trip Logic -->
                       <v-checkbox v-if="systemEntrancesCount > 1" v-model="isThroughTrip"
@@ -86,11 +83,13 @@
 
                       <v-expand-transition>
                         <div v-if="isThroughTrip">
-                          <v-autocomplete v-model="form.exit_cave_id" label="Exit Cave"
-                                          :items="systemEntrances" item-title="name" item-value="id"
-                                          variant="outlined" class="mt-2"
-                                          autocomplete="off"
-                                          name="exit_cave_search_no_autofill" />
+                          <CaveSearchAutocomplete
+                            v-model="form.exit_cave_id"
+                            label="Exit Cave"
+                            :items="systemEntrances"
+                            class="mt-2"
+                            input-name="exit_cave_search_no_autofill"
+                          />
                         </div>
                       </v-expand-transition>
 
@@ -218,7 +217,7 @@
 
                               <div class="d-flex flex-column align-center justify-center ml-3" style="min-width: 40px">
                                 <v-btn v-if="p.hasPhone" icon color="success" variant="text" size="small" class="mb-1"
-                                       @click="$toast.info('This user has a valid phone number saved on their profile.')">
+                                       @click="notificationStore.showInfo('This user has a valid phone number saved on their profile.')">
                                   <v-icon size="large" :icon="mdiPhoneCheck" />
                                 </v-btn>
                                 <v-btn v-if="!p.isCurrentUser" icon color="error" size="small" variant="text"
@@ -354,14 +353,17 @@
 import { mdiAccount, mdiAccountCheck, mdiAccountSearch, mdiAlert, mdiCheck, mdiClockOutline, mdiContentSave, mdiCrosshairsGps, mdiDelete, mdiPhone, mdiPhoneCheck, mdiPlus, mdiShieldCheck, mdiShieldLock } from '@mdi/js'
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
+import { useNotificationStore } from '@/stores/notifications'
 import { api } from '@/plugins/api'
 import { useFormErrors } from '@/composables/useFormErrors'
 import CalloutTimePicker from '@/components/CalloutTimePicker.vue'
+import CaveSearchAutocomplete from '@/components/CaveSearchAutocomplete.vue'
 
 export default {
   name: 'CalloutView',
   components: {
-    CalloutTimePicker
+    CalloutTimePicker,
+    CaveSearchAutocomplete
   },
   beforeRouteLeave(to, from, next) {
     // Allow navigation if user clicked "Leave Anyway"
@@ -387,7 +389,9 @@ export default {
   },
   setup() {
     const { setErrors, clearErrors, errorMessages, generalError } = useFormErrors()
+    const notificationStore = useNotificationStore()
     return {
+      notificationStore,
       setErrors,
       clearErrors,
       errorMessages,
@@ -454,8 +458,8 @@ export default {
     },
     systemEntrances() {
       if (!this.selectedCave) return []
-      if (!this.selectedCave.system) return []
-      return this.caves.filter(c => c.system && c.system.id === this.selectedCave.system.id)
+      if (!this.selectedCave.cave_system_id) return []
+      return this.caves.filter(c => c.cave_system_id === this.selectedCave.cave_system_id)
     },
     systemEntrancesCount() {
       return this.systemEntrances.length
@@ -523,7 +527,9 @@ export default {
       // Check store first then local user object
       const appStore = useAppStore()
       if (appStore.canSuggest) return true
-      if (this.currentUser && this.currentUser.clubs && this.currentUser.clubs.some(c => c.status === 'approved')) return true
+      // Check for explicit callout access role
+      const roles = this.currentUser?.roles ?? []
+      if (roles.some(r => r.slug === 'platform_admin' || r.slug === 'duty_officer' || r.slug === 'callout_access')) return true
       return false
     }
   },
@@ -577,7 +583,7 @@ export default {
           this.getLocation()
         }
       } catch (e) {
-        console.log("Permissions API not supported or error", e)
+        // Permissions API not supported — fall through to manual geolocation
       }
     },
     getLocation() {
@@ -609,7 +615,7 @@ export default {
     },
     async fetchCaves() {
       try {
-        const response = await api.get('/api/caves')
+        const response = await api.get('/api/caves/search')
         this.caves = response.data.data
       } catch (e) {
         console.error(e)
@@ -722,11 +728,11 @@ export default {
         const appStore = useAppStore()
         await appStore.getUser()
 
-        this.$toast.success('Phone number saved to your profile.')
+        this.notificationStore.showSuccess('Phone number saved to your profile.')
       } catch (e) {
         console.error("Failed to save phone:", e)
         const errorMsg = e.response?.data?.message || 'Failed to save phone number.'
-        this.$toast.error(errorMsg)
+        this.notificationStore.showError(errorMsg)
       } finally {
         this.savingPhone = false
       }
@@ -756,7 +762,7 @@ export default {
         const appStore = useAppStore()
         await appStore.getUser()
 
-        this.$toast.success('Callout activated. Stay safe!')
+        this.notificationStore.showSuccess('Callout activated. Stay safe!')
 
         // Redirect to the open callout dashboard
         this.$router.push('/callout/active')
@@ -774,7 +780,7 @@ export default {
       try {
         await api.post(`/api/callouts/${this.activeCallout.id}/cancel`)
         this.showSuccessDialog = true
-        this.$toast.success('Callout cancelled.')
+        this.notificationStore.showSuccess('Callout cancelled.')
       } catch (e) {
         // Global interceptor handles this
       } finally {

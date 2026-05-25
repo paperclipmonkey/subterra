@@ -20,7 +20,7 @@ const router = createRouter({
 router.onError((err, to) => {
   if (err?.message?.includes?.('Failed to fetch dynamically imported module')) {
     if (!localStorage.getItem('vuetify:dynamic-reload')) {
-      console.log('Reloading page to fix dynamic import error', to.fullPath)
+      console.warn('Reloading page to fix dynamic import error', to.fullPath)
       localStorage.setItem('vuetify:dynamic-reload', 'true')
       location.assign(to.fullPath)
     } else {
@@ -37,6 +37,13 @@ router.beforeEach(async (to, from, next) => {
 
   // Allow demo page without authentication
   if (to.path === '/demo') {
+    return next()
+  }
+
+  // Allow offline caves page — still warm the user cache in the background
+  // so components don't render with empty user state after a hard refresh.
+  if (to.path === '/offline') {
+    useAppStore().getUser().catch(() => {})
     return next()
   }
 
@@ -122,6 +129,22 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  // Pip access — platform_admin OR pip_access role explicitly granted.
+  if (to.path.startsWith('/pip')) {
+    const hasRoleSlug = (slug) => user.roles && user.roles.some(r => r.slug === slug)
+    if (!hasRoleSlug('platform_admin') && !hasRoleSlug('pip_access')) {
+      return next({ path: '/trips' })
+    }
+  }
+
+  // Callout access — platform_admin OR duty_officer OR callout_access role explicitly granted.
+  if (to.path.startsWith('/callout') && to.path !== '/callout/active') {
+    const hasRoleSlug = (slug) => user.roles && user.roles.some(r => r.slug === slug)
+    if (!hasRoleSlug('platform_admin') && !hasRoleSlug('duty_officer') && !hasRoleSlug('callout_access')) {
+      return next({ path: '/trips' })
+    }
+  }
+
   if (user.email && (!user.name || user.name.trim() === '')) {
     const isProfilePage = to.name === '/profile/[id].edit' || to.path.includes('/profile/')
     if (!isProfilePage && to.path !== '/logout') {
@@ -132,13 +155,32 @@ router.beforeEach(async (to, from, next) => {
   if (user.email) {
     return next()
   }
+
+  // When offline and there's no cached user session, redirect unauthenticated users
+  // to the offline caves page instead of the login page.
+  // Authenticated users (caught by user.email check above) navigate freely —
+  // individual pages are responsible for showing appropriate offline state.
+  if (!navigator.onLine) {
+    if (
+      to.path === '/offline' ||
+      to.path === '/callout/active' ||
+      to.path.startsWith('/caves') ||
+      to.path.startsWith('/pages/')
+    ) {
+      return next()
+    }
+    return next({ path: '/offline' })
+  }
+
   return next({ path: '/' })
 })
 
-// Scroll to top after each navigation
+// Scroll to top after each navigation, and clear the dynamic-reload retry flag
+// so any subsequent chunk-load failure can trigger another reload.
 router.afterEach(() => {
   document.title = 'subterra.world'
   window.scrollTo(0, 0)
+  localStorage.removeItem('vuetify:dynamic-reload')
 })
 
 router.isReady().then(() => {

@@ -41,11 +41,24 @@ class CaveController extends Controller
                 ->flip();
         }
 
-        // 1. Caves as raw rows
-        $caves = DB::table('caves')
-            ->select(['id', 'slug', 'name', 'location_name', 'location_country', 'location_lat', 'location_lng', 'cave_system_id'])
-            ->orderBy('name')
-            ->get();
+        // 1. Caves as raw rows — optionally filtered to curated-only for fast initial load
+        $cavesQuery = DB::table('caves')
+            ->select(['caves.id', 'caves.slug', 'caves.name', 'caves.location_name', 'caves.location_country', 'caves.location_lat', 'caves.location_lng', 'caves.cave_system_id']);
+
+        if ($request->boolean('curated')) {
+            $curatedTagId = DB::table('tags')
+                ->where('tag', 'Curated')
+                ->where('category', 'curated')
+                ->value('id');
+            if ($curatedTagId) {
+                $cavesQuery->join('cave_tag as ct_curated', function ($join) use ($curatedTagId) {
+                    $join->on('caves.id', '=', 'ct_curated.cave_id')
+                        ->where('ct_curated.tag_id', '=', $curatedTagId);
+                });
+            }
+        }
+
+        $caves = $cavesQuery->orderBy('caves.name')->get();
 
         $caveIds = $caves->pluck('id');
         $systemIds = $caves->pluck('cave_system_id')->unique()->filter();
@@ -178,6 +191,53 @@ class CaveController extends Controller
         });
 
         return response()->json(['data' => $data]);
+    }
+
+    public function search(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        // Fetch the curated tag id once
+        $curatedTagId = DB::table('tags')
+            ->where('tag', 'Curated')
+            ->where('category', 'curated')
+            ->value('id');
+
+        // Fetch the closed tag id once
+        $closedTagId = DB::table('tags')
+            ->where('tag', 'Closed')
+            ->value('id');
+
+        $caves = DB::table('caves')
+            ->select([
+                'caves.id',
+                'caves.name',
+                'caves.location_name',
+                'caves.location_country',
+                'caves.cave_system_id',
+                DB::raw('CASE WHEN ct_curated.cave_id IS NOT NULL THEN 1 ELSE 0 END as is_curated'),
+                DB::raw('CASE WHEN ct_closed.cave_id IS NOT NULL THEN 1 ELSE 0 END as is_closed'),
+            ])
+            ->leftJoin('cave_tag as ct_curated', function ($join) use ($curatedTagId) {
+                $join->on('caves.id', '=', 'ct_curated.cave_id')
+                    ->where('ct_curated.tag_id', '=', $curatedTagId);
+            })
+            ->leftJoin('cave_tag as ct_closed', function ($join) use ($closedTagId) {
+                $join->on('caves.id', '=', 'ct_closed.cave_id')
+                    ->where('ct_closed.tag_id', '=', $closedTagId);
+            })
+            ->orderByDesc('is_curated')
+            ->orderBy('caves.name')
+            ->get()
+            ->map(fn ($cave) => [
+                'id' => $cave->id,
+                'name' => $cave->name,
+                'location_name' => $cave->location_name,
+                'location_country' => $cave->location_country,
+                'cave_system_id' => $cave->cave_system_id,
+                'is_curated' => (bool) $cave->is_curated,
+                'is_closed' => (bool) $cave->is_closed,
+            ]);
+
+        return response()->json(['data' => $caves]);
     }
 
     public function store(StoreCaveRequest $request): CaveResource

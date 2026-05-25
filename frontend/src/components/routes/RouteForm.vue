@@ -209,10 +209,11 @@ import { ref, onMounted, computed, watch } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { convertFileToBase64 } from '@/utilities.js'
 import { useAppStore } from '@/stores/app'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
 import { onBeforeRouteLeave } from 'vue-router'
+import { api } from '@/plugins/api'
 
-const toast = useToast()
+const notifications = useNotificationStore()
 const appStore = useAppStore()
 
 const props = defineProps({
@@ -305,16 +306,13 @@ const handleMediaUpload = async (event) => {
 onMounted(async () => {
   // ... items
   try {
-    const response = await fetch(`/api/cave_systems/${props.caveSystemId}`)
-    if (response.ok) {
-      const system = await response.json()
-      caves.value = system.data.caves || []
+    const response = await api.get(`/api/cave_systems/${props.caveSystemId}`)
+    caves.value = response.data.data.caves || []
 
-      // Auto-prefill if only one cave
-      if (caves.value.length === 1) {
-        route.value.entrance_id = caves.value[0].id
-        route.value.exit_id = caves.value[0].id
-      }
+    // Auto-prefill if only one cave
+    if (caves.value.length === 1) {
+      route.value.entrance_id = caves.value[0].id
+      route.value.exit_id = caves.value[0].id
     }
   } catch (e) {
     console.error(e)
@@ -364,46 +362,24 @@ const save = async () => {
         ? `/api/routes/${route.value.slug}`
         : `/api/cave_systems/${props.caveSystemId}/routes`
 
-      const method = route.value.id ? 'PUT' : 'POST'
+      const method = route.value.id ? 'put' : 'post'
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
+      await api[method](url, payload)
 
-      if (response.ok) {
-        isSaved.value = true
-        emit('saved')
-      } else {
-        console.error('Failed to save')
-      }
+      isSaved.value = true
+      emit('saved')
     } else {
       // Suggest Edit or Create
-      const response = await fetch('/api/suggested-edits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          suggestable_type: 'route',
-          suggestable_id: route.value.id || null, // null means creation
-          suggested_data: { ...payload, cave_system_id: props.caveSystemId },
-          original_data: null
-        })
+      await api.post('/api/suggested-edits', {
+        suggestable_type: 'route',
+        suggestable_id: route.value.id || null, // null means creation
+        suggested_data: { ...payload, cave_system_id: props.caveSystemId },
+        original_data: null
       })
 
-      if (response.ok) {
-        toast.success('Thank you! Your suggestion has been submitted for review.')
-        isSaved.value = true
-        emit('saved')
-      } else {
-        console.error('Failed to submit suggestion')
-      }
+      notifications.showSuccess('Thank you! Your suggestion has been submitted for review.')
+      isSaved.value = true
+      emit('saved')
     }
   } catch (error) {
     console.error(error)

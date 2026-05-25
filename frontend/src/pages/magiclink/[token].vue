@@ -17,8 +17,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mande } from 'mande'
-const authApi = mande('/api/auth')
+import { api } from '@/plugins/api'
 import { useAppStore } from '@/stores/app'
 
 const route = useRoute()
@@ -28,9 +27,7 @@ const error = ref('')
 onMounted(async () => {
   const token = route.params.token
   try {
-    // Call backend API to handle magic link using mande
-    const response = await authApi.get('magic-link-callback', { query: { token } })
-    // Response contains user data and sets a cookie
+    const { data: response } = await api.get('/api/auth/magic-link-callback', { params: { token } })
     if (response && response.user) {
       await useAppStore().getUser(true)
       if (response.needs_profile) {

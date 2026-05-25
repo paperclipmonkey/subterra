@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { api } from '@/plugins/api'
 
 export const useTagStore = defineStore('tags', {
   state: () => ({
@@ -12,8 +13,8 @@ export const useTagStore = defineStore('tags', {
       if (this.loaded || this.loading) return
       this.loading = true
       try {
-        const response = await fetch('/api/tags')
-        this.tags = await response.json()
+        const response = await api.get('/api/tags')
+        this.tags = response.data
         this.loaded = true
       } catch (error) {
         console.error('Failed to fetch tags:', error)

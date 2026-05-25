@@ -1,8 +1,8 @@
-import { mande } from 'mande'
-import { useToast } from "vue-toastification"
+import { useNotificationStore } from '@/stores/notifications'
+import { api } from '@/plugins/api'
 
 export async function markCaveAsDone({ cave, userId }) {
-  const toast = useToast()
+  const notifications = useNotificationStore()
 
   if (!cave || !userId) return false
   const trip = {
@@ -15,24 +15,11 @@ export async function markCaveAsDone({ cave, userId }) {
   }
 
   try {
-    const response = await fetch('/api/trips', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(trip)
-    })
-
-    if (response.ok) {
-      toast.success('Cave marked as done!')
-      return true
-    } else {
-      toast.error('Failed to mark cave as done')
-      return false
-    }
+    await api.post('/api/trips', trip)
+    notifications.showSuccess('Cave marked as done!')
+    return true
   } catch (error) {
-    toast.error('Failed to mark cave as done: ' + (error.message || 'Unknown error'))
+    notifications.showError('Failed to mark cave as done: ' + (error.response?.data?.message || error.message || 'Unknown error'))
     return false
   }
 }

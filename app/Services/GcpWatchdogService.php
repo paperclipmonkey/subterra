@@ -182,7 +182,7 @@ class GcpWatchdogService
                 'email' => $p->email,
             ])->toArray(),
             'trip_plan' => $callout->trip_plan ?? $callout->description ?? '',
-            'cave_name' => $callout->cave->name ?? 'Unknown',
+            'cave_name' => $callout->cave_name,
             'car_registration' => $callout->car_registration,
             'car_parking' => $callout->car_parking,
             'team_details' => $callout->team_details,

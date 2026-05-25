@@ -37,9 +37,32 @@ export const useAppStore = defineStore('app', {
         this.user = response.data.data
         this.userFetched = true
         this.loading = false
+
+        // Cache user data for offline use
+        try {
+          localStorage.setItem('subterra:cached-user', JSON.stringify(this.user))
+        } catch {
+          // localStorage may be full
+        }
+
         return this.user
       } catch (error) {
         this.loading = false
+
+        // When offline, try to use cached user data instead of treating as unauthenticated
+        if (!navigator.onLine || !error.response) {
+          const cached = localStorage.getItem('subterra:cached-user')
+          if (cached) {
+            try {
+              this.user = JSON.parse(cached)
+              this.userFetched = true
+              return this.user
+            } catch {
+              // Corrupted cache, fall through
+            }
+          }
+        }
+
         this.userFetched = true // Set to true even on failure so we don't spam the API with unathenticated requests
         // Silently handle unauthenticated state - it's expected on public pages
         // Return empty user object

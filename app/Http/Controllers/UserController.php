@@ -201,7 +201,7 @@ class UserController extends Controller
     public function toggleRole(User $user, string $role): UserDetailEmailResource
     {
         // Whitelist of roles that can be assigned via the admin panel
-        $allowedRoles = ['platform_admin', 'data_admin', 'duty_officer'];
+        $allowedRoles = ['platform_admin', 'data_admin', 'duty_officer', 'pip_access', 'callout_access'];
         if (!in_array($role, $allowedRoles, true)) {
             abort(422, 'Invalid role.');
         }
@@ -298,6 +298,7 @@ class UserController extends Controller
             'email_platform_news' => ['nullable', 'boolean'],
             'visibility_addable' => ['nullable', 'string', 'in:public,club'],
             'onboarding_completed_at' => ['nullable', 'date'],
+            'photo' => ['nullable', 'file', 'image', 'max:5120'],
         ]);
 
         // If user is a Duty Officer, they cannot remove their phone number
@@ -305,6 +306,19 @@ class UserController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'phone' => ['Duty Officers must have a phone number.'],
             ]);
+        }
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if it's not the default
+            if ($user->photo &&
+                !str_contains($user->photo, 'default.webp') &&
+                !str_contains($user->photo, 'default.png') &&
+                !str_starts_with($user->photo, 'http')
+            ) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->photo);
+            }
+            $validatedData['photo'] = $request->file('photo')->store('avatars', 'public');
         }
 
         $user->update($validatedData);

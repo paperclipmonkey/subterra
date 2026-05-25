@@ -3,6 +3,17 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import TripNew from '@/components/TripNew.vue'
 import { nextTick } from 'vue'
+import { api } from '@/plugins/api'
+
+// Mock api plugin
+vi.mock('@/plugins/api', () => ({
+    api: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
 
 // Mock moment
 vi.mock('moment', () => {
@@ -84,9 +95,6 @@ vi.mock('vue-router', () => ({
   onBeforeRouteLeave: vi.fn()
 }))
 
-// Mock fetch globally
-global.fetch = vi.fn()
-
 const defaultStubs = {
   'v-container': { template: '<div><slot /></div>' },
   'v-card': { template: '<div><slot /></div>' },
@@ -94,6 +102,7 @@ const defaultStubs = {
   'v-form': { template: '<div><slot /></div>' },
   'v-stepper': { template: '<div><slot /></div>' },
   'v-autocomplete': { template: '<div></div>' },
+  'CaveSearchAutocomplete': { template: '<div></div>', props: ['modelValue', 'items', 'loading', 'rules', 'errorMessages', 'hint', 'persistentHint', 'inputName', 'label'] },
   'v-checkbox': { template: '<div></div>' },
   'v-text-field': { template: '<div></div>' },
   'v-select': { template: '<div></div>' },
@@ -125,38 +134,36 @@ describe('TripNew - Duration Loading', () => {
     mockRoute.query = {}
 
     // Mock successful API responses
-    fetch.mockImplementation((url) => {
-      if (url === '/api/caves') {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/caves/search') {
         return Promise.resolve({
-          json: () => Promise.resolve({
+          data: {
             data: [
-              { id: 1, name: 'Test Cave', system: { id: 1 }, location_name: 'Test Location', location_country: 'Test Country' }
+              { id: 1, name: 'Test Cave', cave_system_id: 1, location_name: 'Test Location', location_country: 'Test Country', is_curated: false, is_closed: false }
             ]
-          })
+          }
         })
       }
 
       if (url === '/api/users/me') {
         return Promise.resolve({
-          json: () => Promise.resolve({
-            data: { id: 1 }
-          })
+          data: { data: { id: 1 } }
         })
       }
 
       if (url === '/api/users') {
         return Promise.resolve({
-          json: () => Promise.resolve({
+          data: {
             data: [
               { id: 1, name: 'Test User', photo: null, clubs: [{ name: 'Test Club', slug: 'test-club' }] }
             ]
-          })
+          }
         })
       }
 
       if (url === '/api/trips/123') {
         return Promise.resolve({
-          json: () => Promise.resolve({
+          data: {
             data: {
               id: 123,
               name: 'Test Trip',
@@ -170,7 +177,7 @@ describe('TripNew - Duration Loading', () => {
               media: [],
               visibility: 'public'
             }
-          })
+          }
         })
       }
 
@@ -230,28 +237,26 @@ describe('TripNew - Duration Loading', () => {
 
   it('populates users array with all participants when editing a trip', async () => {
     // Override fetch to return a trip with multiple participants including ones not in the initial users list
-    fetch.mockImplementation((url) => {
-      if (url === '/api/caves') {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/caves/search') {
         return Promise.resolve({
-          json: () => Promise.resolve({
+          data: {
             data: [
-              { id: 1, name: 'Test Cave', system: { id: 1 }, location_name: 'Test Location', location_country: 'Test Country' }
+              { id: 1, name: 'Test Cave', cave_system_id: 1, location_name: 'Test Location', location_country: 'Test Country', is_curated: false, is_closed: false }
             ]
-          })
+          }
         })
       }
 
       if (url === '/api/users/me') {
         return Promise.resolve({
-          json: () => Promise.resolve({
-            data: { id: 1, name: 'Current User', photo: null, clubs: [] }
-          })
+          data: { data: { id: 1, name: 'Current User', photo: null, clubs: [] } }
         })
       }
 
       if (url === '/api/trips/123') {
         return Promise.resolve({
-          json: () => Promise.resolve({
+          data: {
             data: {
               id: 123,
               name: 'Test Trip',
@@ -268,7 +273,7 @@ describe('TripNew - Duration Loading', () => {
               media: [],
               visibility: 'public'
             }
-          })
+          }
         })
       }
 
