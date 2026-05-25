@@ -527,7 +527,9 @@ export default {
       // Check store first then local user object
       const appStore = useAppStore()
       if (appStore.canSuggest) return true
-      if (this.currentUser && this.currentUser.clubs && this.currentUser.clubs.some(c => c.status === 'approved')) return true
+      // Check for explicit callout access role
+      const roles = this.currentUser?.roles ?? []
+      if (roles.some(r => r.slug === 'platform_admin' || r.slug === 'duty_officer' || r.slug === 'callout_access')) return true
       return false
     }
   },

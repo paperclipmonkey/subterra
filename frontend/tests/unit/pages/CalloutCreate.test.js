@@ -13,7 +13,7 @@ vi.mock('vue-router', () => ({
 // Mock Axios
 const mockCaves = [{ id: 1, name: 'Alum Pot', location_name: 'Yorkshire', cave_system_id: 10, is_curated: true, is_closed: false }]
 const mockUsers = [{ id: 2, name: 'Alice' }, { id: 3, name: 'Bob' }]
-const mockUserMe = { id: 1, name: 'Test User', email: 'test@example.com', clubs: [{ status: 'approved' }] }
+const mockUserMe = { id: 1, name: 'Test User', email: 'test@example.com', clubs: [{ status: 'approved' }], roles: [{ slug: 'callout_access' }] }
 
 vi.mock('axios', () => {
     const mock = {
@@ -144,15 +144,10 @@ describe('Callout Wizard', () => {
         expect(wrapper.vm.step).toBe(1)
 
         // Fill out Step 1
-        await wrapper.setData({
-            form: {
-                ...wrapper.vm.form,
-                cave_id: 1,
-                car_registration: 'AB12 CDE',
-                car_parking: 'Bull Pot Farm',
-                location_data: { latitude: 51.5, longitude: -0.1 }
-            }
-        })
+        wrapper.vm.$data.form.cave_id = 1
+        wrapper.vm.$data.form.car_registration = 'AB12 CDE'
+        wrapper.vm.$data.form.car_parking = 'Bull Pot Farm'
+        wrapper.vm.$data.form.location_data = { latitude: 51.5, longitude: -0.1 }
         await wrapper.vm.$nextTick()
 
         // Assert canProceed logic
@@ -527,21 +522,15 @@ describe('Callout Wizard', () => {
         expect(wrapper.vm.form.participants.length).toBe(1)
         expect(wrapper.vm.form.participants[0].isCurrentUser).toBe(true)
 
-        // Use setData to replace the entire participants array for proper reactivity.
-        // Current user with valid phone + invalid manual guest
-        await wrapper.setData({
-            form: {
-                ...wrapper.vm.form,
-                participants: [
-                    { ...wrapper.vm.form.participants[0], phone: '07123456789' },
-                    {
-                        local_id: 'abc', name: 'Invalid Guest', phone: '1234',
-                        user_id: null, locked: false, isCurrentUser: false,
-                        photo: null, clubs: [], hasPhone: false
-                    }
-                ]
+        // Replace participants: current user with valid phone + invalid manual guest
+        wrapper.vm.$data.form.participants = [
+            { ...wrapper.vm.$data.form.participants[0], phone: '07123456789' },
+            {
+                local_id: 'abc', name: 'Invalid Guest', phone: '1234',
+                user_id: null, locked: false, isCurrentUser: false,
+                photo: null, clubs: [], hasPhone: false
             }
-        })
+        ]
         await wrapper.vm.$nextTick()
 
         // Should be blocked due to invalid phone!
@@ -549,15 +538,10 @@ describe('Callout Wizard', () => {
         expect(wrapper.vm.canProceed).toBe(false)
 
         // Correcting the phone number — replace full array to trigger reactivity
-        await wrapper.setData({
-            form: {
-                ...wrapper.vm.form,
-                participants: [
-                    wrapper.vm.form.participants[0],
-                    { ...wrapper.vm.form.participants[1], phone: '07999999999' }
-                ]
-            }
-        })
+        wrapper.vm.$data.form.participants = [
+            { ...wrapper.vm.$data.form.participants[0] },
+            { ...wrapper.vm.$data.form.participants[1], phone: '07999999999' }
+        ]
         await wrapper.vm.$nextTick()
 
         expect(wrapper.vm.phoneError).toBe(false)
@@ -604,19 +588,14 @@ describe('Callout Wizard', () => {
         wrapper.vm.step = 2
 
         // Replace participants: current user (valid phone) + registered user with hidden phone
-        await wrapper.setData({
-            form: {
-                ...wrapper.vm.form,
-                participants: [
-                    { ...wrapper.vm.form.participants[0], phone: '07123456789' },
-                    {
-                        local_id: 'def', user_id: 2, name: 'Alice', phone: '🔒 Hidden',
-                        email: 'alice@example.com', locked: true, photo: null,
-                        clubs: [], hasPhone: true, isCurrentUser: false,
-                    }
-                ]
+        wrapper.vm.$data.form.participants = [
+            { ...wrapper.vm.$data.form.participants[0], phone: '07123456789' },
+            {
+                local_id: 'def', user_id: 2, name: 'Alice', phone: '🔒 Hidden',
+                email: 'alice@example.com', locked: true, photo: null,
+                clubs: [], hasPhone: true, isCurrentUser: false,
             }
-        })
+        ]
         await wrapper.vm.$nextTick()
 
         // Should be valid — hidden phone is skipped in validation
@@ -624,18 +603,13 @@ describe('Callout Wizard', () => {
         expect(wrapper.vm.canProceed).toBe(true)
 
         // Add one more invalid manual guest by replacing array
-        await wrapper.setData({
-            form: {
-                ...wrapper.vm.form,
-                participants: [
-                    ...wrapper.vm.form.participants,
-                    {
-                        local_id: 'ghi', name: 'Bad Guest', phone: '+44123',
-                        user_id: null, locked: false, isCurrentUser: false,
-                    }
-                ]
+        wrapper.vm.$data.form.participants = [
+            ...wrapper.vm.$data.form.participants,
+            {
+                local_id: 'ghi', name: 'Bad Guest', phone: '+44123',
+                user_id: null, locked: false, isCurrentUser: false,
             }
-        })
+        ]
         await wrapper.vm.$nextTick()
 
         expect(wrapper.vm.phoneError).toBe(true)
@@ -688,20 +662,15 @@ describe('Callout Wizard', () => {
         axios.post.mockClear()
 
         // Set up a valid form with a callout_time in the PAST relative to our fake clock
-        await wrapper.setData({
-            step: 4,
-            form: {
-                ...wrapper.vm.form,
-                cave_id: 1,
-                car_registration: 'AB12 CDE',
-                car_parking: 'Parking',
-                trip_plan: 'Plan',
-                callout_time: '2025-01-01T11:00:00',
-                participants: [
-                    { ...wrapper.vm.form.participants[0], phone: '07123456789' }
-                ]
-            }
-        })
+        wrapper.vm.$data.step = 4
+        wrapper.vm.$data.form.cave_id = 1
+        wrapper.vm.$data.form.car_registration = 'AB12 CDE'
+        wrapper.vm.$data.form.car_parking = 'Parking'
+        wrapper.vm.$data.form.trip_plan = 'Plan'
+        wrapper.vm.$data.form.callout_time = '2025-01-01T11:00:00'
+        wrapper.vm.$data.form.participants = [
+            { ...wrapper.vm.$data.form.participants[0], phone: '07123456789' }
+        ]
         await wrapper.vm.$nextTick()
 
         // Verify isFormValid rejects past time
