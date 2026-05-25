@@ -5,17 +5,17 @@ FROM node:24-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 COPY tsconfig.json ./
 
 # Install ALL dependencies (including devDependencies for TypeScript)
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY src/ ./src/
 
 # Build TypeScript
-RUN npm run build
+RUN yarn build
 
 # Production stage
 FROM node:24-alpine
@@ -24,10 +24,10 @@ FROM node:24-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 
 # Install only production dependencies
-RUN npm ci --only=production
+RUN yarn install --frozen-lockfile --production
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
