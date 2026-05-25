@@ -67,3 +67,34 @@ variable "app_url" {
   default     = "https://subterra.world"
 }
 
+# ---------------------------------------------------------------------------
+# Cloud SQL
+# ---------------------------------------------------------------------------
+
+variable "db_name" {
+  description = "PostgreSQL database name"
+  type        = string
+  default     = "subterra"
+}
+
+variable "db_username" {
+  description = "PostgreSQL application user name"
+  type        = string
+  default     = "subterra"
+}
+
+variable "db_password" {
+  description = "PostgreSQL application user password"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_authorized_networks" {
+  description = "CIDRs allowed to reach the Cloud SQL public IP (e.g. Fly.io egress IPs)"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
