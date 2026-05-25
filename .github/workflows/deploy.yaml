@@ -145,7 +145,8 @@ jobs:
             -var="image_processor_image_tag=${{ github.sha }}" \
             -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
             -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}" \
-            -var="webhook_secret=${{ secrets.WEBHOOK_SECRET }}"
+            -var="webhook_secret=${{ secrets.WEBHOOK_SECRET }}" \
+            -var="watchdog_api_key=${{ secrets.WATCHDOG_API_KEY }}"
 
   deploy-fly:
     needs:
