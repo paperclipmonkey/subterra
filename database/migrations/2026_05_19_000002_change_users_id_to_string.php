@@ -199,6 +199,15 @@ return new class () extends Migration
 
         $this->renameNewColumns($fkTables);
 
+        // Restore NOT NULL on columns that were non-nullable before.
+        foreach ($fkTables as $fk) {
+            if (!$fk['nullable']) {
+                Schema::table($fk['table'], function (Blueprint $table) use ($fk): void {
+                    $table->string($fk['column'], 7)->nullable(false)->change();
+                });
+            }
+        }
+
         // Replace users.id: drop the integer PK column, rename _new_id, set NOT NULL + PK
         $this->dropColumnSqlite('users', 'id');
         Schema::table('users', function (Blueprint $table): void {
