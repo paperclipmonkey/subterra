@@ -33,7 +33,7 @@ class UpdateTripRequest extends FormRequest
             'end_time' => ['sometimes', 'required', 'date'],
             'visibility' => ['sometimes', 'in:public,private,club'],
             'participants' => ['sometimes', 'array'],
-            'participants.*' => ['integer', 'exists:users,id'],
+            'participants.*' => ['string', 'exists:users,id'],
             'media' => ['nullable', 'array'],
             'media.*.data' => ['required', 'file', 'max:512000', 'mimes:jpeg,jpg,png,gif,webp,bmp,tiff,tif'],
             'existing_media' => ['nullable', 'array'],

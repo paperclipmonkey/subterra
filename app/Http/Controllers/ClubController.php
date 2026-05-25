@@ -191,7 +191,7 @@ class ClubController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'members' => 'present|array',
-            'members.*.id' => 'required|integer|exists:users,id',
+            'members.*.id' => 'required|exists:users,id',
             'members.*.is_admin' => 'required|boolean',
         ]);
 

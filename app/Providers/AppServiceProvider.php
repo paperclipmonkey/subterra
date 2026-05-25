@@ -48,9 +48,9 @@ class AppServiceProvider extends ServiceProvider
             'collection' => \App\Models\Collection::class,
         ]);
 
-        // Add your custom route binding here
+        // Looks up by string ID while bypassing IsActiveScope
+        // so that admin routes can operate on deactivated users too.
         Route::bind('user_without_scopes', function ($id) {
-            // Use the correct namespace for your User model
             return User::withoutGlobalScopes()->findOrFail($id);
         });
 

@@ -92,7 +92,7 @@
     },
     "creator_id": {
       "type": [
-        "integer",
+        "string",
         "null"
       ]
     }
