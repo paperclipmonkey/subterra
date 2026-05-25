@@ -136,19 +136,20 @@ jobs:
           terraform init
 
       - name: Terraform Apply
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: ${{ env.GCP_REGION }}
+          TF_VAR_image_tag: ${{ github.sha }}
+          TF_VAR_image_processor_image_tag: ${{ github.sha }}
+          TF_VAR_smtp_server: ${{ secrets.SMTP_SERVER }}
+          TF_VAR_smtp_from_email: ${{ secrets.SMTP_FROM_EMAIL }}
+          TF_VAR_webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
+          TF_VAR_watchdog_api_key: ${{ secrets.WATCHDOG_API_KEY }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_authorized_networks: ${{ secrets.DB_AUTHORIZED_NETWORKS }}
         run: |
           cd terraform/gcp
-          terraform apply -auto-approve \
-            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
-            -var="region=${{ env.GCP_REGION }}" \
-            -var="image_tag=${{ github.sha }}" \
-            -var="image_processor_image_tag=${{ github.sha }}" \
-            -var="smtp_server=${{ secrets.SMTP_SERVER }}" \
-            -var="smtp_from_email=${{ secrets.SMTP_FROM_EMAIL }}" \
-            -var="webhook_secret=${{ secrets.WEBHOOK_SECRET }}" \
-            -var="watchdog_api_key=${{ secrets.WATCHDOG_API_KEY }}" \
-            -var="db_password=${{ secrets.DB_PASSWORD }}" \
-            -var="db_authorized_networks=${{ secrets.DB_AUTHORIZED_NETWORKS }}"
+          terraform apply -auto-approve
 
   deploy-fly:
     needs:
