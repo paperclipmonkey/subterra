@@ -133,10 +133,13 @@ const save = async () => {
         if (userStore.user?.is_admin || (props.collection && userStore.user?.id === props.collection.user_id)) {
             if (isNew.value) {
                 await collectionStore.createCollection(payload)
+                await collectionStore.fetchCollections()
             } else {
                 await collectionStore.updateCollection(payload)
+                await collectionStore.fetchCollection(props.collection.slug || props.collection.id)
             }
             notifications.showSuccess(isNew.value ? 'Collection created successfully' : 'Collection updated successfully')
+            dialog.value = false
         } else {
             // Suggest Edit or Create
             const suggestionPayload = {
