@@ -310,15 +310,9 @@
 
                 <div v-if="cave.system.catchment_name" class="mb-4">
                   <div class="text-subtitle-2 text-grey mb-1">Catchment</div>
-                  <v-btn
-                    variant="tonal"
-                    color="primary"
-                    size="small"
-                    :to="{ path: '/caves', query: { catchment: cave.system.catchment_id } }"
-                    :prepend-icon="mdiWater"
-                  >
+                  <v-chip size="small" :prepend-icon="mdiWater" color="primary" variant="tonal">
                     {{ cave.system.catchment_name }}
-                  </v-btn>
+                  </v-chip>
                 </div>
 
                 <MarkdownRenderer v-if="cave.system.description" :source="cave.system.description"
