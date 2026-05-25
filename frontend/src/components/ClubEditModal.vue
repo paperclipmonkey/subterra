@@ -219,7 +219,7 @@ const availableUsers = ref([])
 const selectedUserToAdd = ref(null)
 const memberDataChanged = ref(false)
 const saving = ref(false)
-const loadingPending = ref(false)
+const loadingPending = ref(true)
 const router = useRouter()
 const notifications = useNotificationStore()
 
@@ -290,6 +290,7 @@ const approveMemberRequest = async (pendingUser) => {
     await fetchPendingMembers()
     await fetchClubMembers()
     await fetchClub()
+    emit('saved')
   } finally { pendingUser.loading = false }
 }
 const openRejectDialog = (pendingUser) => {
@@ -312,6 +313,7 @@ const confirmReject = async () => {
   try {
     await api.put(`/api/admin/clubs/${props.clubSlug}/members/${user.id}/reject`, {}, { params: { reason: rejectReason.value } })
     await fetchPendingMembers()
+    emit('saved')
   } catch (e) {
     notifications.showError('Failed to reject member: ' + (e.message || 'Unknown error'))
   } finally {
