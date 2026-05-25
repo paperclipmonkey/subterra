@@ -62,7 +62,10 @@
         <v-card>
           <v-card-title>Booking Info</v-card-title>
           <v-card-text>
-            {{ hut.booking_info || 'Please contact the club for booking information.' }}
+            <div v-if="hut.booking_info" class="markdown-body">
+              <MarkdownRenderer :source="hut.booking_info" />
+            </div>
+            <span v-else class="text-grey font-italic">Please contact the club for booking information.</span>
           </v-card-text>
         </v-card>
       </v-col>
