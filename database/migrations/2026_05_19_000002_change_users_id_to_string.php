@@ -6,8 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-return new class() extends Migration
-{
+return new class () extends Migration {
     /**
      * Change users.id from an auto-incrementing integer to a random 7-character
      * string, and update every table that holds a foreign key reference to users.id.
@@ -44,7 +43,7 @@ return new class() extends Migration
     public function up(): void
     {
         $fkTables = $this->fkTables();
-        $mapping  = $this->buildIdMapping();
+        $mapping = $this->buildIdMapping();
 
         $this->addNewColumns($mapping, $fkTables);
 
@@ -89,7 +88,7 @@ return new class() extends Migration
 
         // FK tables: add _n_{column} and populate from the mapping
         foreach ($fkTables as $fk) {
-            $tmp = '_n_' . $fk['column'];
+            $tmp = '_n_'.$fk['column'];
             Schema::table($fk['table'], function (Blueprint $table) use ($tmp): void {
                 $table->string($tmp, 7)->nullable();
             });
@@ -110,7 +109,7 @@ return new class() extends Migration
         });
         $this->populateMappedColumn('api_interactions', 'trackable_id', '_n_trackable_id', $mapping, "trackable_type = 'App\\Models\\User'");
         DB::statement(
-            'UPDATE "api_interactions" SET "_n_trackable_id" = CAST("trackable_id" AS TEXT)' .
+            'UPDATE "api_interactions" SET "_n_trackable_id" = CAST("trackable_id" AS TEXT)'.
                 ' WHERE "trackable_type" != ? OR "trackable_type" IS NULL',
             ['App\Models\User']
         );
@@ -126,7 +125,7 @@ return new class() extends Migration
     private function renameNewColumns(array $fkTables): void
     {
         foreach ($fkTables as $fk) {
-            $tmp = '_n_' . $fk['column'];
+            $tmp = '_n_'.$fk['column'];
             Schema::table($fk['table'], function (Blueprint $table) use ($tmp, $fk): void {
                 $table->renameColumn($tmp, $fk['column']);
             });
@@ -157,10 +156,10 @@ return new class() extends Migration
             return;
         }
 
-        $cases        = implode(' ', array_fill(0, count($mapping), 'WHEN ? THEN ?'));
+        $cases = implode(' ', array_fill(0, count($mapping), 'WHEN ? THEN ?'));
         $placeholders = implode(', ', array_fill(0, count($mapping), '?'));
-        $caseBindings = collect($mapping)->flatMap(fn($v, $k) => [$k, $v])->values()->all();
-        $whereIn      = array_keys($mapping);
+        $caseBindings = collect($mapping)->flatMap(fn ($v, $k) => [$k, $v])->values()->all();
+        $whereIn = array_keys($mapping);
 
         $where = "\"$fromCol\" IN ($placeholders)";
         if ($whereExtra !== null) {
@@ -192,7 +191,7 @@ return new class() extends Migration
         // $redirectFkTo so FK constraints are preserved and automatically updated
         // by SQLite's native RENAME COLUMN in renameNewColumns().
         foreach ($fkTables as $fk) {
-            $this->dropColumnSqlite($fk['table'], $fk['column'], '_n_' . $fk['column']);
+            $this->dropColumnSqlite($fk['table'], $fk['column'], '_n_'.$fk['column']);
         }
         $this->dropColumnSqlite('audits', 'user_id');
         $this->dropColumnSqlite('api_interactions', 'trackable_id');
@@ -274,7 +273,7 @@ return new class() extends Migration
         foreach ($fkTables as $fk) {
             $onDelete = $fk['delete'] === 'SET NULL' ? 'ON DELETE SET NULL' : 'ON DELETE CASCADE';
             DB::statement(
-                "ALTER TABLE \"{$fk['table']}\" ADD CONSTRAINT \"{$fk['constraint']}\" " .
+                "ALTER TABLE \"{$fk['table']}\" ADD CONSTRAINT \"{$fk['constraint']}\" ".
                     "FOREIGN KEY (\"{$fk['column']}\") REFERENCES \"users\" (\"id\") {$onDelete}"
             );
         }
@@ -310,8 +309,8 @@ return new class() extends Migration
     private function dropColumnSqlite(string $table, string $column, ?string $redirectFkTo = null): void
     {
         // ── Column info ──────────────────────────────────────────────────────
-        $cols     = DB::select("PRAGMA table_info(\"$table\")");
-        $keepCols = array_values(array_filter($cols, fn($c) => $c->name !== $column));
+        $cols = DB::select("PRAGMA table_info(\"$table\")");
+        $keepCols = array_values(array_filter($cols, fn ($c) => $c->name !== $column));
 
         // ── Index info: keep indexes that do NOT reference the dropped column ─
         $rawIndexes = DB::select(
@@ -327,7 +326,7 @@ return new class() extends Migration
         }
 
         // ── FK info: keep/redirect FKs, dropping only those with no redirect ──
-        $fkRows     = DB::select("PRAGMA foreign_key_list(\"$table\")");
+        $fkRows = DB::select("PRAGMA foreign_key_list(\"$table\")");
         $keepFkDefs = [];
         foreach (collect($fkRows)->groupBy('id') as $fkGroup) {
             $fromCols = $fkGroup->pluck('from');
@@ -337,13 +336,13 @@ return new class() extends Migration
                     continue; // Drop the FK entirely
                 }
                 // Redirect: replace the old column name with the replacement
-                $fromCols = $fromCols->map(fn($c) => $c === $column ? $redirectFkTo : $c);
+                $fromCols = $fromCols->map(fn ($c) => $c === $column ? $redirectFkTo : $c);
             }
 
-            $fromStr  = '"' . $fromCols->join('", "') . '"';
-            $toStr    = '"' . $fkGroup->pluck('to')->join('", "') . '"';
+            $fromStr = '"'.$fromCols->join('", "').'"';
+            $toStr = '"'.$fkGroup->pluck('to')->join('", "').'"';
             $onDelete = strtoupper($fkGroup->first()->on_delete ?? '');
-            $fkDef    = "FOREIGN KEY ($fromStr) REFERENCES \"{$fkGroup->first()->table}\" ($toStr)";
+            $fkDef = "FOREIGN KEY ($fromStr) REFERENCES \"{$fkGroup->first()->table}\" ($toStr)";
             if ($onDelete && $onDelete !== 'NO ACTION') {
                 $fkDef .= " ON DELETE $onDelete";
             }
@@ -353,16 +352,22 @@ return new class() extends Migration
         // ── Build the new table schema ────────────────────────────────────────
         $colDefs = [];
         foreach ($keepCols as $c) {
-            $def = '"' . $c->name . '" ' . ($c->type ?: 'text');
-            if ($c->pk)                  $def .= ' PRIMARY KEY';
-            if ($c->notnull && !$c->pk)  $def .= ' NOT NULL';
-            if ($c->dflt_value !== null)  $def .= ' DEFAULT ' . $c->dflt_value;
+            $def = '"'.$c->name.'" '.($c->type ?: 'text');
+            if ($c->pk) {
+                $def .= ' PRIMARY KEY';
+            }
+            if ($c->notnull && !$c->pk) {
+                $def .= ' NOT NULL';
+            }
+            if ($c->dflt_value !== null) {
+                $def .= ' DEFAULT '.$c->dflt_value;
+            }
             $colDefs[] = $def;
         }
 
         // ── Table swap ───────────────────────────────────────────────────────
-        $tmp     = '__mig_' . $table;
-        $colList = implode(', ', array_map(fn($c) => '"' . $c->name . '"', $keepCols));
+        $tmp = '__mig_'.$table;
+        $colList = implode(', ', array_map(fn ($c) => '"'.$c->name.'"', $keepCols));
         DB::statement(sprintf(
             'CREATE TABLE "%s" (%s)',
             $tmp,

@@ -36,8 +36,8 @@ class AuditingTest extends TestCase
 
         $this->assertDatabaseHas('audits', [
             'auditable_type' => User::class,
-            'auditable_id'   => $user->id,
-            'event'          => 'created',
+            'auditable_id' => $user->id,
+            'event' => 'created',
         ]);
     }
 
@@ -59,7 +59,7 @@ class AuditingTest extends TestCase
         $this->assertSame(
             $user->id,
             $audit->auditable_id,
-            'auditable_id was not stored as the user\'s string ID — ' .
+            'auditable_id was not stored as the user\'s string ID — '.
             'check that the audits.auditable_id column is varchar, not bigint',
         );
     }
@@ -72,8 +72,8 @@ class AuditingTest extends TestCase
 
         $this->assertDatabaseHas('audits', [
             'auditable_type' => User::class,
-            'auditable_id'   => $user->id,
-            'event'          => 'updated',
+            'auditable_id' => $user->id,
+            'event' => 'updated',
         ]);
     }
 }

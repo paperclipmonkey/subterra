@@ -69,7 +69,6 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         });
     }
 
-
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -161,11 +160,23 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         return $this->hasOne(Callout::class)->whereIn('status', ['active', 'triggered']);
     }
 
+    public function currentOnCallShift(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(OnCallShift::class)
+            ->where('start_at', '<=', now())
+            ->where('end_at', '>=', now());
+    }
+
     /**
      * Get the user's active callout (either as creator or participant).
      */
     public function getActiveCalloutAttribute()
     {
+        // Use eager-loaded relation if available (avoids N+1 in collection responses)
+        if ($this->relationLoaded('activeCallout')) {
+            return $this->getRelation('activeCallout');
+        }
+
         // First check if user created an active callout
         $callout = $this->callouts()->whereIn('status', ['active', 'triggered'])->first();
 
@@ -202,6 +213,14 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      */
     public function hasRole(string|array $role): bool
     {
+        if ($this->relationLoaded('roles')) {
+            $slugs = $this->roles->pluck('slug');
+
+            return is_array($role)
+                ? $slugs->intersect($role)->isNotEmpty()
+                : $slugs->contains($role);
+        }
+
         if (is_array($role)) {
             return $this->roles()->whereIn('slug', $role)->exists();
         }
@@ -234,6 +253,10 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      */
     public function getIsAdminAttribute(): bool
     {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->whereNotIn('slug', ['pip_access', 'callout_access'])->isNotEmpty();
+        }
+
         return $this->roles()->whereNotIn('slug', ['pip_access', 'callout_access'])->exists();
     }
 

@@ -144,7 +144,21 @@ class UserController extends Controller
      */
     public function adminIndex(): ResourceCollection
     {
-        return UserDetailEmailResource::collection(User::withoutGlobalScopes()->where('is_active', true)->with('roles')->get());
+        return UserDetailEmailResource::collection(
+            User::withoutGlobalScopes()
+                ->where('is_active', true)
+                ->with([
+                    'roles',
+                    'clubs',
+                    'medals',
+                    'trips' => fn ($q) => $q->select(['trips.id', 'trips.start_time', 'trips.end_time', 'trips.cave_system_id']),
+                    'activeCallout.cave',
+                    'activeCallout.participants',
+                    'activeCallout.incident',
+                    'currentOnCallShift',
+                ])
+                ->get()
+        );
     }
 
     public function officerList(Request $request): JsonResponse

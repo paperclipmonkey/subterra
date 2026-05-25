@@ -165,6 +165,7 @@ class CheckAndAwardMedals implements ShouldQueue
 
                 return $collections->contains(function ($collection) use ($visitedCaveIds) {
                     $collectionCaveIds = $collection->caves->pluck('id');
+
                     return $collectionCaveIds->isNotEmpty() && $collectionCaveIds->diff($visitedCaveIds)->isEmpty();
                 });
 

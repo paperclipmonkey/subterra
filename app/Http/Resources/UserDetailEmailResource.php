@@ -55,13 +55,17 @@ class UserDetailEmailResource extends JsonResource
             ]),
             'stats' => [
                 'trips' => $this->trips->count(),
-                'caves' => $this->trips->pluck('system.id')->unique()->count(),
+                'caves' => $this->trips->pluck('cave_system_id')->unique()->count(),
                 'duration' => $this->trips->sum('duration'),
             ],
             'active_callout' => $this->active_callout, // Uses getActiveCalloutAttribute() which checks both creator and participant
-            'on_call' => OnCallShift::covering(now())->where('user_id', $this->id)->exists(),
-            'on_call_until' => OnCallShift::covering(now())->where('user_id', $this->id)->first()?->end_at,
-            'open_callouts_count' => Callout::whereIn('status', ['active', 'triggered'])->count(),
+            'on_call' => $this->relationLoaded('currentOnCallShift')
+                ? $this->currentOnCallShift !== null
+                : OnCallShift::covering(now())->where('user_id', $this->id)->exists(),
+            'on_call_until' => $this->relationLoaded('currentOnCallShift')
+                ? $this->currentOnCallShift?->end_at
+                : OnCallShift::covering(now())->where('user_id', $this->id)->first()?->end_at,
+            'open_callouts_count' => once(fn () => Callout::whereIn('status', ['active', 'triggered'])->count()),
             'tos_agreed_at' => $this->tos_agreed_at,
             'privacy_policy_agreed_at' => $this->privacy_policy_agreed_at,
             'pip_agreement_signed_at' => $this->pip_agreement_signed_at,
