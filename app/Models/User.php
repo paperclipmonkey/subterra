@@ -57,7 +57,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     protected $keyType = 'string';
 
     /**
-     * Auto-generate a random 16-character string ID for new users.
+     * Auto-generate a random 7-character string ID for new users.
      * Using a non-sequential primary key prevents IDOR / enumeration attacks.
      */
     protected static function booted(): void
@@ -136,9 +136,9 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         // Define the relationship via the pivot table 'club_user'
         // Include the 'is_admin' pivot data
         return $this->belongsToMany(Club::class, 'club_user')
-                    ->withPivot('is_admin') // Specify pivot columns to retrieve
-                    ->withPivot('status')
-                    ->withTimestamps(); // Include pivot timestamps if using them
+            ->withPivot('is_admin') // Specify pivot columns to retrieve
+            ->withPivot('status')
+            ->withTimestamps(); // Include pivot timestamps if using them
     }
 
     public function medals(): BelongsToMany

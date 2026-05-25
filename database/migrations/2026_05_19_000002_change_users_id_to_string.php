@@ -6,10 +6,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-return new class () extends Migration
+return new class() extends Migration
 {
     /**
-     * Change users.id from an auto-incrementing integer to a random 16-character
+     * Change users.id from an auto-incrementing integer to a random 7-character
      * string, and update every table that holds a foreign key reference to users.id.
      *
      * Using a random string as the primary key prevents sequential-ID enumeration
@@ -111,7 +111,7 @@ return new class () extends Migration
         $this->populateMappedColumn('api_interactions', 'trackable_id', '_n_trackable_id', $mapping, "trackable_type = 'App\\Models\\User'");
         DB::statement(
             'UPDATE "api_interactions" SET "_n_trackable_id" = CAST("trackable_id" AS TEXT)' .
-            ' WHERE "trackable_type" != ? OR "trackable_type" IS NULL',
+                ' WHERE "trackable_type" != ? OR "trackable_type" IS NULL',
             ['App\Models\User']
         );
     }
@@ -159,7 +159,7 @@ return new class () extends Migration
 
         $cases        = implode(' ', array_fill(0, count($mapping), 'WHEN ? THEN ?'));
         $placeholders = implode(', ', array_fill(0, count($mapping), '?'));
-        $caseBindings = collect($mapping)->flatMap(fn ($v, $k) => [$k, $v])->values()->all();
+        $caseBindings = collect($mapping)->flatMap(fn($v, $k) => [$k, $v])->values()->all();
         $whereIn      = array_keys($mapping);
 
         $where = "\"$fromCol\" IN ($placeholders)";
@@ -275,7 +275,7 @@ return new class () extends Migration
             $onDelete = $fk['delete'] === 'SET NULL' ? 'ON DELETE SET NULL' : 'ON DELETE CASCADE';
             DB::statement(
                 "ALTER TABLE \"{$fk['table']}\" ADD CONSTRAINT \"{$fk['constraint']}\" " .
-                "FOREIGN KEY (\"{$fk['column']}\") REFERENCES \"users\" (\"id\") {$onDelete}"
+                    "FOREIGN KEY (\"{$fk['column']}\") REFERENCES \"users\" (\"id\") {$onDelete}"
             );
         }
 
@@ -311,7 +311,7 @@ return new class () extends Migration
     {
         // ── Column info ──────────────────────────────────────────────────────
         $cols     = DB::select("PRAGMA table_info(\"$table\")");
-        $keepCols = array_values(array_filter($cols, fn ($c) => $c->name !== $column));
+        $keepCols = array_values(array_filter($cols, fn($c) => $c->name !== $column));
 
         // ── Index info: keep indexes that do NOT reference the dropped column ─
         $rawIndexes = DB::select(
@@ -337,7 +337,7 @@ return new class () extends Migration
                     continue; // Drop the FK entirely
                 }
                 // Redirect: replace the old column name with the replacement
-                $fromCols = $fromCols->map(fn ($c) => $c === $column ? $redirectFkTo : $c);
+                $fromCols = $fromCols->map(fn($c) => $c === $column ? $redirectFkTo : $c);
             }
 
             $fromStr  = '"' . $fromCols->join('", "') . '"';
@@ -362,7 +362,7 @@ return new class () extends Migration
 
         // ── Table swap ───────────────────────────────────────────────────────
         $tmp     = '__mig_' . $table;
-        $colList = implode(', ', array_map(fn ($c) => '"' . $c->name . '"', $keepCols));
+        $colList = implode(', ', array_map(fn($c) => '"' . $c->name . '"', $keepCols));
         DB::statement(sprintf(
             'CREATE TABLE "%s" (%s)',
             $tmp,
