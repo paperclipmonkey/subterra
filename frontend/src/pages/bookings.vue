@@ -161,7 +161,7 @@ defineOptions({ name: 'MyBookings' })
 const notificationStore = useNotificationStore()
 const appStore = useAppStore()
 const isAccessOfficer = computed(() => {
-  return appStore.user?.is_admin || appStore.user?.roles?.some(r => r.slug === 'access_officer')
+  return appStore.user?.roles?.some(r => ['access_officer', 'platform_admin'].includes(r.slug))
 })
 const tab = ref('mine')
 const loadingBookings = ref(true)

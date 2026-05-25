@@ -313,4 +313,144 @@ class MedalAwardingTest extends TestCase
         $listener->handle($event);
         $this->assertTrue($user->fresh()->medals->contains('name', 'String Dangler'));
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_copper_miner_medal_for_caving_at_great_orme()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Copper Miner',
+            'description' => 'Awarded for caving at the Great Orme',
+        ]);
+        $tag = \App\Models\Tag::factory()->create(['tag' => 'Great Orme', 'category' => 'region', 'type' => 'cave']);
+        $cave = \App\Models\Cave::factory()->create();
+        $cave->tags()->attach($tag);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Copper Miner'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_dragons_lair_medal_for_five_welsh_trips()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => "Dragon's Lair",
+            'description' => 'Awarded for 5 trips to Welsh caves',
+        ]);
+        $walesTag = \App\Models\Tag::factory()->create(['tag' => 'Wales', 'category' => 'region', 'type' => 'cave']);
+        for ($i = 0; $i < 5; ++$i) {
+            $cave = \App\Models\Cave::factory()->create();
+            $cave->tags()->attach($walesTag);
+            $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user);
+        }
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', "Dragon's Lair"));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_completionist_medal_for_completing_a_cave_collection()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Completionist',
+            'description' => 'Awarded for completing any cave collection',
+        ]);
+        $cave1 = \App\Models\Cave::factory()->create();
+        $cave2 = \App\Models\Cave::factory()->create();
+        $collection = \App\Models\Collection::factory()->create();
+        $collection->caves()->attach([$cave1->id, $cave2->id]);
+        $trip1 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave1->id]);
+        $trip2 = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave2->id]);
+        $trip1->participants()->attach($user);
+        $trip2->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip2, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Completionist'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_does_not_get_completionist_medal_for_incomplete_collection()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Completionist',
+            'description' => 'Awarded for completing any cave collection',
+        ]);
+        $cave1 = \App\Models\Cave::factory()->create();
+        $cave2 = \App\Models\Cave::factory()->create();
+        $collection = \App\Models\Collection::factory()->create();
+        $collection->caves()->attach([$cave1->id, $cave2->id]);
+        // User only visits cave1, not cave2
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave1->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertFalse($user->fresh()->medals->contains('name', 'Completionist'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_slate_heart_medal_for_caving_in_north_wales()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Slate Heart',
+            'description' => 'Awarded for caving in North Wales',
+        ]);
+        $tag = \App\Models\Tag::factory()->create(['tag' => 'North Wales', 'category' => 'region', 'type' => 'cave']);
+        $cave = \App\Models\Cave::factory()->create();
+        $cave->tags()->attach($tag);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Slate Heart'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_gower_power_medal_for_caving_in_gower()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Gower Power',
+            'description' => 'Awarded for caving in Gower',
+        ]);
+        $tag = \App\Models\Tag::factory()->create(['tag' => 'Gower', 'category' => 'region', 'type' => 'cave']);
+        $cave = \App\Models\Cave::factory()->create();
+        $cave->tags()->attach($tag);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Gower Power'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_free_miner_medal_for_caving_in_forest_of_dean()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Free Miner',
+            'description' => 'Awarded for caving in the Forest of Dean',
+        ]);
+        $tag = \App\Models\Tag::factory()->create(['tag' => 'Forest of Dean', 'category' => 'region', 'type' => 'cave']);
+        $cave = \App\Models\Cave::factory()->create();
+        $cave->tags()->attach($tag);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Free Miner'));
+    }
 }

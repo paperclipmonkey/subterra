@@ -15,6 +15,19 @@
       </v-card>
     </v-dialog>
   </div>
+
+  <v-dialog v-model="showDiagramModal" max-width="95vw">
+    <v-card class="rounded-lg overflow-auto">
+      <v-card-text class="pa-6 d-flex justify-center">
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <div v-html="diagramSvg" />
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn variant="text" @click="showDiagramModal = false">Close</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -87,6 +100,7 @@ function geojsonPlugin(md) {
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import VueMarkdown from 'vue-markdown-render'
+import DOMPurify from 'dompurify'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 const props = defineProps({
@@ -100,6 +114,7 @@ const router = useRouter()
 const container = ref(null)
 const showDiagramModal = ref(false)
 const diagramSvg = ref('')
+const sanitizeSvg = (svg) => DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } })
 
 // Track MapLibre instances so we can destroy them when the component unmounts
 const mapInstances = []
@@ -151,12 +166,13 @@ const renderMermaidDiagrams = async () => {
 
             try {
                 const { svg } = await mermaid.render(id, text)
-                node.innerHTML = svg
+                const sanitizedSvg = sanitizeSvg(svg)
+                node.innerHTML = sanitizedSvg
                 node.setAttribute('data-processed', 'true')
                 node.style.cursor = 'pointer'
                 node.title = 'Click to enlarge'
                 node.addEventListener('click', () => {
-                    diagramSvg.value = node.innerHTML
+                    diagramSvg.value = sanitizedSvg
                     showDiagramModal.value = true
                 })
             } catch (renderError) {
