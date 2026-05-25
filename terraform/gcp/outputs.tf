@@ -27,3 +27,18 @@ output "media_pubsub_topic" {
   description = "Pub/Sub topic for all media processing notifications"
   value       = google_pubsub_topic.media_notifications.id
 }
+
+output "cloudsql_instance_name" {
+  description = "Cloud SQL instance name"
+  value       = google_sql_database_instance.postgres.name
+}
+
+output "cloudsql_public_ip" {
+  description = "Cloud SQL public IP address (set as DB_HOST in the app)"
+  value       = google_sql_database_instance.postgres.public_ip_address
+}
+
+output "cloudsql_connection_name" {
+  description = "Cloud SQL connection name — used with the Cloud SQL Auth Proxy (project:region:instance)"
+  value       = google_sql_database_instance.postgres.connection_name
+}
