@@ -43,7 +43,7 @@
     "jsdom": "^28.1.0",
     "maplibre-gl": "^5.18.0",
     "pinia": "^3.0.4",
-    "sass-embedded": "1.97.3",
+    "sass-embedded": "1.100.0",
     "unplugin-auto-import": "^21.0.0",
     "unplugin-fonts": "^1.4.0",
     "unplugin-vue-components": "^31.0.0",
