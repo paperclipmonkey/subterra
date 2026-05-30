@@ -9,7 +9,7 @@ class SyncMcraCaves extends SyncCaveRegistryBaseCommand
     protected $signature = 'sync:mcra-caves
                             {--dry-run : Parse the file without inserting data}
                             {--blocklist= : Comma-separated list of names to always skip}
-                            {--min-length=0 : Minimum length in meters to import (0 = all)}';
+                            {--min-length=10 : Minimum length in meters to import (0 = all)}';
 
     protected $description = 'Sync caves from the Mendip Cave Registry and Archive (MCRA) KML feed';
 
