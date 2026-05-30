@@ -14,6 +14,15 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="6">
+        <v-card :to="{ path: '/trips/discover' }" link height="150" class="d-flex align-center justify-center">
+          <div class="text-center">
+            <v-icon size="48" color="deep-orange" class="mb-2" :icon="mdiCompass" />
+            <div class="text-h5">Discover</div>
+            <div class="text-body-2 text-medium-emphasis">Explore recent trip activity</div>
+          </div>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="6">
         <v-card :to="{ path: '/huts' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="primary" class="mb-2" :icon="mdiHomeMapMarker" />
@@ -101,7 +110,7 @@
 </template>
 
 <script setup>
-import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
+import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiCompass, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useOfflineStore } from '@/stores/offline'
 import { computed } from 'vue'

@@ -27,6 +27,8 @@ class TripSummaryResource extends JsonResource
                 'id' => $this->entrance->id,
                 'name' => $this->entrance->name,
                 'slug' => $this->entrance->slug,
+                'location_lat' => $this->entrance->location_lat,
+                'location_lng' => $this->entrance->location_lng,
             ] : null,
             'media' => MediaResource::collection($this->whenLoaded('media')),
             'entrance_hero_image' => $this->entrance?->heroImage?->filename
