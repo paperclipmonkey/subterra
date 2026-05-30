@@ -203,6 +203,7 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     // Content & Data shared (Platform Admin OR Data Admin)
     Route::middleware(ApiIsAdmin::class.':platform_admin,data_admin')->group(function () {
         Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
+        Route::post('/cave-registry-sync/{registry}', [App\Http\Controllers\Admin\CaveRegistrySyncController::class, 'dispatch'])->name('admin.cave-registry-sync');
         Route::apiResource('pages', App\Http\Controllers\PageController::class);
         Route::apiResource('suggested-edits', App\Http\Controllers\Admin\SuggestedEditController::class)->only(['index', 'show']);
         Route::post('/suggested-edits/{suggested_edit}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approve']);

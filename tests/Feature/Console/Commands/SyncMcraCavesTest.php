@@ -23,6 +23,7 @@ class SyncMcraCavesTest extends TestCase
             'www.mcra.org.uk/registry/googleEarth/placemarks.php?query=Caves' => Http::response($this->getMockKmlCaves(), 200),
             'www.mcra.org.uk/registry/sitedetails.php?id=97' => Http::response($this->getMockSiteDetails97(), 200),
             'www.mcra.org.uk/registry/sitedetails.php?id=384' => Http::response($this->getMockSiteDetails384(), 200),
+            'www.mcra.org.uk/registry/sitedetails.php?id=500' => Http::response($this->getMockSiteDetails500Portland(), 200),
             'www.mcra.org.uk/registry/sitedetails.php?id=999' => Http::response($this->getMockSiteDetailsShort(), 200),
         ]);
 
@@ -49,6 +50,11 @@ class SyncMcraCavesTest extends TestCase
    <name>Balch Cave</name>
    <description><![CDATA[<p>Once one of Britain's most beautifully decorated caves.</p><p><a href="https://www.mcra.org.uk/registry/sitedetails.php?id=384">Full Site Details</a></p><p><small>Database content Copyright 2026 <a href="https://www.mcra.org.uk">Mendip Cave Registry and Archive</a></small></p>]]></description>
    <Point><coordinates>-2.49186482092332,51.2265554769675</coordinates></Point>
+  </Placemark>
+  <Placemark>
+   <name>Portland Cave</name>
+   <description><![CDATA[<p>A coastal cave on Portland.</p><p><a href="https://www.mcra.org.uk/registry/sitedetails.php?id=500">Full Site Details</a></p><p><small>Database content Copyright 2026 <a href="https://www.mcra.org.uk">Mendip Cave Registry and Archive</a></small></p>]]></description>
+   <Point><coordinates>-2.454,50.543</coordinates></Point>
   </Placemark>
  </Document>
 </kml>
@@ -459,4 +465,65 @@ HTML;
             'slug' => 'mendip_attborough-swallet',
         ]);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_assigns_portland_tag_instead_of_mendip_for_portland_caves(): void
+    {
+        Tag::firstOrCreate(['tag' => 'Portland', 'category' => 'region'], ['type' => 'cave']);
+
+        $this->artisan('sync:mcra-caves')
+            ->assertExitCode(0);
+
+        // Portland Cave (id=500) has "Westcliff, Portland." as its location
+        $portlandCave = Cave::where('name', 'Portland Cave')->firstOrFail();
+        $mendipCave = Cave::where('name', 'Attborough Swallet')->firstOrFail();
+
+        $this->assertContains('Portland', $portlandCave->tags->pluck('tag')->toArray());
+        $this->assertNotContains('Mendip', $portlandCave->tags->pluck('tag')->toArray());
+
+        $this->assertContains('Mendip', $mendipCave->tags->pluck('tag')->toArray());
+        $this->assertNotContains('Portland', $mendipCave->tags->pluck('tag')->toArray());
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_whitelisted_cave_bypasses_min_length_filter(): void
+    {
+        // Short Cave Mendip is 50 m — normally filtered out at min-length=200
+        // but whitelisting it should force its import.
+        $whitelistPath = storage_path('app/mcra_whitelist.txt');
+        $originalContent = file_get_contents($whitelistPath);
+        file_put_contents($whitelistPath, $originalContent."\nShort Cave Mendip\n");
+
+        try {
+            $this->artisan('sync:mcra-caves --min-length=200')
+                ->assertExitCode(0);
+
+            $this->assertDatabaseHas('caves', ['name' => 'Attborough Swallet']);
+            $this->assertDatabaseHas('caves', ['name' => 'Balch Cave']);
+            // Should be imported despite being 50 m because it's whitelisted
+            $this->assertDatabaseHas('caves', ['name' => 'Short Cave Mendip']);
+        } finally {
+            file_put_contents($whitelistPath, $originalContent);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Additional mock fixtures
+    // -----------------------------------------------------------------------
+
+    private function getMockSiteDetails500Portland(): string
+    {
+        return <<<'HTML'
+<html><body>
+<h1>Portland Cave</h1>
+<p><strong>Westcliff, Portland.</strong></p>
+<table class='rowhover'>
+<tr><td>Length:</td><td>120 m</td></tr>
+<tr><td>Depth:</td><td>10 m</td></tr>
+<tr><td>Altitude:</td><td>5 m</td></tr>
+</table>
+</body></html>
+HTML;
+    }
 }
+

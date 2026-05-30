@@ -55,11 +55,11 @@ class TagSeeder extends Seeder
         ]);
 
         Tag::updateOrCreate([
-            'tag' => 'Assynt',
+            'tag' => 'Scotland',
             'type' => 'cave',
             'category' => 'region',
         ], [
-            'description' => "Scotland has some of the UK's most remote and challenging caves, including the famous Claonaite System.",
+            'description' => "Scotland is home to some of the UK's most remote and challenging caves, spread across the Highlands and Islands.",
         ]);
 
         Tag::updateOrCreate([
