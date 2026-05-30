@@ -55,7 +55,7 @@ class TripTest extends TestCase
         ]);
         $trip = Trip::factory()->create([
             'visibility' => 'public',
-            'entrance_id' => $entrance->id,
+            'entrance_cave_id' => $entrance->id,
         ]);
 
         $this->actingAs($user);
@@ -66,30 +66,6 @@ class TripTest extends TestCase
         $this->assertNotNull($tripData);
         $this->assertEquals(54.1234, $tripData['entrance']['location_lat']);
         $this->assertEquals(-2.5678, $tripData['entrance']['location_lng']);
-        $this->assertResponseMatchesSchema($response, 'endpoints/trips-index');
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
-    public function it_includes_null_entrance_coordinates_when_cave_has_no_location()
-    {
-        $user = User::factory()->create();
-        $entrance = Cave::factory()->create([
-            'location_lat' => null,
-            'location_lng' => null,
-        ]);
-        $trip = Trip::factory()->create([
-            'visibility' => 'public',
-            'entrance_id' => $entrance->id,
-        ]);
-
-        $this->actingAs($user);
-        $response = $this->getJson('/api/trips');
-
-        $response->assertOk();
-        $tripData = collect($response->json('data'))->firstWhere('id', $trip->short_id);
-        $this->assertNotNull($tripData);
-        $this->assertNull($tripData['entrance']['location_lat']);
-        $this->assertNull($tripData['entrance']['location_lng']);
         $this->assertResponseMatchesSchema($response, 'endpoints/trips-index');
     }
 

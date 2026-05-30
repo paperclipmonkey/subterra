@@ -12,11 +12,11 @@ return new class () extends Migration {
             ->where('category', 'region')
             ->value('id');
 
-        if (! $scotlandId) {
+        if (!$scotlandId) {
             $scotlandId = DB::table('tags')->insertGetId([
-                'tag'         => 'Scotland',
-                'type'        => 'cave',
-                'category'    => 'region',
+                'tag' => 'Scotland',
+                'type' => 'cave',
+                'category' => 'region',
                 'description' => "Scotland is home to some of the UK's most remote and challenging caves, spread across the Highlands and Islands.",
             ]);
         }
@@ -26,7 +26,7 @@ return new class () extends Migration {
             ->where('category', 'region')
             ->value('id');
 
-        if (! $assyntId) {
+        if (!$assyntId) {
             return; // Nothing to migrate.
         }
 
@@ -69,7 +69,7 @@ return new class () extends Migration {
         DB::table('tags')->updateOrInsert(
             ['tag' => 'Assynt', 'category' => 'region'],
             [
-                'type'        => 'cave',
+                'type' => 'cave',
                 'description' => "Scotland has some of the UK's most remote and challenging caves, including the famous Claonaite System.",
             ]
         );

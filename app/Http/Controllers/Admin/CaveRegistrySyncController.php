@@ -12,7 +12,7 @@ class CaveRegistrySyncController extends Controller
 
     public function dispatch(string $registry): JsonResponse
     {
-        if (! in_array($registry, self::REGISTRIES, true)) {
+        if (!in_array($registry, self::REGISTRIES, true)) {
             return response()->json(['message' => 'Unknown registry.'], 422);
         }
 

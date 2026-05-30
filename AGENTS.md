@@ -191,9 +191,11 @@ cd gcp-watchdog && yarn test
 
 ## Important Conventions
 
-- Tests should be written for **all API endpoints**.
+- **Tests are mandatory.** Every backend change must be accompanied by PHPUnit tests. Every new API endpoint or change to an existing one needs a Feature test. Changes to `JsonResource` classes must have their JSON schema updated in `tests/schemas/` and a test asserting the new field. Role/permission changes must be tested in `tests/Feature/Admin/`.
 - Use the **latest PHPUnit attribute syntax** (`#[Test]`, `#[DataProvider]`, etc.).
 - The frontend uses **file-based routing** — adding a `.vue` file to `src/pages/` automatically creates a route.
 - API responses follow a consistent `{ data: ... }` envelope for resources.
 - Images are stored in cloud storage (GCS or S3 depending on environment); local dev uses a local disk driver.
 - The Pip AI assistant (`/api/assistant/*`) is a separate feature with its own access control — test with a `withPipAccess()` user.
+- When adding fields to a `JsonResource`, always update the corresponding JSON schema in `tests/schemas/objects/` — schemas use `additionalProperties: false` and will fail if new fields are not added.
+- Use `import { api } from '@/plugins/api'` (named export) for HTTP calls in the frontend — not the default export.

@@ -70,7 +70,7 @@ class SuggestedEditController extends Controller
                             $sub->select('id')->from('routes')->where('name', 'ilike', "%{$search}%");
                         });
                 })
-                ->orWhereRaw("suggested_data::text ilike ?", ["%{$search}%"]);
+                ->orWhereRaw('suggested_data::text ilike ?', ["%{$search}%"]);
             });
         }
 

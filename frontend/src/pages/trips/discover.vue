@@ -19,7 +19,7 @@
             <v-icon :icon="mdiCompass" size="18" class="mr-1" />
             What's happening underground
           </div>
-          <div class="stats-row" v-if="!loading">
+          <div v-if="!loading" class="stats-row">
             <span class="stat-pill">
               <v-icon size="11" :icon="mdiCalendarMonth" class="mr-1" />
               {{ monthlyTripCount }} trip{{ monthlyTripCount !== 1 ? 's' : '' }} this month
@@ -41,10 +41,10 @@
 
       <!-- Age legend -->
       <div class="legend-overlay">
-        <span class="legend-item"><span class="legend-dot" style="background:#FF6B35;box-shadow:0 0 6px #FF6B35aa;"></span>This week</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#FFB300;"></span>This month</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#26C6DA;"></span>This year</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#78909C;"></span>Older</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#FF6B35;box-shadow:0 0 6px #FF6B35aa;" />This week</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#FFB300;" />This month</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#26C6DA;" />This year</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#78909C;" />Older</span>
       </div>
     </div>
 
