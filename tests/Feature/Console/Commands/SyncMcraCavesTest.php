@@ -491,7 +491,7 @@ HTML;
         // Short Cave Mendip is 50 m — normally filtered out at min-length=200
         // but whitelisting it should force its import.
         $whitelistPath = storage_path('app/mcra_whitelist.txt');
-        $originalContent = file_get_contents($whitelistPath);
+        $originalContent = file_exists($whitelistPath) ? file_get_contents($whitelistPath) : '';
         file_put_contents($whitelistPath, $originalContent."\nShort Cave Mendip\n");
 
         try {
@@ -503,7 +503,11 @@ HTML;
             // Should be imported despite being 50 m because it's whitelisted
             $this->assertDatabaseHas('caves', ['name' => 'Short Cave Mendip']);
         } finally {
-            file_put_contents($whitelistPath, $originalContent);
+            if ($originalContent === '') {
+                @unlink($whitelistPath);
+            } else {
+                file_put_contents($whitelistPath, $originalContent);
+            }
         }
     }
 
