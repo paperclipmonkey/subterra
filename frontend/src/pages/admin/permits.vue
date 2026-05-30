@@ -182,11 +182,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { mdiArrowLeft, mdiCheckCircle, mdiCloseCircle, mdiDelete, mdiMagnify, mdiPencil, mdiPlus } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
 
 defineOptions({ name: 'AdminPermits' })
+
+const route = useRoute()
 
 const notificationStore = useNotificationStore()
 
@@ -331,8 +334,12 @@ const deletePermit = async () => {
   }
 }
 
-onMounted(() => {
-  fetchPermits()
+onMounted(async () => {
+  await fetchPermits()
   fetchCavesAndUsers()
+  if (route.query.edit) {
+    const target = permits.value.find(p => p.slug === route.query.edit)
+    if (target) openEditDialog(target)
+  }
 })
 </script>

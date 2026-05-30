@@ -28,7 +28,7 @@ class BookingController extends Controller
      */
     public function publicPermits(): ResourceCollection
     {
-        $permits = Permit::with('caves')
+        $permits = Permit::with(['caves.system', 'officers'])
             ->where('is_active', true)
             ->orderBy('name')
             ->get();

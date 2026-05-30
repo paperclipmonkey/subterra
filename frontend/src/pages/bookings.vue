@@ -90,13 +90,23 @@
 
       <!-- Browse Permits -->
       <v-tabs-window-item value="browse">
+        <v-text-field
+          v-model="permitSearch"
+          placeholder="Search permits..."
+          :prepend-inner-icon="mdiMagnify"
+          variant="outlined"
+          density="compact"
+          class="mb-4"
+          clearable
+          hide-details
+        />
         <v-progress-linear v-if="loadingPermits" indeterminate class="mb-4" />
         <v-row v-if="!loadingPermits">
-          <v-col v-if="permits.length === 0" cols="12">
+          <v-col v-if="filteredPermits.length === 0" cols="12">
             <p class="text-grey-darken-1 text-center py-8">No permits are currently available.</p>
           </v-col>
-          <v-col v-for="permit in permits" :key="permit.id" cols="12" md="6">
-            <v-card :to="`/caves/${permit.caves?.[0]?.slug}/bookings`" link>
+          <v-col v-for="permit in filteredPermits" :key="permit.id" cols="12" md="6">
+            <v-card>
               <v-card-title>{{ permit.name }}</v-card-title>
               <v-card-subtitle v-if="permit.caves?.length">
                 {{ permit.caves.map(c => c.name).join(', ') }}
@@ -116,6 +126,16 @@
               <v-card-actions>
                 <v-btn color="primary" variant="tonal" :to="`/caves/${permit.caves?.[0]?.slug}/bookings`">
                   View availability &amp; apply
+                </v-btn>
+                <v-spacer />
+                <v-btn
+                  v-if="canEditPermit(permit)"
+                  color="secondary"
+                  variant="tonal"
+                  size="small"
+                  :to="`/admin/permits?edit=${permit.slug}`"
+                >
+                  Edit
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -151,6 +171,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { mdiMagnify } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
@@ -163,11 +184,33 @@ const appStore = useAppStore()
 const isAccessOfficer = computed(() => {
   return appStore.user?.roles?.some(r => ['access_officer', 'platform_admin'].includes(r.slug))
 })
+const isPlatformAdmin = computed(() => {
+  return appStore.user?.roles?.some(r => r.slug === 'platform_admin')
+})
 const tab = ref('mine')
 const loadingBookings = ref(true)
 const loadingPermits = ref(true)
 const bookings = ref([])
 const permits = ref([])
+const permitSearch = ref('')
+
+const filteredPermits = computed(() => {
+  const q = permitSearch.value?.trim().toLowerCase()
+  if (!q) return permits.value
+  return permits.value.filter(permit => {
+    if (permit.name?.toLowerCase().includes(q)) return true
+    if (permit.description?.toLowerCase().includes(q)) return true
+    if (permit.caves?.some(c => c.name?.toLowerCase().includes(q))) return true
+    if (permit.caves?.some(c => c.system?.name?.toLowerCase().includes(q))) return true
+    return false
+  })
+})
+
+const canEditPermit = (permit) => {
+  if (isPlatformAdmin.value) return true
+  const userId = appStore.user?.id
+  return permit.officers?.some(o => o.id === userId)
+}
 const cancelDialog = ref(false)
 const cancellingBooking = ref(null)
 const cancelling = ref(false)

@@ -677,15 +677,21 @@ onMounted(async () => {
       delete loadedTrip.system
       Object.assign(trip, loadedTrip)
 
-      tripStartDate.value = moment.utc(loadedTrip.start_time).local().format('YYYY-MM-DD')
-      tripStartTime.value = moment.utc(loadedTrip.start_time).local().format('HH:mm')
+      if (loadedTrip.start_time) {
+        tripStartDate.value = moment.utc(loadedTrip.start_time).local().format('YYYY-MM-DD')
+        tripStartTime.value = moment.utc(loadedTrip.start_time).local().format('HH:mm')
+      }
 
       // Calculate duration from start_time and end_time
-      const startTime = moment.utc(loadedTrip.start_time).local()
-      const endTime = moment.utc(loadedTrip.end_time).local()
-      const durationInMinutes = endTime.diff(startTime, 'minutes')
-      tripDurationHours.value = Math.floor(durationInMinutes / 60)
-      tripDurationMinutes.value = durationInMinutes % 60
+      if (loadedTrip.start_time && loadedTrip.end_time) {
+        const startTime = moment.utc(loadedTrip.start_time).local()
+        const endTime = moment.utc(loadedTrip.end_time).local()
+        const durationInMinutes = endTime.diff(startTime, 'minutes')
+        if (durationInMinutes >= 0) {
+          tripDurationHours.value = Math.floor(durationInMinutes / 60)
+          tripDurationMinutes.value = durationInMinutes % 60
+        }
+      }
 
       if (loadedTrip.entrance_cave_id !== loadedTrip.exit_cave_id) {
         throughTrip.value = true
