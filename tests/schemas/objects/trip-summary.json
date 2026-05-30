@@ -30,6 +30,12 @@
                         },
                         "slug": {
                             "type": "string"
+                        },
+                        "location_lat": {
+                            "type": ["number", "null"]
+                        },
+                        "location_lng": {
+                            "type": ["number", "null"]
                         }
                     },
                     "required": [

@@ -49,4 +49,59 @@ class UserRoleConstraintTest extends TestCase
         $response->assertStatus(200);
         $this->assertTrue($user->fresh()->hasRole('duty_officer'));
     }
+
+    public function test_access_officer_role_can_be_toggled_on()
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('platform_admin');
+
+        $user = User::factory()->create();
+        Role::firstOrCreate(['slug' => 'access_officer'], ['name' => 'Access Officer']);
+
+        $response = $this->actingAs($admin)
+            ->putJson("/api/admin/users/{$user->id}/toggle-role/access_officer");
+
+        $response->assertStatus(200);
+        $this->assertTrue($user->fresh()->hasRole('access_officer'));
+    }
+
+    public function test_access_officer_role_can_be_toggled_off()
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('platform_admin');
+
+        $user = User::factory()->accessOfficer()->create();
+
+        $response = $this->actingAs($admin)
+            ->putJson("/api/admin/users/{$user->id}/toggle-role/access_officer");
+
+        $response->assertStatus(200);
+        $this->assertFalse($user->fresh()->hasRole('access_officer'));
+    }
+
+    public function test_invalid_role_is_rejected()
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('platform_admin');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($admin)
+            ->putJson("/api/admin/users/{$user->id}/toggle-role/nonexistent_role");
+
+        $response->assertStatus(422);
+    }
+
+    public function test_non_admin_cannot_toggle_roles()
+    {
+        $regularUser = User::factory()->create();
+        $target = User::factory()->create();
+        Role::firstOrCreate(['slug' => 'access_officer'], ['name' => 'Access Officer']);
+
+        $response = $this->actingAs($regularUser)
+            ->putJson("/api/admin/users/{$target->id}/toggle-role/access_officer");
+
+        $response->assertStatus(403);
+        $this->assertFalse($target->fresh()->hasRole('access_officer'));
+    }
 }
