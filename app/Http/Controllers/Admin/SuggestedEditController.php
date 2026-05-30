@@ -25,10 +25,56 @@ class SuggestedEditController extends Controller
     {
         $status = $request->query('status', 'pending');
 
-        return SuggestedEdit::with(['user', 'suggestable'])
-            ->where('status', $status)
-            ->latest()
-            ->paginate(20);
+        $query = SuggestedEdit::with(['user', 'suggestable'])
+            ->where('status', $status);
+
+        if ($request->filled('cave_id')) {
+            // Show suggestions for the cave itself AND its cave system
+            $cave = Cave::find($request->query('cave_id'));
+            $query->where(function ($q) use ($cave) {
+                $q->where(function ($q2) use ($cave) {
+                    $q2->where('suggestable_type', Cave::class)
+                       ->where('suggestable_id', $cave->id);
+                });
+                if ($cave?->cave_system_id) {
+                    $q->orWhere(function ($q2) use ($cave) {
+                        $q2->where('suggestable_type', CaveSystem::class)
+                           ->where('suggestable_id', $cave->cave_system_id);
+                    });
+                }
+            });
+        } elseif ($request->filled('suggestable_type') && $request->filled('suggestable_id')) {
+            $query->where('suggestable_type', $request->query('suggestable_type'))
+                  ->where('suggestable_id', $request->query('suggestable_id'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->query('search');
+            $query->where(function ($q) use ($search) {
+                // Search name in each possible related table (whereHas doesn't work on morphTo)
+                $q->where(function ($q2) use ($search) {
+                    $q2->where('suggestable_type', Cave::class)
+                        ->whereIn('suggestable_id', function ($sub) use ($search) {
+                            $sub->select('id')->from('caves')->where('name', 'ilike', "%{$search}%");
+                        });
+                })
+                ->orWhere(function ($q2) use ($search) {
+                    $q2->where('suggestable_type', CaveSystem::class)
+                        ->whereIn('suggestable_id', function ($sub) use ($search) {
+                            $sub->select('id')->from('cave_systems')->where('name', 'ilike', "%{$search}%");
+                        });
+                })
+                ->orWhere(function ($q2) use ($search) {
+                    $q2->where('suggestable_type', Route::class)
+                        ->whereIn('suggestable_id', function ($sub) use ($search) {
+                            $sub->select('id')->from('routes')->where('name', 'ilike', "%{$search}%");
+                        });
+                })
+                ->orWhereRaw("suggested_data::text ilike ?", ["%{$search}%"]);
+            });
+        }
+
+        return $query->latest()->paginate(20);
     }
 
     public function show(SuggestedEdit $suggestedEdit)

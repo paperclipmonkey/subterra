@@ -7,6 +7,31 @@
       </v-btn>
     </div>
 
+    <v-text-field
+      v-model="searchQuery"
+      :prepend-inner-icon="mdiMagnify"
+      label="Search by cave name or content"
+      clearable
+      hide-details
+      density="compact"
+      variant="outlined"
+      class="mb-4"
+      @update:model-value="onSearchInput"
+      @click:clear="clearSearch"
+    />
+
+    <v-chip
+      v-if="filterLabel"
+      closable
+      color="warning"
+      variant="tonal"
+      size="small"
+      class="mb-4"
+      @click:close="clearFilter"
+    >
+      {{ filterLabel }}
+    </v-chip>
+
     <v-tabs v-model="activeTab" bg-color="transparent" color="primary" class="mb-6">
       <v-tab value="pending">Pending</v-tab>
       <v-tab value="approved">Approved</v-tab>
@@ -112,13 +137,52 @@
 </template>
 
 <script setup>
-import { mdiArrowRight, mdiFileDocument, mdiFileDocumentOutline, mdiFolderMultipleImage, mdiImageFilterHdr, mdiMapMarkerPath, mdiRefresh } from '@mdi/js'
-import { ref, onMounted, watch } from 'vue'
+import { mdiArrowRight, mdiFileDocument, mdiFileDocumentOutline, mdiFolderMultipleImage, mdiImageFilterHdr, mdiMagnify, mdiMapMarkerPath, mdiRefresh } from '@mdi/js'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/plugins/api.js'
+
+const route = useRoute()
+const router = useRouter()
 
 const loading = ref(false)
 const items = ref([])
 const activeTab = ref('pending')
+const searchQuery = ref('')
+
+// cave_id filter — shows cave + its cave system suggestions (set via URL query params from cave page)
+const filterCaveId = ref(route.query.cave_id || '')
+// legacy suggestable_type / suggestable_id filter
+const filterType = ref(route.query.suggestable_type || '')
+const filterId = ref(route.query.suggestable_id || '')
+
+const filterLabel = computed(() => {
+  if (filterCaveId.value) return `Cave #${filterCaveId.value} (cave + system)`
+  if (filterId.value) {
+    const typeName = filterType.value?.split('\\').pop() || 'Item'
+    return `Filtered to ${typeName} #${filterId.value}`
+  }
+  return null
+})
+
+let searchTimer = null
+const onSearchInput = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => fetchItems(), 400)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  fetchItems()
+}
+
+const clearFilter = () => {
+  filterCaveId.value = ''
+  filterType.value = ''
+  filterId.value = ''
+  router.replace({ query: {} })
+  fetchItems()
+}
 
 const IGNORED_KEYS = new Set([
   'id', 'created_at', 'updated_at', 'deleted_at', 'slug', 'user_id',
@@ -186,9 +250,15 @@ const fetchItems = async () => {
   loading.value = true
   items.value = []
   try {
-    const response = await api.get('/api/admin/suggested-edits', {
-      params: { status: activeTab.value }
-    })
+    const params = { status: activeTab.value }
+    if (searchQuery.value?.trim()) params.search = searchQuery.value.trim()
+    if (filterCaveId.value) {
+      params.cave_id = filterCaveId.value
+    } else if (filterType.value && filterId.value) {
+      params.suggestable_type = filterType.value
+      params.suggestable_id = filterId.value
+    }
+    const response = await api.get('/api/admin/suggested-edits', { params })
     items.value = response.data.data
   } catch (error) {
     console.error('Error fetching suggestions:', error)

@@ -16,6 +16,16 @@
         >
           {{ appStore.user?.is_admin ? 'Edit Cave' : 'Suggest Edit' }}
         </v-btn>
+        <v-chip
+          v-if="appStore.user?.is_admin && pendingSuggestionsCount > 0"
+          color="warning"
+          size="small"
+          variant="tonal"
+          class="mr-2 cursor-pointer"
+          :to="`/admin/suggested-edits?cave_id=${cave.id}`"
+        >
+          {{ pendingSuggestionsCount }} pending {{ pendingSuggestionsCount === 1 ? 'edit' : 'edits' }}
+        </v-chip>
         <v-btn
           v-else-if="appStore.user"
           variant="text"
@@ -659,6 +669,7 @@ const cavePermit = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const activeTab = ref(route.query.tab || 'overview')
+const pendingSuggestionsCount = ref(0)
 
 const isDescriptionStub = computed(() => {
   if (!cave.value) return false
@@ -758,6 +769,7 @@ const fetchCave = async () => {
     if (!cave.value.trips) {
       cave.value.trips = []
     }
+    fetchPendingSuggestions()
   } catch (e) {
     const trulyOffline = !navigator.onLine
     const noResponse = !e.response
@@ -845,6 +857,21 @@ const fetchCavePermit = async () => {
     cavePermit.value = response.data.data
   } catch (e) {
     // permit info is optional
+  }
+}
+
+const fetchPendingSuggestions = async () => {
+  if (!appStore.user?.is_admin || !cave.value?.id) return
+  try {
+    const response = await api.get('/api/admin/suggested-edits', {
+      params: {
+        status: 'pending',
+        cave_id: cave.value.id,
+      },
+    })
+    pendingSuggestionsCount.value = response.data.meta?.total ?? response.data.data?.length ?? 0
+  } catch (e) {
+    // non-critical
   }
 }
 
