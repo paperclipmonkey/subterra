@@ -79,9 +79,15 @@ const registries = [
     url: 'registry.gsg.org.uk',
     description: 'Grampian Speleological Group — Scottish cave and mine database.',
   },
+  {
+    id: 'cncc',
+    label: 'CNCC (Yorkshire)',
+    url: 'cncc.org.uk',
+    description: 'Council of Northern Caving Clubs — Yorkshire cave index.',
+  },
 ]
 
-const loading = reactive({ mcra: false, fod: false, gsg: false })
+const loading = reactive({ mcra: false, fod: false, gsg: false, cncc: false })
 
 const snackbar = reactive({ show: false, message: '', color: 'success' })
 
