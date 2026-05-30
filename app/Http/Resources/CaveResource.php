@@ -13,7 +13,7 @@ class CaveResource extends JsonResource
     public static function getCachedTag($label)
     {
         if (self::$cachedTags === null) {
-            self::$cachedTags = Tag::whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m'])->get()->keyBy('tag');
+            self::$cachedTags = Tag::whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m', '< 250m'])->get()->keyBy('tag');
         }
 
         return self::$cachedTags->get($label);
@@ -56,6 +56,8 @@ class CaveResource extends JsonResource
             }
             if ($length >= 250) {
                 $systemLengthTags->push($this->getCachedTag('> 250m'));
+            } elseif ($length > 0) {
+                $systemLengthTags->push($this->getCachedTag('< 250m'));
             }
         }
 

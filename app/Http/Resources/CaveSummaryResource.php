@@ -54,6 +54,8 @@ class CaveSummaryResource extends JsonResource
             }
             if ($length >= 250) {
                 $this->addTagByLabel($systemLengthTags, '> 250m');
+            } elseif ($length > 0) {
+                $this->addTagByLabel($systemLengthTags, '< 250m');
             }
         }
 

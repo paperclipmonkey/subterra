@@ -97,7 +97,7 @@ class CaveController extends Controller
         // 6. Cached special tags (Previously Done, Not Done Yet, length tags)
         $specialTags = DB::table('tags')
             ->select(['id', 'tag', 'category'])
-            ->whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m'])
+            ->whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m', '< 250m'])
             ->get()
             ->keyBy('tag');
 
@@ -141,6 +141,11 @@ class CaveController extends Controller
                         $tags[] = $lt;
                         $lengthTags[] = $lt;
                     }
+                }
+                if ($length > 0 && $length < 250 && ($st = $specialTags->get('< 250m'))) {
+                    $lt = ['id' => $st->id, 'tag' => $st->tag, 'category' => $st->category];
+                    $tags[] = $lt;
+                    $lengthTags[] = $lt;
                 }
             }
 
