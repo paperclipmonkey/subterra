@@ -327,7 +327,7 @@ class SearchCavesTool implements AssistantTool
                 'not_visited' => $arguments['not_visited'] ?? null,
             ], fn ($v) => $v !== null);
             $result['valid_tags_reference'] = [
-                'region' => ['Yorkshire', 'Mendip', 'South Wales', 'North Wales', 'Peak District', 'Forest of Dean', 'Devon', 'Portland', 'Assynt'],
+                'region' => ['Yorkshire', 'Mendip', 'South Wales', 'North Wales', 'Peak District', 'Forest of Dean', 'Devon', 'Portland', 'Scotland'],
                 'tackle' => ['SRT', 'Ladder', 'Handline', 'No Tackle'],
                 'access' => ['Open', 'Permit', 'Padlocked', 'Warden', 'Keycode', 'Closed'],
             ];
@@ -359,7 +359,7 @@ class SearchCavesTool implements AssistantTool
             'south wales' => ['South Wales'],
             'north wales' => ['North Wales'],
             'mendip hills' => ['Mendip'],
-            'mendips' => ['Mendip'],
+            'mendips' => ['Mendip'], // kept as alias in case the model passes "Mendips"
             'peak district' => ['Peak District', 'Derbyshire'],
             'derbyshire' => ['Peak District', 'Derbyshire'],
             'forest of dean' => ['Forest of Dean'],
