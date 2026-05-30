@@ -63,17 +63,17 @@
               <v-row>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripDurationHours" label="Duration (hours)" type="number" min="0" step="1"
-                                :rules="rules.duration" :error-messages="validationErrors.end_time"
+                                :rules="rules.durationHours" :error-messages="validationErrors.end_time"
                                 required hint="How many hours the trip lasted."
                                 persistent-hint
-                                variant="outlined" @input="tripDurationHours = Math.floor(tripDurationHours)" @update:model-value="delete validationErrors.end_time" />
+                                variant="outlined" @update:model-value="val => { tripDurationHours = Math.floor(Number(val)) || 0; delete validationErrors.end_time }" />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripDurationMinutes" label="Duration (minutes)" type="number" min="0" max="59" step="1"
-                                :rules="rules.duration" :error-messages="validationErrors.end_time"
+                                :rules="rules.durationMinutes" :error-messages="validationErrors.end_time"
                                 required hint="How many minutes the trip lasted."
                                 persistent-hint
-                                variant="outlined" @input="tripDurationMinutes = Math.floor(tripDurationMinutes)" @update:model-value="delete validationErrors.end_time" />
+                                variant="outlined" @update:model-value="val => { tripDurationMinutes = Math.max(0, Math.min(59, Math.floor(Number(val)) || 0)); delete validationErrors.end_time }" />
                 </v-col>
               </v-row>
             </v-card-text>
@@ -541,14 +541,22 @@ const rules = {
       return 'Location is required.'
     }
   ],
-  duration: [
+  durationHours: [
     () => {
-      if (tripDurationHours.value > 0 || tripDurationMinutes.value > 0) return true
+      if (Number(tripDurationHours.value) > 0 || Number(tripDurationMinutes.value) > 0) return true
       return 'Duration must be greater than zero.'
     },
-    () => {
-      if (Number.isInteger(Number(tripDurationHours.value)) && Number.isInteger(Number(tripDurationMinutes.value))) return true
+    (value) => {
+      const n = Math.floor(Number(value))
+      if (!isNaN(n) && n >= 0 && n === Number(value)) return true
       return 'Duration must be a whole number.'
+    }
+  ],
+  durationMinutes: [
+    (value) => {
+      const n = Math.floor(Number(value))
+      if (!isNaN(n) && n >= 0 && n <= 59 && n === Number(value)) return true
+      return 'Duration (minutes) must be a whole number between 0 and 59.'
     }
   ],
   participants: [
