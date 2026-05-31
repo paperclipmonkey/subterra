@@ -255,7 +255,9 @@ onMounted(async () => {
     const userResponse = await api.get('/api/users/me')
     const userData = userResponse.data
     if (userData && userData.data && userData.data.email) {
-      router.push('/trips')
+      const redirect = sessionStorage.getItem('redirectAfterLogin')
+      sessionStorage.removeItem('redirectAfterLogin')
+      router.push(redirect || '/trips')
     }
   } catch (e) {
     // Not logged in — stay on login page

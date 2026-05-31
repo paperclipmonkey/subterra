@@ -172,6 +172,7 @@ router.beforeEach(async (to, from, next) => {
     return next({ path: '/offline' })
   }
 
+  sessionStorage.setItem('redirectAfterLogin', to.fullPath)
   return next({ path: '/' })
 })
 

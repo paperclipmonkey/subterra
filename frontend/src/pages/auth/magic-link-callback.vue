@@ -89,8 +89,10 @@ onMounted(async () => {
         router.push({ name: '/profile/[id].edit', params: { id: store.user.id } })
       }, 2000)
     } else {
+      const redirect = sessionStorage.getItem('redirectAfterLogin')
+      sessionStorage.removeItem('redirectAfterLogin')
       setTimeout(() => {
-        router.push({ name: '/trips' })
+        router.push(redirect || { name: '/trips' })
       }, 2000)
     }
   } catch (error) {

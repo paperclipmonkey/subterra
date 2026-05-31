@@ -33,7 +33,9 @@ onMounted(async () => {
       if (response.needs_profile) {
       router.replace({ name: '/profile' })
       } else {
-      router.replace({ name: '/trips' })
+      const redirect = sessionStorage.getItem('redirectAfterLogin')
+      sessionStorage.removeItem('redirectAfterLogin')
+      router.replace(redirect || { name: '/trips' })
       }
     } else {
       error.value = 'Invalid magic link or login failed.'
