@@ -237,9 +237,15 @@ const formatType = (type) => {
 const resolveUrl = (val) => {
     if (!val) return ''
 
-    // Handle object wrapper { data: "..." }
-    if (typeof val === 'object' && val.data) {
-        val = val.data
+    // Handle image object { data: "pending/url", url: "existing/url", ... }
+    if (typeof val === 'object') {
+        if (val.data && typeof val.data === 'string') {
+            val = val.data  // Pending upload path or resolved URL
+        } else if (val.url) {
+            return val.url  // Existing image — use its URL directly
+        } else {
+            return ''
+        }
     }
 
     if (typeof val !== 'string') return ''
@@ -332,8 +338,14 @@ const changedFields = computed(() => {
         // Skip if both are empty
         if (isEmpty(oldVal) && isEmpty(newVal)) continue
 
-        // Deep equality check
-        if (JSON.stringify(oldVal) === JSON.stringify(newVal)) continue
+        // Deep equality check — normalize numeric strings to numbers so that
+        // form-submitted strings (e.g. "51.8158") match model floats (51.8158).
+        const normalizeNumeric = (v) => {
+            if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v)
+            return v
+        }
+        const serialize = (v) => JSON.stringify(v, (_, val) => normalizeNumeric(val))
+        if (serialize(oldVal) === serialize(newVal)) continue
 
         const isImage = isImageField(key)
         const isSystem = key === 'cave_system' || key === 'system'

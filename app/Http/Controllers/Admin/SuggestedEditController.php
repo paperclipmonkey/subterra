@@ -14,6 +14,7 @@ use App\Models\SuggestedEdit;
 use App\Services\MediaSuggestionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SuggestedEditController extends Controller
@@ -96,6 +97,22 @@ class SuggestedEditController extends Controller
                 $suggestedEdit->suggestable->load(['files']);
             }
         }
+
+        // Resolve pending media paths to proper URLs for display in the admin view.
+        // This does not modify the DB — it only affects the JSON response.
+        $suggestedData = $suggestedEdit->suggested_data ?? [];
+        foreach (['hero_image', 'entrance_image', 'photo_path', 'photo_data'] as $field) {
+            if (!isset($suggestedData[$field])) {
+                continue;
+            }
+            $val = $suggestedData[$field];
+            if (is_array($val) && isset($val['data']) && is_string($val['data']) && str_starts_with($val['data'], 'pending_edits/')) {
+                $suggestedData[$field]['data'] = Storage::disk('media')->url($val['data']);
+            } elseif (is_string($val) && str_starts_with($val, 'pending_edits/')) {
+                $suggestedData[$field] = Storage::disk('media')->url($val);
+            }
+        }
+        $suggestedEdit->suggested_data = $suggestedData;
 
         return $suggestedEdit;
     }
