@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Simple validation test for JSON schema setup structure
  * Run with: php tests/check-schema-files.php.

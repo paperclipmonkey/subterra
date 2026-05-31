@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -178,7 +180,7 @@ class OnCallController extends Controller
                 'exists:users,id',
                 function ($attribute, $value, $fail) {
                     $user = User::find($value);
-                    if ($user && ! $user->hasRole(['duty_officer', 'platform_admin'])) {
+                    if ($user && !$user->hasRole(['duty_officer', 'platform_admin'])) {
                         $fail('The selected user must have the Duty Officer role.');
                     }
                 },

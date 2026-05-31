@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Cave;
 use App\Models\Tag;
 use Illuminate\Database\Migrations\Migration;
