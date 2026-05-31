@@ -29,7 +29,30 @@ jobs:
       - name: Run migrations
         run: php artisan migrate --force
       - name: Run tests
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --log-junit /tmp/junit-backend.xml
+      - name: Publish backend test report
+        if: always()
+        run: |
+          if [ -f /tmp/junit-backend.xml ]; then
+            python3 - <<'EOF'
+          import xml.etree.ElementTree as ET, os
+          tree = ET.parse('/tmp/junit-backend.xml')
+          root = tree.getroot()
+          suite = root if root.tag == 'testsuite' else root.find('testsuite')
+          tests   = int(suite.get('tests', 0))
+          failures = int(suite.get('failures', 0))
+          errors   = int(suite.get('errors', 0))
+          skipped  = int(suite.get('skipped', 0))
+          passed   = tests - failures - errors - skipped
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('## PHPUnit Test Report\n\n')
+              f.write('| Result | Count |\n| --- | --- |\n')
+              f.write(f'| ✅ Passed | {passed} |\n')
+              f.write(f'| ❌ Failed | {failures + errors} |\n')
+              f.write(f'| ⏭️ Skipped | {skipped} |\n')
+              f.write(f'| **Total** | **{tests}** |\n')
+          EOF
+          fi
 
   frontend-tests:
     runs-on: ubuntu-latest
@@ -67,7 +90,20 @@ jobs:
       - name: Install watchdog dependencies
         run: cd gcp-watchdog && yarn install --frozen-lockfile
       - name: Run watchdog tests
-        run: cd gcp-watchdog && yarn test
+        run: cd gcp-watchdog && yarn test -- --json --outputFile /tmp/jest-watchdog.json
+      - name: Publish watchdog test report
+        if: always()
+        run: |
+          if [ -f /tmp/jest-watchdog.json ]; then
+            echo "## Jest Test Report — Watchdog" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Result | Count |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| ✅ Passed | $(jq '.numPassedTests' /tmp/jest-watchdog.json) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| ❌ Failed | $(jq '.numFailedTests' /tmp/jest-watchdog.json) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| ⏭️ Skipped | $(jq '.numPendingTests' /tmp/jest-watchdog.json) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| **Total** | **$(jq '.numTotalTests' /tmp/jest-watchdog.json)** |" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   image-processor-tests:
     runs-on: ubuntu-latest
@@ -85,4 +121,17 @@ jobs:
       - name: Install image processor dependencies
         run: cd gcp-image-processor && yarn install --frozen-lockfile
       - name: Run image processor tests
-        run: cd gcp-image-processor && yarn test
+        run: cd gcp-image-processor && yarn test -- --json --outputFile /tmp/jest-image-processor.json
+      - name: Publish image processor test report
+        if: always()
+        run: |
+          if [ -f /tmp/jest-image-processor.json ]; then
+            echo "## Jest Test Report — Image Processor" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Result | Count |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| ✅ Passed | $(jq '.numPassedTests' /tmp/jest-image-processor.json) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| ❌ Failed | $(jq '.numFailedTests' /tmp/jest-image-processor.json) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| ⏭️ Skipped | $(jq '.numPendingTests' /tmp/jest-image-processor.json) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| **Total** | **$(jq '.numTotalTests' /tmp/jest-image-processor.json)** |" >> "$GITHUB_STEP_SUMMARY"
+          fi
