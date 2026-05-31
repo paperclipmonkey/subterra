@@ -92,7 +92,7 @@ class AssistantTripCreationTest extends TestCase
     public function search_users_includes_club_names_for_disambiguation(): void
     {
         $user = User::factory()->create();
-        $club = Club::factory()->create(['name' => 'Mendip Cave Club']);
+        $club = Club::factory()->create(['name' => 'Mendip Cave Club', 'is_active' => true]);
         $target = User::factory()->create(['name' => 'Dave Digger', 'visibility_addable' => true]);
 
         \Illuminate\Support\Facades\DB::table('club_user')->insert([
