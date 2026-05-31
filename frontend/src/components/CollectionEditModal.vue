@@ -45,7 +45,7 @@ import { useAppStore } from '@/stores/app'
 import { useCollectionStore } from '@/stores/collections'
 import CollectionForm from '@/components/CollectionForm.vue'
 import { useNotificationStore } from '@/stores/notifications'
-import { toFormData } from '@/utilities.js'
+import { toFormData } from '@/utilities'
 import { api } from '@/plugins/api'
 
 const notifications = useNotificationStore()

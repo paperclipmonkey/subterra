@@ -360,7 +360,6 @@ import {
   MglGeolocateControl,
 } from '@indoorequal/vue-maplibre-gl'
 import { LngLat } from 'maplibre-gl'
-import { convertFileToBase64 } from '@/utilities.js'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { api } from '@/plugins/api'
 

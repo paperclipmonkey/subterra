@@ -75,7 +75,7 @@ The `User` factory provides state methods for creating users with specific roles
 User::factory()->create()                  // standard authenticated user
 User::factory()->admin()->create()         // platform_admin role
 User::factory()->dataAdmin()->create()     // data_admin role
-User::factory()->dutyOfficer()->create()   // duty officer / on-call role
+User::factory()->dutyOfficer()->create()   // duty_officer role (callouts/shifts)
 User::factory()->withPipAccess()->create() // pip_access role (AI assistant)
 ```
 
@@ -83,6 +83,8 @@ Roles relevant to API middleware:
 
 - `platform_admin` — full admin access
 - `data_admin` — cave/system data editing
+- `access_officer` — permit and booking management
+- `duty_officer` — callout and on-call shift management
 - `pip_access` — Pip AI assistant access
 
 ### API Structure
@@ -110,6 +112,8 @@ Run Pint (PHP formatter) inside the devcontainer:
 ```sh
 ./vendor/bin/pint
 ```
+
+Pint enforces `declare(strict_types=1)` on every PHP file (configured in `pint.json`). After running Pint, all files will have the strict-types declaration added automatically.
 
 Run PHPStan static analysis:
 
@@ -189,6 +193,18 @@ cd gcp-watchdog && yarn test
 
 ---
 
+## CI/CD
+
+Two GitHub Actions workflows handle testing and deployment:
+
+- `.github/workflows/test.yaml` — runs on every PR and push to `main`/`develop`; calls the reusable test workflow.
+- `.github/workflows/deploy.yaml` — runs on push to `main`; calls the same reusable tests then deploys to **Fly.io** (Laravel API) and **GCP** (microservices via Terraform).
+- `.github/workflows/_test.yaml` — reusable workflow with four parallel jobs: `backend-tests`, `frontend-tests`, `watchdog-tests`, `image-processor-tests`.
+
+Backend tests use SQLite in CI. Production uses PostgreSQL 17.
+
+---
+
 ## Important Conventions
 
 - **Tests are mandatory.** Every backend change must be accompanied by PHPUnit tests. Every new API endpoint or change to an existing one needs a Feature test. Changes to `JsonResource` classes must have their JSON schema updated in `tests/schemas/` and a test asserting the new field. Role/permission changes must be tested in `tests/Feature/Admin/`.
@@ -199,3 +215,4 @@ cd gcp-watchdog && yarn test
 - The Pip AI assistant (`/api/assistant/*`) is a separate feature with its own access control — test with a `withPipAccess()` user.
 - When adding fields to a `JsonResource`, always update the corresponding JSON schema in `tests/schemas/objects/` — schemas use `additionalProperties: false` and will fail if new fields are not added.
 - Use `import { api } from '@/plugins/api'` (named export) for HTTP calls in the frontend — not the default export.
+- Import shared utilities from `'@/utilities'` (no `.js` extension) — e.g. `import { toFormData, convertFileToBase64 } from '@/utilities'`.

@@ -207,7 +207,7 @@
 import { mdiCamera, mdiDelete, mdiFilePdfBox, mdiPlus } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
-import { convertFileToBase64 } from '@/utilities.js'
+import { convertFileToBase64 } from '@/utilities'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { onBeforeRouteLeave } from 'vue-router'

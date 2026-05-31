@@ -35,7 +35,6 @@ class UserController extends Controller
             ->pluck('id')
             ->unique()
             ->filter(fn ($id) => $id !== $currentUser->id);
-            // \Log::info('Club User IDs: ' . $clubUserIds->implode(','));
         }
 
         // Count how many trips each user has shared with the current user

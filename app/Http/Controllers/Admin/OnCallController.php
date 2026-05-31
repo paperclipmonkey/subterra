@@ -35,21 +35,7 @@ class OnCallController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'user_id' => [
-                'required',
-                'exists:users,id',
-                function ($attribute, $value, $fail) {
-                    $user = User::find($value);
-                    if ($user && !$user->hasRole(['duty_officer', 'platform_admin'])) {
-                        $fail('The selected user must have the Duty Officer role.');
-                    }
-                },
-            ],
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after:start_at',
-            'notify_do' => 'boolean',
-        ]);
+        $data = $request->validate($this->shiftValidationRules());
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
         $data['start_at'] = Carbon::parse($data['start_at'])->utc();
@@ -81,21 +67,7 @@ class OnCallController extends Controller
     {
         $shift = OnCallShift::findOrFail($id);
 
-        $data = $request->validate([
-            'user_id' => [
-                'required',
-                'exists:users,id',
-                function ($attribute, $value, $fail) {
-                    $user = User::find($value);
-                    if ($user && !$user->hasRole(['duty_officer', 'platform_admin'])) {
-                        $fail('The selected user must have the Duty Officer role.');
-                    }
-                },
-            ],
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after:start_at',
-            'notify_do' => 'boolean',
-        ]);
+        $data = $request->validate($this->shiftValidationRules());
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
         $data['start_at'] = Carbon::parse($data['start_at'])->utc();
@@ -193,5 +165,27 @@ class OnCallController extends Controller
                 'user_name' => $callout->user?->name ?? 'Unknown User',
             ];
         });
+    }
+
+    /**
+     * Shared validation rules for store and update.
+     */
+    private function shiftValidationRules(): array
+    {
+        return [
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+                    if ($user && ! $user->hasRole(['duty_officer', 'platform_admin'])) {
+                        $fail('The selected user must have the Duty Officer role.');
+                    }
+                },
+            ],
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after:start_at',
+            'notify_do' => 'boolean',
+        ];
     }
 }

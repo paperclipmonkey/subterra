@@ -213,7 +213,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import CaveSystemForm from '@/components/CaveSystemForm.vue'
 import AnnotationMapEditor from '@/components/cave-systems/AnnotationMapEditor.vue'
 import { useAppStore } from '@/stores/app'
-import { convertFileToBase64 } from '@/utilities.js'
+import { convertFileToBase64 } from '@/utilities'
 import { useNotificationStore } from '@/stores/notifications'
 import { api } from '@/plugins/api'
 

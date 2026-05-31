@@ -1,0 +1,88 @@
+name: Tests (reusable)
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, bcmath, sqlite3
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+      - name: Copy .env if needed
+        run: |
+          if [ ! -f .env ]; then cp .env.example .env; fi
+      - name: Generate app key
+        run: php artisan key:generate
+      - name: Set up SQLite database
+        run: |
+          touch database.sqlite
+      - name: Run migrations
+        run: php artisan migrate --force
+      - name: Run tests
+        run: vendor/bin/phpunit
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install frontend dependencies
+        run: cd frontend && yarn install --frozen-lockfile
+      - name: Run frontend tests
+        run: cd frontend && yarn test:run
+      - name: Build frontend
+        run: cd frontend && yarn run build
+
+  watchdog-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: gcp-watchdog/yarn.lock
+      - name: Install watchdog dependencies
+        run: cd gcp-watchdog && yarn install --frozen-lockfile
+      - name: Run watchdog tests
+        run: cd gcp-watchdog && yarn test
+
+  image-processor-tests:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: gcp-image-processor/yarn.lock
+      - name: Install image processor dependencies
+        run: cd gcp-image-processor && yarn install --frozen-lockfile
+      - name: Run image processor tests
+        run: cd gcp-image-processor && yarn test

@@ -65,7 +65,6 @@ import { mdiCamera, mdiChevronDown, mdiChevronUp, mdiDelete } from '@mdi/js'
 import { ref, watch, onMounted, computed } from 'vue'
 import { useCaveStore } from '@/stores/caves'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
-import { convertFileToBase64 } from '@/utilities.js'
 
 const props = defineProps({
   modelValue: {

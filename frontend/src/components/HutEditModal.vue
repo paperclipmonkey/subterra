@@ -88,7 +88,7 @@ import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useHutStore } from '@/stores/huts'
 import { api } from '@/plugins/api'
-import { convertFileToBase64 } from '@/utilities.js'
+import { convertFileToBase64 } from '@/utilities'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 
 const props = defineProps({

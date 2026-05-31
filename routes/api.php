@@ -70,7 +70,7 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::post('/suggested-edits', [App\Http\Controllers\SuggestedEditController::class, 'store']);
 
     // Users
-    Route::get('/users', action: [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
+    Route::get('/users', [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
     Route::get('/duty-officers/current', [App\Http\Controllers\DutyOfficerController::class, 'current']);
     Route::get('/duty-officers/rota', [App\Http\Controllers\DutyOfficerController::class, 'rotaPublic']);
 
@@ -119,9 +119,9 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
 
     // User Management
-    Route::post('/users', action: [App\Http\Controllers\UserController::class, 'create'])->middleware('throttle:10,1')->name('users.create');
-    Route::get('/users/{user}', action: [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
-    Route::put('/users/{user}', action: [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
+    Route::post('/users', [App\Http\Controllers\UserController::class, 'create'])->middleware('throttle:10,1')->name('users.create');
+    Route::get('/users/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
+    Route::put('/users/{user}', [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
     Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
     Route::delete('/users/{user_without_scopes}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
 

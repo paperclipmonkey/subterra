@@ -318,7 +318,6 @@ import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'
 import CaveSearchAutocomplete from './CaveSearchAutocomplete.vue'
 import MilkdownEditor from './MilkdownEditor.vue'
-import { convertFileToBase64 } from '@/utilities.js'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { api } from '@/plugins/api'
@@ -577,8 +576,6 @@ onMounted(async () => {
     const userResponse = await api.get('/api/users/me')
     const userData = userResponse.data
     userId.value = userData.data.id
-    // response = await api.get('/api/users')
-    // users.value = response.data.data
 
     // Add self to users list so it displays correctly
     const me = userData.data
