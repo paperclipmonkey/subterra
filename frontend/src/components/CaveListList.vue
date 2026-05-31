@@ -24,8 +24,8 @@
 
       <v-row v-else class="px-2">
         <v-col v-for="cave in displayedCaves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
-          <v-hover v-slot="{ isHovering, props }">
-            <v-card v-bind="props" elevation="2" class="fill-height d-flex flex-column cave-card"
+          <v-hover v-slot="{ isHovering, props: hoverProps }">
+            <v-card v-bind="hoverProps" elevation="2" class="fill-height d-flex flex-column cave-card"
                     :to="'/caves/' + cave.slug">
               <div class="position-relative bg-grey-lighten-2" style="height: 160px; overflow: hidden;">
                 <!-- Video Preview -->

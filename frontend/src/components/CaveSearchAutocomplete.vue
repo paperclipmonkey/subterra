@@ -16,8 +16,8 @@
     autocomplete="off"
     @update:model-value="onSelect"
   >
-    <template #item="{ props, item }">
-      <v-list-item v-bind="props" :title="item.raw.name">
+    <template #item="{ props: itemProps, item }">
+      <v-list-item v-bind="itemProps" :title="item.raw.name">
         <template #subtitle>
           <span class="text-caption text-medium-emphasis">
             {{ [item.raw.location_name, item.raw.location_country].filter(Boolean).join(', ') }}
