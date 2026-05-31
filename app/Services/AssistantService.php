@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Services\Assistant\AssistantTool;
+use App\Services\Assistant\Tools\CreateTripReportTool;
 use App\Services\Assistant\Tools\FindNearbyHutsTool;
 use App\Services\Assistant\Tools\GetCaveDetailsTool;
 use App\Services\Assistant\Tools\GetCaveSystemActivityTool;
@@ -15,7 +16,9 @@ use App\Services\Assistant\Tools\GetUserExperienceTool;
 use App\Services\Assistant\Tools\GetWeatherForecastTool;
 use App\Services\Assistant\Tools\ListCollectionsTool;
 use App\Services\Assistant\Tools\ListRoutesTool;
+use App\Services\Assistant\Tools\ParseLogbookCsvTool;
 use App\Services\Assistant\Tools\SearchCavesTool;
+use App\Services\Assistant\Tools\SearchUsersTool;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -36,6 +39,9 @@ class AssistantService
         GetCaveSystemActivityTool $caveSystemActivityTool,
         ListCollectionsTool $listCollectionsTool,
         GetCollectionDetailsTool $collectionDetailsTool,
+        SearchUsersTool $searchUsersTool,
+        CreateTripReportTool $createTripReportTool,
+        ParseLogbookCsvTool $parseLogbookCsvTool,
     ) {
         $this->tools = [
             'get_user_experience' => $userExperienceTool,
@@ -48,6 +54,9 @@ class AssistantService
             'get_cave_system_activity' => $caveSystemActivityTool,
             'list_collections' => $listCollectionsTool,
             'get_collection_details' => $collectionDetailsTool,
+            'search_users' => $searchUsersTool,
+            'create_trip_report' => $createTripReportTool,
+            'parse_logbook_csv' => $parseLogbookCsvTool,
         ];
     }
 
@@ -118,6 +127,9 @@ class AssistantService
 
         /** @var array<string, mixed>|null $weatherChartsBuffer Most recent weather forecast data with gauges */
         $weatherChartsBuffer = null;
+
+        /** @var array<int, array<string, mixed>> $createdTripsBuffer Trips created this turn */
+        $createdTripsBuffer = [];
 
         /** @var array{prompt_tokens: int, completion_tokens: int} */
         $totalUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0];
@@ -355,6 +367,18 @@ class AssistantService
                         ];
                     }
 
+                    // Buffer created trip so the UI can show a confirmation card
+                    if ($name === 'create_trip_report' && !empty($result['success'])) {
+                        $createdTripsBuffer[] = [
+                            'trip_id' => $result['trip_id'] ?? null,
+                            'trip_url' => $result['trip_url'] ?? null,
+                            'edit_url' => $result['edit_url'] ?? null,
+                            'name' => $result['name'] ?? null,
+                            'cave_system' => $result['cave_system'] ?? null,
+                            'date' => $result['date'] ?? null,
+                        ];
+                    }
+
                     // Safety injection: if a river gauge is High, add a mandatory warning context
                     if ($name === 'get_weather_forecast') {
                         $this->injectSafetyAlert($result, $context, $message['content'] ?? '');
@@ -498,6 +522,11 @@ class AssistantService
         // Emit weather charts (rain/river gauges + forecast) if available
         if ($onEvent && $weatherChartsBuffer !== null) {
             $onEvent('weather_charts', $weatherChartsBuffer);
+        }
+
+        // Emit trip creation cards so the UI can show confirmation links
+        if ($onEvent && !empty($createdTripsBuffer)) {
+            $onEvent('trips_created', $createdTripsBuffer);
         }
 
         // Emit contextual follow-up suggestions based on what was discussed
@@ -741,6 +770,15 @@ class AssistantService
 
         if (in_array('get_user_experience', $unique, true) && !in_array('search_caves', $unique, true)) {
             $suggestions[] = 'What new cave systems should I try next?';
+        }
+
+        if (in_array('create_trip_report', $unique, true)) {
+            $suggestions[] = 'Log another trip';
+            $suggestions[] = 'Import my caving logbook from a spreadsheet';
+        }
+
+        if (in_array('parse_logbook_csv', $unique, true) && !in_array('create_trip_report', $unique, true)) {
+            $suggestions[] = 'Create trips from my parsed logbook';
         }
 
         // Return at most 3 suggestions to avoid cluttering the UI
@@ -1466,6 +1504,84 @@ and practical — cavers want useful information, not essays.
 
 **Disclaimer.** Always note that AI recommendations are a starting point. Users should verify
 conditions, access, and gear requirements before committing to a trip.
+
+---
+
+## Writing Trip Reports with Pip
+
+You can help the user write and save trip reports directly to Subterra. **Do NOT generate the
+trip description for them** — your role is to gather information through questions and record
+what they tell you. The user provides the words; you assemble them into the trip.
+
+### Workflow for a single trip report
+
+When the user says they want to log a trip or write a trip report, work through these steps
+conversationally — ask ONE question at a time and wait for the answer before moving on:
+
+1. **Cave** — ask which cave system they visited. Call `search_caves` to resolve it to a slug.
+   If there are multiple entrances, ask which one they used (and which they exited via if it
+   was a through-trip). Use `get_cave_details` if needed.
+
+2. **Date** — ask when the trip was. Accept natural language ("last Saturday", "3rd June").
+   Convert to YYYY-MM-DD before creating the trip.
+
+3. **Duration** — ask how long they were underground (optional but useful).
+
+4. **Who was there** — ask who else was on the trip. For each name:
+   a. Call `search_users` to find them in Subterra.
+   b. If found, confirm with the user ("I found Alice Smith — is that the right person?").
+   c. If not found (or ambiguous), ask the user to confirm. Unmatched people go into
+      `additional_participants` and are noted in the description.
+   Collect ALL companions before creating the trip — do not create the trip until the user
+   has confirmed or declined each companion.
+
+5. **Trip name** — suggest a sensible default (e.g. "Gaping Gill — 14 June 2025") and ask
+   the user if they want to change it.
+
+6. **Description / report** — ask them to describe the trip in their own words. This is the
+   trip report itself. Do NOT draft it — quote their words directly. Ask follow-ups if needed:
+   - "What did you do underground?"
+   - "Any highlights or notable moments?"
+   - "Were there any particular conditions worth noting?"
+   When you have enough detail, read it back to the user and ask "Does this look right?"
+
+7. **Visibility** — ask whether the report should be public (default), club-only, or private.
+
+8. **Confirm and create** — summarise all the details and ask "Shall I save this trip report?"
+   Only call `create_trip_report` after the user explicitly confirms.
+
+After creation, tell the user their trip has been saved, give them a link to view it
+(/trips/{short_id}), and mention they can add photos by going to /trips/{short_id}/edit.
+
+### Workflow for logbook CSV import
+
+When the user wants to import a CSV logbook (e.g. they've been keeping a spreadsheet):
+
+1. Ask them to paste the CSV content into the chat, or tell them to use the attachment button.
+2. Call `parse_logbook_csv` with the pasted/received content.
+3. Show the user a summary: "I found X trips in your logbook. Here are the first few:"
+   List a few parsed rows with cave name, date, duration, and any notes about low confidence.
+4. Warn about rows that have missing or ambiguous data and ask the user to clarify.
+5. For each trip in sequence:
+   a. Confirm the cave name — call `search_caves` to find the correct slug. If unsure, show
+      the user the top matches and ask which is correct. If the cave isn't in Subterra,
+      skip that trip and note it.
+   b. Confirm the entrance cave — use `get_cave_details` to resolve the entrance slug.
+   c. Confirm the date, duration, and description. Use the raw data from the CSV but ask the
+      user to fill in any blanks.
+   d. Resolve companions via `search_users`.
+   e. Confirm each trip individually before creating it. If the user says "create them all",
+      you may create them one by one with brief progress updates ("Created trip 3/12 — Ogof
+      Ffynnon Ddu, 12 May 2021").
+6. After importing, give the user a count of trips created and flag any that were skipped.
+
+### Rules for trip creation
+
+- **Never create a trip without the user's explicit confirmation for that specific trip.**
+- **Never fabricate description text** — only use words the user has provided.
+- If a required field is missing (cave system, entrance, date), ask for it. Do not guess.
+- If the cave system is not in Subterra, tell the user honestly and skip that trip.
+- Companions who cannot be found go into `additional_participants`, not participant_ids.
 PROMPT;
     }
 }

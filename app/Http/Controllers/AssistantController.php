@@ -139,4 +139,46 @@ class AssistantController extends Controller
             'created_at' => $feedback->created_at,
         ], 201);
     }
+
+    /**
+     * Accept a CSV or TSV logbook file upload, parse it into structured trip data,
+     * and return the parsed rows as JSON. The frontend passes the content to Pip
+     * as a system message so the model can guide the user through creating trips.
+     */
+    public function importLogbook(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user->pip_agreement_signed_at) {
+            return response()->json([
+                'error' => 'You must accept the Pip terms before using the assistant.',
+                'code' => 'pip_agreement_required',
+            ], 403);
+        }
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:2048', 'mimes:csv,txt,tsv'],
+        ]);
+
+        /** @var \Illuminate\Http\UploadedFile $file */
+        $file = $request->file('file');
+
+        // Read up to 2 MB of content — sufficient for even large logbooks
+        $content = file_get_contents($file->getPathname());
+
+        if ($content === false || trim($content) === '') {
+            return response()->json(['error' => 'The uploaded file appears to be empty.'], 422);
+        }
+
+        // Enforce a hard size limit to prevent token abuse
+        if (strlen($content) > 512_000) {
+            return response()->json(['error' => 'File too large. Maximum 512 KB.'], 422);
+        }
+
+        return response()->json([
+            'csv_content' => $content,
+            'filename' => $file->getClientOriginalName(),
+            'size_bytes' => strlen($content),
+        ]);
+    }
 }

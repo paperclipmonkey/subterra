@@ -11,6 +11,9 @@ const TOOL_LABELS = {
   get_cave_system_activity: 'Checking community activity',
   list_collections: 'Browsing collections',
   get_collection_details: 'Loading collection',
+  search_users: 'Searching for cavers',
+  create_trip_report: 'Saving trip report',
+  parse_logbook_csv: 'Parsing logbook',
 }
 
 const STORAGE_KEY = 'vern_conversation_v1'
@@ -28,6 +31,7 @@ function persistableShape(m) {
     reports: m.reports ?? [],
     collections: m.collections ?? [],
     weather_charts: m.weather_charts ?? null,
+    created_trips: m.created_trips ?? [],
     elapsedMs: m.elapsedMs ?? null,
   }
 }
@@ -118,6 +122,7 @@ export const useAssistantStore = defineStore('assistant', {
         reports: [],
         collections: [],
         weather_charts: null,
+        created_trips: [],
       })
 
       const history = this.messages
@@ -241,6 +246,38 @@ export const useAssistantStore = defineStore('assistant', {
     },
 
     /**
+     * Upload a CSV logbook file and inject the parsed content into the conversation
+     * as a user message so Pip can guide the import workflow.
+     *
+     * @param {File} file
+     */
+    async uploadLogbookCsv(file) {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/assistant/logbook-import', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}))
+        throw new Error(body.error || body.message || `Upload failed (${response.status})`)
+      }
+
+      const { csv_content, filename } = await response.json()
+
+      // Inject as a user message so Pip processes the logbook
+      const message = `I'd like to import my caving logbook from "${filename}". Here is the CSV content:\n\n\`\`\`csv\n${csv_content}\n\`\`\``
+      return this.sendMessage(message)
+    },
+
+    /**
      * Retry by re-sending the last user message.
      */
     retry() {
@@ -353,6 +390,15 @@ export const useAssistantStore = defineStore('assistant', {
           const pending = this.messages.findLast(m => m.pending)
           if (pending) {
             pending.weather_charts = event.data || null
+          }
+          break
+        }
+
+        case 'trips_created': {
+          // One or more trips were created by create_trip_report
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.created_trips = (pending.created_trips || []).concat(event.data || [])
           }
           break
         }

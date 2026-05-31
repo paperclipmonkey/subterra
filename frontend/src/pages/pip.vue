@@ -213,6 +213,23 @@
                 </div>
               </div>
 
+              <div
+                v-if="!msg.pending && msg.created_trips && msg.created_trips.length"
+                class="pip-cardrow-wrap"
+              >
+                <div class="pip-cardrow-label">
+                  <v-icon :icon="mdiNotebookOutline" size="13" class="mr-1" />
+                  {{ msg.created_trips.length === 1 ? 'Trip saved' : `${msg.created_trips.length} trips saved` }}
+                </div>
+                <div class="pip-cardrow">
+                  <TripCreatedAssistantCard
+                    v-for="trip in msg.created_trips"
+                    :key="trip.trip_id"
+                    :trip="trip"
+                  />
+                </div>
+              </div>
+
               <!-- Follow-up suggestions -->
               <div
                 v-if="!msg.pending && !msg.streaming && msg.suggestions && msg.suggestions.length"
@@ -279,6 +296,22 @@
           @keydown.shift.enter="inputText += '\n'"
           @input="autosize"
         />
+        <input
+          ref="fileInputEl"
+          type="file"
+          accept=".csv,.tsv,.txt"
+          class="pip-file-input"
+          @change="onFileSelected"
+        >
+        <button
+          class="pip-attach"
+          :disabled="store.isLoading || csvUploading"
+          title="Import caving logbook (CSV)"
+          @click="fileInputEl.click()"
+        >
+          <v-progress-circular v-if="csvUploading" size="16" width="2" indeterminate />
+          <v-icon v-else :icon="mdiPaperclip" size="20" />
+        </button>
         <button
           class="pip-send"
           :disabled="!inputText.trim() || store.isLoading"
@@ -411,12 +444,14 @@ import {
   mdiMicrophone,
   mdiMicrophoneOff,
   mdiNotebookOutline,
+  mdiPaperclip,
   mdiSchoolOutline,
   mdiSend,
   mdiThumbDown,
   mdiThumbDownOutline,
   mdiThumbUp,
   mdiThumbUpOutline,
+  mdiUpload,
   mdiWeatherCloudy,
 } from '@mdi/js'
 import { useAssistantStore } from '@/stores/assistant'
@@ -426,6 +461,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveAssistantCard from '@/components/CaveAssistantCard.vue'
 import CollectionAssistantCard from '@/components/CollectionAssistantCard.vue'
 import HutAssistantCard from '@/components/HutAssistantCard.vue'
+import TripCreatedAssistantCard from '@/components/TripCreatedAssistantCard.vue'
 import TripReportAssistantCard from '@/components/TripReportAssistantCard.vue'
 import WeatherChartCard from '@/components/WeatherChartCard.vue'
 
@@ -533,10 +569,38 @@ const welcomeSuggestions = [
   { icon: mdiCalendarOutline,   label: 'Plan a Yorkshire weekend',        text: 'Can you plan me a caving weekend in the Yorkshire Dales? Two caves over Saturday and Sunday with a hut to stay at.' },
   { icon: mdiSchoolOutline,     label: 'Cave for a beginner',             text: "I'm taking a friend who has never been caving — what's a good first cave for them?" },
   { icon: mdiFormatListChecks,  label: 'How am I doing on collections?',  text: 'How am I doing on the curated cave collections?' },
-  { icon: mdiNotebookOutline,   label: "Recent OFD trip reports",         text: "What have people been saying in recent trip reports for Lancaster Hole?" },
+  { icon: mdiNotebookOutline,   label: "Recent Lancaster Hole reports",   text: "What have people been saying in recent trip reports for Lancaster Hole?" },
   { icon: mdiHomeRoof,          label: "Huts near Swildon's",             text: "What caving huts are near Swildon's Hole? I'd like somewhere to stay for a weekend." },
   { icon: mdiWeatherCloudy,     label: 'Streamway conditions this weekend', text: 'Are conditions OK for a streamway trip in the Dales this weekend?' },
+  { icon: mdiNotebookOutline,   label: 'Log a trip report',               text: "I'd like to log a trip report. Can you help me?" },
+  { icon: mdiUpload,            label: 'Import my caving logbook',        text: "I have a CSV logbook of my caving trips. Can you help me import them into Subterra?" },
 ]
+
+// ── CSV logbook import ───────────────────────────────────────────────────────
+const fileInputEl = ref(null)
+const csvUploading = ref(false)
+
+async function onFileSelected(event) {
+  const file = event.target.files?.[0]
+  if (!fileInputEl.value) return
+  // Reset so the same file can be re-selected
+  fileInputEl.value.value = ''
+
+  if (!file) return
+  if (!hasAgreed.value) {
+    agreementDialog.value = true
+    return
+  }
+
+  csvUploading.value = true
+  try {
+    await store.uploadLogbookCsv(file)
+  } catch (err) {
+    notificationStore.showError(err.message || 'Could not upload file. Please try again.')
+  } finally {
+    csvUploading.value = false
+  }
+}
 
 function send() {
   const text = inputText.value.trim()
@@ -943,7 +1007,7 @@ onMounted(() => {
 }
 .pip-input::placeholder { color: #9ca3af; }
 .pip-input:disabled { color: #9ca3af; }
-.pip-mic, .pip-send {
+.pip-mic, .pip-send, .pip-attach {
   flex-shrink: 0;
   width: 36px;
   height: 36px;
@@ -973,6 +1037,16 @@ onMounted(() => {
   0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.45); }
   50%       { box-shadow: 0 0 0 8px rgba(229, 57, 53, 0); }
 }
+.pip-attach {
+  background: transparent;
+  color: #6b7280;
+}
+.pip-attach:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1f2937;
+}
+.pip-attach:disabled { opacity: 0.4; cursor: not-allowed; }
+.pip-file-input { display: none; }
 .pip-send {
   background: linear-gradient(135deg, #1867c0 0%, #2196f3 100%);
   color: white;
