@@ -227,6 +227,20 @@ HTML;
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_adds_cncc_link_to_cave_description_and_access_info(): void
+    {
+        $this->fakeDefaultHttp();
+
+        $this->artisan('sync:cncc-caves')
+            ->assertExitCode(0);
+
+        $cave = Cave::where('name', 'Alum Pot')->firstOrFail();
+        $this->assertStringContainsString('cncc.org.uk/cave/alum-pot', $cave->description);
+        $this->assertStringContainsString('Alum Pot', $cave->description);
+        $this->assertStringContainsString('cncc.org.uk/cave/alum-pot', $cave->access_info);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_respects_the_blocklist(): void
     {
         $this->fakeDefaultHttp();
@@ -296,9 +310,12 @@ HTML;
             'slug' => 'alum-pot',
             'references' => '- [CNCC Cave Page](https://cncc.org.uk/cave/alum-pot)',
         ]);
+        $cnccLink = '[CNCC page for Alum Pot](https://cncc.org.uk/cave/alum-pot)';
         Cave::factory()->create([
             'name' => 'Alum Pot',
             'cave_system_id' => $system->id,
+            'description' => 'For more information see '.$cnccLink.'.',
+            'access_info' => 'For more information see '.$cnccLink.'.',
             'location_name' => 'Alum Pot',
             'location_lat' => 54.17545399624298,
             'location_lng' => -2.3464968212268102,

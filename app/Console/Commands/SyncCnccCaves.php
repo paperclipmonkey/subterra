@@ -155,8 +155,11 @@ class SyncCnccCaves extends Command
                 // 3. Cave data
                 // -----------------------------------------------------------------
                 $baseSlug = 'cncc_'.Str::slug($name);
+                $cnccLink = '[CNCC page for '.$name.']('.$cavePageUrl.')';
 
                 $caveData = [
+                    'description' => 'For more information see '.$cnccLink.'.',
+                    'access_info' => 'For more information see '.$cnccLink.'.',
                     'location_name' => $region,
                     'location_country' => 'United Kingdom',
                     'location_lat' => $lat,
@@ -169,7 +172,7 @@ class SyncCnccCaves extends Command
 
                 if ($existingCave) {
                     $coordKeys = ['location_lat', 'location_lng'];
-                    $textKeys = ['location_name'];
+                    $textKeys = ['location_name', 'description', 'access_info'];
                     $differences = [];
 
                     foreach ($caveData as $key => $value) {
