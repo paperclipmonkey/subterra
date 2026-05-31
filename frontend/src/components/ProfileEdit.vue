@@ -220,7 +220,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAlert, mdiCamera, mdiEarth } from '@mdi/js'
+import { mdiAccountGroup, mdiCamera, mdiEarth } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'

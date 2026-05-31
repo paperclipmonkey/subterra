@@ -1,4 +1,3 @@
-import { mdiSvg } from '@mdi/js'
 /**
  * plugins/vuetify.js
  *

@@ -16,7 +16,7 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { mdiApple, mdiGoogleMaps, mdiLock } from '@mdi/js'
+import { mdiLock } from '@mdi/js'
 import { ref, watch, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useCaveStore } from '@/stores/caves'
