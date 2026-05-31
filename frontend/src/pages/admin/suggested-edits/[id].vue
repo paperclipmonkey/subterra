@@ -338,13 +338,19 @@ const changedFields = computed(() => {
         // Skip if both are empty
         if (isEmpty(oldVal) && isEmpty(newVal)) continue
 
-        // Deep equality check — normalize numeric strings to numbers so that
-        // form-submitted strings (e.g. "51.8158") match model floats (51.8158).
-        const normalizeNumeric = (v) => {
-            if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v)
+        // Deep equality check — normalize values before comparing so that minor
+        // formatting differences don't cause false positives:
+        // - Numeric strings (e.g. "51.8158") are coerced to numbers to match model floats.
+        // - Trailing whitespace/newlines are trimmed (Milkdown appends a trailing \n).
+        const normalizeValue = (v) => {
+            if (typeof v === 'string') {
+                const trimmed = v.trimEnd()
+                if (trimmed !== '' && !isNaN(Number(trimmed))) return Number(trimmed)
+                return trimmed
+            }
             return v
         }
-        const serialize = (v) => JSON.stringify(v, (_, val) => normalizeNumeric(val))
+        const serialize = (v) => JSON.stringify(v, (_, val) => normalizeValue(val))
         if (serialize(oldVal) === serialize(newVal)) continue
 
         const isImage = isImageField(key)
