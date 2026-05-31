@@ -21,7 +21,7 @@
             v-model.number="internalSystem.length"
             label="Length (m)"
             type="number"
-            :rules="[v => !!v || 'Length is required']"
+            :rules="[v => (v !== null && v !== undefined && v !== '') || 'Length is required']"
             required
           />
         </v-col>
@@ -30,7 +30,7 @@
             v-model.number="internalSystem.vertical_range"
             label="Vertical Range (m)"
             type="number"
-            :rules="[v => v !== null && v !== undefined || 'Vertical range is required']"
+            :rules="[v => (v !== null && v !== undefined && v !== '') || 'Vertical range is required']"
             required
           />
         </v-col>
