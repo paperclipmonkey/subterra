@@ -342,11 +342,12 @@ const changedFields = computed(() => {
         // formatting differences don't cause false positives:
         // - Numeric strings (e.g. "51.8158") are coerced to numbers to match model floats.
         // - Trailing whitespace/newlines are trimmed (Milkdown appends a trailing \n).
+        // - CRLF (\r\n) is normalised to LF (\n); browsers submit CRLF but the DB stores LF.
         const normalizeValue = (v) => {
             if (typeof v === 'string') {
-                const trimmed = v.trimEnd()
-                if (trimmed !== '' && !isNaN(Number(trimmed))) return Number(trimmed)
-                return trimmed
+                const normalized = v.replace(/\r\n/g, '\n').trimEnd()
+                if (normalized !== '' && !isNaN(Number(normalized))) return Number(normalized)
+                return normalized
             }
             return v
         }

@@ -121,6 +121,34 @@ describe('SuggestedEdit [id] page — changedFields comparison', () => {
         expect(wrapper.text()).not.toContain('ACCESS INFO')
     })
 
+    it('does not flag description or access_info when browser submits CRLF line endings', async () => {
+        const wrapper = await mountAndFetch({
+            suggestable: {
+                id: 42,
+                name: 'Test Cave',
+                slug: 'test-cave',
+                description: 'First line.\n\nSecond line.',    // DB stores LF
+                access_info: 'Access line one.\nAccess line two.',
+                location_lat: 51.8158,
+                location_lng: -3.57995,
+                location_alt: 304,
+                tags: []
+            },
+            suggested_data: {
+                name: 'Test Cave',
+                description: 'First line.\r\n\r\nSecond line.',   // Browser submits CRLF
+                access_info: 'Access line one.\r\nAccess line two.',
+                location_lat: '51.8158',
+                location_lng: '-3.57995',
+                location_alt: '304',
+                tags: []
+            }
+        })
+
+        expect(wrapper.text()).not.toContain('DESCRIPTION')
+        expect(wrapper.text()).not.toContain('ACCESS INFO')
+    })
+
     it('does not flag numeric location fields submitted as strings', async () => {
         const wrapper = await mountAndFetch()
 
