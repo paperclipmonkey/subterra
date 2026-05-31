@@ -15,19 +15,6 @@
       </v-card>
     </v-dialog>
   </div>
-
-  <v-dialog v-model="showDiagramModal" max-width="95vw">
-    <v-card class="rounded-lg overflow-auto">
-      <v-card-text class="pa-6 d-flex justify-center">
-        <!-- eslint-disable-next-line vue/no-v-html -->
-        <div v-html="diagramSvg" />
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn variant="text" @click="showDiagramModal = false">Close</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
 </template>
 
 <script>
