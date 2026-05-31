@@ -58,31 +58,37 @@ class Callout extends Model
         'request_data' => 'array',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Cave, $this> */
     public function cave(): BelongsTo
     {
         return $this->belongsTo(Cave::class, 'cave_id');
     }
 
+    /** @return BelongsTo<Cave, $this> */
     public function exitCave(): BelongsTo
     {
         return $this->belongsTo(Cave::class, 'exit_cave_id');
     }
 
+    /** @return BelongsTo<Trip, $this> */
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
     }
 
+    /** @return HasMany<CalloutParticipant, $this> */
     public function participants(): HasMany
     {
         return $this->hasMany(CalloutParticipant::class);
     }
 
+    /** @return HasOne<Incident, $this> */
     public function incident(): HasOne
     {
         return $this->hasOne(Incident::class);

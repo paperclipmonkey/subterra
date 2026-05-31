@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Assistant\Tools;
 
+use App\Models\Cave;
 use App\Models\CaveSystem;
 use App\Models\Trip;
 use App\Models\User;
@@ -42,7 +43,7 @@ class GetCaveDetailsTool implements AssistantTool
             return ['error' => "Cave system with ID {$systemId} not found."];
         }
 
-        $caves = $system->caves->map(fn ($cave) => [
+        $caves = $system->caves->map(fn (Cave $cave) => [
             'id' => $cave->id,
             'name' => $cave->name,
             'slug' => $cave->slug,

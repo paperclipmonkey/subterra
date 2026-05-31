@@ -16,7 +16,7 @@ class AssistantLogbookImportTest extends TestCase
 
     private const ENDPOINT = '/api/assistant/logbook-import';
 
-    private function validCsvFile(string $content = null): UploadedFile
+    private function validCsvFile(?string $content = null): UploadedFile
     {
         $content ??= implode("\n", [
             'date,cave,description',

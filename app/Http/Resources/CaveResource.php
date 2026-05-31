@@ -8,6 +8,7 @@ use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin \App\Models\Cave */
 class CaveResource extends JsonResource
 {
     protected static $cachedTags = null;
@@ -68,11 +69,8 @@ class CaveResource extends JsonResource
             return $tag instanceof Tag;
         });
 
-        // Ensure $this->tags is always a collection of Tag models
-        $tags = $this->tags instanceof \Illuminate\Support\Collection ? $this->tags : collect($this->tags);
-        $tags = $tags->filter(function ($tag) {
-            return $tag instanceof Tag;
-        });
+        // $this->tags is a Collection of Tag models
+        $tags = $this->tags;
         if ($previoslyDoneTag instanceof Tag) {
             $tags = $tags->merge([$previoslyDoneTag]);
         }
@@ -85,14 +83,11 @@ class CaveResource extends JsonResource
             'slug' => $this->slug,
             'name' => $this->name,
             'description' => $this->description ?? '',
-            'access_info' => $this->access_info ?? '',
             'hero_image' => new CaveMediaResource($this->whenLoaded('heroImage', $this->heroImage)),
             'hero_video' => new CaveMediaResource($this->whenLoaded('heroVideo', $this->heroVideo)),
             'entrance_image' => new CaveMediaResource($this->whenLoaded('entranceImage', $this->entranceImage)),
             'media' => CaveMediaResource::collection($this->whenLoaded('media')),
-            'tags' => TagResource::collection($tags->filter(function ($tag) {
-                return $tag instanceof Tag;
-            })),
+            'tags' => TagResource::collection($tags),
             'caving_region' => $this->caving_region,
             'location_name' => $this->location_name,
             'location_country' => $this->location_country,
@@ -117,7 +112,7 @@ class CaveResource extends JsonResource
                 }) : [],
                 'tags' => $this->system->relationLoaded('tags') ? TagResource::collection($this->system->tags->merge($systemLengthTags)) : TagResource::collection($systemLengthTags),
                 'references' => $request->user()?->hasApprovedClub() ? $this->system->references : [],
-                'files' => $request->user()?->hasApprovedClub() && $this->system->relationLoaded('files') && $this->system->files ? CaveSystemFileResource::collection($this->system->files) : [],
+                'files' => $request->user()?->hasApprovedClub() && $this->system->relationLoaded('files') && $this->system->files->isNotEmpty() ? CaveSystemFileResource::collection($this->system->files) : [],
                 'routes' => $this->system->relationLoaded('routes') ? $this->system->routes : [],
                 'annotation' => $this->system->relationLoaded('annotation') ? $this->system->annotation : null,
             ],

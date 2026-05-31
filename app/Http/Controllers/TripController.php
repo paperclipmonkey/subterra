@@ -87,7 +87,7 @@ class TripController extends Controller
                 $query->where('user_id', $userId);
             })
             ->visibleTo($user)
-            ->with('entrance')
+            ->with(['entrance', 'system'])
             ->chunk(200, function ($trips) use ($handle) {
                 foreach ($trips as $trip) {
                     fputcsv($handle, [
@@ -95,7 +95,7 @@ class TripController extends Controller
                         $trip->name,
                         $trip->start_time?->format('Y-m-d') ?? 'N/A',
                         $trip->end_time?->format('Y-m-d') ?? 'N/A',
-                        $trip->entrance?->cave?->name ?? 'N/A',
+                        $trip->system?->name ?? 'N/A',
                         $trip->entrance?->name ?? 'N/A',
                         $trip->description,
                         implode(', ', $trip->participants->pluck('name')->toArray()),
@@ -246,7 +246,7 @@ class TripController extends Controller
             ->toArray();
         $syncResult = $trip->participants()->sync($participantIds);
 
-        $newParticipantIds = $syncResult['attached'] ?? [];
+        $newParticipantIds = $syncResult['attached'];
         if (!empty($newParticipantIds)) {
             $creator = auth()->user() ?? $trip->creator;
             // Fire TripParticipantTagged event for each new participant

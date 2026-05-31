@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 
@@ -34,16 +36,19 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'end_time' => 'datetime',
     ];
 
+    /** @return BelongsTo<CaveSystem, $this> */
     public function system(): BelongsTo
     {
         return $this->belongsTo(CaveSystem::class, 'cave_system_id', 'id');
     }
 
+    /** @return BelongsTo<Cave, $this> */
     public function entrance(): BelongsTo
     {
         return $this->belongsTo(Cave::class, 'entrance_cave_id', 'id');
     }
 
+    /** @return BelongsTo<Cave, $this> */
     public function exit(): BelongsTo
     {
         return $this->belongsTo(Cave::class, 'exit_cave_id', 'id');
@@ -52,16 +57,18 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
     protected function duration(): Attribute
     {
         return Attribute::make(
-            get: fn (mixed $value, array $attributes): int => $this->start_time?->diffInMinutes($this->end_time) ?: 0,
+            get: fn (mixed $value, array $attributes): float => $this->start_time?->diffInMinutes($this->end_time) ?: 0,
         );
     }
 
-    public function participants()
+    /** @return BelongsToMany<User, $this> */
+    public function participants(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withoutGlobalScopes();
     }
 
-    public function media()
+    /** @return HasMany<TripMedia, $this> */
+    public function media(): HasMany
     {
         return $this->hasMany(TripMedia::class);
     }

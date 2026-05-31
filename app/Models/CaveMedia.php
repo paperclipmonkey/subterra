@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 
+/**
+ * @property string|null $url
+ * @property string|null $preview_url
+ * @property string|null $poster_url
+ */
 class CaveMedia extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
     use HasFactory;

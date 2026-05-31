@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
+/** @mixin \App\Models\Cave */
 class CaveSummaryResource extends JsonResource
 {
     protected static ?string $mediaUrlBase = null;
@@ -30,9 +31,7 @@ class CaveSummaryResource extends JsonResource
         // 1. Existing tags
         if ($this->relationLoaded('tags')) {
             foreach ($this->tags as $tag) {
-                if ($tag instanceof Tag) {
-                    $formattedTags[] = $this->formatTag($tag);
-                }
+                $formattedTags[] = $this->formatTag($tag);
             }
         }
 

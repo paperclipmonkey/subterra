@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Models\Club;
 use App\Policies\ClubPolicy;
+use Illuminate\Support\ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
 {

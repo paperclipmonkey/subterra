@@ -45,7 +45,7 @@ class CaveSystemAnnotationController extends Controller
 
     public function destroy(CaveSystem $caveSystem)
     {
-        $caveSystem->annotation()?->delete();
+        $caveSystem->annotation?->delete();
 
         return response()->json(null, 204);
     }

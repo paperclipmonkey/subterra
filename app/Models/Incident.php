@@ -64,11 +64,6 @@ class Incident extends Model
         return $query->where('status', 'open');
     }
 
-    public function scopeUnacknowledged(Builder $query): Builder
-    {
-        return $query->whereNull('incident_controller_id');
-    }
-
     public function resolve(): void
     {
         $this->update([
