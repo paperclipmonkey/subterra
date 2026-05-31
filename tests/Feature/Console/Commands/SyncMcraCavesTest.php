@@ -25,6 +25,7 @@ class SyncMcraCavesTest extends TestCase
             'www.mcra.org.uk/registry/sitedetails.php?id=384' => Http::response($this->getMockSiteDetails384(), 200),
             'www.mcra.org.uk/registry/sitedetails.php?id=500' => Http::response($this->getMockSiteDetails500Portland(), 200),
             'www.mcra.org.uk/registry/sitedetails.php?id=999' => Http::response($this->getMockSiteDetailsShort(), 200),
+            'www.mcra.org.uk/registry/sitedetails.php?id=123' => Http::response($this->getMockSiteDetailsUtf8(), 200),
         ]);
 
         Tag::firstOrCreate(['tag' => 'Cave', 'category' => 'type'], ['type' => 'cave']);
@@ -55,6 +56,11 @@ class SyncMcraCavesTest extends TestCase
    <name>Portland Cave</name>
    <description><![CDATA[<p>A coastal cave on Portland.</p><p><a href="https://www.mcra.org.uk/registry/sitedetails.php?id=500">Full Site Details</a></p><p><small>Database content Copyright 2026 <a href="https://www.mcra.org.uk">Mendip Cave Registry and Archive</a></small></p>]]></description>
    <Point><coordinates>-2.454,50.543</coordinates></Point>
+  </Placemark>
+  <Placemark>
+   <name>Sandy Hole Connection</name>
+   <description><![CDATA[<p>Connected to Sandy Hole via a very difficult and tight rift providing a long and sporting through trip. Combined length of caves is ≈2,489 m.</p><p><a href="https://www.mcra.org.uk/registry/sitedetails.php?id=123">Full Site Details</a></p><p><small>Database content Copyright 2026 <a href="https://www.mcra.org.uk">Mendip Cave Registry and Archive</a></small></p>]]></description>
+   <Point><coordinates>-2.71,51.22</coordinates></Point>
   </Placemark>
  </Document>
 </kml>
@@ -511,9 +517,35 @@ HTML;
         }
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_preserves_utf8_characters_in_kml_descriptions(): void
+    {
+        $this->artisan('sync:mcra-caves')
+            ->assertExitCode(0);
+
+        $cave = Cave::where('name', 'Sandy Hole Connection')->firstOrFail();
+        $this->assertStringContainsString('≈2,489 m', $cave->description);
+        $this->assertStringNotContainsString('â', $cave->description);
+    }
+
     // -----------------------------------------------------------------------
     // Additional mock fixtures
     // -----------------------------------------------------------------------
+
+    private function getMockSiteDetailsUtf8(): string
+    {
+        return <<<'HTML'
+<html><body>
+<h1>Sandy Hole Connection</h1>
+<p><strong>Somerset.</strong></p>
+<table class='rowhover'>
+<tr><td>Length:</td><td>2489 m</td></tr>
+<tr><td>Depth:</td><td>50 m</td></tr>
+<tr><td>Altitude:</td><td>120 m</td></tr>
+</table>
+</body></html>
+HTML;
+    }
 
     private function getMockSiteDetails500Portland(): string
     {

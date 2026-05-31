@@ -528,7 +528,7 @@ abstract class SyncCaveRegistryBaseCommand extends Command
 
         $dom = new \DOMDocument();
         libxml_use_internal_errors(true);
-        $dom->loadHTML('<html><body>'.$html.'</body></html>');
+        $dom->loadHTML('<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>'.$html.'</body></html>');
         libxml_clear_errors();
 
         $paragraphs = $dom->getElementsByTagName('p');
