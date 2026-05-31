@@ -85,9 +85,15 @@ const registries = [
     url: 'cncc.org.uk',
     description: 'Council of Northern Caving Clubs — Yorkshire cave index.',
   },
+  {
+    id: 'pdc',
+    label: 'Peak District Caving',
+    url: 'peakdistrictcaving.info',
+    description: 'Derbyshire Caving Association — Peak District cave database.',
+  },
 ]
 
-const loading = reactive({ mcra: false, fod: false, gsg: false, cncc: false })
+const loading = reactive({ mcra: false, fod: false, gsg: false, cncc: false, pdc: false })
 
 const snackbar = reactive({ show: false, message: '', color: 'success' })
 

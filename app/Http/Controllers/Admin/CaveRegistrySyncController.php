@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 
 class CaveRegistrySyncController extends Controller
 {
-    private const REGISTRIES = ['mcra', 'fod', 'gsg', 'cncc'];
+    private const REGISTRIES = ['mcra', 'fod', 'gsg', 'cncc', 'pdc'];
 
     public function dispatch(string $registry): JsonResponse
     {
