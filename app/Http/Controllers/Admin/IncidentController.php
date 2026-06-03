@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
+use App\Services\IncidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,7 +41,11 @@ class IncidentController extends Controller
             'notes.user',
         ])->findOrFail($id);
 
-        return response()->json(['data' => $incident]);
+        return response()->json([
+            'data' => $incident,
+            // Region-specific 999 / cave-rescue guidance for the Rescue Protocol script.
+            'rescue_info' => app(\App\Services\CaveRescueService::class)->forCave($incident->callout?->cave),
+        ]);
     }
 
     /**
@@ -54,19 +59,9 @@ class IncidentController extends Controller
             return response()->json(['message' => 'Incident already acknowledged by '.$incident->controller->name], 409);
         }
 
-        $incident->update([
-            'incident_controller_id' => Auth::id(),
-            'acknowledged_at' => now(),
-            'status' => 'managed',
-        ]);
+        app(IncidentService::class)->acknowledge($incident, Auth::user(), 'the dashboard');
 
-        // Auto-note
-        $incident->notes()->create([
-            'user_id' => Auth::id(),
-            'content' => 'Acknowledged incident. Assuming Controller role.',
-        ]);
-
-        return response()->json(['data' => $incident->load('controller')]);
+        return response()->json(['data' => $incident->fresh()->load('controller')]);
     }
 
     /**

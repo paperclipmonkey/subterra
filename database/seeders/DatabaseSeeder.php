@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PageSeeder::class,
             PrivacyPolicySeeder::class,
             OfflineModeCmsPageSeeder::class,
+            DutyOfficerGuideSeeder::class,
             CatchmentSeeder::class,
             RouteSeeder::class,
             SuggestedEditSeeder::class,

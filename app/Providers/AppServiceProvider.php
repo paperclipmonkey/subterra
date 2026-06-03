@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(\App\Services\ImageProcessingService::class);
+
+        // Communications providers (Fly/primary side). Bound to interfaces so the vendor
+        // is swappable and easily mocked in tests. The GCP backup uses TextMagic separately.
+        $this->app->bind(\App\Contracts\SmsSender::class, \App\Services\Twilio\TwilioSmsService::class);
+        $this->app->bind(\App\Contracts\VoiceCaller::class, \App\Services\Twilio\TwilioVoiceService::class);
     }
 
     /**

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\Callout;
+use App\Models\Incident;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
@@ -12,118 +15,150 @@ class WebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    // ========================================================================
-    // ClickSend Webhook Secret Bypass
-    // ========================================================================
+    private string $secret = 'test-secret';
 
-    public function test_clicksend_webhook_rejects_when_no_secret_configured()
+    protected function setUp(): void
     {
-        Config::set('services.clicksend.webhook_secret', null);
-
-        $response = $this->postJson('/api/webhooks/clicksend/sms', [
-            'from' => '+447777777777',
-            'body' => 'OUT SAFE',
-        ]);
-
-        $response->assertStatus(401);
+        parent::setUp();
+        Config::set('services.twilio.webhook_secret', $this->secret);
     }
 
-    public function test_clicksend_webhook_rejects_empty_string_secret()
+    private function smsUrl(string $secret): string
     {
-        Config::set('services.clicksend.webhook_secret', '');
-
-        $response = $this->postJson('/api/webhooks/clicksend/sms', [
-            'from' => '+447777777777',
-            'body' => 'OUT SAFE',
-        ]);
-
-        $response->assertStatus(401);
+        return "/api/webhooks/twilio/{$secret}/sms";
     }
 
-    public function test_clicksend_webhook_cancels_callout_with_strict_text_and_normalized_phone()
-    {
-        $secret = 'test-secret';
-        Config::set('services.clicksend.webhook_secret', $secret);
+    // ---- secret enforcement ------------------------------------------------
 
-        $user = \App\Models\User::factory()->create(['phone' => '07777777777']); // Local format
-        $callout = \App\Models\Callout::factory()->create([
+    public function test_rejects_wrong_secret()
+    {
+        $this->postJson($this->smsUrl('wrong'), ['From' => '+447777777777', 'Body' => 'OUT SAFE'])
+            ->assertStatus(403);
+    }
+
+    public function test_rejects_when_no_secret_configured()
+    {
+        Config::set('services.twilio.webhook_secret', '');
+        $this->postJson($this->smsUrl('anything'), ['From' => '+447777777777', 'Body' => 'OUT SAFE'])
+            ->assertStatus(403);
+    }
+
+    // ---- inbound SMS -------------------------------------------------------
+
+    public function test_out_safe_cancels_callout()
+    {
+        $user = User::factory()->create(['phone' => '07777777777']);
+        $callout = Callout::factory()->create([
             'user_id' => $user->id,
             'status' => 'active',
             'trip_plan' => 'Going caving',
         ]);
 
-        $mock = \Mockery::mock(\App\Services\ClickSendService::class);
-        $mock->shouldReceive('sendSms')
-             ->once()
-             ->with('+447777777777', 'Callout cancelled successfully. Glad you are safe.');
-        $this->app->instance(\App\Services\ClickSendService::class, $mock);
-
-        // Incoming webhook has E.164 format and correct text format (case insensitive)
-        $response = $this->postJson('/api/webhooks/clicksend/sms', [
-            'from' => '+447777777777',
-            'body' => '   out safe ',
-            'secret' => $secret,
+        $response = $this->post($this->smsUrl($this->secret), [
+            'From' => '+447777777777',
+            'Body' => '  out safe ',
         ]);
 
         $response->assertStatus(200);
-
+        $response->assertSee('Glad you are safe', false);
         $this->assertEquals('cancelled', $callout->fresh()->status);
-        $this->assertDatabaseHas('trips', [
-            'description' => 'Going caving',
-        ]);
     }
 
-    public function test_clicksend_webhook_handles_generic_message_and_replies()
+    public function test_generic_message_is_logged_against_callout()
     {
-        $secret = 'test-secret';
-        Config::set('services.clicksend.webhook_secret', $secret);
-
-        $user = \App\Models\User::factory()->create(['phone' => '+447777777777']);
-        $callout = \App\Models\Callout::factory()->create([
+        $user = User::factory()->create(['phone' => '+447777777777']);
+        $callout = Callout::factory()->create([
             'user_id' => $user->id,
             'status' => 'active',
             'team_details' => 'Initial team info',
         ]);
 
-        $mock = \Mockery::mock(\App\Services\ClickSendService::class);
-        $mock->shouldReceive('sendSms')
-             ->once()
-             ->with('07777777777', "Message logged. Not cancelled. Reply exactly 'OUT SAFE' to cancel callout.");
-        $this->app->instance(\App\Services\ClickSendService::class, $mock);
-
-        // Testing loose "OUT SAFE" - should fall into generic handler now
-        $response = $this->postJson('/api/webhooks/clicksend/sms', [
-            'from' => '07777777777',
-            'body' => 'Not out safe yet',
-            'secret' => $secret,
+        $response = $this->post($this->smsUrl($this->secret), [
+            'From' => '07777777777',
+            'Body' => 'Stuck at the second pitch',
         ]);
 
-        $response->assertStatus(200);
-
+        $response->assertStatus(200)->assertSee('Message logged', false);
         $callout->refresh();
         $this->assertEquals('active', $callout->status);
-        $this->assertStringContainsString('Not out safe yet', $callout->team_details);
+        $this->assertStringContainsString('Stuck at the second pitch', $callout->team_details);
     }
 
-    public function test_clicksend_webhook_aborts_without_callout_and_replies()
+    public function test_no_active_callout_replies_gracefully()
     {
-        $this->withoutExceptionHandling();
-
-        $secret = 'test-secret';
-        Config::set('services.clicksend.webhook_secret', $secret);
-
-        $mock = \Mockery::mock(\App\Services\ClickSendService::class);
-        $mock->shouldReceive('sendSms')
-             ->once()
-             ->with('+447777777777', 'Callout not cancelled. No active callout found for this number.');
-        $this->app->instance(\App\Services\ClickSendService::class, $mock);
-
-        $response = $this->postJson('/api/webhooks/clicksend/sms', [
-            'from' => '+447777777777',
-            'body' => 'OUT SAFE',
-            'secret' => $secret,
+        $response = $this->post($this->smsUrl($this->secret), [
+            'From' => '+447777777777',
+            'Body' => 'OUT SAFE',
         ]);
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)->assertSee('No active callout found', false);
+    }
+
+    public function test_ack_from_duty_officer_acknowledges_open_incident()
+    {
+        $do = User::factory()->dutyOfficer()->create(['phone' => '07111111111', 'name' => 'Jane']);
+        $callout = Callout::factory()->create(['status' => 'triggered']);
+        $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+
+        $response = $this->post($this->smsUrl($this->secret), [
+            'From' => '+447111111111',
+            'Body' => 'ACK',
+        ]);
+
+        $response->assertStatus(200)->assertSee('incident controller', false);
+        $incident->refresh();
+        $this->assertEquals($do->id, $incident->incident_controller_id);
+        $this->assertEquals('managed', $incident->status);
+    }
+
+    // ---- voice -------------------------------------------------------------
+
+    public function test_voice_twiml_contains_gather_and_acknowledge_prompt()
+    {
+        $do = User::factory()->dutyOfficer()->create(['phone' => '07111111111']);
+        $callout = Callout::factory()->create(['status' => 'triggered']);
+        $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+
+        $response = $this->post("/api/webhooks/twilio/{$this->secret}/voice?incident={$incident->id}&user={$do->id}");
+
+        $response->assertStatus(200)
+            ->assertSee('<Gather', false)
+            ->assertSee('Press 1', false);
+    }
+
+    public function test_voice_gather_press_1_acknowledges_incident()
+    {
+        $do = User::factory()->dutyOfficer()->create(['phone' => '07111111111', 'name' => 'Jane']);
+        $callout = Callout::factory()->create(['status' => 'triggered']);
+        $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+
+        $response = $this->post(
+            "/api/webhooks/twilio/{$this->secret}/voice/gather?incident={$incident->id}&user={$do->id}",
+            ['Digits' => '1']
+        );
+
+        $response->assertStatus(200)->assertSee('acknowledged', false);
+        $incident->refresh();
+        $this->assertEquals($do->id, $incident->incident_controller_id);
+        $this->assertEquals('managed', $incident->status);
+    }
+
+    public function test_voice_gather_no_digit_does_not_acknowledge()
+    {
+        $do = User::factory()->dutyOfficer()->create(['phone' => '07111111111']);
+        $callout = Callout::factory()->create(['status' => 'triggered']);
+        $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+
+        $this->post("/api/webhooks/twilio/{$this->secret}/voice/gather?incident={$incident->id}&user={$do->id}", [])
+            ->assertStatus(200);
+
+        $this->assertNull($incident->fresh()->incident_controller_id);
+    }
+
+    public function test_voice_test_returns_confirmation_twiml()
+    {
+        $this->post("/api/webhooks/twilio/{$this->secret}/voice/test")
+            ->assertStatus(200)
+            ->assertSee('test call', false);
     }
 }

@@ -36,12 +36,16 @@ class Incident extends Model
         'acknowledged_at',
         'escalated_at',
         'police_log_number',
+        'last_voice_call_at',
+        'voice_call_count',
     ];
 
     protected $casts = [
         'resolved_at' => 'datetime',
         'acknowledged_at' => 'datetime',
         'escalated_at' => 'datetime',
+        'last_voice_call_at' => 'datetime',
+        'voice_call_count' => 'integer',
     ];
 
     public function callout(): BelongsTo

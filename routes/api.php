@@ -25,8 +25,16 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/webhooks/clicksend/sms', [\App\Http\Controllers\Webhook\ClickSendController::class, 'handleSms'])
-    ->middleware('throttle:30,1');
+// Twilio inbound webhooks. Authenticated by a shared secret in the URL path (Twilio
+// cannot send a custom header). Configure these URLs in the Twilio console.
+Route::post('/webhooks/twilio/{secret}/sms', [\App\Http\Controllers\Webhook\TwilioController::class, 'handleSms'])
+    ->middleware('throttle:60,1')->name('webhooks.twilio.sms');
+Route::post('/webhooks/twilio/{secret}/voice', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceTwiml'])
+    ->middleware('throttle:120,1')->name('webhooks.twilio.voice');
+Route::post('/webhooks/twilio/{secret}/voice/gather', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceGather'])
+    ->middleware('throttle:120,1')->name('webhooks.twilio.voice.gather');
+Route::post('/webhooks/twilio/{secret}/voice/test', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceTest'])
+    ->middleware('throttle:120,1')->name('webhooks.twilio.voice.test');
 
 Route::post('/webhooks/gcp/media', [\App\Http\Controllers\Webhook\GcpMediaWebhookController::class, 'handle'])
     ->middleware('throttle:120,1');
@@ -246,6 +254,12 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::get('/duty-officers', [App\Http\Controllers\DutyOfficerController::class, 'index'])->name('admin.duty-officers.index');
         Route::get('/callouts', [App\Http\Controllers\Admin\CalloutController::class, 'index'])->name('admin.callouts.index');
         Route::post('/callouts/test-watchdog', [App\Http\Controllers\Admin\CalloutController::class, 'sendTestWatchdogCallout'])->name('admin.callouts.test-watchdog');
+
+        // Duty officers test the alert channels (SMS + voice) to build confidence.
+        Route::post('/duty-officers/test-self', [App\Http\Controllers\Admin\DutyOfficerTestController::class, 'testSelf'])
+            ->middleware('throttle:10,1')->name('admin.duty-officers.test-self');
+        Route::post('/duty-officers/test-broadcast', [App\Http\Controllers\Admin\DutyOfficerTestController::class, 'testBroadcast'])
+            ->middleware('throttle:3,5')->name('admin.duty-officers.test-broadcast');
         Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
         Route::post('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'store']);
         Route::put('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'update']);

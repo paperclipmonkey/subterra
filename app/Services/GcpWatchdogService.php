@@ -52,14 +52,19 @@ class GcpWatchdogService
                 'response' => $response->body(),
             ]);
 
-            throw new Exception("Failed to register GCP watchdog: {$response->status()}");
+            // Return null (per this method's contract) rather than throwing. The backup
+            // watchdog is non-essential to creating a callout — a registration failure
+            // must never prevent the primary safety net from being set up. The caller
+            // records the missing coverage via watchdog_registered_at, and the
+            // callouts:check-watchdog-sync monitor surfaces it.
+            return null;
         } catch (Exception $e) {
             Log::error("Exception registering GCP watchdog: {$e->getMessage()}", [
                 'callout_id' => $callout->id,
                 'exception' => $e,
             ]);
 
-            throw new Exception("Watchdog registration down or failed: {$e->getMessage()}");
+            return null;
         }
     }
 

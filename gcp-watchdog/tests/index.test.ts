@@ -165,6 +165,94 @@ describe('Watchdog API', () => {
             expect(response.body.message).toContain('Processed 1 overdue callout');
             expect(response.body.alerts_sent).toHaveLength(1);
         });
+
+        it('isolates a failing callout so the others are still alerted', async () => {
+            const makeCallout = (id: string, phone: string, email: string) => ({
+                callout_id: id,
+                callout_time: { toDate: () => new Date('2026-01-30T08:00:00Z') },
+                user: { name: 'John Doe', phone: '+1234567890' },
+                participants: [],
+                duty_officers: [{ name: 'DO', phone, email }],
+                trip_plan: 'Test trip',
+                cave_name: 'Test Cave',
+            });
+
+            mockFirestore.getOverdueCallouts = jest
+                .fn()
+                .mockResolvedValue([makeCallout('c1', '+1', 'a@x.com'), makeCallout('c2', '+2', 'b@x.com')]);
+            mockSms.sendSms = jest.fn().mockResolvedValue(true);
+            mockEmail.sendAlertEmail = jest.fn().mockResolvedValue(true);
+            // Processing c1 fails at the Firestore write; c2 must still be processed.
+            mockFirestore.markAsAlerted = jest
+                .fn()
+                .mockImplementation((id: string) =>
+                    id === 'c1' ? Promise.reject(new Error('firestore down')) : Promise.resolve()
+                );
+
+            const response = await request(app)
+                .post('/check')
+                .set('X-Watchdog-Key', 'test-api-key');
+
+            expect(response.status).toBe(200);
+            // Both callouts were attempted (one SMS each) despite c1 failing.
+            expect(mockSms.sendSms).toHaveBeenCalledTimes(2);
+            expect(response.body.alerts_sent).toHaveLength(1);
+            expect(response.body.alerts_sent[0].callout_id).toBe('c2');
+            expect(response.body.failures).toHaveLength(1);
+            expect(response.body.failures[0].callout_id).toBe('c1');
+        });
+
+        it('does not mark a callout as alerted when every send fails', async () => {
+            const callout = {
+                callout_id: 'c1',
+                callout_time: { toDate: () => new Date('2026-01-30T08:00:00Z') },
+                user: { name: 'John Doe' },
+                participants: [],
+                duty_officers: [{ name: 'DO', phone: '+1', email: 'a@x.com' }],
+                cave_name: 'Test Cave',
+            };
+
+            mockFirestore.getOverdueCallouts = jest.fn().mockResolvedValue([callout]);
+            mockSms.sendSms = jest.fn().mockResolvedValue(false);
+            mockEmail.sendAlertEmail = jest.fn().mockResolvedValue(false);
+            mockFirestore.markAsAlerted = jest.fn().mockResolvedValue(undefined);
+
+            const response = await request(app)
+                .post('/check')
+                .set('X-Watchdog-Key', 'test-api-key');
+
+            expect(response.status).toBe(200);
+            // Left un-alerted so the next cycle retries.
+            expect(mockFirestore.markAsAlerted).not.toHaveBeenCalled();
+            expect(response.body.alerts_sent[0].alerted).toBe(false);
+        });
+
+        it('still sends email and marks alerted when an SMS send throws', async () => {
+            const callout = {
+                callout_id: 'c1',
+                callout_time: { toDate: () => new Date('2026-01-30T08:00:00Z') },
+                user: { name: 'John Doe' },
+                participants: [],
+                duty_officers: [{ name: 'DO', phone: '+1', email: 'a@x.com' }],
+                cave_name: 'Test Cave',
+            };
+
+            mockFirestore.getOverdueCallouts = jest.fn().mockResolvedValue([callout]);
+            mockSms.sendSms = jest.fn().mockRejectedValue(new Error('sms provider down'));
+            mockEmail.sendAlertEmail = jest.fn().mockResolvedValue(true);
+            mockFirestore.markAsAlerted = jest.fn().mockResolvedValue(undefined);
+
+            const response = await request(app)
+                .post('/check')
+                .set('X-Watchdog-Key', 'test-api-key');
+
+            expect(response.status).toBe(200);
+            // The thrown SMS did not prevent the email attempt.
+            expect(mockEmail.sendAlertEmail).toHaveBeenCalledTimes(1);
+            // Email delivered => alerted.
+            expect(mockFirestore.markAsAlerted).toHaveBeenCalledTimes(1);
+            expect(response.body.alerts_sent[0].alerted).toBe(true);
+        });
     });
 
     describe('GET /watchdog', () => {

@@ -26,11 +26,18 @@ return [
         'api_key' => env('PIRATE_WEATHER_API_KEY'),
     ],
 
-    // Used for SMS to trip participants and primary SMS for Duty Officers
-    'clicksend' => [
-        'username' => env('CLICKSEND_USERNAME'),
-        'api_key' => env('CLICKSEND_API_KEY'),
-        'webhook_secret' => env('CLICKSEND_WEBHOOK_SECRET'),
+    // Twilio — primary SMS + voice for the Fly/Subterra side (the GCP backup uses
+    // TextMagic, preserving cross-provider redundancy).
+    'twilio' => [
+        'sid' => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        // Outbound caller-ID / SMS sender number (E.164, e.g. +447...).
+        'from' => env('TWILIO_PHONE_NUMBER'),
+        // Shared secret embedded in inbound webhook URLs (Twilio can't send a custom
+        // header, so the secret lives in the configured URL — like the other webhooks).
+        'webhook_secret' => env('TWILIO_WEBHOOK_SECRET'),
+        // Master kill-switch for real outbound SMS/voice (e.g. off in staging).
+        'enabled' => env('TWILIO_ENABLED', false),
     ],
 
     'betterstack' => [

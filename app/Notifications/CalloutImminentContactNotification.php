@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
-use App\Channels\ClickSendChannel;
+use App\Channels\SmsChannel;
 use App\Models\Callout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,7 +32,7 @@ class CalloutImminentContactNotification extends Notification implements ShouldQ
      */
     public function via(object $notifiable): array
     {
-        return ['mail', ClickSendChannel::class];
+        return ['mail', SmsChannel::class];
     }
 
     /**
@@ -54,9 +54,9 @@ class CalloutImminentContactNotification extends Notification implements ShouldQ
     }
 
     /**
-     * Get the ClickSend SMS representation of the notification.
+     * Get the SMS representation of the notification.
      */
-    public function toClickSend(object $notifiable): string
+    public function toSms(object $notifiable): string
     {
         //return "WARNING: Callout at {$this->callout->cave->name} due in 15 mins. Check in immediately to avoid rescue. Reply 'OUT SAFE' to cancel.";
         return 'Your callout is close. Please mark yourself safe or reply "OUT SAFE"';

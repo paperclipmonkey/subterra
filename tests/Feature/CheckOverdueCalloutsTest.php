@@ -13,6 +13,7 @@ use App\Notifications\CalloutImminentNotification;
 use App\Notifications\OverdueCalloutNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -327,5 +328,161 @@ class CheckOverdueCalloutsTest extends TestCase
 
         $callout->refresh();
         $this->assertNotNull($callout->warned_at);
+    }
+
+    public function test_sms_failure_during_trigger_still_creates_incident()
+    {
+        // A downed SMS provider must NOT prevent the callout being triggered or the
+        // incident being persisted. ClickSend reports failure, so the SMS channel throws;
+        // the per-recipient isolation in safeNotify catches it without rolling anything back.
+        Mail::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $this->mock(\App\Contracts\SmsSender::class, function ($mock) {
+            $mock->shouldReceive('send')->andReturn(false);
+        });
+
+        $do = User::factory()->dutyOfficer()->create(['phone' => '+447111111111']);
+        OnCallShift::create([
+            'user_id' => $do->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->endOfDay(),
+        ]);
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->subMinute(),
+            'status' => 'active',
+        ]);
+        \App\Models\CalloutParticipant::create([
+            'callout_id' => $callout->id,
+            'name' => 'Participant 1',
+            'phone' => '+447999999999',
+        ]);
+
+        $this->artisan('callouts:check-overdue')->assertExitCode(0);
+
+        $this->assertDatabaseHas('callouts', ['id' => $callout->id, 'status' => 'triggered']);
+        $this->assertDatabaseHas('incidents', ['callout_id' => $callout->id, 'status' => 'open']);
+    }
+
+    public function test_escalation_persists_even_if_sms_fails()
+    {
+        // The escalation record (escalated_at + note) must be committed before notifying,
+        // so a downed SMS provider can't roll it back and cause repeated escalation.
+        Mail::fake();
+        Carbon::setTestNow('2025-01-01 12:30:00');
+
+        $this->mock(\App\Contracts\SmsSender::class, function ($mock) {
+            $mock->shouldReceive('send')->andReturn(false);
+        });
+
+        User::factory()->dutyOfficer()->create(['is_active' => true, 'phone' => '+447111111111']);
+
+        $callout = Callout::factory()->create(['status' => 'triggered']);
+        $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+        $incident->created_at = now()->subMinutes(30);
+        $incident->save();
+
+        $this->artisan('callouts:check-overdue')->assertExitCode(0);
+
+        $incident->refresh();
+        $this->assertNotNull($incident->escalated_at);
+        $this->assertDatabaseHas('incident_notes', [
+            'incident_id' => $incident->id,
+            'content' => 'SYSTEM ALERT: Incident ESCALATED. Notification sent to all Duty Officers due to 15m idle time.',
+        ]);
+    }
+
+    public function test_imminent_warning_sets_warned_at_even_if_sms_fails()
+    {
+        // warned_at must be persisted regardless of notification outcome, to prevent the
+        // same imminent warning being re-sent every minute when a provider is down.
+        Mail::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $this->mock(\App\Contracts\SmsSender::class, function ($mock) {
+            $mock->shouldReceive('send')->andReturn(false);
+        });
+
+        $do = User::factory()->dutyOfficer()->create(['phone' => '+447111111111']);
+        OnCallShift::create([
+            'user_id' => $do->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->endOfDay(),
+        ]);
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->addMinutes(15),
+            'status' => 'active',
+        ]);
+
+        $this->artisan('callouts:check-overdue')->assertExitCode(0);
+
+        $callout->refresh();
+        $this->assertNotNull($callout->warned_at);
+    }
+
+    public function test_one_recipient_sms_failure_does_not_block_other_recipients()
+    {
+        // Per-recipient isolation: the first recipient's SMS failure must not stop the
+        // command from attempting the second recipient. We assert the provider was called
+        // for BOTH duty officers despite the first throwing.
+        Mail::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $this->mock(\App\Contracts\SmsSender::class, function ($mock) {
+            $mock->shouldReceive('send')->twice()->andReturn(false);
+        });
+
+        // No shift => fall back to ALL active duty officers (two recipients).
+        User::factory()->dutyOfficer()->create(['is_active' => true, 'phone' => '+447111111111']);
+        User::factory()->dutyOfficer()->create(['is_active' => true, 'phone' => '+447222222222']);
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->subMinute(),
+            'status' => 'active',
+        ]);
+
+        $this->artisan('callouts:check-overdue')->assertExitCode(0);
+
+        $this->assertDatabaseHas('incidents', ['callout_id' => $callout->id, 'status' => 'open']);
+    }
+
+    public function test_trigger_with_no_duty_officers_still_creates_incident()
+    {
+        // Even with nobody to notify, the incident must be recorded (and an emergency log
+        // emitted) rather than the run failing.
+        Notification::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->subMinute(),
+            'status' => 'active',
+        ]);
+
+        $this->artisan('callouts:check-overdue')->assertExitCode(0);
+
+        $this->assertDatabaseHas('callouts', ['id' => $callout->id, 'status' => 'triggered']);
+        $this->assertDatabaseHas('incidents', ['callout_id' => $callout->id, 'status' => 'open']);
+    }
+
+    public function test_running_check_twice_does_not_create_duplicate_incident()
+    {
+        // Idempotency: once triggered, a second run must not re-trigger or duplicate the
+        // incident (guarded by the active->triggered status transition + unique callout_id).
+        Notification::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        User::factory()->dutyOfficer()->create();
+
+        $callout = Callout::factory()->create([
+            'callout_time' => now()->subMinute(),
+            'status' => 'active',
+        ]);
+
+        $this->artisan('callouts:check-overdue');
+        $this->artisan('callouts:check-overdue');
+
+        $this->assertEquals(1, Incident::where('callout_id', $callout->id)->count());
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
-use App\Channels\ClickSendChannel;
+use App\Channels\SmsChannel;
 use App\Models\Incident;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,7 +32,7 @@ class IncidentEscalatedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', ClickSendChannel::class];
+        return ['mail', SmsChannel::class];
     }
 
     /**
@@ -58,9 +58,9 @@ class IncidentEscalatedNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the ClickSend SMS representation of the notification.
+     * Get the SMS representation of the notification.
      */
-    public function toClickSend(object $notifiable): string
+    public function toSms(object $notifiable): string
     {
         return "URGENT: Incident #{$this->incident->id} waiting for Controller >15m! Please log in to Subterra immediately.";
     }

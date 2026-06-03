@@ -8,6 +8,7 @@ import { TextMagicClient } from './textmagic-client';
 import { SMTPClient } from './smtp-client';
 import { getSecret } from './secrets';
 import { setupSlackLogger } from './slack-logger';
+import { sendOverdueSlackAlert } from './slack-alert';
 
 // Setup Slack logging for console.warn and console.error
 setupSlackLogger();
@@ -215,28 +216,43 @@ Reply SAFE to acknowledge this test.`;
 
 // Check for overdue callouts (triggered by Cloud Scheduler)
 app.post('/check', async (req: Request, res: Response) => {
+    // Only the Firestore query failing is a true 500 — if we can't read the callouts we
+    // genuinely cannot proceed. Per-callout processing below is isolated so that a failure
+    // alerting one callout never suppresses alerts for the others in this cycle.
+    let overdueCallouts;
     try {
-        // Query for overdue callouts
-        const overdueCallouts = await getFirestoreClient().getOverdueCallouts();
+        overdueCallouts = await getFirestoreClient().getOverdueCallouts();
+    } catch (error) {
+        console.error('Error checking overdue callouts:', error);
+        return res.status(500).json({ error: (error as Error).message });
+    }
 
-        if (overdueCallouts.length === 0) {
-            console.log('No overdue callouts found');
-            return res.json({
-                message: 'No overdue callouts',
-                checked_at: new Date().toISOString(),
-            });
-        }
+    if (overdueCallouts.length === 0) {
+        console.log('No overdue callouts found');
+        return res.json({
+            message: 'No overdue callouts',
+            checked_at: new Date().toISOString(),
+        });
+    }
 
-        console.warn(`Found ${overdueCallouts.length} overdue callout(s)`);
+    console.log(`Found ${overdueCallouts.length} overdue callout(s)`);
 
-        const alertsSent = [];
+    // Dedicated, high-visibility Slack alert (with @channel), independent of the per-line
+    // console log forwarding. Fire-and-forget so a slow/failed Slack post never delays the
+    // SMS/email alerts below — the function swallows its own errors.
+    void sendOverdueSlackAlert(overdueCallouts);
 
-        for (const callout of overdueCallouts) {
-            const calloutId = callout.callout_id;
+    const alertsSent = [];
+    const failures: Array<{ callout_id: string; error: string }> = [];
+
+    for (const callout of overdueCallouts) {
+        const calloutId = callout.callout_id;
+
+        try {
             const user = callout.user || {};
             const dutyOfficers = callout.duty_officers || [];
 
-            console.warn(`Processing overdue callout: ${calloutId}`);
+            console.log(`Processing overdue callout: ${calloutId}`);
 
             // Collect all phone numbers and emails to alert
             const phoneNumbers: string[] = [];
@@ -259,41 +275,75 @@ This is a 15m overdue unacknowledged callout. Please contact the team immediatel
 
 Callout ID: ${calloutId}`;
 
-            // Send SMS alerts
+            // Send SMS alerts — each send isolated so one failing recipient/provider call
+            // cannot stop the rest (or the email alerts) from going out.
             const smsResults: Record<string, boolean> = {};
             for (const phone of phoneNumbers) {
-                smsResults[phone] = await getSmsClient().sendSms(phone, alertMessage);
+                try {
+                    smsResults[phone] = await getSmsClient().sendSms(phone, alertMessage);
+                } catch (err) {
+                    console.error(`Failed to send watchdog SMS for callout ${calloutId}:`, err);
+                    smsResults[phone] = false;
+                }
             }
 
-            // Send email alerts
+            // Send email alerts (also isolated per recipient)
             const emailResults: Record<string, boolean> = {};
             for (const email of emails) {
-                emailResults[email] = await getEmailClient().sendAlertEmail(email, callout);
+                try {
+                    emailResults[email] = await getEmailClient().sendAlertEmail(email, callout);
+                } catch (err) {
+                    console.error(`Failed to send watchdog email for callout ${calloutId}:`, err);
+                    emailResults[email] = false;
+                }
             }
 
-            // Mark as alerted in Firestore
-            await getFirestoreClient().markAsAlerted(calloutId);
+            const hadRecipients = phoneNumbers.length > 0 || emails.length > 0;
+            const anyDelivered =
+                Object.values(smsResults).some(Boolean) || Object.values(emailResults).some(Boolean);
+
+            if (!hadRecipients) {
+                // Nothing we can do for this callout — surface it loudly (goes to Slack)
+                // but mark it alerted so we don't reprocess it forever.
+                console.error(`Overdue callout ${calloutId} has NO duty officer contacts to alert.`);
+            }
+
+            // Only mark as alerted if we actually reached someone (or there was nobody to
+            // reach). If every send failed, leave it un-alerted so the next 5-minute cycle
+            // retries it rather than silently giving up.
+            if (anyDelivered || !hadRecipients) {
+                await getFirestoreClient().markAsAlerted(calloutId);
+            } else {
+                console.error(
+                    `All alerts FAILED for overdue callout ${calloutId}; leaving un-alerted to retry next cycle.`
+                );
+            }
 
             alertsSent.push({
                 callout_id: calloutId,
                 sms_sent: smsResults,
                 emails_sent: emailResults,
+                alerted: anyDelivered || !hadRecipients,
             });
 
             console.log(
                 `Alerts sent for callout ${calloutId}: SMS=${JSON.stringify(smsResults)}, Email=${JSON.stringify(emailResults)}`
             );
+        } catch (error) {
+            // Isolate per-callout: a failure processing one callout (e.g. Firestore write,
+            // unexpected data shape) must not prevent the remaining overdue callouts from
+            // being alerted.
+            console.error(`Error processing overdue callout ${calloutId}:`, error);
+            failures.push({ callout_id: calloutId, error: (error as Error).message });
         }
-
-        res.json({
-            message: `Processed ${overdueCallouts.length} overdue callout(s)`,
-            alerts_sent: alertsSent,
-            checked_at: new Date().toISOString(),
-        });
-    } catch (error) {
-        console.error('Error checking overdue callouts:', error);
-        res.status(500).json({ error: (error as Error).message });
     }
+
+    res.json({
+        message: `Processed ${overdueCallouts.length} overdue callout(s)`,
+        alerts_sent: alertsSent,
+        failures,
+        checked_at: new Date().toISOString(),
+    });
 });
 
 // Start server only if not in test environment

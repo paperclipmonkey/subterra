@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
-use App\Channels\ClickSendChannel;
+use App\Channels\SmsChannel;
 use App\Models\Callout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,7 +32,7 @@ class CalloutImminentNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', ClickSendChannel::class];
+        return ['mail', SmsChannel::class];
     }
 
     /**
@@ -53,9 +53,9 @@ class CalloutImminentNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the ClickSend SMS representation of the notification.
+     * Get the SMS representation of the notification.
      */
-    public function toClickSend(object $notifiable): string
+    public function toSms(object $notifiable): string
     {
         return 'ALERT: Callout at '.($this->callout->cave?->name ?? 'Unknown Location')." due in 15 mins ({$this->callout->callout_time->timezone(config('app.display_timezone'))->format('H:i')}). Please stand by. Subterra.";
     }

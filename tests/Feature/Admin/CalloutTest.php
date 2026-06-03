@@ -8,6 +8,7 @@ use App\Models\Callout;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
 
 class CalloutTest extends TestCase
@@ -43,6 +44,17 @@ class CalloutTest extends TestCase
         $this->assertArrayHasKey('team_size', $data[0]);
         $this->assertArrayNotHasKey('participants', $data[0]); // Ensure raw participants not returned
         $this->assertArrayHasKey('has_incident', $data[0]);
+    }
+
+    public function test_dashboard_exposes_configured_whatsapp_group_url()
+    {
+        Config::set('callouts.whatsapp_group_url', 'https://chat.whatsapp.com/TESTGROUP');
+        $admin = User::factory()->dutyOfficer()->create();
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/callouts')
+            ->assertStatus(200)
+            ->assertJsonPath('whatsapp_group_url', 'https://chat.whatsapp.com/TESTGROUP');
     }
 
     public function test_non_admin_cannot_view_live_operations()

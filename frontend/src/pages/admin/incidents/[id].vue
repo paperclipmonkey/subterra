@@ -58,12 +58,12 @@
                   <div class="text-caption grey--text">Immediate</div>
                 </template>
                 <div class="mb-2 font-weight-bold">Initiate Call</div>
-                <div>Dial 999 and ask for <strong>POLICE</strong>.</div>
-                <div v-if="policeRegion" class="mt-1">
-                  Request Police for <strong>{{ policeRegion }}</strong> region.
+                <div>Dial 999 (or 112) and ask for <strong>POLICE</strong>.</div>
+                <div v-if="rescueInfo && rescueInfo.police_force" class="mt-1">
+                  Ask for <strong>{{ rescueInfo.police_force }}</strong><span v-if="rescueInfo.region"> ({{ rescueInfo.region }})</span>.
                 </div>
                 <div v-else class="mt-1 red--text font-weight-bold">
-                  Ask caller for the correct Police region.
+                  Region unknown — ask the caller which area the cave is in, then request that police force.
                 </div>
                 <v-checkbox v-model="script.calledPolice" label="Connected to Police Dispatch" dense
                             hide-details color="success" />
@@ -71,12 +71,18 @@
 
               <!-- Step 2: State Nature -->
               <v-timeline-item dot-color="orange" size="small" :icon="mdiAlert">
-                <div class="mb-2 font-weight-bold">State Emergency</div>
+                <div class="mb-2 font-weight-bold">Ask for Cave Rescue</div>
                 <v-alert type="warning" variant="tonal" border="start" density="compact" class="mb-2">
-                  "I need to contact the <strong>CAVE RESCUE</strong> controller."
+                  "I need <strong>CAVE RESCUE</strong> — not mountain rescue."
                 </v-alert>
-                <div>Location: <strong>{{ incident.callout.cave ? incident.callout.cave.name : 'Unknown'
-                }}</strong></div>
+                <div v-if="rescueInfo && rescueInfo.rescue_team" class="mb-1">
+                  Cave rescue team:
+                  <strong>{{ rescueInfo.rescue_team }}<span v-if="rescueInfo.rescue_abbr"> ({{ rescueInfo.rescue_abbr }})</span></strong>
+                </div>
+                <div>Location: <strong>{{ incident.callout.cave ? incident.callout.cave.name : 'Unknown' }}</strong></div>
+                <v-alert v-if="rescueInfo && rescueInfo.note" type="info" variant="tonal" density="compact" class="mt-2 text-caption">
+                  {{ rescueInfo.note }}
+                </v-alert>
                 <v-checkbox v-model="script.statedNature" label="Nature of emergency confirmed" dense
                             hide-details color="success" :disabled="!script.calledPolice" />
               </v-timeline-item>
@@ -382,6 +388,7 @@ export default {
   data() {
     return {
       incident: null,
+      rescueInfo: null,
       mapInstance: null,
       mapStyle: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge',
       script: {
@@ -404,11 +411,6 @@ export default {
       if (this.incident.status === 'managed') return 'orange darken-3'
       return 'green'
     },
-    policeRegion() {
-      if (!this.incident || !this.incident.callout || !this.incident.callout.cave || !this.incident.callout.cave.tags) return null
-      const regionTag = this.incident.callout.cave.tags.find(t => t.category === 'region')
-      return regionTag ? regionTag.tag : null
-    }
   },
   watch: {
     incident: {
@@ -440,6 +442,7 @@ export default {
       try {
         const res = await api.get(`/api/admin/incidents/${this.$route.params.id}`)
         this.incident = res.data.data
+        this.rescueInfo = res.data.rescue_info
 
         // Check if protocol has been dismissed via note
         const dismissNote = "Police have been contacted and they're waiting to hear from cave rescue."

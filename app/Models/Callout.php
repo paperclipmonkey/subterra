@@ -49,11 +49,13 @@ class Callout extends Model
         'cancelled_user_agent',
         'cancelled_location',
         'warned_at',
+        'watchdog_registered_at',
     ];
 
     protected $casts = [
         'callout_time' => 'datetime',
         'warned_at' => 'datetime',
+        'watchdog_registered_at' => 'datetime',
         'location_data' => 'array',
         'request_data' => 'array',
     ];

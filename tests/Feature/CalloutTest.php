@@ -468,8 +468,12 @@ class CalloutTest extends TestCase
         ]);
     }
 
-    public function test_callout_creation_fails_if_watchdog_service_fails()
+    public function test_callout_creation_succeeds_even_if_watchdog_service_fails()
     {
+        // The GCP watchdog is a BACKUP to the primary Subterra scheduler. If it is
+        // unavailable, the callout must still be created (and monitored by the primary
+        // scheduler) — otherwise the backup being down would also disable the primary
+        // safety net. The missing backup coverage is recorded via watchdog_registered_at.
         Mail::fake();
         $user = User::factory()->withApprovedClub()->create();
 
@@ -480,7 +484,7 @@ class CalloutTest extends TestCase
             'end_at' => Carbon::now()->addHours(5),
         ]);
 
-        // Mock GcpWatchdogService to throw exception
+        // Mock GcpWatchdogService to throw exception (watchdog API down)
         $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
             $mock->shouldReceive('register')->andThrow(new \Exception('Watchdog API is down'));
         });
@@ -494,9 +498,76 @@ class CalloutTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
 
-        // Assert it catches the exception, returns 422, and aborts creation
-        $response->assertStatus(422);
-        $this->assertDatabaseMissing('callouts', ['user_id' => $user->id]);
+        // Assert the watchdog failure is tolerated: callout is still created, but flagged
+        // as lacking backup watchdog coverage.
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('callouts', [
+            'user_id' => $user->id,
+            'watchdog_registered_at' => null,
+        ]);
+    }
+
+    public function test_callout_creation_records_watchdog_registration_on_success()
+    {
+        Mail::fake();
+        $user = User::factory()->withApprovedClub()->create();
+
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        // Watchdog registers successfully and returns its id.
+        $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('register')->once()->andReturn('watchdog-123');
+        });
+
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'description' => 'Trip Plan', 'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE', 'car_parking' => 'Bull Pot Farm',
+            'participants' => [['name' => 'Alice']],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(201);
+        $callout = Callout::where('user_id', $user->id)->firstOrFail();
+        $this->assertNotNull($callout->watchdog_registered_at, 'Successful watchdog registration should be recorded.');
+    }
+
+    public function test_callout_creation_leaves_watchdog_registered_at_null_when_not_registered()
+    {
+        // register() returns null when the watchdog is unconfigured or fails — the callout
+        // is created but flagged as having no backup coverage.
+        Mail::fake();
+        $user = User::factory()->withApprovedClub()->create();
+
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('register')->once()->andReturn(null);
+        });
+
+        $payload = [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'description' => 'Trip Plan', 'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE', 'car_parking' => 'Bull Pot Farm',
+            'participants' => [['name' => 'Alice']],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
+
+        $response->assertStatus(201);
+        $callout = Callout::where('user_id', $user->id)->firstOrFail();
+        $this->assertNull($callout->watchdog_registered_at);
     }
 
     public function test_callout_creation_succeeds_even_if_email_service_fails()

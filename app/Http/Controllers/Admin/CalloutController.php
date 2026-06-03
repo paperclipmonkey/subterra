@@ -65,6 +65,8 @@ class CalloutController extends Controller
             'watchdog_count' => $watchdogCount,
             'system_count' => $systemCount,
             'is_watchdog_out_of_sync' => $watchdogCount !== -1 && $watchdogCount !== $systemCount,
+            // Live (read at request time, so it never goes stale) — surfaced as a link on the dashboard.
+            'whatsapp_group_url' => config('callouts.whatsapp_group_url'),
         ]);
     }
 

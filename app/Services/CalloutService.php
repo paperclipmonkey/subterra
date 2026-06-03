@@ -108,7 +108,22 @@ class CalloutService
                 }
             }
 
-            $this->watchdogService->register($callout);
+            // Register the callout with the independent GCP backup watchdog.
+            // The watchdog is a *backup* to the primary Subterra scheduler, so a
+            // registration failure must NEVER prevent the callout being created —
+            // otherwise the backup being down would also take down the primary safety
+            // net. We record success in watchdog_registered_at so the admin dashboard
+            // can surface callouts that lack backup coverage.
+            try {
+                $watchdogId = $this->watchdogService->register($callout);
+                if ($watchdogId !== null) {
+                    $callout->update(['watchdog_registered_at' => now()]);
+                }
+            } catch (Exception $e) {
+                Log::error('GCP Watchdog registration failed; callout still created and monitored by the primary scheduler: '.$e->getMessage(), [
+                    'callout_id' => $callout->id,
+                ]);
+            }
 
             try {
                 // Collect all emails, falling back to User account if autocomplete only sent user_id
