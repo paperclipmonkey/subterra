@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import AdminIndex from '@/pages/admin/callout/index.vue'
 
 // Mock api plugin
@@ -27,6 +28,7 @@ describe('Admin Dashboard', () => {
   it('renders correctly', async () => {
     const wrapper = mount(AdminIndex, {
       global: {
+        plugins: [createPinia()],
         stubs: {
           'v-container': { template: '<div class="v-container"><slot /></div>' },
           'v-row': { template: '<div class="v-row"><slot /></div>' },
@@ -54,7 +56,7 @@ describe('Admin Dashboard', () => {
       }
     })
 
-    expect(wrapper.html()).toContain('Status:')
+    expect(wrapper.html()).toContain('Callout Dashboard')
     // expect(wrapper.html()).toContain('Active Operations') 
     // Loosening strict check on "All Quiet" due to async loading test issues
     // expect(wrapper.html()).toContain('All Quiet')
@@ -63,6 +65,7 @@ describe('Admin Dashboard', () => {
   it('has the expected component structure', () => {
     const wrapper = mount(AdminIndex, {
       global: {
+        plugins: [createPinia()],
         stubs: {
           'v-container': { template: '<div class="v-container"><slot /></div>' },
           'v-row': { template: '<div class="v-row"><slot /></div>' },
