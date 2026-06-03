@@ -16,10 +16,12 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
-import { mdiLock } from '@mdi/js'
+import { mdiLock, mdiDownload } from '@mdi/js'
 import { ref, watch, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useCaveStore } from '@/stores/caves'
+import { MapButtonControl } from '@/utilities/MapButtonControl'
+import { downloadCavesKml } from '@/utilities/caveKml'
 import maplibregl from 'maplibre-gl'
 
 const appStore = useAppStore()
@@ -210,6 +212,16 @@ const fitBounds = (caves) => {
 
 const onMapLoad = ({ map: loadedMap }) => {
   map = loadedMap
+
+  // Export control — sits in the top-right stack, beneath the layer switcher
+  map.addControl(
+    new MapButtonControl({
+      title: 'Export caves to Google Earth (KML)',
+      iconSvg: `<svg style="width:20px;height:20px;margin:5px;" viewBox="0 0 24 24"><path fill="currentColor" d="${mdiDownload}" /></svg>`,
+      onClick: () => downloadCavesKml(caveStore.caves),
+    }),
+    'top-right',
+  )
 
   // style.load fires once per style (initial + every swap). Re-run full setup each time.
   map.on('style.load', setupLayers)

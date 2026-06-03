@@ -116,11 +116,24 @@
       </v-row>
 
       <!-- Infinite scroll sentinel -->
-      <div ref="sentinel" class="py-6 d-flex justify-center">
+      <div ref="sentinel" class="py-6 d-flex flex-wrap align-center justify-center ga-1">
         <v-progress-circular v-if="hasMore" indeterminate color="grey-lighten-2" size="28" />
-        <p v-else-if="caveStore.caves.length > PAGE_SIZE" class="text-caption text-grey">
-          All {{ caveStore.caves.length }} caves shown
-        </p>
+        <template v-else>
+          <p v-if="caveStore.caves.length > PAGE_SIZE" class="text-caption text-grey mb-0">
+            All {{ caveStore.caves.length }} caves shown
+          </p>
+          <v-btn
+            v-if="caveStore.caves.length > 0 && appStore.canSuggest"
+            variant="text"
+            size="small"
+            color="primary"
+            class="text-none"
+            :prepend-icon="mdiEarth"
+            @click="exportKml"
+          >
+            Export to Google Earth (KML)
+          </v-btn>
+        </template>
       </div>
     </template>
 
@@ -140,8 +153,9 @@
   </v-container>
 </template>
 <script setup>
-import { mdiCheck, mdiCloudDownload, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
+import { mdiCheck, mdiCloudDownload, mdiEarth, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { downloadCavesKml } from '@/utilities/caveKml'
 
 const emit = defineEmits(['tag-click', 'clear-filters'])
 
@@ -197,6 +211,10 @@ watch(sentinel, (el) => {
 onUnmounted(() => {
   observer?.disconnect()
 })
+
+const exportKml = () => {
+  downloadCavesKml(caveStore.caves)
+}
 
 const markAsDone = async (cave) => {
   if (!cave) return
