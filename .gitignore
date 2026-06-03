@@ -26,4 +26,4 @@ database.sqlite
 TODO.md
 gcp-watchdog/node_modules/
 gcp-key.json
-.claude/worktrees
+.claude/
