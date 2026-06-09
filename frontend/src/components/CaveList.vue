@@ -122,8 +122,12 @@ import { mdiChevronDown, mdiFilterOutline, mdiFilterVariant, mdiMagnify } from '
 import { useCaveStore } from '@/stores/caves'
 import { useTagStore } from '@/stores/tags'
 import FilterByTagModal from './FilterByTagModal.vue'
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+
+// Lazily load the map (and MapLibre GL, ~hundreds of KB) only when the user
+// switches to the map tab — keeps it out of the initial caves-list bundle.
+const CaveListMap = defineAsyncComponent(() => import('./CaveListMap.vue'))
 
 const caveStore = useCaveStore()
 const tagStore = useTagStore()
