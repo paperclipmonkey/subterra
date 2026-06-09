@@ -19,7 +19,7 @@
 <script setup>
 import { computed, ref, onBeforeUnmount } from 'vue'
 import { MapStyleControl } from '@/utilities/MapStyleControl'
-import { mdiTerrain, mdiSatelliteVariant } from '@mdi/js'
+import { mdiTerrain, mdiSatelliteVariant, mdiMap } from '@mdi/js'
 import {
   MglMap,
   MglNavigationControl,
@@ -56,6 +56,11 @@ const props = defineProps({
   customOptions: {
     type: Array,
     default: () => [
+      {
+        title: 'Terrain',
+        value: 'https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528',
+        icon: mdiMap
+      },
       {
         title: 'Satellite Hybrid',
         value: 'https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528',

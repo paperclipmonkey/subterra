@@ -27,7 +27,10 @@ import maplibregl from 'maplibre-gl'
 const appStore = useAppStore()
 const caveStore = useCaveStore()
 
-const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
+// Default to the lightweight global vector style — far fewer bytes on slow
+// connections than satellite raster tiles. Users can switch to Satellite/OS
+// via the style control.
+const style = ref('https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 5
 const lnglat = [-2, 53]
 const mapRef = ref(null)
