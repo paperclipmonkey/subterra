@@ -74,11 +74,13 @@ export default defineConfig(({ mode }) => {
               },
             },
             {
-              urlPattern: /\/api\/caves$/,
+              // Matches both /api/caves and the initial /api/caves?curated=1
+              // load (but not /api/caves/123 or /api/caves/search).
+              urlPattern: /\/api\/caves(\?.*)?$/,
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'caves-list-cache',
-                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 },
+                expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 },
                 cacheableResponse: { statuses: [0, 200] },
                 networkTimeoutSeconds: 5,
               },
