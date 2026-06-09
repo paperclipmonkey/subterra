@@ -177,6 +177,7 @@ HTML;
     <table>
         <tr><td>Length</td><td>-</td></tr>
         <tr><td>Depth</td><td>-</td></tr>
+        <tr><td><span property="geo:lat">53.3400</span> <span property="geo:long">-1.8200</span></td></tr>
     </table>
 </section>
 </body>
@@ -488,9 +489,9 @@ HTML;
         $this->artisan('sync:pdc-caves')
             ->assertExitCode(0);
 
-        // Giants Hole should still be imported, just without coordinates
-        $cave = Cave::where('name', 'Giants Hole')->firstOrFail();
-        $this->assertEquals(0.0, $cave->location_lat);
-        $this->assertEquals(0.0, $cave->location_lng);
+        // A cave with no extractable GPS coordinates should be skipped, not
+        // imported at a useless 0,0 location — and no orphan system left behind.
+        $this->assertDatabaseMissing('caves', ['name' => 'Giants Hole']);
+        $this->assertDatabaseMissing('cave_systems', ['name' => 'Giants Hole']);
     }
 }

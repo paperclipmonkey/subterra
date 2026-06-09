@@ -367,9 +367,24 @@ HTML;
         $this->artisan('sync:cncc-caves')
             ->assertExitCode(0);
 
-        // Alum Pot should still be created, just with no coordinates
-        $this->assertDatabaseHas('caves', ['name' => 'Alum Pot']);
-        $cave = Cave::where('name', 'Alum Pot')->firstOrFail();
-        $this->assertEquals(0.0, $cave->location_lat);
+        // A cave with no extractable GPS coordinates should be skipped, not
+        // created at a useless 0,0 location.
+        $this->assertDatabaseMissing('caves', ['name' => 'Alum Pot']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_does_not_create_an_orphan_cave_system_when_skipping_a_no_gps_cave(): void
+    {
+        Http::fake([
+            self::INDEX_URL_PATTERN => Http::response($this->getMockIndex(), 200),
+            '*cncc.org.uk/cave/alum-pot' => Http::response('', 404),
+            '*cncc.org.uk/cave/lost-johns-cave' => Http::response($this->getMockDetailLostJohns(), 200),
+            '*cncc.org.uk/cave/blocked-cave' => Http::response($this->getMockDetailGeneric(), 200),
+        ]);
+
+        $this->artisan('sync:cncc-caves')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('cave_systems', ['name' => 'Alum Pot']);
     }
 }

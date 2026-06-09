@@ -85,6 +85,20 @@ class SyncCnccCaves extends Command
                 $lat = $detail['lat'];
                 $lng = $detail['lng'];
 
+                // A 0,0 location means we couldn't extract GPS coordinates. Don't
+                // create a brand-new cave for it — but still process caves that
+                // already exist so their references/tags stay up to date.
+                $baseSlug = 'cncc_'.Str::slug($name);
+                $existingCave = Cave::where('registry', 'cncc')->where('registry_id', $slug)->first()
+                    ?? Cave::where('name', $name)->first()
+                    ?? Cave::where('slug', $baseSlug)->first();
+
+                if (!$existingCave && round($lat, 5) === 0.0 && round($lng, 5) === 0.0) {
+                    $this->line("<fg=gray>  ⊘ Skipped (no GPS):</> {$name}");
+                    ++$skippedCount;
+                    continue;
+                }
+
                 $this->line("Processing: {$name} <fg=gray>({$region})</>");
                 ++$importedCount;
 
@@ -156,7 +170,6 @@ class SyncCnccCaves extends Command
                 // -----------------------------------------------------------------
                 // 3. Cave data
                 // -----------------------------------------------------------------
-                $baseSlug = 'cncc_'.Str::slug($name);
                 $cnccLink = '[CNCC page for '.$name.']('.$cavePageUrl.')';
 
                 $caveData = [
@@ -167,10 +180,6 @@ class SyncCnccCaves extends Command
                     'location_lat' => $lat,
                     'location_lng' => $lng,
                 ];
-
-                $existingCave = Cave::where('registry', 'cncc')->where('registry_id', $slug)->first()
-                    ?? Cave::where('name', $name)->first()
-                    ?? Cave::where('slug', $baseSlug)->first();
 
                 if ($existingCave) {
                     $coordKeys = ['location_lat', 'location_lng'];

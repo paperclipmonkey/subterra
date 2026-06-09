@@ -111,15 +111,27 @@ class SyncPdcCaves extends Command
                     $lng = $detail['lng'];
                     $accessInfo = $detail['access_info'];
 
+                    // A 0,0 location means we couldn't extract GPS coordinates.
+                    // Don't create a brand-new cave for it — but still process
+                    // caves that already exist so their references/tags stay current.
+                    $registryId = $regionSlugEntry.'/'.$caveSlug;
+                    $baseSlug = 'pdc_'.$regionSlugEntry.'_'.$caveSlug;
+                    $existingCave = Cave::where('registry', 'pdc')->where('registry_id', $registryId)->first()
+                        ?? Cave::where('name', $name)->first()
+                        ?? Cave::where('slug', $baseSlug)->first();
+
+                    if (!$existingCave && round($lat, 5) === 0.0 && round($lng, 5) === 0.0) {
+                        $this->line("<fg=gray>  ⊘ Skipped (no GPS):</> {$name}");
+                        ++$skippedCount;
+                        continue;
+                    }
+
                     $this->line("Processing: {$name} <fg=gray>({$regionName})</>");
                     ++$importedCount;
 
                     if ($dryRun) {
                         continue;
                     }
-
-                    // Registry ID is region/cave-slug pair for uniqueness
-                    $registryId = $regionSlugEntry.'/'.$caveSlug;
 
                     // -----------------------------------------------------------------
                     // 1. Cave System
@@ -185,7 +197,6 @@ class SyncPdcCaves extends Command
                     // -----------------------------------------------------------------
                     // 3. Cave data
                     // -----------------------------------------------------------------
-                    $baseSlug = 'pdc_'.$regionSlugEntry.'_'.$caveSlug;
                     $pdcLink = '[Peak District Caving page for '.$name.']('.$cavePageUrl.')';
 
                     // Use the scraped access info if available, otherwise fall back to the PDC link
@@ -201,10 +212,6 @@ class SyncPdcCaves extends Command
                         'location_lat' => $lat,
                         'location_lng' => $lng,
                     ];
-
-                    $existingCave = Cave::where('registry', 'pdc')->where('registry_id', $registryId)->first()
-                        ?? Cave::where('name', $name)->first()
-                        ?? Cave::where('slug', $baseSlug)->first();
 
                     if ($existingCave) {
                         $coordKeys = ['location_lat', 'location_lng'];
