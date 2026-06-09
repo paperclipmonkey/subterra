@@ -24,11 +24,13 @@ class CaveSystemResource extends JsonResource
             'description' => $this->description ?? '',
             'length' => $this->length,
             'vertical_range' => $this->vertical_range,
-            'caves' => $this->caves,
+            // Cave tags are eager loaded only to compute the caving_region append
+            // without per-cave queries; keep them out of the payload.
+            'caves' => $this->caves->makeHidden('tags'),
             'tags' => TagResource::collection($this->tags),
             'references' => $this->references,
             'catchment_id' => $this->catchment_id,
-            'files' => $this->files ? CaveSystemFileResource::collection($this->whenLoaded('files')) : [],
+            'files' => $this->relationLoaded('files') ? CaveSystemFileResource::collection($this->files) : [],
             'annotation' => $this->whenLoaded('annotation'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

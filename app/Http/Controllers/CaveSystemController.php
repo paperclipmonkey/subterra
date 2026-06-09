@@ -25,7 +25,9 @@ class CaveSystemController extends Controller
 
     public function index()
     {
-        return CaveSystemResource::collection(CaveSystem::orderBy('name')->get());
+        return CaveSystemResource::collection(
+            CaveSystem::with(['caves.tags', 'tags', 'files'])->orderBy('name')->get()
+        );
     }
 
     public function store(StoreCaveSystemRequest $request)
@@ -38,7 +40,7 @@ class CaveSystemController extends Controller
 
     public function show(CaveSystem $caveSystem)
     {
-        $caveSystem->load(['files', 'caves', 'annotation']);
+        $caveSystem->load(['files', 'caves.tags', 'tags', 'annotation']);
 
         return new CaveSystemResource($caveSystem);
     }
