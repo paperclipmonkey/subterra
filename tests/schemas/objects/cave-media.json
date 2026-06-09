@@ -18,6 +18,12 @@
                 "null"
             ]
         },
+        "srcset": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
         "title": {
             "type": [
                 "string",

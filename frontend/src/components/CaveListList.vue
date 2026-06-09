@@ -39,7 +39,9 @@
                   :style="{ opacity: (!mobile && isHovering) ? 1 : 0 }"
                 />
                 <!-- Image Fallback/Poster -->
-                <v-img :src="cave.hero_video?.poster_url || cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="160" cover
+                <v-img :src="cardImage(cave).src" :srcset="cardImage(cave).srcset"
+                       sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, (max-width: 1280px) 33vw, 320px"
+                       height="160" cover
                        class="position-absolute w-100 h-100" style="top: 0; left: 0; z-index: 0;">
                   <template #placeholder>
                     <div class="d-flex align-center justify-center fill-height">
@@ -184,6 +186,20 @@ const sentinel = ref(null)
 
 const displayedCaves = computed(() => caveStore.caves.slice(0, displayCount.value))
 const hasMore = computed(() => displayCount.value < caveStore.caves.length)
+
+// Pick the card image with a responsive srcset when the API provides variants.
+// Cards are small (160px tall), so the browser will choose the mobile/tablet
+// WebP variant rather than downloading the full-size desktop image.
+const cardImage = (cave) => {
+  if (cave.hero_video?.poster_url) {
+    return { src: cave.hero_video.poster_url, srcset: undefined }
+  }
+  const media = cave.hero_image || cave.entrance_image
+  if (media?.url) {
+    return { src: media.url, srcset: media.srcset || undefined }
+  }
+  return { src: '/placeholder-cave.jpg', srcset: undefined }
+}
 
 // Reset pagination whenever the filtered cave list changes
 watch(() => caveStore.caves, () => {

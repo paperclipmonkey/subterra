@@ -167,9 +167,11 @@ class CaveController extends Controller
                 if (!$m || !$m->filename) {
                     return;
                 }
-                $url = str_starts_with($m->filename, 'http') ? $m->filename : $mediaUrlBase.'/'.$m->filename;
 
-                return ['url' => $url];
+                return [
+                    'url' => \App\Support\MediaUrl::url($m->filename, $mediaUrlBase),
+                    'srcset' => \App\Support\MediaUrl::srcset($m->filename, $mediaUrlBase),
+                ];
             };
 
             return [
@@ -294,13 +296,17 @@ class CaveController extends Controller
             $imageData['data'] = $fileData;
             $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $type);
 
-            $cave->media()->create([
+            $media = $cave->media()->create([
                 'type' => $type,
                 'filename' => $filePath,
                 'title' => $imageData['title'] ?? null,
                 'photographer' => $imageData['photographer'] ?? null,
                 'copyright' => $imageData['copyright'] ?? null,
             ]);
+
+            // Generate responsive WebP variants (and preserve the source) so the
+            // cave list serves small images on slow connections.
+            \App\Jobs\ProcessImageCloudJob::dispatch($filePath, \App\Models\CaveMedia::class, $media->id);
         }
     }
 
@@ -387,15 +393,21 @@ class CaveController extends Controller
                 $imageData['data'] = $fileData;
                 $filePath = $this->imageProcessingService->processAndStoreImage($imageData, 'caves', $type);
 
-                $cave->media()->updateOrCreate(
+                $media = $cave->media()->updateOrCreate(
                     ['type' => $type],
                     [
                         'filename' => $filePath,
+                        // Reset so the webhook records the new source as the original.
+                        'original_filename' => null,
                         'title' => $imageData['title'] ?? null,
                         'photographer' => $imageData['photographer'] ?? null,
                         'copyright' => $imageData['copyright'] ?? null,
                     ]
                 );
+
+                // Generate responsive WebP variants (and preserve the source) so the
+                // cave list serves small images on slow connections.
+                \App\Jobs\ProcessImageCloudJob::dispatch($filePath, \App\Models\CaveMedia::class, $media->id);
             } elseif (is_array($imageData)) {
                 // Metadata update only (if file already exists or is not being replaced)
                 $cave->media()->where('type', $type)->update([

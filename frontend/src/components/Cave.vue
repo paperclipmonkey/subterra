@@ -65,7 +65,10 @@
           class="position-absolute w-100 h-100"
           style="object-fit: cover; top: 0; left: 0; z-index: 1;"
         />
-        <v-img v-else :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'" height="300" cover
+        <v-img v-else :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'"
+               :srcset="cave.hero_image?.srcset || cave.entrance_image?.srcset || undefined"
+               sizes="(max-width: 960px) 100vw, 1200px"
+               height="300" cover
                class="align-end" style="z-index: 1;">
           <template #placeholder>
             <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">

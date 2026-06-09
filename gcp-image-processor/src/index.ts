@@ -92,6 +92,7 @@ app.post('/', async (req: Request, res: Response) => {
         const mediaId = customMetadata['media_id'] as string | undefined;
         const outputPrefix = customMetadata['output_prefix'] as string | undefined;
         const originalPath = customMetadata['file_path'] as string | undefined;
+        const namingBase = customMetadata['naming_base'] as string | undefined;
 
         if (!mediaModel || !mediaId || !outputPrefix) {
              console.log(`Skipping: missing custom metadata on ${sourcePath}`, customMetadata);
@@ -113,7 +114,8 @@ app.post('/', async (req: Request, res: Response) => {
                   mediaId: Number(mediaId),
                   variants: result.variants,
                   sourcePath: result.sourcePath,
-                  originalPath
+                  originalPath,
+                  namingBase: namingBase || originalPath
              };
 
              const dataBuffer = Buffer.from(JSON.stringify(callbackPayload));

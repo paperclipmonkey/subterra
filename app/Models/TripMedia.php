@@ -13,7 +13,7 @@ class TripMedia extends Model implements \OwenIt\Auditing\Contracts\Auditable
     use HasFactory;
     use Auditable;
 
-    protected $fillable = ['trip_id', 'filename', 'title', 'taken_at', 'photographer', 'copyright'];
+    protected $fillable = ['trip_id', 'filename', 'original_filename', 'title', 'taken_at', 'photographer', 'copyright'];
 
     protected $casts = [
         'taken_at' => 'datetime',

@@ -19,6 +19,7 @@ class RouteMedia extends Model
     protected $fillable = [
         'route_id',
         'path',
+        'original_filename',
         'type',
         'caption',
     ];

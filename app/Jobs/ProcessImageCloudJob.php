@@ -20,14 +20,16 @@ class ProcessImageCloudJob implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param  string  $filePath    Path of the source image on the media disk.
-     * @param  string  $mediaModel  Fully-qualified class name of the media model.
-     * @param  int     $mediaId     Primary key of the media record.
+     * @param  string       $filePath    Path of the source image on the media disk; its bytes are processed and it is preserved as the original.
+     * @param  string       $mediaModel  Fully-qualified class name of the media model.
+     * @param  int          $mediaId     Primary key of the media record.
+     * @param  string|null  $namingBase  Logical path used to name the generated variants ({base}_desktop.webp, etc). Defaults to $filePath. Pass a variant-suffix-stripped path when re-processing an already-processed image so variants don't gain a double suffix.
      */
     public function __construct(
         public readonly string $filePath,
         public readonly string $mediaModel,
         public readonly int $mediaId,
+        public readonly ?string $namingBase = null,
     ) {
     }
 
@@ -59,6 +61,7 @@ class ProcessImageCloudJob implements ShouldQueue
                     'media_id' => (string) $this->mediaId,
                     'output_prefix' => $outputPrefix,
                     'file_path' => $this->filePath,
+                    'naming_base' => $this->namingBase ?? $this->filePath,
                 ],
             ],
         ]);

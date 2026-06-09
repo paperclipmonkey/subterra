@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 /** @mixin \App\Models\TripMedia */
 class MediaResource extends JsonResource
@@ -22,7 +22,8 @@ class MediaResource extends JsonResource
             'id' => $this->id,
             'filename' => $this->filename,
             'title' => $this->title,
-            'url' => Storage::disk('media')->url($this->filename),
+            'url' => MediaUrl::url($this->filename),
+            'srcset' => MediaUrl::srcset($this->filename),
             'taken_at' => $this->taken_at,
             'photographer' => $this->photographer,
             'copyright' => $this->copyright,

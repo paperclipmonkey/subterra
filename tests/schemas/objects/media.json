@@ -26,6 +26,9 @@
     "url": {
       "type": "string",
       "format": "uri"
+    },
+    "srcset": {
+      "type": ["string", "null"]
     }
   },
   "required": ["id", "filename", "original_filename", "mime_type", "size", "url"],

@@ -23,6 +23,7 @@ class CaveMedia extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'cave_id',
         'type',
         'filename',
+        'original_filename',
         'title',
         'photographer',
         'copyright',

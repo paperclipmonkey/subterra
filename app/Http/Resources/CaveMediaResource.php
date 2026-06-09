@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,7 +22,8 @@ class CaveMediaResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'filename' => $this->filename,
-            'url' => $this->filename ? (str_starts_with($this->filename, 'http') ? $this->filename : \Illuminate\Support\Facades\Storage::disk('media')->url($this->filename)) : null,
+            'url' => MediaUrl::url($this->filename),
+            'srcset' => MediaUrl::srcset($this->filename),
             'title' => $this->title,
             'photographer' => $this->photographer,
             'copyright' => $this->copyright,

@@ -67,8 +67,9 @@ class GcpMediaWebhookController extends Controller
         $variants = $notification['variants'] ?? [];
         $sourcePath = $notification['sourcePath'] ?? '';
         $originalPath = $notification['originalPath'] ?? '';
+        $namingBase = $notification['namingBase'] ?? '';
 
-        return $this->processImageVariants($mediaModelLabel, $mediaId, $variants, $sourcePath, $originalPath);
+        return $this->processImageVariants($mediaModelLabel, $mediaId, $variants, $sourcePath, $originalPath, $namingBase);
     }
 
     /**
@@ -124,8 +125,14 @@ class GcpMediaWebhookController extends Controller
 
     /**
      * Relocate image variants back to primary storage.
+     *
+     * The source image is preserved as `original_filename` (never deleted) so
+     * images can be re-processed in future without quality loss. Variants are
+     * named from $namingBase, which is the source path with any variant suffix
+     * stripped, so re-processing an already-processed image doesn't produce a
+     * double suffix (e.g. `foo_desktop_desktop.webp`).
      */
-    protected function processImageVariants(string $mediaModelLabel, int $mediaId, array $variants, string $sourcePath, string $originalPath): \Illuminate\Http\JsonResponse
+    protected function processImageVariants(string $mediaModelLabel, int $mediaId, array $variants, string $sourcePath, string $originalPath, string $namingBase = ''): \Illuminate\Http\JsonResponse
     {
         $modelConfig = self::MEDIA_MODEL_MAP[$mediaModelLabel] ?? null;
         if (!$modelConfig || !$mediaId || empty($variants)) {
@@ -141,9 +148,12 @@ class GcpMediaWebhookController extends Controller
         }
 
         try {
-            $currentPath = $originalPath ?: $media->{$filenameAttribute};
-            $directory = dirname($currentPath);
-            $baseName = pathinfo($currentPath, PATHINFO_FILENAME);
+            // The file whose bytes were processed — preserved as the original.
+            $processedSource = $originalPath ?: $media->{$filenameAttribute};
+            // The base used to name the generated variants.
+            $namingPath = $namingBase ?: $processedSource;
+            $directory = dirname($namingPath);
+            $baseName = pathinfo($namingPath, PATHINFO_FILENAME);
 
             $storedPaths = [];
 
@@ -161,11 +171,14 @@ class GcpMediaWebhookController extends Controller
             }
 
             $primaryPath = $storedPaths['desktop'] ?? reset($storedPaths);
-            $media->update([$filenameAttribute => $primaryPath]);
 
-            if ($currentPath && $currentPath !== $primaryPath) {
-                Storage::disk('s3_clone')->delete($currentPath);
+            $media->{$filenameAttribute} = $primaryPath;
+            // Record the preserved source once. Never overwrite an existing
+            // original, and never point it at a generated variant.
+            if (empty($media->original_filename) && $processedSource && !in_array($processedSource, $storedPaths, true)) {
+                $media->original_filename = $processedSource;
             }
+            $media->save();
 
             Log::info('GcpMediaWebhook: image variants stored async', ['media_id' => $mediaId]);
 
