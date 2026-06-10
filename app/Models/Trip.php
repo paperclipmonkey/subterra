@@ -56,8 +56,13 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
 
     protected function duration(): Attribute
     {
+        // Whole minutes. Carbon 3's diffInMinutes() returns a float with
+        // sub-minute precision, so round to avoid fractional minutes leaking
+        // into the UI (e.g. "6h 8.699999999999989m") and into summed totals.
         return Attribute::make(
-            get: fn (mixed $value, array $attributes): float => $this->start_time?->diffInMinutes($this->end_time) ?: 0,
+            get: fn (mixed $value, array $attributes): int => $this->start_time
+                ? (int) round($this->start_time->diffInMinutes($this->end_time))
+                : 0,
         );
     }
 

@@ -305,9 +305,11 @@ const formatTime = (date) => {
 }
 const formatDuration = (start, end) => {
   if (!end) return '-'
-  const duration = moment.duration(moment(end).diff(moment(start)))
-  const hours = Math.floor(duration.asHours())
-  const minutes = duration.minutes()
+  // Round to whole minutes so this matches the rounded `duration` the API
+  // returns elsewhere (e.g. trip cards), avoiding an off-by-one-minute mismatch.
+  const total = Math.round(moment(end).diff(moment(start), 'minutes', true))
+  const hours = Math.floor(total / 60)
+  const minutes = total % 60
   return `${hours}h ${minutes}m`
 }
 

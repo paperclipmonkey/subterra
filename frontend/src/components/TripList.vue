@@ -172,8 +172,9 @@ const formatDate = (date) => {
 
 const formatDuration = (minutes) => {
   if (!minutes) return ''
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
+  const total = Math.round(minutes) // guard against fractional minutes
+  const hours = Math.floor(total / 60)
+  const mins = total % 60
   if (hours > 0) {
     if (mins > 0) return `${hours}h ${mins}m`
     return `${hours}h`
