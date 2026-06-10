@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Models\Cave;
 use App\Models\CaveSystem;
 use App\Models\Tag;
+use App\Support\CaveName;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -116,15 +117,19 @@ class SyncCcrCaves extends Command
                 // 1. Cave System
                 // Defaulting System to the Cave Name (same as csv importer).
                 $systemName = $name;
+                $systemSlug = Str::slug($systemName);
 
-                $system = CaveSystem::firstOrCreate(
-                    ['name' => $systemName],
-                    [
-                        'slug' => Str::slug($systemName),
+                $system = CaveName::findSystem($systemName)
+                    ?? CaveSystem::where('slug', $systemSlug)->first();
+
+                if (!$system) {
+                    $system = CaveSystem::create([
+                        'name' => $systemName,
+                        'slug' => $this->uniqueSlug($systemSlug, 'cave_systems'),
                         'length' => $length,
                         'vertical_range' => $depth,
-                    ]
-                );
+                    ]);
+                }
 
                 if ($length > 0 || $depth > 0) {
                     $system->length = max($system->length, (int) $length);
@@ -284,7 +289,7 @@ class SyncCcrCaves extends Command
 
                 $ccrId = (string) $entry['id'];
                 $existingCave = Cave::where('registry', 'ccr')->where('registry_id', $ccrId)->first()
-                    ?? Cave::where('name', $name)->first()
+                    ?? CaveName::findCave($name)
                     ?? Cave::where('slug', $baseSlug)->first();
 
                 if ($existingCave) {

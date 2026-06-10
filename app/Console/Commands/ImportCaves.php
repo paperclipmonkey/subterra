@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Models\Cave;
 use App\Models\CaveSystem;
 use App\Models\Tag;
+use App\Support\CaveName;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -94,14 +95,17 @@ class ImportCaves extends Command
                 $length = (float) str_replace(',', '', $row['length'] ?? '0');
                 $depth = (float) str_replace(',', '', $row['depth'] ?? '0');
 
-                $system = CaveSystem::firstOrCreate(
-                    ['name' => $systemName],
-                    [
+                // Match case-insensitively so a differently-cased name reuses the
+                // existing system rather than creating a duplicate.
+                $system = CaveName::findSystem($systemName);
+                if (!$system) {
+                    $system = CaveSystem::create([
+                        'name' => $systemName,
                         'slug' => Str::slug($systemName),
                         'length' => $length, // Assuming singular or system length provided
                         'vertical_range' => $depth,
-                    ]
-                );
+                    ]);
+                }
 
                 // Update system stats if provided and non-zero
                 if ($length > 0 || $depth > 0) {
@@ -131,21 +135,26 @@ class ImportCaves extends Command
                 }
                 $description = implode("\n\n", $descriptionParts);
 
-                // 4. Create/Update Cave
-                $cave = Cave::updateOrCreate(
-                    ['name' => $name],
-                    [
-                        'slug' => Str::slug($name),
-                        'description' => $description,
-                        'cave_system_id' => $caveSystemId,
-                        'location_name' => $locationName,
-                        'location_country' => $row['location_country'] ?? 'United Kingdom',
-                        'location_lat' => (float) ($row['latitude'] ?? 0),
-                        'location_lng' => (float) ($row['longitude'] ?? 0),
-                        'location_alt' => (float) ($row['altitude'] ?? 0),
-                        'access_info' => $row['access_info'] ?? null,
-                    ]
-                );
+                // 4. Create/Update Cave — match case-insensitively so a
+                // differently-cased name updates the existing cave instead of duplicating it.
+                $caveAttributes = [
+                    'slug' => Str::slug($name),
+                    'description' => $description,
+                    'cave_system_id' => $caveSystemId,
+                    'location_name' => $locationName,
+                    'location_country' => $row['location_country'] ?? 'United Kingdom',
+                    'location_lat' => (float) ($row['latitude'] ?? 0),
+                    'location_lng' => (float) ($row['longitude'] ?? 0),
+                    'location_alt' => (float) ($row['altitude'] ?? 0),
+                    'access_info' => $row['access_info'] ?? null,
+                ];
+
+                $cave = CaveName::findCave($name);
+                if ($cave) {
+                    $cave->update($caveAttributes);
+                } else {
+                    $cave = Cave::create(array_merge(['name' => $name], $caveAttributes));
+                }
 
                 // 5. Sync Tags
                 if (!empty($row['tags'])) {

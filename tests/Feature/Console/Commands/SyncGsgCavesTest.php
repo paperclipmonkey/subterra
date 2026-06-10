@@ -7,6 +7,7 @@ namespace Tests\Feature\Console\Commands;
 use App\Models\Cave;
 use App\Models\CaveSystem;
 use App\Models\Tag;
+use App\Support\CaveName;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -194,5 +195,41 @@ HTML;
             ->assertExitCode(0);
 
         $this->assertDatabaseMissing('caves', ['name' => 'Claonaite']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_reuses_an_existing_differently_cased_cave_instead_of_duplicating(): void
+    {
+        // A copy of the cave already exists from another registry, spelled with
+        // different capitalisation ("An" vs "an") and with no GSG registry id.
+        $system = CaveSystem::create(['name' => 'Uamh An Claonaite', 'slug' => 'uamh-an-claonaite-existing', 'length' => 0, 'vertical_range' => 0]);
+        $existing = Cave::create([
+            'name' => 'Uamh An Claonaite',
+            'slug' => 'cncc_uamh-an-claonaite',
+            'cave_system_id' => $system->id,
+            'registry' => 'cncc',
+            'registry_id' => 'uamh-an-claonaite',
+            'location_name' => 'Assynt',
+            'location_country' => 'United Kingdom',
+            'location_lat' => 56.73,
+            'location_lng' => -5.11,
+        ]);
+
+        $this->artisan('sync:gsg-caves')->assertExitCode(0);
+
+        // Still exactly one cave for this place, and it kept its original record.
+        $this->assertSame(1, CaveName::match(Cave::query(), 'Uamh an Claonaite')->count());
+        $this->assertDatabaseMissing('caves', ['name' => 'Uamh an Claonaite']);
+        $this->assertTrue(Cave::whereKey($existing->id)->exists());
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_reuses_an_existing_differently_cased_system_instead_of_duplicating(): void
+    {
+        CaveSystem::create(['name' => 'Uamh An Claonaite', 'slug' => 'uamh-an-claonaite-existing', 'length' => 0, 'vertical_range' => 0]);
+
+        $this->artisan('sync:gsg-caves')->assertExitCode(0);
+
+        $this->assertSame(1, CaveName::match(CaveSystem::query(), 'Uamh an Claonaite')->count());
     }
 }

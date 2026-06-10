@@ -8,6 +8,7 @@ use App\Models\Cave;
 use App\Models\CaveSystem;
 use App\Models\SuggestedEdit;
 use App\Models\Tag;
+use App\Support\CaveName;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -185,7 +186,7 @@ abstract class SyncCaveRegistryBaseCommand extends Command
                 // -----------------------------------------------------------------
                 $systemName = $name;
                 $systemSlug = Str::slug($systemName);
-                $system = CaveSystem::where('name', $systemName)->first()
+                $system = CaveName::findSystem($systemName)
                     ?? CaveSystem::where('slug', $systemSlug)->first();
 
                 $systemIsNew = false;
@@ -282,7 +283,7 @@ abstract class SyncCaveRegistryBaseCommand extends Command
                 $baseSlug = $this->slugPrefix().Str::slug($name);
 
                 $existingCave = Cave::where('registry', $registryId)->where('registry_id', $registryEntryId)->first()
-                    ?? Cave::where('name', $name)->first()
+                    ?? CaveName::findCave($name)
                     ?? Cave::where('slug', $baseSlug)->first();
 
                 if ($existingCave) {

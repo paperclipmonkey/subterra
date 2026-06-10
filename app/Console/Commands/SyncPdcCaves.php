@@ -8,6 +8,7 @@ use App\Models\Cave;
 use App\Models\CaveSystem;
 use App\Models\SuggestedEdit;
 use App\Models\Tag;
+use App\Support\CaveName;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -117,7 +118,7 @@ class SyncPdcCaves extends Command
                     $registryId = $regionSlugEntry.'/'.$caveSlug;
                     $baseSlug = 'pdc_'.$regionSlugEntry.'_'.$caveSlug;
                     $existingCave = Cave::where('registry', 'pdc')->where('registry_id', $registryId)->first()
-                        ?? Cave::where('name', $name)->first()
+                        ?? CaveName::findCave($name)
                         ?? Cave::where('slug', $baseSlug)->first();
 
                     if (!$existingCave && round($lat, 5) === 0.0 && round($lng, 5) === 0.0) {
@@ -138,7 +139,7 @@ class SyncPdcCaves extends Command
                     // -----------------------------------------------------------------
                     $systemName = $name;
                     $systemSlug = Str::slug($systemName);
-                    $system = CaveSystem::where('name', $systemName)->first()
+                    $system = CaveName::findSystem($systemName)
                         ?? CaveSystem::where('slug', $systemSlug)->first();
 
                     $systemIsNew = false;
