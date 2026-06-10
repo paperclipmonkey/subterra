@@ -43,14 +43,16 @@ class GetCaveDetailsTool implements AssistantTool
             return ['error' => "Cave system with ID {$systemId} not found."];
         }
 
+        // NB: no per-cave length/depth — those columns don't exist on the caves
+        // table (length/vertical_range live on the system and are returned at
+        // the top level of this payload). Including always-null keys here was
+        // teaching the model that cave-level measurements might exist.
         $caves = $system->caves->map(fn (Cave $cave) => [
             'id' => $cave->id,
             'name' => $cave->name,
             'slug' => $cave->slug,
             'cave_url' => "/caves/{$cave->slug}",
             'location_name' => $cave->location_name,
-            'depth_m' => $cave->depth,
-            'length_m' => $cave->length,
             'access_info' => $cave->access_info,
             'latitude' => $cave->location_lat ? (float) $cave->location_lat : null,
             'longitude' => $cave->location_lng ? (float) $cave->location_lng : null,

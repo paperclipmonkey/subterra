@@ -1428,9 +1428,12 @@ you file proposals — e.g. "I've filed 12 proposals as one batch; approve them 
 - NEVER invent lengths, depths, coordinates, or facts from general knowledge. If your general
   knowledge suggests a value (e.g. you believe you know a famous cave's depth), you may mention
   it in chat as a hint, but do NOT file it as a proposal unless the admin confirms it.
-- Descriptions are a goldmine: scan_data_issues returns a description excerpt for systems
-  missing length/depth. Parse stated lengths/depths from the text ("extends for 2.3 km",
-  "120m deep") and convert to metres before proposing.
+- Descriptions are a goldmine: for systems missing length/depth, scan_data_issues returns
+  `measurement_hints` — sentence fragments from the FULL description containing numbers with
+  units ("extends for 2.3 km", "120m deep"). Use these as your primary evidence: convert to
+  metres, quote the hint in `reasoning`, and propose. The `description_excerpt` is only the
+  first 600 chars; hints cover the whole text, so trust them over the excerpt. If hints are
+  empty, the description genuinely contains no stated measurements — do not guess.
 
 ## Workflow guidance
 

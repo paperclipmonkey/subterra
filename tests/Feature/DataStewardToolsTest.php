@@ -41,6 +41,11 @@ class DataStewardToolsTest extends TestCase
         $missing = CaveSystem::factory()->create(['name' => 'Gaping Void', 'length' => 0, 'vertical_range' => 0]);
         CaveSystem::factory()->create(['name' => 'Complete Cave', 'length' => 5000, 'vertical_range' => 120]);
 
+        // The system must have entrances: a production bug selected phantom
+        // length/depth columns from the caves table in the eager-load, which
+        // only errors once the relation query actually runs against real rows.
+        $entrance = Cave::factory()->create(['cave_system_id' => $missing->id, 'name' => 'Void Entrance']);
+
         $service = app(DataHealthService::class);
         $results = $service->systemsMissingLengthDepth();
 
@@ -48,6 +53,61 @@ class DataStewardToolsTest extends TestCase
         $this->assertContains($missing->id, $ids);
         $this->assertCount(1, $results);
         $this->assertEqualsCanonicalizing(['length', 'vertical_range'], $results[0]['missing']);
+
+        // Entrance payload: exactly the columns that exist on the caves table.
+        // SQLite masks phantom quoted columns by returning them as string
+        // literals, so assert the key set rather than relying on a SQL error.
+        $entranceRow = collect($results[0]['entrances'])->firstWhere('cave_id', $entrance->id);
+        $this->assertNotNull($entranceRow);
+        $this->assertEqualsCanonicalizing(
+            ['cave_id', 'name', 'registry', 'registry_id'],
+            array_keys($entranceRow)
+        );
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function scanner_extracts_measurement_hints_from_full_description(): void
+    {
+        // Put the measurement well past the 600-char excerpt window to prove
+        // hints scan the whole description, not just the excerpt.
+        $padding = str_repeat('A fine cave with much history. ', 30); // ~930 chars
+        $description = $padding
+            .'The main streamway extends for 2.3 km to the terminal sump, '
+            .'and the system reaches a depth of 120m below the entrance.';
+
+        CaveSystem::factory()->create([
+            'name' => 'Documented Void',
+            'length' => 0,
+            'vertical_range' => 0,
+            'description' => $description,
+        ]);
+
+        $results = app(DataHealthService::class)->systemsMissingLengthDepth();
+
+        $this->assertCount(1, $results);
+        $hints = $results[0]['measurement_hints'];
+        $this->assertNotEmpty($hints);
+        $this->assertTrue(
+            collect($hints)->contains(fn ($h) => str_contains($h, '2.3 km')),
+            'Expected a hint containing "2.3 km", got: '.json_encode($hints)
+        );
+        $this->assertTrue(
+            collect($hints)->contains(fn ($h) => str_contains($h, '120m')),
+            'Expected a hint containing "120m", got: '.json_encode($hints)
+        );
+
+        // The measurement sits beyond the excerpt, proving hints add real value
+        $this->assertStringNotContainsString('2.3 km', (string) $results[0]['description_excerpt']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function measurement_hints_empty_for_descriptions_without_numbers(): void
+    {
+        $service = app(DataHealthService::class);
+
+        $this->assertSame([], $service->extractMeasurementHints(null));
+        $this->assertSame([], $service->extractMeasurementHints(''));
+        $this->assertSame([], $service->extractMeasurementHints('A lovely cave with no stated dimensions at all.'));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

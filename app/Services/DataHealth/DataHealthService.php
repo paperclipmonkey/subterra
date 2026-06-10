@@ -61,7 +61,12 @@ class DataHealthService
         }
 
         return $query
-            ->with(['caves:id,cave_system_id,name,slug,registry,registry_id,length,depth', 'tags'])
+            // NB: length/depth are NOT selected here — those columns exist on
+            // cave_systems only. (The Cave model lists them in $fillable, but
+            // the caves table has never had them; selecting them errors on
+            // Postgres. SQLite hid this in tests by treating the quoted
+            // identifiers as string literals.)
+            ->with(['caves:id,cave_system_id,name,slug,registry,registry_id', 'tags'])
             ->orderBy('name')
             ->skip($offset)
             ->take($limit)
@@ -79,16 +84,48 @@ class DataHealthService
                 'description_excerpt' => $system->description
                     ? mb_substr($system->description, 0, 600)
                     : null,
+                'measurement_hints' => $this->extractMeasurementHints($system->description),
                 'regions' => $system->tags->where('category', 'region')->pluck('tag')->values(),
                 'entrances' => $system->caves->map(fn (Cave $cave) => [
                     'cave_id' => $cave->id,
                     'name' => $cave->name,
                     'registry' => $cave->getRawOriginal('registry'),
                     'registry_id' => $cave->getRawOriginal('registry_id'),
-                    'length_m' => $cave->length,
-                    'depth_m' => $cave->depth,
                 ])->values(),
             ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Pull measurement-bearing snippets out of a description so the assistant
+     * can propose length/depth values with evidence, even when the numbers sit
+     * beyond the excerpt window. Matches metric and imperial units around each
+     * number and returns the surrounding sentence fragment.
+     *
+     * @return array<int, string>
+     */
+    public function extractMeasurementHints(?string $description): array
+    {
+        if ($description === null || trim($description) === '') {
+            return [];
+        }
+
+        $text = strip_tags($description);
+
+        // A number followed by a unit, with up to ~80 chars of context either side.
+        // Units covered: m, km, metres/meters, ft/feet, yards. Word boundaries stop
+        // "5 miles" of road directions matching as "5 m".
+        $pattern = '/.{0,80}\b\d[\d,]*(?:\.\d+)?\s*(?:km|kilometres?|kilometers?|m\b|metres?|meters?|ft\b|feet|yards?)\.?.{0,80}/iu';
+
+        if (!preg_match_all($pattern, $text, $matches)) {
+            return [];
+        }
+
+        return collect($matches[0])
+            ->map(fn (string $snippet) => trim(preg_replace('/\s+/', ' ', $snippet)))
+            ->unique()
+            ->take(6)
             ->values()
             ->all();
     }

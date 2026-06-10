@@ -23,7 +23,9 @@ class ScanDataIssuesTool implements AssistantTool
                 'name' => 'scan_data_issues',
                 'description' => 'Scan the cave database for data-quality problems. Use issue_type="summary" first '
                     .'to get counts per issue type, then drill into a specific type to list affected records. '
-                    .'Issue types: missing_length_depth (cave systems with no length or vertical range), '
+                    .'Issue types: missing_length_depth (cave systems with no length or vertical range — each '
+                    .'result includes measurement_hints: sentence fragments from the full description that contain '
+                    .'numbers with units, ready to convert and propose), '
                     .'missing_coordinates (caves with no location), missing_region_tag (caves with no region tag, '
                     .'so they are invisible to region search), missing_description (systems with no description), '
                     .'unlinked_entrances (caves in different systems whose entrances are suspiciously close together '
