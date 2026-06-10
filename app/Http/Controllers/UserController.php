@@ -182,7 +182,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'photo' => $user->photo
-                        ? (str_starts_with($user->photo, 'http') ? $user->photo : \Illuminate\Support\Facades\Storage::disk('public')->url($user->photo))
+                        ? (str_starts_with($user->photo, 'http') ? $user->photo : \Illuminate\Support\Facades\Storage::disk('media')->url($user->photo))
                         : null,
                     'clubs' => $user->clubs->map(fn ($c) => ['name' => $c->name, 'slug' => $c->slug])->values(),
                 ];
@@ -329,9 +329,11 @@ class UserController extends Controller
                 !str_contains($user->photo, 'default.png') &&
                 !str_starts_with($user->photo, 'http')
             ) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->photo);
+                \Illuminate\Support\Facades\Storage::disk('media')->delete($user->photo);
             }
-            $validatedData['photo'] = $request->file('photo')->store('avatars', 'public');
+            // Store on the durable 'media' disk (S3 in production) rather than the
+            // ephemeral local 'public' disk, so avatars survive server restarts/redeploys.
+            $validatedData['photo'] = $request->file('photo')->store('avatars', 'media');
         }
 
         $user->update($validatedData);
@@ -467,9 +469,10 @@ class UserController extends Controller
         // 1. Delete user photo if it's not the default
         if ($user->photo &&
             !str_contains($user->photo, 'default.webp') &&
-            !str_contains($user->photo, 'default.png')
+            !str_contains($user->photo, 'default.png') &&
+            !str_starts_with($user->photo, 'http')
         ) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->photo);
+            \Illuminate\Support\Facades\Storage::disk('media')->delete($user->photo);
         }
 
         // 2. Clear trips

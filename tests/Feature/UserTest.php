@@ -127,6 +127,31 @@ class UserTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_stores_uploaded_avatar_on_the_durable_media_disk()
+    {
+        Storage::fake('media');
+
+        $user = User::factory()->create(['photo' => null]);
+        $this->actingAs($user, 'sanctum');
+
+        $file = \Illuminate\Http\Testing\File::image('avatar.jpg');
+
+        $response = $this->postJson(route('users.me.update.post'), [
+            'photo' => $file,
+        ]);
+
+        $response->assertOk();
+
+        $user->refresh();
+
+        // Photo path should be persisted on the durable 'media' disk (S3 in prod),
+        // not the ephemeral local 'public' disk.
+        $this->assertNotNull($user->photo);
+        $this->assertStringStartsWith('avatars/', $user->photo);
+        Storage::disk('media')->assertExists($user->photo);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_updates_user_preferences()
     {
         $user = User::factory()->create([
@@ -318,14 +343,14 @@ class UserTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function user_deletion_removes_photo_and_orphans_incident_notes()
     {
-        Storage::fake('public');
+        Storage::fake('media');
 
         $user = User::factory()->create([
             'photo' => 'profile/custom-photo.jpg',
         ]);
 
         // Ensure the file exists in our fake storage
-        Storage::disk('public')->put('profile/custom-photo.jpg', 'fake-image-content');
+        Storage::disk('media')->put('profile/custom-photo.jpg', 'fake-image-content');
 
         // Create an incident note from this user
         $callout = \App\Models\Callout::factory()->create();
@@ -341,7 +366,7 @@ class UserTest extends TestCase
         $response->assertOk();
 
         // Verify photo is gone
-        Storage::disk('public')->assertMissing('profile/custom-photo.jpg');
+        Storage::disk('media')->assertMissing('profile/custom-photo.jpg');
 
         // Verify note still exists but user_id is null
         $this->assertDatabaseHas('incident_notes', [
@@ -354,13 +379,13 @@ class UserTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function user_deletion_is_completely_thorough_and_preserves_defaults()
     {
-        Storage::fake('public');
+        Storage::fake('media');
 
         // Create a user with the DEFAULT photo
         $user = User::factory()->create([
             'photo' => 'profile/default.webp',
         ]);
-        Storage::disk('public')->put('profile/default.webp', 'shared-default-image');
+        Storage::disk('media')->put('profile/default.webp', 'shared-default-image');
 
         // 1. Check Medals Detachment
         $medal = \App\Models\Medal::factory()->create();
@@ -390,7 +415,7 @@ class UserTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
 
         // DEFAULT PHOTO IS PRESERVED (IMPORTANT!)
-        Storage::disk('public')->assertExists('profile/default.webp');
+        Storage::disk('media')->assertExists('profile/default.webp');
 
         // Detachments
         $this->assertDatabaseMissing('medal_user', ['user_id' => $user->id, 'medal_id' => $medal->id]);

@@ -21,7 +21,7 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'photo' => $this->photo ? (str_starts_with($this->photo, 'http') ? $this->photo : Storage::disk('public')->url($this->photo)) : null,
+            'photo' => $this->photo ? (str_starts_with($this->photo, 'http') ? $this->photo : Storage::disk('media')->url($this->photo)) : null,
             'has_phone' => !empty($this->phone),
             'clubs' => $this->clubs->filter(function ($club) {
                 return $club->pivot->status === 'approved';
