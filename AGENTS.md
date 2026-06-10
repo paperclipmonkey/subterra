@@ -41,6 +41,37 @@ Services defined in `docker-compose.yml`:
 - `laravel.test` — PHP 8.4 app server on port 80, Vite on port 5173
 - `postgres` — PostgreSQL 17 database on port 5432
 
+### Logging in as a test user (magic link)
+
+Most pages and API routes return 401 without a session, and Google sign-in is
+not usable from an agent-driven or headless browser. To authenticate one, mint
+a magic link directly in tinker (the seeded admin user is
+`admin@subterra.test`):
+
+```sh
+docker exec subterra-laravel.test-1 php artisan tinker --execute='
+$user = App\Models\User::where("email","admin@subterra.test")->first();
+echo MagicLink\MagicLink::create(new MagicLink\Actions\LoginAction($user), 30)->url;
+'
+```
+
+Then either open the printed `/magiclink/<token>` URL in the browser, or call
+the callback endpoint directly from the app origin (the token must be
+URL-encoded — note the `:` in the middle):
+
+```js
+await fetch('/api/auth/magic-link-callback?token=' + encodeURIComponent(token), { credentials: 'include' })
+```
+
+Either way the response sets the Laravel session cookie and subsequent API
+calls are authenticated.
+
+Gotcha: auth is Sanctum session-based, and Sanctum only issues session cookies
+to requests whose `Origin` is in its stateful-domains list (`localhost:3000`
+by default). The Vite dev proxy (`frontend/vite.config.mjs`) rewrites the
+`Origin` header to `http://localhost:3000` for `/api` requests, so a dev
+server on any port (e.g. a second instance on 3100 for previews) works.
+
 ---
 
 ## Backend (Laravel API)
