@@ -19,6 +19,9 @@ class SuggestedEdit extends Model
         'suggested_data',
         'status',
         'admin_comment',
+        'source',
+        'batch_id',
+        'reasoning',
     ];
 
     protected $casts = [

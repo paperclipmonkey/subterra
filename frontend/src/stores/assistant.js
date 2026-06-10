@@ -14,6 +14,12 @@ const TOOL_LABELS = {
   search_users: 'Searching for cavers',
   create_trip_report: 'Saving trip report',
   parse_logbook_csv: 'Parsing logbook',
+  scan_data_issues: 'Scanning for data issues',
+  find_link_candidates: 'Finding link candidates',
+  list_tags: 'Loading tag taxonomy',
+  propose_data_fix: 'Filing fix proposal',
+  propose_bulk_tag: 'Filing bulk tag proposals',
+  propose_system_merge: 'Filing merge proposal',
 }
 
 const STORAGE_KEY = 'vern_conversation_v1'
@@ -32,6 +38,7 @@ function persistableShape(m) {
     collections: m.collections ?? [],
     weather_charts: m.weather_charts ?? null,
     created_trips: m.created_trips ?? [],
+    proposals: m.proposals ?? [],
     elapsedMs: m.elapsedMs ?? null,
   }
 }
@@ -91,6 +98,8 @@ export const useAssistantStore = defineStore('assistant', {
     /** @type {{ id: number, title: string, createdAt: string, messages: object[] }[]} */
     savedConversations: loadHistory(),
     historyDrawerOpen: false,
+    /** @type {'default' | 'data'} 'data' is the admin data-steward mode */
+    mode: 'default',
   }),
 
   getters: {
@@ -123,6 +132,7 @@ export const useAssistantStore = defineStore('assistant', {
         collections: [],
         weather_charts: null,
         created_trips: [],
+        proposals: [],
       })
 
       const history = this.messages
@@ -137,7 +147,7 @@ export const useAssistantStore = defineStore('assistant', {
             'Accept': 'text/event-stream',
             'X-Requested-With': 'XMLHttpRequest',
           },
-          body: JSON.stringify({ messages: history }),
+          body: JSON.stringify({ messages: history, mode: this.mode }),
           credentials: 'same-origin',
         })
 
@@ -394,6 +404,15 @@ export const useAssistantStore = defineStore('assistant', {
           break
         }
 
+        case 'proposals_created': {
+          // Data-steward proposals filed this turn — show review links
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.proposals = (pending.proposals || []).concat(event.data || [])
+          }
+          break
+        }
+
         case 'trips_created': {
           // One or more trips were created by create_trip_report
           const pending = this.messages.findLast(m => m.pending)
@@ -507,6 +526,20 @@ export const useAssistantStore = defineStore('assistant', {
       const history = this.savedConversations.filter(c => c.id !== id)
       this.savedConversations = history
       saveHistory(history)
+    },
+
+    /**
+     * Switch between the normal assistant and the admin data-steward mode.
+     * Archives the current conversation — the two modes have different system
+     * prompts and tool sets, so history must not leak across.
+     * @param {'default' | 'data'} mode
+     */
+    setMode(mode) {
+      if (mode === this.mode || this.isLoading) return
+      if (this.hasMessages) {
+        this.clearConversation()
+      }
+      this.mode = mode
     },
 
     toolLabel(toolName) {

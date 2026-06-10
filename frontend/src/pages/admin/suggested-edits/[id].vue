@@ -14,6 +14,9 @@
             <v-chip size="small" :color="suggestion.status === 'approved' ? 'success' : suggestion.status === 'rejected' ? 'error' : 'warning'" variant="tonal">
               {{ suggestion.status }}
             </v-chip>
+            <v-chip v-if="suggestion.source === 'pip'" size="small" color="deep-purple" variant="tonal">
+              🤖 Pip proposal
+            </v-chip>
           </div>
           <h2 class="text-h4 font-weight-bold">
             {{ suggestion.suggestable?.name || suggestion.suggested_data?.name || `Suggestion #${suggestion.id}` }}
@@ -41,6 +44,17 @@
         class="mt-4 mb-4"
       >
         This suggestion has been {{ suggestion.status }}.
+      </v-alert>
+
+      <v-alert
+        v-if="suggestion.reasoning"
+        type="info"
+        variant="tonal"
+        color="deep-purple"
+        class="mt-4 mb-4"
+        :icon="mdiRobotOutline"
+      >
+        <strong>Pip's reasoning:</strong> {{ suggestion.reasoning }}
       </v-alert>
 
       <v-card v-if="changedFields.length > 0" class="mb-6">
@@ -209,7 +223,7 @@
 </template>
 
 <script setup>
-import { mdiArrowLeft, mdiArrowRight, mdiCompare, mdiOpenInNew } from '@mdi/js'
+import { mdiArrowLeft, mdiArrowRight, mdiCompare, mdiOpenInNew, mdiRobotOutline } from '@mdi/js'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/plugins/api.js'
@@ -306,12 +320,43 @@ const changedFields = computed(() => {
         'id', 'created_at', 'updated_at', 'deleted_at', 'slug', 'user_id',
         'suggestable_id', 'suggestable_type', 'photo_data',
         'trips', 'visits', 'collections', 'is_ticked',
-        'previously_done', 'cave_system_id',
+        'previously_done',
+        // AI-proposal display metadata — rendered via their paired keys below
+        'tags_add_names', 'tags_remove_names', 'merge_source_system_name',
+        'target_entrances', 'source_entrances',
     ])
     const keys = [...new Set([...Object.keys(suggested), ...Object.keys(originalData)])]
 
     for (const key of keys) {
         if (ignoredKeys.has(key)) continue
+        // cave_system_id stays hidden for ordinary edits, but an AI relink proposal
+        // is ONLY a cave_system_id change — show it for those.
+        if (key === 'cave_system_id' && suggestion.value.source !== 'pip') continue
+
+        // AI tag proposals: show names as chips, approval applies the paired ID list
+        if (key === 'tags_add' || key === 'tags_remove') {
+            const names = suggested[`${key}_names`] || suggested[key] || []
+            fields.push({
+                key,
+                label: key === 'tags_add' ? 'TAGS TO ADD' : 'TAGS TO REMOVE',
+                oldValue: [],
+                newValue: names.map(n => ({ tag: String(n) })),
+                isTags: true,
+            })
+            continue
+        }
+
+        // AI merge proposals: show which system gets merged into this one
+        if (key === 'merge_source_system_id') {
+            const name = suggested.merge_source_system_name || `System #${suggested[key]}`
+            fields.push({
+                key,
+                label: 'MERGE INTO THIS SYSTEM (SOURCE WILL BE DELETED)',
+                oldValue: null,
+                newValue: `${name} (#${suggested[key]})`,
+            })
+            continue
+        }
 
         const newVal = suggested[key]
         // Per-key fallback: use snapshot if available, else live model

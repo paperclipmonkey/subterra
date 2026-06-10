@@ -38,6 +38,69 @@
       <v-tab value="rejected">Rejected</v-tab>
     </v-tabs>
 
+    <!-- AI proposal batches (bulk approve/reject) -->
+    <v-card
+      v-for="batch in batches"
+      :key="batch.batch_id"
+      variant="tonal"
+      color="deep-purple"
+      class="mb-4"
+    >
+      <v-card-item>
+        <template #prepend>
+          <v-avatar size="36" image="/pip.png" alt="Pip" />
+        </template>
+        <v-card-title class="text-body-1 font-weight-bold">
+          Pip proposal batch — {{ batch.count }} suggested edits
+        </v-card-title>
+        <v-card-subtitle v-if="batch.reasoning" class="text-wrap mt-1">
+          {{ batch.reasoning }}
+        </v-card-subtitle>
+      </v-card-item>
+      <v-card-text class="pt-0">
+        <v-chip
+          v-for="target in batch.targets.slice(0, 8)"
+          :key="target"
+          size="x-small"
+          variant="outlined"
+          class="mr-1 mb-1"
+        >
+          {{ target }}
+        </v-chip>
+        <v-chip v-if="batch.targets.length > 8" size="x-small" variant="text">
+          +{{ batch.targets.length - 8 }} more
+        </v-chip>
+      </v-card-text>
+      <v-card-actions class="pt-0">
+        <v-btn
+          size="small"
+          variant="text"
+          @click="filterToBatch(batch.batch_id)"
+        >
+          View edits
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          size="small"
+          color="error"
+          variant="tonal"
+          :loading="batchActionInFlight === batch.batch_id + ':reject'"
+          @click="rejectBatch(batch.batch_id)"
+        >
+          Reject all
+        </v-btn>
+        <v-btn
+          size="small"
+          color="success"
+          variant="flat"
+          :loading="batchActionInFlight === batch.batch_id + ':approve'"
+          @click="approveBatch(batch.batch_id)"
+        >
+          Approve all {{ batch.count }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+
     <div v-if="loading" class="d-flex justify-center my-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
@@ -68,6 +131,9 @@
               <v-chip size="x-small" :color="isNewItem(item) ? 'success' : 'blue-darken-1'" variant="tonal" class="mr-1">
                 {{ isNewItem(item) ? '✨ New Item' : formatType(item.suggestable_type) }}
               </v-chip>
+              <v-chip v-if="item.source === 'pip'" size="x-small" color="deep-purple" variant="tonal" class="mr-1">
+                🤖 Pip proposal
+              </v-chip>
             </v-card-subtitle>
             <template #append>
               <v-chip
@@ -91,6 +157,11 @@
             <!-- Description snippet -->
             <p v-if="getDescriptionSnippet(item)" class="text-body-2 text-grey-darken-2 mb-3 description-preview">
               {{ getDescriptionSnippet(item) }}
+            </p>
+
+            <!-- AI reasoning -->
+            <p v-if="item.reasoning" class="text-body-2 text-deep-purple-darken-1 mb-3 description-preview">
+              <strong>Why:</strong> {{ item.reasoning }}
             </p>
 
             <!-- Changed field chips -->
@@ -155,9 +226,12 @@ const filterCaveId = ref(route.query.cave_id || '')
 // legacy suggestable_type / suggestable_id filter
 const filterType = ref(route.query.suggestable_type || '')
 const filterId = ref(route.query.suggestable_id || '')
+// AI proposal batch filter (set via review links from Pip)
+const filterBatch = ref(route.query.batch || '')
 
 const filterLabel = computed(() => {
   if (filterCaveId.value) return `Cave #${filterCaveId.value} (cave + system)`
+  if (filterBatch.value) return 'Pip batch '+String(filterBatch.value).slice(0, 12)+'…'
   if (filterId.value) {
     const typeName = filterType.value?.split('\\').pop() || 'Item'
     return `Filtered to ${typeName} #${filterId.value}`
@@ -180,7 +254,14 @@ const clearFilter = () => {
   filterCaveId.value = ''
   filterType.value = ''
   filterId.value = ''
+  filterBatch.value = ''
   router.replace({ query: {} })
+  fetchItems()
+}
+
+const filterToBatch = (batchId) => {
+  filterBatch.value = batchId
+  router.replace({ query: { batch: batchId } })
   fetchItems()
 }
 
@@ -258,6 +339,7 @@ const fetchItems = async () => {
       params.suggestable_type = filterType.value
       params.suggestable_id = filterId.value
     }
+    if (filterBatch.value) params.batch = filterBatch.value
     const response = await api.get('/api/admin/suggested-edits', { params })
     items.value = response.data.data
   } catch (error) {
@@ -267,12 +349,57 @@ const fetchItems = async () => {
   }
 }
 
+// ── AI proposal batches ──────────────────────────────────────────────────────
+const batches = ref([])
+const batchActionInFlight = ref(null)
+
+const fetchBatches = async () => {
+  if (activeTab.value !== 'pending') {
+    batches.value = []
+    return
+  }
+  try {
+    const response = await api.get('/api/admin/suggested-edits/batches', { params: { status: 'pending' } })
+    batches.value = response.data.batches || []
+  } catch (error) {
+    console.error('Error fetching proposal batches:', error)
+  }
+}
+
+const approveBatch = async (batchId) => {
+  if (!confirm('Approve and apply every suggested edit in this batch?')) return
+  batchActionInFlight.value = batchId + ':approve'
+  try {
+    await api.post(`/api/admin/suggested-edits/batches/${batchId}/approve`)
+    await Promise.all([fetchItems(), fetchBatches()])
+  } catch (error) {
+    console.error('Error approving batch:', error)
+  } finally {
+    batchActionInFlight.value = null
+  }
+}
+
+const rejectBatch = async (batchId) => {
+  if (!confirm('Reject every suggested edit in this batch?')) return
+  batchActionInFlight.value = batchId + ':reject'
+  try {
+    await api.post(`/api/admin/suggested-edits/batches/${batchId}/reject`)
+    await Promise.all([fetchItems(), fetchBatches()])
+  } catch (error) {
+    console.error('Error rejecting batch:', error)
+  } finally {
+    batchActionInFlight.value = null
+  }
+}
+
 watch(activeTab, () => {
   fetchItems()
+  fetchBatches()
 })
 
 onMounted(() => {
   fetchItems()
+  fetchBatches()
 })
 </script>
 

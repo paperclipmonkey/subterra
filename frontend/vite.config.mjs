@@ -181,7 +181,12 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       proxy: {
-        '/api': 'http://127.0.0.1',
+        '/api': {
+          target: 'http://127.0.0.1',
+          // Present the canonical dev origin so Sanctum treats the request as
+          // stateful even when the dev server runs on a non-default port.
+          headers: { origin: 'http://localhost:3000', referer: 'http://localhost:3000/' },
+        },
         '/storage': 'http://127.0.0.1',
         '/media': 'http://127.0.0.1',
         'public': 'http://127.0.0.1',

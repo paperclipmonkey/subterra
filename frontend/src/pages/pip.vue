@@ -10,8 +10,25 @@
             <h2 class="pip-title">Pip</h2>
             <v-chip color="warning" variant="tonal" size="x-small" density="compact">Preview</v-chip>
           </div>
-          <p class="pip-subtitle">Your caving guide</p>
+          <p class="pip-subtitle">{{ isDataMode ? 'Data steward — fixes need your approval' : 'Your caving guide' }}</p>
         </div>
+        <v-btn-toggle
+          v-if="canUseDataMode"
+          :model-value="store.mode"
+          density="compact"
+          mandatory
+          class="pip-mode-toggle mr-1"
+          @update:model-value="switchMode"
+        >
+          <v-btn value="default" size="small" variant="text" :disabled="store.isLoading">
+            <v-icon :icon="mdiCompassOutline" size="16" class="mr-1" />
+            Caving
+          </v-btn>
+          <v-btn value="data" size="small" variant="text" :disabled="store.isLoading">
+            <v-icon :icon="mdiDatabaseCogOutline" size="16" class="mr-1" />
+            Data
+          </v-btn>
+        </v-btn-toggle>
         <v-btn
           variant="text"
           size="small"
@@ -37,13 +54,15 @@
       <div v-if="!store.hasMessages && !store.error" class="pip-welcome">
         <img src="/pip.png" alt="Pip" class="pip-welcome-avatar">
 
-        <h3 class="pip-welcome-title">Hi, I'm Pip</h3>
+        <h3 class="pip-welcome-title">{{ isDataMode ? 'Pip — data steward' : "Hi, I'm Pip" }}</h3>
         <p class="pip-welcome-tagline">
-          Cave recommendations, conditions, trip reports and weekend planning — pick a starter or just ask.
+          {{ isDataMode
+            ? 'Find and fix data problems — missing lengths, unlinked entrances, tags. Every fix is filed as a suggested edit for your approval.'
+            : 'Cave recommendations, conditions, trip reports and weekend planning — pick a starter or just ask.' }}
         </p>
         <div class="pip-suggestions">
           <button
-            v-for="s in welcomeSuggestions"
+            v-for="s in (isDataMode ? dataWelcomeSuggestions : welcomeSuggestions)"
             :key="s.text"
             class="pip-suggestion"
             @click="sendSuggestion(s.text)"
@@ -214,6 +233,23 @@
               </div>
 
               <div
+                v-if="!msg.pending && msg.proposals && msg.proposals.length"
+                class="pip-cardrow-wrap"
+              >
+                <div class="pip-cardrow-label">
+                  <v-icon :icon="mdiClipboardCheckOutline" size="13" class="mr-1" />
+                  Proposals awaiting your approval
+                </div>
+                <div class="pip-cardrow">
+                  <ProposalAssistantCard
+                    v-for="(proposal, pIndex) in msg.proposals"
+                    :key="proposal.suggested_edit_id || proposal.batch_id || pIndex"
+                    :proposal="proposal"
+                  />
+                </div>
+              </div>
+
+              <div
                 v-if="!msg.pending && msg.created_trips && msg.created_trips.length"
                 class="pip-cardrow-wrap"
               >
@@ -290,7 +326,7 @@
           v-model="inputText"
           class="pip-input"
           rows="1"
-          :placeholder="isRecording ? 'Listening…' : 'Ask about caves, conditions, or weekend plans…'"
+          :placeholder="isRecording ? 'Listening…' : (isDataMode ? 'Ask about data issues, or describe a fix…' : 'Ask about caves, conditions, or weekend plans…')"
           :disabled="store.isLoading"
           @keydown.enter.exact.prevent="send"
           @keydown.shift.enter="inputText += '\n'"
@@ -323,7 +359,9 @@
         </button>
       </div>
       <p class="pip-disclaimer">
-        Pip can make mistakes — always verify conditions, access and gear before a trip.
+        {{ isDataMode
+          ? 'Pip cannot change data directly — every fix is filed as a suggested edit for review.'
+          : 'Pip can make mistakes — always verify conditions, access and gear before a trip.' }}
       </p>
     </div>
 
@@ -433,20 +471,26 @@ import {
   mdiBroom,
   mdiCalendarOutline,
   mdiCheck,
+  mdiClipboardCheckOutline,
   mdiClockOutline,
   mdiClose,
   mdiCompassOutline,
   mdiContentCopy,
+  mdiDatabaseCogOutline,
   mdiDelete,
   mdiFormatListChecks,
   mdiHistory,
   mdiHomeRoof,
+  mdiLinkVariant,
   mdiMicrophone,
   mdiMicrophoneOff,
   mdiNotebookOutline,
   mdiPaperclip,
+  mdiRulerSquare,
   mdiSchoolOutline,
   mdiSend,
+  mdiStethoscope,
+  mdiTagMultipleOutline,
   mdiThumbDown,
   mdiThumbDownOutline,
   mdiThumbUp,
@@ -461,6 +505,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveAssistantCard from '@/components/CaveAssistantCard.vue'
 import CollectionAssistantCard from '@/components/CollectionAssistantCard.vue'
 import HutAssistantCard from '@/components/HutAssistantCard.vue'
+import ProposalAssistantCard from '@/components/ProposalAssistantCard.vue'
 import TripCreatedAssistantCard from '@/components/TripCreatedAssistantCard.vue'
 import TripReportAssistantCard from '@/components/TripReportAssistantCard.vue'
 import WeatherChartCard from '@/components/WeatherChartCard.vue'
@@ -475,6 +520,18 @@ const inputText = ref('')
 const inputEl = ref(null)
 const streamEl = ref(null)
 const copiedIndex = ref(null)
+
+// ── Data-steward mode (admins only) ──────────────────────────────────────────
+const canUseDataMode = computed(() => {
+  const roles = appStore.user?.roles || []
+  return roles.some(r => r.slug === 'platform_admin' || r.slug === 'data_admin')
+})
+const isDataMode = computed(() => store.mode === 'data')
+
+function switchMode(mode) {
+  if (!mode || mode === store.mode) return
+  store.setMode(mode)
+}
 
 // ── Agreement gate ───────────────────────────────────────────────────────────
 const hasAgreed = computed(() => !!appStore.user?.pip_agreement_signed_at)
@@ -574,6 +631,15 @@ const welcomeSuggestions = [
   { icon: mdiWeatherCloudy,     label: 'Streamway conditions this weekend', text: 'Are conditions OK for a streamway trip in the Dales this weekend?' },
   { icon: mdiNotebookOutline,   label: 'Log a trip report',               text: "I'd like to log a trip report. Can you help me?" },
   { icon: mdiUpload,            label: 'Import my caving logbook',        text: "I have a CSV logbook of my caving trips. Can you help me import them into Subterra?" },
+]
+
+// ── Data-steward welcome suggestions ─────────────────────────────────────────
+const dataWelcomeSuggestions = [
+  { icon: mdiStethoscope,       label: 'Data health summary',             text: 'Give me a summary of all data issues in the cave database.' },
+  { icon: mdiRulerSquare,       label: 'Missing length & depth',          text: 'Find cave systems that are missing length or depth information, and propose fixes where the description states the values.' },
+  { icon: mdiLinkVariant,       label: 'Find unlinked entrances',         text: 'Scan for caves in different systems whose entrances are very close together — they may be the same system that needs merging.' },
+  { icon: mdiTagMultipleOutline, label: 'Bulk tag caves',                 text: "I want to add a tag to several caves at once. Show me the tag taxonomy and I'll tell you which caves." },
+  { icon: mdiCompassOutline,    label: 'Caves missing region tags',       text: 'Find caves that have no region tag, and suggest the right region from their location.' },
 ]
 
 // ── CSV logbook import ───────────────────────────────────────────────────────
@@ -714,6 +780,11 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 .min-width-0 { min-width: 0; }
+.pip-mode-toggle {
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+}
 
 /* ── Stream (the only scrolling area) ───────────────────────────────── */
 .pip-stream {

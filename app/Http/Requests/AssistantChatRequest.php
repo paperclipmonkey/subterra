@@ -19,6 +19,7 @@ class AssistantChatRequest extends FormRequest
             'messages' => ['required', 'array', 'min:1', 'max:20'],
             'messages.*.role' => ['required', 'string', 'in:user,assistant'],
             'messages.*.content' => ['required', 'string', 'max:4000'],
+            'mode' => ['sometimes', 'string', 'in:default,data'],
         ];
     }
 
