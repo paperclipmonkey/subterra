@@ -176,6 +176,14 @@ class DataHealthService
      *
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * Hard cap on candidate pairs pulled from the bounding-box join. Keeps the
+     * scan (and summary()) bounded on large datasets; ordering by id keeps
+     * paging deterministic. Pairs beyond the cap are simply not surfaced in
+     * this scan — they show up once nearer pairs have been resolved.
+     */
+    private const MAX_PAIR_SCAN = 2000;
+
     public function unlinkedEntranceCandidates(int $limit = 25, int $offset = 0, float $maxDistanceM = 400.0): array
     {
         // Bounding-box self-join first (cheap), haversine refinement second.
@@ -200,6 +208,9 @@ class DataHealthService
                 'b.id as b_id', 'b.name as b_name', 'b.location_lat as b_lat', 'b.location_lng as b_lng',
                 'b.cave_system_id as b_system_id', 'sb.name as b_system_name',
             ])
+            ->orderBy('a.id')
+            ->orderBy('b.id')
+            ->limit(self::MAX_PAIR_SCAN)
             ->get();
 
         $candidates = [];

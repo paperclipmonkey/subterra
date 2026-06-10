@@ -29,6 +29,7 @@ return new class () extends Migration {
     public function down(): void
     {
         Schema::table('suggested_edits', function (Blueprint $table) {
+            $table->dropIndex(['batch_id']);
             $table->dropColumn(['source', 'batch_id', 'reasoning']);
         });
     }

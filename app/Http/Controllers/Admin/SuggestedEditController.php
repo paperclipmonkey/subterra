@@ -220,7 +220,9 @@ class SuggestedEditController extends Controller
 
         $suggestedEdit->update(['status' => 'approved']);
 
-        // Create a new pending suggestion for any remaining unapproved fields
+        // Create a new pending suggestion for any remaining unapproved fields,
+        // preserving AI attribution so the leftover keeps its badge, batch
+        // grouping, and mail-skip behaviour.
         if (!empty($remainingData)) {
             SuggestedEdit::create([
                 'user_id' => $suggestedEdit->user_id,
@@ -229,6 +231,9 @@ class SuggestedEditController extends Controller
                 'original_data' => $remainingOriginal,
                 'suggested_data' => $remainingData,
                 'status' => 'pending',
+                'source' => $suggestedEdit->source ?? 'user',
+                'batch_id' => $suggestedEdit->batch_id,
+                'reasoning' => $suggestedEdit->reasoning,
             ]);
         }
 
@@ -248,6 +253,7 @@ class SuggestedEditController extends Controller
         $status = $request->query('status', 'pending');
 
         $batchIds = SuggestedEdit::where('status', $status)
+            ->where('source', 'pip')
             ->whereNotNull('batch_id')
             ->orderByDesc('id')
             ->pluck('batch_id')
@@ -258,6 +264,7 @@ class SuggestedEditController extends Controller
         $batches = $batchIds->map(function (string $batchId) use ($status) {
             $edits = SuggestedEdit::with('suggestable')
                 ->where('batch_id', $batchId)
+                ->where('source', 'pip')
                 ->where('status', $status)
                 ->get();
 
@@ -284,6 +291,7 @@ class SuggestedEditController extends Controller
     {
         $edits = SuggestedEdit::with('suggestable')
             ->where('batch_id', $batchId)
+            ->where('source', 'pip')
             ->where('status', 'pending')
             ->get();
 
@@ -327,6 +335,7 @@ class SuggestedEditController extends Controller
     public function rejectBatch(Request $request, string $batchId)
     {
         $count = SuggestedEdit::where('batch_id', $batchId)
+            ->where('source', 'pip')
             ->where('status', 'pending')
             ->update([
                 'status' => 'rejected',
@@ -347,14 +356,30 @@ class SuggestedEditController extends Controller
     private function applyTagChanges(SuggestedEdit $suggestedEdit, array $data): array
     {
         $target = $suggestedEdit->suggestable;
-        $isTaggable = $target instanceof Cave || $target instanceof CaveSystem;
+        // Only Pip-filed proposals may carry tag operations — suggested_data is
+        // user-controlled for community edits, so honouring these keys there
+        // would let arbitrary tag changes ride along with an innocent approval.
+        $applicable = ($suggestedEdit->source ?? 'user') === 'pip'
+            && ($target instanceof Cave || $target instanceof CaveSystem);
 
-        if ($isTaggable && !empty($data['tags_add'])) {
-            $target->tags()->syncWithoutDetaching(array_map('intval', (array) $data['tags_add']));
+        if ($applicable && !empty($data['tags_add'])) {
+            // Re-validate at apply time: only existing, assignable tags attach
+            $validAddIds = \App\Models\Tag::whereKey(array_map('intval', (array) $data['tags_add']))
+                ->where('assignable', true)
+                ->pluck('id')
+                ->all();
+            if ($validAddIds !== []) {
+                $target->tags()->syncWithoutDetaching($validAddIds);
+            }
         }
 
-        if ($isTaggable && !empty($data['tags_remove'])) {
-            $target->tags()->detach(array_map('intval', (array) $data['tags_remove']));
+        if ($applicable && !empty($data['tags_remove'])) {
+            $validRemoveIds = \App\Models\Tag::whereKey(array_map('intval', (array) $data['tags_remove']))
+                ->pluck('id')
+                ->all();
+            if ($validRemoveIds !== []) {
+                $target->tags()->detach($validRemoveIds);
+            }
         }
 
         unset($data['tags_add'], $data['tags_add_names'], $data['tags_remove'], $data['tags_remove_names']);
@@ -369,7 +394,11 @@ class SuggestedEditController extends Controller
      */
     private function applySystemMerge(SuggestedEdit $suggestedEdit, array $data): array
     {
-        if ($suggestedEdit->suggestable_type === CaveSystem::class && !empty($data['merge_source_system_id'])) {
+        // Merges delete a record — only Pip-filed proposals may trigger them.
+        // Community-sourced suggested_data must never reach this code path.
+        $isPip = ($suggestedEdit->source ?? 'user') === 'pip';
+
+        if ($isPip && $suggestedEdit->suggestable_type === CaveSystem::class && !empty($data['merge_source_system_id'])) {
             $source = CaveSystem::find((int) $data['merge_source_system_id']);
 
             if (!$source) {

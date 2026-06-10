@@ -346,14 +346,19 @@ const changedFields = computed(() => {
             continue
         }
 
-        // AI merge proposals: show which system gets merged into this one
+        // AI merge proposals: show which system gets merged into this one,
+        // including the entrance lists captured when the proposal was filed
         if (key === 'merge_source_system_id') {
             const name = suggested.merge_source_system_name || `System #${suggested[key]}`
+            const targetEntrances = (originalData.target_entrances || []).join(', ')
+            const sourceEntrances = (originalData.source_entrances || []).join(', ')
             fields.push({
                 key,
                 label: 'MERGE INTO THIS SYSTEM (SOURCE WILL BE DELETED)',
-                oldValue: null,
-                newValue: `${name} (#${suggested[key]})`,
+                oldValue: targetEntrances ? `Current entrances: ${targetEntrances}` : '(no entrances recorded)',
+                newValue: `${name} (#${suggested[key]})`
+                    + (sourceEntrances ? ` — brings entrances: ${sourceEntrances}` : ''),
+                isLongText: true,
             })
             continue
         }

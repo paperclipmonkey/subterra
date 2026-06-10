@@ -184,6 +184,132 @@ class SuggestedEditBatchApprovalTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function tag_keys_on_user_sourced_edits_are_ignored(): void
+    {
+        $tag = Tag::factory()->create(['tag' => 'Sneaky', 'category' => 'curated']);
+        $cave = Cave::factory()->create();
+
+        // A community suggestion smuggling tag operations into suggested_data
+        $edit = SuggestedEdit::create([
+            'user_id' => $this->admin->id,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => [],
+            'suggested_data' => ['access_info' => 'Updated info', 'tags_add' => [$tag->id]],
+            'status' => 'pending',
+            'source' => 'user',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/admin/suggested-edits/{$edit->id}/approve")
+            ->assertStatus(200);
+
+        $this->assertFalse($cave->tags()->where('tags.id', $tag->id)->exists());
+        $this->assertSame('Updated info', $cave->fresh()->access_info);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function non_assignable_tags_are_not_attached_on_approval(): void
+    {
+        $tag = Tag::factory()->create(['tag' => 'System Only', 'assignable' => false]);
+        $cave = Cave::factory()->create();
+        $edit = $this->makeTagProposal($cave, $tag, null);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/admin/suggested-edits/{$edit->id}/approve")
+            ->assertStatus(200);
+
+        $this->assertFalse($cave->tags()->where('tags.id', $tag->id)->exists());
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function merge_keys_on_user_sourced_edits_are_ignored(): void
+    {
+        $target = CaveSystem::factory()->create();
+        $source = CaveSystem::factory()->create();
+
+        $edit = SuggestedEdit::create([
+            'user_id' => $this->admin->id,
+            'suggestable_type' => CaveSystem::class,
+            'suggestable_id' => $target->id,
+            'original_data' => [],
+            'suggested_data' => ['merge_source_system_id' => $source->id],
+            'status' => 'pending',
+            'source' => 'user',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/admin/suggested-edits/{$edit->id}/approve")
+            ->assertStatus(200);
+
+        // Source survives: merges only run for Pip-filed proposals
+        $this->assertNotNull(CaveSystem::find($source->id));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function batch_endpoints_only_touch_pip_sourced_edits(): void
+    {
+        $cave = Cave::factory()->create();
+
+        // A user-sourced edit that somehow carries a batch_id
+        $userEdit = SuggestedEdit::create([
+            'user_id' => $this->admin->id,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => [],
+            'suggested_data' => ['access_info' => 'community change'],
+            'status' => 'pending',
+            'source' => 'user',
+            'batch_id' => 'pip-test-batch',
+        ]);
+
+        $batches = $this->actingAs($this->admin)
+            ->getJson('/api/admin/suggested-edits/batches')
+            ->assertStatus(200)
+            ->json('batches');
+        $this->assertCount(0, $batches);
+
+        $this->actingAs($this->admin)
+            ->postJson('/api/admin/suggested-edits/batches/pip-test-batch/approve')
+            ->assertStatus(404);
+
+        $this->actingAs($this->admin)
+            ->postJson('/api/admin/suggested-edits/batches/pip-test-batch/reject')
+            ->assertStatus(200)
+            ->assertJsonPath('rejected', 0);
+
+        $this->assertSame('pending', $userEdit->fresh()->status);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function partial_approval_preserves_ai_attribution_on_the_remainder(): void
+    {
+        $system = CaveSystem::factory()->create(['length' => 0, 'vertical_range' => 0]);
+
+        $edit = SuggestedEdit::create([
+            'user_id' => $this->admin->id,
+            'suggestable_type' => CaveSystem::class,
+            'suggestable_id' => $system->id,
+            'original_data' => ['length' => 0, 'vertical_range' => 0],
+            'suggested_data' => ['length' => 4500, 'vertical_range' => 120],
+            'status' => 'pending',
+            'source' => 'pip',
+            'batch_id' => 'pip-partial-batch',
+            'reasoning' => 'Description states the values.',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/admin/suggested-edits/{$edit->id}/approve", ['fields' => ['length']])
+            ->assertStatus(200);
+
+        $remainder = SuggestedEdit::where('status', 'pending')->firstOrFail();
+        $this->assertSame(['vertical_range' => 120], $remainder->suggested_data);
+        $this->assertSame('pip', $remainder->source);
+        $this->assertSame('pip-partial-batch', $remainder->batch_id);
+        $this->assertSame('Description states the values.', $remainder->reasoning);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function index_supports_batch_and_source_filters(): void
     {
         $tag = Tag::factory()->create(['tag' => 'Curated', 'category' => 'curated']);
