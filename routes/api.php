@@ -220,6 +220,9 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
         Route::post('/cave-registry-sync/{registry}', [App\Http\Controllers\Admin\CaveRegistrySyncController::class, 'dispatch'])->name('admin.cave-registry-sync');
         Route::apiResource('pages', App\Http\Controllers\PageController::class);
+        Route::get('/suggested-edits/batches', [App\Http\Controllers\Admin\SuggestedEditController::class, 'batches']);
+        Route::post('/suggested-edits/batches/{batchId}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approveBatch']);
+        Route::post('/suggested-edits/batches/{batchId}/reject', [App\Http\Controllers\Admin\SuggestedEditController::class, 'rejectBatch']);
         Route::apiResource('suggested-edits', App\Http\Controllers\Admin\SuggestedEditController::class)->only(['index', 'show']);
         Route::post('/suggested-edits/{suggested_edit}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approve']);
         Route::post('/suggested-edits/{suggested_edit}/reject', [App\Http\Controllers\Admin\SuggestedEditController::class, 'reject']);

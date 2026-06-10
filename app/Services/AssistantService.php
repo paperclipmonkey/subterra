@@ -6,6 +6,12 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Services\Assistant\AssistantTool;
+use App\Services\Assistant\Tools\Admin\FindLinkCandidatesTool;
+use App\Services\Assistant\Tools\Admin\ListTagsTool;
+use App\Services\Assistant\Tools\Admin\ProposeBulkTagTool;
+use App\Services\Assistant\Tools\Admin\ProposeDataFixTool;
+use App\Services\Assistant\Tools\Admin\ProposeSystemMergeTool;
+use App\Services\Assistant\Tools\Admin\ScanDataIssuesTool;
 use App\Services\Assistant\Tools\CreateTripReportTool;
 use App\Services\Assistant\Tools\FindNearbyHutsTool;
 use App\Services\Assistant\Tools\GetCaveDetailsTool;
@@ -25,8 +31,17 @@ use Illuminate\Support\Facades\Log;
 
 class AssistantService
 {
+    public const MODE_DEFAULT = 'default';
+    public const MODE_DATA = 'data';
+
     /** @var AssistantTool[] */
     private array $tools;
+
+    /** @var AssistantTool[] Tool set for the admin data-steward mode */
+    private array $dataTools;
+
+    /** @var AssistantTool[] The tool set in use for the current chat() call */
+    private array $activeTools;
 
     public function __construct(
         GetUserExperienceTool $userExperienceTool,
@@ -42,6 +57,12 @@ class AssistantService
         SearchUsersTool $searchUsersTool,
         CreateTripReportTool $createTripReportTool,
         ParseLogbookCsvTool $parseLogbookCsvTool,
+        ScanDataIssuesTool $scanDataIssuesTool,
+        FindLinkCandidatesTool $findLinkCandidatesTool,
+        ListTagsTool $listTagsTool,
+        ProposeDataFixTool $proposeDataFixTool,
+        ProposeBulkTagTool $proposeBulkTagTool,
+        ProposeSystemMergeTool $proposeSystemMergeTool,
     ) {
         $this->tools = [
             'get_user_experience' => $userExperienceTool,
@@ -58,6 +79,23 @@ class AssistantService
             'create_trip_report' => $createTripReportTool,
             'parse_logbook_csv' => $parseLogbookCsvTool,
         ];
+
+        // Data-steward mode: scanning + proposal tools, plus read-only lookups
+        // shared with the default mode for resolving names to records.
+        $this->dataTools = [
+            'scan_data_issues' => $scanDataIssuesTool,
+            'find_link_candidates' => $findLinkCandidatesTool,
+            'list_tags' => $listTagsTool,
+            'propose_data_fix' => $proposeDataFixTool,
+            'propose_bulk_tag' => $proposeBulkTagTool,
+            'propose_system_merge' => $proposeSystemMergeTool,
+            'search_caves' => $searchCavesTool,
+            'get_cave_details' => $caveDetailsTool,
+            'list_collections' => $listCollectionsTool,
+            'get_collection_details' => $collectionDetailsTool,
+        ];
+
+        $this->activeTools = $this->tools;
     }
 
     /**
@@ -66,7 +104,7 @@ class AssistantService
      * @param  array<int, array{role: string, content: string}>  $messages  Full conversation history from the client
      * @param  callable|null  $onEvent  fn(string $type, mixed $data): void — called for SSE progress events
      */
-    public function chat(array $messages, User $user, ?callable $onEvent = null): string
+    public function chat(array $messages, User $user, ?callable $onEvent = null, string $mode = self::MODE_DEFAULT): string
     {
         $apiKey = config('assistant.openrouter.api_key');
 
@@ -74,9 +112,13 @@ class AssistantService
             throw new \RuntimeException('OpenRouter API key is not configured.');
         }
 
+        $this->activeTools = $mode === self::MODE_DATA ? $this->dataTools : $this->tools;
+
         $systemMessage = [
             'role' => 'system',
-            'content' => $this->buildSystemPrompt($user),
+            'content' => $mode === self::MODE_DATA
+                ? $this->buildDataStewardPrompt($user)
+                : $this->buildSystemPrompt($user),
         ];
 
         // Cap history to avoid ballooning token costs
@@ -130,6 +172,9 @@ class AssistantService
 
         /** @var array<int, array<string, mixed>> $createdTripsBuffer Trips created this turn */
         $createdTripsBuffer = [];
+
+        /** @var array<int, array<string, mixed>> $proposalsBuffer Suggested edits filed by data-steward tools this turn */
+        $proposalsBuffer = [];
 
         /** @var array{prompt_tokens: int, completion_tokens: int} */
         $totalUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0];
@@ -367,6 +412,30 @@ class AssistantService
                         ];
                     }
 
+                    // Buffer filed data-fix proposals so the UI can show review links
+                    if (in_array($name, ['propose_data_fix', 'propose_system_merge'], true) && !empty($result['success'])) {
+                        $proposalsBuffer[] = [
+                            'type' => $name === 'propose_system_merge' ? 'merge' : 'field_fix',
+                            'suggested_edit_id' => $result['suggested_edit_id'] ?? null,
+                            'batch_id' => $result['batch_id'] ?? null,
+                            'target' => $result['target'] ?? ($result['keep']['name'] ?? null),
+                            'count' => 1,
+                            'review_url' => $result['review_url'] ?? null,
+                        ];
+                    }
+
+                    if ($name === 'propose_bulk_tag' && !empty($result['success'])) {
+                        $proposalsBuffer[] = [
+                            'type' => 'bulk_tag',
+                            'suggested_edit_id' => null,
+                            'batch_id' => $result['batch_id'] ?? null,
+                            'target' => implode(', ', array_slice($result['targets'] ?? [], 0, 5))
+                                .(count($result['targets'] ?? []) > 5 ? '…' : ''),
+                            'count' => $result['proposals_created'] ?? 0,
+                            'review_url' => $result['review_url'] ?? null,
+                        ];
+                    }
+
                     // Buffer created trip so the UI can show a confirmation card
                     if ($name === 'create_trip_report' && !empty($result['success'])) {
                         $createdTripsBuffer[] = [
@@ -529,9 +598,16 @@ class AssistantService
             $onEvent('trips_created', $createdTripsBuffer);
         }
 
+        // Emit filed proposals so the UI can show "review in admin" cards
+        if ($onEvent && !empty($proposalsBuffer)) {
+            $onEvent('proposals_created', $proposalsBuffer);
+        }
+
         // Emit contextual follow-up suggestions based on what was discussed
         if ($onEvent && !empty($toolsUsed)) {
-            $suggestions = $this->buildSuggestions($toolsUsed, $context);
+            $suggestions = $mode === self::MODE_DATA
+                ? $this->buildDataSuggestions($toolsUsed, $proposalsBuffer)
+                : $this->buildSuggestions($toolsUsed, $context);
             if (!empty($suggestions)) {
                 $onEvent('suggestions', $suggestions);
             }
@@ -587,7 +663,7 @@ class AssistantService
     private function getToolDefinitions(): array
     {
         return array_values(
-            array_map(fn ($tool) => $tool::definition(), $this->tools)
+            array_map(fn ($tool) => $tool::definition(), $this->activeTools)
         );
     }
 
@@ -1067,14 +1143,14 @@ class AssistantService
 
     private function dispatchTool(string $name, array $arguments, User $user): array
     {
-        if (!isset($this->tools[$name])) {
+        if (!isset($this->activeTools[$name])) {
             Log::warning('AssistantService: unknown tool requested', ['tool' => $name]);
 
             return ['error' => "Unknown tool: {$name}"];
         }
 
         try {
-            return $this->tools[$name]->handle($arguments, $user);
+            return $this->activeTools[$name]->handle($arguments, $user);
         } catch (\Throwable $e) {
             Log::error('AssistantService: tool dispatch error', [
                 'tool' => $name,
@@ -1281,6 +1357,108 @@ class AssistantService
                 return implode("\n", $lines);
             }
         );
+    }
+
+    /**
+     * Follow-up suggestions for the data-steward mode.
+     *
+     * @param  string[]  $toolsUsed
+     * @param  array<int, array<string, mixed>>  $proposals
+     * @return string[]
+     */
+    private function buildDataSuggestions(array $toolsUsed, array $proposals): array
+    {
+        $unique = array_unique($toolsUsed);
+        $suggestions = [];
+
+        if (!empty($proposals)) {
+            $suggestions[] = 'Scan for the next batch of issues of the same type';
+        }
+
+        if (!in_array('scan_data_issues', $unique, true)) {
+            $suggestions[] = 'Give me a summary of all data issues';
+        }
+
+        if (in_array('scan_data_issues', $unique, true) && empty($proposals)) {
+            $suggestions[] = 'Propose fixes for the issues you just found';
+        }
+
+        if (!in_array('propose_bulk_tag', $unique, true)) {
+            $suggestions[] = 'Help me tag a set of caves in bulk';
+        }
+
+        return array_slice($suggestions, 0, 3);
+    }
+
+    private function buildDataStewardPrompt(User $user): string
+    {
+        $date = now()->format('l, j F Y');
+        $tagTaxonomy = $this->buildTagTaxonomy();
+
+        return <<<PROMPT
+You are Pip in **data-steward mode**, helping a Subterra administrator find and fix
+data-quality problems in the cave database. The admin you are talking to is {$user->name}.
+
+Current date: {$date}
+
+## What you can do
+
+- **Scan** for problems with `scan_data_issues` (start with issue_type="summary" when the
+  admin asks "what's wrong with the data"). Issue types cover missing length/depth, missing
+  coordinates, missing region tags, missing descriptions, and caves in different systems whose
+  entrances are suspiciously close together (likely the same system, imported twice).
+- **Investigate** specific records with `search_caves`, `get_cave_details`,
+  `find_link_candidates`, `list_tags`, `list_collections` and `get_collection_details`.
+- **Propose fixes** with `propose_data_fix` (field values, including relinking an entrance via
+  cave_system_id), `propose_bulk_tag` (tag many caves/systems at once), and
+  `propose_system_merge` (merge duplicate systems).
+
+## The golden rule: propose, never apply
+
+You CANNOT change live data. Every propose_* call files a *suggested edit* that the admin
+approves or rejects later in the review queue (/admin/suggested-edits). Say this plainly when
+you file proposals — e.g. "I've filed 12 proposals as one batch; approve them at the link below."
+
+## Evidence rules
+
+- Only propose a value you can point to evidence for: a number stated in the record's own
+  description ("4.5km of passage" → length 4500), data returned by a tool, or a value the
+  admin explicitly gave you in chat. Put the evidence in the `reasoning` argument — the
+  reviewing admin sees it next to the diff.
+- NEVER invent lengths, depths, coordinates, or facts from general knowledge. If your general
+  knowledge suggests a value (e.g. you believe you know a famous cave's depth), you may mention
+  it in chat as a hint, but do NOT file it as a proposal unless the admin confirms it.
+- Descriptions are a goldmine: scan_data_issues returns a description excerpt for systems
+  missing length/depth. Parse stated lengths/depths from the text ("extends for 2.3 km",
+  "120m deep") and convert to metres before proposing.
+
+## Workflow guidance
+
+- **Confirm before bulk.** Before calling propose_bulk_tag, show the admin the exact list of
+  caves/systems you intend to tag and get a yes. After confirmation, one tool call handles up
+  to 100 targets — do not call it per cave.
+- **Tags must be real.** Always call list_tags before proposing tag changes and use the exact
+  tag IDs it returns. Current taxonomy (live counts per cave system):
+{$tagTaxonomy}
+- **Verify links before merging.** For suspected duplicate/unlinked systems, call
+  find_link_candidates and check distance + name similarity before propose_system_merge.
+  The better-documented system should be the merge target. If the evidence is weak (>200m
+  apart, dissimilar names, no description references), flag it to the admin instead of filing.
+- **Batch related fixes.** Reuse the batch_id from the first proposal of a sweep on subsequent
+  propose_data_fix/propose_system_merge calls in the same sweep, so the admin can approve the
+  lot in one click.
+- **Work in slices.** Scans are paged (limit/offset). Fix one page, tell the admin how many
+  remain, and offer to continue. Do not try to fix hundreds of records in one turn.
+- **Tool budget is small** (about 10 dispatches per turn). Plan: scan once, investigate the
+  few records you'll act on, propose, report. Don't re-scan after every proposal.
+
+## Output format
+
+Reply in plain markdown only — no JSON or tool-call syntax in your reply. When you file
+proposals, end with a short summary: how many proposals, what they change, and the review
+link(s) the tools returned. Be precise and factual; the admin is auditing data, not planning
+a trip.
+PROMPT;
     }
 
     private function buildSystemPrompt(User $user): string

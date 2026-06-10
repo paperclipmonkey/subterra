@@ -37,71 +37,8 @@ class CaveSystemController extends Controller
 
         $source = CaveSystem::findOrFail($sourceId);
 
-        DB::beginTransaction();
-
         try {
-            // 1. Migrate caves
-            Cave::where('cave_system_id', $source->id)
-                ->update(['cave_system_id' => $caveSystem->id]);
-
-            // 2. Migrate routes
-            CaveRoute::where('cave_system_id', $source->id)
-                ->update(['cave_system_id' => $caveSystem->id]);
-
-            // 3. Migrate trips
-            Trip::where('cave_system_id', $source->id)
-                ->update(['cave_system_id' => $caveSystem->id]);
-
-            // 4. Migrate files — move storage and update records
-            $sourceFiles = CaveSystemFile::where('cave_system_id', $source->id)->get();
-            foreach ($sourceFiles as $file) {
-                $oldPath = "cave_system_files/{$source->id}/{$file->filename}";
-                $newPath = "cave_system_files/{$caveSystem->id}/{$file->filename}";
-
-                if (Storage::disk('media')->exists($oldPath)) {
-                    Storage::disk('media')->move($oldPath, $newPath);
-                }
-
-                if ($file->thumbnail_filename) {
-                    $oldThumb = "cave_system_files/{$source->id}/{$file->thumbnail_filename}";
-                    $newThumb = "cave_system_files/{$caveSystem->id}/{$file->thumbnail_filename}";
-                    if (Storage::disk('media')->exists($oldThumb)) {
-                        Storage::disk('media')->move($oldThumb, $newThumb);
-                    }
-                }
-
-                $file->update(['cave_system_id' => $caveSystem->id]);
-            }
-
-            // 5. Migrate tags (sync without detaching to avoid duplicates)
-            $sourceTags = $source->tags()->pluck('tags.id')->toArray();
-            if (!empty($sourceTags)) {
-                $caveSystem->tags()->syncWithoutDetaching($sourceTags);
-            }
-
-            // 6. Migrate suggested edits
-            SuggestedEdit::where('suggestable_type', CaveSystem::class)
-                ->where('suggestable_id', $source->id)
-                ->update(['suggestable_id' => $caveSystem->id]);
-
-            // 7. Merge metadata — keep target values, fill in blanks from source
-            $fieldsToMerge = ['description', 'references', 'catchment_id'];
-            foreach ($fieldsToMerge as $field) {
-                if (empty($caveSystem->$field) && !empty($source->$field)) {
-                    $caveSystem->$field = $source->$field;
-                }
-            }
-
-            // Take the larger length and vertical_range
-            $caveSystem->length = max($caveSystem->length ?? 0, $source->length ?? 0);
-            $caveSystem->vertical_range = max($caveSystem->vertical_range ?? 0, $source->vertical_range ?? 0);
-            $caveSystem->save();
-
-            // 8. Delete source system (all relations already migrated)
-            $source->tags()->detach();
-            $source->delete();
-
-            DB::commit();
+            app(\App\Services\CaveSystemMergeService::class)->merge($caveSystem, $source);
 
             $caveSystem->load(['caves', 'routes', 'files', 'tags']);
 
@@ -110,8 +47,6 @@ class CaveSystemController extends Controller
                 'data' => $caveSystem,
             ]);
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return response()->json([
                 'error' => 'Merge failed: '.$e->getMessage(),
             ], 500);

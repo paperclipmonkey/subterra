@@ -51,6 +51,14 @@ class SuggestedEditController extends Controller
                   ->where('suggestable_id', $request->query('suggestable_id'));
         }
 
+        if ($request->filled('batch')) {
+            $query->where('batch_id', $request->query('batch'));
+        }
+
+        if ($request->filled('source')) {
+            $query->where('source', $request->query('source'));
+        }
+
         if ($request->filled('search')) {
             $search = $request->query('search');
             $query->where(function ($q) use ($search) {
@@ -168,7 +176,11 @@ class SuggestedEditController extends Controller
                 $this->handleCaveSystemFiles($suggestedEdit->suggestable, $data);
                 unset($data['media'], $data['deleted_files']);
             }
-            $suggestedEdit->suggestable->update($data);
+            $data = $this->applyTagChanges($suggestedEdit, $data);
+            $data = $this->applySystemMerge($suggestedEdit, $data);
+            if (!empty($data)) {
+                $suggestedEdit->suggestable->update($data);
+            }
         } else {
             // Create new item
             $modelClass = $suggestedEdit->suggestable_type;
@@ -208,7 +220,9 @@ class SuggestedEditController extends Controller
 
         $suggestedEdit->update(['status' => 'approved']);
 
-        // Create a new pending suggestion for any remaining unapproved fields
+        // Create a new pending suggestion for any remaining unapproved fields,
+        // preserving AI attribution so the leftover keeps its badge, batch
+        // grouping, and mail-skip behaviour.
         if (!empty($remainingData)) {
             SuggestedEdit::create([
                 'user_id' => $suggestedEdit->user_id,
@@ -217,14 +231,188 @@ class SuggestedEditController extends Controller
                 'original_data' => $remainingOriginal,
                 'suggested_data' => $remainingData,
                 'status' => 'pending',
+                'source' => $suggestedEdit->source ?? 'user',
+                'batch_id' => $suggestedEdit->batch_id,
+                'reasoning' => $suggestedEdit->reasoning,
             ]);
         }
 
-        if ($suggestedEdit->user) {
+        // AI proposals were filed by the reviewing admin via Pip — no approval mail needed
+        if ($suggestedEdit->user && ($suggestedEdit->source ?? 'user') === 'user') {
             Mail::to($suggestedEdit->user)->send(new SuggestionApprovedMail($suggestedEdit));
         }
 
         return response()->json(['message' => 'Suggestion approved and applied.']);
+    }
+
+    /**
+     * List pending AI proposal batches with a summary of what each contains.
+     */
+    public function batches(Request $request)
+    {
+        $status = $request->query('status', 'pending');
+
+        $batchIds = SuggestedEdit::where('status', $status)
+            ->where('source', 'pip')
+            ->whereNotNull('batch_id')
+            ->orderByDesc('id')
+            ->pluck('batch_id')
+            ->unique()
+            ->take(50)
+            ->values();
+
+        $batches = $batchIds->map(function (string $batchId) use ($status) {
+            $edits = SuggestedEdit::with('suggestable')
+                ->where('batch_id', $batchId)
+                ->where('source', 'pip')
+                ->where('status', $status)
+                ->get();
+
+            $first = $edits->first();
+
+            return [
+                'batch_id' => $batchId,
+                'count' => $edits->count(),
+                'source' => $first?->source,
+                'reasoning' => $first?->reasoning,
+                'created_at' => $first?->created_at,
+                'targets' => $edits->map(fn ($e) => $e->suggestable?->name)->filter()->values(),
+                'suggested_data_sample' => $first?->suggested_data,
+            ];
+        });
+
+        return response()->json(['batches' => $batches]);
+    }
+
+    /**
+     * Approve every pending suggestion in an AI proposal batch.
+     */
+    public function approveBatch(Request $request, string $batchId)
+    {
+        $edits = SuggestedEdit::with('suggestable')
+            ->where('batch_id', $batchId)
+            ->where('source', 'pip')
+            ->where('status', 'pending')
+            ->get();
+
+        if ($edits->isEmpty()) {
+            return response()->json(['message' => 'No pending suggestions in this batch.'], 404);
+        }
+
+        $approved = 0;
+        $failed = [];
+
+        foreach ($edits as $edit) {
+            try {
+                if (!$edit->suggestable) {
+                    throw new \RuntimeException('Target record no longer exists.');
+                }
+
+                $data = $edit->suggested_data;
+                $data = $this->applyTagChanges($edit, $data);
+                $data = $this->applySystemMerge($edit, $data);
+                if (!empty($data)) {
+                    $edit->suggestable->update($data);
+                }
+
+                $edit->update(['status' => 'approved']);
+                ++$approved;
+            } catch (\Throwable $e) {
+                $failed[] = ['suggested_edit_id' => $edit->id, 'error' => $e->getMessage()];
+            }
+        }
+
+        return response()->json([
+            'message' => "Approved {$approved} of {$edits->count()} suggestions in batch.",
+            'approved' => $approved,
+            'failed' => $failed,
+        ]);
+    }
+
+    /**
+     * Reject every pending suggestion in an AI proposal batch.
+     */
+    public function rejectBatch(Request $request, string $batchId)
+    {
+        $count = SuggestedEdit::where('batch_id', $batchId)
+            ->where('source', 'pip')
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'rejected',
+                'admin_comment' => $request->input('admin_comment'),
+            ]);
+
+        return response()->json([
+            'message' => "Rejected {$count} suggestions in batch.",
+            'rejected' => $count,
+        ]);
+    }
+
+    /**
+     * Apply tags_add / tags_remove keys (AI bulk-tag proposals) to the target,
+     * returning $data with the tag keys stripped so the remaining fields can be
+     * mass-assigned as usual.
+     */
+    private function applyTagChanges(SuggestedEdit $suggestedEdit, array $data): array
+    {
+        $target = $suggestedEdit->suggestable;
+        // Only Pip-filed proposals may carry tag operations — suggested_data is
+        // user-controlled for community edits, so honouring these keys there
+        // would let arbitrary tag changes ride along with an innocent approval.
+        $applicable = ($suggestedEdit->source ?? 'user') === 'pip'
+            && ($target instanceof Cave || $target instanceof CaveSystem);
+
+        if ($applicable && !empty($data['tags_add'])) {
+            // Re-validate at apply time: only existing, assignable tags attach
+            $validAddIds = \App\Models\Tag::whereKey(array_map('intval', (array) $data['tags_add']))
+                ->where('assignable', true)
+                ->pluck('id')
+                ->all();
+            if ($validAddIds !== []) {
+                $target->tags()->syncWithoutDetaching($validAddIds);
+            }
+        }
+
+        if ($applicable && !empty($data['tags_remove'])) {
+            $validRemoveIds = \App\Models\Tag::whereKey(array_map('intval', (array) $data['tags_remove']))
+                ->pluck('id')
+                ->all();
+            if ($validRemoveIds !== []) {
+                $target->tags()->detach($validRemoveIds);
+            }
+        }
+
+        unset($data['tags_add'], $data['tags_add_names'], $data['tags_remove'], $data['tags_remove_names']);
+
+        return $data;
+    }
+
+    /**
+     * Apply a merge_source_system_id key (AI merge proposals): merges the
+     * source system into the suggestion's target system. Returns $data with
+     * the merge keys stripped.
+     */
+    private function applySystemMerge(SuggestedEdit $suggestedEdit, array $data): array
+    {
+        // Merges delete a record — only Pip-filed proposals may trigger them.
+        // Community-sourced suggested_data must never reach this code path.
+        $isPip = ($suggestedEdit->source ?? 'user') === 'pip';
+
+        if ($isPip && $suggestedEdit->suggestable_type === CaveSystem::class && !empty($data['merge_source_system_id'])) {
+            $source = CaveSystem::find((int) $data['merge_source_system_id']);
+
+            if (!$source) {
+                throw new \RuntimeException(
+                    'Merge source system '.$data['merge_source_system_id'].' no longer exists.'
+                );
+            }
+
+            app(\App\Services\CaveSystemMergeService::class)->merge($suggestedEdit->suggestable, $source);
+        }
+
+        unset($data['merge_source_system_id'], $data['merge_source_system_name']);
+
+        return $data;
     }
 
     public function reject(Request $request, SuggestedEdit $suggestedEdit)

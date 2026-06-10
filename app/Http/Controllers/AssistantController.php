@@ -38,8 +38,16 @@ class AssistantController extends Controller
         }
 
         $messages = $request->validated()['messages'];
+        $mode = $request->validated()['mode'] ?? AssistantService::MODE_DEFAULT;
 
-        return response()->stream(function () use ($messages, $user) {
+        // Data-steward mode files data-fix proposals — admins only
+        if ($mode === AssistantService::MODE_DATA && !$user->hasRole(['platform_admin', 'data_admin'])) {
+            return response()->json([
+                'error' => 'Data-steward mode is restricted to administrators.',
+            ], 403);
+        }
+
+        return response()->stream(function () use ($messages, $user, $mode) {
             // Release the session lock so other browser tabs remain responsive
             session()->save();
 
@@ -61,7 +69,8 @@ class AssistantController extends Controller
                 $content = $this->assistantService->chat(
                     $messages,
                     $user,
-                    fn (string $type, mixed $data) => $emit($type, $data)
+                    fn (string $type, mixed $data) => $emit($type, $data),
+                    $mode
                 );
 
                 $emit('content', ['text' => $content]);
