@@ -53,9 +53,9 @@
                    :class="{ 'not-current': !cell.current, 'today': cell.today }">
                 <div class="day-number">{{ cell.date.date() }}</div>
                 <div class="day-events">
-                  <div v-for="shift in cell.shifts" :key="shift.id" 
-                       class="shift-event" 
-                       :style="{ background: getEventColor(shift.user_id) }"
+                  <div v-for="shift in cell.shifts" :key="shift.id"
+                       class="shift-event"
+                       :style="{ background: getEventColor(shift.user_id), color: getEventTextColor(shift.user_id) }"
                        @click="editShift(shift)">
                     {{ shift.user.name.split(' ')[0] }}
                   </div>
@@ -248,7 +248,30 @@ export default {
     getEventColor(userId) {
       // Simple deterministic color from ID
       const colors = ['#1976D2', '#388E3C', '#F57C00', '#7B1FA2', '#C2185B', '#0097A7', '#689F38']
-      return colors[userId % colors.length]
+      const id = Number(userId)
+      // Guard against a missing/non-numeric id so a chip always gets a solid colour.
+      const index = Number.isFinite(id) ? ((id % colors.length) + colors.length) % colors.length : 0
+      return colors[index]
+    },
+    getEventTextColor(userId) {
+      // Pick black or white text — whichever has better contrast against the chip
+      // colour — so lighter backgrounds (orange, lime) stay legible.
+      const bg = this.getEventColor(userId)
+      const relLuminance = (hex) => {
+        const channel = (v) => {
+          const c = parseInt(v, 16) / 255
+          return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+        }
+        const r = channel(hex.slice(1, 3))
+        const g = channel(hex.slice(3, 5))
+        const b = channel(hex.slice(5, 7))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+      }
+      const contrast = (a, b) => {
+        const [hi, lo] = [relLuminance(a), relLuminance(b)].sort((x, y) => y - x)
+        return (hi + 0.05) / (lo + 0.05)
+      }
+      return contrast(bg, '#ffffff') >= contrast(bg, '#1f2937') ? '#ffffff' : '#1f2937'
     },
     toISOWithOffset(localDatetime) {
       // Convert a datetime-local value (no tz info) to a full ISO 8601 string with timezone offset
@@ -392,7 +415,7 @@ export default {
   font-size: 0.7rem;
   padding: 2px 4px;
   border-radius: 4px;
-  color: white;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;

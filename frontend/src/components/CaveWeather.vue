@@ -134,7 +134,7 @@
               </div>
             </v-card-text>
             <v-card-actions>
-              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/station/${gauge.station_id}`" target="_blank" :prepend-icon="mdiOpenInNew">
+              <v-btn block variant="tonal" :href="`https://check-for-flooding.service.gov.uk/rainfall-station/${gauge.station_id}`" target="_blank" :prepend-icon="mdiOpenInNew">
                 View Official Gauge Data
               </v-btn>
             </v-card-actions>

@@ -97,10 +97,10 @@ const items = computed(() => {
   left: auto !important;
   right: auto !important;
   bottom: auto !important;
-  width: min(560px, calc(100vw - 24px)) !important;
+  width: min(480px, calc(100vw - 24px)) !important;
   margin: 0 auto 10px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.86) !important;
+  background: rgba(255, 255, 255, 0.58) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow:
