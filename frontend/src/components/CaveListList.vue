@@ -1,5 +1,5 @@
 <template>
-  <v-container class="pa-0 pb-8">
+  <v-container class="pa-0 pb-16">
     <template v-if="caveStore.loading">
       <div class="d-flex justify-center my-8">
         <v-progress-circular indeterminate color="primary" size="48" />
@@ -27,7 +27,7 @@
           <v-hover v-slot="{ isHovering, props: hoverProps }">
             <v-card v-bind="hoverProps" elevation="2" class="fill-height d-flex flex-column cave-card"
                     :to="'/caves/' + cave.slug">
-              <div class="position-relative bg-grey-lighten-2" style="height: 160px; overflow: hidden;">
+              <div class="position-relative bg-grey-darken-3 cave-card__media" style="height: 210px; overflow: hidden;">
                 <!-- Video Preview -->
                 <video
                   v-if="cave.hero_video"
@@ -41,76 +41,70 @@
                 <!-- Image Fallback/Poster -->
                 <v-img :src="cardImage(cave).src" :srcset="cardImage(cave).srcset"
                        sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, (max-width: 1280px) 33vw, 320px"
-                       height="160" cover
-                       class="position-absolute w-100 h-100" style="top: 0; left: 0; z-index: 0;">
+                       height="210" cover
+                       class="position-absolute w-100 h-100"
+                       :class="{ 'cave-card__img--placeholder': cardImage(cave).isPlaceholder }"
+                       style="top: 0; left: 0; z-index: 0;">
                   <template #placeholder>
                     <div class="d-flex align-center justify-center fill-height">
                       <v-icon color="grey-lighten-1" size="large" :icon="mdiImageOffOutline" />
                     </div>
                   </template>
-                  <div v-if="cave.previously_done" class="d-flex justify-end pa-2 position-relative" style="z-index: 2;">
-                    <v-chip color="success" size="small" variant="elevated" :prepend-icon="mdiCheck">Done</v-chip>
-                  </div>
-                  <div v-if="offlineStore.isPwa && offlineStore.isCaveDownloaded(cave.id)" class="position-absolute pa-2" style="z-index: 2; top: 0; left: 0;">
-                    <v-chip color="grey-darken-3" size="x-small" variant="elevated" :prepend-icon="mdiCloudDownload">Offline</v-chip>
-                  </div>
                 </v-img>
-              </div>
 
-              <div class="pa-4 d-flex flex-column flex-grow-1">
-                <div class="mb-2">
-                  <h3 class="text-h6 font-weight-bold lh-tight mb-1 text-truncate">{{ cave.name }}</h3>
-                  <div class="d-flex align-center text-caption text-grey-darken-1">
-                    <v-icon size="small" :icon="mdiMapMarker" class="mr-1" />
+                <!-- Gradient + title overlay -->
+                <div class="cave-card__scrim" />
+                <div class="cave-card__overlay pa-3">
+                  <h3 class="cave-card__name">{{ cave.name }}</h3>
+                  <div class="cave-card__loc d-flex align-center">
+                    <v-icon size="14" :icon="mdiMapMarker" class="mr-1 flex-shrink-0" />
                     <span class="text-truncate">{{ cave.location_name }}, {{ cave.location_country }}</span>
                   </div>
                 </div>
 
-                <div class="d-flex align-center ga-4 mb-3">
-                  <div class="d-flex flex-column">
-                    <span class="text-caption text-grey">Length</span>
-                    <span class="font-weight-medium">
-                      {{ cave.system?.length ? Math.round((cave.system.length / 1000) * 10) / 10 + ' km' : '-' }}
-                    </span>
-                  </div>
-                  <!-- Add vertical divider if needed -->
-                  <div class="d-flex flex-column">
-                    <span class="text-caption text-grey">Vertical</span>
-                    <span class="font-weight-medium">
-                      {{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}
-                    </span>
-                  </div>
+                <div v-if="cave.previously_done" class="position-absolute pa-2" style="z-index: 3; top: 0; right: 0;">
+                  <v-chip color="success" size="small" variant="elevated" :prepend-icon="mdiCheck">Done</v-chip>
                 </div>
-
-                <div class="mt-auto">
-                  <v-chip-group class="mb-0">
-                    <v-chip
-                      v-for="tag in (cave.tags || []).slice(0, 3)"
-                      :key="tag.tag"
-                      size="x-small"
-                      variant="tonal"
-                      style="cursor: pointer;"
-                      @click.stop.prevent="emit('tag-click', tag.tag)"
-                    >
-                      {{ tag.tag }}
-                    </v-chip>
-                    <v-chip v-if="(cave.tags || []).length > 3" size="x-small" variant="text" class="px-1 text-grey">
-                      +{{ cave.tags.length - 3 }}
-                    </v-chip>
-                  </v-chip-group>
+                <div v-if="offlineStore.isPwa && offlineStore.isCaveDownloaded(cave.id)" class="position-absolute pa-2" style="z-index: 3; top: 0; left: 0;">
+                  <v-chip color="grey-darken-3" size="x-small" variant="elevated" :prepend-icon="mdiCloudDownload">Offline</v-chip>
                 </div>
               </div>
 
-              <v-divider />
+              <div class="px-3 py-2 d-flex flex-column flex-grow-1">
+                <div class="d-flex align-center">
+                  <div class="d-flex align-center cave-card__stat">
+                    <v-icon size="15" :icon="mdiArrowExpandHorizontal" class="mr-1" />
+                    <span>{{ cave.system?.length ? Math.round((cave.system.length / 1000) * 10) / 10 + ' km' : '–' }}</span>
+                  </div>
+                  <div class="d-flex align-center cave-card__stat ml-4">
+                    <v-icon size="15" :icon="mdiArrowExpandVertical" class="mr-1" />
+                    <span>{{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '–' }}</span>
+                  </div>
+                  <v-spacer />
+                  <v-tooltip v-if="!cave.previously_done" text="Mark as done" location="top">
+                    <template #activator="{ props: tipProps }">
+                      <v-btn v-bind="tipProps" :icon="mdiCheckCircleOutline" size="small" variant="text"
+                             color="grey-darken-1" density="comfortable" aria-label="Mark as done"
+                             @click.stop.prevent="showConfirmModal = true; caveToMark = cave" />
+                    </template>
+                  </v-tooltip>
+                </div>
 
-              <div class="pa-2 d-flex justify-end">
-                <v-btn v-if="!cave.previously_done" variant="text" color="primary" size="small"
-                       @click.stop.prevent="showConfirmModal = true; caveToMark = cave">
-                  Mark as Done
-                </v-btn>
-                <v-btn variant="text" size="small" color="grey-darken-1" :to="'/caves/' + cave.slug">
-                  Details
-                </v-btn>
+                <div class="d-flex align-center flex-wrap ga-1 mt-1 mb-1">
+                  <v-chip
+                    v-for="tag in (cave.tags || []).slice(0, 3)"
+                    :key="tag.tag"
+                    size="x-small"
+                    variant="tonal"
+                    style="cursor: pointer;"
+                    @click.stop.prevent="emit('tag-click', tag.tag)"
+                  >
+                    {{ tag.tag }}
+                  </v-chip>
+                  <span v-if="(cave.tags || []).length > 3" class="text-caption text-grey ml-1">
+                    +{{ cave.tags.length - 3 }}
+                  </span>
+                </div>
               </div>
             </v-card>
           </v-hover>
@@ -155,7 +149,7 @@
   </v-container>
 </template>
 <script setup>
-import { mdiCheck, mdiCloudDownload, mdiEarth, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
+import { mdiArrowExpandHorizontal, mdiArrowExpandVertical, mdiCheck, mdiCheckCircleOutline, mdiCloudDownload, mdiEarth, mdiImageOffOutline, mdiMapMarker, mdiMapMarkerOff } from '@mdi/js'
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { downloadCavesKml } from '@/utilities/caveKml'
 
@@ -198,7 +192,7 @@ const cardImage = (cave) => {
   if (media?.url) {
     return { src: media.url, srcset: media.srcset || undefined }
   }
-  return { src: '/placeholder-cave.jpg', srcset: undefined }
+  return { src: '/placeholder-cave.jpg', srcset: undefined, isPlaceholder: true }
 }
 
 // Reset pagination whenever the filtered cave list changes
@@ -246,3 +240,89 @@ const markAsDone = async (cave) => {
   }
 }
 </script>
+
+<style scoped lang="scss">
+.cave-card {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 2px 6px rgba(24, 38, 31, 0.08),
+      0 14px 32px rgba(24, 38, 31, 0.16) !important;
+  }
+}
+
+.cave-card__media {
+  :deep(.v-img__img),
+  video {
+    transition: transform 0.45s ease;
+  }
+}
+
+.cave-card:hover .cave-card__media :deep(.v-img__img) {
+  transform: scale(1.06);
+}
+
+// Strong bottom gradient so the overlaid title is always readable,
+// even on the muted placeholder artwork.
+.cave-card__scrim {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 70%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(12, 18, 15, 0.74) 0%,
+    rgba(12, 18, 15, 0.28) 55%,
+    rgba(12, 18, 15, 0) 100%
+  );
+}
+
+// The placeholder artwork is very dark — lift it so cards don't read as
+// black rectangles when a cave has no photo yet.
+.cave-card__img--placeholder :deep(.v-img__img) {
+  filter: brightness(1.55) saturate(0.85);
+}
+
+.cave-card__overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 3;
+  color: #fff;
+  pointer-events: none;
+}
+
+.cave-card__name {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cave-card__loc {
+  font-size: 0.78rem;
+  opacity: 0.85;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  max-width: 100%;
+}
+
+.cave-card__stat {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(30, 42, 36, 0.85);
+
+  .v-icon {
+    color: rgba(30, 42, 36, 0.45);
+  }
+}
+</style>

@@ -1,0 +1,67 @@
+/**
+ * src/styles/global.scss
+ *
+ * App-wide styling polish layered on top of the Vuetify theme.
+ * Loaded once from plugins/vuetify.js (settings.scss is injected per
+ * component by vite-plugin-vuetify, so global rules live here instead).
+ */
+
+// --- Typography ------------------------------------------------------------
+
+.v-application {
+  .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
+    letter-spacing: -0.015em !important;
+  }
+}
+
+// Softer corners on regular buttons; icon buttons/FABs stay circular and
+// explicit rounded-* utilities (e.g. pills) are left alone.
+.v-btn:not(.v-btn--icon):not([class*="rounded-"]) {
+  border-radius: 8px;
+}
+
+// Buttons inside a segmented group are clipped by the group's own radius.
+.v-btn-group .v-btn {
+  border-radius: 0;
+}
+
+// --- Surfaces & elevation ----------------------------------------------------
+
+// Replace Material's harsh single shadows with a soft layered shadow so
+// cards feel like they float on the warm stone background.
+.v-card.v-card--variant-elevated {
+  box-shadow:
+    0 1px 2px rgba(24, 38, 31, 0.05),
+    0 6px 18px rgba(24, 38, 31, 0.07);
+}
+
+// Dialogs still need clear separation from the page behind them.
+.v-overlay .v-card.v-card--variant-elevated {
+  box-shadow:
+    0 4px 12px rgba(24, 38, 31, 0.12),
+    0 16px 48px rgba(24, 38, 31, 0.22);
+}
+
+// --- Scrollbars (desktop) ----------------------------------------------------
+
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(24, 38, 31, 0.22);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+
+    &:hover {
+      background-color: rgba(24, 38, 31, 0.38);
+    }
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

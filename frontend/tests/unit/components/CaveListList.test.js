@@ -62,6 +62,7 @@ describe('CaveListList', () => {
                         emits: ['click']
                     },
                     'v-hover': { template: '<div><slot :isHovering="false" :props="{}" /></div>' },
+                    'v-tooltip': { template: '<div><slot name="activator" :props="{}" /></div>', props: ['text', 'location'] },
                     'v-dialog': { template: '<div v-if="modelValue"><slot></slot></div>', props: ['modelValue'] },
                     'v-card-title': true,
                     'v-card-text': true,
@@ -71,8 +72,9 @@ describe('CaveListList', () => {
             }
         })
 
-        const markAsDoneBtn = wrapper.findAll('button').find(b => b.text().includes('Mark as Done'))
-        expect(markAsDoneBtn.exists()).toBe(true)
+        // "Mark as done" is an icon button identified by its aria-label
+        const markAsDoneBtn = wrapper.findAll('button').find(b => b.attributes('aria-label') === 'Mark as done')
+        expect(markAsDoneBtn).toBeTruthy()
 
         await markAsDoneBtn.trigger('click')
 

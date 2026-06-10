@@ -5,9 +5,10 @@
  */
 
 // https://vuetifyjs.com/features/sass-variables/`
-// @use 'vuetify/settings' with (
-//   $color-pack: false
-// );
+@use 'vuetify/settings' with (
+  $body-font-family: ('Inter', 'Roboto', -apple-system, 'Segoe UI', sans-serif),
+  $heading-font-family: ('Plus Jakarta Sans', 'Inter', 'Roboto', sans-serif),
+);
 
 .metric-item {
   margin-bottom: 16px;

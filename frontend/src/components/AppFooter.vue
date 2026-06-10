@@ -1,7 +1,7 @@
 <template>
   <div class="footer">
-    <v-footer v-if="userStore.user.id" app>
-      <v-bottom-navigation bg-color="surface" elevation="4">
+    <v-footer v-if="userStore.user.id" app class="bg-transparent">
+      <v-bottom-navigation color="primary" elevation="0" class="nav-dock">
         <v-btn v-for="item in items" :key="item.title" :to="item.href" :title="item.title" icon>
           <v-icon :icon="item.icon" />
           <v-tooltip bottom>
@@ -88,6 +88,26 @@ const items = computed(() => {
 
 .v-footer {
   padding: 0px;
+  background: transparent !important;
+}
+
+/* Floating frosted dock instead of a full-width bar */
+:deep(.v-bottom-navigation.nav-dock) {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(560px, calc(100vw - 24px)) !important;
+  margin: 0 auto 10px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 2px 8px rgba(24, 38, 31, 0.08),
+    0 12px 32px rgba(24, 38, 31, 0.2) !important;
+  border: 1px solid rgba(24, 38, 31, 0.08);
+  overflow: hidden;
 }
 
 :deep(.v-bottom-navigation__content) {
@@ -107,6 +127,17 @@ const items = computed(() => {
   min-width: 80px;
   /* Prevent squashing */
   flex-shrink: 0;
+}
+
+/* Fit all five items inside the dock on narrow phones */
+@media (max-width: 600px) {
+  :deep(.v-bottom-navigation .v-btn) {
+    min-width: 0 !important;
+    flex: 1 1 0;
+    padding: 0 4px;
+    font-size: 0.7rem !important;
+    letter-spacing: 0;
+  }
 }
 
 /* Center items when they fit, but align left when they overflow */

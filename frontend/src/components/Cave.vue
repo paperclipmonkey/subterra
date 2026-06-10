@@ -55,8 +55,8 @@
     </v-row>
 
     <!-- Hero Section -->
-    <v-card class="mb-6 rounded-lg position-relative cursor-pointer hero-img" elevation="2" @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }">
-      <div style="height: 300px; width: 100%; position: relative; overflow: hidden; border-radius: inherit;">
+    <v-card class="mb-6 rounded-xl position-relative cursor-pointer hero-img" elevation="2" @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }">
+      <div class="cave-hero__media" style="width: 100%; position: relative; overflow: hidden; border-radius: inherit;">
         <video
           v-if="cave.hero_video?.preview_url || cave.hero_video?.url"
           ref="heroVideoRef"
@@ -68,7 +68,7 @@
         <v-img v-else :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'"
                :srcset="cave.hero_image?.srcset || cave.entrance_image?.srcset || undefined"
                sizes="(max-width: 960px) 100vw, 1200px"
-               height="300" cover
+               height="100%" cover
                class="align-end" style="z-index: 1;">
           <template #placeholder>
             <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
@@ -76,16 +76,16 @@
             </div>
           </template>
         </v-img>
-        
-        <div class="d-flex flex-column pa-6 text-white position-absolute w-100"
-             style="background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0)); bottom: 0; z-index: 2;">
+
+        <div class="d-flex flex-column pa-4 pa-sm-6 text-white position-absolute w-100 cave-hero__overlay"
+             style="bottom: 0; z-index: 2;">
           <div class="d-flex justify-space-between align-end">
             <div>
-              <div v-if="cave.system?.caves?.length > 1" class="text-overline mb-1">{{ cave.system?.name || 'Unknown System' }}</div>
-              <h1 class="text-h3 font-weight-bold mb-2">{{ cave.name }}</h1>
-              <div class="d-flex align-center">
+              <div v-if="cave.system?.caves?.length > 1" class="text-overline mb-1 opacity-80">{{ cave.system?.name || 'Unknown System' }}</div>
+              <h1 class="text-h4 text-md-h3 font-weight-bold mb-3 cave-hero__title">{{ cave.name }}</h1>
+              <div class="cave-hero__location d-inline-flex align-center px-3 py-1">
                 <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
-                <span class="text-subtitle-1">{{ cave.location_name }}, {{ cave.location_country }}</span>
+                <span class="text-body-2 font-weight-medium">{{ cave.location_name }}, {{ cave.location_country }}</span>
               </div>
             </div>
             <div v-if="cave.hero_video?.photographer || cave.hero_image?.photographer" class="text-caption text-right opacity-70">
@@ -1101,8 +1101,38 @@ function renderAnnotationOverlays (map) {
   transition: filter 0.2s ease;
 
   &:hover {
-    filter: brightness(0.9);
+    filter: brightness(0.93);
   }
+}
+
+.cave-hero__media {
+  height: 260px;
+
+  @media (min-width: 960px) {
+    height: 380px;
+  }
+}
+
+.cave-hero__overlay {
+  background: linear-gradient(
+    to top,
+    rgba(10, 16, 13, 0.88) 0%,
+    rgba(10, 16, 13, 0.45) 55%,
+    rgba(10, 16, 13, 0) 100%
+  );
+  padding-top: 72px !important;
+}
+
+.cave-hero__title {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.cave-hero__location {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .file-list {

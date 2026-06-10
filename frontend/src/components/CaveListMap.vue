@@ -1,17 +1,15 @@
 <template>
-  <v-card class="map-container">
-    <v-card-text class="map-holder">
-      <div v-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-4 h-100 flex-column text-center">
-        <v-icon size="64" color="grey" class="mb-4" :icon="mdiLock" />
-        <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
-        <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
-          Cave locations and map features are exclusive to approved club members.
-        </p>
-        <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
-      </div>
-      <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15" @map:load="onMapLoad" />
-    </v-card-text>
-  </v-card>
+  <div class="map-container">
+    <div v-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-4 h-100 flex-column text-center">
+      <v-icon size="64" color="grey" class="mb-4" :icon="mdiLock" />
+      <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
+      <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
+        Cave locations and map features are exclusive to approved club members.
+      </p>
+      <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
+    </div>
+    <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15" @map:load="onMapLoad" />
+  </div>
 </template>
 
 <script setup>
@@ -249,16 +247,18 @@ onUnmounted(() => {
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
+// Fills the flex column set up by the caves page in map mode; the
+// min-height is a fallback so the map stays usable if that ever breaks.
 .map-container {
-  height: calc(100dvh - 200px);
+  height: 100%;
+  min-height: 420px;
 }
 
-.map-holder {
-  margin-left: -20px;
-  margin-right: -20px;
-  padding-bottom: 0px;
-  width: calc(100% + 40px);
-  height: 100%;
+// The map runs underneath the floating nav dock — keep MapLibre's
+// attribution and bottom controls visible above it.
+.map-container .maplibregl-ctrl-bottom-left,
+.map-container .maplibregl-ctrl-bottom-right {
+  bottom: 74px;
 }
 
 .maplibregl-popup .maplibregl-popup-content {

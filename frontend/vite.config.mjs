@@ -103,8 +103,8 @@ export default defineConfig(({ mode }) => {
           name: 'Subterra.world',
           short_name: 'Subterra',
           description: 'Plan your next adventure with Subterra.world',
-          theme_color: '#000000',
-          background_color: '#ffffff',
+          theme_color: '#2F6852',
+          background_color: '#F4F4F0',
           display: 'standalone',
           orientation: 'portrait-primary',
           scope: '/',
@@ -148,6 +148,12 @@ export default defineConfig(({ mode }) => {
           families: [{
             name: 'Roboto',
             styles: 'wght@100;300;400;500;700;900',
+          }, {
+            name: 'Inter',
+            styles: 'wght@400;500;600;700',
+          }, {
+            name: 'Plus Jakarta Sans',
+            styles: 'wght@500;600;700;800',
           }],
         },
       }),
@@ -181,7 +187,12 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       proxy: {
-        '/api': 'http://127.0.0.1',
+        '/api': {
+          target: 'http://127.0.0.1',
+          // Present the canonical dev origin so Sanctum treats the request as
+          // stateful even when the dev server runs on a non-default port.
+          headers: { origin: 'http://localhost:3000', referer: 'http://localhost:3000/' },
+        },
         '/storage': 'http://127.0.0.1',
         '/media': 'http://127.0.0.1',
         'public': 'http://127.0.0.1',
