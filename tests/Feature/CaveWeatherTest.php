@@ -213,4 +213,41 @@ class CaveWeatherTest extends TestCase
         // Verify we got 7 days of data
         $this->assertCount(7, $response->json('data'));
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_handles_a_pooled_request_connection_failure_gracefully()
+    {
+        $this->actingAs(User::factory()->create());
+        config(['services.pirate_weather.api_key' => 'test-key']);
+
+        $cave = Cave::factory()->create([
+            'location_lat' => 51.4545,
+            'location_lng' => -2.5879,
+        ]);
+
+        // One pooled Time Machine request times out (returned as a
+        // ConnectionException, not a Response). It must not crash the whole batch
+        // (regression: ConnectionException::successful() fatal error) — the other
+        // days should still come through.
+        $callCount = 0;
+        Http::fake([
+            'timemachine.pirateweather.net/*' => function () use (&$callCount) {
+                ++$callCount;
+                if ($callCount === 1) {
+                    throw new \Illuminate\Http\Client\ConnectionException('cURL error 28: Connection timed out');
+                }
+
+                return Http::response([
+                    'daily' => ['data' => [['time' => 1234567890, 'precipIntensity' => 0.5]]],
+                    'hourly' => ['data' => [['time' => 1234567890, 'precipIntensity' => 0.1]]],
+                ], 200);
+            },
+        ]);
+
+        $response = $this->getJson("/api/caves/{$cave->slug}/weather/historic");
+
+        $response->assertStatus(200);
+        // 7 days requested, 1 failed — the remaining 6 still come through.
+        $this->assertCount(6, $response->json('data'));
+    }
 }

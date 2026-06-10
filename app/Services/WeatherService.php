@@ -113,6 +113,17 @@ class WeatherService
                 foreach ($datesToFetch as $dateString => $fetchInfo) {
                     $response = $responses[array_search($dateString, array_keys($datesToFetch))];
 
+                    // A pooled request that times out or fails to connect comes back as a
+                    // ConnectionException (or other Throwable) rather than a Response. Skip
+                    // it gracefully so one bad request doesn't abort the whole batch.
+                    if ($response instanceof \Throwable) {
+                        Log::error('Pirate Weather Historic API connection error', [
+                            'message' => $response->getMessage(),
+                            'url' => $fetchInfo['url'],
+                        ]);
+                        continue;
+                    }
+
                     if ($response->successful()) {
                         $json = $response->json();
                         $dayData = [
