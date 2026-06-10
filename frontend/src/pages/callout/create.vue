@@ -656,7 +656,11 @@ export default {
     },
     prefillForm() {
       const now = moment()
-      this.form.callout_time = now.clone().add(5, 'hours').format('YYYY-MM-DDTHH:mm')
+      // Emit a timezone-aware ISO string (UTC, with 'Z'), matching what
+      // CalloutTimePicker emits. A naive 'YYYY-MM-DDTHH:mm' string here had no
+      // offset, so the backend (APP_TIMEZONE=UTC) read the user's local BST time
+      // as UTC and stored the callout one hour late — see active page mismatch.
+      this.form.callout_time = now.clone().add(5, 'hours').toISOString()
 
       if (this.currentUser) {
         this.form.participants.push({

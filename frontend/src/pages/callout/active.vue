@@ -109,8 +109,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="grey darken-1" text @click="confirmSafe = false">Cancel</v-btn>
-          <v-btn color="green darken-1" text @click="cancelCallout">Yes, I'm Safe</v-btn>
+          <v-btn color="grey darken-1" text :disabled="cancelling" @click="confirmSafe = false">Cancel</v-btn>
+          <v-btn color="green darken-1" text :loading="cancelling" :disabled="cancelling" @click="cancelCallout">Yes, I'm Safe</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -151,6 +151,7 @@ const notifications = useNotificationStore()
 
 const isOffline = ref(!navigator.onLine)
 const confirmSafe = ref(false)
+const cancelling = ref(false)
 const convertToTrip = ref(false)
 const newTripId = ref(null)
 const now = ref(moment())
@@ -188,7 +189,12 @@ const formatTime = (t) => moment(t).format('HH:mm')
 const formatDate = (t) => moment(t).format('ddd Do MMM')
 
 const cancelCallout = async () => {
-  confirmSafe.value = false
+  // Guard against double-submission. The geolocation lookup below can take up to
+  // 5s, during which the button stays mounted — without this guard an anxious
+  // caver tapping repeatedly would fire a storm of requests and trip the rate
+  // limiter on this life-safety action.
+  if (cancelling.value) return
+  cancelling.value = true
 
   // Attempt to get location for cancellation snapshot
   let locationData = null
@@ -218,9 +224,12 @@ const cancelCallout = async () => {
     }
 
     // Show convert dialog
+    confirmSafe.value = false
     convertToTrip.value = true
   } catch (e) {
     notifications.showError("Failed to cancel callout: " + (e.response?.data?.message || e.message))
+  } finally {
+    cancelling.value = false
   }
 }
 

@@ -247,6 +247,32 @@ class CalloutTest extends TestCase
         ]);
     }
 
+    public function test_cancelling_callout_twice_is_idempotent()
+    {
+        Mail::fake();
+        $user = User::factory()->create();
+        $callout = Callout::factory()->create(['user_id' => $user->id, 'status' => 'active']);
+
+        $this->actingAs($user)
+            ->postJson("/api/callouts/{$callout->id}/cancel")
+            ->assertStatus(200);
+
+        $tripsAfterFirst = \App\Models\Trip::count();
+
+        // A second cancel must be a harmless no-op: still 200, no duplicate trip,
+        // no second batch of cancellation emails.
+        $this->actingAs($user)
+            ->postJson("/api/callouts/{$callout->id}/cancel")
+            ->assertStatus(200);
+
+        $this->assertSame(
+            $tripsAfterFirst,
+            \App\Models\Trip::count(),
+            'A repeated cancel must not create a duplicate trip'
+        );
+        $this->assertDatabaseHas('callouts', ['id' => $callout->id, 'status' => 'cancelled']);
+    }
+
     public function test_user_cannot_cancel_others_callout()
     {
         $owner = User::factory()->create();

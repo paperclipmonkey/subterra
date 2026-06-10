@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
@@ -45,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
             '*',
         ]);
 
+        $this->configureRateLimiters();
+
         \App\Models\Incident::observe(\App\Observers\IncidentObserver::class);
         \App\Models\IncidentNote::observe(\App\Observers\IncidentNoteObserver::class);
 
@@ -78,5 +83,45 @@ class AppServiceProvider extends ServiceProvider
                 $config
             );
         });
+    }
+
+    /**
+     * Register a dedicated, named rate limiter for every throttled route.
+     *
+     * Laravel's inline `throttle:N,M` middleware keys its counter ONLY by the
+     * request signature — sha1(user id) for authenticated requests, or
+     * sha1(domain|ip) for guests — and that same key is shared across EVERY
+     * inline-throttled route regardless of each route's limit. The practical
+     * effect is that unrelated routes share one counter: e.g. a user's AI
+     * assistant calls (a 24h window) could exhaust the budget and block an
+     * unrelated action, with a confusing multi-hour Retry-After.
+     *
+     * Named limiters avoid this: Laravel namespaces their cache key by the
+     * limiter name (md5(name . key)), so each route below gets its own isolated
+     * budget. We also make the keying explicit — authenticated routes are keyed
+     * per user (falling back to IP), webhooks/guest routes per client IP.
+     */
+    private function configureRateLimiters(): void
+    {
+        // Per-user limiters (these routes always run behind auth middleware, so
+        // a user is present; the IP fallback is purely defensive).
+        $perUser = fn (int $max, int $decayMinutes) => fn (Request $request) => Limit::perMinutes($decayMinutes, $max)
+            ->by($request->user()?->id ? 'user:'.$request->user()->id : 'ip:'.$request->ip());
+
+        RateLimiter::for('user-create', $perUser(10, 1));
+        RateLimiter::for('assistant-chat', $perUser(50, 1440));      // 50 per day
+        RateLimiter::for('assistant-feedback', $perUser(60, 60));    // 60 per hour
+        RateLimiter::for('assistant-logbook-import', $perUser(20, 1440)); // 20 per day
+        RateLimiter::for('duty-officer-test-self', $perUser(10, 1));
+        RateLimiter::for('duty-officer-test-broadcast', $perUser(3, 5)); // 3 per 5 min
+
+        // Per-IP limiters for guest/webhook endpoints.
+        $perIp = fn (int $max, int $decayMinutes) => fn (Request $request) => Limit::perMinutes($decayMinutes, $max)
+            ->by('ip:'.$request->ip());
+
+        RateLimiter::for('magic-link', $perIp(5, 1));
+        RateLimiter::for('webhook-twilio-sms', $perIp(60, 1));
+        RateLimiter::for('webhook-twilio-voice', $perIp(120, 1));
+        RateLimiter::for('webhook-gcp-media', $perIp(120, 1));
     }
 }

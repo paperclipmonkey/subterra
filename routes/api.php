@@ -28,16 +28,16 @@ Route::get('/user', function (Request $request) {
 // Twilio inbound webhooks. Authenticated by a shared secret in the URL path (Twilio
 // cannot send a custom header). Configure these URLs in the Twilio console.
 Route::post('/webhooks/twilio/{secret}/sms', [\App\Http\Controllers\Webhook\TwilioController::class, 'handleSms'])
-    ->middleware('throttle:60,1')->name('webhooks.twilio.sms');
+    ->middleware('throttle:webhook-twilio-sms')->name('webhooks.twilio.sms');
 Route::post('/webhooks/twilio/{secret}/voice', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceTwiml'])
-    ->middleware('throttle:120,1')->name('webhooks.twilio.voice');
+    ->middleware('throttle:webhook-twilio-voice')->name('webhooks.twilio.voice');
 Route::post('/webhooks/twilio/{secret}/voice/gather', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceGather'])
-    ->middleware('throttle:120,1')->name('webhooks.twilio.voice.gather');
+    ->middleware('throttle:webhook-twilio-voice')->name('webhooks.twilio.voice.gather');
 Route::post('/webhooks/twilio/{secret}/voice/test', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceTest'])
-    ->middleware('throttle:120,1')->name('webhooks.twilio.voice.test');
+    ->middleware('throttle:webhook-twilio-voice')->name('webhooks.twilio.voice.test');
 
 Route::post('/webhooks/gcp/media', [\App\Http\Controllers\Webhook\GcpMediaWebhookController::class, 'handle'])
-    ->middleware('throttle:120,1');
+    ->middleware('throttle:webhook-gcp-media');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
@@ -46,8 +46,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Guest accessible callout routes
 Route::get('/callouts/{id}', [App\Http\Controllers\CalloutController::class, 'show']);
-Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel'])
-    ->middleware('throttle:10,1'); // Max 10 attempts per minute to prevent abuse
+// Deliberately NOT rate-limited. This is a life-safety "I am safe" action — blocking
+// a legitimate cancellation could trigger a false rescue, which is far worse than any
+// abuse. The 16-char random callout id is a capability token that makes enumeration
+// infeasible, and CalloutService::cancel() is idempotent, so repeated calls are
+// harmless no-ops. See the controller docblock for the security rationale.
+Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::class, 'cancel']);
 
 Route::get('/users/me', function (Request $request) {
     $user = $request->user();
@@ -63,7 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Magic link authentication routes (no auth required)
 Route::post('/auth/magic-link', [MagicLinkController::class, 'sendMagicLink'])
-    ->middleware('throttle:5,1');
+    ->middleware('throttle:magic-link');
 Route::get('/auth/magic-link-callback', [MagicLinkController::class, 'handleCallback']);
 
 // Public CMS Pages
@@ -129,7 +133,7 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::get('/tags', [App\Http\Controllers\TagsController::class, 'index'])->name('tags.index');
 
     // User Management
-    Route::post('/users', [App\Http\Controllers\UserController::class, 'create'])->middleware('throttle:10,1')->name('users.create');
+    Route::post('/users', [App\Http\Controllers\UserController::class, 'create'])->middleware('throttle:user-create')->name('users.create');
     Route::get('/users/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
     Route::put('/users/{user}', [App\Http\Controllers\UserController::class, 'store'])->middleware(CurrentUserOrAdmin::class)->name('users.store');
     Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
@@ -169,7 +173,7 @@ Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']
 // Rate-limited to 50 requests per day (1440 min).
 Route::post('/assistant/chat', [App\Http\Controllers\AssistantController::class, 'chat'])
     ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
-    ->middleware('throttle:50,1440')
+    ->middleware('throttle:assistant-chat')
     ->name('assistant.chat');
 
 Route::post('/assistant/agreement', [App\Http\Controllers\AssistantController::class, 'acceptAgreement'])
@@ -178,12 +182,12 @@ Route::post('/assistant/agreement', [App\Http\Controllers\AssistantController::c
 
 Route::post('/assistant/feedback', [App\Http\Controllers\AssistantController::class, 'feedback'])
     ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
-    ->middleware('throttle:60,60')
+    ->middleware('throttle:assistant-feedback')
     ->name('assistant.feedback');
 
 Route::post('/assistant/logbook-import', [App\Http\Controllers\AssistantController::class, 'importLogbook'])
     ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
-    ->middleware('throttle:20,1440')
+    ->middleware('throttle:assistant-logbook-import')
     ->name('assistant.logbook-import');
 
 // --- Admin Routes ---
@@ -260,9 +264,9 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
 
         // Duty officers test the alert channels (SMS + voice) to build confidence.
         Route::post('/duty-officers/test-self', [App\Http\Controllers\Admin\DutyOfficerTestController::class, 'testSelf'])
-            ->middleware('throttle:10,1')->name('admin.duty-officers.test-self');
+            ->middleware('throttle:duty-officer-test-self')->name('admin.duty-officers.test-self');
         Route::post('/duty-officers/test-broadcast', [App\Http\Controllers\Admin\DutyOfficerTestController::class, 'testBroadcast'])
-            ->middleware('throttle:3,5')->name('admin.duty-officers.test-broadcast');
+            ->middleware('throttle:duty-officer-test-broadcast')->name('admin.duty-officers.test-broadcast');
         Route::get('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'index']);
         Route::post('/shifts', [App\Http\Controllers\Admin\OnCallController::class, 'store']);
         Route::put('/shifts/{id}', [App\Http\Controllers\Admin\OnCallController::class, 'update']);

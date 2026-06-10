@@ -154,6 +154,14 @@ class CalloutService
      */
     public function cancel(Callout $callout): ?Trip
     {
+        // Idempotency guard: a callout can only be cancelled once. Without this,
+        // repeated cancel requests (e.g. an anxious caver double-tapping "I am safe")
+        // would each create a duplicate Trip and re-send cancellation emails. Once
+        // the callout is cancelled, treat further cancels as no-ops.
+        if ($callout->status === 'cancelled') {
+            return null;
+        }
+
         $trip = $this->createTripFromCallout($callout);
 
         try {
