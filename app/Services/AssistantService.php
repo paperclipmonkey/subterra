@@ -6,12 +6,15 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Services\Assistant\AssistantTool;
+use App\Services\Assistant\Tools\Admin\CreateCollectionTool;
+use App\Services\Assistant\Tools\Admin\DeleteCollectionTool;
 use App\Services\Assistant\Tools\Admin\FindLinkCandidatesTool;
 use App\Services\Assistant\Tools\Admin\ListTagsTool;
 use App\Services\Assistant\Tools\Admin\ProposeBulkTagTool;
 use App\Services\Assistant\Tools\Admin\ProposeDataFixTool;
 use App\Services\Assistant\Tools\Admin\ProposeSystemMergeTool;
 use App\Services\Assistant\Tools\Admin\ScanDataIssuesTool;
+use App\Services\Assistant\Tools\Admin\UpdateCollectionTool;
 use App\Services\Assistant\Tools\CreateTripReportTool;
 use App\Services\Assistant\Tools\FindNearbyHutsTool;
 use App\Services\Assistant\Tools\GetCaveDetailsTool;
@@ -63,6 +66,9 @@ class AssistantService
         ProposeDataFixTool $proposeDataFixTool,
         ProposeBulkTagTool $proposeBulkTagTool,
         ProposeSystemMergeTool $proposeSystemMergeTool,
+        CreateCollectionTool $createCollectionTool,
+        UpdateCollectionTool $updateCollectionTool,
+        DeleteCollectionTool $deleteCollectionTool,
     ) {
         $this->tools = [
             'get_user_experience' => $userExperienceTool,
@@ -89,6 +95,9 @@ class AssistantService
             'propose_data_fix' => $proposeDataFixTool,
             'propose_bulk_tag' => $proposeBulkTagTool,
             'propose_system_merge' => $proposeSystemMergeTool,
+            'create_collection' => $createCollectionTool,
+            'update_collection' => $updateCollectionTool,
+            'delete_collection' => $deleteCollectionTool,
             'search_caves' => $searchCavesTool,
             'get_cave_details' => $caveDetailsTool,
             'list_collections' => $listCollectionsTool,
@@ -186,6 +195,9 @@ class AssistantService
 
         /** @var array<int, array<string, mixed>> $proposalsBuffer Suggested edits filed by data-steward tools this turn */
         $proposalsBuffer = [];
+
+        /** @var array<int, array<string, mixed>> $collectionsChangedBuffer Collections created/edited/deleted by steward tools this turn */
+        $collectionsChangedBuffer = [];
 
         /** @var array{prompt_tokens: int, completion_tokens: int} */
         $totalUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0];
@@ -459,6 +471,25 @@ class AssistantService
                         ];
                     }
 
+                    // Buffer collection create/edit/delete so the UI can show a confirmation card.
+                    // Delete returns the name under 'deleted_collection' and has no id/url/cave_count.
+                    $collectionAction = match ($name) {
+                        'create_collection' => 'created',
+                        'update_collection' => 'updated',
+                        'delete_collection' => 'deleted',
+                        default => null,
+                    };
+                    if ($collectionAction !== null && !empty($result['success'])) {
+                        $collectionsChangedBuffer[] = [
+                            'action' => $collectionAction,
+                            'collection_id' => $result['collection_id'] ?? null,
+                            'name' => $result['name'] ?? $result['deleted_collection'] ?? null,
+                            'slug' => $result['slug'] ?? null,
+                            'url' => $result['url'] ?? null,
+                            'cave_count' => $result['cave_count'] ?? null,
+                        ];
+                    }
+
                     // Safety injection: if a river gauge is High, add a mandatory warning context
                     if ($name === 'get_weather_forecast') {
                         $this->injectSafetyAlert($result, $context, $message['content'] ?? '');
@@ -607,6 +638,11 @@ class AssistantService
         // Emit trip creation cards so the UI can show confirmation links
         if ($onEvent && !empty($createdTripsBuffer)) {
             $onEvent('trips_created', $createdTripsBuffer);
+        }
+
+        // Emit collection change cards (created/edited/deleted) for the steward UI
+        if ($onEvent && !empty($collectionsChangedBuffer)) {
+            $onEvent('collections_changed', $collectionsChangedBuffer);
         }
 
         // Emit filed proposals so the UI can show "review in admin" cards
@@ -1423,12 +1459,21 @@ Current date: {$date}
 - **Propose fixes** with `propose_data_fix` (field values, including relinking an entrance via
   cave_system_id), `propose_bulk_tag` (tag many caves/systems at once), and
   `propose_system_merge` (merge duplicate systems).
+- **Manage collections** with `create_collection`, `update_collection`, and `delete_collection`.
+  Collections are curated lists of caves (e.g. "Mendip Classics"); reference caves by slug.
 
-## The golden rule: propose, never apply
+## The golden rule: propose, never apply — except collections
 
-You CANNOT change live data. Every propose_* call files a *suggested edit* that the admin
-approves or rejects later in the review queue (/admin/suggested-edits). Say this plainly when
-you file proposals — e.g. "I've filed 12 proposals as one batch; approve them at the link below."
+For caves and cave systems you CANNOT change live data. Every propose_* call files a *suggested
+edit* that the admin approves or rejects later in the review queue (/admin/suggested-edits). Say
+this plainly when you file proposals — e.g. "I've filed 12 proposals as one batch; approve them
+at the link below."
+
+Collections are the one exception: `create_collection`, `update_collection`, and
+`delete_collection` change live data immediately — there is no review queue for them. Treat them
+with care: confirm the name and exact cave list with the admin before creating or editing, and
+ALWAYS confirm the specific collection before deleting (deletes cannot be undone). `update_collection`
+with a `caves` list REPLACES the whole list, so pass the full desired set, not just additions.
 
 ## Evidence rules
 

@@ -20,6 +20,9 @@ const TOOL_LABELS = {
   propose_data_fix: 'Filing fix proposal',
   propose_bulk_tag: 'Filing bulk tag proposals',
   propose_system_merge: 'Filing merge proposal',
+  create_collection: 'Creating collection',
+  update_collection: 'Updating collection',
+  delete_collection: 'Deleting collection',
 }
 
 const STORAGE_KEY = 'pip_conversation_v1'
@@ -61,6 +64,7 @@ function persistableShape(m) {
     weather_charts: m.weather_charts ?? null,
     created_trips: m.created_trips ?? [],
     proposals: m.proposals ?? [],
+    collections_changed: m.collections_changed ?? [],
     elapsedMs: m.elapsedMs ?? null,
   }
 }
@@ -173,6 +177,7 @@ export const useAssistantStore = defineStore('assistant', {
         weather_charts: null,
         created_trips: [],
         proposals: [],
+        collections_changed: [],
       })
 
       const history = this.messages
@@ -458,6 +463,15 @@ export const useAssistantStore = defineStore('assistant', {
           const pending = this.messages.findLast(m => m.pending)
           if (pending) {
             pending.created_trips = (pending.created_trips || []).concat(event.data || [])
+          }
+          break
+        }
+
+        case 'collections_changed': {
+          // Collections created/edited/deleted by the data-steward tools this turn
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.collections_changed = (pending.collections_changed || []).concat(event.data || [])
           }
           break
         }

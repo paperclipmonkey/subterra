@@ -266,6 +266,23 @@
                 </div>
               </div>
 
+              <div
+                v-if="!msg.pending && msg.collections_changed && msg.collections_changed.length"
+                class="pip-cardrow-wrap"
+              >
+                <div class="pip-cardrow-label">
+                  <v-icon :icon="mdiFormatListChecks" size="13" class="mr-1" />
+                  {{ msg.collections_changed.length === 1 ? 'Collection change' : 'Collection changes' }}
+                </div>
+                <div class="pip-cardrow">
+                  <CollectionChangedAssistantCard
+                    v-for="(coll, cIndex) in msg.collections_changed"
+                    :key="`${coll.action}-${coll.slug || cIndex}`"
+                    :collection="coll"
+                  />
+                </div>
+              </div>
+
               <!-- Follow-up suggestions -->
               <div
                 v-if="!msg.pending && !msg.streaming && msg.suggestions && msg.suggestions.length"
@@ -360,7 +377,7 @@
       </div>
       <p class="pip-disclaimer">
         {{ isDataMode
-          ? 'Pip cannot change data directly — every fix is filed as a suggested edit for review.'
+          ? 'Cave & system fixes are filed as suggested edits for review; collection changes apply immediately.'
           : 'Pip can make mistakes — always verify conditions, access and gear before a trip.' }}
       </p>
     </div>
@@ -504,6 +521,7 @@ import { useNotificationStore } from '@/stores/notifications'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveAssistantCard from '@/components/CaveAssistantCard.vue'
 import CollectionAssistantCard from '@/components/CollectionAssistantCard.vue'
+import CollectionChangedAssistantCard from '@/components/CollectionChangedAssistantCard.vue'
 import HutAssistantCard from '@/components/HutAssistantCard.vue'
 import ProposalAssistantCard from '@/components/ProposalAssistantCard.vue'
 import TripCreatedAssistantCard from '@/components/TripCreatedAssistantCard.vue'

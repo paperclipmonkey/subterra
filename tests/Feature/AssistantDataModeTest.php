@@ -104,6 +104,9 @@ class AssistantDataModeTest extends TestCase
         $this->assertContains('scan_data_issues', $toolNames);
         $this->assertContains('propose_bulk_tag', $toolNames);
         $this->assertContains('propose_system_merge', $toolNames);
+        $this->assertContains('create_collection', $toolNames);
+        $this->assertContains('update_collection', $toolNames);
+        $this->assertContains('delete_collection', $toolNames);
         $this->assertNotContains('create_trip_report', $toolNames);
 
         $this->assertStringContainsString('data-steward mode', $body['messages'][0]['content']);
@@ -165,6 +168,8 @@ class AssistantDataModeTest extends TestCase
         $toolNames = array_map(fn ($t) => $t['function']['name'], $request->data()['tools']);
         $this->assertNotContains('propose_data_fix', $toolNames);
         $this->assertNotContains('scan_data_issues', $toolNames);
+        $this->assertNotContains('create_collection', $toolNames);
+        $this->assertNotContains('delete_collection', $toolNames);
         $this->assertContains('search_caves', $toolNames);
     }
 }
