@@ -24,6 +24,7 @@ const TOOL_LABELS = {
 
 const STORAGE_KEY = 'vern_conversation_v1'
 const HISTORY_KEY = 'vern_conversation_history_v1'
+const MODE_KEY = 'vern_mode_v1'
 const MAX_PERSISTED = 50
 const MAX_HISTORY = 15
 
@@ -87,6 +88,24 @@ function saveHistory(history) {
   } catch { /* ignore */ }
 }
 
+// Persist the assistant mode so a data-steward session survives page loads.
+// Important for consistency too: the persisted conversation belongs to the
+// mode it was held in — restoring messages without the mode would replay a
+// data-mode conversation against the caving assistant (and its history cap).
+function loadMode() {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'data' ? 'data' : 'default'
+  } catch {
+    return 'default'
+  }
+}
+
+function saveMode(mode) {
+  try {
+    localStorage.setItem(MODE_KEY, mode)
+  } catch { /* ignore */ }
+}
+
 export const useAssistantStore = defineStore('assistant', {
   state: () => ({
     /** @type {{ role: string, content: string, pending?: boolean, streaming?: boolean, suggestions?: string[], usage?: object, cards?: object[], elapsedMs?: number }[]} */
@@ -99,7 +118,7 @@ export const useAssistantStore = defineStore('assistant', {
     savedConversations: loadHistory(),
     historyDrawerOpen: false,
     /** @type {'default' | 'data'} 'data' is the admin data-steward mode */
-    mode: 'default',
+    mode: loadMode(),
   }),
 
   getters: {
@@ -540,6 +559,7 @@ export const useAssistantStore = defineStore('assistant', {
         this.clearConversation()
       }
       this.mode = mode
+      saveMode(mode)
     },
 
     toolLabel(toolName) {

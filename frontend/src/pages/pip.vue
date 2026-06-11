@@ -533,6 +533,16 @@ function switchMode(mode) {
   store.setMode(mode)
 }
 
+// The mode is persisted across page loads. If the user can no longer use data
+// mode (e.g. admin role revoked), drop them back to the default assistant —
+// otherwise they'd be stuck in a mode whose toggle is hidden and whose
+// requests 403.
+watch([canUseDataMode, () => appStore.user], ([allowed, user]) => {
+  if (user && !allowed && store.mode === 'data') {
+    store.setMode('default')
+  }
+}, { immediate: true })
+
 // ── Agreement gate ───────────────────────────────────────────────────────────
 const hasAgreed = computed(() => !!appStore.user?.pip_agreement_signed_at)
 const agreementDialog = ref(false)
