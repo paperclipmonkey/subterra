@@ -462,7 +462,7 @@ class TripTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_rejects_heic_media()
+    public function it_accepts_heic_media()
     {
         $user = User::factory()->create();
         $participant = User::factory()->create();
@@ -495,9 +495,12 @@ class TripTest extends TestCase
         $this->actingAs($user);
         $response = $this->withHeaders(['Accept' => 'application/json'])->post('/api/trips', $tripData);
 
-        // HEIC is not a supported format — should be rejected at validation
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['media.0.data']);
+        // HEIC/HEIF are accepted — native iPhone photos upload as-is and are
+        // transcoded downstream by the image processor.
+        $response->assertCreated();
+        $trip = Trip::where('name', 'Test Trip with HEIC')->first();
+        $this->assertNotNull($trip);
+        $this->assertCount(1, $trip->media);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
