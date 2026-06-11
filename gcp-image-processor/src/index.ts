@@ -3,6 +3,7 @@ import { Storage } from '@google-cloud/storage';
 import { PubSub } from '@google-cloud/pubsub';
 import { TranscoderServiceClient } from '@google-cloud/video-transcoder';
 import sharp from 'sharp';
+import convert from 'heic-convert';
 import { getSecret } from './secrets';
 import { setupSlackLogger } from './slack-logger';
 
@@ -156,6 +157,36 @@ interface ProcessImageParams {
 }
 
 /**
+ * ISO-BMFF `ftyp` brands that indicate an HEVC-coded HEIC/HEIF image — the
+ * format iPhones produce by default. AVIF (brands `avif`/`avis`) is deliberately
+ * excluded: sharp's bundled libvips decodes AVIF natively, but NOT these HEVC
+ * brands, so only these need the heic-convert fallback.
+ */
+const HEIC_BRANDS = new Set(['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'hevm', 'hevs']);
+
+/**
+ * Detect an HEVC-coded HEIC/HEIF image by sniffing the `ftyp` box (major brand
+ * plus compatible brands). Content sniffing is used rather than the file
+ * extension because it is robust regardless of how the object was named upstream.
+ */
+export function isHeic(buffer: Buffer): boolean {
+    // Smallest plausible ftyp box: size(4) + 'ftyp'(4) + major(4) + minor(4).
+    if (buffer.length < 16) return false;
+    if (buffer.toString('latin1', 4, 8) !== 'ftyp') return false;
+
+    // The ftyp box length is a big-endian uint32 at offset 0; clamp to the buffer.
+    const boxEnd = Math.min(buffer.readUInt32BE(0), buffer.length);
+
+    // Major brand is at offset 8; compatible brands follow the 4-byte minor
+    // version (offset 16), each 4 bytes until the end of the box.
+    if (HEIC_BRANDS.has(buffer.toString('latin1', 8, 12))) return true;
+    for (let offset = 16; offset + 4 <= boxEnd; offset += 4) {
+        if (HEIC_BRANDS.has(buffer.toString('latin1', offset, offset + 4))) return true;
+    }
+    return false;
+}
+
+/**
  * Core image processing logic.
  * Downloads source → generates WebP variants → uploads → notifies callback.
  */
@@ -169,6 +200,17 @@ export async function processImage(params: ProcessImageParams): Promise<{ varian
     const [sourceBuffer] = await bucket.file(sourcePath).download();
     console.log(`Downloaded source image: ${sourceBuffer.length} bytes`);
 
+    // iPhones upload HEVC-coded HEIC by default, which sharp's bundled libvips
+    // cannot decode. Convert to JPEG first so the rest of the pipeline is
+    // format-agnostic. AVIF and everything else flows straight through to sharp.
+    let inputBuffer = sourceBuffer;
+    if (isHeic(sourceBuffer)) {
+        console.log('Detected HEVC-coded HEIC/HEIF source — decoding to JPEG before resize');
+        const decoded = await convert({ buffer: sourceBuffer, format: 'JPEG', quality: 0.92 });
+        inputBuffer = Buffer.from(decoded);
+        console.log(`Decoded HEIC to JPEG: ${inputBuffer.length} bytes`);
+    }
+
     const variants: Array<{ name: string; path: string; width: number; height: number; size: number }> =
         [];
 
@@ -176,7 +218,7 @@ export async function processImage(params: ProcessImageParams): Promise<{ varian
     for (const preset of IMAGE_SIZES) {
         const outputPath = `${outputPrefix.replace(/\/$/, '')}/${preset.name}.webp`;
 
-        const processed = await sharp(sourceBuffer)
+        const processed = await sharp(inputBuffer)
             .resize(preset.width, undefined, { withoutEnlargement: true, fit: 'inside' })
             .webp({ quality: preset.quality })
             .toBuffer({ resolveWithObject: true });

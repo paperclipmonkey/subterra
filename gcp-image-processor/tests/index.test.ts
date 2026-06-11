@@ -1,7 +1,8 @@
 import request from 'supertest';
-import app from '../src/index';
+import app, { isHeic } from '../src/index';
 import { Storage } from '@google-cloud/storage';
 import sharp from 'sharp';
+import convert from 'heic-convert';
 import * as secrets from '../src/secrets';
 var mockDownload: any = jest.fn();
 var mockSave: any = jest.fn();
@@ -30,6 +31,11 @@ jest.mock('@google-cloud/pubsub', () => ({
         topic: (name: string) => mockTopic(name)
     }))
 }));
+// Mock heic-convert (default-exported function) so tests don't decode real HEVC.
+jest.mock('heic-convert', () =>
+    jest.fn().mockResolvedValue(new TextEncoder().encode('decoded-jpeg-data').buffer)
+);
+
 // Mock sharp correctly since it's a default export of a function
 jest.mock('sharp', () => {
     const mSharp = jest.fn(() => ({
@@ -41,6 +47,38 @@ jest.mock('sharp', () => {
         })
     }));
     return mSharp;
+});
+
+describe('isHeic', () => {
+    const ftypBox = (major: string, compatible: string[] = []): Buffer => {
+        const size = 16 + compatible.length * 4;
+        const buf = Buffer.alloc(size);
+        buf.writeUInt32BE(size, 0);
+        buf.write('ftyp', 4, 'latin1');
+        buf.write(major.padEnd(4), 8, 'latin1');
+        compatible.forEach((brand, i) => buf.write(brand.padEnd(4), 16 + i * 4, 'latin1'));
+        return buf;
+    };
+
+    it('detects the HEVC `heic` major brand', () => {
+        expect(isHeic(ftypBox('heic'))).toBe(true);
+    });
+
+    it('detects an HEVC brand listed only as a compatible brand', () => {
+        expect(isHeic(ftypBox('mif1', ['miaf', 'heic']))).toBe(true);
+    });
+
+    it('does not treat AVIF as HEIC (sharp decodes AVIF natively)', () => {
+        expect(isHeic(ftypBox('avif', ['mif1', 'miaf']))).toBe(false);
+    });
+
+    it('returns false for non-ISO-BMFF data (e.g. a PNG header)', () => {
+        expect(isHeic(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(false);
+    });
+
+    it('returns false for a truncated buffer', () => {
+        expect(isHeic(Buffer.from('ftyp'))).toBe(false);
+    });
 });
 
 describe('Health Check Endpoint', () => {
@@ -134,6 +172,51 @@ describe('POST / GCS Trigger Execution', () => {
             mediaId: 104,
             error: 'GCS Download Failure'
         });
+    });
+
+    it('decodes HEVC-coded HEIC sources via heic-convert before resizing', async () => {
+        // A minimal ISO-BMFF ftyp box with the HEVC `heic` major brand.
+        const ftyp = Buffer.alloc(16);
+        ftyp.writeUInt32BE(16, 0);
+        ftyp.write('ftyp', 4, 'latin1');
+        ftyp.write('heic', 8, 'latin1');
+        mockDownload.mockResolvedValueOnce([ftyp]);
+
+        const payload = {
+            bucket: 'subterra-test-bucket',
+            name: 'input/some-uuid/IMG_1234.heic',
+        };
+
+        const response = await request(app)
+            .post('/')
+            .set('Authorization', 'Bearer test-api-key')
+            .send(payload);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('status', 'success');
+
+        // The HEIC must be decoded once, then the 3 webp variants still produced.
+        expect(convert).toHaveBeenCalledTimes(1);
+        expect(convert).toHaveBeenCalledWith(
+            expect.objectContaining({ buffer: ftyp, format: 'JPEG' })
+        );
+        expect(mockSave).toHaveBeenCalledTimes(3);
+    });
+
+    it('does not invoke heic-convert for non-HEIC sources', async () => {
+        // beforeEach default download buffer is plain bytes, not an ftyp box.
+        const payload = {
+            bucket: 'subterra-test-bucket',
+            name: 'input/some-uuid/original-image.png',
+        };
+
+        await request(app)
+            .post('/')
+            .set('Authorization', 'Bearer test-api-key')
+            .send(payload);
+
+        expect(convert).not.toHaveBeenCalled();
+        expect(mockSave).toHaveBeenCalledTimes(3);
     });
 
     it('ignores non-input paths immediately', async () => {
