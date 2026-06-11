@@ -22,11 +22,32 @@ const TOOL_LABELS = {
   propose_system_merge: 'Filing merge proposal',
 }
 
-const STORAGE_KEY = 'vern_conversation_v1'
-const HISTORY_KEY = 'vern_conversation_history_v1'
-const MODE_KEY = 'vern_mode_v1'
+const STORAGE_KEY = 'pip_conversation_v1'
+const HISTORY_KEY = 'pip_conversation_history_v1'
+const MODE_KEY = 'pip_mode_v1'
 const MAX_PERSISTED = 50
 const MAX_HISTORY = 15
+
+// One-time migration from the assistant's old name (Vern → Pip). Copies any
+// legacy values to the new keys, then removes the old ones. Safe to delete
+// after this has been in production for a while.
+function migrateLegacyVernKeys() {
+  try {
+    const legacy = {
+      vern_conversation_v1: STORAGE_KEY,
+      vern_conversation_history_v1: HISTORY_KEY,
+      vern_mode_v1: MODE_KEY,
+    }
+    for (const [oldKey, newKey] of Object.entries(legacy)) {
+      const value = localStorage.getItem(oldKey)
+      if (value !== null && localStorage.getItem(newKey) === null) {
+        localStorage.setItem(newKey, value)
+      }
+      localStorage.removeItem(oldKey)
+    }
+  } catch { /* storage unavailable — ignore */ }
+}
+migrateLegacyVernKeys()
 
 function persistableShape(m) {
   return {

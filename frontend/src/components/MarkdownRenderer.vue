@@ -232,13 +232,13 @@ const renderGeoJSONMaps = async () => {
         map.addControl(new maplibre.NavigationControl({ showCompass: false }))
 
         map.on('load', () => {
-            map.addSource('vern-data', { type: 'geojson', data: geojson })
+            map.addSource('pip-data', { type: 'geojson', data: geojson })
 
             // Glow halo beneath each pin
             map.addLayer({
-                id: 'vern-halo',
+                id: 'pip-halo',
                 type: 'circle',
-                source: 'vern-data',
+                source: 'pip-data',
                 filter: ['==', ['geometry-type'], 'Point'],
                 paint: {
                     'circle-radius': 14,
@@ -250,9 +250,9 @@ const renderGeoJSONMaps = async () => {
 
             // Main pin circle
             map.addLayer({
-                id: 'vern-points',
+                id: 'pip-points',
                 type: 'circle',
-                source: 'vern-data',
+                source: 'pip-data',
                 filter: ['==', ['geometry-type'], 'Point'],
                 paint: {
                     'circle-radius': 8,
@@ -264,9 +264,9 @@ const renderGeoJSONMaps = async () => {
 
             // Cave name labels
             map.addLayer({
-                id: 'vern-labels',
+                id: 'pip-labels',
                 type: 'symbol',
-                source: 'vern-data',
+                source: 'pip-data',
                 filter: ['==', ['geometry-type'], 'Point'],
                 layout: {
                     'text-field': ['coalesce', ['get', 'name'], ''],
@@ -312,7 +312,7 @@ const renderGeoJSONMaps = async () => {
             // textContent / setAttribute so LLM-generated property values can
             // never reach an HTML or JS sink. The slug is also validated as a
             // safe URL slug before being placed in the href.
-            map.on('click', 'vern-points', (e) => {
+            map.on('click', 'pip-points', (e) => {
                 const props = e.features[0].properties
                 const name = props.name || 'Cave'
                 const rawSlug = props.slug
@@ -347,8 +347,8 @@ const renderGeoJSONMaps = async () => {
                     .addTo(map)
             })
 
-            map.on('mouseenter', 'vern-points', () => { map.getCanvas().style.cursor = 'pointer' })
-            map.on('mouseleave', 'vern-points', () => { map.getCanvas().style.cursor = '' })
+            map.on('mouseenter', 'pip-points', () => { map.getCanvas().style.cursor = 'pointer' })
+            map.on('mouseleave', 'pip-points', () => { map.getCanvas().style.cursor = '' })
         })
 
         map.on('error', (e) => {
