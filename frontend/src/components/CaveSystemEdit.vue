@@ -101,13 +101,18 @@
           <v-card-title>Merge Another Cave System</v-card-title>
           <v-card-text>
             <p class="mb-4">Merge another cave system into this one. All caves, routes, trips, files, and tags from the selected system will be moved here, and the other system will be deleted.</p>
-            <v-select
+            <!-- Autocomplete (not v-select) so typing filters the list persistently.
+                 v-select only does keyboard typeahead, which resets after a short
+                 pause — i.e. it only "filters" while you type fast. All systems are
+                 already loaded, so this filters client-side on the name. -->
+            <v-autocomplete
               v-model="mergeSourceId"
               :items="availableSystems"
               item-title="name"
               item-value="id"
               label="Select cave system to merge in"
               clearable
+              auto-select-first
               variant="outlined"
               density="compact"
               :loading="systemsLoading"
