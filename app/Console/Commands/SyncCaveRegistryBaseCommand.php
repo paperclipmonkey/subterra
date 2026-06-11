@@ -186,8 +186,7 @@ abstract class SyncCaveRegistryBaseCommand extends Command
                 // -----------------------------------------------------------------
                 $systemName = $name;
                 $systemSlug = Str::slug($systemName);
-                $system = CaveName::findSystem($systemName)
-                    ?? CaveSystem::where('slug', $systemSlug)->first();
+                $system = CaveName::findSystemForRegistry($systemName, $systemSlug, $registryId, $lat, $lng);
 
                 $systemIsNew = false;
                 if (!$system) {
@@ -283,8 +282,7 @@ abstract class SyncCaveRegistryBaseCommand extends Command
                 $baseSlug = $this->slugPrefix().Str::slug($name);
 
                 $existingCave = Cave::where('registry', $registryId)->where('registry_id', $registryEntryId)->first()
-                    ?? CaveName::findCave($name)
-                    ?? Cave::where('slug', $baseSlug)->first();
+                    ?? CaveName::findCaveForRegistry($name, $baseSlug, $registryId, $lat, $lng);
 
                 if ($existingCave) {
                     $coordKeys = ['location_lat', 'location_lng', 'location_alt'];

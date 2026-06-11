@@ -91,8 +91,7 @@ class SyncCnccCaves extends Command
                 // already exist so their references/tags stay up to date.
                 $baseSlug = 'cncc_'.Str::slug($name);
                 $existingCave = Cave::where('registry', 'cncc')->where('registry_id', $slug)->first()
-                    ?? CaveName::findCave($name)
-                    ?? Cave::where('slug', $baseSlug)->first();
+                    ?? CaveName::findCaveForRegistry($name, $baseSlug, 'cncc', $lat, $lng);
 
                 if (!$existingCave && round($lat, 5) === 0.0 && round($lng, 5) === 0.0) {
                     $this->line("<fg=gray>  ⊘ Skipped (no GPS):</> {$name}");
@@ -112,8 +111,7 @@ class SyncCnccCaves extends Command
                 // -----------------------------------------------------------------
                 $systemName = $name;
                 $systemSlug = Str::slug($systemName);
-                $system = CaveName::findSystem($systemName)
-                    ?? CaveSystem::where('slug', $systemSlug)->first();
+                $system = CaveName::findSystemForRegistry($systemName, $systemSlug, 'cncc', $lat, $lng);
 
                 $systemIsNew = false;
                 if (!$system) {

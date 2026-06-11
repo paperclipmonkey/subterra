@@ -118,32 +118,9 @@ class SyncCcrCaves extends Command
                     continue;
                 }
 
-                // 1. Cave System
-                // Defaulting System to the Cave Name (same as csv importer).
-                $systemName = $name;
-                $systemSlug = Str::slug($systemName);
-
-                $system = CaveName::findSystem($systemName)
-                    ?? CaveSystem::where('slug', $systemSlug)->first();
-
-                if (!$system) {
-                    $system = CaveSystem::create([
-                        'name' => $systemName,
-                        'slug' => $this->uniqueSlug($systemSlug, 'cave_systems'),
-                        'length' => $length,
-                        'vertical_range' => $depth,
-                    ]);
-                }
-
-                if ($length > 0 || $depth > 0) {
-                    $system->length = max($system->length, (int) $length);
-                    $system->vertical_range = max($system->vertical_range, (int) $depth);
-                    $system->save();
-                }
-
-                $caveSystemId = $system->id;
-
-                // 2. Geolocation (Calculate from GR/E/N using PHPCoord)
+                // 1. Geolocation (Calculate from GR/E/N using PHPCoord)
+                // Resolved before the system/cave lookup so it can disambiguate
+                // same-named places in different regions by proximity.
                 $lat = 0;
                 $lng = 0;
 
@@ -173,6 +150,30 @@ class SyncCcrCaves extends Command
                 }
 
                 $alt = round((float) ($entry['alt'] ?? 0), 1);
+
+                // 2. Cave System
+                // Defaulting System to the Cave Name (same as csv importer).
+                $systemName = $name;
+                $systemSlug = Str::slug($systemName);
+
+                $system = CaveName::findSystemForRegistry($systemName, $systemSlug, 'ccr', $lat, $lng);
+
+                if (!$system) {
+                    $system = CaveSystem::create([
+                        'name' => $systemName,
+                        'slug' => $this->uniqueSlug($systemSlug, 'cave_systems'),
+                        'length' => $length,
+                        'vertical_range' => $depth,
+                    ]);
+                }
+
+                if ($length > 0 || $depth > 0) {
+                    $system->length = max($system->length, (int) $length);
+                    $system->vertical_range = max($system->vertical_range, (int) $depth);
+                    $system->save();
+                }
+
+                $caveSystemId = $system->id;
 
                 // 3. Description & References
                 $descriptionParts = [];
@@ -293,8 +294,7 @@ class SyncCcrCaves extends Command
 
                 $ccrId = (string) $entry['id'];
                 $existingCave = Cave::where('registry', 'ccr')->where('registry_id', $ccrId)->first()
-                    ?? CaveName::findCave($name)
-                    ?? Cave::where('slug', $baseSlug)->first();
+                    ?? CaveName::findCaveForRegistry($name, $baseSlug, 'ccr', $lat, $lng);
 
                 if ($existingCave) {
                     // Check for differences. Round both sides before comparing floats to avoid

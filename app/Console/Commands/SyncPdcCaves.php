@@ -118,8 +118,7 @@ class SyncPdcCaves extends Command
                     $registryId = $regionSlugEntry.'/'.$caveSlug;
                     $baseSlug = 'pdc_'.$regionSlugEntry.'_'.$caveSlug;
                     $existingCave = Cave::where('registry', 'pdc')->where('registry_id', $registryId)->first()
-                        ?? CaveName::findCave($name)
-                        ?? Cave::where('slug', $baseSlug)->first();
+                        ?? CaveName::findCaveForRegistry($name, $baseSlug, 'pdc', $lat, $lng);
 
                     if (!$existingCave && round($lat, 5) === 0.0 && round($lng, 5) === 0.0) {
                         $this->line("<fg=gray>  ⊘ Skipped (no GPS):</> {$name}");
@@ -139,8 +138,7 @@ class SyncPdcCaves extends Command
                     // -----------------------------------------------------------------
                     $systemName = $name;
                     $systemSlug = Str::slug($systemName);
-                    $system = CaveName::findSystem($systemName)
-                        ?? CaveSystem::where('slug', $systemSlug)->first();
+                    $system = CaveName::findSystemForRegistry($systemName, $systemSlug, 'pdc', $lat, $lng);
 
                     $systemIsNew = false;
                     if (!$system) {

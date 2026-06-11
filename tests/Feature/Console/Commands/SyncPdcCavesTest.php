@@ -437,6 +437,39 @@ HTML;
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_does_not_merge_a_same_named_cave_from_another_region(): void
+    {
+        $this->fakeDefaultHttp();
+
+        // An unrelated "Giants Hole" already exists in Mendip (a different real
+        // cave that happens to share the name), owned by the MCRA registry.
+        $mendipSystem = CaveSystem::factory()->create(['name' => 'Giants Hole', 'slug' => 'giants-hole']);
+        $mendipCave = Cave::factory()->create([
+            'name' => 'Giants Hole',
+            'cave_system_id' => $mendipSystem->id,
+            'registry' => 'mcra',
+            'registry_id' => 'mendip-giants-hole',
+            'location_lat' => 51.27,
+            'location_lng' => -2.66,
+        ]);
+
+        $this->artisan('sync:pdc-caves')->assertExitCode(0);
+
+        // The Peak District Giants Hole is imported as its own cave + system,
+        // not merged into the Mendip one — and nothing tries to edit the Mendip
+        // records.
+        $this->assertSame(2, Cave::where('name', 'Giants Hole')->count());
+        $this->assertSame(2, CaveSystem::where('name', 'Giants Hole')->count());
+
+        $pdcCave = Cave::where('registry', 'pdc')->where('name', 'Giants Hole')->firstOrFail();
+        $this->assertNotSame($mendipCave->id, $pdcCave->id);
+        $this->assertNotSame($mendipSystem->id, $pdcCave->cave_system_id);
+
+        $this->assertDatabaseMissing('suggested_edits', ['suggestable_id' => $mendipCave->id, 'suggestable_type' => Cave::class]);
+        $this->assertDatabaseMissing('suggested_edits', ['suggestable_id' => $mendipSystem->id, 'suggestable_type' => CaveSystem::class]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_handles_an_empty_region_gracefully(): void
     {
         Http::fake([
