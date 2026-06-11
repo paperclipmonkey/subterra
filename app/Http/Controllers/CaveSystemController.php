@@ -85,6 +85,8 @@ class CaveSystemController extends Controller
                 'image/png',
                 'image/gif',
                 'image/webp',
+                'image/heic',
+                'image/heif',
             ];
 
             $details = $request->input('new_file_details', []);

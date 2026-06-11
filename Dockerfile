@@ -33,7 +33,7 @@ ADD .fly/php/packages/${PHP_VERSION}.txt /tmp/php-packages.txt
 RUN apt-get update \
     && apt-get install -y --no-install-recommends software-properties-common gnupg2 ca-certificates git-core curl zip unzip \
                                                   rsync vim-tiny htop sqlite3 nginx supervisor cron \
-                                                  imagemagick ghostscript \
+                                                  imagemagick ghostscript libheif-plugin-libde265 \
     && ln -sf /usr/bin/vim.tiny /etc/alternatives/vim \
     && ln -sf /etc/alternatives/vim /usr/bin/vim \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
