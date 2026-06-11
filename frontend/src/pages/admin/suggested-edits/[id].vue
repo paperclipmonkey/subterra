@@ -287,12 +287,15 @@ const isImageField = (key) => {
 const normalizeTags = (tags) => {
     if (!Array.isArray(tags)) return []
     return tags
+        // Tags may arrive as objects ({tag, category, type}) or as bare name strings
+        // (e.g. an original_data snapshot like ["Yorkshire", "Cave"]). Normalise both.
+        .map(t => (typeof t === 'string' ? { tag: t } : t))
         .filter(t => !['previously done'].includes(t.category)) // Filter out system/non-editable tags
         .map(t => ({
             tag: t.tag,
             category: t.category,
             type: t.type || 'cave'
-        })).sort((a, b) => a.tag.localeCompare(b.tag))
+        })).sort((a, b) => (a.tag ?? '').localeCompare(b.tag ?? ''))
 }
 
 const normalizeCaves = (caves) => {
@@ -369,6 +372,11 @@ const changedFields = computed(() => {
 
         // Normalise tags/caves in place before comparing
         if (key === 'tags') {
+            // 'tags' can appear in original_data purely as baseline context while the
+            // real proposal is expressed via tags_add/tags_remove. Only render a full
+            // tags replacement when suggested_data actually contains a 'tags' key —
+            // otherwise we'd show a misleading "all tags removed" diff.
+            if (!('tags' in suggested)) continue
             const normOld = normalizeTags(oldVal)
             const normNew = normalizeTags(newVal)
             if (JSON.stringify(normOld) !== JSON.stringify(normNew)) {
