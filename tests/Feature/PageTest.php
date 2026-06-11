@@ -107,4 +107,16 @@ class PageTest extends TestCase
             'access_count' => 1,
         ]);
     }
+
+    public function test_missing_page_returns_clean_404_without_leaking_model_internals()
+    {
+        $response = $this->getJson('/api/pages/does-not-exist');
+
+        $response->assertStatus(404)
+            ->assertJsonPath('message', 'The requested resource was not found.');
+
+        // Must NOT leak Laravel's internal "No query results for model [App\Models\Page]" text.
+        $this->assertStringNotContainsString('No query results', $response->getContent());
+        $this->assertStringNotContainsString('App\\Models\\Page', $response->getContent());
+    }
 }

@@ -38,4 +38,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return $request->expectsJson();
         });
+
+        // Implicit route-model binding failures surface (after Laravel's
+        // prepareException) as a NotFoundHttpException wrapping a
+        // ModelNotFoundException, whose message leaks internals to the client —
+        // e.g. "No query results for model [App\Models\Page] duty-officer-guide".
+        // Replace ONLY those with a clean, generic 404 for API requests; explicit
+        // abort(404, '...') calls have no ModelNotFoundException previous and are
+        // left untouched so their custom messages survive.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->is('api/*') && $e->getPrevious() instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                return response()->json(['message' => 'The requested resource was not found.'], 404);
+            }
+        });
     })->create();

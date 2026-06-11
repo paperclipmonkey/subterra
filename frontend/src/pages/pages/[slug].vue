@@ -41,7 +41,9 @@ const fetchPage = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await api.get(`/api/pages/${route.params.slug}`)
+    // This view renders its own not-found / error state below, so suppress the
+    // global error toast (a missing page is an expected outcome here, not noise).
+    const res = await api.get(`/api/pages/${route.params.slug}`, { suppressErrorNotification: true })
     page.value = res.data.data
   } catch (e) {
     console.error(e)
