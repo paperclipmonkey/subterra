@@ -2,10 +2,10 @@
   <div class="bg-background" :class="{ 'cave-page--map': tab === 'map' }">
     <!-- Branded page header -->
     <div class="caves-header">
-      <div class="caves-header__inner px-4 pt-4 pt-sm-6 pb-5 mx-auto">
-        <div v-show="tab !== 'map'" class="mb-3">
-          <h1 class="text-h5 text-sm-h4 text-md-h3 font-weight-bold text-white mb-1">Caves</h1>
-          <div class="caves-header__count text-body-2">{{ headerSubtitle }}</div>
+      <div class="caves-header__inner px-4 pt-3 pt-sm-4 pb-4 mx-auto">
+        <div v-show="tab !== 'map'" class="mb-2">
+          <h1 class="text-h6 text-sm-h5 text-md-h4 font-weight-bold text-white">Caves</h1>
+          <div class="caves-header__count text-caption text-sm-body-2">{{ headerSubtitle }}</div>
         </div>
 
         <div class="d-flex align-center ga-2">
@@ -17,7 +17,7 @@
             flat
             hide-details
             class="flex-grow-1 caves-header__search"
-            density="comfortable"
+            density="compact"
             rounded="pill"
             bg-color="surface"
           />
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Compact Horizontal Filter Bar -->
-        <div class="d-flex align-center overflow-x-auto no-scrollbar mt-4 ga-2">
+        <div class="d-flex align-center overflow-x-auto no-scrollbar mt-3 ga-2">
           <!-- Active Tags -->
           <v-chip
             v-for="tag in cachedTags"
@@ -87,7 +87,7 @@
       </div>
     </v-alert>
 
-    <div class="d-flex justify-center mt-4 mb-2">
+    <div class="d-flex justify-center mt-3 mb-2">
       <v-btn-toggle
         v-model="tab"
         mandatory
