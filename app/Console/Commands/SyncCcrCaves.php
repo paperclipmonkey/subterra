@@ -470,6 +470,13 @@ class SyncCcrCaves extends Command
             return false;
         }
 
+        // Normalize line endings before comparing. Legacy stored values use CRLF
+        // (\r\n) while text parsed from the CCR XML uses LF (\n); without this a
+        // field that differs only in line endings would register as a change and
+        // produce a no-op suggested edit.
+        $newText = str_replace("\r\n", "\n", $newText);
+        $existingText = str_replace("\r\n", "\n", $existingText);
+
         // Check each paragraph/part of the new text individually.
         // This handles formatting differences (e.g. URLs wrapped in <> brackets,
         // trailing <br/> tags) from previous imports or manual edits.
@@ -512,6 +519,12 @@ class SyncCcrCaves extends Command
         $innerXml = preg_replace('/^<'.$tagName.'[^>]*>/', '', $innerXml);
         $innerXml = preg_replace('/<\/'.$tagName.'>$/', '', $innerXml);
 
-        return trim(strip_tags($innerXml));
+        // strip_tags removes the real markup but leaves entities encoded, and
+        // asXML() re-encodes literal characters (& -> &amp;, < -> &lt;). Decode
+        // after stripping so the plain text matches what is stored in Subterra
+        // (otherwise "capped & gated" parses as "capped &amp; gated" and a no-op
+        // suggested edit is created). Strip first, then decode, so encoded angle
+        // brackets in the text aren't mistaken for tags.
+        return trim(html_entity_decode(strip_tags($innerXml), ENT_QUOTES | ENT_HTML5));
     }
 }

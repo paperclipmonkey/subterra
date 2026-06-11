@@ -227,6 +227,88 @@ XML;
         }
     }
 
+    public function test_it_does_not_suggest_access_info_differing_only_by_line_endings()
+    {
+        // Reset the shared fake from setUp() — Http::fake() appends stubs and the
+        // first registered match wins, so the override below must replace it.
+        $this->app->forgetInstance(\Illuminate\Http\Client\Factory::class);
+        Http::clearResolvedInstances();
+        Http::fake([
+            'cambriancavingcouncil.org.uk/*' => Http::response(<<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Registry>
+    <Region name="South Wales">
+        <Entry id="1" len="300" dep="50" alt="150" E="260000" N="215000" GR="SN">
+            <Name>Test Cave One</Name>
+            <Desc>A test cave description.</Desc>
+            <Access con="loc">Small entrance in dry valley near track.
+Follow the old tramway up from the farm towards the stone walling.</Access>
+        </Entry>
+    </Region>
+</Registry>
+XML, 200),
+        ]);
+
+        // Existing cave stores the identical access text but with CRLF line endings
+        // (legacy data), while the XML above parses to LF.
+        $cave = Cave::factory()->create([
+            'name' => 'Test Cave One',
+            'description' => "A test cave description.\n\nCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1",
+            'location_name' => 'South Wales',
+            'location_country' => 'United Kingdom',
+            'access_info' => "Small entrance in dry valley near track.\r\nFollow the old tramway up from the farm towards the stone walling.",
+        ]);
+
+        $this->artisan('sync:ccr-caves --min-length=250')
+            ->assertExitCode(0);
+
+        // No suggested edit should be created — the only difference is \r\n vs \n.
+        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        if ($edit) {
+            $this->assertArrayNotHasKey('access_info', $edit->suggested_data);
+        }
+    }
+
+    public function test_it_decodes_html_entities_and_does_not_suggest_encoded_change()
+    {
+        // Reset the shared fake from setUp() so the override below takes effect.
+        $this->app->forgetInstance(\Illuminate\Http\Client\Factory::class);
+        Http::clearResolvedInstances();
+        Http::fake([
+            'cambriancavingcouncil.org.uk/*' => Http::response(<<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Registry>
+    <Region name="South Wales">
+        <Entry id="1" len="300" dep="50" alt="150" E="260000" N="215000" GR="SN">
+            <Name>Test Cave One</Name>
+            <Desc>A test cave description.</Desc>
+            <Access con="loc">The entrance is in the quarry floor and is capped &amp; gated.</Access>
+        </Entry>
+    </Region>
+</Registry>
+XML, 200),
+        ]);
+
+        // Existing cave stores the plain ampersand. The XML encodes it as &amp;;
+        // without decoding, the parsed text would be "capped &amp; gated" and
+        // register as a spurious change.
+        $cave = Cave::factory()->create([
+            'name' => 'Test Cave One',
+            'description' => "A test cave description.\n\nCC Registry: https://www.cambriancavingcouncil.org.uk/registry/ccr_registry_view.php?ID=1",
+            'location_name' => 'South Wales',
+            'location_country' => 'United Kingdom',
+            'access_info' => 'The entrance is in the quarry floor and is capped & gated.',
+        ]);
+
+        $this->artisan('sync:ccr-caves --min-length=250')
+            ->assertExitCode(0);
+
+        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        if ($edit) {
+            $this->assertArrayNotHasKey('access_info', $edit->suggested_data);
+        }
+    }
+
     public function test_it_handles_merged_cave_with_existing_name()
     {
         // Simulate a merged entrance: the cave exists under the same name
