@@ -91,9 +91,15 @@ const registries = [
     url: 'peakdistrictcaving.info',
     description: 'Derbyshire Caving Association — Peak District cave database.',
   },
+  {
+    id: 'ccr',
+    label: 'CCR (Wales)',
+    url: 'cambriancavingcouncil.org.uk',
+    description: 'Cambrian Caving Council — Welsh cave registry.',
+  },
 ]
 
-const loading = reactive({ mcra: false, fod: false, gsg: false, cncc: false, pdc: false })
+const loading = reactive({ mcra: false, fod: false, gsg: false, cncc: false, pdc: false, ccr: false })
 
 const snackbar = reactive({ show: false, message: '', color: 'success' })
 
