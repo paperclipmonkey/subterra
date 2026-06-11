@@ -84,11 +84,25 @@ const items = computed(() => {
   position: fixed;
   width: 100%;
   padding: 0px;
+  // Sit above page content (sticky headers, expansion panels like the resolved
+  // incidents table) but below dialogs/overlays (~2400) and the top system bars
+  // (9999). Without an explicit z-index this fixed dock defaulted to `auto` (0),
+  // so page panels painted over it.
+  z-index: 1010;
+  // The wrapper spans the full width, but only the centered dock is visible —
+  // let clicks fall through the transparent gutters to the content beneath
+  // (re-enabled on the nav itself below).
+  pointer-events: none;
 }
 
 .v-footer {
   padding: 0px;
   background: transparent !important;
+}
+
+/* Only the actual nav bar is interactive, not the transparent full-width wrapper. */
+:deep(.v-bottom-navigation) {
+  pointer-events: auto;
 }
 
 /* Floating frosted dock instead of a full-width bar */
