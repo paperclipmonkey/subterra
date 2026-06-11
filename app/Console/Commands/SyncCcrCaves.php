@@ -90,8 +90,12 @@ class SyncCcrCaves extends Command
                     continue;
                 }
 
-                $length = (float) ($entry['len'] ?? 0);
-                $depth = (float) ($entry['dep'] ?? 0);
+                // CCR wraps a figure in square brackets when it refers to the whole
+                // system rather than this individual entrance (e.g. len="[70000]" on a
+                // second entrance to Ogof Draenen). Strip non-numeric chars so these
+                // parse instead of casting to 0 and getting dropped by the length filter.
+                $length = (float) preg_replace('/[^0-9.\-]/', '', (string) ($entry['len'] ?? ''));
+                $depth = (float) preg_replace('/[^0-9.\-]/', '', (string) ($entry['dep'] ?? ''));
 
                 // Apply Filters
                 $isBlocklisted = in_array(strtolower($name), array_map('strtolower', $blocklistNames));
