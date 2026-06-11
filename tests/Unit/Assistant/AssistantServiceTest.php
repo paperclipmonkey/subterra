@@ -195,6 +195,35 @@ class AssistantServiceTest extends TestCase
         });
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function data_mode_history_is_unlimited_when_configured_null(): void
+    {
+        config(['assistant.data_limits.max_history_messages' => null]);
+
+        $user = User::factory()->create();
+
+        Http::fake([
+            self::OPENROUTER_URL => Http::response(
+                $this->openRouterReply('Response'),
+                200
+            ),
+        ]);
+
+        $messages = [];
+        for ($i = 1; $i <= 30; ++$i) {
+            $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
+        }
+
+        $this->service->chat($messages, $user, null, AssistantService::MODE_DATA);
+
+        // System prompt + all 30 history messages, uncapped
+        Http::assertSent(function ($request) {
+            $body = json_decode($request->body(), true);
+
+            return count($body['messages'] ?? []) === 31;
+        });
+    }
+
     // -------------------------------------------------------------------------
     // Tool dispatch loop
     // -------------------------------------------------------------------------

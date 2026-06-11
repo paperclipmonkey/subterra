@@ -121,9 +121,20 @@ class AssistantService
                 : $this->buildSystemPrompt($user),
         ];
 
+        // Per-mode limits: the data-steward mode runs long curation jobs, so it
+        // gets a much larger budget (see config/assistant.php). null = unlimited.
+        $limits = (array) config($mode === self::MODE_DATA ? 'assistant.data_limits' : 'assistant.limits', []);
+        $limit = static function (string $key, int $default) use ($limits): int {
+            if (! array_key_exists($key, $limits)) {
+                return $default;
+            }
+
+            return $limits[$key] === null ? PHP_INT_MAX : (int) $limits[$key];
+        };
+
         // Cap history to avoid ballooning token costs
-        $maxHistory = (int) config('assistant.limits.max_history_messages', 20);
-        $cappedMessages = array_slice($messages, -$maxHistory);
+        $maxHistory = $limit('max_history_messages', 20);
+        $cappedMessages = $maxHistory === PHP_INT_MAX ? $messages : array_slice($messages, -$maxHistory);
 
         $context = array_merge([$systemMessage], $cappedMessages);
         $toolDefinitions = $this->getToolDefinitions();
@@ -139,12 +150,12 @@ class AssistantService
             'system_prompt_chars' => mb_strlen($systemMessage['content']),
         ]);
 
-        $maxIterations = (int) config('assistant.limits.max_tool_iterations', 5);
+        $maxIterations = $limit('max_tool_iterations', 5);
         // Hard cap on TOTAL tool dispatches (vs iterations) — some models batch
         // 4-5 parallel tool calls per iteration, so the iter cap alone lets a
         // turn balloon to 12+ tool calls (and 200s of latency) before forced
         // recovery. This stops that.
-        $maxTotalToolCalls = (int) config('assistant.limits.max_total_tool_calls', 10);
+        $maxTotalToolCalls = $limit('max_total_tool_calls', 10);
         $iterations = 0;
         $lastContent = '';
         $toolCallsThisTurn = 0;
@@ -1452,8 +1463,9 @@ you file proposals — e.g. "I've filed 12 proposals as one batch; approve them 
   lot in one click.
 - **Work in slices.** Scans are paged (limit/offset). Fix one page, tell the admin how many
   remain, and offer to continue. Do not try to fix hundreds of records in one turn.
-- **Tool budget is small** (about 10 dispatches per turn). Plan: scan once, investigate the
-  few records you'll act on, propose, report. Don't re-scan after every proposal.
+- **Tool budget is generous** (dozens of dispatches per turn), so working through a full
+  page of records in one turn is fine. Still plan: scan once, investigate the records
+  you'll act on, propose, report. Don't re-scan after every proposal.
 
 ## Output format
 

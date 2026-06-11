@@ -110,6 +110,44 @@ class AssistantDataModeTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function data_mode_accepts_long_conversation_history(): void
+    {
+        $this->fakeOpenRouter();
+        $admin = User::factory()->admin()->pipAgreed()->create();
+
+        $messages = [];
+        for ($i = 1; $i <= 40; ++$i) {
+            $messages[] = ['role' => $i % 2 === 1 ? 'user' : 'assistant', 'content' => "Message {$i}"];
+        }
+
+        $response = $this->actingAs($admin)
+            ->postJson(self::ENDPOINT, ['messages' => $messages, 'mode' => 'data']);
+
+        $response->assertStatus(200);
+        $this->drainStream($response);
+
+        // The full history (plus system prompt) reached the model — no 20-message cap
+        [$request] = Http::recorded()->first();
+        $this->assertCount(41, $request->data()['messages']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function default_mode_still_caps_history_at_20_messages(): void
+    {
+        $admin = User::factory()->admin()->pipAgreed()->create();
+
+        $messages = [];
+        for ($i = 1; $i <= 21; ++$i) {
+            $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
+        }
+
+        $this->actingAs($admin)
+            ->postJson(self::ENDPOINT, ['messages' => $messages])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['messages']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function default_mode_does_not_offer_proposal_tools(): void
     {
         $this->fakeOpenRouter();

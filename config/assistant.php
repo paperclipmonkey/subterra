@@ -58,4 +58,15 @@ return [
         'max_total_tool_calls' => 10,
     ],
 
+    // Limits for the admin data-steward mode. Data curation sessions are long
+    // (scan → investigate → propose, across many records and many turns), so
+    // this mode gets a far bigger budget than the trip-planning assistant.
+    // A `null` value means unlimited. The tool caps are kept finite — even
+    // generous ones — purely as a runaway-loop guard.
+    'data_limits' => [
+        'max_history_messages' => null,
+        'max_tool_iterations' => 30,
+        'max_total_tool_calls' => 60,
+    ],
+
 ];

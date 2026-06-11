@@ -220,7 +220,7 @@ Add `/assistant` as a route, and optionally surface a floating action button (FA
 
 ### State
 
-Conversation history lives in a Pinia store (`stores/assistant.js`). The full `messages[]` array is sent to the backend on each turn so the model has context. A maximum history depth (e.g. 20 messages) should be enforced to avoid ballooning token costs.
+Conversation history lives in a Pinia store (`stores/assistant.js`). The full `messages[]` array is sent to the backend on each turn so the model has context. In the default mode a maximum history depth (20 messages) is enforced to avoid ballooning token costs. The admin data-steward mode has no history cap and a much larger tool budget (`config/assistant.php` → `data_limits`), since curation sessions run long multi-step jobs.
 
 ---
 

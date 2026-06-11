@@ -15,8 +15,15 @@ class AssistantChatRequest extends FormRequest
 
     public function rules(): array
     {
+        // Data-steward mode supports long curation sessions, so the history
+        // cap is lifted there (the service trims per config/assistant.php).
+        $messagesRule = ['required', 'array', 'min:1'];
+        if ($this->input('mode') !== 'data') {
+            $messagesRule[] = 'max:20';
+        }
+
         return [
-            'messages' => ['required', 'array', 'min:1', 'max:20'],
+            'messages' => $messagesRule,
             'messages.*.role' => ['required', 'string', 'in:user,assistant'],
             'messages.*.content' => ['required', 'string', 'max:4000'],
             'mode' => ['sometimes', 'string', 'in:default,data'],
