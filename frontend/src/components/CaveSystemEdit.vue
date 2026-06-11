@@ -352,8 +352,10 @@ const save = async () => {
     formData.append('_method', 'PUT')
     formData.append('name', cavesystem.value.name || '')
     formData.append('description', cavesystem.value.description || '')
-    formData.append('length', cavesystem.value.length || '')
-    formData.append('vertical_range', cavesystem.value.vertical_range || '')
+    // Use ?? (not ||) so a legitimate 0 is preserved — `0 || ''` is '', which the
+    // backend reads as null and rejects against the NOT NULL length column.
+    formData.append('length', cavesystem.value.length ?? '')
+    formData.append('vertical_range', cavesystem.value.vertical_range ?? '')
     formData.append('slug', cavesystem.value.slug || '')
     formData.append('references', cavesystem.value.references || '')
     if (cavesystem.value.catchment_id) {

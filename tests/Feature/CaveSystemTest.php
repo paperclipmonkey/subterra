@@ -67,6 +67,31 @@ class CaveSystemTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_treats_blank_length_as_zero_instead_of_violating_not_null()
+    {
+        // Reproduces the Gaping Gill case: a CNCC-imported system whose length is 0
+        // is edited, and the form submits an empty length/vertical_range. That must
+        // save as 0 (keeping the rest of the record), not 500 on the NOT NULL column.
+        $caveSystem = CaveSystem::factory()->create(['length' => 0, 'vertical_range' => 0]);
+
+        $response = $this->json('POST', "/api/cave_systems/{$caveSystem->id}?_method=PUT", [
+            'name' => 'Gaping Gill',
+            'length' => '',          // empty, as the form sends for an unknown/0 value
+            'vertical_range' => '',
+            'references' => '* [CNCC Cave Page](https://cncc.org.uk/cave/gaping-gill)',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('cave_systems', [
+            'id' => $caveSystem->id,
+            'name' => 'Gaping Gill',
+            'length' => 0,
+            'vertical_range' => 0,
+            'references' => '* [CNCC Cave Page](https://cncc.org.uk/cave/gaping-gill)',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_prevents_non_admins_from_updating_a_cave_system()
     {
         $nonAdminUser = User::factory()->create();
