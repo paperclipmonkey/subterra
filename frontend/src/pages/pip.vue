@@ -104,7 +104,7 @@
                    of being wiped when a tool starts. Whitespace-only content is
                    treated as no content. -->
               <div v-if="msg.content?.trim()" class="pip-bubble pip-bubble--assistant">
-                <MarkdownRenderer :source="msg.content" />
+                <MarkdownRenderer :source="msg.content" :streaming="!!msg.pending" />
                 <span v-if="msg.streaming" class="pip-cursor" />
               </div>
 

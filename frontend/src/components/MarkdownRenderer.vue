@@ -93,7 +93,9 @@ function geojsonPlugin(md) {
         if (info === 'geojson') {
             // Encode the raw JSON so it survives being placed inside an HTML attribute
             const encoded = encodeURIComponent(token.content.trim())
-            return `<div class="geojson-map" data-geojson="${encoded}"><div class="geojson-placeholder">Loading map…</div></div>`
+            return `<div class="geojson-map" data-geojson="${encoded}">`
+                + '<div class="geojson-placeholder"><span class="geojson-spinner"></span>Building map…</div>'
+                + '</div>'
         }
         return defaultFenceRenderer(tokens, idx, options, env, self)
     }
@@ -112,6 +114,14 @@ const props = defineProps({
     source: {
         type: String,
         default: ''
+    },
+    // True while the source is still being token-streamed. Map hydration is
+    // deferred until streaming finishes: a half-streamed ```geojson fence is
+    // not valid JSON yet, and initialising MapLibre on a DOM node that the
+    // next chunk's re-render will replace wastes WebGL contexts.
+    streaming: {
+        type: Boolean,
+        default: false
     }
 })
 
@@ -150,6 +160,10 @@ const attachSpaLinks = () => {
 }
 
 const renderMermaidDiagrams = async () => {
+    // While streaming, the fence content is incomplete — rendering it would
+    // flash "Mermaid error" bubbles until the diagram finishes arriving.
+    if (props.streaming) return
+
     // Wait for ticks and a small delay to ensure vue-markdown-render has completed its DOM update
     await nextTick()
     await nextTick()
@@ -214,6 +228,10 @@ onBeforeUnmount(() => {
 const MAPTILER_STYLE = 'https://api.maptiler.com/maps/outdoor/style.json?key=0gGMv4po9Mjrpd64A528'
 
 const renderGeoJSONMaps = async () => {
+    // While streaming, leave the animated "Building map…" placeholder in
+    // place — the fence content is incomplete and would fail to parse.
+    if (props.streaming) return
+
     await nextTick()
     await nextTick()
 
@@ -381,8 +399,9 @@ const renderGeoJSONMaps = async () => {
     }
 }
 
-// Watch must be declared AFTER renderGeoJSONMaps to avoid temporal dead zone errors
-watch(() => props.source, () => {
+// Watch must be declared AFTER renderGeoJSONMaps to avoid temporal dead zone errors.
+// streaming is watched too so maps hydrate the moment the stream finishes.
+watch(() => [props.source, props.streaming], () => {
     renderMermaidDiagrams()
     renderGeoJSONMaps()
     nextTick(attachSpaLinks)
@@ -591,9 +610,23 @@ watch(() => props.source, () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   height: 320px;
   color: #9ca3af;
   font-size: 0.875rem;
+}
+
+.markdown-renderer :deep(.geojson-spinner) {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  border-top-color: #2F6852;
+  animation: geojson-spin 0.8s linear infinite;
+}
+
+@keyframes geojson-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* MapLibre GL popup tweaks */
