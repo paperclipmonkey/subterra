@@ -1,38 +1,35 @@
 <template>
   <v-container class="pb-8">
-    <v-toolbar flat color="transparent" class="mb-4">
-      <v-toolbar-title class="text-h4 font-weight-bold pl-0">
-        Collections
-      </v-toolbar-title>
-      <v-spacer />
-      <div style="width: 300px" class="mr-4">
+    <div class="mb-4">
+      <h1 class="text-h5 text-sm-h4 font-weight-bold mb-3">Collections</h1>
+      <div class="d-flex align-center flex-wrap ga-2">
         <v-text-field v-model="search" :prepend-inner-icon="mdiMagnify" label="Search collections" single-line
-                      hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface" />
+                      hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface"
+                      class="flex-grow-1" style="min-width: 200px" />
+        <CollectionEditModal v-if="userStore.canSuggest" />
+        <v-btn
+          v-else-if="userStore.user?.id"
+          color="grey"
+          variant="text"
+          disabled
+          :prepend-icon="mdiPlus"
+        >
+          <v-tooltip activator="parent" location="top">
+            {{ !userStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
+          </v-tooltip>
+          Suggest New
+        </v-btn>
+        <v-btn
+          v-else
+          color="primary"
+          variant="text"
+          to="/login"
+          :prepend-icon="mdiPlus"
+        >
+          Log in to Suggest
+        </v-btn>
       </div>
-      <CollectionEditModal v-if="userStore.canSuggest" />
-      <v-btn
-        v-else-if="userStore.user?.id"
-        color="grey"
-        variant="text"
-        disabled
-        :prepend-icon="mdiPlus"
-        class="mr-2"
-      >
-        <v-tooltip activator="parent" location="top">
-          {{ !userStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
-        </v-tooltip>
-        Suggest New
-      </v-btn>
-      <v-btn
-        v-else
-        color="primary"
-        variant="text"
-        to="/login"
-        :prepend-icon="mdiPlus"
-      >
-        Log in to Suggest
-      </v-btn>
-    </v-toolbar>
+    </div>
 
     <div v-if="loading" class="d-flex justify-center my-12">
       <v-progress-circular indeterminate color="primary" size="64" />
@@ -54,7 +51,7 @@
                     {{ collection.name }}
                   </v-card-title>
                   <v-card-subtitle class="text-white pa-0 opacity-80">
-                    {{ collection.caves_count }} Caves
+                    {{ collection.caves_count }} {{ collection.caves_count === 1 ? 'Cave' : 'Caves' }}
                   </v-card-subtitle>
                 </div>
               </div>

@@ -1,8 +1,14 @@
 <template>
   <v-dialog v-model="dialog" max-width="800px">
     <template #activator="{ props: activatorProps }">
-      <v-btn v-if="canEdit && (isNew || userStore.canSuggest)" color="primary" variant="text" :prepend-icon="isNew ? mdiPlus : mdiPencil"
-             v-bind="activatorProps">
+      <v-btn
+        v-if="canEdit && (isNew || userStore.canSuggest)"
+        :color="overlay ? 'white' : 'primary'"
+        :variant="overlay ? 'elevated' : 'text'"
+        :class="overlay ? 'text-primary' : ''"
+        :prepend-icon="isNew ? mdiPlus : mdiPencil"
+        v-bind="activatorProps"
+      >
         {{ activatorText }}
       </v-btn>
       <v-btn v-else-if="canEdit" color="grey" variant="text" disabled :prepend-icon="mdiPencilOff">
@@ -55,6 +61,12 @@ const props = defineProps({
         type: Object,
         required: false,
         default: null
+    },
+    // When shown over a hero image, render a solid elevated button so it stays
+    // legible against any background instead of a plain text button.
+    overlay: {
+        type: Boolean,
+        default: false,
     },
 })
 

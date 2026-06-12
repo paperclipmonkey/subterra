@@ -55,7 +55,7 @@
     </v-row>
 
     <!-- Hero Section -->
-    <v-card class="mb-6 rounded-xl position-relative cursor-pointer hero-img" elevation="2" @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }">
+    <v-card class="mb-4 rounded-xl position-relative cursor-pointer hero-img" elevation="2" @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }">
       <div class="cave-hero__media" style="width: 100%; position: relative; overflow: hidden; border-radius: inherit;">
         <video
           v-if="cave.hero_video?.preview_url || cave.hero_video?.url"
@@ -82,7 +82,7 @@
           <div class="d-flex justify-space-between align-end">
             <div>
               <div v-if="cave.system?.caves?.length > 1" class="text-overline mb-1 opacity-80">{{ cave.system?.name || 'Unknown System' }}</div>
-              <h1 class="text-h4 text-md-h3 font-weight-bold mb-3 cave-hero__title">{{ cave.name }}</h1>
+              <h1 class="text-h4 text-md-h3 font-weight-bold mb-2 cave-hero__title">{{ cave.name }}</h1>
               <div class="cave-hero__location d-inline-flex align-center px-3 py-1">
                 <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
                 <span class="text-body-2 font-weight-medium">{{ cave.location_name }}, {{ cave.location_country }}</span>
@@ -1106,10 +1106,10 @@ function renderAnnotationOverlays (map) {
 }
 
 .cave-hero__media {
-  height: 260px;
+  height: 190px;
 
   @media (min-width: 960px) {
-    height: 380px;
+    height: 260px;
   }
 }
 
@@ -1120,7 +1120,7 @@ function renderAnnotationOverlays (map) {
     rgba(10, 16, 13, 0.45) 55%,
     rgba(10, 16, 13, 0) 100%
   );
-  padding-top: 72px !important;
+  padding-top: 48px !important;
 }
 
 .cave-hero__title {

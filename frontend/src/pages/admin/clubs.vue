@@ -29,7 +29,7 @@
             </v-btn>
           </template>
           <template #item.website="{ item }">
-            <a :href="item.website" target="_blank" @click.stop>{{ item.website }}</a>
+            <a :href="item.website" target="_blank" class="text-primary" @click.stop>{{ item.website }}</a>
           </template>
           <template #item.description="{ item }">
             <div class="text-truncate" style="max-width: 200px;" :title="item.description">{{ item.description }}</div>

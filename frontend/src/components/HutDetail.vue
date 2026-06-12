@@ -44,7 +44,7 @@
 
             <div v-if="hut.external_url" class="d-flex align-center mb-2">
               <v-icon start color="primary" :icon="mdiWeb" />
-              <a :href="hut.external_url" target="_blank">{{ hut.external_url }}</a>
+              <a :href="hut.external_url" target="_blank" class="text-primary text-decoration-none">{{ hut.external_url }}</a>
             </div>
 
             <div v-if="hut.amenities && hut.amenities.length" class="mt-4">

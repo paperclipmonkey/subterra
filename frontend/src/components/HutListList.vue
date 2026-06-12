@@ -11,7 +11,7 @@
         <!-- Placeholder image if mostly not available, or map snapshot -->
         <v-img height="200px" cover :src="hut.image_url"
                gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-          <v-card-title class="text-white align-end d-flex fill-height" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">{{ hut.name
+          <v-card-title class="text-white align-end d-flex fill-height hut-card-title" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">{{ hut.name
           }}</v-card-title>
         </v-img>
         <v-card-text>
@@ -38,3 +38,17 @@ defineProps({
     }
 })
 </script>
+
+<style scoped>
+/* Allow long hut names to wrap onto a second line instead of being clipped
+   by v-card-title's default single-line ellipsis. */
+.hut-card-title {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

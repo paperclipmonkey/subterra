@@ -54,17 +54,23 @@
 
           <v-row class="mb-8">
             <v-col v-for="officer in officers" :key="officer.id" cols="12" sm="6" md="4">
-              <v-card height="100%" class="d-flex flex-column">
+              <v-card height="100%" class="d-flex flex-column" :to="`/profile/${officer.id}`" hover>
                 <div class="d-flex align-center pa-4 pb-2">
                   <v-avatar size="56" class="mr-3 elevation-1" color="primary">
-                    <v-img v-if="officer.photo" :src="officer.photo" :alt="officer.name" />
+                    <v-img v-if="officer.photo" :src="officer.photo" :alt="officer.name" cover>
+                      <template #error>
+                        <span class="text-h5 text-white font-weight-bold">
+                          {{ officer.name.charAt(0) }}
+                        </span>
+                      </template>
+                    </v-img>
                     <span v-else class="text-h5 text-white font-weight-bold">
                       {{ officer.name.charAt(0) }}
                     </span>
                   </v-avatar>
                   <div>
                     <div class="text-subtitle-1 font-weight-bold">{{ officer.name }}</div>
-                    <div v-if="officer.clubs && officer.clubs.length" class="d-flex flex-wrap gap-1 mt-1">
+                    <div v-if="officer.clubs && officer.clubs.length" class="d-flex flex-wrap ga-2 mt-1">
                       <v-chip
                         v-for="club in officer.clubs"
                         :key="club.slug"
@@ -102,7 +108,13 @@
                 <v-list-item>
                   <template #prepend>
                     <v-avatar size="36" color="primary" class="mr-2">
-                      <v-img v-if="shift.user.photo" :src="shift.user.photo" :alt="shift.user.name" />
+                      <v-img v-if="shift.user.photo" :src="shift.user.photo" :alt="shift.user.name" cover>
+                        <template #error>
+                          <span class="text-body-2 text-white font-weight-bold">
+                            {{ shift.user.name.charAt(0) }}
+                          </span>
+                        </template>
+                      </v-img>
                       <span v-else class="text-body-2 text-white font-weight-bold">
                         {{ shift.user.name.charAt(0) }}
                       </span>

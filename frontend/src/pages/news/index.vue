@@ -52,8 +52,12 @@ const loading = ref(true)
 
 const getExcerpt = (markdown) => {
   // Simple strip of header # and basic formatting for preview
-  // Remove headers
-  let text = markdown.replace(/^#+\s+/gm, '')
+  let text = markdown || ''
+  // Drop a leading heading line — articles repeat their title as the first
+  // heading, which would otherwise duplicate the card title in the excerpt.
+  text = text.replace(/^\s*#{1,6}\s+.*(?:\r?\n)+/, '')
+  // Remove remaining header markers but keep their text
+  text = text.replace(/^#+\s+/gm, '')
   // Remove images
   text = text.replace(/!\[.*?\]\(.*?\)/g, '')
   // Remove links but keep text

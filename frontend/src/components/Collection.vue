@@ -16,7 +16,7 @@
       </div>
 
       <div class="position-absolute top-0 right-0 pa-4 d-flex align-center" style="z-index: 1;">
-        <CollectionEditModal :collection="collection" />
+        <CollectionEditModal :collection="collection" overlay />
       </div>
 
       <v-container class="pb-6">
@@ -62,10 +62,20 @@
 
     <!-- Mobile View: Tabs -->
     <div v-else>
-      <v-tabs v-model="tab" color="primary" align-tabs="center" grow>
-        <v-tab value="list" class="font-weight-bold"><v-icon start :icon="mdiFormatListBulleted" /> List View</v-tab>
-        <v-tab value="map" class="font-weight-bold"><v-icon start :icon="mdiMap" /> Map View</v-tab>
-      </v-tabs>
+      <div class="d-flex justify-center mt-3 mb-2">
+        <v-btn-toggle
+          v-model="tab"
+          mandatory
+          density="comfortable"
+          rounded="pill"
+          color="primary"
+          variant="tonal"
+          class="view-toggle"
+        >
+          <v-btn value="list" :prepend-icon="mdiViewGridOutline" class="text-none px-6">List</v-btn>
+          <v-btn value="map" :prepend-icon="mdiMapOutline" class="text-none px-6">Map</v-btn>
+        </v-btn-toggle>
+      </div>
 
       <v-window v-model="tab">
         <v-window-item value="list">
@@ -96,7 +106,7 @@
 </template>
 
 <script setup>
-import { mdiAlertCircleOutline, mdiArrowLeft, mdiFormatListBulleted, mdiMap } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiMapOutline, mdiViewGridOutline } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
@@ -175,6 +185,10 @@ const openImage = (item) => {
 </script>
 
 <style scoped>
+.view-toggle {
+  border: 1px solid rgba(24, 38, 31, 0.12);
+}
+
 .backdrop-blur {
   backdrop-filter: blur(8px);
   background-color: rgba(255, 255, 255, 0.1) !important;

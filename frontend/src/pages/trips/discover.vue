@@ -119,7 +119,8 @@ import { api } from '@/plugins/api'
 const router = useRouter()
 
 // ── State ──────────────────────────────────────────────────────────────
-const mapStyle = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
+// Overview map — default to terrain (topo) like the caves list.
+const mapStyle = ref('https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528')
 const mapRef = ref(null)
 const loading = ref(true)
 const allTrips = ref([])
@@ -180,22 +181,13 @@ const formatDuration = (minutes) => {
   return `${m}m`
 }
 
-const CARD_GRADIENTS = [
-  'linear-gradient(135deg, #1a237e 0%, #0288d1 100%)',
-  'linear-gradient(135deg, #1b5e20 0%, #00897b 100%)',
-  'linear-gradient(135deg, #4a148c 0%, #880e4f 100%)',
-  'linear-gradient(135deg, #e65100 0%, #f57f17 100%)',
-  'linear-gradient(135deg, #0d47a1 0%, #006064 100%)',
-]
-
 const getMiniCardBg = (trip) => {
   const img = trip.media?.[0]?.url
     || trip.media?.[0]?.filename
     || trip.entrance_hero_image
     || trip.entrance_entrance_image
-  if (img) return `url("${img}") center/cover no-repeat`
-  const idx = (typeof trip.id === 'string' ? trip.id.charCodeAt(0) : (trip.id ?? 0)) % CARD_GRADIENTS.length
-  return CARD_GRADIENTS[idx]
+    || '/placeholder-cave.jpg'
+  return `url("${img}") center/cover no-repeat`
 }
 
 // ── Age color expression for MapLibre ──────────────────────────────────
@@ -284,9 +276,7 @@ const setupLayers = () => {
 }
 
 const openPopup = (coords, props) => {
-  const img = props.image_url
-    ? `<img src="${props.image_url}" style="width:100%;height:96px;object-fit:cover;" />`
-    : `<div style="height:60px;background:linear-gradient(135deg,#1a237e,#0288d1);"></div>`
+  const img = `<img src="${props.image_url || '/placeholder-cave.jpg'}" style="width:100%;height:96px;object-fit:cover;" />`
 
   const duration = props.duration
     ? `<span style="margin-left:8px;">⏱ ${formatDuration(props.duration)}</span>`

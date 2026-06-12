@@ -3,6 +3,7 @@
     <v-card-text class="map-holder">
       <AppMap ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15">
         <mgl-marker v-for="cave in caves" :key="cave.id"
+                    :scale="1.2"
                     :coordinates="[cave.location_lng, cave.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card>

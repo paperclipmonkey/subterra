@@ -3,6 +3,7 @@
     <v-card-text class="map-holder">
       <AppMap ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15">
         <mgl-marker v-for="hut in huts" :key="hut.id"
+                    :scale="1.2"
                     :coordinates="[hut.location_lng, hut.location_lat]">
           <mgl-popup ref="popupRefs">
             <v-card>
@@ -74,7 +75,9 @@ import {
 
 import maplibregl from 'maplibre-gl'
 
-const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
+// Listing/overview map — default to terrain (topo) like the caves list. Users
+// can switch to satellite via the layer control.
+const style = ref('https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528')
 const zoom = 5
 const lnglat = [-2, 53]
 

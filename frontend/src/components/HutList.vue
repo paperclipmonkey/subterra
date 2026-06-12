@@ -7,10 +7,20 @@
       </div>
     </template>
 
-    <v-tabs v-model="tab" align-tabs="center" density="compact">
-      <v-tab value="map">Map</v-tab>
-      <v-tab value="list">List</v-tab>
-    </v-tabs>
+    <div class="d-flex justify-center mt-3 mb-2">
+      <v-btn-toggle
+        v-model="tab"
+        mandatory
+        density="comfortable"
+        rounded="pill"
+        color="primary"
+        variant="tonal"
+        class="view-toggle"
+      >
+        <v-btn value="list" :prepend-icon="mdiViewGridOutline" class="text-none px-6">List</v-btn>
+        <v-btn value="map" :prepend-icon="mdiMapOutline" class="text-none px-6">Map</v-btn>
+      </v-btn-toggle>
+    </div>
 
     <v-tabs-window v-model="tab">
       <v-tabs-window-item value="map">
@@ -30,7 +40,7 @@
 </template>
 
 <script setup>
-import { mdiMagnify } from '@mdi/js'
+import { mdiMagnify, mdiMapOutline, mdiViewGridOutline } from '@mdi/js'
 
 import { ref, onMounted, computed, watch } from 'vue'
 import { useHutStore } from '@/stores/huts'
@@ -44,7 +54,7 @@ const userStore = useAppStore()
 const route = useRoute()
 const router = useRouter()
 
-const tab = ref(route.query.view || 'map')
+const tab = ref(route.query.view || 'list')
 const search = ref(route.query.search || '')
 
 onMounted(() => {
@@ -70,3 +80,9 @@ const huts = computed(() => {
 })
 const loading = computed(() => hutStore.loading)
 </script>
+
+<style scoped>
+.view-toggle {
+  border: 1px solid rgba(24, 38, 31, 0.12);
+}
+</style>

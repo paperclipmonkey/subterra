@@ -1,7 +1,7 @@
 <template>
   <div v-if="trip" class="fill-height bg-grey-lighten-4">
-    <!-- Hero Header - with photo -->
-    <v-img v-if="heroImage" :src="heroImage" cover height="300" class="align-end"
+    <!-- Hero Header -->
+    <v-img :src="heroImage" cover height="300" class="align-end"
            gradient="to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.8)">
       <!-- Top Navigation -->
       <div class="position-absolute top-0 left-0 w-100 d-flex align-center pa-4">
@@ -34,40 +34,6 @@
         </div>
       </v-container>
     </v-img>
-
-    <!-- Hero Header - no photo gradient fallback -->
-    <div v-else class="trip-hero-gradient d-flex flex-column justify-end" style="height: 300px; position: relative;">
-      <!-- Top Navigation -->
-      <div class="position-absolute top-0 left-0 w-100 d-flex align-center pa-4" style="z-index: 1;">
-        <v-btn :icon="mdiArrowLeft" variant="tonal" color="white" class="backdrop-blur"
-               @click="$router.push('/trips')" />
-        <v-spacer />
-        <template v-if="currentUserWasOnTrip">
-          <v-btn :icon="mdiPencil" variant="tonal" color="white" class="mr-2 backdrop-blur"
-                 @click="$router.push('/trips/' + trip.id + '/edit')" />
-          <v-btn :icon="mdiDelete" variant="tonal" color="error" class="backdrop-blur text-white"
-                 @click="showDeleteConfirmDialog = true" />
-        </template>
-      </div>
-      <!-- Hero Content -->
-      <v-container class="pb-6" style="position: relative; z-index: 1;">
-        <div class="text-subtitle-1 text-white mb-1 d-flex align-center">
-          <v-icon :icon="mdiMapMarker" size="small" class="mr-1" />
-          {{ trip.system?.name || 'Unknown System' }}
-        </div>
-        <h1 class="text-h3 text-white font-weight-bold mb-2">{{ trip.name }}</h1>
-        <div class="d-flex align-center text-white">
-          <v-chip size="small" color="white" variant="outlined" class="mr-3">
-            <v-icon start :icon="mdiCalendar" />
-            {{ formatDate(trip.start_time) }}
-          </v-chip>
-          <v-chip :color="getVisibilityColor(trip.visibility)" size="small" variant="flat">
-            <v-icon start size="small">{{ getVisibilityIcon(trip.visibility) }}</v-icon>
-            {{ trip.visibility }}
-          </v-chip>
-        </div>
-      </v-container>
-    </div>
 
     <v-container class="mt-n8 position-relative">
       <v-row>
@@ -292,7 +258,8 @@ const heroImage = computed(() => {
   if (trip.value?.media && trip.value.media.length > 0) {
     return trip.value.media[0].url
   }
-  return null
+  // Fall back to the default cave image (matching the caves list) rather than a flat gradient.
+  return '/placeholder-cave.jpg'
 })
 
 const formatDate = (date) => {
@@ -365,24 +332,6 @@ onMounted(async () => {
 .backdrop-blur {
   backdrop-filter: blur(4px);
   background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.trip-hero-gradient {
-  background: linear-gradient(160deg,
-    #0d1b2a 0%,
-    #1b2f45 25%,
-    #162840 50%,
-    #0f1f33 75%,
-    #0a1628 100%
-  );
-  position: relative;
-}
-
-.trip-hero-gradient::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.75));
 }
 
 .scale-110 {
