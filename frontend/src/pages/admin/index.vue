@@ -6,7 +6,7 @@
     </div>
 
     <!-- Operations & Safety -->
-    <section v-if="isDutyOfficer || isPlatformAdmin" class="mb-10">
+    <section v-if="isDutyOfficer" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="error" class="mr-3" size="32" :icon="mdiShieldAlert" />
         <h3 class="text-h5 font-weight-bold">Operations & Safety</h3>
