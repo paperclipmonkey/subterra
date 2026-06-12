@@ -259,7 +259,7 @@ describe('Profile.vue', () => {
         await wrapper.vm.$nextTick()
 
         expect(wrapper.text()).toContain('Start your collection!')
-        expect(wrapper.text()).toContain('Find a cave')
+        expect(wrapper.text()).toContain('See what you can earn')
     })
 
     it('hides medal introduction for other profile with no medals', async () => {
