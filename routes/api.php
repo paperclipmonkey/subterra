@@ -287,6 +287,7 @@ Route::middleware(['auth:sanctum'])->prefix('clubs/{club}')->group(function () {
     Route::get('recent-trips', [ClubDataController::class, 'recentTrips'])->middleware('can:view,club');
     Route::get('members', [ClubDataController::class, 'members'])->middleware('can:view,club');
     Route::get('activity-heatmap', [ClubDataController::class, 'activityHeatmap'])->middleware('can:view,club');
+    Route::get('summary', [ClubDataController::class, 'summary'])->middleware('can:view,club');
 });
 
 Route::post('logout', function (Request $request) {

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             TestDataSeeder::class,
             TagSeeder::class,
             CaveSeeder::class,
+            CrossClubTripSeeder::class,
             HutSeeder::class,
             PageSeeder::class,
             PrivacyPolicySeeder::class,
