@@ -65,8 +65,11 @@ class WeatherService
     /**
      * Get historic rain data for the last 7 days from Pirate Weather
      * Uses Time Machine requests.
+     *
+     * With $includeTodaySoFar, today's observed hours (midnight up to now) are
+     * appended as an extra day so the data joins up with a live forecast.
      */
-    public function getHistoricRain(float $latitude, float $longitude): ?array
+    public function getHistoricRain(float $latitude, float $longitude, bool $includeTodaySoFar = false): ?array
     {
         if (empty($this->apiKey)) {
             Log::warning('Pirate Weather API key not configured');
@@ -83,8 +86,12 @@ class WeatherService
         $datesToFetch = [];
 
         // Identify which days are not in cache
-        for ($i = 0; $i < 7; ++$i) {
-            $date = $now->copy()->subDays($i + 1)->setHour(12)->setMinute(0)->setSecond(0);
+        for ($daysAgo = $includeTodaySoFar ? 0 : 1; $daysAgo <= 7; ++$daysAgo) {
+            // Past days are anchored to noon; today must use the current time
+            // since noon may not have happened yet.
+            $date = $daysAgo === 0
+                ? $now->copy()
+                : $now->copy()->subDays($daysAgo)->setHour(12)->setMinute(0)->setSecond(0);
             $dateString = $date->format('Y-m-d');
             $cacheKey = "weather_historic_{$normalizedLatitude}_{$normalizedLongitude}_{$dateString}";
 
@@ -95,6 +102,8 @@ class WeatherService
                 $datesToFetch[$dateString] = [
                     'url' => "https://timemachine.pirateweather.net/forecast/{$this->apiKey}/{$normalizedLatitude},{$normalizedLongitude},{$date->timestamp}",
                     'cacheKey' => $cacheKey,
+                    // Completed days are immutable; today is still accumulating.
+                    'ttl' => $daysAgo === 0 ? self::FORECAST_CACHE_TTL : 31536000,
                 ];
             }
         }
@@ -137,7 +146,7 @@ class WeatherService
                             }, $json['hourly']['data'] ?? []),
                         ];
 
-                        Cache::put($fetchInfo['cacheKey'], $dayData, 31536000); // 1 year
+                        Cache::put($fetchInfo['cacheKey'], $dayData, $fetchInfo['ttl']);
                         $historicData[$dateString] = $dayData;
                     } else {
                         Log::error('Pirate Weather Historic API error', [
@@ -152,6 +161,17 @@ class WeatherService
                     'message' => $e->getMessage(),
                 ]);
             }
+        }
+
+        // Today's Time Machine response covers the whole day, so hours that
+        // haven't happened yet hold model estimates — drop them to keep this
+        // strictly observed data (a live forecast covers the rest of today).
+        $todayKey = $now->format('Y-m-d');
+        if ($includeTodaySoFar && isset($historicData[$todayKey]['hourly'])) {
+            $historicData[$todayKey]['hourly'] = array_values(array_filter(
+                $historicData[$todayKey]['hourly'],
+                fn ($hour) => $hour['time'] <= $now->timestamp
+            ));
         }
 
         // Sort by date descending (to match existing behavior of subDays order)

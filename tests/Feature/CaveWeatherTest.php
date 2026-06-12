@@ -176,7 +176,7 @@ class CaveWeatherTest extends TestCase
             'location_lng' => -2.5879,
         ]);
 
-        // Mock Pirate Weather Time Machine calls (7 calls for 7 days)
+        // Mock Pirate Weather Time Machine calls (8 calls: 7 past days + today so far)
         Http::fake([
             'timemachine.pirateweather.net/*' => Http::response([
                 'daily' => [
@@ -210,8 +210,8 @@ class CaveWeatherTest extends TestCase
             ],
         ]);
 
-        // Verify we got 7 days of data
-        $this->assertCount(7, $response->json('data'));
+        // Verify we got 8 days of data (7 past days + today so far)
+        $this->assertCount(8, $response->json('data'));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -247,7 +247,7 @@ class CaveWeatherTest extends TestCase
         $response = $this->getJson("/api/caves/{$cave->slug}/weather/historic");
 
         $response->assertStatus(200);
-        // 7 days requested, 1 failed — the remaining 6 still come through.
-        $this->assertCount(6, $response->json('data'));
+        // 8 days requested (incl. today so far), 1 failed — the remaining 7 still come through.
+        $this->assertCount(7, $response->json('data'));
     }
 }

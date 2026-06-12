@@ -10,6 +10,11 @@
       <!-- Current Weather -->
       <v-card v-if="weatherData.currently" class="mb-4 rounded-lg" elevation="0" color="blue-grey-darken-4">
         <v-card-text class="pa-6">
+          <div class="d-flex align-center text-caption text-blue-grey-lighten-2 mb-3 flex-wrap">
+            <v-icon :icon="mdiMapMarker" size="16" class="mr-1 text-blue-grey-lighten-3" />
+            <span class="text-blue-grey-lighten-4 font-weight-medium mr-1">{{ caveName }}</span>
+            <span v-if="location.lat">&middot; forecast for the cave entrance ({{ Number(location.lat).toFixed(4) }}, {{ Number(location.lng).toFixed(4) }})</span>
+          </div>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
               <div class="text-h4 font-weight-light text-white mb-1">
@@ -44,32 +49,22 @@
 
       <v-row>
         <v-col cols="12">
-          <!-- Forecast Rain Chart -->
+          <!-- Combined Precipitation Timeline (observed + forecast) -->
           <v-card class="mb-4 rounded-lg" elevation="1">
-            <v-card-title class="text-subtitle-1 font-weight-bold">Predicted Precipitation (Next 48h)</v-card-title>
+            <v-card-title class="text-subtitle-1 font-weight-bold">Precipitation at {{ caveName }}</v-card-title>
+            <v-card-subtitle>Last 7 days observed &middot; next 48 hours forecast</v-card-subtitle>
             <v-card-text>
-              <Line
-                id="forecast-rain-chart"
-                :options="forecastChartOptions"
-                :data="forecastChartData"
-              />
+              <v-progress-linear v-if="!historicData" indeterminate height="2" class="mb-2" />
+              <div style="height: 320px;">
+                <Line
+                  id="precipitation-timeline-chart"
+                  :options="combinedChartOptions"
+                  :data="combinedChartData"
+                  :plugins="[nowLinePlugin]"
+                />
+              </div>
             </v-card-text>
           </v-card>
-        </v-col>
-
-        <v-col cols="12">
-          <!-- Historic Rain Chart -->
-          <v-card v-if="historicData" class="mb-4 rounded-lg" elevation="1">
-            <v-card-title class="text-subtitle-1 font-weight-bold">Historic Precipitation (Last 7 Days)</v-card-title>
-            <v-card-text>
-              <Line
-                id="historic-rain-chart"
-                :options="historicChartOptions"
-                :data="historicChartData"
-              />
-            </v-card-text>
-          </v-card>
-          <v-skeleton-loader v-else class="mb-4 rounded-lg" type="card" />
         </v-col>
 
         <v-col v-if="weatherData.river_levels && weatherData.river_levels.length > 0" cols="12">
@@ -172,7 +167,7 @@
 </template>
 
 <script setup>
-import { mdiArrowBottomRight, mdiArrowTopRight, mdiMinus, mdiOpenInNew, mdiWeatherCloudy, mdiWeatherCloudyClock, mdiWeatherFog, mdiWeatherLightning, mdiWeatherNight, mdiWeatherNightPartlyCloudy, mdiWeatherPartlyCloudy, mdiWeatherRainy, mdiWeatherSnowy, mdiWeatherSnowyRainy, mdiWeatherSunny, mdiWeatherTornado, mdiWeatherWindy } from '@mdi/js'
+import { mdiArrowBottomRight, mdiArrowTopRight, mdiMapMarker, mdiMinus, mdiOpenInNew, mdiWeatherCloudy, mdiWeatherCloudyClock, mdiWeatherFog, mdiWeatherLightning, mdiWeatherNight, mdiWeatherNightPartlyCloudy, mdiWeatherPartlyCloudy, mdiWeatherRainy, mdiWeatherSnowy, mdiWeatherSnowyRainy, mdiWeatherSunny, mdiWeatherTornado, mdiWeatherWindy } from '@mdi/js'
 
 import { ref, onMounted, computed } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
@@ -197,55 +192,92 @@ const historicData = ref(null)
 const location = ref({ lat: 0, lng: 0 })
 const caveName = ref('')
 
-const historicChartOptions = {
+// Draws a dashed vertical line at the current time, lightly shades the
+// forecast region to its right, and labels it "Now".
+const nowLinePlugin = {
+  id: 'nowLine',
+  afterDatasetsDraw(chart) {
+    const xScale = chart.scales.x
+    const area = chart.chartArea
+    if (!xScale || !area) return
+
+    const px = xScale.getPixelForValue(Date.now())
+    if (px < area.left || px > area.right) return
+
+    const ctx = chart.ctx
+    ctx.save()
+    ctx.fillStyle = 'rgba(96, 125, 139, 0.07)'
+    ctx.fillRect(px, area.top, area.right - px, area.bottom - area.top)
+    ctx.strokeStyle = 'rgba(55, 71, 79, 0.65)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    ctx.beginPath()
+    ctx.moveTo(px, area.top)
+    ctx.lineTo(px, area.bottom)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.font = '500 11px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#37474F'
+    ctx.fillText('Now', px, area.top - 6)
+    ctx.restore()
+  }
+}
+
+const combinedChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  layout: { padding: { top: 18 } },
   plugins: {
-    legend: { display: false },
+    legend: {
+      display: true,
+      position: 'bottom',
+      labels: {
+        usePointStyle: true,
+        pointStyle: 'line',
+        // With usePointStyle, Chart.js builds legend styles from data point 0,
+        // which has no borderDash — re-apply each dataset's dash pattern so
+        // the forecast/probability markers render dashed like their lines.
+        generateLabels: chart => {
+          const labels = ChartJS.defaults.plugins.legend.labels.generateLabels(chart)
+          labels.forEach(label => {
+            label.lineDash = chart.data.datasets[label.datasetIndex].borderDash || []
+            label.lineWidth = 2
+          })
+          return labels
+        }
+      }
+    },
     tooltip: {
       callbacks: {
-        label: function (context) {
-          return context.parsed.y + ' mm'
+        title: items => moment(items[0].parsed.x).format('ddd D MMM HH:mm'),
+        label: context => {
+          const name = context.dataset.label.replace(/ \(.*\)$/, '')
+          const unit = context.dataset.yAxisID === 'y1' ? '%' : ' mm/h'
+          return `${name}: ${Math.round(context.parsed.y * 100) / 100}${unit}`
         }
       }
     }
   },
   scales: {
+    x: {
+      type: 'time',
+      time: {
+        unit: 'day',
+        displayFormats: { day: 'ddd D' }
+      }
+    },
     y: {
       beginAtZero: true,
-      title: { display: true, text: 'Precipitation (mm)' }
-    }
-  }
-}
-
-const forecastChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: true, position: 'bottom' },
-    tooltip: {
-      mode: 'index',
-      intersect: false,
-    }
-  },
-  scales: {
-    y: {
-      type: 'linear',
-      display: true,
-      position: 'left',
-      title: { display: true, text: 'Probability (%)' },
-      min: 0,
-      max: 100,
+      title: { display: true, text: 'Rainfall (mm/h)' }
     },
     y1: {
       type: 'linear',
-      display: true,
       position: 'right',
-      title: { display: true, text: 'Intensity (mm/h)' },
-      grid: {
-        drawOnChartArea: false,
-      },
-      beginAtZero: true
+      min: 0,
+      max: 100,
+      grid: { drawOnChartArea: false },
+      ticks: { callback: value => value + '%' }
     }
   },
   interaction: {
@@ -255,61 +287,69 @@ const forecastChartOptions = {
   }
 }
 
-const historicChartData = computed(() => {
-  if (!historicData.value) return { labels: [], datasets: [] }
+const combinedChartData = computed(() => {
+  const nowMs = Date.now()
 
-  // historicData is an object keyed by date string
-  // Sort keys just in case
-  const dates = Object.keys(historicData.value).sort()
-
-  // Calculate total daily rainfall from hourly data
-  const dailyRain = dates.map(date => {
-    const day = historicData.value[date]
-    if (!day.hourly) return 0
-
-    // Sum precipIntensity (mm/hour) for each hour. 
-    // Assuming data is hourly, summing intensity gives approx total mm.
-    return day.hourly.reduce((sum, hour) => sum + (hour.precipIntensity || 0), 0)
-  })
-
-  return {
-    labels: dates.map(d => moment(d).format('ddd Do')),
-    datasets: [{
-      label: 'Precipitation (mm)',
-      borderColor: '#42A5F5',
-      backgroundColor: 'rgba(66, 165, 245, 0.2)',
-      fill: true,
-      tension: 0.4,
-      data: dailyRain
-    }]
+  // Observed: hourly readings for the last 7 days plus today so far.
+  const observed = []
+  if (historicData.value) {
+    const dates = Object.keys(historicData.value).sort()
+    for (const date of dates) {
+      for (const hour of historicData.value[date].hourly || []) {
+        const t = hour.time * 1000
+        if (t <= nowMs) observed.push({ x: t, y: hour.precipIntensity || 0 })
+      }
+    }
+    observed.sort((a, b) => a.x - b.x)
   }
-})
 
-const forecastChartData = computed(() => {
-  if (!weatherData.value?.hourly?.data) return { labels: [], datasets: [] }
+  // Forecast: the next 48 hours from now.
+  const horizonMs = nowMs + 48 * 3600 * 1000
+  const forecastHours = (weatherData.value?.hourly?.data || [])
+    .filter(h => h.time * 1000 > nowMs - 3600 * 1000 && h.time * 1000 <= horizonMs)
+  const forecast = forecastHours.map(h => ({ x: h.time * 1000, y: h.precipIntensity || 0 }))
+  const probability = forecastHours.map(h => ({ x: h.time * 1000, y: Math.round((h.precipProbability || 0) * 100) }))
 
-  const next48Hours = weatherData.value.hourly.data.slice(0, 48)
+  // Bridge the gap so the observed and forecast lines join at "now".
+  if (observed.length && forecast.length && forecast[0].x > observed[observed.length - 1].x) {
+    forecast.unshift(observed[observed.length - 1])
+  }
 
   return {
-    labels: next48Hours.map(h => moment.unix(h.time).format('ddd HH:mm')),
     datasets: [
       {
-        label: 'Precip Probability (%)',
-        borderColor: '#90CAF9',
-        backgroundColor: 'rgba(144, 202, 249, 0.2)',
+        label: 'Observed (mm/h)',
+        data: observed,
+        borderColor: '#1E88E5',
+        backgroundColor: 'rgba(30, 136, 229, 0.25)',
         fill: true,
-        data: next48Hours.map(h => (h.precipProbability * 100)),
-        yAxisID: 'y',
-        tension: 0.4
+        pointRadius: 0,
+        borderWidth: 1.5,
+        tension: 0.3,
+        yAxisID: 'y'
       },
       {
-        label: 'Precip Intensity (mm/h)',
-        borderColor: '#1E88E5',
-        backgroundColor: 'rgba(30, 136, 229, 0.5)',
-        borderDash: [5, 5],
-        data: next48Hours.map(h => h.precipIntensity),
-        yAxisID: 'y1',
-        tension: 0.4
+        label: 'Forecast (mm/h)',
+        data: forecast,
+        borderColor: '#42A5F5',
+        backgroundColor: 'rgba(66, 165, 245, 0.13)',
+        borderDash: [6, 4],
+        fill: true,
+        pointRadius: 0,
+        borderWidth: 1.5,
+        tension: 0.3,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Chance of rain (%)',
+        data: probability,
+        borderColor: 'rgba(120, 120, 120, 0.5)',
+        borderDash: [2, 3],
+        fill: false,
+        pointRadius: 0,
+        borderWidth: 1.2,
+        tension: 0.3,
+        yAxisID: 'y1'
       }
     ]
   }
@@ -553,13 +593,3 @@ const getTrendColor = (trend) => {
 }
 </script>
 
-<style scoped>
-/* Chart heights */
-#historic-rain-chart {
-  height: 200px;
-}
-
-#forecast-rain-chart {
-  height: 300px;
-}
-</style>

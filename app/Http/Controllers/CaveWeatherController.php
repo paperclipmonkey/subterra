@@ -112,7 +112,8 @@ class CaveWeatherController extends Controller
 
         $historicData = $this->weatherService->getHistoricRain(
             $cave->location_lat,
-            $cave->location_lng
+            $cave->location_lng,
+            includeTodaySoFar: true
         );
 
         if (!$historicData) {
