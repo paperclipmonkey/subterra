@@ -115,8 +115,10 @@
               auto-select-first
               variant="outlined"
               density="compact"
+              autocomplete="off"
               :loading="systemsLoading"
               :no-data-text="systemsLoading ? 'Loading...' : 'No other cave systems found'"
+              :menu-props="{ zIndex: 2500 }"
             />
           </v-card-text>
           <v-card-actions>
