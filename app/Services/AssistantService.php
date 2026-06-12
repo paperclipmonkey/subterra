@@ -20,6 +20,7 @@ use App\Services\Assistant\Tools\FindNearbyHutsTool;
 use App\Services\Assistant\Tools\GetCaveDetailsTool;
 use App\Services\Assistant\Tools\GetCaveSystemActivityTool;
 use App\Services\Assistant\Tools\GetCollectionDetailsTool;
+use App\Services\Assistant\Tools\GetMedalProgressTool;
 use App\Services\Assistant\Tools\GetUpcomingPermitsTool;
 use App\Services\Assistant\Tools\GetUserExperienceTool;
 use App\Services\Assistant\Tools\GetWeatherForecastTool;
@@ -48,6 +49,7 @@ class AssistantService
 
     public function __construct(
         GetUserExperienceTool $userExperienceTool,
+        GetMedalProgressTool $medalProgressTool,
         SearchCavesTool $searchCavesTool,
         GetCaveDetailsTool $caveDetailsTool,
         GetWeatherForecastTool $weatherForecastTool,
@@ -72,6 +74,7 @@ class AssistantService
     ) {
         $this->tools = [
             'get_user_experience' => $userExperienceTool,
+            'get_medal_progress' => $medalProgressTool,
             'search_caves' => $searchCavesTool,
             'get_cave_details' => $caveDetailsTool,
             'get_weather_forecast' => $weatherForecastTool,
@@ -134,7 +137,7 @@ class AssistantService
         // gets a much larger budget (see config/assistant.php). null = unlimited.
         $limits = (array) config($mode === self::MODE_DATA ? 'assistant.data_limits' : 'assistant.limits', []);
         $limit = static function (string $key, int $default) use ($limits): int {
-            if (! array_key_exists($key, $limits)) {
+            if (!array_key_exists($key, $limits)) {
                 return $default;
             }
 
@@ -198,6 +201,9 @@ class AssistantService
 
         /** @var array<int, array<string, mixed>> $collectionsChangedBuffer Collections created/edited/deleted by steward tools this turn */
         $collectionsChangedBuffer = [];
+
+        /** @var array<string, mixed>|null $medalProgressBuffer Medal catalogue + progress for the UI card */
+        $medalProgressBuffer = null;
 
         /** @var array{prompt_tokens: int, completion_tokens: int} */
         $totalUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0];
@@ -490,6 +496,19 @@ class AssistantService
                         ];
                     }
 
+                    // Capture medal progress for the UI card, then strip the image
+                    // URLs from the LLM context — they're for the card, not the model.
+                    if ($name === 'get_medal_progress' && empty($result['error'])) {
+                        $medalProgressBuffer = $result;
+                        $stripImages = fn (array $medals): array => array_map(function (array $medal): array {
+                            unset($medal['image_url']);
+
+                            return $medal;
+                        }, $medals);
+                        $result['earned'] = $stripImages($result['earned'] ?? []);
+                        $result['unearned'] = $stripImages($result['unearned'] ?? []);
+                    }
+
                     // Safety injection: if a river gauge is High, add a mandatory warning context
                     if ($name === 'get_weather_forecast') {
                         $this->injectSafetyAlert($result, $context, $message['content'] ?? '');
@@ -633,6 +652,11 @@ class AssistantService
         // Emit weather charts (rain/river gauges + forecast) if available
         if ($onEvent && $weatherChartsBuffer !== null) {
             $onEvent('weather_charts', $weatherChartsBuffer);
+        }
+
+        // Emit the medal progress card (earned medals + nearest unearned)
+        if ($onEvent && $medalProgressBuffer !== null) {
+            $onEvent('medal_progress', $medalProgressBuffer);
         }
 
         // Emit trip creation cards so the UI can show confirmation links
@@ -1626,6 +1650,21 @@ beginner — it's a serious streamway. Long Churn Caves (1100m, 35m vertical, No
 beginner. If the search returns nothing matching all four criteria, say so honestly rather than
 labelling a sporting cave "beginner-friendly".
 
+**Beginner queries — read the intent.** Distinguish two very different requests:
+  - "caves FOR a beginner" / "where should I take a beginner" / "a good first cave for someone new"
+    — the user (often experienced themselves) wants easy caves to take a less-experienced person
+    to. Here, do NOT pass not_visited=true. Caves the user has ALREADY DONE are the BEST answers —
+    they know the cave and can confidently lead a beginner there. Prefer easy caves (meeting the
+    four criteria above) from all_visited_systems, and say so explicitly, e.g. "you've done Long
+    Churn — it's a great one to take a beginner". Only fall back to unvisited easy caves if they
+    have few or no suitable visited ones.
+  - "I'm a beginner, what should I try" / "what should I do next as a beginner" — the user wants
+    NEW easy caves to attempt themselves. Here, DO pass not_visited=true and apply the four
+    beginner criteria above.
+
+If the intent is genuinely ambiguous, ask one short clarifying question ("is this for you, or for
+someone you're taking caving?") rather than guessing.
+
 **No-SRT requests.** When the user says "I haven't done any SRT" or "non-SRT cave", a candidate
 qualifies ONLY if its tackle tags include "No Tackle", "Handline", or "Ladder" — NOT "SRT".
 A cave with no tackle tag at all is ambiguous and should be VERIFIED via list_routes (route
@@ -1675,6 +1714,10 @@ when you suggest Swildon's Hole or Attborough Swallet when they've already done 
 already searched by name and got a hit that's in all_visited_systems, pivot to suggesting a
 different cave — or be honest and say "I see you've already done X, here's an alternative".
 
+EXCEPTION: "caves FOR a beginner" / "where to take a beginner" queries (see "Beginner queries —
+read the intent" above). There, already-done easy caves are exactly what to recommend, so do NOT
+pass not_visited=true and do NOT filter out visited caves.
+
 **Use the `regions` field for region accuracy.** Every entry in all_visited_systems carries the
 system's actual region tags (e.g. ["Mendip"], ["South Wales"]). Use that — do NOT guess a cave's
 region from its name. Ogof Draenen is South Wales, not Mendip; Bull Pot of the Witches is
@@ -1708,6 +1751,17 @@ about classic trips, goal lists, or what to aim for. Use get_collection_details 
 specific collection. Always quote the user's progress — e.g. "you've done 2/3 of the Yorkshire
 Big Three" — when reporting on a collection, since the tool returns user_progress directly.
 Link to /collections/{slug} when naming a collection.
+
+**Medals.** Subterra awards medals for caving achievements (e.g. Explorer for 5 different caves,
+Night Owl for a post-8pm trip). When the user asks about medals, trophies, achievements, or what
+to aim for next, call get_medal_progress — it returns the full catalogue with earned status and
+progress toward each unearned medal, sorted nearest-first. Quote concrete progress ("2 more caves
+for Explorer"), suggest trips that would tick off the closest medals, and link to
+[your medals](/medals). Do not guess at the catalogue from get_user_experience — it only shows
+earned medals. A visual medal card renders beneath your reply whenever you call
+get_medal_progress, showing the full catalogue with progress bars — so do NOT enumerate every
+medal in prose or write a markdown table of them. Keep the text short: congratulate, call out
+the 2-3 closest medals, and suggest a concrete trip that would earn one.
 
 **Safety first.** For any cave that is a streamway, sump, rising phreatic, or has known flood
 potential, you MUST call get_weather_forecast before recommending it. If river gauge state is

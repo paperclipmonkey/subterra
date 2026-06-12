@@ -199,6 +199,13 @@
               </div>
 
               <div
+                v-if="!msg.pending && msg.medal_progress"
+                class="pip-cardrow-wrap"
+              >
+                <MedalProgressAssistantCard :data="msg.medal_progress" />
+              </div>
+
+              <div
                 v-if="!msg.pending && msg.huts && msg.huts.huts && msg.huts.huts.length"
                 class="pip-cardrow-wrap"
               >
@@ -523,6 +530,7 @@ import CaveAssistantCard from '@/components/CaveAssistantCard.vue'
 import CollectionAssistantCard from '@/components/CollectionAssistantCard.vue'
 import CollectionChangedAssistantCard from '@/components/CollectionChangedAssistantCard.vue'
 import HutAssistantCard from '@/components/HutAssistantCard.vue'
+import MedalProgressAssistantCard from '@/components/MedalProgressAssistantCard.vue'
 import ProposalAssistantCard from '@/components/ProposalAssistantCard.vue'
 import TripCreatedAssistantCard from '@/components/TripCreatedAssistantCard.vue'
 import TripReportAssistantCard from '@/components/TripReportAssistantCard.vue'

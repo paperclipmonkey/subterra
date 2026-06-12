@@ -424,6 +424,52 @@ class AssistantServiceTest extends TestCase
         $this->assertContains('done', $statuses);
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function emits_medal_progress_event_with_image_urls_stripped_from_llm_context(): void
+    {
+        $user = User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'First Trip',
+            'description' => 'Awarded for completing your first trip',
+            'image_path' => 'first-trip.svg',
+        ]);
+
+        Http::fake([
+            self::OPENROUTER_URL => Http::sequence()
+                ->push($this->openRouterReply('', [
+                    $this->toolCallEntry('call_001', 'get_medal_progress', []),
+                ]), 200)
+                ->push($this->openRouterReply('Here is your medal progress.'), 200),
+        ]);
+
+        $events = [];
+        $this->service->chat(
+            [['role' => 'user', 'content' => 'How are my medals going?']],
+            $user,
+            function (string $type, mixed $data) use (&$events) {
+                $events[] = ['type' => $type, 'data' => $data];
+            }
+        );
+
+        // The card event carries the full payload including medal images
+        $medalEvents = array_values(array_filter($events, fn ($e) => $e['type'] === 'medal_progress'));
+        $this->assertCount(1, $medalEvents);
+        $this->assertSame('0 of 1 medals earned.', $medalEvents[0]['data']['summary']);
+        $this->assertArrayHasKey('image_url', $medalEvents[0]['data']['unearned'][0]);
+
+        // ...but the tool result sent back to the model has the image URLs stripped
+        $sawToolResult = false;
+        foreach (Http::recorded() as [$request]) {
+            foreach ($request->data()['messages'] ?? [] as $m) {
+                if (($m['role'] ?? '') === 'tool') {
+                    $sawToolResult = true;
+                    $this->assertStringNotContainsString('image_url', (string) $m['content']);
+                }
+            }
+        }
+        $this->assertTrue($sawToolResult, 'Expected a tool result message in the LLM context');
+    }
+
     // -------------------------------------------------------------------------
     // Safety alert injection
     // -------------------------------------------------------------------------

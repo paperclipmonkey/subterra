@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 const TOOL_LABELS = {
   get_user_experience: 'Looking up your experience',
+  get_medal_progress: 'Checking your medals',
   search_caves: 'Searching caves',
   get_cave_details: 'Fetching cave details',
   get_weather_forecast: 'Checking weather & river levels',
@@ -65,6 +66,7 @@ function persistableShape(m) {
     created_trips: m.created_trips ?? [],
     proposals: m.proposals ?? [],
     collections_changed: m.collections_changed ?? [],
+    medal_progress: m.medal_progress ?? null,
     elapsedMs: m.elapsedMs ?? null,
   }
 }
@@ -178,6 +180,7 @@ export const useAssistantStore = defineStore('assistant', {
         created_trips: [],
         proposals: [],
         collections_changed: [],
+        medal_progress: null,
       })
 
       const history = this.messages
@@ -445,6 +448,15 @@ export const useAssistantStore = defineStore('assistant', {
           const pending = this.messages.findLast(m => m.pending)
           if (pending) {
             pending.weather_charts = event.data || null
+          }
+          break
+        }
+
+        case 'medal_progress': {
+          // Full medal catalogue with the user's progress (from get_medal_progress)
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) {
+            pending.medal_progress = event.data || null
           }
           break
         }

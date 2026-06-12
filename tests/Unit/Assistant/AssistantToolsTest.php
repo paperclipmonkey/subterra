@@ -484,4 +484,51 @@ class AssistantToolsTest extends TestCase
         $this->assertArrayHasKey('most_popular_entrance', $result);
         $this->assertArrayHasKey('avg_trip_duration_mins', $result);
     }
+
+    // =========================================================================
+    // GetMedalProgressTool
+    // =========================================================================
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function get_medal_progress_splits_earned_and_unearned_with_progress(): void
+    {
+        $user = User::factory()->create();
+        $firstTrip = \App\Models\Medal::create(['name' => 'First Trip', 'description' => 'Awarded for your first trip']);
+        \App\Models\Medal::create(['name' => 'Explorer', 'description' => 'Visit 5 different caves']);
+        \App\Models\Medal::create(['name' => 'Veteran', 'description' => 'Participate in 20 trips']);
+
+        for ($i = 0; $i < 3; ++$i) {
+            $cave = Cave::factory()->create();
+            $trip = Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+            $trip->participants()->attach($user->id);
+        }
+        $user->medals()->attach($firstTrip->id, ['awarded_at' => now()]);
+
+        $tool = $this->app->make(\App\Services\Assistant\Tools\GetMedalProgressTool::class);
+        $result = $tool->handle([], $user);
+
+        $this->assertSame('1 of 3 medals earned.', $result['summary']);
+        $this->assertSame('First Trip', $result['earned'][0]['name']);
+        $this->assertNotNull($result['earned'][0]['awarded_at']);
+
+        // Unearned sorted nearest-first: Explorer (3/5) before Veteran (3/20)
+        $this->assertSame('Explorer', $result['unearned'][0]['name']);
+        $this->assertSame(['current' => 3, 'target' => 5], $result['unearned'][0]['progress']);
+        $this->assertSame('Veteran', $result['unearned'][1]['name']);
+        $this->assertSame(['current' => 3, 'target' => 20], $result['unearned'][1]['progress']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function get_medal_progress_result_contains_expected_keys(): void
+    {
+        $user = User::factory()->create();
+        $tool = $this->app->make(\App\Services\Assistant\Tools\GetMedalProgressTool::class);
+
+        $result = $tool->handle([], $user);
+
+        $this->assertArrayHasKey('summary', $result);
+        $this->assertArrayHasKey('earned', $result);
+        $this->assertArrayHasKey('unearned', $result);
+        $this->assertArrayHasKey('note', $result);
+    }
 }
