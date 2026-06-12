@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Collection;
 use App\Models\Medal;
+use App\Models\SuggestedEdit;
 use App\Models\User;
 use Illuminate\Support\Collection as SupportCollection;
 
@@ -23,7 +24,7 @@ class MedalProgressService
      */
     public function progressForUser(User $user): SupportCollection
     {
-        $trips = $user->trips()->with('entrance.tags', 'entrance.system.tags')->get();
+        $trips = $user->trips()->with('entrance.tags', 'entrance.system.tags', 'media')->get();
         $collections = Collection::with('caves')->get();
         $earned = $user->medals()->get()->keyBy('id');
 
@@ -222,6 +223,28 @@ class MedalProgressService
             case 'Free Miner':
                 // Awarded for caving in the Forest of Dean
                 return $this->boolProgress($this->regionTags($trips)->contains('Forest of Dean'));
+
+            case 'Archivist':
+                // Awarded for submitting a suggested edit to the cave data
+                return [
+                    'current' => SuggestedEdit::where('user_id', $user->id)->count(),
+                    'target' => 1,
+                ];
+
+            case 'Cave Photographer':
+                // Awarded for adding photos to 3 trips
+                return [
+                    'current' => $trips->filter(fn ($trip) => $trip->media->isNotEmpty())->count(),
+                    'target' => 3,
+                ];
+
+            case 'Wordsmith':
+                // Awarded for 5 detailed trip reports (a proper write-up, not one line)
+                $detailedTrips = $trips->filter(function ($trip) {
+                    return mb_strlen(trim((string) $trip->description)) >= 280;
+                });
+
+                return ['current' => $detailedTrips->count(), 'target' => 5];
 
             default:
                 return null;

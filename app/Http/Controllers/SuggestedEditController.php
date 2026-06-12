@@ -85,6 +85,9 @@ class SuggestedEditController extends Controller
             'status' => 'pending',
         ]);
 
+        // Contribution medals (e.g. Archivist) are checked off-trip via this event
+        event(new \App\Events\UserContributed($user));
+
         // Send Slack Notification
         $entityName = $suggestedData['name'] ?? $suggestedData['title'] ?? 'Unknown';
         $typeLabel = ucfirst(str_replace('_', ' ', $validated['suggestable_type']));

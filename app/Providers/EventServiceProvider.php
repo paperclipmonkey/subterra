@@ -21,6 +21,9 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\SendTripTaggedEmail::class,
             \App\Listeners\CheckAndAwardMedals::class,
         ],
+        \App\Events\UserContributed::class => [
+            \App\Listeners\CheckAndAwardMedals::class,
+        ],
         \App\Events\CalloutCreated::class => [
             \App\Listeners\SendCalloutCreatedSlackAlert::class,
         ],

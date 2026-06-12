@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Events\MedalAwarded;
 use App\Events\TripParticipantTagged;
+use App\Events\UserContributed;
 use App\Models\Collection;
 use App\Models\Medal;
 use App\Services\MedalProgressService;
@@ -24,13 +25,13 @@ class CheckAndAwardMedals implements ShouldQueue
         $this->medalProgress = $medalProgress ?? new MedalProgressService();
     }
 
-    public function handle(TripParticipantTagged $event): void
+    public function handle(TripParticipantTagged|UserContributed $event): void
     {
         $user = $event->user;
         $awardedMedals = [];
 
         // Preload all trips and collections with their relations once to avoid repeated queries per medal
-        $trips = $user->trips()->with('entrance.tags', 'entrance.system.tags')->get();
+        $trips = $user->trips()->with('entrance.tags', 'entrance.system.tags', 'media')->get();
         $collections = Collection::with('caves')->get();
 
         $medals = Medal::all();

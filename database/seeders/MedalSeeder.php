@@ -117,6 +117,21 @@ class MedalSeeder extends Seeder
                 'description' => 'Awarded for caving in the Forest of Dean',
                 'image_path' => 'free-miner.svg',
             ],
+            [
+                'name' => 'Archivist',
+                'description' => 'Awarded for submitting a suggested edit to improve the cave data.',
+                'image_path' => 'archivist.svg',
+            ],
+            [
+                'name' => 'Cave Photographer',
+                'description' => 'Awarded for adding photos to 3 of your trips.',
+                'image_path' => 'cave-photographer.svg',
+            ],
+            [
+                'name' => 'Wordsmith',
+                'description' => 'Awarded for writing 5 detailed trip reports.',
+                'image_path' => 'wordsmith.svg',
+            ],
         ];
 
         foreach ($medals as $medal) {

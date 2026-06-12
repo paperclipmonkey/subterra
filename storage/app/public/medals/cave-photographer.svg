@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="359" height="468" viewBox="0 0 360 468">
+  <!-- Stone arch badge -->
+  <path d="M30 458 L30 180 Q30 30 180 30 Q330 30 330 180 L330 458 Z" fill="#3b3a2e" stroke="#1a1a0c" stroke-width="12"/>
+  <path d="M52 440 L52 184 Q52 52 180 52 Q308 52 308 184 L308 440 Z" fill="#d6cfb8"/>
+  <!-- Camera glyph -->
+  <g transform="translate(180 180)">
+    <rect x="-92" y="-50" width="184" height="124" rx="18" fill="#3b3a2e"/>
+    <path d="M-34 -50 L-26 -74 L26 -74 L34 -50 Z" fill="#3b3a2e"/>
+    <circle cx="0" cy="12" r="48" fill="#d6cfb8"/>
+    <circle cx="0" cy="12" r="30" fill="#b98a18" stroke="#1a1a0c" stroke-width="6"/>
+    <circle cx="-12" cy="0" r="9" fill="#f4efdd"/>
+    <!-- Flash -->
+    <path d="M58 -34 L74 -34 L64 -16 L78 -16 L52 14 L60 -8 L48 -8 Z" fill="#b98a18" stroke="#1a1a0c" stroke-width="4"/>
+  </g>
+  <!-- Banner -->
+  <rect x="52" y="306" width="256" height="106" fill="#b98a18"/>
+  <rect x="52" y="306" width="256" height="106" fill="none" stroke="#1a1a0c" stroke-width="8"/>
+  <text x="180" y="348" text-anchor="middle" font-family="Georgia, serif" font-size="36" font-weight="bold" fill="#1a1a0c" letter-spacing="2">CAVE</text>
+  <text x="180" y="392" text-anchor="middle" font-family="Georgia, serif" font-size="27" font-weight="bold" fill="#1a1a0c" letter-spacing="1">PHOTOGRAPHER</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="359" height="468" viewBox="0 0 360 468">
+  <!-- Stone arch badge -->
+  <path d="M30 458 L30 180 Q30 30 180 30 Q330 30 330 180 L330 458 Z" fill="#3b3a2e" stroke="#1a1a0c" stroke-width="12"/>
+  <path d="M52 440 L52 184 Q52 52 180 52 Q308 52 308 184 L308 440 Z" fill="#d6cfb8"/>
+  <!-- Open book + quill glyph -->
+  <g transform="translate(180 188)">
+    <path d="M-92 30 Q-46 8 0 30 Q46 8 92 30 L92 -64 Q46 -86 0 -64 Q-46 -86 -92 -64 Z" fill="#f4efdd" stroke="#3b3a2e" stroke-width="9"/>
+    <line x1="0" y1="-64" x2="0" y2="30" stroke="#3b3a2e" stroke-width="9"/>
+    <line x1="-70" y1="-46" x2="-22" y2="-54" stroke="#3b3a2e" stroke-width="7" stroke-linecap="round"/>
+    <line x1="-70" y1="-22" x2="-22" y2="-30" stroke="#3b3a2e" stroke-width="7" stroke-linecap="round"/>
+    <line x1="-70" y1="2" x2="-22" y2="-6" stroke="#3b3a2e" stroke-width="7" stroke-linecap="round"/>
+    <!-- Quill -->
+    <path d="M30 6 Q58 -64 102 -92 Q86 -38 52 10 Q44 18 36 14 Z" fill="#b98a18" stroke="#1a1a0c" stroke-width="6"/>
+    <line x1="30" y1="14" x2="20" y2="30" stroke="#1a1a0c" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <!-- Banner -->
+  <rect x="52" y="320" width="256" height="78" fill="#b98a18"/>
+  <rect x="52" y="320" width="256" height="78" fill="none" stroke="#1a1a0c" stroke-width="8"/>
+  <text x="180" y="370" text-anchor="middle" font-family="Georgia, serif" font-size="33" font-weight="bold" fill="#1a1a0c" letter-spacing="2">WORDSMITH</text>
+</svg>

@@ -336,6 +336,109 @@ class MedalAwardingTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_archivist_medal_for_submitting_a_suggested_edit()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Archivist',
+            'description' => 'Awarded for submitting a suggested edit to improve the cave data.',
+        ]);
+        $cave = \App\Models\Cave::factory()->create();
+        \App\Models\SuggestedEdit::create([
+            'user_id' => $user->id,
+            'suggestable_type' => \App\Models\Cave::class,
+            'suggestable_id' => $cave->id,
+            'suggested_data' => ['description' => 'Better description'],
+            'status' => 'pending',
+        ]);
+
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $listener->handle(new \App\Events\UserContributed($user));
+
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Archivist'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_does_not_get_archivist_medal_without_a_suggested_edit()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Archivist',
+            'description' => 'Awarded for submitting a suggested edit to improve the cave data.',
+        ]);
+
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $listener->handle(new \App\Events\UserContributed($user));
+
+        $this->assertFalse($user->fresh()->medals->contains('name', 'Archivist'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_cave_photographer_medal_for_photos_on_three_trips()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Cave Photographer',
+            'description' => 'Awarded for adding photos to 3 of your trips.',
+        ]);
+        for ($i = 0; $i < 3; ++$i) {
+            $trip = \App\Models\Trip::factory()->create();
+            $trip->participants()->attach($user);
+            \App\Models\TripMedia::factory()->create(['trip_id' => $trip->id]);
+        }
+        // A photo-less trip shouldn't count
+        $bareTrip = \App\Models\Trip::factory()->create();
+        $bareTrip->participants()->attach($user);
+
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $listener->handle(new \App\Events\TripParticipantTagged($bareTrip, $user, $user));
+
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Cave Photographer'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_wordsmith_medal_for_five_detailed_trip_reports()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Wordsmith',
+            'description' => 'Awarded for writing 5 detailed trip reports.',
+        ]);
+        $longDescription = str_repeat('A grand day underground with plenty to report. ', 10);
+        for ($i = 0; $i < 5; ++$i) {
+            $trip = \App\Models\Trip::factory()->create(['description' => $longDescription]);
+            $trip->participants()->attach($user);
+        }
+        // Short write-ups shouldn't count
+        $shortTrip = \App\Models\Trip::factory()->create(['description' => 'Good trip.']);
+        $shortTrip->participants()->attach($user);
+
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $listener->handle(new \App\Events\TripParticipantTagged($shortTrip, $user, $user));
+
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Wordsmith'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_does_not_get_wordsmith_medal_for_short_reports()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Wordsmith',
+            'description' => 'Awarded for writing 5 detailed trip reports.',
+        ]);
+        for ($i = 0; $i < 5; ++$i) {
+            $trip = \App\Models\Trip::factory()->create(['description' => 'Short note.']);
+            $trip->participants()->attach($user);
+        }
+
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $listener->handle(new \App\Events\TripParticipantTagged($trip, $user, $user));
+
+        $this->assertFalse($user->fresh()->medals->contains('name', 'Wordsmith'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_copper_miner_medal_for_great_orme_cave_named_by_location()
     {
         $user = \App\Models\User::factory()->create();
