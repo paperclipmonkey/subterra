@@ -3,15 +3,26 @@
     <vue-markdown :source="source" :plugins="[geojsonPlugin, mermaidPlugin]" />
 
     <v-dialog v-model="showDiagramModal" max-width="95vw">
-      <v-card class="rounded-lg overflow-auto">
-        <v-card-text class="pa-6 d-flex justify-center">
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <div v-html="diagramSvg" />
-        </v-card-text>
-        <v-card-actions>
+      <v-card class="rounded-lg d-flex flex-column" style="height: 90vh;">
+        <v-toolbar density="comfortable" color="surface" flat>
+          <v-toolbar-title class="text-subtitle-1 font-weight-bold">Diagram</v-toolbar-title>
           <v-spacer />
-          <v-btn variant="text" @click="showDiagramModal = false">Close</v-btn>
-        </v-card-actions>
+          <v-btn :icon="mdiMagnifyMinusOutline" variant="text" :disabled="diagramZoom <= 0.5" @click="zoomDiagram(-0.25)" />
+          <span class="text-caption text-medium-emphasis mx-1" style="min-width: 48px; text-align: center;">
+            {{ Math.round(diagramZoom * 100) }}%
+          </span>
+          <v-btn :icon="mdiMagnifyPlusOutline" variant="text" :disabled="diagramZoom >= 4" @click="zoomDiagram(0.25)" />
+          <v-btn :icon="mdiRestore" variant="text" title="Reset zoom" @click="diagramZoom = 1" />
+          <v-divider vertical class="mx-1" />
+          <v-btn :icon="mdiClose" variant="text" @click="showDiagramModal = false" />
+        </v-toolbar>
+        <v-divider />
+        <div class="diagram-scroll flex-grow-1">
+          <div class="diagram-zoom" :style="{ transform: `scale(${diagramZoom})` }">
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div v-html="diagramSvg" />
+          </div>
+        </div>
       </v-card>
     </v-dialog>
   </div>
@@ -27,6 +38,12 @@ const initMermaid = async () => {
         startOnLoad: false,
         theme: 'default',
         securityLevel: 'strict',
+        // Render labels as native SVG <text> rather than HTML inside <foreignObject>.
+        // The rendered SVG is run through DOMPurify with an SVG-only profile, which
+        // strips foreignObject HTML and would otherwise leave every node label blank.
+        htmlLabels: false,
+        flowchart: { htmlLabels: false },
+        class: { htmlLabels: false },
     })
     mermaidInstance = mermaid
     return mermaid
@@ -88,6 +105,7 @@ import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import VueMarkdown from 'vue-markdown-render'
 import DOMPurify from 'dompurify'
+import { mdiClose, mdiMagnifyMinusOutline, mdiMagnifyPlusOutline, mdiRestore } from '@mdi/js'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 const props = defineProps({
@@ -101,6 +119,11 @@ const router = useRouter()
 const container = ref(null)
 const showDiagramModal = ref(false)
 const diagramSvg = ref('')
+const diagramZoom = ref(1)
+
+const zoomDiagram = (delta) => {
+    diagramZoom.value = Math.min(4, Math.max(0.5, Math.round((diagramZoom.value + delta) * 100) / 100))
+}
 const sanitizeSvg = (svg) => DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } })
 
 // Track MapLibre instances so we can destroy them when the component unmounts
@@ -160,6 +183,7 @@ const renderMermaidDiagrams = async () => {
                 node.title = 'Click to enlarge'
                 node.addEventListener('click', () => {
                     diagramSvg.value = sanitizedSvg
+                    diagramZoom.value = 1
                     showDiagramModal.value = true
                 })
             } catch (renderError) {
@@ -373,6 +397,30 @@ watch(() => props.source, () => {
   max-width: 100%;
 }
 
+/* Mermaid diagram zoom modal — scrollable/pannable viewport with a zoomable
+   inner layer so large diagrams can be read at full size. */
+.diagram-scroll {
+  overflow: auto;
+  background: #fff;
+  padding: 1.5rem;
+}
+
+.diagram-zoom {
+  transform-origin: top center;
+  transition: transform 0.12s ease;
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  margin: 0 auto;
+}
+
+.diagram-zoom :deep(svg) {
+  max-width: none !important;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
 .markdown-renderer :deep(h1),
 .markdown-renderer :deep(h2),
 .markdown-renderer :deep(h3),
@@ -388,7 +436,7 @@ watch(() => props.source, () => {
 
 .markdown-renderer :deep(h1) {
   font-size: 2.25rem;
-  border-bottom: 3px solid #4285f4;
+  border-bottom: 3px solid #2F6852;
   padding-bottom: 0.5rem;
   margin-top: 0;
 }
@@ -430,7 +478,7 @@ watch(() => props.source, () => {
 }
 
 .markdown-renderer :deep(blockquote) {
-  border-left: 4px solid #4285f4;
+  border-left: 4px solid #2F6852;
   background: #f9fafb;
   padding: 1rem 1.5rem;
   margin: 1.5rem 0;
@@ -456,7 +504,7 @@ watch(() => props.source, () => {
 
 .markdown-renderer :deep(:not(pre) > code) {
   background: #f1f5f9;
-  color: #4285f4;
+  color: #2F6852;
   padding: 0.2rem 0.4rem;
   border-radius: 0.375rem;
   font-weight: 500;
@@ -516,17 +564,17 @@ watch(() => props.source, () => {
   height: auto;
 }
 
-/* Internal SPA links — styled to match Vuetify's primary colour */
-.markdown-renderer :deep(a.spa-link) {
-  color: #1867c0;
+/* Links (internal SPA links and external links) — styled to match the app's primary green */
+.markdown-renderer :deep(a) {
+  color: #2F6852;
   text-decoration: none;
   font-weight: 500;
   border-bottom: 1px solid transparent;
   transition: border-color 0.15s;
 }
 
-.markdown-renderer :deep(a.spa-link:hover) {
-  border-bottom-color: #1867c0;
+.markdown-renderer :deep(a:hover) {
+  border-bottom-color: #2F6852;
 }
 
 /* GeoJSON map placeholder shown before MapLibre loads */
