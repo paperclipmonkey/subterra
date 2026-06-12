@@ -263,7 +263,7 @@
             <v-window-item v-if="smAndDown" value="map">
               <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
-                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" @map:load="onMapLoad" />
+                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" :geolocate="true" @map:load="onMapLoad" />
                 </template>
                 <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
                   <div class="text-center pa-4">
@@ -293,6 +293,12 @@
                         <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
                                :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
                                target="_blank" />
+                      </template>
+                    </v-tooltip>
+                    <v-tooltip text="Download GeoJSON" location="top">
+                      <template #activator="{ props }">
+                        <v-btn :icon="mdiDownload" size="small" variant="text" v-bind="props"
+                               @click="downloadGeoJSON" />
                       </template>
                     </v-tooltip>
                   </div>
@@ -515,7 +521,7 @@
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg overflow-hidden" elevation="2">
           <template v-if="appStore.canSuggest">
-            <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad" />
+            <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" :geolocate="true" @map:load="onMapLoad" />
           </template>
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
             <div class="text-center pa-4">
@@ -544,6 +550,12 @@
                     <v-btn :icon="mdiGoogleMaps" size="small" variant="text" v-bind="props"
                            :href="`https://www.google.com/maps?q=${cave.location_lat},${cave.location_lng}`"
                            target="_blank" />
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="Download GeoJSON" location="top">
+                  <template #activator="{ props }">
+                    <v-btn :icon="mdiDownload" size="small" variant="text" v-bind="props"
+                           @click="downloadGeoJSON" />
                   </template>
                 </v-tooltip>
               </div>
@@ -891,37 +903,111 @@ watch(
     }
   }
 )
+
+// Map state — not reactive, just imperative MapLibre handles
+let mapInstance = null
+let caveMarkerInstances = []
+
+const makeEntrancePopupHtml = (lat, lng, ent, isSelected) => {
+  const e = (s) => { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML }
+  const lines = []
+  if (!isSelected && ent?.name) {
+    lines.push(`<div style="font-weight:600;margin-bottom:6px;font-size:14px;">${e(ent.name)}</div>`)
+    lines.push(`<a href="/caves/${e(ent.slug)}" style="display:block;margin-bottom:6px;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">View Entrance</a>`)
+  }
+  lines.push(`<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="display:block;margin-bottom:6px;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">Open in Google Maps</a>`)
+  lines.push(`<a href="https://maps.apple.com/?q=${lat},${lng}" target="_blank" style="display:block;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">Open in Apple Maps</a>`)
+  return `<div style="padding:10px 12px;font-family:sans-serif;text-align:center;min-width:140px;">${lines.join('')}</div>`
+}
+
+const syncEntranceMarkers = () => {
+  if (!mapInstance || !cave.value) return
+
+  caveMarkerInstances.forEach(m => m.remove())
+  caveMarkerInstances = []
+
+  const entrances = (cave.value.system?.caves ?? []).filter(e => e.location_lat && e.location_lng)
+
+  if (entrances.length > 0) {
+    entrances.forEach(ent => {
+      const isSelected = ent.id === cave.value.id
+      const popup = new maplibregl.Popup({ offset: 30, closeButton: false })
+        .setHTML(makeEntrancePopupHtml(ent.location_lat, ent.location_lng, ent, isSelected))
+      const marker = new maplibregl.Marker({ color: isSelected ? '#cc0000' : '#757575', scale: isSelected ? 1 : 0.8 })
+        .setLngLat([ent.location_lng, ent.location_lat])
+        .setPopup(popup)
+        .addTo(mapInstance)
+      caveMarkerInstances.push(marker)
+    })
+  } else if (cave.value.location_lat && cave.value.location_lng) {
+    // Fallback when system caves have no coordinates yet
+    const popup = new maplibregl.Popup({ offset: 30, closeButton: false })
+      .setHTML(makeEntrancePopupHtml(cave.value.location_lat, cave.value.location_lng, cave.value, true))
+    const marker = new maplibregl.Marker({ color: '#cc0000' })
+      .setLngLat([cave.value.location_lng, cave.value.location_lat])
+      .setPopup(popup)
+      .addTo(mapInstance)
+    caveMarkerInstances.push(marker)
+  }
+}
+
+watch(cave, (newCave) => {
+  if (!newCave || !mapInstance) return
+  syncEntranceMarkers()
+  if (newCave.location_lat && newCave.location_lng) {
+    mapInstance.flyTo({ center: [newCave.location_lng, newCave.location_lat], zoom: 14 })
+  }
+  renderAnnotationOverlays(mapInstance)
+})
+
+const downloadGeoJSON = () => {
+  if (!cave.value) return
+
+  const features = []
+
+  const entrances = (cave.value.system?.caves ?? []).filter(e => e.location_lat && e.location_lng)
+  if (entrances.length > 0) {
+    entrances.forEach(ent => {
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [ent.location_lng, ent.location_lat] },
+        properties: { name: ent.name, slug: ent.slug, marker_type: 'entrance', is_selected: ent.id === cave.value.id },
+      })
+    })
+  } else if (cave.value.location_lat && cave.value.location_lng) {
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [cave.value.location_lng, cave.value.location_lat] },
+      properties: { name: cave.value.name, slug: cave.value.slug, marker_type: 'entrance', is_selected: true },
+    })
+  }
+
+  const annotationFeatures = cave.value.system?.annotation?.geojson?.features ?? []
+  features.push(...annotationFeatures)
+
+  const geojson = { type: 'FeatureCollection', features }
+  const safeName = (cave.value.system?.name || cave.value.name).replace(/[^\w\s-]/g, '').trim()
+  const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/geo+json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${safeName}.geojson`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 const onMapLoad = (event) => {
-  const map = event.map
+  mapInstance = event.map
 
-  // Add marker with popup for Google/Apple Maps links
-  const mapsPopup = new maplibregl.Popup({ offset: 30, closeButton: false })
-    .setHTML(`
-      <div style="padding:10px 12px;font-family:sans-serif;text-align:center;min-width:140px;">
-        <a href="https://www.google.com/maps?q=${cave.value.location_lat},${cave.value.location_lng}"
-           target="_blank"
-           style="display:block;margin-bottom:6px;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">
-          Open in Google Maps
-        </a>
-        <a href="https://maps.apple.com/?q=${cave.value.location_lat},${cave.value.location_lng}"
-           target="_blank"
-           style="display:block;color:#1976D2;text-decoration:none;font-size:13px;font-weight:500;">
-          Open in Apple Maps
-        </a>
-      </div>
-    `)
+  syncEntranceMarkers()
 
-  new maplibregl.Marker({ color: '#cc0000' })
-    .setLngLat(lnglat.value)
-    .setPopup(mapsPopup)
-    .addTo(map)
-
-  // Re-render annotation overlays whenever the map style changes
-  map.on('style.load', () => {
-    renderAnnotationOverlays(map)
+  mapInstance.on('style.load', () => {
+    renderAnnotationOverlays(mapInstance)
   })
 
-  renderAnnotationOverlays(map)
+  renderAnnotationOverlays(mapInstance)
 }
 
 function renderAnnotationOverlays (map) {

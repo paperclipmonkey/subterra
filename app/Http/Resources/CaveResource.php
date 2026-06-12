@@ -103,11 +103,13 @@ class CaveResource extends JsonResource
                 'catchment_name' => $this->system->relationLoaded('catchment') ? $this->system->catchment?->name : null,
                 'length' => $this->system->length,
                 'vertical_range' => $this->system->vertical_range,
-                'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->map(function ($cave) {
+                'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->map(function ($cave) use ($request) {
                     return [
                         'id' => $cave->id,
                         'name' => $cave->name,
                         'slug' => $cave->slug,
+                        'location_lat' => $request->user()?->hasApprovedClub() ? $cave->location_lat : null,
+                        'location_lng' => $request->user()?->hasApprovedClub() ? $cave->location_lng : null,
                     ];
                 }) : [],
                 'tags' => $this->system->relationLoaded('tags') ? TagResource::collection($this->system->tags->merge($systemLengthTags)) : TagResource::collection($systemLengthTags),
