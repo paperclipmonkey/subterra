@@ -336,6 +336,24 @@ class MedalAwardingTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function user_gets_copper_miner_medal_for_great_orme_cave_named_by_location()
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Medal::create([
+            'name' => 'Copper Miner',
+            'description' => 'Awarded for caving at the Great Orme',
+        ]);
+        // No region tag — the location only appears in the cave name
+        $cave = \App\Models\Cave::factory()->create(['name' => 'Penmorfa, Llandudno, Wales']);
+        $trip = \App\Models\Trip::factory()->create(['entrance_cave_id' => $cave->id]);
+        $trip->participants()->attach($user);
+        $listener = new \App\Listeners\CheckAndAwardMedals();
+        $event = new \App\Events\TripParticipantTagged($trip, $user, $user);
+        $listener->handle($event);
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Copper Miner'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_dragons_lair_medal_for_five_welsh_trips()
     {
         $user = \App\Models\User::factory()->create();

@@ -126,6 +126,8 @@
               <span class="text-h6 font-weight-bold">Trophy Case</span>
               <v-spacer />
               <v-chip size="x-small" color="amber" variant="flat">{{ medals.length }}</v-chip>
+              <v-btn v-if="profile.id === user.id" variant="text" size="small" color="primary" class="ml-2"
+                     to="/medals" :append-icon="mdiArrowRight">View All</v-btn>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6">
@@ -142,8 +144,8 @@
                 <p class="text-body-2 text-medium-emphasis mb-4">
                   You can earn medals by completing specific trips and exploring new caves.
                 </p>
-                <v-btn color="primary" variant="tonal" size="small" to="/caves" :prepend-icon="mdiMagnify">
-                  Find a cave
+                <v-btn color="primary" variant="tonal" size="small" to="/medals" :prepend-icon="mdiMedalOutline">
+                  See what you can earn
                 </v-btn>
               </div>
             </v-card-text>
@@ -295,7 +297,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAccountGroupOutline, mdiAlertCircleOutline, mdiArrowLeft, mdiArrowRight, mdiChevronRight, mdiClockTimeFourOutline, mdiDatabaseExport, mdiDownload, mdiFileExport, mdiFire, mdiFlashlight, mdiHiking, mdiHistory, mdiLogout, mdiMagnify, mdiMapMarker, mdiMedalOutline, mdiPencil, mdiShieldAccount } from '@mdi/js'
+import { mdiAccountGroup, mdiAccountGroupOutline, mdiAlertCircleOutline, mdiArrowLeft, mdiArrowRight, mdiChevronRight, mdiClockTimeFourOutline, mdiDatabaseExport, mdiDownload, mdiFileExport, mdiFire, mdiFlashlight, mdiHiking, mdiHistory, mdiLogout, mdiMapMarker, mdiMedalOutline, mdiPencil, mdiShieldAccount } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/plugins/api'

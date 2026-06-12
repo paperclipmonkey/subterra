@@ -122,6 +122,9 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::get('/me/trips', [App\Http\Controllers\TripController::class, 'indexMe']);
     Route::get('/me/trips/download', [TripController::class, 'downloadMyTripsCsv']);
 
+    // My Medals — earned plus progress toward the rest
+    Route::get('/me/medals', [App\Http\Controllers\MedalController::class, 'indexMe'])->name('medals.me');
+
     // Clubs
     Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
     Route::get('/clubs/{club}', [ClubController::class, 'show'])->name('clubs.show');

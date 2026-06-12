@@ -58,6 +58,15 @@
           </div>
         </v-card>
       </v-col>
+      <v-col v-if="userStore.user" cols="12" md="6">
+        <v-card :to="{ path: '/medals' }" link height="150" class="d-flex align-center justify-center">
+          <div class="text-center">
+            <v-icon size="48" color="amber-darken-2" class="mb-2" :icon="mdiMedalOutline" />
+            <div class="text-h5">Medals</div>
+            <div class="text-body-2 text-medium-emphasis">Your trophy case & medals still to earn</div>
+          </div>
+        </v-card>
+      </v-col>
       <v-col v-if="offlineStore.isPwa" cols="12" md="6">
         <v-card :to="{ path: '/offline' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
@@ -110,7 +119,7 @@
 </template>
 
 <script setup>
-import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiCompass, mdiHeartPulse, mdiHomeMapMarker, mdiNewspaper } from '@mdi/js'
+import { mdiBookmarkBoxMultipleOutline, mdiClipboardCheck, mdiCloudDownload, mdiCogs, mdiCompass, mdiHeartPulse, mdiHomeMapMarker, mdiMedalOutline, mdiNewspaper } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useOfflineStore } from '@/stores/offline'
 import { computed } from 'vue'
