@@ -17,6 +17,7 @@ class PermitResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
+            'photo_url' => $this->photo_url,
             'conditions' => $this->conditions,
             'has_max_groups_per_day' => $this->has_max_groups_per_day,
             'max_groups_per_day' => $this->max_groups_per_day,

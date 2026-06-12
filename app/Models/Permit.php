@@ -20,6 +20,7 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'name',
         'slug',
         'description',
+        'photo_path',
         'conditions',
         'has_max_groups_per_day',
         'max_groups_per_day',
@@ -45,6 +46,19 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
             'auto_approve' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!$this->photo_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->photo_path, 'http')) {
+            return $this->photo_path;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('media')->url($this->photo_path);
     }
 
     public function caves(): BelongsToMany

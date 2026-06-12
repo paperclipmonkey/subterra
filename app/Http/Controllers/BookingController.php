@@ -37,6 +37,18 @@ class BookingController extends Controller
     }
 
     /**
+     * Public detail view for a single active permit (by slug).
+     */
+    public function showPermit(Permit $permit): JsonResponse
+    {
+        abort_unless($permit->is_active, 404);
+
+        $permit->load(['caves.system', 'officers']);
+
+        return response()->json(['data' => new PermitResource($permit)]);
+    }
+
+    /**
      * Get the permit info for a cave (if any).
      */
     public function permitForCave(Cave $cave): JsonResponse

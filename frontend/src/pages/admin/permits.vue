@@ -76,6 +76,41 @@
             <v-text-field v-model="form.name" label="Name" :rules="[v => !!v || 'Required']" class="mb-2" />
             <v-text-field v-model="form.slug" label="Slug" hint="Auto-generated from name if blank" persistent-hint class="mb-2" />
             <v-textarea v-model="form.description" label="Description" rows="3" class="mb-2" />
+
+            <div class="mb-3">
+              <div class="text-subtitle-2 mb-1">Photo</div>
+              <v-img
+                v-if="existingPhotoUrl"
+                :src="existingPhotoUrl"
+                height="150"
+                cover
+                class="rounded mb-2 bg-grey-lighten-3"
+              />
+              <v-file-input
+                v-model="photoFile"
+                accept="image/*"
+                :label="existingPhotoUrl ? 'Replace photo' : 'Upload photo'"
+                :prepend-icon="null"
+                :prepend-inner-icon="mdiCamera"
+                variant="outlined"
+                density="compact"
+                show-size
+                hide-details
+                clearable
+              />
+              <v-btn
+                v-if="editing && existingPhotoUrl"
+                size="small"
+                variant="text"
+                color="error"
+                class="mt-1"
+                :prepend-icon="mdiDelete"
+                @click="removeExistingPhoto"
+              >
+                Remove current photo
+              </v-btn>
+            </div>
+
             <v-textarea v-model="form.conditions" label="Conditions" rows="3" hint="Applicants must accept these conditions" persistent-hint class="mb-2" />
 
             <v-switch v-model="form.has_max_groups_per_day" label="Limit groups per day" color="primary" class="mb-2" />
@@ -183,7 +218,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { mdiArrowLeft, mdiCheckCircle, mdiCloseCircle, mdiDelete, mdiMagnify, mdiPencil, mdiPlus } from '@mdi/js'
+import { mdiArrowLeft, mdiCamera, mdiCheckCircle, mdiCloseCircle, mdiDelete, mdiMagnify, mdiPencil, mdiPlus } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -206,6 +241,8 @@ const editing = ref(false)
 const editingId = ref(null)
 const deletingPermit = ref(null)
 const formRef = ref(null)
+const photoFile = ref(null)
+const existingPhotoUrl = ref(null)
 
 const headers = [
   { title: 'Name', key: 'name', sortable: true },
@@ -267,6 +304,8 @@ const openCreateDialog = () => {
   editing.value = false
   editingId.value = null
   form.value = defaultForm()
+  photoFile.value = null
+  existingPhotoUrl.value = null
   dialog.value = true
 }
 
@@ -291,19 +330,34 @@ const openEditDialog = (permit) => {
     cave_ids: (permit.caves || []).map(c => c.id),
     officer_ids: (permit.officers || []).map(o => o.id),
   }
+  photoFile.value = null
+  existingPhotoUrl.value = permit.photo_url || null
   dialog.value = true
 }
 
 const savePermit = async () => {
   saving.value = true
   try {
+    let slug = editingId.value
     if (editing.value) {
       await api.put(`/api/admin/permits/${editingId.value}`, form.value)
-      notificationStore.showSuccess('Permit updated')
     } else {
-      await api.post('/api/admin/permits', form.value)
-      notificationStore.showSuccess('Permit created')
+      const res = await api.post('/api/admin/permits', form.value)
+      const created = res.data?.data || res.data
+      slug = created?.slug
     }
+
+    // A photo upload is a separate multipart request so the main form can stay JSON.
+    const file = Array.isArray(photoFile.value) ? photoFile.value[0] : photoFile.value
+    if (file && slug) {
+      const fd = new FormData()
+      fd.append('photo', file)
+      await api.post(`/api/admin/permits/${slug}/photo`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    }
+
+    notificationStore.showSuccess(editing.value ? 'Permit updated' : 'Permit created')
     dialog.value = false
     fetchPermits()
   } catch (e) {
@@ -312,6 +366,23 @@ const savePermit = async () => {
     }
   } finally {
     saving.value = false
+  }
+}
+
+const removeExistingPhoto = async () => {
+  if (!editing.value || !editingId.value) {
+    photoFile.value = null
+    existingPhotoUrl.value = null
+    return
+  }
+  try {
+    await api.delete(`/api/admin/permits/${editingId.value}/photo`)
+    existingPhotoUrl.value = null
+    photoFile.value = null
+    notificationStore.showSuccess('Photo removed')
+    fetchPermits()
+  } catch (e) {
+    // handled by interceptor
   }
 }
 

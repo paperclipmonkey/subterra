@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -124,6 +125,47 @@ class PermitController extends Controller
         if (array_key_exists('officer_ids', $data)) {
             $permit->officers()->sync($data['officer_ids'] ?? []);
         }
+
+        $permit->load(['caves', 'officers']);
+
+        return response()->json(new PermitResource($permit));
+    }
+
+    public function uploadPhoto(Request $request, Permit $permit): JsonResponse
+    {
+        $this->authorize('update', $permit);
+
+        $validator = Validator::make($request->all(), [
+            'photo' => ['required', 'file', 'image', 'max:5120'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        // Remove the previous photo if it lives on our disk (not an external URL).
+        if ($permit->photo_path && !str_starts_with($permit->photo_path, 'http')) {
+            Storage::disk('media')->delete($permit->photo_path);
+        }
+
+        $permit->photo_path = $request->file('photo')->store('permits', 'media');
+        $permit->save();
+
+        $permit->load(['caves', 'officers']);
+
+        return response()->json(new PermitResource($permit));
+    }
+
+    public function deletePhoto(Permit $permit): JsonResponse
+    {
+        $this->authorize('update', $permit);
+
+        if ($permit->photo_path && !str_starts_with($permit->photo_path, 'http')) {
+            Storage::disk('media')->delete($permit->photo_path);
+        }
+
+        $permit->photo_path = null;
+        $permit->save();
 
         $permit->load(['caves', 'officers']);
 

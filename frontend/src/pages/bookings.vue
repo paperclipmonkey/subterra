@@ -35,16 +35,7 @@
           </template>
 
           <template #item.actions="{ item }">
-            <div class="d-flex gap-1">
-              <v-btn
-                v-if="isAccessOfficer && item.permit"
-                size="small"
-                variant="text"
-                color="primary"
-                :to="`/admin/bookings?permit_id=${item.permit.id}`"
-              >
-                Manage
-              </v-btn>
+            <div class="d-flex ga-2">
               <v-btn
                 v-if="item.status === 'pending' || item.status === 'approved'"
                 size="small"
@@ -54,6 +45,7 @@
               >
                 Cancel
               </v-btn>
+              <span v-else class="text-medium-emphasis text-caption align-self-center">No actions</span>
             </div>
           </template>
 
@@ -106,32 +98,48 @@
             <p class="text-grey-darken-1 text-center py-8">No permits are currently available.</p>
           </v-col>
           <v-col v-for="permit in filteredPermits" :key="permit.id" cols="12" md="6">
-            <v-card>
-              <v-card-title>{{ permit.name }}</v-card-title>
-              <v-card-subtitle v-if="permit.caves?.length">
-                {{ permit.caves.map(c => c.name).join(', ') }}
-              </v-card-subtitle>
-              <v-card-text>
-                <div v-if="permit.description" class="text-body-2 mb-3">
-                  <MarkdownRenderer :source="permit.description" />
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
+            <v-card class="rounded-lg overflow-hidden fill-height d-flex flex-column" hover>
+              <router-link :to="`/permits/${permit.slug}`" class="text-decoration-none">
+                <v-img
+                  :src="permit.photo_url || '/placeholder-cave.jpg'"
+                  height="170"
+                  cover
+                  class="align-end"
+                  gradient="to top, rgba(0,0,0,0.85), rgba(0,0,0,0.05) 55%"
+                >
+                  <div class="pa-3">
+                    <div class="text-h6 font-weight-bold text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                      {{ permit.name }}
+                    </div>
+                    <div v-if="permit.caves?.length" class="text-caption text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                      <v-icon size="x-small" :icon="mdiMapMarker" /> {{ permit.caves.map(c => c.name).join(', ') }}
+                    </div>
+                  </div>
+                </v-img>
+              </router-link>
+              <v-card-text class="flex-grow-1">
+                <div class="d-flex ga-2 flex-wrap mb-3">
                   <v-chip v-if="permit.auto_approve" color="success" size="small" variant="tonal">Auto-approved</v-chip>
                   <v-chip v-else color="warning" size="small" variant="tonal">Reviewed by officer</v-chip>
                   <v-chip v-if="permit.has_max_groups_per_day" size="small" variant="tonal">
-                    Max {{ permit.max_groups_per_day }} group{{ permit.max_groups_per_day !== 1 ? 's' : '' }} per day
+                    Max {{ permit.max_groups_per_day }} group{{ permit.max_groups_per_day !== 1 ? 's' : '' }}/day
                   </v-chip>
                 </div>
+                <div v-if="permit.description" class="text-body-2 text-grey-darken-1 permit-desc-clamp">
+                  <MarkdownRenderer :source="permit.description" />
+                </div>
               </v-card-text>
+              <v-divider />
               <v-card-actions>
-                <v-btn color="primary" variant="tonal" :to="`/caves/${permit.caves?.[0]?.slug}/bookings`">
-                  View availability &amp; apply
+                <v-btn color="primary" variant="tonal" :prepend-icon="mdiCalendarCheck" :to="`/caves/${permit.caves?.[0]?.slug}/bookings`">
+                  Apply
                 </v-btn>
+                <v-btn variant="text" :to="`/permits/${permit.slug}`">Details</v-btn>
                 <v-spacer />
                 <v-btn
                   v-if="canEditPermit(permit)"
                   color="secondary"
-                  variant="tonal"
+                  variant="text"
                   size="small"
                   :to="`/admin/permits?edit=${permit.slug}`"
                 >
@@ -171,7 +179,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { mdiMagnify } from '@mdi/js'
+import { mdiCalendarCheck, mdiMagnify, mdiMapMarker } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
 import { useAppStore } from '@/stores/app'
@@ -181,9 +189,6 @@ defineOptions({ name: 'MyBookings' })
 
 const notificationStore = useNotificationStore()
 const appStore = useAppStore()
-const isAccessOfficer = computed(() => {
-  return appStore.user?.roles?.some(r => ['access_officer', 'platform_admin'].includes(r.slug))
-})
 const isPlatformAdmin = computed(() => {
   return appStore.user?.roles?.some(r => r.slug === 'platform_admin')
 })
@@ -285,3 +290,13 @@ onMounted(() => {
   fetchPermits()
 })
 </script>
+
+<style scoped>
+/* Keep browse-permit cards uniform by clamping the description preview. */
+.permit-desc-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

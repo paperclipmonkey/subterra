@@ -158,6 +158,7 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     // Permits & Bookings (public-facing)
     Route::get('/permits', [BookingController::class, 'publicPermits']);
     Route::get('/caves/{cave}/permit', [BookingController::class, 'permitForCave']);
+    Route::get('/permits/{permit}', [BookingController::class, 'showPermit']);
     Route::get('/permits/{permit}/calendar', [BookingController::class, 'calendarForPermit']);
     Route::post('/permits/{permit}/bookings', [BookingController::class, 'store']);
     Route::get('/bookings/mine', [BookingController::class, 'mine']);
@@ -246,6 +247,8 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::post('/permits', [App\Http\Controllers\Admin\PermitController::class, 'store'])->name('admin.permits.store');
         Route::get('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'show'])->name('admin.permits.show');
         Route::put('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'update'])->name('admin.permits.update');
+        Route::post('/permits/{permit}/photo', [App\Http\Controllers\Admin\PermitController::class, 'uploadPhoto'])->name('admin.permits.photo.upload');
+        Route::delete('/permits/{permit}/photo', [App\Http\Controllers\Admin\PermitController::class, 'deletePhoto'])->name('admin.permits.photo.delete');
         Route::delete('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'destroy'])->name('admin.permits.destroy');
 
         Route::get('/bookings', [App\Http\Controllers\Admin\BookingController::class, 'index'])->name('admin.bookings.index');
