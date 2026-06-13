@@ -39,6 +39,8 @@ sequenceDiagram
 
 A callout **can only be created if a duty officer is on call** at the expected return time. If nobody is covering that slot, the system refuses and tells you why.
 
+The caver's own number must also be **verified** — they confirm it once by entering a 6-digit code we text them (changing the number requires re-verifying). A verified phone is likewise required to join the duty-officer rota, so the safety-critical contact data is known-good and reachable.
+
 Backup coverage is **mandatory**: a callout must be watched by *both* the primary Subterra scheduler **and** the independent GCP backup. If the backup can't be registered, the callout is **not created** — the creation is rolled back and you're asked to try again. This guarantees a callout is never left watched by only one system, but it does mean a backup outage prevents new callouts being set until it recovers. (When the backup isn't configured at all — for example in local development — this check is skipped.)
 
 Subterra also refuses a callout if it couldn't actually raise the alarm: if essential alerting configuration is missing, or if **either SMS provider's credit is below a safe minimum**, the callout is rejected. A credit-block also fires a Slack alert — auto-top-up should keep credit from ever running out, so this is a belt-and-braces guard. (A balance Subterra can't read never blocks, so a balance-API outage can't take callouts down.)

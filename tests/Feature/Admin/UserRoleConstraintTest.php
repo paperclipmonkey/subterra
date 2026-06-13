@@ -52,6 +52,23 @@ class UserRoleConstraintTest extends TestCase
         $this->assertTrue($user->fresh()->hasRole('duty_officer'));
     }
 
+    public function test_duty_officer_role_requires_a_verified_phone()
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('platform_admin');
+
+        // Has a phone, but it isn't verified.
+        $user = User::factory()->create(['phone' => '+447999888666', 'phone_verified_at' => null]);
+        Role::firstOrCreate(['slug' => 'duty_officer'], ['name' => 'Duty Officer']);
+
+        $response = $this->actingAs($admin)
+            ->putJson("/api/admin/users/{$user->id}/toggle-role/duty_officer");
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['phone']);
+        $this->assertFalse($user->fresh()->hasRole('duty_officer'));
+    }
+
     public function test_access_officer_role_can_be_toggled_on()
     {
         $admin = User::factory()->create();

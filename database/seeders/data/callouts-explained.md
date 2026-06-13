@@ -20,6 +20,8 @@ In the app you tell us:
 
 A callout can only start if a duty officer is on call to cover your return time. If nobody is on call, the app will tell you — leave your plans with a trusted friend instead.
 
+The first time you set a callout you'll be asked to **verify your phone number** — we text you a 6-digit code to confirm it's correct and that alerts can reach you. You only need to do this once (or again if you change your number).
+
 ## While the trip is underway
 
 There's nothing for you to do underground. Subterra watches the clock for you — in fact **two independent systems** do, so a single failure can't leave you unwatched.

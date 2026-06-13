@@ -45,6 +45,15 @@ class CalloutController extends Controller
             abort(403, 'You must be an approved club member to open callouts.');
         }
 
+        // A callout relies on us being able to reach the caver, so their own number must be
+        // verified first. The frontend prompts for this; this is the server-side guard.
+        if (!$request->user()->phoneVerified()) {
+            return response()->json([
+                'message' => 'Please verify your phone number before creating a callout.',
+                'code' => 'phone_unverified',
+            ], 422);
+        }
+
         $data = $request->validate([
             'cave_id' => 'nullable|exists:caves,id',
             'exit_cave_id' => 'nullable|exists:caves,id',

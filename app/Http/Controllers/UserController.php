@@ -232,6 +232,12 @@ class UserController extends Controller
                     'phone' => ['User must have a phone number to be a Duty Officer.'],
                 ]);
             }
+            // A duty officer is alerted by SMS and voice, so their number must be verified.
+            if ($user->phone_verified_at === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'phone' => ['User must verify their phone number before they can be a Duty Officer.'],
+                ]);
+            }
         }
 
         if ($user->hasRole($role)) {
@@ -336,9 +342,23 @@ class UserController extends Controller
             $validatedData['photo'] = $request->file('photo')->store('avatars', 'media');
         }
 
+        // Changing the phone number invalidates any prior verification — the new number
+        // must be verified afresh. (phone_verified_at is not mass-assignable, so reset it
+        // explicitly rather than through update().)
+        $phoneChanged = array_key_exists('phone', $validatedData) && $validatedData['phone'] !== $user->phone;
+
         $user->update($validatedData);
 
-        return new UserDetailEmailResource($user);
+        if ($phoneChanged) {
+            $user->forceFill([
+                'phone_verified_at' => null,
+                'phone_verification_code' => null,
+                'phone_verification_sent_at' => null,
+                'phone_verification_attempts' => 0,
+            ])->save();
+        }
+
+        return new UserDetailEmailResource($user->fresh());
     }
 
     /**

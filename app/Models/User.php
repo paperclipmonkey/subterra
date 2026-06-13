@@ -76,6 +76,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      */
     protected $hidden = [
         'remember_token',
+        'phone_verification_code',
     ];
 
     protected $appends = [
@@ -91,6 +92,8 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'phone_verification_sent_at' => 'datetime',
             'is_active' => 'boolean',
             'tos_agreed_at' => 'datetime',
             'privacy_policy_agreed_at' => 'datetime',
@@ -100,6 +103,12 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
             'onboarding_completed_at' => 'datetime',
             'pip_agreement_signed_at' => 'datetime',
         ];
+    }
+
+    /** Whether this user has a confirmed (SMS-verified) phone number. */
+    public function phoneVerified(): bool
+    {
+        return !empty($this->phone) && $this->phone_verified_at !== null;
     }
 
     /**

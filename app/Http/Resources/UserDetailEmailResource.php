@@ -27,6 +27,7 @@ class UserDetailEmailResource extends JsonResource
             'photo' => $this->photo ? (str_starts_with($this->photo, 'http') ? $this->photo : Storage::disk('media')->url($this->photo)) : null,
             'bio' => $this->bio,
             'phone' => $this->phone,
+            'phone_verified' => $this->phone_verified_at !== null,
             'email_trophies' => $this->email_trophies,
             'email_tagged' => $this->email_tagged,
             'email_platform_news' => $this->email_platform_news,

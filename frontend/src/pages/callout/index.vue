@@ -123,12 +123,24 @@
           </div>
                     
           <div v-else>
-            <v-btn x-large color="warning" size="x-large" block to="/callout/create" class="mb-4 font-weight-bold elevation-4" :disabled="!onCallOfficer">
+            <v-alert v-if="needsPhoneVerify" type="warning" variant="tonal" class="mb-4 text-start">
+              <div class="font-weight-bold mb-1">Verify your phone number first</div>
+              <div class="text-body-2 mb-2">A callout alerts people by text and call, so we need to confirm your number works before you can start one.</div>
+              <v-btn v-if="appStore.user.phone" size="small" color="warning" variant="flat" class="text-none" :prepend-icon="mdiCellphoneMessage" @click="showVerify = true">
+                Verify now
+              </v-btn>
+              <v-btn v-else size="small" color="warning" variant="flat" class="text-none" :to="`/profile/${appStore.user.id}/edit`">
+                Add a phone number
+              </v-btn>
+            </v-alert>
+            <v-btn x-large color="warning" size="x-large" block to="/callout/create" class="mb-4 font-weight-bold elevation-4" :disabled="!onCallOfficer || needsPhoneVerify">
               START CALLOUT
               <v-icon right class="ml-2" :icon="mdiArrowRight" />
             </v-btn>
           </div>
         </div>
+
+        <PhoneVerify v-model="showVerify" :phone="appStore.user?.phone || ''" @verified="appStore.getUser(true)" />
 
       </v-col>
     </v-row>
@@ -140,12 +152,14 @@ import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRig
 import { api } from '@/plugins/api'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
+import PhoneVerify from '@/components/PhoneVerify.vue'
 import { useAppStore } from '@/stores/app'
 
 export default {
   name: 'CalloutLanding',
   components: {
-    ActiveCalloutMap
+    ActiveCalloutMap,
+    PhoneVerify
   },
   setup() {
     const appStore = useAppStore()
@@ -168,6 +182,7 @@ export default {
       activeCallouts: [],
       onCallOfficer: null,
       primarySmsNumber: null,
+      showVerify: false,
       loading: true
     }
   },
@@ -175,6 +190,11 @@ export default {
     dutyOfficerColor() {
       if (this.onCallOfficer) return 'success-lighten-5'
       return 'red-lighten-5'
+    },
+    // A logged-in user whose phone isn't verified can't start a callout yet.
+    needsPhoneVerify() {
+      const u = this.appStore.user
+      return !!(u && u.id) && !u.phone_verified
     }
   },
   async mounted() {

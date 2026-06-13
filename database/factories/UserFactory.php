@@ -28,6 +28,9 @@ class UserFactory extends Factory
             'id' => Str::random(7),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            // Factory users are treated as phone-verified by default (like email_verified_at
+            // in Laravel's stock factory); tests for the verification flow override to null.
+            'phone_verified_at' => now(),
             'is_active' => true,
             'email_trophies' => true,
             'email_tagged' => true,
@@ -105,6 +108,12 @@ class UserFactory extends Factory
                 ['name' => 'Test Club', 'is_active' => true]
             );
             $user->clubs()->syncWithoutDetaching([$club->id => ['status' => 'approved']]);
+
+            // Club members in tests are typically callout creators, who now need a verified
+            // phone (verified via the factory default). Only set one if not already given.
+            if (empty($user->phone)) {
+                $user->forceFill(['phone' => '+447'.fake()->unique()->numerify('#########')])->save();
+            }
         });
     }
 }

@@ -42,6 +42,9 @@
             "null"
           ]
         },
+        "phone_verified": {
+          "type": "boolean"
+        },
         "email_trophies": {
           "type": "boolean"
         },

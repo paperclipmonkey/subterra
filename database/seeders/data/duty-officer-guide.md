@@ -72,7 +72,7 @@ The dashboard also shows the **remaining SMS credit** on both providers, and the
 
 ## Set your phone up to receive alerts
 
-A ringing phone is the hardest alert to miss — but only if your phone is allowed to ring. The **primary (Twilio)** and **backup (TextMagic)** alert numbers are shown in the **Test notifications** dialog on the Callout Dashboard — save both to your contacts (e.g. as **"Subterra Callout"**) first, then:
+You must have a **verified** phone number to be on the duty-officer rota — verify it on your profile (we text you a 6-digit code to confirm it's correct). After that, a ringing phone is the hardest alert to miss, but only if your phone is allowed to ring. The **primary (Twilio)** and **backup (TextMagic)** alert numbers are shown in the **Test notifications** dialog on the Callout Dashboard — save both to your contacts (e.g. as **"Subterra Callout"**) first, then:
 
 ### iPhone
 - Edit the **Subterra Callout** contact → **Ringtone** → turn **Emergency Bypass ON**. Repeat for **Text Tone**. This lets that number ring/alert even when your phone is silenced or in a Focus/Do Not Disturb mode.

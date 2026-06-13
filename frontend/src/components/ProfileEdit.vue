@@ -69,7 +69,11 @@
 
       <!-- Phone Number section -->
       <div class="phone-edit pa-4">
-        <h3>Phone Number:</h3>
+        <h3 class="d-flex align-center" style="gap: 8px;">
+          Phone Number:
+          <v-chip v-if="phoneVerified" size="small" color="success" variant="tonal" :prepend-icon="mdiCheckCircle">Verified</v-chip>
+          <v-chip v-else-if="profile.phone" size="small" color="warning" variant="tonal" :prepend-icon="mdiAlertCircleOutline">Unverified</v-chip>
+        </h3>
         <v-text-field
           v-model="profile.phone"
           label="Your mobile number"
@@ -79,7 +83,20 @@
           hint="Must be exactly 11 digits (07...) or 13 characters (+44...)."
           persistent-hint
         />
-        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency.</p>
+        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency. <strong>You'll need to verify it before creating a callout or joining the duty-officer rota.</strong></p>
+        <v-btn
+          v-if="profile.phone && !phoneVerified && !phoneDirty"
+          class="mt-2 text-none"
+          color="primary"
+          variant="tonal"
+          :prepend-icon="mdiCellphoneCheck"
+          @click="showVerify = true"
+        >
+          Verify this number
+        </v-btn>
+        <p v-else-if="phoneDirty" class="text-caption text-medium-emphasis mt-1">Save your profile, then verify the new number.</p>
+
+        <PhoneVerify v-model="showVerify" :phone="profile.phone" @verified="onVerified" />
       </div>
       <v-divider />
 
@@ -220,13 +237,14 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiCamera, mdiEarth } from '@mdi/js'
+import { mdiAccountGroup, mdiAlertCircleOutline, mdiCamera, mdiCellphoneCheck, mdiCheckCircle, mdiEarth } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { api } from '@/plugins/api'
 import { useFormErrors } from '@/composables/useFormErrors'
+import PhoneVerify from '@/components/PhoneVerify.vue'
 
 const { setErrors, clearErrors, errorMessages } = useFormErrors()
 
@@ -258,6 +276,17 @@ const isNameConfirmed = ref(false)
 const photoInput = ref(null)
 const photoPreview = ref(null)
 const photoFile = ref(null)
+const showVerify = ref(false)
+const originalPhone = ref('')
+
+// Editing the number (before saving) means it would need re-verifying, so don't show the
+// "Verified" state or the Verify button until the change is saved.
+const phoneDirty = computed(() => (profile.value.phone || '') !== originalPhone.value)
+const phoneVerified = computed(() => !!profile.value.phone_verified && !phoneDirty.value)
+
+const onVerified = () => {
+  profile.value.phone_verified = true
+}
 
 const triggerPhotoUpload = () => {
   photoInput.value?.click()
@@ -335,6 +364,8 @@ const save = async () => {
     profile.value.email_tagged = updatedProfile.email_tagged
     profile.value.email_platform_news = updatedProfile.email_platform_news
     profile.value.visibility_addable = updatedProfile.visibility_addable
+    profile.value.phone_verified = updatedProfile.phone_verified
+    originalPhone.value = updatedProfile.phone || ''
     notifications.showSuccess('Profile updated successfully!')
     router.push({ name: '/profile/[id]', params: { id: route.params.id } }) // Redirect only if necessary
   } catch (error) {
@@ -356,6 +387,7 @@ const fetchProfile = async () => {
   try {
     const response = await api.get(`/api/users/me`)
     profile.value = response.data.data
+    originalPhone.value = profile.value.phone || ''
   } catch (error) {
     console.error("Error fetching profile:", error)
     // Global interceptor handles the toast

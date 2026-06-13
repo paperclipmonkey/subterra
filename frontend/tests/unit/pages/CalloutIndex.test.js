@@ -37,7 +37,7 @@ vi.mock('@/plugins/api', () => ({
 vi.mock('@/stores/app', () => ({
     useAppStore: () => ({
         getUser: vi.fn(),
-        user: { id: 1, name: 'Test User', active_callout: null }
+        user: { id: 1, name: 'Test User', active_callout: null, phone: '+447700900000', phone_verified: true }
     })
 }))
 
@@ -62,7 +62,8 @@ const getStubConfig = () => ({
     'v-expansion-panel': { template: '<div><slot /></div>' },
     'v-expansion-panel-title': { template: '<div><slot /></div>' },
     'v-expansion-panel-text': { template: '<div><slot /></div>' },
-    'ActiveCalloutMap': { template: '<div class="active-callout-map"></div>' }
+    'ActiveCalloutMap': { template: '<div class="active-callout-map"></div>' },
+    'PhoneVerify': true
 })
 
 describe('Callout Index Page', () => {

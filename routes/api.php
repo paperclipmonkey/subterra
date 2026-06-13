@@ -66,6 +66,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update');
     Route::post('/users/me', [App\Http\Controllers\UserController::class, 'updateMe'])->name('users.me.update.post');
     Route::delete('/users/me', [App\Http\Controllers\UserController::class, 'destroyMe'])->name('users.me.destroy');
+
+    // Phone-number verification (send a code by SMS, then confirm it).
+    Route::post('/users/me/phone/send-code', [App\Http\Controllers\PhoneVerificationController::class, 'sendCode'])
+        ->middleware('throttle:phone-verify-send')->name('users.me.phone.send-code');
+    Route::post('/users/me/phone/verify', [App\Http\Controllers\PhoneVerificationController::class, 'verify'])
+        ->middleware('throttle:phone-verify')->name('users.me.phone.verify');
 });
 
 // Magic link authentication routes (no auth required)

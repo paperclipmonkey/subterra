@@ -88,6 +88,34 @@ class CalloutTest extends TestCase
         Mail::assertSentCount(3);
     }
 
+    public function test_callout_creation_requires_a_verified_phone()
+    {
+        $user = User::factory()->withApprovedClub()->create([
+            'phone' => '+447700900900',
+            'phone_verified_at' => null,
+        ]);
+        $cave = Cave::factory()->create();
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'description' => 'Unverified attempt',
+            'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm',
+            'participants' => [['name' => 'Alice', 'phone' => '+447999000111']],
+        ]);
+
+        $response->assertStatus(422)->assertJsonFragment(['code' => 'phone_unverified']);
+        $this->assertDatabaseMissing('callouts', ['description' => 'Unverified attempt']);
+    }
+
     public function test_participants_with_only_userid_receive_emails()
     {
         Mail::fake();
