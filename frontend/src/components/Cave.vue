@@ -81,7 +81,37 @@
              style="bottom: 0; z-index: 2;">
           <div class="d-flex justify-space-between align-end">
             <div>
-              <div v-if="cave.system?.caves?.length > 1" class="text-overline mb-1 opacity-80">{{ cave.system?.name || 'Unknown System' }}</div>
+              <v-menu v-if="cave.system?.caves?.length > 1" location="bottom start" offset="6">
+                <template #activator="{ props, isActive }">
+                  <button
+                    type="button"
+                    class="cave-hero__system d-inline-flex align-center mb-2"
+                    :class="{ 'cave-hero__system--open': isActive }"
+                    v-bind="props"
+                    @click.stop
+                  >
+                    <v-icon size="x-small" class="mr-1" :icon="mdiTunnel" />
+                    <span class="text-caption font-weight-medium text-truncate">{{ cave.system?.name || 'Unknown System' }}</span>
+                    <span class="cave-hero__system-count">{{ cave.system.caves.length }} entrances</span>
+                    <v-icon size="x-small" class="ml-1" :icon="mdiChevronDown" />
+                  </button>
+                </template>
+                <v-list density="compact" min-width="220">
+                  <v-list-subheader>System Entrances</v-list-subheader>
+                  <v-list-item
+                    v-for="ent in cave.system.caves"
+                    :key="ent.id"
+                    :to="'/caves/' + ent.slug"
+                    :active="ent.id === cave.id"
+                    @click.stop
+                  >
+                    <template #prepend>
+                      <v-icon :icon="mdiTunnel" size="small" />
+                    </template>
+                    <v-list-item-title>{{ ent.name }}</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
               <h1 class="text-h4 text-md-h3 font-weight-bold mb-2 cave-hero__title">{{ cave.name }}</h1>
               <div class="cave-hero__location d-inline-flex align-center px-3 py-1">
                 <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
@@ -651,7 +681,7 @@
 <script setup>
 import AppMap from '@/components/AppMap.vue'
 import { api } from '@/plugins/api'
-import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiRefresh, mdiShieldLockOutline, mdiWater } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronDown, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiRefresh, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { useDisplay } from 'vuetify'
@@ -1219,6 +1249,33 @@ function renderAnnotationOverlays (map) {
   border-radius: 999px;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+}
+
+.cave-hero__system {
+  max-width: 100%;
+  padding: 3px 10px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover,
+  &--open {
+    background: rgba(255, 255, 255, 0.26);
+  }
+}
+
+.cave-hero__system-count {
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
 .file-list {
