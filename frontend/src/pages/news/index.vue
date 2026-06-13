@@ -1,5 +1,11 @@
 <template>
   <v-container class="py-8" style="max-width: 900px;">
+    <div class="mb-6">
+      <v-btn variant="text" :prepend-icon="mdiArrowLeft" to="/more" class="text-none">
+        More
+      </v-btn>
+    </div>
+
     <div class="mb-10 text-center">
       <h1 class="text-h3 font-weight-black mb-2 text-grey-darken-4">Latest News</h1>
       <p class="text-subtitle-1 text-medium-emphasis">Updates from the Subterra team</p>
@@ -41,7 +47,7 @@
 </template>
 
 <script setup>
-import { mdiArrowRight, mdiCalendar } from '@mdi/js'
+import { mdiArrowLeft, mdiArrowRight, mdiCalendar } from '@mdi/js'
 
 import { ref, onMounted } from 'vue'
 import moment from 'moment'
