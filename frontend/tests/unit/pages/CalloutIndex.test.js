@@ -88,10 +88,12 @@ describe('Callout Index Page', () => {
         expect(wrapper.vm.onCallOfficer).toBeTruthy()
         expect(wrapper.vm.onCallOfficer.name).toBe('Officer Jenny')
 
-        // Verify button is NOT disabled
-        const button = wrapper.find('button')
-        expect(button.attributes('disabled')).toBeUndefined()
-        expect(button.attributes('to')).toBe('/callout/create')
+        // Verify the START CALLOUT button is NOT disabled
+        const buttons = wrapper.findAll('button')
+        const startButton = buttons.find(b => b.text().includes('START CALLOUT'))
+        expect(startButton).toBeTruthy()
+        expect(startButton.attributes('disabled')).toBeUndefined()
+        expect(startButton.attributes('to')).toBe('/callout/create')
     })
 
     it('disables START CALLOUT button when no duty officer is on call', async () => {
