@@ -40,6 +40,13 @@ return [
         'enabled' => env('TWILIO_ENABLED', false),
     ],
 
+    // The backup SMS provider's credentials. SENDING happens in the GCP watchdog, but
+    // Laravel reads the account balance directly so it can surface and guard on it.
+    'textmagic' => [
+        'username' => env('TEXTMAGIC_USERNAME'),
+        'api_key' => env('TEXTMAGIC_API_KEY'),
+    ],
+
     'betterstack' => [
         'heartbeat_url' => env('CRON_HEARTBEAT_URL'),
     ],

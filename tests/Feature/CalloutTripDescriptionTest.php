@@ -33,6 +33,7 @@ class CalloutTripDescriptionTest extends TestCase
 
         // 2. Mock the GCP Watchdog service
         $mockWatchdog = Mockery::mock(GcpWatchdogService::class);
+        $mockWatchdog->shouldReceive('isConfigured')->andReturn(false);
         $mockWatchdog->shouldReceive('register')->andReturn(null);
         $mockWatchdog->shouldReceive('cancel')->andReturn(true);
 

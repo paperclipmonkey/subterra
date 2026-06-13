@@ -23,7 +23,7 @@ class TwilioVoiceService implements VoiceCaller
         $token = (string) config('services.twilio.token');
         $from = (string) config('services.twilio.from');
 
-        if (! config('services.twilio.enabled')) {
+        if (!config('services.twilio.enabled')) {
             Log::info('Twilio disabled (services.twilio.enabled=false); voice call not placed.', ['to' => $to]);
 
             return null;

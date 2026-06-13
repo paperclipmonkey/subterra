@@ -494,12 +494,12 @@ class CalloutTest extends TestCase
         ]);
     }
 
-    public function test_callout_creation_succeeds_even_if_watchdog_service_fails()
+    public function test_callout_creation_fails_when_watchdog_is_configured_but_unavailable()
     {
-        // The GCP watchdog is a BACKUP to the primary Subterra scheduler. If it is
-        // unavailable, the callout must still be created (and monitored by the primary
-        // scheduler) — otherwise the backup being down would also disable the primary
-        // safety net. The missing backup coverage is recorded via watchdog_registered_at.
+        // Backup coverage is mandatory: a callout must be watched by BOTH the primary
+        // scheduler and the independent GCP backup. If the backup is configured but can't
+        // be registered, creation hard-fails and rolls back — we never create a callout
+        // that only one system is watching.
         Mail::fake();
         $user = User::factory()->withApprovedClub()->create();
 
@@ -510,9 +510,10 @@ class CalloutTest extends TestCase
             'end_at' => Carbon::now()->addHours(5),
         ]);
 
-        // Mock GcpWatchdogService to throw exception (watchdog API down)
+        // Watchdog is configured but registration fails (returns null).
         $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
-            $mock->shouldReceive('register')->andThrow(new \Exception('Watchdog API is down'));
+            $mock->shouldReceive('isConfigured')->andReturn(true);
+            $mock->shouldReceive('register')->once()->andReturn(null);
         });
 
         $payload = [
@@ -524,13 +525,11 @@ class CalloutTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/api/callouts', $payload);
 
-        // Assert the watchdog failure is tolerated: callout is still created, but flagged
-        // as lacking backup watchdog coverage.
-        $response->assertStatus(201);
-        $this->assertDatabaseHas('callouts', [
-            'user_id' => $user->id,
-            'watchdog_registered_at' => null,
-        ]);
+        // Creation is rejected and nothing is left behind.
+        $response->assertStatus(422);
+        $response->assertJsonFragment(['message' => 'We could not register this callout with the backup safety system, so it was not created. Please try again in a moment. If the problem continues, leave your plans with a trusted person and contact a duty officer directly.']);
+        $this->assertDatabaseMissing('callouts', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('callout_participants', ['name' => 'Alice']);
     }
 
     public function test_callout_creation_records_watchdog_registration_on_success()
@@ -547,6 +546,7 @@ class CalloutTest extends TestCase
 
         // Watchdog registers successfully and returns its id.
         $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('isConfigured')->andReturn(true);
             $mock->shouldReceive('register')->once()->andReturn('watchdog-123');
         });
 
@@ -564,10 +564,10 @@ class CalloutTest extends TestCase
         $this->assertNotNull($callout->watchdog_registered_at, 'Successful watchdog registration should be recorded.');
     }
 
-    public function test_callout_creation_leaves_watchdog_registered_at_null_when_not_registered()
+    public function test_callout_creation_leaves_watchdog_registered_at_null_when_not_configured()
     {
-        // register() returns null when the watchdog is unconfigured or fails — the callout
-        // is created but flagged as having no backup coverage.
+        // When the watchdog is not configured (e.g. local development or CI), registration
+        // is skipped entirely and the callout is created without backup coverage.
         Mail::fake();
         $user = User::factory()->withApprovedClub()->create();
 
@@ -579,7 +579,8 @@ class CalloutTest extends TestCase
         ]);
 
         $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
-            $mock->shouldReceive('register')->once()->andReturn(null);
+            $mock->shouldReceive('isConfigured')->andReturn(false);
+            $mock->shouldNotReceive('register');
         });
 
         $payload = [
@@ -613,9 +614,10 @@ class CalloutTest extends TestCase
             $mock->shouldReceive('send')->andThrow(new \Exception('Mail service is down'));
         });
 
-        // Mock Watchdog so we don't accidentally hit the real one
+        // Mock Watchdog so we don't accidentally hit the real one (registers successfully).
         $this->mock(\App\Services\GcpWatchdogService::class, function (MockInterface $mock) {
-            $mock->shouldReceive('register');
+            $mock->shouldReceive('isConfigured')->andReturn(true);
+            $mock->shouldReceive('register')->andReturn('watchdog-123');
         });
 
         $payload = [

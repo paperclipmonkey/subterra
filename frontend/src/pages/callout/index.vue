@@ -63,6 +63,9 @@
               <div class="caption grey--text">
                 Note: Always check weather and conditions yourself.
               </div>
+              <v-btn variant="text" size="small" class="text-none mt-2 px-0" :append-icon="mdiChevronRight" to="/pages/callouts-explained">
+                Read more about callouts
+              </v-btn>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -80,14 +83,30 @@
             <v-divider />
             <v-list-item
               :prepend-icon="mdiInformationOutline"
+              title="Callouts explained"
+              subtitle="A plain-English overview of how callouts keep you safe"
+              to="/pages/callouts-explained"
+              :append-icon="mdiChevronRight"
+            />
+            <v-divider />
+            <v-list-item
+              :prepend-icon="mdiBookOpenVariant"
               title="How the callout system works"
               subtitle="Full technical details — two independent monitoring layers, escalation process and more"
-              href="https://subterra.world/pages/callout-system"
-              target="_blank"
-              rel="noopener noreferrer"
-              :append-icon="mdiOpenInNew"
+              to="/pages/callout-system"
+              :append-icon="mdiChevronRight"
             />
           </v-list>
+        </v-card>
+
+        <!-- Save our number -->
+        <v-card v-if="primarySmsNumber" variant="tonal" color="info" class="mb-8">
+          <v-list-item :prepend-icon="mdiCellphoneMessage">
+            <v-list-item-title class="font-weight-medium">Save our callout number</v-list-item-title>
+            <v-list-item-subtitle style="white-space: normal;">
+              Warnings and check-in texts come from <strong>{{ primarySmsNumber }}</strong>. Save it as a contact so you recognise a callout instantly.
+            </v-list-item-subtitle>
+          </v-list-item>
         </v-card>
 
         <!-- Action Button -->
@@ -117,7 +136,7 @@
 </template>
 
 <script>
-import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRight, mdiChevronRight, mdiInformationOutline, mdiOpenInNew, mdiShieldAccount } from '@mdi/js'
+import { mdiAccountGroup, mdiAccountOff, mdiAlert, mdiAlertOctagram, mdiArrowRight, mdiBookOpenVariant, mdiCellphoneMessage, mdiChevronRight, mdiInformationOutline, mdiShieldAccount } from '@mdi/js'
 import { api } from '@/plugins/api'
 import moment from 'moment'
 import ActiveCalloutMap from '@/components/ActiveCalloutMap.vue'
@@ -137,9 +156,10 @@ export default {
       mdiAlert,
       mdiAlertOctagram,
       mdiArrowRight,
+      mdiBookOpenVariant,
+      mdiCellphoneMessage,
       mdiChevronRight,
       mdiInformationOutline,
-      mdiOpenInNew,
       mdiShieldAccount,
     }
   },
@@ -147,6 +167,7 @@ export default {
     return {
       activeCallouts: [],
       onCallOfficer: null,
+      primarySmsNumber: null,
       loading: true
     }
   },
@@ -160,11 +181,20 @@ export default {
     await Promise.all([
       this.fetchActiveCallouts(),
       this.fetchDutyOfficer(),
+      this.fetchContactNumbers(),
       this.appStore.getUser() // Ensure we have the latest user state with active_callout
     ])
     this.loading = false
   },
   methods: {
+    async fetchContactNumbers() {
+      try {
+        const res = await api.get('/api/callouts/contact-numbers')
+        this.primarySmsNumber = res.data.primary_sms_number
+      } catch (e) {
+        console.error("Failed to fetch callout contact numbers", e)
+      }
+    },
     async fetchActiveCallouts() {
       try {
         const res = await api.get('/api/callouts/active')

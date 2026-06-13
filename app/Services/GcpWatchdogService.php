@@ -21,6 +21,16 @@ class GcpWatchdogService
     }
 
     /**
+     * Whether the backup watchdog is configured in this environment. When this is
+     * false (e.g. local development or CI, where no watchdog URL is set) callouts are
+     * created without backup coverage; when true, backup registration is mandatory.
+     */
+    public function isConfigured(): bool
+    {
+        return !empty($this->baseUrl);
+    }
+
+    /**
      * Register a callout with the GCP watchdog service.
      *
      * @param Callout $callout

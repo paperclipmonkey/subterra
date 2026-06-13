@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Models\Callout;
 use App\Services\GcpWatchdogService;
+use App\Services\Sms\SmsBalanceService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Spatie\SlackAlerts\Facades\SlackAlert;
@@ -25,7 +26,7 @@ class CheckWatchdogSync extends Command
 
     protected $description = 'Verify the GCP backup watchdog is reachable and tracking the same active callouts as Subterra.';
 
-    public function handle(GcpWatchdogService $watchdog): int
+    public function handle(GcpWatchdogService $watchdog, SmsBalanceService $balances): int
     {
         $alerts = [];
 
@@ -51,6 +52,14 @@ class CheckWatchdogSync extends Command
         if ($uncovered->isNotEmpty()) {
             $ids = $uncovered->pluck('id')->implode(', ');
             $alerts[] = "⚠️ {$uncovered->count()} active callout(s) have NO backup watchdog coverage (registration failed): {$ids}. Monitored by the Subterra scheduler only.";
+        }
+
+        // Proactively catch low SMS credit before anyone tries to set a callout. Auto-top-up
+        // should keep this from ever firing — this is the belt-and-braces alert if it does.
+        foreach ($balances->providerStatuses() as $status) {
+            if ($status['reachable'] && !$status['ok']) {
+                $alerts[] = "🔴 {$status['provider']} SMS credit is LOW ({$status['amount']} {$status['currency']}, below the {$status['minimum']} minimum) — NEW CALLOUTS ARE BLOCKED. Auto-top-up should prevent this; check the account now.";
+            }
         }
 
         if (empty($alerts)) {

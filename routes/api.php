@@ -29,6 +29,8 @@ Route::get('/user', function (Request $request) {
 // cannot send a custom header). Configure these URLs in the Twilio console.
 Route::post('/webhooks/twilio/{secret}/sms', [\App\Http\Controllers\Webhook\TwilioController::class, 'handleSms'])
     ->middleware('throttle:webhook-twilio-sms')->name('webhooks.twilio.sms');
+Route::post('/webhooks/twilio/{secret}/sms/status', [\App\Http\Controllers\Webhook\TwilioController::class, 'handleSmsStatus'])
+    ->middleware('throttle:webhook-twilio-sms')->name('webhooks.twilio.sms.status');
 Route::post('/webhooks/twilio/{secret}/voice', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceTwiml'])
     ->middleware('throttle:webhook-twilio-voice')->name('webhooks.twilio.voice');
 Route::post('/webhooks/twilio/{secret}/voice/gather', [\App\Http\Controllers\Webhook\TwilioController::class, 'voiceGather'])
@@ -42,6 +44,7 @@ Route::post('/webhooks/gcp/media', [\App\Http\Controllers\Webhook\GcpMediaWebhoo
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
     Route::get('/callouts/active', [App\Http\Controllers\CalloutController::class, 'active']);
+    Route::get('/callouts/contact-numbers', [App\Http\Controllers\CalloutController::class, 'contactNumbers']);
 });
 
 // Guest accessible callout routes

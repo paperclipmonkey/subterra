@@ -8,6 +8,9 @@ use App\Models\Callout;
 use App\Models\Cave;
 use App\Services\GcpWatchdogService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CheckWatchdogSyncTest extends TestCase
@@ -38,6 +41,25 @@ class CheckWatchdogSyncTest extends TestCase
 
         $this->artisan('callouts:check-watchdog-sync')
             ->expectsOutputToContain('in sync')
+            ->assertExitCode(0);
+    }
+
+    public function test_alerts_when_sms_credit_is_low()
+    {
+        // Watchdog healthy + no active callouts, so the only alert is the low credit.
+        $this->mockWatchdogCount(0);
+
+        Config::set('services.twilio.sid', 'AC');
+        Config::set('services.twilio.token', 'tok');
+        Config::set('services.textmagic.username', null);
+        Config::set('services.textmagic.api_key', null);
+        Config::set('callouts.balance.primary_min', 5);
+        Config::set('callouts.balance.cache_seconds', 0);
+        Cache::flush();
+        Http::fake(['api.twilio.com/*' => Http::response(['balance' => '0.50', 'currency' => 'USD'])]);
+
+        $this->artisan('callouts:check-watchdog-sync')
+            ->expectsOutputToContain('SMS credit is LOW')
             ->assertExitCode(0);
     }
 

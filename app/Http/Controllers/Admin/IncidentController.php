@@ -45,6 +45,12 @@ class IncidentController extends Controller
             'data' => $incident,
             // Region-specific 999 / cave-rescue guidance for the Rescue Protocol script.
             'rescue_info' => app(\App\Services\CaveRescueService::class)->forCave($incident->callout?->cave),
+            // Per-recipient SMS delivery for this incident's callout (most recent first).
+            'sms_deliveries' => \App\Models\SmsMessage::query()
+                ->where('incident_id', $incident->id)
+                ->orWhere('callout_id', $incident->callout_id)
+                ->orderByDesc('created_at')
+                ->get(['id', 'recipient_name', 'to_masked', 'context', 'status', 'error_code', 'sent_at', 'delivered_at', 'failed_at']),
         ]);
     }
 

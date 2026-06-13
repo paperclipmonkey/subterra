@@ -350,6 +350,33 @@
           </div>
         </v-card>
 
+        <!-- SMS Credit -->
+        <v-card rounded="lg" variant="outlined" class="mb-4">
+          <div class="pa-3">
+            <div class="d-flex justify-space-between align-center mb-2">
+              <span class="text-caption font-weight-bold text-medium-emphasis">SMS CREDIT</span>
+              <v-chip v-if="lowCredit" color="error" size="x-small" label>LOW CREDIT</v-chip>
+              <v-chip v-else color="success" size="x-small" label>OK</v-chip>
+            </div>
+
+            <v-row no-gutters class="text-center">
+              <v-col v-for="(bal, key) in smsBalances" :key="key" cols="6">
+                <div
+                  class="text-h6 font-weight-bold"
+                  :class="!bal.reachable ? 'text-medium-emphasis' : (bal.ok ? '' : 'text-error')"
+                >
+                  {{ formatBalance(bal) }}
+                </div>
+                <div class="text-caption text-medium-emphasis">{{ bal.provider }}{{ key === 'primary' ? ' (primary)' : ' (backup)' }}</div>
+              </v-col>
+            </v-row>
+
+            <v-alert v-if="lowCredit" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiAlert">
+              Credit is below the safe minimum — new callouts are blocked until it's topped up.
+            </v-alert>
+          </div>
+        </v-card>
+
         <!-- Legend -->
         <v-card variant="outlined" rounded="lg" class="mb-4">
           <v-card-text class="text-caption">
@@ -456,6 +483,12 @@
             you — even with your phone on silent or Do&nbsp;Not&nbsp;Disturb.
           </p>
 
+          <v-list v-if="contactNumbers.primary || contactNumbers.backup" density="compact" class="bg-grey-lighten-4 rounded mb-4">
+            <v-list-subheader class="text-caption font-weight-bold">Save these alert numbers as contacts</v-list-subheader>
+            <v-list-item v-if="contactNumbers.primary" :prepend-icon="mdiCellphoneMessage" title="Primary — SMS &amp; calls (Twilio)" :subtitle="contactNumbers.primary" />
+            <v-list-item v-if="contactNumbers.backup" :prepend-icon="mdiShieldCheck" title="Backup — SMS only (TextMagic)" :subtitle="contactNumbers.backup" />
+          </v-list>
+
           <div class="d-flex flex-wrap mb-2" style="gap: 8px;">
             <v-btn color="primary" variant="flat" :loading="testingSelf" :prepend-icon="mdiCellphoneMessage" @click="testSelf">
               Test my phone
@@ -557,6 +590,8 @@ export default {
       systemCount: 0,
       isWatchdogOutOfSync: false,
       whatsappGroupUrl: null,
+      contactNumbers: { primary: null, backup: null },
+      smsBalances: {},
       testDialog: false,
       testingSelf: false,
       testingAll: false,
@@ -571,6 +606,9 @@ export default {
     }
   },
   computed: {
+    lowCredit() {
+      return Object.values(this.smsBalances).some(b => b && b.reachable && !b.ok)
+    },
     activeIncidents() {
       return this.incidents.filter(i => i.status === 'open' || i.status === 'managed')
     },
@@ -687,6 +725,11 @@ export default {
     clearInterval(this.ticker)
   },
   methods: {
+    formatBalance(bal) {
+      if (!bal || !bal.reachable || bal.amount === null) return '—'
+      const amount = Number(bal.amount).toFixed(2)
+      return bal.currency ? `${amount} ${bal.currency}` : amount
+    },
     async fetchIncidents() {
       try {
         const res = await api.get('/api/admin/incidents')
@@ -703,6 +746,8 @@ export default {
         this.systemCount = res.data.system_count
         this.isWatchdogOutOfSync = res.data.is_watchdog_out_of_sync
         this.whatsappGroupUrl = res.data.whatsapp_group_url
+        this.contactNumbers = res.data.contact_numbers || { primary: null, backup: null }
+        this.smsBalances = res.data.sms_balances || {}
       } catch (e) {
         console.error(e)
       } finally {

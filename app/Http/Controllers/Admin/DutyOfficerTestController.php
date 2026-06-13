@@ -75,7 +75,7 @@ class DutyOfficerTestController extends Controller
 
         return $users->map(fn (User $u) => [
             'user' => $u->name,
-            'sms' => $this->sms->send($u->phone, $message),
+            'sms' => $this->sms->send($u->phone, $message, ['user_id' => $u->id, 'recipient_name' => $u->name, 'label' => 'test']),
             'call' => $this->voice->call($u->phone, $twimlUrl) !== null,
         ])->all();
     }

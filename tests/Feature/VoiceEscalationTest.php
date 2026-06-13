@@ -30,6 +30,7 @@ class VoiceEscalationTest extends TestCase
             'voice_after_minutes' => 3,
             'voice_repeat_minutes' => 3,
             'voice_max_attempts' => 5,
+            'voice_all_after_minutes' => 12,
             'unmanaged_after_minutes' => 15,
         ]);
     }
@@ -158,6 +159,30 @@ class VoiceEscalationTest extends TestCase
         $this->openIncident(20, [
             'escalated_at' => now()->subMinute(),
             'voice_call_count' => 1,
+            'last_voice_call_at' => now()->subMinutes(5),
+        ]);
+
+        $this->artisan('callouts:check-overdue')->assertExitCode(0);
+    }
+
+    public function test_voice_calls_widen_to_all_dos_at_the_voice_all_threshold_before_full_escalation()
+    {
+        // From voice_all_after_minutes (12) the calls widen to ALL duty officers — even
+        // though the incident has not yet reached the 15-minute unmanaged escalation.
+        $this->mock(VoiceCaller::class, fn ($m) => $m->shouldReceive('call')->twice()->andReturn('CA1'));
+
+        $onCall = User::factory()->dutyOfficer()->create(['phone' => '+447111111111']);
+        OnCallShift::create([
+            'user_id' => $onCall->id,
+            'start_at' => now()->subHour(),
+            'end_at' => now()->addHour(),
+        ]);
+        // A second duty officer who is NOT on call — should now also be called.
+        User::factory()->dutyOfficer()->create(['phone' => '+447222222222']);
+
+        // 13 minutes old (>= 12), not yet escalated, and due another call.
+        $this->openIncident(13, [
+            'voice_call_count' => 3,
             'last_voice_call_at' => now()->subMinutes(5),
         ]);
 

@@ -27,5 +27,6 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="ASSISTANT_STREAMING" value="false"/>
+        <env name="CALLOUT_ENFORCE_CONFIG" value="false"/>
     </php>
 </phpunit>

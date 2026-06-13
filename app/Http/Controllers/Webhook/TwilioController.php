@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Webhook;
 use App\Http\Controllers\Controller;
 use App\Models\Callout;
 use App\Models\Incident;
+use App\Models\SmsMessage;
 use App\Models\User;
 use App\Services\CalloutService;
 use App\Services\IncidentService;
@@ -55,7 +56,7 @@ class TwilioController extends Controller
         // Otherwise treat as a caver replying about their own callout.
         $callout = $this->findCalloutByPhone($normalized);
 
-        if (! $callout) {
+        if (!$callout) {
             return $this->twiml('<Message>No active callout found for this number.</Message>');
         }
 
@@ -85,6 +86,46 @@ class TwilioController extends Controller
         }
 
         return $this->twiml('<Message>Message logged. Reply "OUT SAFE" to cancel your callout.</Message>');
+    }
+
+    /**
+     * Delivery status callback: Twilio POSTs the message SID and its latest status
+     * (queued → sent → delivered, or undelivered/failed) so we can track whether alerts
+     * actually reached each device.
+     */
+    public function handleSmsStatus(Request $request, string $secret): Response
+    {
+        $this->assertSecret($secret);
+
+        $sid = (string) $request->input('MessageSid', $request->input('SmsSid', ''));
+        $status = (string) $request->input('MessageStatus', $request->input('SmsStatus', ''));
+
+        if ($sid === '' || $status === '') {
+            return response('', 204);
+        }
+
+        $message = SmsMessage::where('provider_sid', $sid)->first();
+
+        if (!$message) {
+            Log::info('Twilio status callback for unknown SMS SID.', ['sid' => $sid, 'status' => $status]);
+
+            return response('', 204);
+        }
+
+        $attributes = ['status' => $status];
+
+        if ($status === 'delivered') {
+            $attributes['delivered_at'] = now();
+        } elseif (in_array($status, SmsMessage::FAILED_STATUSES, true)) {
+            $attributes['failed_at'] = now();
+            if ($request->filled('ErrorCode')) {
+                $attributes['error_code'] = (string) $request->input('ErrorCode');
+            }
+        }
+
+        $message->update($attributes);
+
+        return response('', 204);
     }
 
     /** Voice TwiML for an overdue-incident alert call: speak the alert + press-1 gather. */
@@ -122,7 +163,7 @@ class TwilioController extends Controller
         $incident = Incident::find($request->query('incident'));
         $do = User::find($request->query('user'));
 
-        if ($incident && ! $incident->incident_controller_id) {
+        if ($incident && !$incident->incident_controller_id) {
             $this->incidentService->acknowledge($incident, $do, 'a voice call');
         }
 
@@ -151,11 +192,11 @@ class TwilioController extends Controller
 
         $incident = Incident::where('status', 'open')->doesntHave('controller')->latest()->first();
 
-        if (! $incident) {
+        if (!$incident) {
             return $this->twiml('<Message>There is no open incident to acknowledge.</Message>');
         }
 
-        if (! $do) {
+        if (!$do) {
             return $this->twiml('<Message>We could not match your number to a duty officer.</Message>');
         }
 
@@ -188,7 +229,7 @@ class TwilioController extends Controller
     {
         $expected = (string) config('services.twilio.webhook_secret');
 
-        if ($expected === '' || ! hash_equals($expected, $secret)) {
+        if ($expected === '' || !hash_equals($expected, $secret)) {
             abort(403, 'Invalid webhook secret.');
         }
     }

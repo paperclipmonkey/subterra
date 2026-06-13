@@ -17,6 +17,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class CalloutService
 {
@@ -31,6 +32,44 @@ class CalloutService
      */
     public function create(User $user, array $data): Callout
     {
+        // A callout must never be created in an environment that can't actually raise
+        // the alarm. Refuse if essential configuration (Twilio credentials, the sender
+        // number, the backup number, …) is missing, rather than create a callout that
+        // can never alert anyone. (Disabled in tests / via CALLOUT_ENFORCE_CONFIG.)
+        if (config('callouts.enforce_config')) {
+            $missing = $this->missingEssentialConfig();
+
+            if (!empty($missing)) {
+                Log::critical('Callout creation blocked: essential configuration is missing.', [
+                    'missing' => $missing,
+                ]);
+
+                throw new Exception('Callouts are temporarily unavailable because the alerting system is not fully configured. Please contact an administrator.');
+            }
+
+            // A callout must not be created if a provider can't afford to send the alerts.
+            // Blocks if EITHER the primary or backup balance is below its minimum; an
+            // unknown/unreachable balance never blocks (see SmsBalanceService).
+            $lowCredit = app(\App\Services\Sms\SmsBalanceService::class)->blockingProviders();
+
+            if (!empty($lowCredit)) {
+                Log::critical('Callout creation blocked: SMS credit below minimum.', [
+                    'providers' => $lowCredit,
+                ]);
+
+                // Loud alert: auto-top-up should make this impossible, so if a callout is
+                // ever actually blocked for low credit we want to know about it immediately.
+                try {
+                    $which = implode(' and ', $lowCredit);
+                    SlackAlert::to('callouts-overdue')->message("🚨 *Callout BLOCKED — SMS credit too low* ({$which}). Auto-top-up should prevent this; check the provider account(s) now.");
+                } catch (\Throwable $e) {
+                    Log::error('Failed to send low-credit Slack alert: '.$e->getMessage());
+                }
+
+                throw new Exception('Callouts are temporarily unavailable because the alerting credit is too low. Please contact an administrator.');
+            }
+        }
+
         $calloutTime = Carbon::parse($data['callout_time'])->utc();
 
         if (!OnCallShift::isCovered($calloutTime)) {
@@ -78,7 +117,7 @@ class CalloutService
             }
         }
 
-        return DB::transaction(function () use ($user, $data, $calloutTime) {
+        $callout = DB::transaction(function () use ($user, $data, $calloutTime) {
             $callout = Callout::create([
                 'id' => str()->random(16),
                 'user_id' => $user->id,
@@ -108,21 +147,27 @@ class CalloutService
                 }
             }
 
-            // Register the callout with the independent GCP backup watchdog.
-            // The watchdog is a *backup* to the primary Subterra scheduler, so a
-            // registration failure must NEVER prevent the callout being created —
-            // otherwise the backup being down would also take down the primary safety
-            // net. We record success in watchdog_registered_at so the admin dashboard
-            // can surface callouts that lack backup coverage.
-            try {
+            // Backup coverage is mandatory: a callout must be watched by BOTH the
+            // primary Subterra scheduler AND the independent GCP backup watchdog. If
+            // the backup cannot be registered we roll the whole creation back and
+            // surface the error, rather than create a callout that only one system is
+            // watching. Registering inside the transaction means a failure leaves no
+            // callout behind, and a successful registration is the last external step
+            // before commit, so a rolled-back callout never orphans a backup entry.
+            // When the watchdog is not configured (e.g. local development or CI) we
+            // skip it and create the callout without backup coverage.
+            if ($this->watchdogService->isConfigured()) {
                 $watchdogId = $this->watchdogService->register($callout);
-                if ($watchdogId !== null) {
-                    $callout->update(['watchdog_registered_at' => now()]);
+
+                if ($watchdogId === null) {
+                    Log::error('GCP Watchdog registration failed; rolling back callout creation so it is never watched by only one system.', [
+                        'user_id' => $user->id,
+                    ]);
+
+                    throw new Exception('We could not register this callout with the backup safety system, so it was not created. Please try again in a moment. If the problem continues, leave your plans with a trusted person and contact a duty officer directly.');
                 }
-            } catch (Exception $e) {
-                Log::error('GCP Watchdog registration failed; callout still created and monitored by the primary scheduler: '.$e->getMessage(), [
-                    'callout_id' => $callout->id,
-                ]);
+
+                $callout->update(['watchdog_registered_at' => now()]);
             }
 
             try {
@@ -143,10 +188,29 @@ class CalloutService
                 // Don't rollback transaction for email failure
             }
 
-            CalloutCreated::dispatch($callout);
-
             return $callout;
         });
+
+        // Dispatched after the transaction commits so its synchronous listeners
+        // (e.g. the Slack alert) can never roll back a successfully created callout.
+        CalloutCreated::dispatch($callout);
+
+        return $callout;
+    }
+
+    /**
+     * Return the list of essential config keys that are currently empty. A callout
+     * cannot safely be created while any of these are missing (see config/callouts.php
+     * `required_config`).
+     *
+     * @return array<int, string>
+     */
+    public function missingEssentialConfig(): array
+    {
+        return collect(config('callouts.required_config', []))
+            ->filter(fn ($key) => empty(config($key)))
+            ->values()
+            ->all();
     }
 
     /**

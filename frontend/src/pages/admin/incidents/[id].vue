@@ -263,6 +263,36 @@
           </v-card-actions>
         </v-card>
 
+        <!-- SMS Delivery -->
+        <v-card class="mt-4">
+          <v-card-title class="grey lighten-4 py-2 text-subtitle-2 d-flex align-center">
+            <v-icon left size="20" :icon="mdiCellphoneMessage" class="mr-2" />
+            SMS Delivery
+            <v-spacer />
+            <v-chip v-if="smsDeliveries.length" size="x-small" :color="allSmsDelivered ? 'success' : 'grey'" label>
+              {{ smsDeliveredCount }}/{{ smsDeliveries.length }} delivered
+            </v-chip>
+          </v-card-title>
+          <v-list v-if="smsDeliveries.length" density="compact">
+            <v-list-item v-for="m in smsDeliveries" :key="m.id">
+              <v-list-item-title class="text-body-2">
+                {{ m.recipient_name || m.to_masked || 'Unknown' }}
+                <span v-if="m.to_masked && m.recipient_name" class="text-medium-emphasis text-caption">({{ m.to_masked }})</span>
+              </v-list-item-title>
+              <v-list-item-subtitle class="text-caption">
+                {{ formatDateTime(m.delivered_at || m.failed_at || m.sent_at) }}
+                <span v-if="m.error_code" class="text-error"> · err {{ m.error_code }}</span>
+              </v-list-item-subtitle>
+              <template #append>
+                <v-chip size="x-small" :color="smsStatusColor(m.status)" label>{{ m.status }}</v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
+          <v-card-text v-else class="text-caption text-medium-emphasis">
+            No SMS messages recorded for this callout yet.
+          </v-card-text>
+        </v-card>
+
         <!-- Incident Map -->
         <v-card class="mt-4 overflow-hidden">
           <v-card-title class="grey lighten-4 py-2 text-subtitle-2">
@@ -345,7 +375,7 @@
 </template>
 
 <script>
-import { mdiAccount, mdiAlert, mdiAlertDecagram, mdiCheckCircle, mdiCheckDecagram, mdiContentCopy, mdiInformation, mdiMap, mdiMapMarker, mdiMapMarkerPath, mdiMapMarkerRadius, mdiPhone, mdiSend, mdiShieldCheck } from '@mdi/js'
+import { mdiAccount, mdiAlert, mdiAlertDecagram, mdiCellphoneMessage, mdiCheckCircle, mdiCheckDecagram, mdiContentCopy, mdiInformation, mdiMap, mdiMapMarker, mdiMapMarkerPath, mdiMapMarkerRadius, mdiPhone, mdiSend, mdiShieldCheck } from '@mdi/js'
 import { api } from '@/plugins/api'
 import moment from 'moment'
 import { useNotificationStore } from '@/stores/notifications'
@@ -382,13 +412,15 @@ export default {
       mdiMapMarkerRadius,
       mdiPhone,
       mdiSend,
-      mdiShieldCheck
+      mdiShieldCheck,
+      mdiCellphoneMessage
     }
   },
   data() {
     return {
       incident: null,
       rescueInfo: null,
+      smsDeliveries: [],
       mapInstance: null,
       mapStyle: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?srs=3857&key=1uHtffJAZux4RBSVyOhOOGVmt3ASocge',
       script: {
@@ -405,6 +437,12 @@ export default {
     }
   },
   computed: {
+    smsDeliveredCount() {
+      return this.smsDeliveries.filter(m => m.status === 'delivered').length
+    },
+    allSmsDelivered() {
+      return this.smsDeliveries.length > 0 && this.smsDeliveredCount === this.smsDeliveries.length
+    },
     bannerColor() {
       if (!this.incident) return 'grey'
       if (this.incident.status === 'open') return 'red'
@@ -443,6 +481,7 @@ export default {
         const res = await api.get(`/api/admin/incidents/${this.$route.params.id}`)
         this.incident = res.data.data
         this.rescueInfo = res.data.rescue_info
+        this.smsDeliveries = res.data.sms_deliveries || []
 
         // Check if protocol has been dismissed via note
         const dismissNote = "Police have been contacted and they're waiting to hear from cave rescue."
@@ -575,6 +614,12 @@ export default {
     },
     formatDateTime(d) {
       return moment(d).format('HH:mm DD/MM')
+    },
+    smsStatusColor(status) {
+      if (status === 'delivered') return 'success'
+      if (['undelivered', 'failed', 'canceled', 'rejected'].includes(status)) return 'error'
+      if (status === 'sent') return 'info'
+      return 'grey'
     }
   }
 }

@@ -21,6 +21,22 @@ class CalloutController extends Controller
     }
 
     /**
+     * The numbers callout alerts are sent from, so people can save them as contacts.
+     * The primary (Twilio) number is returned to everyone; the backup (TextMagic)
+     * number is only returned to duty officers and platform admins.
+     */
+    public function contactNumbers(Request $request)
+    {
+        $user = $request->user();
+        $canSeeBackup = $user && $user->hasRole(['platform_admin', 'duty_officer']);
+
+        return response()->json([
+            'primary_sms_number' => config('callouts.numbers.primary_sms'),
+            'backup_sms_number' => $canSeeBackup ? config('callouts.numbers.backup_sms') : null,
+        ]);
+    }
+
+    /**
      * Create a new callout.
      */
     public function store(Request $request)

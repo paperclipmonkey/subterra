@@ -26,7 +26,7 @@
 <script setup>
 import { mdiAlertCircleOutline } from '@mdi/js'
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import moment from 'moment'
@@ -60,6 +60,12 @@ const fetchPage = async () => {
 const formatDate = (date) => moment(date).format('MMMM Do YYYY, h:mm a')
 
 onMounted(fetchPage)
+
+// The router reuses this component when navigating between two CMS pages (only the
+// slug param changes), so onMounted won't fire again — re-fetch when the slug changes.
+watch(() => route.params.slug, (slug) => {
+  if (slug) fetchPage()
+})
 </script>
 
 <style scoped>

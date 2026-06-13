@@ -157,15 +157,21 @@ class CheckOverdueCallouts extends Command
 
     private function placeVoiceCalls(Incident $incident): void
     {
-        // The on-call DO gets the full 15-minute window to respond: voice calls target
-        // ONLY them (repeating) until the incident is escalated for being unmanaged. Once
-        // escalated (the 15-minute mark), calls widen to ALL duty officers. If nobody is on
-        // call at all, getNotifiableDutyOfficers falls back to everyone as a safety net.
-        $recipients = $incident->escalated_at
+        // The on-call DO gets the calls to themselves at first (repeating). Voice calls
+        // then widen to ALL duty officers once the incident reaches voice_all_after_minutes
+        // (default 12) — Twilio is the only voice channel, so ringing every phone is the
+        // hardest alert to miss — or as soon as it is escalated for being unmanaged (the
+        // 15-minute mark), whichever comes first. If nobody is on call at all,
+        // getNotifiableDutyOfficers falls back to everyone as a safety net.
+        $voiceAllAfterMinutes = (int) (config('callouts.escalation.voice_all_after_minutes') ?? 12);
+        $widenToAll = $incident->escalated_at
+            || $incident->created_at->lte(now()->subMinutes($voiceAllAfterMinutes));
+
+        $recipients = $widenToAll
             ? $this->getAllDutyOfficers()
             : $this->getNotifiableDutyOfficers();
 
-        $recipients = $recipients->filter(fn ($do) => ! empty($do->phone))->values();
+        $recipients = $recipients->filter(fn ($do) => !empty($do->phone))->values();
 
         if ($recipients->isEmpty()) {
             Log::warning("Voice escalation: no duty officers with a phone for incident {$incident->id}.");
@@ -187,7 +193,7 @@ class CheckOverdueCallouts extends Command
             ]);
 
             if ($voice->call($do->phone, $url) !== null) {
-                $placed++;
+                ++$placed;
             }
         }
 
