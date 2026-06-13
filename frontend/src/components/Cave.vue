@@ -56,7 +56,7 @@
 
     <!-- Hero Section -->
     <v-card class="mb-4 rounded-xl position-relative cursor-pointer hero-img" elevation="2" @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }">
-      <div class="cave-hero__media" style="width: 100%; position: relative; overflow: hidden; border-radius: inherit;">
+      <div class="cave-hero__media d-flex flex-column" style="width: 100%; position: relative; overflow: hidden; border-radius: inherit;">
         <video
           v-if="cave.hero_video?.preview_url || cave.hero_video?.url"
           ref="heroVideoRef"
@@ -68,8 +68,8 @@
         <v-img v-else :src="cave.hero_image?.url || cave.entrance_image?.url || '/placeholder-cave.jpg'"
                :srcset="cave.hero_image?.srcset || cave.entrance_image?.srcset || undefined"
                sizes="(max-width: 960px) 100vw, 1200px"
-               height="100%" cover
-               class="align-end" style="z-index: 1;">
+               cover
+               class="position-absolute w-100 h-100" style="top: 0; left: 0; z-index: 1;">
           <template #placeholder>
             <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
               <v-icon color="grey" size="64" :icon="mdiImageOff" />
@@ -77,11 +77,11 @@
           </template>
         </v-img>
 
-        <div class="d-flex flex-column pa-4 pa-sm-6 text-white position-absolute w-100 cave-hero__overlay"
-             style="bottom: 0; z-index: 2;">
+        <div class="d-flex flex-column pa-4 pa-sm-6 text-white w-100 cave-hero__overlay mt-auto position-relative"
+             style="z-index: 2;">
           <div class="d-flex justify-space-between align-end">
             <div>
-              <v-menu v-if="cave.system?.caves?.length > 1" location="bottom start" offset="6">
+              <v-menu v-if="cave.system?.caves?.length > 1" v-model="systemMenuOpen" location="bottom start" offset="6">
                 <template #activator="{ props, isActive }">
                   <button
                     type="button"
@@ -103,7 +103,7 @@
                     :key="ent.id"
                     :to="'/caves/' + ent.slug"
                     :active="ent.id === cave.id"
-                    @click.stop
+                    @click="systemMenuOpen = false"
                   >
                     <template #prepend>
                       <v-icon :icon="mdiTunnel" size="small" />
@@ -715,6 +715,7 @@ const loading = ref(true)
 const error = ref(null)
 const activeTab = ref(route.query.tab || 'overview')
 const pendingSuggestionsCount = ref(0)
+const systemMenuOpen = ref(false)
 
 const isDescriptionStub = computed(() => {
   if (!cave.value) return false
@@ -1222,10 +1223,10 @@ function renderAnnotationOverlays (map) {
 }
 
 .cave-hero__media {
-  height: 190px;
+  min-height: 190px;
 
   @media (min-width: 960px) {
-    height: 260px;
+    min-height: 260px;
   }
 }
 
