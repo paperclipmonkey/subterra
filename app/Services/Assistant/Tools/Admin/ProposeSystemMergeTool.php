@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Assistant\Tools\Admin;
 
-use App\Models\User;
 use App\Models\CaveSystem;
+use App\Models\User;
 use App\Services\Assistant\AssistantTool;
 use App\Services\DataHealth\ProposalService;
 

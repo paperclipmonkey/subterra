@@ -78,14 +78,14 @@ class ReprocessMediaImages extends Command
 
                         $current = (string) $record->{$attribute};
                         if ($current === '' || str_starts_with($current, 'http')) {
-                            $skipped++;
+                            ++$skipped;
 
                             continue;
                         }
 
                         $extension = strtolower(pathinfo($current, PATHINFO_EXTENSION));
                         if (in_array($extension, self::VIDEO_EXTENSIONS, true)) {
-                            $skipped++;
+                            ++$skipped;
 
                             continue;
                         }
@@ -101,7 +101,7 @@ class ReprocessMediaImages extends Command
                             ProcessImageCloudJob::dispatch($source, $class, $record->id, $namingBase);
                         }
 
-                        $dispatched++;
+                        ++$dispatched;
                     }
 
                     return true;

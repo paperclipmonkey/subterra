@@ -395,7 +395,7 @@ class DataHealthService
     private function systemsMissingDescriptionQuery()
     {
         return CaveSystem::query()->where(function ($q) {
-            $q->whereNull('description')->orWhereRaw("LENGTH(TRIM(description)) < 20");
+            $q->whereNull('description')->orWhereRaw('LENGTH(TRIM(description)) < 20');
         });
     }
 
