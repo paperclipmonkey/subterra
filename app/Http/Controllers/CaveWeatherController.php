@@ -69,8 +69,7 @@ class CaveWeatherController extends Controller
                 }
                 // Rain Gauges
                 elseif ($gauge['type'] === 'rain' && !empty($gauge['station_id'])) {
-                    $readings = $this->rainfallService->getReadings($gauge['station_id']);
-                    $metadata = $this->rainfallService->getStationMetadata($gauge['station_id']);
+                    ['readings' => $readings, 'metadata' => $metadata] = $this->rainfallService->getStationData($gauge['station_id']);
 
                     if ($readings) {
                         $rainGauges[] = [
