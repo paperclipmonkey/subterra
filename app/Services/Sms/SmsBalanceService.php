@@ -149,9 +149,17 @@ class SmsBalanceService
                     return;
                 }
 
+                // TextMagic returns currency as an object (e.g. {"id": "GBP", "htmlSymbol": "&pound;"}),
+                // not a plain string like Twilio. Reduce it to the currency code so the frontend
+                // doesn't render "[object Object]".
+                $currency = $response->json('currency');
+                if (is_array($currency)) {
+                    $currency = $currency['id'] ?? $currency['code'] ?? null;
+                }
+
                 return [
                     'amount' => (float) $response->json('balance'),
-                    'currency' => $response->json('currency'),
+                    'currency' => is_string($currency) ? $currency : null,
                 ];
             } catch (\Throwable $e) {
                 Log::warning('TextMagic balance exception: '.$e->getMessage());

@@ -45,6 +45,24 @@ class SmsBalanceServiceTest extends TestCase
         $this->assertSame([], $this->service->blockingProviders());
     }
 
+    public function test_textmagic_object_currency_is_reduced_to_its_code()
+    {
+        // TextMagic's /user endpoint returns currency as an object, unlike Twilio's string.
+        // It must be reduced to the code so the UI doesn't render "[object Object]".
+        Http::fake([
+            'api.twilio.com/*' => Http::response(['balance' => '12.50', 'currency' => 'USD']),
+            'rest.textmagic.com/*' => Http::response([
+                'balance' => 13.62,
+                'currency' => ['id' => 'GBP', 'htmlSymbol' => '&pound;'],
+            ]),
+        ]);
+
+        $statuses = $this->service->providerStatuses();
+
+        $this->assertSame(13.62, $statuses['backup']['amount']);
+        $this->assertSame('GBP', $statuses['backup']['currency']);
+    }
+
     public function test_flags_provider_below_minimum_as_blocking()
     {
         Http::fake([
