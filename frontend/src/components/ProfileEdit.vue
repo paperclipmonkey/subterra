@@ -135,14 +135,15 @@
           v-model="profile.visibility_addable"
           mandatory
           color="primary"
-          variant="outlined"
+          variant="text"
+          class="visibility-toggle"
         >
-          <v-btn value="public">
-            <v-icon left :icon="mdiEarth" />
+          <v-btn value="public" class="text-none">
+            <v-icon start :icon="mdiEarth" />
             Public
           </v-btn>
-          <v-btn value="club">
-            <v-icon left :icon="mdiAccountGroup" />
+          <v-btn value="club" class="text-none">
+            <v-icon start :icon="mdiAccountGroup" />
             Club Members Only
           </v-btn>
         </v-btn-toggle>
@@ -506,6 +507,14 @@ h3 {
   position: relative;
 }
 
+/* Scale the photo to fill the circle (cover) instead of showing it at natural size,
+   which would only reveal a crop of a large image. */
+.v-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .avatar-overlay {
   position: absolute;
   inset: 0;
@@ -517,6 +526,45 @@ h3 {
 
 .v-avatar:hover .avatar-overlay {
   opacity: 1;
+}
+
+/* Connected segmented control for the trip/callout visibility toggle. */
+.visibility-toggle {
+  width: 100%;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.visibility-toggle :deep(.v-btn) {
+  flex: 1 1 0;
+  min-width: 0; /* allow the button to shrink so long labels can wrap instead of overflowing */
+  min-height: 48px;
+  height: auto;
+  border-radius: 0;
+}
+
+/* Let "Club Members Only" wrap onto a second line on narrow screens rather than clip. */
+.visibility-toggle :deep(.v-btn__content) {
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.visibility-toggle :deep(.v-btn:not(:last-child)) {
+  border-right: 1px solid rgba(var(--v-theme-on-surface), 0.22);
+}
+
+.visibility-toggle :deep(.v-btn--active) {
+  background: rgba(var(--v-theme-primary), 0.12);
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
+}
+
+@media (max-width: 400px) {
+  .visibility-toggle :deep(.v-btn) {
+    font-size: 0.75rem;
+    padding-inline: 8px;
+  }
 }
 
 .v-card-actions {

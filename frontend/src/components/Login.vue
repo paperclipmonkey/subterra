@@ -25,20 +25,30 @@
 
           <!-- Login Methods -->
           <div class="mb-6">
-            <v-checkbox v-model="agreedToToS" color="primary" hide-details class="mb-4">
-              <template #label>
-                <div class="text-body-2">
-                  I agree to the 
-                  <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold" @click.stop>
-                    Terms of Service
-                  </router-link>
-                  and
-                  <router-link to="/pages/privacy-policy" class="text-decoration-none font-weight-bold" @click.stop>
-                    Privacy Policy
-                  </router-link>
-                </div>
-              </template>
-            </v-checkbox>
+            <!-- The agreement text lives OUTSIDE the checkbox's label slot. Nesting the
+                 router-links inside the Vuetify <label> caused inconsistent toggling (the
+                 native label-for click and the control's own handler could both fire),
+                 leaving the model checked while the box appeared unticked. -->
+            <div class="d-flex align-center mb-4">
+              <v-checkbox
+                v-model="agreedToToS"
+                color="primary"
+                hide-details
+                density="compact"
+                class="flex-grow-0 me-1"
+                aria-label="I agree to the Terms of Service and Privacy Policy"
+              />
+              <div class="text-body-2">
+                <span class="agree-text" @click="agreedToToS = !agreedToToS">I agree to the</span>
+                <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold">
+                  Terms of Service
+                </router-link>
+                and
+                <router-link to="/pages/privacy-policy" class="text-decoration-none font-weight-bold">
+                  Privacy Policy
+                </router-link>
+              </div>
+            </div>
 
             <v-btn href="/api/google/redirect" block size="large" color="white" class="google-btn text-none mb-6"
                    elevation="2" :disabled="!agreedToToS">
@@ -249,10 +259,12 @@ onMounted(async () => {
     currentHeroIndex.value = (currentHeroIndex.value + 1) % heroImages.value.length
   }, 5000)
 
-  // Load the user endpoint to check if the user is logged in
-  await api.get('/api/livez') // Warm the database
+  // Load the user endpoint to check if the user is logged in.
+  // Being unauthenticated here is the expected case on the login page, so suppress
+  // the global error toast (otherwise the 401 surfaces a "Session expired" message).
+  await api.get('/api/livez', { suppressErrorNotification: true }) // Warm the database
   try {
-    const userResponse = await api.get('/api/users/me')
+    const userResponse = await api.get('/api/users/me', { suppressErrorNotification: true })
     const userData = userResponse.data
     if (userData && userData.data && userData.data.email) {
       const redirect = sessionStorage.getItem('redirectAfterLogin')
@@ -273,6 +285,11 @@ onUnmounted(() => {
 .login-container {
   width: 100%;
   max-width: 480px;
+}
+
+.agree-text {
+  cursor: pointer;
+  user-select: none;
 }
 
 .google-btn {
