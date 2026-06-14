@@ -75,29 +75,29 @@ describe('OnboardingWizard.vue', () => {
     it('sends a valid ISO timestamp when completing onboarding (not undefined)', async () => {
         const wrapper = mount(OnboardingWizard, mountOptions)
 
-        // Force the component to step 3 (completion step)
-        wrapper.vm.step = 3
+        // Jump to the final step. The wizard now has a dynamic, keyed set of steps, so
+        // completion is keyed on the last step rather than a fixed step number.
+        wrapper.vm.step = wrapper.vm.totalSteps
         wrapper.vm.visible = true
         await wrapper.vm.$nextTick()
 
-        // Trigger the "Get Started" button (nextStep at step 3)
+        // Trigger the "Get Started" button (nextStep on the final step)
         await wrapper.vm.nextStep()
 
         // Wait for async operations
         await new Promise(resolve => setTimeout(resolve, 0))
         await wrapper.vm.$nextTick()
 
-        // The PUT call should have been made with onboarding_completed_at
-        expect(mockPut).toHaveBeenCalledWith(
+        // The final save is a multipart POST (so it can carry the photo + every field).
+        expect(mockPost).toHaveBeenCalledWith(
             '/api/users/me',
-            expect.objectContaining({
-                onboarding_completed_at: expect.any(String),
-            })
+            expect.any(FormData),
+            expect.any(Object)
         )
 
-        // Crucially, the value must NOT be undefined
-        const putCall = mockPut.mock.calls[0]
-        const sentTimestamp = putCall[1].onboarding_completed_at
+        // The timestamp lives in the FormData, and must NOT be undefined.
+        const formData = mockPost.mock.calls[0][1]
+        const sentTimestamp = formData.get('onboarding_completed_at')
         expect(sentTimestamp).toBeDefined()
         expect(sentTimestamp).not.toBeNull()
 
@@ -109,7 +109,7 @@ describe('OnboardingWizard.vue', () => {
     it('updates store with the same timestamp sent to the API', async () => {
         const wrapper = mount(OnboardingWizard, mountOptions)
 
-        wrapper.vm.step = 3
+        wrapper.vm.step = wrapper.vm.totalSteps
         wrapper.vm.visible = true
         await wrapper.vm.$nextTick()
 
@@ -117,9 +117,9 @@ describe('OnboardingWizard.vue', () => {
         await new Promise(resolve => setTimeout(resolve, 0))
         await wrapper.vm.$nextTick()
 
-        // The timestamp sent to the API should match the one set on the store
-        const putCall = mockPut.mock.calls[0]
-        const sentTimestamp = putCall[1].onboarding_completed_at
+        // The timestamp sent to the API (in the FormData)
+        const formData = mockPost.mock.calls[0][1]
+        const sentTimestamp = formData.get('onboarding_completed_at')
 
         // store.getUser should have been called to refresh user data
         expect(mockGetUser).toHaveBeenCalled()
