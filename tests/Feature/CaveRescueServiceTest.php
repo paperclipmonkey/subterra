@@ -57,6 +57,36 @@ class CaveRescueServiceTest extends TestCase
         $this->assertNotEmpty($info['procedure']);
     }
 
+    public function test_every_seeded_region_resolves_to_a_real_police_force(): void
+    {
+        $this->seed(\Database\Seeders\TagSeeder::class);
+
+        $regions = Tag::query()->where('category', 'region')->pluck('tag');
+
+        $this->assertNotEmpty($regions, 'TagSeeder should seed at least one region tag.');
+
+        $missing = [];
+
+        foreach ($regions as $region) {
+            $cave = $this->caveTaggedRegion($region);
+            $info = app(CaveRescueService::class)->forCave($cave);
+
+            $this->assertSame($region, $info['region'], "Region tag '{$region}' should resolve to itself.");
+
+            // A seeded region with no configured police force falls back to the
+            // generic default (police_force === null) — that's the bug this guards.
+            if ($info['police_force'] === null) {
+                $missing[] = $region;
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $missing,
+            'These seeded region tags have no police force in config/cave_rescue.php: '.implode(', ', $missing)
+        );
+    }
+
     public function test_falls_back_when_cave_has_no_region_tag(): void
     {
         $cave = Cave::factory()->create();
