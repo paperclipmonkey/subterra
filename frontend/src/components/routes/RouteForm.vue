@@ -19,18 +19,38 @@
           @change="handleHeroImageUpload"
         />
         <v-img
-          v-if="heroImagePreview || route.hero_image"
-          :src="heroImagePreview || route.hero_image"
+          v-if="heroImagePreview || route.hero_image?.url"
+          :src="heroImagePreview || route.hero_image?.url"
           max-height="200"
           cover
           class="rounded mt-2 bg-grey-lighten-2"
         />
+        <v-row v-if="heroImageFile || heroImagePreview || route.hero_image?.url" dense class="mt-2">
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="heroPhotographer"
+              label="Photographer"
+              density="compact"
+              hide-details="auto"
+              :prepend-inner-icon="mdiCamera"
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="heroCopyright"
+              label="Copyright"
+              density="compact"
+              hide-details="auto"
+              :prepend-inner-icon="mdiCopyright"
+            />
+          </v-col>
+        </v-row>
       </div>
 
       <v-autocomplete
-        v-if="caves.length > 1"
+        v-if="caveOptions.length > 1"
         v-model="route.entrance_id"
-        :items="caves"
+        :items="caveOptions"
         item-title="name"
         item-value="id"
         label="Entrance Cave"
@@ -39,9 +59,9 @@
       />
 
       <v-autocomplete
-        v-if="caves.length > 1"
+        v-if="caveOptions.length > 1"
         v-model="route.exit_id"
-        :items="caves"
+        :items="caveOptions"
         item-title="name"
         item-value="id"
         label="Exit Cave"
@@ -66,6 +86,7 @@
         v-model="route.duration"
         :items="['0-30 mins', '30-60 mins', '1-2 hours', '2-4 hours', '4-6 hours', 'Full Day']"
         label="Duration"
+        clearable
         autocomplete="off"
       />
 
@@ -204,7 +225,7 @@
 </template>
 
 <script setup>
-import { mdiCamera, mdiDelete, mdiFilePdfBox, mdiPlus } from '@mdi/js'
+import { mdiCamera, mdiCopyright, mdiDelete, mdiFilePdfBox, mdiPlus } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
 import { convertFileToBase64, toFormData } from '@/utilities'
@@ -249,14 +270,33 @@ const newMedia = ref([])
 const deletedMediaIds = ref([])
 const heroImageFile = ref(null)
 const heroImagePreview = ref(null)
+const heroPhotographer = ref(props.initialRoute.hero_image?.photographer || '')
+const heroCopyright = ref(props.initialRoute.hero_image?.copyright || '')
 const isSaved = ref(false)
+
+// The route's entrance/exit may reference caves that aren't in this system's
+// cave list (e.g. a through-trip between systems). Include the currently
+// selected caves as options so the autocomplete shows their name, not the id.
+const caveOptions = computed(() => {
+  const options = [...caves.value]
+  const seen = new Set(options.map(c => c.id))
+  for (const cave of [route.value.entrance, route.value.exit]) {
+    if (cave && cave.id != null && !seen.has(cave.id)) {
+      options.push(cave)
+      seen.add(cave.id)
+    }
+  }
+  return options
+})
 
 const isDirty = computed(() => {
   if (isSaved.value) return false
   return JSON.stringify(route.value) !== JSON.stringify(props.initialRoute) ||
     newMedia.value.length > 0 ||
     deletedMediaIds.value.length > 0 ||
-    heroImageFile.value !== null
+    heroImageFile.value !== null ||
+    heroPhotographer.value !== (props.initialRoute.hero_image?.photographer || '') ||
+    heroCopyright.value !== (props.initialRoute.hero_image?.copyright || '')
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -315,8 +355,9 @@ onMounted(async () => {
     const response = await api.get(`/api/cave_systems/${props.caveSystemId}`)
     caves.value = response.data.data.caves || []
 
-    // Auto-prefill if only one cave
-    if (caves.value.length === 1) {
+    // Auto-prefill a new route's entrance/exit when the system has a single
+    // cave. Never do this when editing — it would clobber the saved entrance.
+    if (caves.value.length === 1 && !route.value.id) {
       route.value.entrance_id = caves.value[0].id
       route.value.exit_id = caves.value[0].id
     }
@@ -365,6 +406,24 @@ const buildBasePayload = () => ({
   }))
 })
 
+// Builds the nested hero_image object (file under `data`, plus credits),
+// mirroring the cave forms. Returns null when there's nothing to send.
+const buildHeroImage = () => {
+  const hasExisting = !!route.value.hero_image?.url
+  if (!heroImageFile.value && !hasExisting && !heroPhotographer.value && !heroCopyright.value) {
+    return null
+  }
+
+  const hero = {
+    // Empty strings let the backend clear credits that were removed.
+    photographer: heroPhotographer.value || '',
+    copyright: heroCopyright.value || '',
+  }
+  // Only send a new file when one was chosen; otherwise the existing image is kept.
+  if (heroImageFile.value) hero.data = heroImageFile.value
+  return hero
+}
+
 const save = async () => {
   const { valid } = await form.value.validate()
   if (!valid) return
@@ -374,7 +433,7 @@ const save = async () => {
     if (props.preventSubmit) {
       emit('submit', {
         ...buildBasePayload(),
-        hero_image: heroImageFile.value,
+        hero_image: buildHeroImage(),
         media: newMedia.value,
         deleted_media: deletedMediaIds.value
       })
@@ -385,10 +444,9 @@ const save = async () => {
     if (appStore.user?.is_admin) {
       const payload = buildBasePayload()
 
-      // Only attach the hero image when a new file was chosen — the existing
-      // value is a URL string and would fail the backend's `file` validation.
-      if (heroImageFile.value) {
-        payload.hero_image = heroImageFile.value
+      const hero = buildHeroImage()
+      if (hero) {
+        payload.hero_image = hero
       }
 
       payload.media = newMedia.value.map(m => ({

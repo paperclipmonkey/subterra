@@ -50,9 +50,9 @@
       >
         <v-row no-gutters>
           <v-col cols="12" sm="4">
-            <v-img 
-              :src="route.hero_image || '/placeholder-cave.jpg'" 
-              height="100%" 
+            <v-img
+              :src="route.hero_image?.url || '/placeholder-cave.jpg'"
+              height="100%"
               min-height="200"
               cover
               class="bg-grey-lighten-2"
@@ -68,27 +68,29 @@
             <v-card-item>
               <div class="d-flex justify-space-between align-start mb-1">
                 <v-card-title class="text-h5 font-weight-bold pt-0 text-truncate">{{ route.name }}</v-card-title>
-                <v-chip color="warning" variant="flat" size="small" class="font-weight-bold flex-shrink-0 ml-2">
-                  Grade {{ route.grade || '?' }}
-                  <v-tooltip v-if="route.grade" activator="parent" location="top">
+                <v-chip v-if="route.grade" color="warning" variant="flat" size="small" class="font-weight-bold flex-shrink-0 ml-2">
+                  Grade {{ route.grade }}
+                  <v-tooltip activator="parent" location="top">
                     {{ getGradeDescription(route.grade) }}
                   </v-tooltip>
                 </v-chip>
               </div>
-                    
+
               <div class="d-flex flex-wrap gap-4 text-body-2 text-medium-emphasis mb-3">
                 <div v-if="route.duration" class="d-flex align-center mr-4">
                   <v-icon start size="small" color="primary" :icon="mdiClockOutline" />
                   {{ route.duration }}
                 </div>
-                <div v-if="route.entrance" class="d-flex align-center mr-4">
-                  <v-icon start size="small" color="primary" :icon="mdiDoorOpen" />
-                  In: {{ route.entrance.name }}
-                </div>
-                <div v-if="route.exit" class="d-flex align-center">
-                  <v-icon start size="small" color="primary" :icon="mdiExitToApp" />
-                  Out: {{ route.exit.name }}
-                </div>
+                <template v-if="showEntrances">
+                  <div v-if="route.entrance" class="d-flex align-center mr-4">
+                    <v-icon start size="small" color="primary" :icon="mdiDoorOpen" />
+                    In: {{ route.entrance.name }}
+                  </div>
+                  <div v-if="route.exit" class="d-flex align-center">
+                    <v-icon start size="small" color="primary" :icon="mdiExitToApp" />
+                    Out: {{ route.exit.name }}
+                  </div>
+                </template>
               </div>
 
               <div class="text-body-1 text-truncate-3-lines mb-4">
@@ -115,11 +117,12 @@
 
 <script setup>
 import { mdiArrowRight, mdiClockOutline, mdiDoorOpen, mdiExitToApp, mdiMapMarkerPath, mdiPlus } from '@mdi/js'
+import { computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
 
-defineProps({
+const props = defineProps({
   routes: {
     type: Array,
     default: () => []
@@ -128,8 +131,16 @@ defineProps({
     type: [String, Number],
     required: false,
     default: null
+  },
+  // Number of entrances (caves) in the system. In/Out is only meaningful when
+  // there's more than one — a single-entrance system has no other option.
+  entranceCount: {
+    type: Number,
+    default: 0
   }
 })
+
+const showEntrances = computed(() => props.entranceCount > 1)
 const truncateDescription = (text) => {
   if (!text) return 'No description available.'
   // Strip markdown chars broadly if needed, but simple text substring is usually fine for preview

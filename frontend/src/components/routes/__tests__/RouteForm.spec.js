@@ -28,6 +28,8 @@ const mountForm = (initialRoute, caveSystemId = 5) =>
     global: {
       stubs: {
         'v-container': { template: '<div><slot /></div>' },
+        'v-row': { template: '<div><slot /></div>' },
+        'v-col': { template: '<div><slot /></div>' },
         'v-form': {
           inheritAttrs: false,
           methods: { validate: () => ({ valid: true }) },
@@ -37,16 +39,27 @@ const mountForm = (initialRoute, caveSystemId = 5) =>
           inheritAttrs: false,
           template: '<input type="file" v-bind="$attrs" />',
         },
+        // Real input wired to v-model so we can read/drive credit fields by label.
+        'v-text-field': {
+          props: ['modelValue', 'label'],
+          emits: ['update:modelValue'],
+          template: '<input type="text" :data-label="label" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+        },
       },
     },
   })
+
+const setField = async (wrapper, label, value) => {
+  const input = wrapper.find(`input[data-label="${label}"]`)
+  await input.setValue(value)
+}
 
 const selectHeroImage = async (wrapper, file) => {
   // The hero image input is the first file input in the form.
   const input = wrapper.findAll('input[type=file]')[0]
   Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
   await input.trigger('change')
-  await flushPromises() // wait for the base64 preview conversion
+  await flushPromises()
 }
 
 const submit = async (wrapper) => {
@@ -77,7 +90,8 @@ describe('RouteForm — image submission', () => {
     expect(body).toBeInstanceOf(FormData)
     expect(config.headers['Content-Type']).toBe('multipart/form-data')
 
-    const hero = body.get('hero_image')
+    // The file rides under the nested hero_image[data] key (cave-form convention).
+    const hero = body.get('hero_image[data]')
     expect(hero).toBeInstanceOf(File)
     expect(hero.name).toBe('hero.png')
 
@@ -88,12 +102,31 @@ describe('RouteForm — image submission', () => {
     }
   })
 
-  it('spoofs PUT and omits the unchanged hero image when updating', async () => {
+  it('sends the photographer and copyright credits with the hero image', async () => {
+    const wrapper = mountForm({ name: 'Entrance Series', tackle: [] })
+    await flushPromises()
+
+    const file = new File(['fake-bytes'], 'hero.png', { type: 'image/png' })
+    await selectHeroImage(wrapper, file)
+
+    // Credit fields only appear once an image is present.
+    await setField(wrapper, 'Photographer', 'Jane Doe')
+    await setField(wrapper, 'Copyright', '© Jane Doe')
+
+    await submit(wrapper)
+
+    const [, body] = apiMock.post.mock.calls[0]
+    expect(body.get('hero_image[data]')).toBeInstanceOf(File)
+    expect(body.get('hero_image[photographer]')).toBe('Jane Doe')
+    expect(body.get('hero_image[copyright]')).toBe('© Jane Doe')
+  })
+
+  it('spoofs PUT and keeps the existing image while still sending credits when updating', async () => {
     const wrapper = mountForm({
       id: 42,
       slug: 'entrance-series',
       name: 'Entrance Series',
-      hero_image: 'https://cdn.example.com/routes/existing.jpg',
+      hero_image: { url: 'https://cdn.example.com/routes/existing.jpg', photographer: 'Orig', copyright: '' },
       tackle: [],
     })
     await flushPromises()
@@ -105,8 +138,36 @@ describe('RouteForm — image submission', () => {
 
     expect(url).toBe('/api/routes/entrance-series')
     expect(body.get('_method')).toBe('PUT')
-    // The existing hero image is a URL string; resending it would fail the
-    // backend's `file` rule, so it must be left out entirely.
-    expect(body.get('hero_image')).toBeNull()
+    // No new file is uploaded — the existing image URL must never be resent as
+    // hero_image[data] (it would fail the backend's `file` rule).
+    expect(body.get('hero_image[data]')).toBeNull()
+    // Existing credits are preserved so an unrelated edit doesn't wipe them.
+    expect(body.get('hero_image[photographer]')).toBe('Orig')
+  })
+
+  it('keeps the saved entrance/exit when editing a single-cave system', async () => {
+    // Only one cave in the system — the new-route auto-prefill must NOT run on
+    // an edit, or it would clobber an entrance that lives in another system.
+    apiMock.get.mockResolvedValue({
+      data: { data: { caves: [{ id: 1, name: 'Only Cave', slug: 'only-cave' }] } },
+    })
+
+    const wrapper = mountForm({
+      id: 7,
+      slug: 'my-route',
+      name: 'My Route',
+      entrance_id: 2013,
+      exit_id: 2014,
+      entrance: { id: 2013, name: 'Keaton', slug: 'keaton' },
+      exit: { id: 2014, name: 'Hank', slug: 'hank' },
+      tackle: [],
+    })
+    await flushPromises()
+
+    await submit(wrapper)
+
+    const [, body] = apiMock.post.mock.calls[0]
+    expect(body.get('entrance_id')).toBe('2013')
+    expect(body.get('exit_id')).toBe('2014')
   })
 })

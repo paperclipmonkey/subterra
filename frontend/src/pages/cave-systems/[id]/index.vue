@@ -56,7 +56,7 @@
       </v-row>
       <v-row>
         <v-col cols="12">
-          <RouteList :routes="caveSystem.routes" :cave-system-id="caveSystem.id" />
+          <RouteList :routes="caveSystem.routes" :cave-system-id="caveSystem.id" :entrance-count="caveSystem.caves?.length || 0" />
         </v-col>
       </v-row>
     </v-container>

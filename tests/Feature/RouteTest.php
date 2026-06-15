@@ -144,16 +144,29 @@ class RouteTest extends TestCase
 
         $data = [
             'name' => 'Hero Route',
-            'hero_image' => $imageFile,
+            'hero_image' => [
+                'data' => $imageFile,
+                'photographer' => 'Jane Doe',
+                'copyright' => '© Jane Doe',
+            ],
         ];
 
         $response = $this->actingAs($admin)->withHeaders(['Accept' => 'application/json'])->post("/api/cave_systems/{$system->id}/routes", $data);
 
         $response->assertStatus(201);
         $route = Route::where('name', 'Hero Route')->first();
-        $this->assertNotNull($route->hero_image);
-        // Ensure it's not the raw base64 string
-        $this->assertStringNotContainsString('data:image', $route->hero_image);
+
+        // A real file path is stored, not the raw base64 string.
+        $this->assertNotNull($route->getRawOriginal('hero_image'));
+        $this->assertStringNotContainsString('data:image', $route->getRawOriginal('hero_image'));
+        $this->assertSame('Jane Doe', $route->hero_image_photographer);
+        $this->assertSame('© Jane Doe', $route->hero_image_copyright);
+
+        // The accessor exposes a nested object with credits.
+        $this->assertIsArray($route->hero_image);
+        $this->assertArrayHasKey('url', $route->hero_image);
+        $this->assertSame('Jane Doe', $route->hero_image['photographer']);
+        $this->assertSame('© Jane Doe', $route->hero_image['copyright']);
     }
 
     public function test_admin_can_update_hero_image_via_multipart_method_spoofing()
@@ -169,7 +182,11 @@ class RouteTest extends TestCase
             ->post("/api/routes/{$route->slug}", [
                 '_method' => 'PUT',
                 'name' => 'Updated Hero Route',
-                'hero_image' => $imageFile,
+                'hero_image' => [
+                    'data' => $imageFile,
+                    'photographer' => 'New Photographer',
+                    'copyright' => 'New Copyright',
+                ],
             ]);
 
         $response->assertStatus(200);
@@ -178,6 +195,35 @@ class RouteTest extends TestCase
         $this->assertNotNull($route->getRawOriginal('hero_image'));
         $this->assertNotSame('routes/old.jpg', $route->getRawOriginal('hero_image'));
         $this->assertStringNotContainsString('data:image', $route->getRawOriginal('hero_image'));
+        $this->assertSame('New Photographer', $route->hero_image_photographer);
+        $this->assertSame('New Copyright', $route->hero_image_copyright);
+    }
+
+    public function test_admin_can_update_hero_image_credits_without_replacing_the_file()
+    {
+        $admin = User::factory()->admin()->create();
+        $route = Route::factory()->create([
+            'hero_image' => 'routes/existing.jpg',
+            'hero_image_photographer' => 'Old Photographer',
+            'hero_image_copyright' => 'Old Copyright',
+        ]);
+
+        $response = $this->actingAs($admin)->withHeaders(['Accept' => 'application/json'])
+            ->post("/api/routes/{$route->slug}", [
+                '_method' => 'PUT',
+                'name' => $route->name,
+                'hero_image' => [
+                    'photographer' => 'Updated Photographer',
+                    'copyright' => 'Updated Copyright',
+                ],
+            ]);
+
+        $response->assertStatus(200);
+        $route->refresh();
+        // Image file is preserved when no new file is sent.
+        $this->assertSame('routes/existing.jpg', $route->getRawOriginal('hero_image'));
+        $this->assertSame('Updated Photographer', $route->hero_image_photographer);
+        $this->assertSame('Updated Copyright', $route->hero_image_copyright);
     }
 
     public function test_admin_can_upload_media_for_route()
@@ -223,6 +269,23 @@ class RouteTest extends TestCase
         $response->assertStatus(200);
         $this->assertDatabaseMissing('route_media', ['id' => $media1->id]);
         $this->assertDatabaseHas('route_media', ['id' => $media2->id]);
+    }
+
+    public function test_factory_assigns_entrance_and_exit_within_the_routes_system()
+    {
+        // Default factory: entrance/exit belong to the route's own system.
+        $route = Route::factory()->create();
+        $this->assertSame($route->cave_system_id, $route->entrance->cave_system_id);
+        $this->assertSame($route->cave_system_id, $route->exit->cave_system_id);
+
+        // When the system is supplied via for(), entrance/exit reuse its caves.
+        $system = CaveSystem::factory()->create();
+        Cave::factory(3)->create(['cave_system_id' => $system->id]);
+        $forRoute = Route::factory()->for($system)->create();
+
+        $this->assertSame($system->id, $forRoute->cave_system_id);
+        $this->assertSame($system->id, $forRoute->entrance->cave_system_id);
+        $this->assertSame($system->id, $forRoute->exit->cave_system_id);
     }
 
     public function test_can_resolve_route_by_slug()

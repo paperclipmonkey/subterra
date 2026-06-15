@@ -491,7 +491,7 @@
             <!-- Routes Tab -->
             <v-window-item value="routes">
               <template v-if="cave.system && cave.system.routes && cave.system.routes.length > 0">
-                <RouteList :routes="cave.system.routes" :cave-system-id="cave.system.id" />
+                <RouteList :routes="cave.system.routes" :cave-system-id="cave.system.id" :entrance-count="cave.system.caves?.length || 0" />
               </template>
               <v-alert v-else-if="cave.system" type="info" variant="tonal">
                 <div class="d-flex justify-space-between align-center">
