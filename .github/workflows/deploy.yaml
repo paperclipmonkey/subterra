@@ -17,6 +17,7 @@ jobs:
       COPILOT_AGENT_FIREWALL_ENABLED: false
       GCP_REGION: europe-west2
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -49,8 +50,17 @@ jobs:
         with:
           terraform_version: 1.10.5
 
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-plugins-${{ runner.os }}-${{ hashFiles('terraform/gcp/.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-plugins-${{ runner.os }}-
+
       - name: Terraform Init
         run: |
+          mkdir -p "$TF_PLUGIN_CACHE_DIR"
           cd terraform/gcp
           terraform init
 
