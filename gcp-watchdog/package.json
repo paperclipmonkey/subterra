@@ -15,7 +15,7 @@
         "@google-cloud/firestore": "^8.5.0",
         "axios": "^1.15.2",
         "express": "^4.22.2",
-        "nodemailer": "^8.0.5"
+        "nodemailer": "^8.0.9"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",
