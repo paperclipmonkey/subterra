@@ -56,6 +56,11 @@
       </v-row>
       <v-row>
         <v-col cols="12">
+          <SystemCaveList :caves="caveSystem.caves" />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
           <RouteList :routes="caveSystem.routes" :cave-system-id="caveSystem.id" :entrance-count="caveSystem.caves?.length || 0" />
         </v-col>
       </v-row>
@@ -69,6 +74,7 @@ import { mdiPencil, mdiPencilOff, mdiRobotOutline } from '@mdi/js'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
+import SystemCaveList from '@/components/cave-systems/SystemCaveList.vue'
 import AnnotationMapViewer from '@/components/cave-systems/AnnotationMapViewer.vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
