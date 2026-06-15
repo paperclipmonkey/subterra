@@ -154,7 +154,7 @@
             <v-tab v-if="smAndDown" value="map">Map</v-tab>
             <v-tab value="media">Media</v-tab>
             <v-tab value="routes">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1" /></v-tab>
-            <v-tab v-if="appStore.user.is_admin || (linkedCollections && linkedCollections.length > 0)" value="collections">Collections</v-tab>
+            <v-tab v-if="appStore.user.is_admin || (linkedCollections && linkedCollections.length > 0)" value="collections">Collections <v-badge v-if="linkedCollections.length > 0" :content="linkedCollections.length" inline color="grey-lighten-1" /></v-tab>
           </v-tabs>
           <v-divider />
 
