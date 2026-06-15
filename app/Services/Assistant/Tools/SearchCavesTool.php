@@ -26,7 +26,7 @@ class SearchCavesTool implements AssistantTool
                         ],
                         'region' => [
                             'type' => 'string',
-                            'description' => 'UK/Ireland region. Accepts any of: Yorkshire / Yorkshire Dales / Dales, Mendip / Mendips, South Wales / Brecon Beacons, North Wales / Snowdonia, Peak District / Derbyshire, Forest of Dean, Devon, Portland, Assynt / Scottish Highlands. Matches both cave location names AND tags, so use the natural region name.',
+                            'description' => 'UK/Ireland region. Accepts any of: Northern / Yorkshire / Yorkshire Dales / Dales, Mendip / Mendips, South Wales / Brecon Beacons, North Wales / Snowdonia, Peak District / Derbyshire, Forest of Dean, Devon, Portland, Assynt / Scottish Highlands. Matches both cave location names AND tags, so use the natural region name.',
                         ],
                         'tags' => [
                             'type' => 'array',
@@ -98,7 +98,7 @@ class SearchCavesTool implements AssistantTool
         }
 
         // Region filter — match caves' location_name OR system/cave tags.
-        // Most regional context (Yorkshire, Mendip, South Wales) lives in tags
+        // Most regional context (Northern, Mendip, South Wales) lives in tags
         // rather than location_name (which holds specific village/quarry names).
         if (!empty($arguments['region'])) {
             $region = (string) $arguments['region'];
@@ -121,6 +121,16 @@ class SearchCavesTool implements AssistantTool
                             ->from('cave_system_tag')
                             ->join('tags', 'tags.id', '=', 'cave_system_tag.tag_id')
                             ->whereColumn('cave_system_tag.cave_system_id', 'cave_systems.id')
+                            ->whereRaw('LOWER(tags.tag) LIKE ?', [$needle]);
+                    });
+                    // Region tags are applied at the cave (entrance) level, not the
+                    // system level — match any cave in the system carrying the tag.
+                    $outer->orWhereExists(function ($sub) use ($needle) {
+                        $sub->select(DB::raw(1))
+                            ->from('cave_tag')
+                            ->join('tags', 'tags.id', '=', 'cave_tag.tag_id')
+                            ->join('caves as tag_caves', 'tag_caves.id', '=', 'cave_tag.cave_id')
+                            ->whereColumn('tag_caves.cave_system_id', 'cave_systems.id')
                             ->whereRaw('LOWER(tags.tag) LIKE ?', [$needle]);
                     });
                     // Also match the cave slug prefix (e.g. `mendips_*`) so we catch
@@ -327,7 +337,7 @@ class SearchCavesTool implements AssistantTool
                 'not_visited' => $arguments['not_visited'] ?? null,
             ], fn ($v) => $v !== null);
             $result['valid_tags_reference'] = [
-                'region' => ['Yorkshire', 'Mendip', 'South Wales', 'North Wales', 'Peak District', 'Forest of Dean', 'Devon', 'Portland', 'Scotland'],
+                'region' => ['Northern', 'Mendip', 'South Wales', 'North Wales', 'Peak District', 'Forest of Dean', 'Devon', 'Portland', 'Scotland'],
                 'tackle' => ['SRT', 'Ladder', 'Handline', 'No Tackle'],
                 'access' => ['Open', 'Permit', 'Padlocked', 'Warden', 'Keycode', 'Closed'],
             ];
@@ -341,7 +351,7 @@ class SearchCavesTool implements AssistantTool
 
     /**
      * Expand a region term to an array of search terms covering common synonyms,
-     * so that "Yorkshire Dales" also matches the "Yorkshire" tag and "Brecon
+     * so that "Yorkshire Dales" also matches the "Northern" tag and "Brecon
      * Beacons" matches "South Wales", etc.
      *
      * @return string[]
@@ -352,8 +362,10 @@ class SearchCavesTool implements AssistantTool
         $terms = [$region];
 
         $synonyms = [
-            'yorkshire dales' => ['Yorkshire'],
-            'dales' => ['Yorkshire'],
+            'yorkshire' => ['Northern'],
+            'yorkshire dales' => ['Northern'],
+            'dales' => ['Northern'],
+            'northern' => ['Northern'],
             'brecon beacons' => ['South Wales', 'Brecon'],
             'snowdonia' => ['North Wales'],
             'south wales' => ['South Wales'],

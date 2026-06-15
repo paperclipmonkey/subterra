@@ -37,7 +37,7 @@ class GetCaveDetailsTool implements AssistantTool
     {
         $systemId = (int) ($arguments['cave_system_id'] ?? 0);
 
-        $system = CaveSystem::with(['caves.heroImage', 'caves.entranceImage', 'tags', 'routes'])->find($systemId);
+        $system = CaveSystem::with(['caves.heroImage', 'caves.entranceImage', 'caves.tags', 'tags', 'routes'])->find($systemId);
 
         if (!$system) {
             return ['error' => "Cave system with ID {$systemId} not found."];
@@ -71,10 +71,17 @@ class GetCaveDetailsTool implements AssistantTool
                 : null,
         ])->values();
 
-        $tags = $system->tags->map(fn ($t) => [
-            'tag' => $t->tag,
-            'category' => $t->category,
-        ])->values();
+        // Region tags (and other tags) live at the cave (entrance) level as well
+        // as the system level. Merge both so callers see the full tag picture —
+        // notably the caving region, which is only ever applied to caves.
+        $tags = $system->tags
+            ->concat($system->caves->flatMap->tags)
+            ->unique(fn ($t) => $t->tag.'|'.$t->category)
+            ->map(fn ($t) => [
+                'tag' => $t->tag,
+                'category' => $t->category,
+            ])
+            ->values();
 
         $description = $system->description
             ? mb_substr(strip_tags($system->description), 0, 1000)

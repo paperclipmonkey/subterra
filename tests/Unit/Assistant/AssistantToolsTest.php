@@ -311,6 +311,29 @@ class AssistantToolsTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function get_cave_details_surfaces_region_tag_from_cave(): void
+    {
+        $system = CaveSystem::factory()->create(['name' => 'Otter Hole']);
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
+
+        // Region tags are applied to caves (entrances), not the system.
+        $region = \App\Models\Tag::create([
+            'tag' => 'Forest of Dean',
+            'type' => 'cave',
+            'category' => 'region',
+        ]);
+        $cave->tags()->attach($region->id);
+
+        $user = User::factory()->create();
+        $tool = new GetCaveDetailsTool();
+
+        $result = $tool->handle(['cave_system_id' => $system->id], $user);
+
+        $tagNames = collect($result['tags'])->pluck('tag')->all();
+        $this->assertContains('Forest of Dean', $tagNames);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function get_cave_details_returns_zero_id_error(): void
     {
         $user = User::factory()->create();

@@ -123,6 +123,29 @@ class FuzzySearchCavesTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function tool_search_finds_system_by_region_tag_on_cave(): void
+    {
+        $user = User::factory()->create();
+        $system = CaveSystem::factory()->create(['name' => 'Otter Hole']);
+        $system->tags()->attach($this->curatedTag->id);
+
+        // Region tags live at the cave (entrance) level, not the system level.
+        $region = Tag::create(['tag' => 'Forest of Dean', 'type' => 'cave', 'category' => 'region']);
+        $cave = Cave::factory()->create([
+            'cave_system_id' => $system->id,
+            'name' => 'Otter Hole',
+            'location_name' => 'Chepstow',
+        ]);
+        $cave->tags()->attach($region->id);
+
+        $tool = app(\App\Services\Assistant\Tools\SearchCavesTool::class);
+        $result = $tool->handle(['region' => 'Forest of Dean'], $user);
+
+        $this->assertNotEmpty($result['cave_systems']);
+        $this->assertStringContainsString('Otter', $result['cave_systems'][0]['name']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function tool_fuzzy_search_matches_cave_entrance_names(): void
     {
         $user = User::factory()->create();
