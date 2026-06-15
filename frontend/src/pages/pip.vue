@@ -1,5 +1,5 @@
 <template>
-  <div class="pip-shell">
+  <div ref="shellEl" class="pip-shell">
     <!-- Header -->
     <header class="pip-header">
       <div class="pip-header-inner">
@@ -21,12 +21,12 @@
           @update:model-value="switchMode"
         >
           <v-btn value="default" size="small" variant="text" :disabled="store.isLoading">
-            <v-icon :icon="mdiCompassOutline" size="16" class="mr-1" />
-            Caving
+            <v-icon :icon="mdiCompassOutline" size="16" class="pip-mode-icon mr-1" />
+            <span class="pip-mode-label">Caving</span>
           </v-btn>
           <v-btn value="data" size="small" variant="text" :disabled="store.isLoading">
-            <v-icon :icon="mdiDatabaseCogOutline" size="16" class="mr-1" />
-            Data
+            <v-icon :icon="mdiDatabaseCogOutline" size="16" class="pip-mode-icon mr-1" />
+            <span class="pip-mode-label">Data</span>
           </v-btn>
         </v-btn-toggle>
         <v-btn
@@ -545,6 +545,7 @@ const route = useRoute()
 const inputText = ref('')
 const inputEl = ref(null)
 const streamEl = ref(null)
+const shellEl = ref(null)
 const copiedIndex = ref(null)
 
 // ── Data-steward mode (admins only) ──────────────────────────────────────────
@@ -633,7 +634,15 @@ function toggleVoice() {
   isRecording.value = true
 }
 
-onBeforeUnmount(() => { recognition?.stop() })
+onBeforeUnmount(() => {
+  recognition?.stop()
+  document.documentElement.classList.remove('pip-fullscreen')
+  window.removeEventListener('resize', scheduleHeightUpdate)
+  window.visualViewport?.removeEventListener('resize', scheduleHeightUpdate)
+  layoutObserver?.disconnect()
+  clearTimeout(heightTimer)
+  clearTimeout(settleTimer)
+})
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function formatElapsed(ms) {
@@ -654,6 +663,42 @@ function autosize() {
   if (!el) return
   el.style.height = 'auto'
   el.style.height = Math.min(el.scrollHeight, 180) + 'px'
+}
+
+// ── Shell sizing ──────────────────────────────────────────────────────────────
+// The app nests two v-apps: the top system bar lives in the outer layout while
+// the bottom nav dock lives in the inner one. Neither Vuetify layout variable
+// captures *both*, so a pure CSS `calc(100dvh − top − bottom)` is always off by
+// the system-bar height (causing a phantom page scrollbar) and over-reserves the
+// dock's footprint (leaving a big gap above the menu). Instead we measure the
+// real chrome: the shell's distance from the top of the viewport already folds
+// in the system bar, and the dock's own rect tells us exactly how much room to
+// leave at the bottom. Recomputed whenever the viewport or app chrome changes.
+let layoutObserver = null
+let heightTimer = 0
+
+function updateShellHeight() {
+  const el = shellEl.value || document.querySelector('.pip-shell')
+  if (!el) return
+  const top = el.getBoundingClientRect().top
+  const dock = document.querySelector('.nav-dock')
+  const reserve = dock
+    ? Math.round(window.innerHeight - dock.getBoundingClientRect().top) + 8
+    : 80
+  el.style.height = `${Math.max(window.innerHeight - top - reserve, 320)}px`
+}
+
+// Coalesce bursts (resize, ResizeObserver) via timers rather than rAF — timers
+// still fire when the tab isn't painting, so the height stays correct even in a
+// backgrounded/offscreen context. We recompute immediately and again after a
+// short settle, since app-chrome toggles (system bar, banners) register their
+// layout space a frame or two after the triggering DOM change.
+let settleTimer = 0
+function scheduleHeightUpdate() {
+  clearTimeout(heightTimer)
+  clearTimeout(settleTimer)
+  heightTimer = setTimeout(updateShellHeight, 0)
+  settleTimer = setTimeout(updateShellHeight, 150)
 }
 
 // ── Welcome suggestions ──────────────────────────────────────────────────────
@@ -747,6 +792,20 @@ watch(
 )
 
 onMounted(() => {
+  // Lock the page scroller: only the message stream should scroll, never the
+  // page itself. (See updateShellHeight for why the layout overflows otherwise.)
+  document.documentElement.classList.add('pip-fullscreen')
+  scheduleHeightUpdate()
+  window.addEventListener('resize', scheduleHeightUpdate)
+  window.visualViewport?.addEventListener('resize', scheduleHeightUpdate)
+  // Recompute when app chrome (system bar, offline banner) toggles — the outer
+  // v-app's height changes when those register/deregister layout space.
+  const outerApp = document.querySelector('.v-application')
+  if (outerApp && 'ResizeObserver' in window) {
+    layoutObserver = new ResizeObserver(scheduleHeightUpdate)
+    layoutObserver.observe(outerApp)
+  }
+
   // Show the agreement dialog immediately on first arrival if not yet signed.
   if (!hasAgreed.value) {
     agreementDialog.value = true
@@ -1185,4 +1244,24 @@ onMounted(() => {
   }
   .pip-bubble--user { max-width: 70%; }
 }
+
+/* Narrow phones: keep the header from crowding. The Caving/Data toggle (admins
+   only) collapses to icons so it stops pushing the history/new-chat buttons off
+   the edge, and the header packs a little tighter. */
+@media (max-width: 599px) {
+  .pip-header-inner { padding: 10px var(--pip-gutter); }
+  .pip-mode-label { display: none; }
+  .pip-mode-toggle :deep(.v-btn) { min-width: 36px; padding: 0 6px; }
+  .pip-mode-toggle :deep(.pip-mode-icon) { margin-right: 0 !important; }
+}
+</style>
+
+<!--
+  Non-scoped: while the Pip chat is mounted the root element must not scroll, so
+  the message stream is the only scroller. The class is added/removed in the
+  component's mount/unmount hooks. It survives Vuetify's dialog scroll-lock
+  (which toggles an inline overflow on <html>) because it's a class, not inline.
+-->
+<style>
+html.pip-fullscreen { overflow: hidden; }
 </style>
