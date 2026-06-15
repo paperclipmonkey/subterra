@@ -64,7 +64,7 @@
 
       <v-combobox
         v-model="route.duration"
-        :items="['1-2 hours', '2-4 hours', '4-6 hours', 'Full Day']"
+        :items="['0-30 mins', '30-60 mins', '1-2 hours', '2-4 hours', '4-6 hours', 'Full Day']"
         label="Duration"
         autocomplete="off"
       />
