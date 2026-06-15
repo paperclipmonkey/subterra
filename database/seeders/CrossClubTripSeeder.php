@@ -59,7 +59,7 @@ class CrossClubTripSeeder extends Seeder
                 $club->id => ['is_admin' => false, 'status' => 'approved'],
             ]);
 
-            for ($i = 1; $i <= $allied['trips']; $i++) {
+            for ($i = 1; $i <= $allied['trips']; ++$i) {
                 $day = 4 + $i;
                 $trip = Trip::firstOrCreate(
                     ['name' => "Joint meet with {$allied['name']} ({$i})"],

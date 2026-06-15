@@ -131,7 +131,7 @@ class RateLimiterIsolationTest extends TestCase
         // End-to-end proof the named limiter is wired: 10 allowed, 11th blocked.
         $user = User::factory()->create();
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 10; ++$i) {
             $response = $this->actingAs($user)->postJson('/api/users', []);
             $this->assertNotSame(429, $response->status(), "Request {$i} should not be throttled yet.");
         }

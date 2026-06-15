@@ -41,11 +41,11 @@ class TagSeeder extends Seeder
         ]);
 
         Tag::updateOrCreate([
-            'tag' => 'Yorkshire',
+            'tag' => 'Northern',
             'type' => 'cave',
             'category' => 'region',
         ], [
-            'description' => "Yorkshire is home to the UK's deepest cave, Gaping Gill, as well as the famous White Scar Cave.",
+            'description' => "Northern England above the Peak District, including the Yorkshire Dales — the UK's premier caving region. Home to the country's deepest cave, Gaping Gill, as well as the famous White Scar Cave.",
         ]);
 
         Tag::updateOrCreate([

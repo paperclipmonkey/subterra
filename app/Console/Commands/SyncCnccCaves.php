@@ -265,7 +265,7 @@ class SyncCnccCaves extends Command
                     ['type' => 'cave']
                 );
                 $regionTag = Tag::firstOrCreate(
-                    ['tag' => 'Yorkshire', 'category' => 'region'],
+                    ['tag' => 'Northern', 'category' => 'region'],
                     ['type' => 'cave']
                 );
                 $cave->tags()->syncWithoutDetaching([$tagCave->id, $regionTag->id]);

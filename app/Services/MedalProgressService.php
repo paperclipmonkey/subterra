@@ -101,11 +101,11 @@ class MedalProgressService
                 ];
 
             case 'Hard Caver':
-                // Awarded for trips in Yorkshire, Mendip and Wales (by region tag)
+                // Awarded for trips in the Northern region, Mendip and Wales (by region tag)
                 $regions = $this->regionTags($trips);
 
                 return [
-                    'current' => collect(['Yorkshire', 'Mendip', 'Wales'])
+                    'current' => collect(['Northern', 'Mendip', 'Wales'])
                         ->filter(fn ($region) => $regions->contains($region))->count(),
                     'target' => 3,
                 ];

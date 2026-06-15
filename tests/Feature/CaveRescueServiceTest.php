@@ -32,7 +32,7 @@ class CaveRescueServiceTest extends TestCase
     {
         return [
             'Mendip' => ['Mendip', 'Avon and Somerset Police', 'Mendip Cave Rescue', 'MCR'],
-            'Yorkshire' => ['Yorkshire', 'North Yorkshire Police', 'Cave Rescue Organisation', 'CRO'],
+            'Northern' => ['Northern', 'North Yorkshire Police', 'Cave Rescue Organisation', 'CRO'],
             'Peak District' => ['Peak District', 'Derbyshire Constabulary', 'Derbyshire Cave Rescue Organisation', 'DCRO'],
             'South Wales' => ['South Wales', 'Dyfed-Powys Police', 'South & Mid Wales Cave Rescue Team', 'SMWCRT'],
             'North Wales' => ['North Wales', 'North Wales Police', 'North Wales Cave Rescue Organisation', 'NWCRO'],

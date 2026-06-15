@@ -85,7 +85,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => "One of the UK's most famous and largest cave systems, with a 110m main shaft and the iconic Main Chamber. Multi-entrance system on the southern flank of Ingleborough — through-trips between Bar Pot, Flood Entrance, and Gaping Gill itself are classic Yorkshire SRT outings.",
                 'length' => 16500,
                 'vertical_range' => 195,
-                'tags' => ['Yorkshire', 'SRT'],
+                'tags' => ['Northern', 'SRT'],
                 'entrances' => [
                     ['name' => 'Gaping Gill Main Shaft', 'lat' => 54.1543, 'lng' => -2.3736, 'location_name' => 'Ingleborough, Yorkshire Dales'],
                     ['name' => 'Bar Pot',                 'lat' => 54.1521, 'lng' => -2.3728, 'location_name' => 'Ingleborough, Yorkshire Dales'],
@@ -98,7 +98,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'The longest cave system in the UK at over 90km of surveyed passage. The Easegill catchment links Lancaster Hole, County Pot, Pippikin Pot, and many more entrances across Casterton Fell. Outstanding sporting through-trips — but the streamway floods rapidly.',
                 'length' => 90000,
                 'vertical_range' => 211,
-                'tags' => ['Yorkshire', 'SRT'],
+                'tags' => ['Northern', 'SRT'],
                 'entrances' => [
                     ['name' => 'Lancaster Hole', 'lat' => 54.2156, 'lng' => -2.5042, 'location_name' => 'Casterton Fell, Yorkshire Dales'],
                     ['name' => 'County Pot',     'lat' => 54.2192, 'lng' => -2.4969, 'location_name' => 'Casterton Fell, Yorkshire Dales'],
@@ -111,7 +111,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'A classic Yorkshire SRT trip with a series of fine pitches into a sporting streamway. CNCC permit required.',
                 'length' => 1900,
                 'vertical_range' => 130,
-                'tags' => ['Yorkshire', 'SRT', 'Permit'],
+                'tags' => ['Northern', 'SRT', 'Permit'],
                 'entrances' => [
                     ['name' => 'Ireby Fell Cavern', 'lat' => 54.2103, 'lng' => -2.4503, 'location_name' => 'Ireby Fell, Yorkshire Dales', 'access_info' => 'Access via CNCC permit only. Apply through cncc.org.uk before the trip.'],
                 ],
@@ -122,7 +122,7 @@ class AssistantDemoSeeder extends Seeder
                 'description' => 'The classic introductory caving trip on Selside. Walking-sized streamway, the famous Cheese Press squeeze (optional), and a connection to Diccan Pot for the bold. Perfect for beginners with a leader.',
                 'length' => 1100,
                 'vertical_range' => 35,
-                'tags' => ['Yorkshire', 'No Tackle'],
+                'tags' => ['Northern', 'No Tackle'],
                 'entrances' => [
                     ['name' => 'Upper Long Churn',  'lat' => 54.1745, 'lng' => -2.3268, 'location_name' => 'Selside, Yorkshire Dales'],
                     ['name' => 'Lower Long Churn',  'lat' => 54.1757, 'lng' => -2.3252, 'location_name' => 'Selside, Yorkshire Dales'],

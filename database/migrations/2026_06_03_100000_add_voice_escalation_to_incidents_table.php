@@ -6,8 +6,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Tracks the automated voice-call rung of the escalation ladder, so the scheduler
      * knows when it last called and how many attempts it has made for an incident.

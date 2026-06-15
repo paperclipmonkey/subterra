@@ -42,11 +42,11 @@ return [
             'rescue_abbr' => 'MCR',
             'note' => null,
         ],
-        'Yorkshire' => [
+        'Northern' => [
             'police_force' => 'North Yorkshire Police',
             'rescue_team' => 'Cave Rescue Organisation',
             'rescue_abbr' => 'CRO',
-            'note' => 'The Dales straddle three forces — near Leck Fell it may be Cumbria or Lancashire Police. Give a precise location and let the 999 operator route the call.',
+            'note' => 'The northern caving areas straddle several forces — the Yorkshire Dales fall under North Yorkshire Police, but near Leck Fell it may be Cumbria or Lancashire Police. Give a precise location and let the 999 operator route the call.',
         ],
         'Peak District' => [
             'police_force' => 'Derbyshire Constabulary',

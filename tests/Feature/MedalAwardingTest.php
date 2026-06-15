@@ -128,11 +128,11 @@ class MedalAwardingTest extends TestCase
             'name' => 'Hard Caver',
             'description' => 'Awarded for trips in Yorkshire, Mendip and Wales',
         ]);
-        $yorkshireTag = \App\Models\Tag::factory()->create(['tag' => 'Yorkshire', 'category' => 'region', 'type' => 'cave']);
+        $northernTag = \App\Models\Tag::factory()->create(['tag' => 'Northern', 'category' => 'region', 'type' => 'cave']);
         $mendipTag = \App\Models\Tag::factory()->create(['tag' => 'Mendip', 'category' => 'region', 'type' => 'cave']);
         $walesTag = \App\Models\Tag::factory()->create(['tag' => 'Wales', 'category' => 'region', 'type' => 'cave']);
         $cave1 = \App\Models\Cave::factory()->create();
-        $cave1->tags()->attach($yorkshireTag);
+        $cave1->tags()->attach($northernTag);
         $cave2 = \App\Models\Cave::factory()->create();
         $cave2->tags()->attach($mendipTag);
         $cave3 = \App\Models\Cave::factory()->create();

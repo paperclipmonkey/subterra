@@ -14,8 +14,7 @@ class SmsChannelTest extends TestCase
 {
     private function notifiableWithPhone(?string $phone)
     {
-        return new class($phone)
-        {
+        return new class ($phone) {
             public function __construct(public ?string $phone)
             {
             }

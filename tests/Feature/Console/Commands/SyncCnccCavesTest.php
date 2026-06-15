@@ -23,7 +23,7 @@ class SyncCnccCavesTest extends TestCase
         parent::setUp();
 
         Tag::firstOrCreate(['tag' => 'Cave', 'category' => 'type'], ['type' => 'cave']);
-        Tag::firstOrCreate(['tag' => 'Yorkshire', 'category' => 'region'], ['type' => 'cave']);
+        Tag::firstOrCreate(['tag' => 'Northern', 'category' => 'region'], ['type' => 'cave']);
     }
 
     /** Set up the default Http fakes for a normal sync run. */
@@ -190,7 +190,7 @@ HTML;
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_adds_cave_and_yorkshire_tags(): void
+    public function it_adds_cave_and_northern_region_tags(): void
     {
         $this->fakeDefaultHttp();
 
@@ -201,7 +201,7 @@ HTML;
         $tagNames = $cave->tags->pluck('tag')->toArray();
 
         $this->assertContains('Cave', $tagNames);
-        $this->assertContains('Yorkshire', $tagNames);
+        $this->assertContains('Northern', $tagNames);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
