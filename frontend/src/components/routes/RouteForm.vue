@@ -19,8 +19,8 @@
           @change="handleHeroImageUpload"
         />
         <v-img
-          v-if="route.hero_image"
-          :src="route.hero_image"
+          v-if="heroImagePreview || route.hero_image"
+          :src="heroImagePreview || route.hero_image"
           max-height="200"
           cover
           class="rounded mt-2 bg-grey-lighten-2"
@@ -207,7 +207,7 @@
 import { mdiCamera, mdiDelete, mdiFilePdfBox, mdiPlus } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
-import { convertFileToBase64 } from '@/utilities'
+import { convertFileToBase64, toFormData } from '@/utilities'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { onBeforeRouteLeave } from 'vue-router'
@@ -247,13 +247,16 @@ const route = ref({ ...props.initialRoute })
 const caves = ref([])
 const newMedia = ref([])
 const deletedMediaIds = ref([])
+const heroImageFile = ref(null)
+const heroImagePreview = ref(null)
 const isSaved = ref(false)
 
 const isDirty = computed(() => {
   if (isSaved.value) return false
   return JSON.stringify(route.value) !== JSON.stringify(props.initialRoute) ||
     newMedia.value.length > 0 ||
-    deletedMediaIds.value.length > 0
+    deletedMediaIds.value.length > 0 ||
+    heroImageFile.value !== null
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -270,14 +273,20 @@ onBeforeRouteLeave((to, from, next) => {
 })
 
 const handleHeroImageUpload = async (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    try {
-      const result = await convertFileToBase64(file)
-      route.value.hero_image = result.data
-    } catch (error) {
-      console.error('Error converting file to base64:', error)
-    }
+  const file = event.target.files?.[0]
+  if (!file) {
+    heroImageFile.value = null
+    heroImagePreview.value = null
+    return
+  }
+
+  // Keep the real File for upload; base64 is only used for the inline preview.
+  heroImageFile.value = file
+  try {
+    const result = await convertFileToBase64(file)
+    heroImagePreview.value = result.data
+  } catch (error) {
+    console.error('Error generating hero image preview:', error)
   }
 }
 
@@ -286,11 +295,10 @@ const handleMediaUpload = async (event) => {
   for (const file of files) {
     try {
       const result = await convertFileToBase64(file)
-      // simple type detection based on extension or mime if available in result (it is not, strictly)
-      // let's infer type from file.type
       const type = file.type === 'application/pdf' ? 'pdf' : 'photo'
       newMedia.value.push({
-        data: result.data,
+        file, // real File sent on submit
+        data: result.data, // base64 used only for the thumbnail preview
         caption: '',
         type: type,
         file_name: file.name
@@ -299,8 +307,6 @@ const handleMediaUpload = async (event) => {
       console.error('Error processing media file:', error)
     }
   }
-  // Clear input to allow re-selecting same files if needed? 
-  // event.target.value = '' 
 }
 
 onMounted(async () => {
@@ -339,41 +345,81 @@ const markMediaForDeletion = (index, id) => {
   deletedMediaIds.value.push(id)
 }
 
+// Fields shared by every submission path. Images are added separately because
+// they must be sent as real files (multipart), not JSON.
+const buildBasePayload = () => ({
+  name: route.value.name,
+  description: route.value.description ?? '',
+  entrance_id: route.value.entrance_id ?? null,
+  exit_id: route.value.exit_id ?? null,
+  duration: route.value.duration ?? null,
+  grade: route.value.grade ?? null,
+  tackle: (route.value.tackle || []).map(t => ({
+    type: t.type,
+    description: t.description,
+    length: t.length ?? null,
+    // FormData stringifies booleans to "true"/"false", which Laravel's
+    // boolean rule rejects; send 1/0 instead.
+    optional: t.optional ? 1 : 0,
+    quantity: t.quantity ?? 1
+  }))
+})
+
 const save = async () => {
   const { valid } = await form.value.validate()
   if (!valid) return
 
   loading.value = true
   try {
-    const payload = {
-      ...route.value,
-      media: newMedia.value, // Add new media to payload
-      deleted_media: deletedMediaIds.value // Send deleted media IDs
-    }
-
     if (props.preventSubmit) {
-      emit('submit', payload)
+      emit('submit', {
+        ...buildBasePayload(),
+        hero_image: heroImageFile.value,
+        media: newMedia.value,
+        deleted_media: deletedMediaIds.value
+      })
       loading.value = false
       return
     }
 
     if (appStore.user?.is_admin) {
-      const url = route.value.id
+      const payload = buildBasePayload()
+
+      // Only attach the hero image when a new file was chosen — the existing
+      // value is a URL string and would fail the backend's `file` validation.
+      if (heroImageFile.value) {
+        payload.hero_image = heroImageFile.value
+      }
+
+      payload.media = newMedia.value.map(m => ({
+        data: m.file,
+        caption: m.caption ?? '',
+        type: m.type
+      }))
+      payload.deleted_media = deletedMediaIds.value
+
+      const isUpdate = !!route.value.id
+      const url = isUpdate
         ? `/api/routes/${route.value.slug}`
         : `/api/cave_systems/${props.caveSystemId}/routes`
 
-      const method = route.value.id ? 'put' : 'post'
+      const formData = toFormData(payload)
+      // Method spoofing: files can't be sent over a real PUT request body.
+      if (isUpdate) formData.append('_method', 'PUT')
 
-      await api[method](url, payload)
+      await api.post(url, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
 
       isSaved.value = true
       emit('saved')
     } else {
-      // Suggest Edit or Create
+      // Suggested edits don't support route imagery (see the backend whitelist),
+      // so only the textual fields are sent.
       await api.post('/api/suggested-edits', {
         suggestable_type: 'route',
         suggestable_id: route.value.id || null, // null means creation
-        suggested_data: { ...payload, cave_system_id: props.caveSystemId },
+        suggested_data: { ...buildBasePayload(), cave_system_id: props.caveSystemId },
         original_data: null
       })
 

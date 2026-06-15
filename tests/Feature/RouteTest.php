@@ -156,6 +156,30 @@ class RouteTest extends TestCase
         $this->assertStringNotContainsString('data:image', $route->hero_image);
     }
 
+    public function test_admin_can_update_hero_image_via_multipart_method_spoofing()
+    {
+        // Mirrors the real frontend request: a multipart POST with _method=PUT
+        // carrying the hero image as a genuine uploaded file.
+        $admin = User::factory()->admin()->create();
+        $route = Route::factory()->create(['hero_image' => 'routes/old.jpg']);
+
+        $imageFile = \Illuminate\Http\UploadedFile::fake()->image('new-hero.png');
+
+        $response = $this->actingAs($admin)->withHeaders(['Accept' => 'application/json'])
+            ->post("/api/routes/{$route->slug}", [
+                '_method' => 'PUT',
+                'name' => 'Updated Hero Route',
+                'hero_image' => $imageFile,
+            ]);
+
+        $response->assertStatus(200);
+        $route->refresh();
+        $this->assertSame('Updated Hero Route', $route->name);
+        $this->assertNotNull($route->getRawOriginal('hero_image'));
+        $this->assertNotSame('routes/old.jpg', $route->getRawOriginal('hero_image'));
+        $this->assertStringNotContainsString('data:image', $route->getRawOriginal('hero_image'));
+    }
+
     public function test_admin_can_upload_media_for_route()
     {
         $admin = User::factory()->admin()->create();
