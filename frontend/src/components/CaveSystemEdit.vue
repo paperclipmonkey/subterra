@@ -32,6 +32,16 @@
         </v-col>
       </v-row>
 
+      <!-- Map Overlays (admin only) -->
+      <v-row v-if="appStore.user?.is_admin && cavesystem.id">
+        <v-col cols="12">
+          <MapOverlayManager
+            :cave-system-id="cavesystem.id"
+            :initial-overlays="cavesystem.map_overlays || []"
+          />
+        </v-col>
+      </v-row>
+
       <v-row>
         <v-col>
           <v-card-text>
@@ -219,6 +229,7 @@ import { ref, watch, onMounted, computed } from "vue"
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import CaveSystemForm from '@/components/CaveSystemForm.vue'
 import AnnotationMapEditor from '@/components/cave-systems/AnnotationMapEditor.vue'
+import MapOverlayManager from '@/components/cave-systems/MapOverlayManager.vue'
 import { useAppStore } from '@/stores/app'
 import { convertFileToBase64 } from '@/utilities'
 import { useNotificationStore } from '@/stores/notifications'

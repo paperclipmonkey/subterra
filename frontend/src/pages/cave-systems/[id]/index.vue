@@ -51,6 +51,7 @@
           <AnnotationMapViewer
             :annotation="caveSystem.annotation"
             :caves="caveSystem.caves"
+            :overlays="caveSystem.map_overlays"
           />
         </v-col>
       </v-row>

@@ -19,6 +19,7 @@ use OwenIt\Auditing\Auditable;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CaveSystemFile> $files
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Route> $routes
  * @property-read \App\Models\CaveSystemAnnotation|null $annotation
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CaveSystemMapOverlay> $mapOverlays
  */
 class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
@@ -84,5 +85,13 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function annotation(): HasOne
     {
         return $this->hasOne(CaveSystemAnnotation::class);
+    }
+
+    /** @return HasMany<CaveSystemMapOverlay, $this> */
+    public function mapOverlays(): HasMany
+    {
+        return $this->hasMany(CaveSystemMapOverlay::class)
+            ->orderBy('display_order')
+            ->orderBy('id');
     }
 }
