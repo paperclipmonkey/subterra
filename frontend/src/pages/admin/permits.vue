@@ -6,6 +6,10 @@
       </v-btn>
       <h2 class="text-h4 font-weight-bold ml-2">Permits</h2>
       <v-spacer />
+      <v-btn color="primary" variant="text" to="/admin/bookings" class="mr-2">
+        <v-icon :icon="mdiClipboardCheck" class="mr-1" />
+        View and manage bookings
+      </v-btn>
       <v-btn color="primary" @click="openCreateDialog">
         <v-icon :icon="mdiPlus" class="mr-1" />
         New Permit
@@ -109,6 +113,27 @@
               >
                 Remove current photo
               </v-btn>
+
+              <v-row v-if="existingPhotoUrl || photoFile" dense class="mt-1">
+                <v-col cols="12" sm="6">
+                  <v-text-field
+                    v-model="form.photo_photographer"
+                    label="Photographer"
+                    density="compact"
+                    hide-details="auto"
+                    :prepend-inner-icon="mdiCamera"
+                  />
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field
+                    v-model="form.photo_copyright"
+                    label="Licence / Copyright"
+                    density="compact"
+                    hide-details="auto"
+                    :prepend-inner-icon="mdiCopyright"
+                  />
+                </v-col>
+              </v-row>
             </div>
 
             <v-textarea v-model="form.conditions" label="Conditions" rows="3" hint="Applicants must accept these conditions" persistent-hint class="mb-2" />
@@ -218,7 +243,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { mdiArrowLeft, mdiCamera, mdiCheckCircle, mdiCloseCircle, mdiDelete, mdiMagnify, mdiPencil, mdiPlus } from '@mdi/js'
+import { mdiArrowLeft, mdiCamera, mdiCheckCircle, mdiClipboardCheck, mdiCloseCircle, mdiCopyright, mdiDelete, mdiMagnify, mdiPencil, mdiPlus } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -258,6 +283,8 @@ const defaultForm = () => ({
   name: '',
   slug: '',
   description: '',
+  photo_photographer: '',
+  photo_copyright: '',
   conditions: '',
   has_max_groups_per_day: false,
   max_groups_per_day: 1,
@@ -316,6 +343,8 @@ const openEditDialog = (permit) => {
     name: permit.name,
     slug: permit.slug,
     description: permit.description || '',
+    photo_photographer: permit.photo?.photographer || '',
+    photo_copyright: permit.photo?.copyright || '',
     conditions: permit.conditions || '',
     has_max_groups_per_day: permit.has_max_groups_per_day,
     max_groups_per_day: permit.max_groups_per_day || 1,
@@ -331,7 +360,7 @@ const openEditDialog = (permit) => {
     officer_ids: (permit.officers || []).map(o => o.id),
   }
   photoFile.value = null
-  existingPhotoUrl.value = permit.photo_url || null
+  existingPhotoUrl.value = permit.photo?.url || null
   dialog.value = true
 }
 

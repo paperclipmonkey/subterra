@@ -25,7 +25,9 @@
       <v-row v-else class="px-2">
         <v-col v-for="cave in displayedCaves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
           <v-hover v-slot="{ isHovering, props: hoverProps }">
-            <v-card v-bind="hoverProps" elevation="2" class="fill-height d-flex flex-column cave-card"
+            <v-card v-bind="hoverProps" elevation="2"
+                    class="fill-height d-flex flex-column cave-card"
+                    :class="{ 'cave-card--leaving': leavingIds.has(cave.id) }"
                     :to="'/caves/' + cave.slug">
               <div class="position-relative bg-grey-darken-3 cave-card__media" style="height: 210px; overflow: hidden;">
                 <!-- Video Preview -->
@@ -178,6 +180,11 @@ const PAGE_SIZE = 24
 const displayCount = ref(PAGE_SIZE)
 const sentinel = ref(null)
 
+// Cards mid-fade before they're spliced from the list (see markAsDone).
+// Must match the CSS transition duration on .cave-card--leaving.
+const FADE_MS = 650
+const leavingIds = ref(new Set())
+
 const displayedCaves = computed(() => caveStore.caves.slice(0, displayCount.value))
 const hasMore = computed(() => displayCount.value < caveStore.caves.length)
 
@@ -229,14 +236,25 @@ const exportKml = () => {
 const markAsDone = async (cave) => {
   if (!cave) return
   const ok = await markCaveAsDone({ cave, userId: appStore.user.id })
-  if (ok) {
-    // Refresh whichever dataset is currently active (curated or full) so the
-    // user keeps the filter view they were on, with the cave now marked done.
-    await caveStore.refresh()
-    showConfirmModal.value = false
-    caveToMark.value = null
-  } else {
+  if (!ok) {
     console.error('failed to save trip')
+    return
+  }
+  showConfirmModal.value = false
+  caveToMark.value = null
+
+  if (caveStore.hidesDoneCaves) {
+    // The active filter only shows not-yet-done caves, so this one no longer
+    // belongs. Fade the card out, then splice it from the list. Both steps keep
+    // the user's scroll position — a refetch would reset pagination and jump
+    // them back to the top of a list that can be thousands of caves long.
+    leavingIds.value.add(cave.id)
+    await new Promise(resolve => setTimeout(resolve, FADE_MS))
+    caveStore.removeCaveFromList(cave.id)
+    leavingIds.value.delete(cave.id)
+  } else {
+    // Otherwise keep the card in place, now showing its "Done" state.
+    caveStore.markDoneLocally(cave.id)
   }
 }
 </script>
@@ -253,6 +271,14 @@ const markAsDone = async (cave) => {
       0 2px 6px rgba(24, 38, 31, 0.08),
       0 14px 32px rgba(24, 38, 31, 0.16) !important;
   }
+}
+
+// Fade + shrink a card as it's removed from a "not done yet" filtered list.
+.cave-card--leaving {
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  pointer-events: none;
 }
 
 .cave-card__media {

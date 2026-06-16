@@ -21,6 +21,8 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'slug',
         'description',
         'photo_path',
+        'photo_photographer',
+        'photo_copyright',
         'conditions',
         'has_max_groups_per_day',
         'max_groups_per_day',
@@ -48,17 +50,24 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
         ];
     }
 
-    public function getPhotoUrlAttribute(): ?string
+    /**
+     * The permit photo as a structured object: responsive URL/srcset plus
+     * credits. Mirrors the route hero-image shape. Null when no photo is set.
+     *
+     * @return array{url: string|null, srcset: string|null, photographer: string|null, copyright: string|null}|null
+     */
+    public function getPhotoAttribute(): ?array
     {
         if (!$this->photo_path) {
             return null;
         }
 
-        if (str_starts_with($this->photo_path, 'http')) {
-            return $this->photo_path;
-        }
-
-        return \Illuminate\Support\Facades\Storage::disk('media')->url($this->photo_path);
+        return [
+            'url' => \App\Support\MediaUrl::url($this->photo_path),
+            'srcset' => \App\Support\MediaUrl::srcset($this->photo_path),
+            'photographer' => $this->photo_photographer,
+            'copyright' => $this->photo_copyright,
+        ];
     }
 
     public function caves(): BelongsToMany

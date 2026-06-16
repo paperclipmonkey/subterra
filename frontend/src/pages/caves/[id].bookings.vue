@@ -1,109 +1,166 @@
 <template>
-  <v-container>
-    <div class="d-flex align-center mb-4">
-      <v-btn icon variant="text" @click="$router.back()">
-        <v-icon :icon="mdiArrowLeft" />
-      </v-btn>
-      <div class="ml-2">
-        <h2 class="text-h4 font-weight-bold">{{ permit?.name || 'Booking' }}</h2>
-        <div v-if="permit?.description" class="text-subtitle-1 text-grey-darken-1 mt-1">
-          <MarkdownRenderer :source="permit.description" />
-        </div>
-      </div>
-    </div>
-
-    <v-progress-linear v-if="loading" indeterminate class="mb-4" />
+  <div>
+    <v-progress-linear v-if="loading" indeterminate />
 
     <template v-if="permit">
-      <!-- Permit Info -->
-      <v-alert v-if="permit.conditions" type="info" variant="tonal" class="mb-4">
-        <div class="text-subtitle-2 font-weight-bold mb-1">Conditions</div>
-        <MarkdownRenderer :source="permit.conditions" />
-      </v-alert>
-
-      <v-row v-if="permit.has_max_groups_per_day" class="mb-4">
-        <v-col>
-          <v-chip color="info" variant="tonal">
-            Max {{ permit.max_groups_per_day }} group{{ permit.max_groups_per_day !== 1 ? 's' : '' }} per day
-          </v-chip>
-          <v-chip v-if="permit.auto_approve" color="success" variant="tonal" class="ml-2">
-            Auto-approved
-          </v-chip>
-        </v-col>
-      </v-row>
-
-      <!-- Linked Caves -->
-      <v-card v-if="permit.caves?.length" class="mb-6" variant="outlined">
-        <v-card-title class="text-subtitle-1 font-weight-bold">Caves covered by this permit</v-card-title>
-        <v-list density="compact">
-          <v-list-item
-            v-for="cave in permit.caves"
-            :key="cave.id"
-            :to="`/caves/${cave.slug}`"
-            :title="cave.name"
-          />
-        </v-list>
-      </v-card>
-
-      <!-- Calendar -->
-      <v-card class="mb-6">
-        <v-card-title class="d-flex align-center justify-center">
-          <v-btn icon variant="text" @click="prevMonth">
-            <v-icon :icon="mdiChevronLeft" />
-          </v-btn>
-          <span class="text-h6 mx-4">{{ calendarTitle }}</span>
-          <v-btn icon variant="text" @click="nextMonth">
-            <v-icon :icon="mdiChevronRight" />
-          </v-btn>
-        </v-card-title>
-
-        <v-alert
-          v-if="calendarPermitInfo.has_season"
-          type="info"
-          variant="tonal"
-          density="compact"
-          class="mx-4 mb-2"
-        >
-          This permit is only open from
-          <strong>{{ formatSeasonDate(calendarPermitInfo.season_start) }}</strong>
-          to
-          <strong>{{ formatSeasonDate(calendarPermitInfo.season_end) }}</strong>.
-          Dates outside this season cannot be booked.
-        </v-alert>
-
-        <v-card-text>
-          <div class="calendar-grid">
-            <div v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="day" class="calendar-header">
-              {{ day }}
-            </div>
-            <div
-              v-for="(cell, i) in calendarCells"
-              :key="i"
-              class="calendar-day"
-              :class="{
-                'calendar-day--other': !cell.current,
-                'calendar-day--today': cell.today,
-                'calendar-day--past': cell.current && cell.past,
-                'calendar-day--out-of-season': cell.current && !cell.past && cell.outOfSeason,
-                'calendar-day--full': !cell.available && cell.current && !cell.past && !cell.outOfSeason,
-                'calendar-day--clickable': cell.available && cell.current && !cell.past && !cell.outOfSeason,
-              }"
-              @click="cell.available && cell.current && !cell.past && !cell.outOfSeason ? selectDate(cell) : null"
-            >
-              <div class="day-number">{{ cell.day }}</div>
-              <div v-if="cell.current && !cell.past && cell.outOfSeason" class="text-caption day-label day-label--season">
-                Out of season
-              </div>
-              <div v-else-if="cell.current && !cell.past && cell.bookingCount > 0" class="text-caption text-grey-darken-1">
-                {{ cell.bookingCount }} booked
-              </div>
-              <div v-else-if="cell.current && !cell.past && !cell.available" class="text-caption text-error">
-                Full
-              </div>
-            </div>
+      <!-- Hero -->
+      <v-img
+        :src="permit.photo?.url || '/placeholder-cave.jpg'"
+        :srcset="permit.photo?.srcset || undefined"
+        height="320"
+        cover
+        class="align-end"
+        gradient="to top, rgba(0,0,0,0.85), rgba(0,0,0,0.1) 60%"
+      >
+        <div class="position-absolute top-0 left-0 pa-4 d-flex w-100" style="z-index: 1;">
+          <v-btn :icon="mdiArrowLeft" variant="tonal" color="white" class="backdrop-blur" @click="$router.back()" />
+        </div>
+        <div v-if="permit.photo?.photographer || permit.photo?.copyright" class="photo-credit text-caption">
+          <v-icon size="x-small" :icon="mdiCamera" class="mr-1" />
+          <span v-if="permit.photo.photographer">{{ permit.photo.photographer }}</span>
+          <span v-if="permit.photo.photographer && permit.photo.copyright"> · </span>
+          <span v-if="permit.photo.copyright">{{ permit.photo.copyright }}</span>
+        </div>
+        <v-container class="pb-6">
+          <div class="d-flex flex-wrap ga-2 mb-2">
+            <v-chip v-if="permit.auto_approve" color="success" size="small" variant="flat">
+              <v-icon start :icon="mdiCheckDecagram" /> Auto-approved
+            </v-chip>
+            <v-chip v-else color="warning" size="small" variant="flat">
+              <v-icon start :icon="mdiAccountClock" /> Reviewed by officer
+            </v-chip>
+            <v-chip v-if="permit.has_max_groups_per_day" size="small" variant="flat" color="white" class="text-grey-darken-3">
+              Max {{ permit.max_groups_per_day }} group{{ permit.max_groups_per_day !== 1 ? 's' : '' }}/day
+            </v-chip>
+            <v-chip v-if="permit.has_max_participants" size="small" variant="flat" color="white" class="text-grey-darken-3">
+              Max {{ permit.max_participants }} per group
+            </v-chip>
           </div>
-        </v-card-text>
-      </v-card>
+          <h1 class="text-h3 text-white font-weight-bold">{{ permit.name }}</h1>
+          <div v-if="permit.caves?.length" class="text-subtitle-1 text-white mt-1 d-flex align-center">
+            <v-icon :icon="mdiMapMarker" size="small" class="mr-1" />
+            {{ permit.caves.map(c => c.name).join(', ') }}
+          </div>
+        </v-container>
+      </v-img>
+
+      <v-container class="py-6">
+        <v-row>
+          <!-- Calendar (main) -->
+          <v-col cols="12" md="8" order="2" order-md="1">
+            <v-card class="rounded-lg" elevation="2">
+              <v-card-title class="d-flex align-center justify-space-between py-4">
+                <v-btn icon variant="text" @click="prevMonth">
+                  <v-icon :icon="mdiChevronLeft" />
+                </v-btn>
+                <span class="text-h6">{{ calendarTitle }}</span>
+                <v-btn icon variant="text" @click="nextMonth">
+                  <v-icon :icon="mdiChevronRight" />
+                </v-btn>
+              </v-card-title>
+              <v-divider />
+
+              <v-alert
+                v-if="calendarPermitInfo.has_season"
+                type="info"
+                variant="tonal"
+                density="compact"
+                class="ma-4 mb-0"
+              >
+                This permit is only open from
+                <strong>{{ formatSeasonDate(calendarPermitInfo.season_start) }}</strong>
+                to
+                <strong>{{ formatSeasonDate(calendarPermitInfo.season_end) }}</strong>.
+                Dates outside this season cannot be booked.
+              </v-alert>
+
+              <v-card-text>
+                <div class="calendar-grid">
+                  <div v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="day" class="calendar-header">
+                    {{ day }}
+                  </div>
+                  <div
+                    v-for="(cell, i) in calendarCells"
+                    :key="i"
+                    class="calendar-day"
+                    :class="{
+                      'calendar-day--other': !cell.current,
+                      'calendar-day--today': cell.today,
+                      'calendar-day--past': cell.current && cell.past,
+                      'calendar-day--out-of-season': cell.current && !cell.past && cell.outOfSeason,
+                      'calendar-day--full': !cell.available && cell.current && !cell.past && !cell.outOfSeason,
+                      'calendar-day--at-risk': cell.atRisk && cell.current && !cell.past && !cell.outOfSeason,
+                      'calendar-day--clickable': cell.available && cell.current && !cell.past && !cell.outOfSeason,
+                    }"
+                    @click="cell.available && cell.current && !cell.past && !cell.outOfSeason ? selectDate(cell) : null"
+                  >
+                    <div class="day-number">{{ cell.day }}</div>
+                    <template v-if="cell.current && !cell.past">
+                      <div v-if="cell.outOfSeason" class="text-caption day-label day-label--season">
+                        Out of season
+                      </div>
+                      <template v-else>
+                        <div v-if="cell.bookingCount > 0" class="text-caption text-grey-darken-1">
+                          {{ cell.bookingCount }} booked
+                        </div>
+                        <div v-if="cell.available && cell.pendingCount > 0" class="text-caption" :class="cell.atRisk ? 'day-label--pending' : 'text-grey'">
+                          {{ cell.pendingCount }} pending
+                        </div>
+                        <div v-if="!cell.available" class="text-caption text-error">
+                          Full
+                        </div>
+                      </template>
+                    </template>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-wrap ga-4 mt-4 text-caption text-grey-darken-1">
+                  <span class="d-flex align-center"><span class="legend-swatch legend-swatch--available" /> Available — click to apply</span>
+                  <span class="d-flex align-center"><span class="legend-swatch legend-swatch--at-risk" /> Pending — may fill once approved</span>
+                  <span class="d-flex align-center"><span class="legend-swatch legend-swatch--full" /> Full</span>
+                  <span class="d-flex align-center"><span class="legend-swatch legend-swatch--today" /> Today</span>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <!-- Info (sidebar) -->
+          <v-col cols="12" md="4" order="1" order-md="2">
+            <v-card v-if="permit.description" class="rounded-lg mb-4" elevation="2">
+              <v-card-title class="d-flex align-center py-4 text-subtitle-1 font-weight-bold">
+                <v-icon :icon="mdiInformationOutline" class="mr-2 text-primary" />
+                About this permit
+              </v-card-title>
+              <v-divider />
+              <v-card-text>
+                <MarkdownRenderer :source="permit.description" />
+              </v-card-text>
+            </v-card>
+
+            <v-alert v-if="permit.conditions" type="info" variant="tonal" class="rounded-lg mb-4">
+              <div class="text-subtitle-2 font-weight-bold mb-1">Conditions</div>
+              <MarkdownRenderer :source="permit.conditions" />
+            </v-alert>
+
+            <v-card v-if="permit.caves?.length" class="rounded-lg" variant="outlined">
+              <v-card-title class="d-flex align-center py-4 text-subtitle-1 font-weight-bold">
+                <v-icon :icon="mdiMapMarker" class="mr-2 text-primary" />
+                Caves covered
+              </v-card-title>
+              <v-divider />
+              <v-list density="compact" nav>
+                <v-list-item
+                  v-for="cave in permit.caves"
+                  :key="cave.id"
+                  :to="`/caves/${cave.slug}`"
+                  :title="cave.name"
+                  :append-icon="mdiChevronRight"
+                />
+              </v-list>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
 
       <!-- Application Form -->
       <v-dialog v-model="applyDialog" max-width="600" persistent>
@@ -114,6 +171,13 @@
               <p class="mb-4 text-body-2 text-grey-darken-2">
                 You are applying for <strong>{{ permit.name }}</strong> on <strong>{{ formatDate(selectedDate) }}</strong>.
               </p>
+
+              <v-alert v-if="selectedDateAtRisk" type="warning" variant="tonal" density="compact" class="mb-4">
+                There {{ selectedDatePending === 1 ? 'is' : 'are' }} already
+                <strong>{{ selectedDatePending }}</strong> pending application{{ selectedDatePending === 1 ? '' : 's' }}
+                for this date. If {{ selectedDatePending === 1 ? 'it is' : 'they are' }} approved this date may become fully
+                booked, so your application can still be submitted but isn't guaranteed.
+              </v-alert>
 
               <v-text-field
                 v-model.number="application.participants"
@@ -170,16 +234,18 @@
       </v-dialog>
     </template>
 
-    <v-alert v-if="!loading && !permit" type="info" variant="tonal">
-      This cave does not have a permit scheme associated with it.
-    </v-alert>
-  </v-container>
+    <v-container v-if="!loading && !permit">
+      <v-alert type="info" variant="tonal">
+        This cave does not have a permit scheme associated with it.
+      </v-alert>
+    </v-container>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mdiArrowLeft, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
+import { mdiArrowLeft, mdiChevronLeft, mdiChevronRight, mdiCheckDecagram, mdiAccountClock, mdiCamera, mdiMapMarker, mdiInformationOutline } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
@@ -247,6 +313,13 @@ const calendarCells = computed(() => {
     const dayData = calendarData.value[dateStr]
     const isPast = d < today
     const inSeason = isInSeason(dateStr)
+    const bookingCount = dayData?.booking_count || 0
+    const pendingCount = dayData?.pending_count || 0
+    const available = isPast || !inSeason ? false : (dayData?.available !== false)
+    const info = calendarPermitInfo.value
+    // Available now, but approved + pending applications would fill the day if
+    // all pending ones are approved — likely to book out.
+    const atRisk = available && info.has_max_groups_per_day && (bookingCount + pendingCount) >= info.max_groups_per_day
 
     cells.push({
       day: i,
@@ -255,8 +328,10 @@ const calendarCells = computed(() => {
       date: dateStr,
       past: isPast,
       outOfSeason: !inSeason,
-      bookingCount: dayData?.booking_count || 0,
-      available: isPast || !inSeason ? false : (dayData?.available !== false),
+      bookingCount,
+      pendingCount,
+      available,
+      atRisk,
     })
   }
 
@@ -266,6 +341,20 @@ const calendarCells = computed(() => {
   }
 
   return cells
+})
+
+// Pending applications already lodged for the date being applied for.
+const selectedDatePending = computed(() => {
+  if (!selectedDate.value) return 0
+  return calendarData.value[selectedDate.value]?.pending_count || 0
+})
+
+// True when outstanding pending applications could fill the date if approved.
+const selectedDateAtRisk = computed(() => {
+  const info = calendarPermitInfo.value
+  const d = selectedDate.value ? calendarData.value[selectedDate.value] : null
+  if (!d || !info.has_max_groups_per_day || d.available === false) return false
+  return (d.booking_count || 0) + (d.pending_count || 0) >= info.max_groups_per_day
 })
 
 const prevMonth = () => {
@@ -371,11 +460,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.backdrop-blur {
+  backdrop-filter: blur(4px);
+}
+
+.photo-credit {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.75);
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 1px;
   background: #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .calendar-header {
@@ -407,6 +510,19 @@ onMounted(() => {
 
 .calendar-day--full {
   background: #ffebee;
+}
+
+.calendar-day--at-risk {
+  background: #fff8e1;
+}
+
+.calendar-day--at-risk.calendar-day--clickable:hover {
+  background: #ffecb3;
+}
+
+.day-label--pending {
+  color: #f57f17;
+  font-weight: 600;
 }
 
 .calendar-day--out-of-season {
@@ -441,5 +557,30 @@ onMounted(() => {
 .day-number {
   font-weight: 600;
   font-size: 0.85rem;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  margin-right: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.legend-swatch--available {
+  background: #e8f5e9;
+}
+
+.legend-swatch--at-risk {
+  background: #fff8e1;
+}
+
+.legend-swatch--full {
+  background: #ffebee;
+}
+
+.legend-swatch--today {
+  background: #e3f2fd;
 }
 </style>

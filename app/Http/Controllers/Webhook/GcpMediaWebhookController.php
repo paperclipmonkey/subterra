@@ -15,6 +15,7 @@ class GcpMediaWebhookController extends Controller
         'cave_media' => ['class' => \App\Models\CaveMedia::class, 'attribute' => 'filename'],
         'trip_media' => ['class' => \App\Models\TripMedia::class, 'attribute' => 'filename'],
         'route_media' => ['class' => \App\Models\RouteMedia::class, 'attribute' => 'path'],
+        'permit' => ['class' => \App\Models\Permit::class, 'attribute' => 'photo_path'],
     ];
 
     /**

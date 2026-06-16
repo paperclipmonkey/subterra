@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Cave;
 use App\Models\CaveMedia;
+use App\Models\Permit;
 use App\Models\TripMedia;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -125,6 +126,47 @@ class TranscoderWebhookControllerTest extends TestCase
 
         $tripMedia->refresh();
         $this->assertStringEndsWith('.mp4', $tripMedia->filename);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_stores_image_variants_and_updates_permit_photo(): void
+    {
+        $permit = Permit::factory()->create([
+            'photo_path' => 'permits/raw-photo.jpg',
+            'original_filename' => null,
+        ]);
+
+        // The processor leaves the WebP variants on the GCS staging disk.
+        Storage::disk('gcs_staging')->put('output/perm-uuid/desktop.webp', 'desktop-bytes');
+        Storage::disk('gcs_staging')->put('output/perm-uuid/tablet.webp', 'tablet-bytes');
+        Storage::disk('gcs_staging')->put('output/perm-uuid/mobile.webp', 'mobile-bytes');
+
+        // Image notifications carry no `labels` key (that distinguishes them from video).
+        $payload = $this->buildPubSubPayload([
+            'status' => 'succeeded',
+            'mediaModel' => 'permit',
+            'mediaId' => $permit->id,
+            'sourcePath' => 'permits/raw-photo.jpg',
+            'originalPath' => 'permits/raw-photo.jpg',
+            'namingBase' => 'permits/raw-photo.jpg',
+            'variants' => [
+                ['name' => 'desktop', 'path' => 'output/perm-uuid/desktop.webp'],
+                ['name' => 'tablet', 'path' => 'output/perm-uuid/tablet.webp'],
+                ['name' => 'mobile', 'path' => 'output/perm-uuid/mobile.webp'],
+            ],
+        ]);
+
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
+
+        $response->assertOk()->assertJson(['status' => 'ok']);
+
+        // Variants relocated to the media (s3_clone) disk.
+        Storage::disk('s3_clone')->assertExists('permits/raw-photo_desktop.webp');
+        Storage::disk('s3_clone')->assertExists('permits/raw-photo_mobile.webp');
+
+        $permit->refresh();
+        $this->assertSame('permits/raw-photo_desktop.webp', $permit->photo_path);
+        $this->assertSame('permits/raw-photo.jpg', $permit->original_filename);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

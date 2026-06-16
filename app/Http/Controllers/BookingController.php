@@ -80,20 +80,32 @@ class BookingController extends Controller
         $endDate = date('Y-m-t', strtotime($startDate));
 
         $bookings = $permit->bookings()
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'pending'])
             ->whereDate('date', '>=', $startDate)
             ->whereDate('date', '<=', $endDate)
-            ->select('date')
+            ->select('date', 'status')
             ->selectRaw('count(*) as booking_count')
-            ->groupBy('date')
+            ->groupBy('date', 'status')
             ->get();
 
-        $calendarData = $bookings->mapWithKeys(function ($item) use ($permit) {
-            return [$item->date->toDateString() => [
-                'booking_count' => $item->booking_count,
-                'available' => !$permit->has_max_groups_per_day || $item->booking_count < $permit->max_groups_per_day,
-            ]];
-        });
+        // Approved bookings determine availability; pending ones are surfaced so
+        // applicants can see a day may fill once outstanding applications are reviewed.
+        $calendarData = [];
+        foreach ($bookings as $item) {
+            $key = $item->date->toDateString();
+            $calendarData[$key] ??= ['booking_count' => 0, 'pending_count' => 0, 'available' => true];
+
+            if ($item->status === 'approved') {
+                $calendarData[$key]['booking_count'] = $item->booking_count;
+            } else {
+                $calendarData[$key]['pending_count'] = $item->booking_count;
+            }
+        }
+
+        foreach ($calendarData as &$day) {
+            $day['available'] = !$permit->has_max_groups_per_day || $day['booking_count'] < $permit->max_groups_per_day;
+        }
+        unset($day);
 
         return response()->json([
             'data' => $calendarData,
