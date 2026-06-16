@@ -10,32 +10,22 @@
         :max-zoom="18"
         @map:load="onMapLoad"
       />
-      <div v-if="overlayList.length" class="overlay-toggle-panel">
-        <div class="overlay-toggle-title">
-          <v-icon size="16" :icon="mdiLayers" /> Overlays
-        </div>
-        <div v-for="ov in overlayList" :key="ov.id" class="overlay-toggle-row">
-          <v-switch
-            :model-value="overlayVisibility[ov.id]"
-            color="primary"
-            density="compact"
-            hide-details
-            :label="ov.name"
-            :loading="overlayLoading[ov.id]"
-            @update:model-value="(val) => toggleOverlay(ov.id, val)"
-          />
-        </div>
-      </div>
+      <OverlayTogglePanel
+        :overlays="overlayList"
+        :visibility="overlays.visibility"
+        :loading="overlays.loading"
+        @toggle="overlays.toggle"
+      />
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
-import { mdiLayers } from '@mdi/js'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import AppMap from '@/components/AppMap.vue'
 import maplibregl from 'maplibre-gl'
-import { parseGeoTiff, boundsToCoordinates } from '@/utilities/geotiffOverlay'
+import OverlayTogglePanel from '@/components/cave-systems/OverlayTogglePanel.vue'
+import { useMapOverlays } from '@/composables/useMapOverlays'
 
 const props = defineProps({
   annotation: {
@@ -57,13 +47,9 @@ const mapRef = ref(null)
 const mapInstance = ref(null)
 let activePopup = null
 
-// Overlay (GeoTIFF) state
-const overlayVisibility = reactive({})
-const overlayLoading = reactive({})
-// Cache of decoded overlays so toggling/style-switching doesn't re-fetch: id -> { dataUrl, coordinates }
-const overlayCache = new Map()
-
-const overlayList = computed(() => props.overlays || [])
+// GeoTIFF overlay rendering (shared with the individual cave map)
+const overlays = useMapOverlays(() => mapInstance.value, () => props.overlays)
+const overlayList = overlays.overlayList
 
 // Pre-create icon image data (synchronous, reusable)
 const parkingIcon = createParkingIcon()
@@ -189,98 +175,8 @@ function showPopup (map, lngLat, html, offset = 16) {
 
 function onMapLoad (e) {
   mapInstance.value = e.map
-  renderOverlays()
+  overlays.render()
   renderAnnotations()
-}
-
-const overlayLayerId = (id) => `geotiff-overlay-${id}`
-const overlaySourceId = (id) => `geotiff-overlay-${id}`
-
-// Decode a GeoTIFF (once) and add it as a raster image source + layer.
-async function addOverlayToMap (overlay) {
-  const map = mapInstance.value
-  if (!map || !overlay?.url) return
-
-  const sourceId = overlaySourceId(overlay.id)
-  const layerId = overlayLayerId(overlay.id)
-  if (map.getLayer(layerId)) return // already added
-
-  let decoded = overlayCache.get(overlay.id)
-  if (!decoded) {
-    overlayLoading[overlay.id] = true
-    try {
-      const res = await fetch(overlay.url)
-      const buffer = await res.arrayBuffer()
-      const parsed = await parseGeoTiff(buffer)
-      decoded = { dataUrl: parsed.dataUrl, coordinates: parsed.coordinates }
-      overlayCache.set(overlay.id, decoded)
-    } catch (err) {
-      console.error(`Failed to load GeoTIFF overlay "${overlay.name}"`, err)
-      overlayLoading[overlay.id] = false
-      overlayVisibility[overlay.id] = false
-      return
-    }
-    overlayLoading[overlay.id] = false
-  }
-
-  // The map style may have been torn down while we were decoding
-  if (!mapInstance.value || map.getSource(sourceId)) return
-
-  map.addSource(sourceId, {
-    type: 'image',
-    url: decoded.dataUrl,
-    coordinates: decoded.coordinates,
-  })
-  map.addLayer({
-    id: layerId,
-    type: 'raster',
-    source: sourceId,
-    paint: {
-      'raster-opacity': overlay.opacity ?? 0.8,
-      'raster-fade-duration': 0,
-    },
-  }, firstAnnotationLayerId())
-}
-
-// Insert overlays beneath annotation layers so markers/routes stay on top
-function firstAnnotationLayerId () {
-  const map = mapInstance.value
-  if (!map) return undefined
-  const candidates = ['annotation-caves-layer', 'annotation-lines-layer', 'annotation-parking-layer', 'annotation-houses-layer']
-  return candidates.find(id => map.getLayer(id))
-}
-
-function removeOverlayFromMap (id) {
-  const map = mapInstance.value
-  if (!map) return
-  const layerId = overlayLayerId(id)
-  const sourceId = overlaySourceId(id)
-  if (map.getLayer(layerId)) map.removeLayer(layerId)
-  if (map.getSource(sourceId)) map.removeSource(sourceId)
-}
-
-function renderOverlays () {
-  const map = mapInstance.value
-  if (!map) return
-  overlayList.value.forEach(ov => {
-    // Default visibility from the overlay record, unless the user already toggled it
-    if (overlayVisibility[ov.id] === undefined) {
-      overlayVisibility[ov.id] = ov.visible_by_default !== false
-    }
-    if (overlayVisibility[ov.id]) {
-      addOverlayToMap(ov)
-    }
-  })
-}
-
-async function toggleOverlay (id, visible) {
-  overlayVisibility[id] = visible
-  if (visible) {
-    const overlay = overlayList.value.find(o => o.id === id)
-    if (overlay) await addOverlayToMap(overlay)
-  } else {
-    removeOverlayFromMap(id)
-  }
 }
 
 function addLayerEvent (map, event, layer, handler) {
@@ -511,13 +407,9 @@ function fitBounds () {
   })
 
   // Include overlay extents (uses stored WGS84 bounds — no decode required)
-  overlayList.value.forEach(ov => {
-    const coords = boundsToCoordinates(ov.bounds)
-    if (coords) {
-      coords.forEach(c => bounds.extend(c))
-      hasPoints = true
-    }
-  })
+  if (overlays.extendBounds(bounds)) {
+    hasPoints = true
+  }
 
   if (hasPoints) {
     map.fitBounds(bounds, { padding: 50, maxZoom: 15 })
@@ -566,7 +458,7 @@ watch(style, () => {
   const map = mapInstance.value
   if (!map) return
   map.once('style.load', () => {
-    renderOverlays()
+    overlays.render()
     renderAnnotations()
   })
 })
@@ -574,7 +466,7 @@ watch(style, () => {
 // Re-render overlays when the overlay list changes (e.g. data loads after mount)
 watch(() => props.overlays, () => {
   if (mapInstance.value) {
-    renderOverlays()
+    overlays.render()
     fitBounds()
   }
 }, { deep: true })
@@ -593,39 +485,6 @@ onBeforeUnmount(() => {
   padding: 0 !important;
   height: calc(100% - 48px);
   position: relative;
-}
-
-.overlay-toggle-panel {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 8px;
-  padding: 6px 12px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  max-width: 240px;
-}
-
-.overlay-toggle-title {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #555;
-  margin-bottom: 2px;
-}
-
-.overlay-toggle-row :deep(.v-selection-control) {
-  min-height: 32px;
-}
-
-.overlay-toggle-row :deep(.v-label) {
-  font-size: 13px;
-  opacity: 1;
 }
 </style>
 

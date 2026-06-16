@@ -117,6 +117,7 @@ class CaveResource extends JsonResource
                 'files' => $request->user()?->hasApprovedClub() && $this->system->relationLoaded('files') && $this->system->files->isNotEmpty() ? CaveSystemFileResource::collection($this->system->files) : [],
                 'routes' => $this->system->relationLoaded('routes') ? $this->system->routes : [],
                 'annotation' => $this->system->relationLoaded('annotation') ? $this->system->annotation : null,
+                'map_overlays' => $this->system->relationLoaded('mapOverlays') ? CaveSystemMapOverlayResource::collection($this->system->mapOverlays) : [],
             ],
             'trips' => TripSummaryResource::collection($this->whenLoaded('trips')),
             'previously_done' => optional($previoslyDoneTag)->tag === 'Previously Done',
