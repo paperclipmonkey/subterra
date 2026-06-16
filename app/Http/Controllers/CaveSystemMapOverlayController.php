@@ -48,9 +48,11 @@ class CaveSystemMapOverlayController extends Controller
         $extension = strtolower($file->getClientOriginalExtension() ?: (string) $file->guessExtension());
 
         if (!in_array($extension, $this->allowedExtensions, true)) {
+            $message = 'The uploaded file must be a GeoTIFF (.'.implode(', .', $this->allowedExtensions).').';
+
             return response()->json([
-                'message' => 'The uploaded file must be a GeoTIFF (.tif or .tiff).',
-                'errors' => ['file' => ['The uploaded file must be a GeoTIFF (.tif or .tiff).']],
+                'message' => $message,
+                'errors' => ['file' => [$message]],
             ], 422);
         }
 

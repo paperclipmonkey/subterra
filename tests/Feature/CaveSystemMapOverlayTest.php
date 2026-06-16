@@ -51,13 +51,16 @@ class CaveSystemMapOverlayTest extends TestCase
 
         $file = UploadedFile::fake()->create('survey.tif', 200, 'image/tiff');
 
-        $response = $this->postJson("/api/cave_systems/{$caveSystem->id}/map_overlays", [
+        // Use a real multipart request (not postJson) so the UploadedFile is
+        // transmitted as a file and the string-typed form fields exercise the
+        // same coercion the browser upload relies on.
+        $response = $this->post("/api/cave_systems/{$caveSystem->id}/map_overlays", [
             'name' => 'Survey sheet 1',
             'file' => $file,
             'bounds' => [-2.65, 51.82, -2.60, 51.85],
             'opacity' => 0.6,
             'visible_by_default' => true,
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $response->assertCreated()
             ->assertJsonPath('data.name', 'Survey sheet 1')
@@ -82,10 +85,10 @@ class CaveSystemMapOverlayTest extends TestCase
 
         $file = UploadedFile::fake()->create('notes.pdf', 50, 'application/pdf');
 
-        $response = $this->postJson("/api/cave_systems/{$caveSystem->id}/map_overlays", [
+        $response = $this->post("/api/cave_systems/{$caveSystem->id}/map_overlays", [
             'name' => 'Bad file',
             'file' => $file,
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['file']);
@@ -100,10 +103,10 @@ class CaveSystemMapOverlayTest extends TestCase
 
         $file = UploadedFile::fake()->create('survey.tif', 100, 'image/tiff');
 
-        $response = $this->postJson("/api/cave_systems/{$caveSystem->id}/map_overlays", [
+        $response = $this->post("/api/cave_systems/{$caveSystem->id}/map_overlays", [
             'name' => 'Survey',
             'file' => $file,
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $response->assertForbidden();
     }

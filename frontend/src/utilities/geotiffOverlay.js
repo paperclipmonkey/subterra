@@ -141,9 +141,12 @@ export async function parseGeoTiff (arrayBuffer) {
     for (let gi = 0; gi <= WARP_GRID; gi++) {
       const mx = mW + ((mE - mW) * gi) / WARP_GRID
       const [sx, sy] = fromMerc(mx, my)
-      // Source CRS coordinate -> downsampled source pixel (row 0 = north)
-      gridCols[gj * (WARP_GRID + 1) + gi] = ((sx - minX) / spanX) * srcW
-      gridRows[gj * (WARP_GRID + 1) + gi] = ((maxY - sy) / spanY) * srcH
+      // Source CRS coordinate -> downsampled source pixel index (row 0 = north).
+      // Map the extent edges onto the first/last pixel index (0 .. srcW-1) so the
+      // east/south edges sample the final row/column instead of falling off the
+      // raster and leaving a 1px transparent border.
+      gridCols[gj * (WARP_GRID + 1) + gi] = ((sx - minX) / spanX) * (srcW - 1)
+      gridRows[gj * (WARP_GRID + 1) + gi] = ((maxY - sy) / spanY) * (srcH - 1)
     }
   }
 

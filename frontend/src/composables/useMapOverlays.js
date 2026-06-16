@@ -14,6 +14,8 @@ export function useMapOverlays (getMap, getOverlays) {
   const loading = reactive({})
   // overlayId -> { dataUrl, coordinates } so toggling/style-switching never re-fetches
   const cache = new Map()
+  // overlayId -> in-flight decode Promise, so concurrent calls share one fetch/decode
+  const inflight = new Map()
 
   const overlayList = computed(() => getOverlays() || [])
 
@@ -31,26 +33,41 @@ export function useMapOverlays (getMap, getOverlays) {
     return candidates.find(id => map.getLayer(id))
   }
 
+  // Fetch + decode a GeoTIFF at most once per overlay, even under concurrent
+  // calls (toggle / style switch / data load can all race).
+  function decodeOverlay (overlay) {
+    if (cache.has(overlay.id)) return Promise.resolve(cache.get(overlay.id))
+    if (inflight.has(overlay.id)) return inflight.get(overlay.id)
+
+    loading[overlay.id] = true
+    const promise = (async () => {
+      const buffer = await (await fetch(overlay.url)).arrayBuffer()
+      const parsed = await parseGeoTiff(buffer)
+      const decoded = { dataUrl: parsed.dataUrl, coordinates: parsed.coordinates }
+      cache.set(overlay.id, decoded)
+      return decoded
+    })()
+      .finally(() => {
+        inflight.delete(overlay.id)
+        loading[overlay.id] = false
+      })
+
+    inflight.set(overlay.id, promise)
+    return promise
+  }
+
   async function addOverlay (overlay) {
     const map = getMap()
     if (!map || !overlay?.url) return
     if (map.getLayer(layerId(overlay.id))) return // already added
 
-    let decoded = cache.get(overlay.id)
-    if (!decoded) {
-      loading[overlay.id] = true
-      try {
-        const buffer = await (await fetch(overlay.url)).arrayBuffer()
-        const parsed = await parseGeoTiff(buffer)
-        decoded = { dataUrl: parsed.dataUrl, coordinates: parsed.coordinates }
-        cache.set(overlay.id, decoded)
-      } catch (err) {
-        console.error(`Failed to load GeoTIFF overlay "${overlay.name}"`, err)
-        loading[overlay.id] = false
-        visibility[overlay.id] = false
-        return
-      }
-      loading[overlay.id] = false
+    let decoded
+    try {
+      decoded = await decodeOverlay(overlay)
+    } catch (err) {
+      console.error(`Failed to load GeoTIFF overlay "${overlay.name}"`, err)
+      visibility[overlay.id] = false
+      return
     }
 
     // The style may have been torn down while we were decoding
