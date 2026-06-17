@@ -240,7 +240,7 @@
 <script setup>
 import { mdiAccountGroup, mdiAlertCircleOutline, mdiCamera, mdiCellphoneCheck, mdiCheckCircle, mdiEarth } from '@mdi/js'
 import router from '@/router'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import { api } from '@/plugins/api'
@@ -476,6 +476,12 @@ onMounted(async () => {
   // Fetch all clubs needed for the join request modal
   // We don't necessarily need to wait for this for the initial profile display
   fetchAllClubs()
+})
+
+// The router reuses this component when navigating between profile-edit pages,
+// so onMounted won't re-fire — refetch when the id changes.
+watch(() => route.params.id, (id, prev) => {
+  if (id && id !== prev) fetchProfile()
 })
 </script>
 

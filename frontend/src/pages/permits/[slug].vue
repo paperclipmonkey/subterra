@@ -129,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   mdiAccountClock,
@@ -187,6 +187,12 @@ const loadPermit = async () => {
 }
 
 onMounted(loadPermit)
+
+// The router reuses this component when navigating between permits, so
+// onMounted won't re-fire — refetch when the slug changes.
+watch(() => route.params.slug, (slug, prev) => {
+  if (slug && slug !== prev) loadPermit()
+})
 </script>
 
 <style scoped>

@@ -193,7 +193,7 @@
 
 <script setup>
 import { mdiArrowLeft, mdiCamera, mdiClockOutline, mdiFilePdfBox, mdiPencil, mdiPencilOff, mdiHelpCircleOutline, mdiShieldHalfFull, mdiStairs } from '@mdi/js'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
@@ -236,6 +236,12 @@ const load = async () => {
 }
 
 onMounted(load)
+
+// The router reuses this component when navigating between routes, so
+// onMounted won't re-fire — refetch when the slug changes.
+watch(() => route.params.slug, (slug, prev) => {
+  if (slug && slug !== prev) load()
+})
 
 const getGradeDescription = (grade) => {
   const grades = {

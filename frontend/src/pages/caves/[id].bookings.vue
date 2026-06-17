@@ -457,6 +457,12 @@ watch(currentMonth, () => {
 onMounted(() => {
   fetchPermit()
 })
+
+// The router reuses this component when navigating between caves' booking
+// pages, so onMounted won't re-fire — refetch when the cave id changes.
+watch(() => route.params.id, (id, prev) => {
+  if (id && id !== prev) fetchPermit()
+})
 </script>
 
 <style scoped>

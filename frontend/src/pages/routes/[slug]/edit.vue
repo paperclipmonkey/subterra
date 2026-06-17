@@ -32,7 +32,7 @@
 
 <script setup>
 import { mdiArrowLeft } from '@mdi/js'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RouteForm from '@/components/routes/RouteForm.vue'
 import { useAppStore } from '@/stores/app'
@@ -68,5 +68,11 @@ onMounted(async () => {
   if (!appStore.user.is_admin) {
     router.push('/')
   }
+})
+
+// The router reuses this component when navigating between routes, so
+// onMounted won't re-fire — refetch when the slug changes.
+watch(() => route.params.slug, (slug, prev) => {
+  if (slug && slug !== prev) load()
 })
 </script>
