@@ -18,7 +18,7 @@
               <v-chip v-if="club.website" color="primary" variant="outlined" :href="club.website" target="_blank">
                 <v-icon start :icon="mdiWeb" /> Website
               </v-chip>
-              <v-chip class="ml-2" color="info" variant="outlined">
+              <v-chip v-if="!isIndividualMembership" class="ml-2" color="info" variant="outlined">
                 <v-icon start :icon="mdiAccountGroup" /> {{ club.member_count }} members
               </v-chip>
               <v-chip
@@ -61,7 +61,8 @@
     </v-row>
 
     <!-- Member Specific Content Wrapper -->
-    <template v-if="club && !error"> <!-- Only render this section if club loaded -->
+    <!-- The Direct Individual Member catch-all club has no member roster, trips or stats. -->
+    <template v-if="club && !error && !isIndividualMembership"> <!-- Only render this section if club loaded -->
       <!-- Loading State for Member Data -->
       <v-row v-if="memberDataLoading">
         <v-col cols="12" class="text-center py-5">
@@ -202,7 +203,7 @@
 
 <script setup>
 import { mdiAccountClock, mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiClockOutline, mdiHomeVariantOutline, mdiMagnify, mdiMapMarker, mdiMapMarkerDistance, mdiPencil, mdiTerrain, mdiTrophyOutline, mdiWeb } from '@mdi/js'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/plugins/api'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
@@ -225,6 +226,10 @@ const isApprovedMember = ref(false)
 const endDate = ref(new Date())
 
 const PHOTO_LIMIT = 11
+
+// The Direct Individual Member catch-all club hides all of its social
+// features (member roster, club trips, stats) — it isn't a real club.
+const isIndividualMembership = computed(() => !!club.value?.is_individual_membership)
 
 const stats = computed(() => summary.value?.stats || null)
 const alliedClubs = computed(() => summary.value?.allied_clubs || [])
@@ -314,6 +319,12 @@ async function fetchClubData() {
   try {
     const clubResponse = await api.get(`/api/clubs/${clubSlug}`)
     club.value = clubResponse.data.data || clubResponse.data
+    // The Direct Individual Member catch-all club has no member content, so
+    // skip the activity/roster requests entirely.
+    if (isIndividualMembership.value) {
+      memberDataLoading.value = false
+      return
+    }
     // Attempt to load member-specific data ONLY if club loaded
     try {
       const [tripsResponse, membersResponse, heatmapResponse, summaryResponse] = await Promise.all([
@@ -350,6 +361,15 @@ onMounted(async () => {
   const { editClub, tab } = route.query
   if (editClub && isClubAdmin.value) {
     openEditClubModal(tab === 'pending' ? 'pending' : 'details')
+  }
+})
+
+// The router reuses this component when navigating between clubs (e.g. via the
+// "Caved Alongside" links), so onMounted won't re-fire — refetch on slug change.
+watch(() => route.params.slug, (slug, prevSlug) => {
+  if (slug && slug !== prevSlug) {
+    club.value = null
+    fetchClubData()
   }
 })
 </script>

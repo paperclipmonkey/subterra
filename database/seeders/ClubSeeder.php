@@ -23,5 +23,14 @@ class ClubSeeder extends Seeder
             'name' => 'Disabled Club',
             'description' => 'This club is disabled for testing purposes.',
         ]);
+
+        // The "Direct Individual Member" catch-all club for cavers who aren't
+        // part of a real club. Identified by its slug; it has no member roster,
+        // club trips or stats.
+        Club::factory()->enabled()->create([
+            'name' => 'Direct Individual Member',
+            'slug' => Club::SLUG_DIRECT_INDIVIDUAL,
+            'description' => 'For cavers who hold a direct individual membership rather than belonging to a club.',
+        ]);
     }
 }

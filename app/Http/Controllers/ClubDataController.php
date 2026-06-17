@@ -22,6 +22,11 @@ class ClubDataController extends Controller
      */
     public function recentTrips(Club $club): ResourceCollection
     {
+        // The Direct Individual Member catch-all club has no club trips.
+        if ($club->isIndividualMembership()) {
+            return TripResource::collection(collect());
+        }
+
         $trips = Trip::whereHas('participants', function ($query) use ($club) {
             $query->whereIn('user_id', $club->users()->wherePivot('status', 'approved')->pluck('users.id'));
         })
@@ -39,6 +44,12 @@ class ClubDataController extends Controller
      */
     public function members(Club $club): ResourceCollection
     {
+        // Members of the Direct Individual Member catch-all club shouldn't be
+        // able to browse each other, so its roster is never exposed.
+        if ($club->isIndividualMembership()) {
+            return UserResource::collection(collect());
+        }
+
         $members = $club->users()->wherePivot('status', 'approved')->orderBy('name')->get();
 
         // Used by ClubEditModal for club admins who can't access the full admin endpoint
@@ -60,6 +71,16 @@ class ClubDataController extends Controller
      */
     public function summary(Club $club): JsonResponse
     {
+        // The Direct Individual Member catch-all club has no club stats.
+        if ($club->isIndividualMembership()) {
+            return response()->json([
+                'stats' => $this->emptyStats(),
+                'allied_clubs' => [],
+                'photos' => [],
+                'photo_count' => 0,
+            ]);
+        }
+
         $approvedIds = $club->approvedUsers()->pluck('users.id');
 
         // No members yet → nothing to aggregate. Bail early with empty shells so
@@ -201,6 +222,11 @@ class ClubDataController extends Controller
      */
     public function activityHeatmap(Club $club): JsonResponse
     {
+        // The Direct Individual Member catch-all club has no club activity.
+        if ($club->isIndividualMembership()) {
+            return response()->json([]);
+        }
+
         $oneYearAgo = Carbon::now()->subYear();
         $approvedMemberIdsList = $club->approvedUsers()->pluck('users.id');
         $approvedMemberIds = $approvedMemberIdsList->flip();

@@ -25,6 +25,9 @@ class ClubDetailResource extends JsonResource
             'website' => $this->website,
             'location' => $this->location,
             'is_active' => $this->is_active,
+            // The "Direct Individual Member" catch-all club has its social
+            // features (member roster, club trips, stats) hidden in the UI.
+            'is_individual_membership' => $this->isIndividualMembership(),
             // Ensure 'users_count' is loaded via withCount('users') in the controller for efficiency
             'member_count' => $this->whenCounted('users', $this->member_count), // Use whenCounted if using withCount
             'pending_users_count' => $this->whenCounted('pendingUsers'),

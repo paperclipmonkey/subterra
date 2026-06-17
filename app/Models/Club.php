@@ -16,6 +16,13 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
     use Auditable;
 
     /**
+     * Slug of the "Direct Individual Member" catch-all club. It collects cavers
+     * who aren't members of a real club, so it deliberately has none of the
+     * social features (member roster, club trips, stats) a normal club has.
+     */
+    public const SLUG_DIRECT_INDIVIDUAL = 'dim';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
@@ -99,5 +106,14 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * Whether this is the "Direct Individual Member" catch-all club, which has
+     * its social features (member roster, club trips, stats) disabled.
+     */
+    public function isIndividualMembership(): bool
+    {
+        return $this->slug === self::SLUG_DIRECT_INDIVIDUAL;
     }
 }
