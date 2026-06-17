@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CalloutResource;
 use App\Models\Callout;
 use App\Services\CalloutService;
 use Exception;
@@ -81,9 +82,12 @@ class CalloutController extends Controller
         try {
             $callout = $this->calloutService->create($request->user(), $data);
 
+            // The creator is entitled to see the full detail of the callout they just raised.
+            $callout->loadMissing(['participants', 'cave', 'exitCave']);
+
             return response()->json([
                 'message' => 'Callout activated successfully.',
-                'callout' => $callout,
+                'callout' => (new CalloutResource($callout))->withContact(true),
             ], 201);
         } catch (Exception $e) {
             Log::error('Callout creation failed', ['error' => $e->getMessage(), 'user' => $request->user()->id]);
@@ -150,7 +154,21 @@ class CalloutController extends Controller
             ]]);
         }
 
-        return response()->json(['data' => $callout]);
+        // Sensitive trip detail and participant contact info are only for the
+        // creator, a fellow participant, or a duty officer/admin — not every
+        // authenticated holder of the callout's (capability-token) id.
+        $user = auth()->user();
+        $canSeeContact = $user && (
+            $user->id === $callout->user_id
+            || $callout->participants->contains('user_id', $user->id)
+            || $user->is_admin
+            || $user->hasRole(['duty_officer', 'platform_admin'])
+        );
+
+        return (new CalloutResource($callout))
+            ->withContact($canSeeContact)
+            ->response()
+            ->setStatusCode(200);
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OnCallShiftResource;
 use App\Models\Callout;
 use App\Models\OnCallShift;
 use App\Models\User;
@@ -27,9 +28,7 @@ class OnCallController extends Controller
             ->orderBy('start_at')
             ->get();
 
-        return response()->json([
-            'data' => $shifts,
-        ]);
+        return OnCallShiftResource::collection($shifts)->response();
     }
 
     /**
@@ -58,7 +57,7 @@ class OnCallController extends Controller
 
         return response()->json([
             'message' => 'Shift created',
-            'data' => $shift->load('user'),
+            'data' => new OnCallShiftResource($shift->load('user')),
         ]);
     }
 
@@ -99,7 +98,7 @@ class OnCallController extends Controller
 
         return response()->json([
             'message' => 'Shift updated',
-            'data' => $shift->load('user'),
+            'data' => new OnCallShiftResource($shift->load('user')),
         ]);
     }
 

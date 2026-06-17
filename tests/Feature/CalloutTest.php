@@ -394,6 +394,54 @@ class CalloutTest extends TestCase
         $response->assertJsonFragment(['name' => 'Visible Person']);
     }
 
+    public function test_callout_show_never_exposes_forensic_metadata()
+    {
+        $owner = User::factory()->create();
+        $callout = Callout::factory()->create([
+            'user_id' => $owner->id,
+            'request_data' => ['ip' => '203.0.113.7', 'user_agent' => 'Mozilla/5.0'],
+            'cancelled_ip' => '203.0.113.7',
+            'cancelled_user_agent' => 'Mozilla/5.0',
+            'cancelled_location' => 'Bull Pot Farm',
+        ]);
+
+        // Even the creator (who sees the most) must never receive IP / user-agent
+        // forensic metadata — it is personal data with no place in an API response.
+        $response = $this->actingAs($owner)->getJson("/api/callouts/{$callout->id}");
+
+        $response->assertStatus(200);
+        $response->assertJsonMissing(['ip' => '203.0.113.7']);
+        $response->assertJsonMissingPath('data.request_data');
+        $response->assertJsonMissingPath('data.cancelled_ip');
+        $response->assertJsonMissingPath('data.cancelled_user_agent');
+        $response->assertJsonMissingPath('data.cancelled_location');
+    }
+
+    public function test_unrelated_authenticated_user_cannot_see_participant_contact_details()
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $callout = Callout::factory()->create([
+            'user_id' => $owner->id,
+            'car_registration' => 'AB12 CDE',
+        ]);
+        $callout->participants()->create([
+            'name' => 'Visible Person',
+            'phone' => '+447777777777',
+            'email' => 'visible@test.com',
+        ]);
+
+        // A logged-in user who is neither creator, participant, nor a duty
+        // officer/admin may identify the callout but not harvest contact details.
+        $response = $this->actingAs($stranger)->getJson("/api/callouts/{$callout->id}");
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment(['name' => 'Visible Person']);
+        $response->assertJsonMissing(['phone' => '+447777777777']);
+        $response->assertJsonMissing(['email' => 'visible@test.com']);
+        $response->assertJsonMissing(['car_registration' => 'AB12 CDE']);
+    }
+
     public function test_user_can_mark_safe_after_rescue_initiated()
     {
         Mail::fake();
