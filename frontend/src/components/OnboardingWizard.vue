@@ -372,7 +372,7 @@
 
             <div class="feature-tour-grid">
               <!-- Logbook -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4">
+              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 33, 150, 243;">
                 <div class="tour-preview pa-3 d-flex align-center" style="gap: 12px;">
                   <div class="mock-cave-row d-flex align-center flex-grow-1 pa-2 rounded-lg">
                     <v-avatar size="28" color="blue-lighten-4" class="mr-2">
@@ -395,7 +395,7 @@
               </div>
 
               <!-- Cave details -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4">
+              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 67, 160, 71;">
                 <div class="tour-preview pa-3">
                   <div class="mock-map rounded-lg d-flex align-end pa-2">
                     <v-chip size="x-small" color="white" variant="flat" :prepend-icon="mdiMapMarkerOutline">12 entrances</v-chip>
@@ -411,7 +411,7 @@
               </div>
 
               <!-- Collections -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4">
+              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 94, 53, 177;">
                 <div class="tour-preview pa-3">
                   <div class="mock-collection rounded-lg pa-2">
                     <div class="d-flex align-center mb-1">
@@ -433,7 +433,7 @@
               </div>
 
               <!-- Permits -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4">
+              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 0, 150, 136;">
                 <div class="tour-preview pa-3">
                   <div class="mock-permit rounded-lg pa-2 d-flex align-center" style="gap: 8px;">
                     <v-avatar size="28" color="teal-lighten-4" class="mr-1">
@@ -456,7 +456,7 @@
               </div>
 
               <!-- Callouts -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4">
+              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 251, 140, 0;">
                 <div class="tour-preview pa-3">
                   <div class="mock-callout rounded-lg pa-2 d-flex align-center" style="gap: 8px;">
                     <v-icon :icon="mdiAlertOctagram" color="white" size="20" />
@@ -477,7 +477,7 @@
               </div>
 
               <!-- Medals -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4">
+              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 142, 36, 170;">
                 <div class="tour-preview pa-3 d-flex align-center justify-center" style="gap: 10px;">
                   <v-avatar v-for="m in ['amber','blue-grey','deep-orange']" :key="m" size="34" :color="m + '-lighten-4'">
                     <v-icon :color="m + '-darken-2'" :icon="mdiMedalOutline" />
@@ -876,6 +876,11 @@ const nextStep = async () => {
 }
 
 .tour-item {
+  // Each card carries its own accent via the --tour-accent custom property
+  // (an "R, G, B" triple) so the feature previews read as distinct and pop.
+  --tour-accent: var(--v-theme-on-surface);
+  border-color: rgba(var(--tour-accent), 0.35) !important;
+  border-left-width: 4px !important;
   transition: transform 0.2s;
 
   &:hover {
@@ -884,8 +889,8 @@ const nextStep = async () => {
 }
 
 .tour-preview {
-  background: rgba(var(--v-theme-on-surface), 0.03);
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  background: rgba(var(--tour-accent), 0.12);
+  border-bottom: 1px solid rgba(var(--tour-accent), 0.2);
 }
 
 .mock-cave-row {

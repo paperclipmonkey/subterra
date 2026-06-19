@@ -36,7 +36,20 @@
 
       <!-- Display User's Clubs -->
       <div class="clubs pa-4">
-        <h3>My Clubs:</h3>
+        <div class="d-flex align-center justify-space-between mb-2">
+          <h3 class="mb-0">My Clubs:</h3>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            size="small"
+            icon
+            aria-label="Request to join a club"
+            @click="openJoinClubModal"
+          >
+            <v-icon :icon="mdiPlus" />
+            <v-tooltip activator="parent" location="top">Request to join a club</v-tooltip>
+          </v-btn>
+        </div>
         <v-list v-if="profile.clubs && profile.clubs.length" lines="one">
           <v-list-item
             v-for="club in profile.clubs"
@@ -51,7 +64,6 @@
           </v-list-item>
         </v-list>
         <p v-else>You are not a member of any clubs yet.</p>
-        <v-btn color="primary" class="mt-2" @click="openJoinClubModal">Request to Join Club</v-btn>
       </div>
 
       <v-divider />
@@ -83,7 +95,7 @@
           hint="Must be exactly 11 digits (07...) or 13 characters (+44...)."
           persistent-hint
         />
-        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency. <strong>You'll need to verify it before creating a callout or joining the duty-officer rota.</strong></p>
+        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency. <strong>You'll need to verify it before creating a callout.</strong></p>
         <v-btn
           v-if="profile.phone && !phoneVerified && !phoneDirty"
           class="mt-2 text-none"
@@ -149,9 +161,9 @@
         </v-btn-toggle>
       </div>
       <v-card-actions class="pa-4">
-        <v-btn color="error" variant="outlined" class="mr-auto" @click="openDeleteModal">Delete Account</v-btn>
+        <v-btn color="error" variant="text" size="small" class="mr-auto" @click="openDeleteModal">Delete Account</v-btn>
         <v-spacer />
-        <v-btn color="success" @click="save">Save Profile</v-btn>
+        <v-btn color="success" variant="flat" size="large" class="px-8" @click="save">Save Profile</v-btn>
       </v-card-actions>
 
     </v-card>
@@ -238,7 +250,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAlertCircleOutline, mdiCamera, mdiCellphoneCheck, mdiCheckCircle, mdiEarth } from '@mdi/js'
+import { mdiAccountGroup, mdiAlertCircleOutline, mdiCamera, mdiCellphoneCheck, mdiCheckCircle, mdiEarth, mdiPlus } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'

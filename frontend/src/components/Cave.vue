@@ -204,7 +204,7 @@
                   <div>
                     <div class="text-body-2 text-grey-darken-2">
                       Access information is restricted to approved club members.
-                      <router-link :to="`/profile/${appStore.user.id}`" class="text-decoration-none font-weight-bold">Join a club</router-link> to view details.
+                      <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Join a club</router-link> to view details.
                     </div>
                   </div>
                 </v-alert>
