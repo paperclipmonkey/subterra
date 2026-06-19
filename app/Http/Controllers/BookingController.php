@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesBookingParticipants;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\PermitResource;
 use App\Mail\BookingApprovedMail;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Validator;
 class BookingController extends Controller
 {
     use AuthorizesRequests;
+    use ResolvesBookingParticipants;
 
     /**
      * List all active permits (public).
@@ -130,8 +132,10 @@ class BookingController extends Controller
 
         $validator = Validator::make($request->all(), [
             'date' => 'required|date|after_or_equal:today',
+            // When BCA numbers are required the headcount comes from the named
+            // roster (validated separately) rather than a free integer.
             'participants' => [
-                'required',
+                $permit->requires_bca ? 'nullable' : 'required',
                 'integer',
                 'min:1',
                 $permit->has_max_participants ? 'max:'.$permit->max_participants : null,
@@ -144,9 +148,17 @@ class BookingController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $date = $request->input('date');
+        // Throws ValidationException (422) if the roster is incomplete.
+        $participantRows = $permit->requires_bca
+            ? $this->resolveBcaParticipants($request->all(), $permit)
+            : [];
 
-        return DB::transaction(function () use ($request, $permit, $date) {
+        $date = $request->input('date');
+        $participantCount = $permit->requires_bca
+            ? count($participantRows)
+            : (int) $request->input('participants');
+
+        return DB::transaction(function () use ($request, $permit, $date, $participantCount, $participantRows) {
             // Lock the permit row to prevent concurrent bookings from overbooking
             $permit = Permit::lockForUpdate()->find($permit->id);
 
@@ -162,14 +174,18 @@ class BookingController extends Controller
                 'permit_id' => $permit->id,
                 'user_id' => $request->user()->id,
                 'date' => $date,
-                'participants' => $request->input('participants'),
+                'participants' => $participantCount,
                 'notes' => $request->input('notes'),
                 'status' => $permit->auto_approve ? 'approved' : 'pending',
                 'approved_at' => $permit->auto_approve ? now() : null,
                 'conditions_accepted_at' => now(),
             ]);
 
-            $booking->load(['permit', 'applicant']);
+            if ($participantRows) {
+                $booking->participantDetails()->createMany($participantRows);
+            }
+
+            $booking->load(['permit', 'applicant', 'participantDetails']);
 
             // Notify officers
             $officers = $permit->officers;
@@ -197,7 +213,7 @@ class BookingController extends Controller
     {
         $bookings = $request->user()
             ->bookings()
-            ->with(['permit'])
+            ->with(['permit', 'participantDetails'])
             ->orderBy('date', 'desc')
             ->get();
 
@@ -213,6 +229,6 @@ class BookingController extends Controller
 
         $booking->update(['status' => 'cancelled']);
 
-        return response()->json(new BookingResource($booking->load('permit')));
+        return response()->json(new BookingResource($booking->load('permit', 'participantDetails')));
     }
 }

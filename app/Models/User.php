@@ -32,6 +32,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'photo',
         'bio',
         'phone',
+        'bca_number',
         'tos_agreed_at',
         'privacy_policy_agreed_at',
         'email_trophies',

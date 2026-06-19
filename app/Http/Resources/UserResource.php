@@ -23,6 +23,9 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'photo' => $this->photo ? (str_starts_with($this->photo, 'http') ? $this->photo : Storage::disk('media')->url($this->photo)) : null,
             'has_phone' => !empty($this->phone),
+            // Whether a BCA number is on file (the number itself is PII and is
+            // never exposed here — it's resolved server-side at booking time).
+            'has_bca' => !empty($this->bca_number),
             'clubs' => $this->clubs->filter(function ($club) {
                 return $club->pivot->status === 'approved';
             })->map(function ($club) {

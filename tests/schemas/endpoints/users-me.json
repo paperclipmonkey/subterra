@@ -45,6 +45,12 @@
         "phone_verified": {
           "type": "boolean"
         },
+        "bca_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "email_trophies": {
           "type": "boolean"
         },

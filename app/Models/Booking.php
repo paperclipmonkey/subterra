@@ -8,6 +8,7 @@ use App\Models\Concerns\HasShortId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 
 class Booking extends Model implements \OwenIt\Auditing\Contracts\Auditable
@@ -52,6 +53,15 @@ class Booking extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Named participants with their BCA numbers (only populated for bookings
+     * against permits with requires_bca enabled).
+     */
+    public function participantDetails(): HasMany
+    {
+        return $this->hasMany(BookingParticipant::class);
     }
 
     public function isPending(): bool

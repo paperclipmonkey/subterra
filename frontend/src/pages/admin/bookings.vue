@@ -199,6 +199,17 @@
               <v-list-item-subtitle>{{ detailBooking.participants }}</v-list-item-subtitle>
             </v-list-item>
 
+            <v-list-item v-if="detailBooking.participants_detail?.length">
+              <template #prepend><v-icon :icon="mdiCardAccountDetails" class="mr-2" /></template>
+              <v-list-item-title>BCA roster</v-list-item-title>
+              <v-list-item-subtitle>
+                <div v-for="(p, i) in detailBooking.participants_detail" :key="i" class="d-flex justify-space-between">
+                  <span>{{ p.name }}</span>
+                  <span class="font-weight-medium ml-4">{{ p.bca_number }}</span>
+                </div>
+              </v-list-item-subtitle>
+            </v-list-item>
+
             <v-list-item v-if="detailBooking.notes">
               <template #prepend><v-icon :icon="mdiNoteText" class="mr-2" /></template>
               <v-list-item-title>Notes from applicant</v-list-item-title>
@@ -426,7 +437,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import {
   mdiAccount, mdiAccountGroup, mdiArrowLeft, mdiCalendar, mdiCalendarBlank,
   mdiCheck, mdiCheckCircle, mdiChevronLeft, mdiChevronRight, mdiClipboardCheck,
-  mdiClose, mdiCloseCircle, mdiClockOutline, mdiDomain, mdiEmail, mdiInformationOutline, mdiKey,
+  mdiCardAccountDetails, mdiClose, mdiCloseCircle, mdiClockOutline, mdiDomain, mdiEmail, mdiInformationOutline, mdiKey,
   mdiNoteText, mdiPlus, mdiViewList,
 } from '@mdi/js'
 import { api } from '@/plugins/api'

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\ResolvesBookingParticipants;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Mail\BookingApprovedMail;
@@ -22,10 +23,11 @@ use Illuminate\Support\Facades\Validator;
 class BookingController extends Controller
 {
     use AuthorizesRequests;
+    use ResolvesBookingParticipants;
 
     public function index(Request $request): ResourceCollection
     {
-        $query = Booking::with(['permit.caves', 'applicant.clubs']);
+        $query = Booking::with(['permit.caves', 'applicant.clubs', 'participantDetails']);
 
         if ($request->has('permit_id')) {
             $query->where('permit_id', $request->input('permit_id'));
@@ -62,7 +64,7 @@ class BookingController extends Controller
             'approved_at' => now(),
         ]);
 
-        $booking->load(['permit.caves', 'applicant.clubs']);
+        $booking->load(['permit.caves', 'applicant.clubs', 'participantDetails']);
 
         Mail::to($booking->applicant->email)->queue(
             new BookingApprovedMail($booking)
@@ -92,7 +94,7 @@ class BookingController extends Controller
             'rejection_reason' => $validator->validated()['rejection_reason'],
         ]);
 
-        $booking->load(['permit.caves', 'applicant.clubs']);
+        $booking->load(['permit.caves', 'applicant.clubs', 'participantDetails']);
 
         Mail::to($booking->applicant->email)->queue(
             new BookingRejectedMail($booking)
@@ -107,7 +109,9 @@ class BookingController extends Controller
             'permit_slug' => 'required|string|exists:permits,slug',
             'user_id' => 'nullable|string|exists:users,id',
             'date' => 'required|date',
-            'participants' => 'required|integer|min:1',
+            // For BCA permits the headcount comes from the named roster, so a bare
+            // count isn't required when participants_detail is supplied.
+            'participants' => 'required_without:participants_detail|integer|min:1',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -119,11 +123,20 @@ class BookingController extends Controller
         $permit = Permit::where('slug', $data['permit_slug'])->firstOrFail();
         $applicant = isset($data['user_id']) ? User::findOrFail($data['user_id']) : null;
 
+        // Throws ValidationException (422) if the roster is incomplete.
+        $participantRows = $permit->requires_bca
+            ? $this->resolveBcaParticipants($request->all(), $permit)
+            : [];
+
+        $participantCount = $permit->requires_bca
+            ? count($participantRows)
+            : (int) $data['participants'];
+
         $booking = Booking::create([
             'permit_id' => $permit->id,
             'user_id' => $applicant?->id,
             'date' => $data['date'],
-            'participants' => $data['participants'],
+            'participants' => $participantCount,
             'notes' => $data['notes'] ?? null,
             'status' => 'approved',
             'approved_by' => $request->user()->id,
@@ -131,7 +144,11 @@ class BookingController extends Controller
             'conditions_accepted_at' => now(),
         ]);
 
-        $booking->load(['permit.caves', 'applicant.clubs']);
+        if ($participantRows) {
+            $booking->participantDetails()->createMany($participantRows);
+        }
+
+        $booking->load(['permit.caves', 'applicant.clubs', 'participantDetails']);
 
         if ($applicant) {
             Mail::to($applicant->email)->queue(new BookingApprovedMail($booking));
@@ -166,7 +183,7 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'cancelled']);
-        $booking->load(['permit.caves', 'applicant.clubs']);
+        $booking->load(['permit.caves', 'applicant.clubs', 'participantDetails']);
 
         return response()->json(new BookingResource($booking));
     }

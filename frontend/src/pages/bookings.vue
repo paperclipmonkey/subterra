@@ -63,6 +63,17 @@
                     <strong>Rejection reason:</strong>
                     <v-alert type="error" variant="tonal" class="mt-2">{{ item.rejection_reason }}</v-alert>
                   </div>
+                  <div v-if="item.participants_detail?.length" class="mb-3">
+                    <strong>Participants (BCA):</strong>
+                    <v-table density="compact" class="mt-1">
+                      <tbody>
+                        <tr v-for="(p, i) in item.participants_detail" :key="i">
+                          <td>{{ p.name }}</td>
+                          <td class="text-medium-emphasis">{{ p.bca_number }}</td>
+                        </tr>
+                      </tbody>
+                    </v-table>
+                  </div>
                   <div v-if="item.notes">
                     <strong>Your notes:</strong> {{ item.notes }}
                   </div>

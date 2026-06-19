@@ -160,6 +160,15 @@
               class="mb-2"
             />
 
+            <v-switch
+              v-model="form.requires_bca"
+              label="BCA number required"
+              color="primary"
+              hint="Applicants must list every participant by name and supply each person's BCA membership number"
+              persistent-hint
+              class="mb-2"
+            />
+
             <v-switch v-model="form.has_season" label="Restrict to a season" color="primary" class="mb-2" />
             <v-row v-if="form.has_season" class="mb-2">
               <v-col cols="6">
@@ -290,6 +299,7 @@ const defaultForm = () => ({
   max_groups_per_day: 1,
   has_max_participants: false,
   max_participants: 1,
+  requires_bca: false,
   has_season: false,
   season_start: '',
   season_end: '',
@@ -350,6 +360,7 @@ const openEditDialog = (permit) => {
     max_groups_per_day: permit.max_groups_per_day || 1,
     has_max_participants: permit.has_max_participants,
     max_participants: permit.max_participants || 1,
+    requires_bca: permit.requires_bca || false,
     has_season: permit.has_season || false,
     season_start: permit.season_start || '',
     season_end: permit.season_end || '',

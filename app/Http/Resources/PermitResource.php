@@ -23,6 +23,7 @@ class PermitResource extends JsonResource
             'max_groups_per_day' => $this->max_groups_per_day,
             'has_max_participants' => $this->has_max_participants,
             'max_participants' => $this->max_participants,
+            'requires_bca' => $this->requires_bca,
             'has_season' => $this->has_season,
             'season_start' => $this->season_start,
             'season_end' => $this->season_end,

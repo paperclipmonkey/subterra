@@ -19,6 +19,9 @@
     "has_phone": {
       "type": "boolean"
     },
+    "has_bca": {
+      "type": "boolean"
+    },
     "clubs": {
       "type": "array",
       "items": {

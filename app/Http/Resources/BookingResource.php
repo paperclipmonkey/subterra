@@ -22,6 +22,16 @@ class BookingResource extends JsonResource
             'applicant' => new UserResource($this->whenLoaded('applicant')),
             'date' => $this->date->toDateString(),
             'participants' => $this->participants,
+            // BCA numbers are PII — only the applicant and permit officers may see
+            // the named roster.
+            'participants_detail' => $this->when(
+                ($user?->id === $this->user_id || $isOfficer) && $this->relationLoaded('participantDetails'),
+                fn () => $this->participantDetails->map(fn ($p) => [
+                    'name' => $p->name,
+                    'bca_number' => $p->bca_number,
+                    'user_id' => $p->user_id,
+                ])->values()
+            ),
             'status' => $this->status,
             'notes' => $this->notes,
             'rejection_reason' => $this->rejection_reason,

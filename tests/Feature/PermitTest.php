@@ -818,6 +818,194 @@ class PermitTest extends TestCase
         $response->assertStatus(403);
     }
 
+    // --- BCA number requirement ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function bca_permit_rejects_booking_without_participant_roster()
+    {
+        $permit = Permit::factory()->create(['requires_bca' => true]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => now()->addDays(7)->format('Y-m-d'),
+                'conditions_accepted' => true,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('participants_detail');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function bca_permit_rejects_participant_missing_bca_number()
+    {
+        $permit = Permit::factory()->create(['requires_bca' => true]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => now()->addDays(7)->format('Y-m-d'),
+                'conditions_accepted' => true,
+                'participants_detail' => [
+                    ['name' => 'Alice Caver', 'bca_number' => 'AB1234'],
+                    ['name' => 'Bob Caver', 'bca_number' => ''], // missing
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('participants_detail');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function bca_permit_accepts_full_roster_and_persists_participants()
+    {
+        Mail::fake();
+
+        $permit = Permit::factory()->create(['requires_bca' => true]);
+        $permit->officers()->attach($this->accessOfficer->id);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => now()->addDays(7)->format('Y-m-d'),
+                'conditions_accepted' => true,
+                'participants_detail' => [
+                    ['name' => 'Alice Caver', 'bca_number' => 'AB1234'],
+                    ['name' => 'Bob Caver', 'bca_number' => 'CD5678'],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('participants', 2)
+            ->assertJsonCount(2, 'participants_detail');
+
+        $booking = Booking::where('permit_id', $permit->id)->first();
+        $this->assertSame(2, $booking->participants);
+        $this->assertDatabaseHas('booking_participants', [
+            'booking_id' => $booking->id,
+            'name' => 'Alice Caver',
+            'bca_number' => 'AB1234',
+        ]);
+        $this->assertDatabaseHas('booking_participants', [
+            'booking_id' => $booking->id,
+            'name' => 'Bob Caver',
+            'bca_number' => 'CD5678',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function bca_permit_resolves_member_bca_number_from_profile()
+    {
+        Mail::fake();
+
+        $member = User::factory()->create(['bca_number' => 'MEMBER99']);
+        $permit = Permit::factory()->create(['requires_bca' => true]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => now()->addDays(7)->format('Y-m-d'),
+                'conditions_accepted' => true,
+                'participants_detail' => [
+                    // BCA number left blank — should be resolved from the member's profile.
+                    ['name' => $member->name, 'user_id' => $member->id, 'bca_number' => ''],
+                ],
+            ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('booking_participants', [
+            'user_id' => $member->id,
+            'bca_number' => 'MEMBER99',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function bca_permit_rejects_member_without_bca_and_no_number_supplied()
+    {
+        $member = User::factory()->create(['bca_number' => null]);
+        $permit = Permit::factory()->create(['requires_bca' => true]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => now()->addDays(7)->format('Y-m-d'),
+                'conditions_accepted' => true,
+                'participants_detail' => [
+                    ['name' => $member->name, 'user_id' => $member->id, 'bca_number' => ''],
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('participants_detail');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function non_bca_permit_still_accepts_plain_participant_count()
+    {
+        Mail::fake();
+
+        $permit = Permit::factory()->create(['requires_bca' => false]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => now()->addDays(7)->format('Y-m-d'),
+                'participants' => 3,
+                'conditions_accepted' => true,
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('participants', 3);
+
+        $this->assertDatabaseCount('booking_participants', 0);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function bca_roster_is_hidden_from_users_who_are_not_the_applicant_or_an_officer()
+    {
+        $permit = Permit::factory()->create(['requires_bca' => true]);
+        $booking = Booking::factory()->create([
+            'permit_id' => $permit->id,
+            'user_id' => $this->regularUser->id,
+        ]);
+        $booking->participantDetails()->create(['name' => 'Alice Caver', 'bca_number' => 'AB1234']);
+
+        $other = User::factory()->create();
+
+        // The applicant sees the roster on their own bookings.
+        $this->actingAs($this->regularUser, 'sanctum')
+            ->getJson('/api/bookings/mine')
+            ->assertStatus(200)
+            ->assertJsonPath('data.0.participants_detail.0.bca_number', 'AB1234');
+
+        // A different regular user listing their own bookings never receives this booking,
+        // and the officer-gated field is not present for non-officers — assert the admin
+        // listing is forbidden for them as the privacy boundary.
+        $this->actingAs($other, 'sanctum')
+            ->getJson('/api/admin/bookings')
+            ->assertStatus(403);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_can_save_bca_number_on_profile()
+    {
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->putJson('/api/users/me', ['bca_number' => 'XY9876']);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.bca_number', 'XY9876');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->regularUser->id,
+            'bca_number' => 'XY9876',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function bca_number_must_be_alphanumeric()
+    {
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->putJson('/api/users/me', ['bca_number' => 'no spaces!']);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('bca_number');
+    }
+
     // --- Permit photo & credits ---
 
     #[\PHPUnit\Framework\Attributes\Test]

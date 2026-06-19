@@ -179,7 +179,9 @@
                 booked, so your application can still be submitted but isn't guaranteed.
               </v-alert>
 
+              <!-- Simple headcount (permits that don't require BCA numbers) -->
               <v-text-field
+                v-if="!permit.requires_bca"
                 v-model.number="application.participants"
                 label="Number of participants"
                 type="number"
@@ -193,6 +195,108 @@
                 ]"
                 class="mb-2"
               />
+
+              <!-- Named roster with BCA numbers (permits that require BCA) -->
+              <div v-else class="mb-4">
+                <div class="d-flex align-center mb-1">
+                  <div class="text-subtitle-2 font-weight-bold">Participants &amp; BCA numbers</div>
+                  <v-chip size="x-small" class="ml-2" variant="tonal">{{ application.participants_detail.length }}</v-chip>
+                </div>
+                <p class="text-caption text-grey-darken-1 mb-3">
+                  This permit requires every participant to be a BCA member. List everyone in your group with their BCA membership number.
+                </p>
+
+                <v-card v-for="(p, i) in application.participants_detail" :key="i" variant="outlined" class="mb-2">
+                  <v-card-text class="py-3">
+                    <div class="d-flex align-center mb-1">
+                      <span class="text-body-2 font-weight-medium">
+                        {{ i === 0 ? 'You (trip leader)' : `Participant ${i + 1}` }}
+                      </span>
+                      <v-chip v-if="p.user_id" size="x-small" color="primary" variant="tonal" class="ml-2">Member</v-chip>
+                      <v-spacer />
+                      <v-btn
+                        v-if="i !== 0"
+                        :icon="mdiClose"
+                        size="x-small"
+                        variant="text"
+                        density="comfortable"
+                        @click="removeParticipant(i)"
+                      />
+                    </div>
+                    <v-text-field
+                      v-model="p.name"
+                      label="Full name"
+                      density="compact"
+                      hide-details="auto"
+                      :readonly="i === 0 || !!p.user_id"
+                      :rules="[v => !!(v && v.trim()) || 'Name required']"
+                      class="mb-2"
+                    />
+                    <v-text-field
+                      v-if="p.bca_on_file"
+                      model-value="On file ✓"
+                      label="BCA number"
+                      density="compact"
+                      hide-details
+                      readonly
+                      :prepend-inner-icon="mdiCheckDecagram"
+                    />
+                    <v-text-field
+                      v-else
+                      v-model="p.bca_number"
+                      label="BCA membership number"
+                      density="compact"
+                      hide-details="auto"
+                      :rules="[
+                        v => !!(v && v.trim()) || 'BCA number required',
+                        v => /^[A-Za-z0-9]{3,20}$/.test(v || '') || '3–20 letters or numbers',
+                      ]"
+                    />
+                  </v-card-text>
+                </v-card>
+
+                <v-alert
+                  v-if="permit.has_max_participants && application.participants_detail.length >= permit.max_participants"
+                  type="info"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-2"
+                >
+                  This permit allows a maximum of {{ permit.max_participants }} participants.
+                </v-alert>
+
+                <template v-else>
+                  <v-autocomplete
+                    v-model="memberToAdd"
+                    v-model:search="memberSearch"
+                    label="Add a member by name"
+                    :items="memberResults"
+                    item-title="name"
+                    item-value="id"
+                    return-object
+                    :loading="memberSearching"
+                    no-filter
+                    clearable
+                    autocomplete="off"
+                    name="random_unique_participant_search_field"
+                    prepend-inner-icon=""
+                    hint="Search existing Subterra members — their BCA number is filled in automatically"
+                    persistent-hint
+                    class="mb-2"
+                    @update:search="onMemberSearch"
+                    @update:model-value="addMember"
+                  />
+                  <v-btn
+                    variant="tonal"
+                    size="small"
+                    :prepend-icon="mdiAccountPlus"
+                    class="mb-2"
+                    @click="addManualParticipant"
+                  >
+                    Add someone not on Subterra
+                  </v-btn>
+                </template>
+              </div>
 
               <v-textarea
                 v-model="application.notes"
@@ -245,9 +349,10 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mdiArrowLeft, mdiChevronLeft, mdiChevronRight, mdiCheckDecagram, mdiAccountClock, mdiCamera, mdiMapMarker, mdiInformationOutline } from '@mdi/js'
+import { mdiArrowLeft, mdiChevronLeft, mdiChevronRight, mdiCheckDecagram, mdiAccountClock, mdiAccountPlus, mdiClose, mdiCamera, mdiMapMarker, mdiInformationOutline } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
+import { useAppStore } from '@/stores/app'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 defineOptions({ name: 'CaveBookings' })
@@ -255,6 +360,7 @@ defineOptions({ name: 'CaveBookings' })
 const route = useRoute()
 const router = useRouter()
 const notificationStore = useNotificationStore()
+const appStore = useAppStore()
 
 const loading = ref(true)
 const permit = ref(null)
@@ -268,9 +374,17 @@ const applyFormRef = ref(null)
 
 const application = ref({
   participants: 1,
+  participants_detail: [],
   notes: '',
   conditions_accepted: false,
 })
+
+// Member search for the BCA participant roster
+const memberToAdd = ref(null)
+const memberSearch = ref('')
+const memberResults = ref([])
+const memberSearching = ref(false)
+let memberSearchTimer = null
 
 const caveSlug = computed(() => route.params.id)
 
@@ -383,8 +497,73 @@ const formatSeasonDate = (mmdd) => {
 
 const selectDate = (cell) => {
   selectedDate.value = cell.date
-  application.value = { participants: 1, notes: '', conditions_accepted: false }
+  const detail = []
+  if (permit.value?.requires_bca) {
+    // Seed the roster with the current user as the trip leader, pre-filled from
+    // their profile. If they have no BCA number on file they must type one.
+    const me = appStore.user || {}
+    detail.push({
+      user_id: me.id || null,
+      name: me.name || '',
+      bca_number: me.bca_number || '',
+      bca_on_file: !!me.bca_number,
+    })
+  }
+  application.value = { participants: 1, participants_detail: detail, notes: '', conditions_accepted: false }
+  memberToAdd.value = null
+  memberSearch.value = ''
+  memberResults.value = []
   applyDialog.value = true
+}
+
+const onMemberSearch = (query) => {
+  if (memberSearchTimer) clearTimeout(memberSearchTimer)
+  if (!query) return
+  memberSearching.value = true
+  memberSearchTimer = setTimeout(async () => {
+    try {
+      const { data } = await api.get(`/api/users?search=${encodeURIComponent(query)}`)
+      // Exclude members already on the roster.
+      const existing = application.value.participants_detail.map(p => p.user_id).filter(Boolean)
+      memberResults.value = (data.data || []).filter(u => !existing.includes(u.id))
+    } catch (e) {
+      // handled by interceptor
+    } finally {
+      memberSearching.value = false
+    }
+  }, 300)
+}
+
+const addMember = (member) => {
+  if (!member) return
+  // The public search response intentionally omits other members' BCA numbers
+  // (PII). The server resolves it from their profile on submit, so we only flag
+  // whether one is expected to be on file.
+  application.value.participants_detail.push({
+    user_id: member.id,
+    name: member.name,
+    bca_number: '',
+    // The number itself is PII so the search never returns it; has_bca tells us
+    // whether the server will resolve one from their profile. If not, the leader
+    // supplies it here.
+    bca_on_file: !!member.has_bca,
+  })
+  memberToAdd.value = null
+  memberSearch.value = ''
+  memberResults.value = []
+}
+
+const addManualParticipant = () => {
+  application.value.participants_detail.push({
+    user_id: null,
+    name: '',
+    bca_number: '',
+    bca_on_file: false,
+  })
+}
+
+const removeParticipant = (index) => {
+  application.value.participants_detail.splice(index, 1)
 }
 
 const fetchPermit = async () => {
@@ -423,14 +602,41 @@ const submitApplication = async () => {
     return
   }
 
+  const payload = {
+    date: selectedDate.value,
+    notes: application.value.notes,
+    conditions_accepted: true,
+  }
+
+  if (permit.value.requires_bca) {
+    const rows = application.value.participants_detail
+    if (!rows.length) {
+      notificationStore.showError('Please add at least one participant.')
+      return
+    }
+    for (const p of rows) {
+      if (!p.name || !p.name.trim()) {
+        notificationStore.showError('Every participant needs a name.')
+        return
+      }
+      if (!p.bca_on_file && !/^[A-Za-z0-9]{3,20}$/.test((p.bca_number || '').trim())) {
+        notificationStore.showError(`A valid BCA number is required for ${p.name.trim()}.`)
+        return
+      }
+    }
+    payload.participants_detail = rows.map(p => ({
+      user_id: p.user_id || null,
+      name: p.name.trim(),
+      // Leave blank for members with a number on file — the server resolves it.
+      bca_number: p.bca_on_file ? '' : (p.bca_number || '').trim(),
+    }))
+  } else {
+    payload.participants = application.value.participants
+  }
+
   submitting.value = true
   try {
-    await api.post(`/api/permits/${permit.value.slug}/bookings`, {
-      date: selectedDate.value,
-      participants: application.value.participants,
-      notes: application.value.notes,
-      conditions_accepted: true,
-    })
+    await api.post(`/api/permits/${permit.value.slug}/bookings`, payload)
 
     applyDialog.value = false
     notificationStore.showSuccess(
@@ -455,6 +661,8 @@ watch(currentMonth, () => {
 })
 
 onMounted(() => {
+  // Ensure the current user is available so the BCA roster can pre-fill the leader.
+  appStore.getUser()
   fetchPermit()
 })
 

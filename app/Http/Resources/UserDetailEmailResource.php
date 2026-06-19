@@ -28,6 +28,7 @@ class UserDetailEmailResource extends JsonResource
             'bio' => $this->bio,
             'phone' => $this->phone,
             'phone_verified' => $this->phone_verified_at !== null,
+            'bca_number' => $this->bca_number,
             'email_trophies' => $this->email_trophies,
             'email_tagged' => $this->email_tagged,
             'email_platform_news' => $this->email_platform_news,

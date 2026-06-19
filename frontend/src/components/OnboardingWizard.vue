@@ -184,6 +184,16 @@
             <div class="text-center mt-4 text-caption text-medium-emphasis">
               Can't find your club, or joining later? You can confirm your membership any time from your profile.
             </div>
+
+            <v-divider class="my-4" />
+
+            <v-text-field
+              v-model="bcaNumber"
+              label="BCA membership number (optional)"
+              :rules="bcaRules"
+              hint="Your British Caving Association number. Adding it now lets you apply for permits that require it without re-entering it."
+              persistent-hint
+            />
           </v-card-text>
         </v-window-item>
 
@@ -607,6 +617,12 @@ const emailPlatformNews = ref(true)
 // Findability
 const visibilityAddable = ref('public')
 
+// BCA membership number (optional, collected on the club step)
+const bcaNumber = ref('')
+const bcaRules = [
+  v => !v || /^[A-Za-z0-9]{3,20}$/.test(v) || 'Must be 3–20 letters or numbers',
+]
+
 // Phone verification (optional, callout-access users only)
 const phone = ref('')
 const phoneVerifiedLocal = ref(false)
@@ -661,6 +677,7 @@ const checkOnboarding = () => {
   if (store.user.email_tagged !== undefined) emailTagged.value = !!store.user.email_tagged
   if (store.user.email_platform_news !== undefined) emailPlatformNews.value = !!store.user.email_platform_news
   if (store.user.visibility_addable) visibilityAddable.value = store.user.visibility_addable
+  bcaNumber.value = store.user.bca_number || ''
   phone.value = store.user.phone || ''
   phoneVerifiedLocal.value = !!store.user.phone_verified
   fetchClubs()
@@ -782,6 +799,7 @@ const nextStep = async () => {
       formData.append('email_tagged', emailTagged.value ? '1' : '0')
       formData.append('email_platform_news', emailPlatformNews.value ? '1' : '0')
       formData.append('visibility_addable', visibilityAddable.value || 'public')
+      formData.append('bca_number', bcaNumber.value || '')
       // The phone is persisted (and uniqueness-validated) via the phone step's "Send code"
       // action, not here — so a taken/invalid number can't silently fail this final save
       // and block onboarding.

@@ -100,6 +100,21 @@
       </div>
       <v-divider />
 
+      <!-- BCA Membership Number section -->
+      <div class="bca-edit pa-4">
+        <h3>BCA Membership Number:</h3>
+        <v-text-field
+          v-model="profile.bca_number"
+          label="Your BCA membership number"
+          outlined
+          :rules="bcaRules"
+          :error-messages="errorMessages('bca_number')"
+          hint="Your British Caving Association membership number. Required to apply for some permits."
+          persistent-hint
+        />
+      </div>
+      <v-divider />
+
       <!-- Email Preferences section -->
       <div class="email-prefs pa-4">
         <h3>Email Communications:</h3>
@@ -260,6 +275,7 @@ const profile = ref({
   "clubs": [],
   "bio": "",
   "phone": "",
+  "bca_number": "",
   "email_trophies": true,
   "email_tagged": true,
   "email_platform_news": true,
@@ -318,6 +334,10 @@ const phoneRules = [
   v => !v || /^(07[0-9]{9}|\+44[0-9]{10})$/.test(v) || 'Must be exactly 11 digits (07...) or 13 characters (+44...) long',
 ]
 
+const bcaRules = [
+  v => !v || /^[A-Za-z0-9]{3,20}$/.test(v) || 'Must be 3–20 letters or numbers',
+]
+
 // Filter clubs the user can request to join (not already a member or pending)
 const availableClubs = computed(() => {
   if (!profile.value.clubs || !allClubs.value) return []
@@ -344,6 +364,7 @@ const save = async () => {
     formData.append('name', profile.value.name || '')
     formData.append('bio', profile.value.bio || '')
     formData.append('phone', profile.value.phone || '')
+    formData.append('bca_number', profile.value.bca_number || '')
     formData.append('email_trophies', profile.value.email_trophies ? '1' : '0')
     formData.append('email_tagged', profile.value.email_tagged ? '1' : '0')
     formData.append('email_platform_news', profile.value.email_platform_news ? '1' : '0')
@@ -361,6 +382,7 @@ const save = async () => {
     profile.value.name = updatedProfile.name
     profile.value.bio = updatedProfile.bio
     profile.value.phone = updatedProfile.phone
+    profile.value.bca_number = updatedProfile.bca_number
     profile.value.email_trophies = updatedProfile.email_trophies
     profile.value.email_tagged = updatedProfile.email_tagged
     profile.value.email_platform_news = updatedProfile.email_platform_news

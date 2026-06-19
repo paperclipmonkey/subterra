@@ -312,6 +312,7 @@ class UserController extends Controller
                 },
             ],
             'phone' => ['nullable', 'string', 'regex:/^(07[0-9]{9}|\+44[0-9]{10})$/', 'unique:users,phone,'.$user->id],
+            'bca_number' => ['nullable', 'string', 'regex:/^[A-Za-z0-9]{3,20}$/'],
             'email_trophies' => ['nullable', 'boolean'],
             'email_tagged' => ['nullable', 'boolean'],
             'email_platform_news' => ['nullable', 'boolean'],
