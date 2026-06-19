@@ -161,9 +161,9 @@
         </v-btn-toggle>
       </div>
       <v-card-actions class="pa-4">
-        <v-btn color="error" variant="outlined" class="mr-auto" @click="openDeleteModal">Delete Account</v-btn>
+        <v-btn color="error" variant="text" size="small" class="mr-auto" @click="openDeleteModal">Delete Account</v-btn>
         <v-spacer />
-        <v-btn color="success" @click="save">Save Profile</v-btn>
+        <v-btn color="success" variant="flat" size="large" class="px-8" @click="save">Save Profile</v-btn>
       </v-card-actions>
 
     </v-card>
