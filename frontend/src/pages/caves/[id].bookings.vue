@@ -206,7 +206,7 @@
                   This permit requires every participant to be a BCA member. List everyone in your group with their BCA membership number.
                 </p>
 
-                <v-card v-for="(p, i) in application.participants_detail" :key="i" variant="outlined" class="mb-2">
+                <v-card v-for="(p, i) in application.participants_detail" :key="p.client_id" variant="outlined" class="mb-2">
                   <v-card-text class="py-3">
                     <div class="d-flex align-center mb-1">
                       <span class="text-body-2 font-weight-medium">
@@ -386,6 +386,10 @@ const memberResults = ref([])
 const memberSearching = ref(false)
 let memberSearchTimer = null
 
+// Stable per-row keys so Vue doesn't reuse a removed row's DOM/state for another.
+let participantRowSeq = 0
+const nextRowId = () => `p${participantRowSeq++}`
+
 const caveSlug = computed(() => route.params.id)
 
 const calendarTitle = computed(() => {
@@ -503,6 +507,7 @@ const selectDate = (cell) => {
     // their profile. If they have no BCA number on file they must type one.
     const me = appStore.user || {}
     detail.push({
+      client_id: nextRowId(),
       user_id: me.id || null,
       name: me.name || '',
       bca_number: me.bca_number || '',
@@ -540,6 +545,7 @@ const addMember = (member) => {
   // (PII). The server resolves it from their profile on submit, so we only flag
   // whether one is expected to be on file.
   application.value.participants_detail.push({
+    client_id: nextRowId(),
     user_id: member.id,
     name: member.name,
     bca_number: '',
@@ -555,6 +561,7 @@ const addMember = (member) => {
 
 const addManualParticipant = () => {
   application.value.participants_detail.push({
+    client_id: nextRowId(),
     user_id: null,
     name: '',
     bca_number: '',
@@ -660,9 +667,11 @@ watch(currentMonth, () => {
   fetchCalendar()
 })
 
-onMounted(() => {
-  // Ensure the current user is available so the BCA roster can pre-fill the leader.
-  appStore.getUser()
+onMounted(async () => {
+  // Ensure the current user is loaded before any date is selected, so the BCA
+  // roster can reliably pre-fill the leader (awaited to avoid an empty leader row
+  // on a fast click).
+  await appStore.getUser()
   fetchPermit()
 })
 

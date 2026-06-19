@@ -18,7 +18,8 @@ return new class () extends Migration {
             $table->string('user_id', 7)->nullable();
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
             $table->string('name');
-            $table->string('bca_number');
+            // Length capped at 20 to match the application validation rule.
+            $table->string('bca_number', 20);
             $table->timestamps();
 
             $table->index('booking_id');

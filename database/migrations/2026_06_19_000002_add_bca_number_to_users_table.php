@@ -11,8 +11,9 @@ return new class () extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             // BCA (British Caving Association) membership number — alphanumeric,
-            // self-declared. Not unique or verified, so no constraint.
-            $table->string('bca_number')->nullable()->after('phone');
+            // self-declared. Not unique or verified, so no unique constraint.
+            // Length capped at 20 to match the application validation rule.
+            $table->string('bca_number', 20)->nullable()->after('phone');
         });
     }
 
