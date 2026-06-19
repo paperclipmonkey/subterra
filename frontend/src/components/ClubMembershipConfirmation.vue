@@ -9,19 +9,19 @@
           <div v-if="pendingClubs && pendingClubs.length">
             <h3 class="text-h6 font-weight-bold mb-4">Your Applications</h3>
             <v-list class="pa-0">
-              <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-0 mb-4 border rounded-lg">
+              <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-3 py-3 mb-4 border rounded-lg">
                 <template #prepend>
-                  <v-avatar color="warning" size="40" class="mr-4">
+                  <v-avatar color="warning" size="40" class="mr-3">
                     <v-icon color="white" :icon="mdiAccountClock" />
                   </v-avatar>
                 </template>
-                <v-list-item-title class="font-weight-bold">{{ club.name }}</v-list-item-title>
-                <v-list-item-subtitle class="mt-1">
-                  <v-chip color="warning" size="small" variant="flat" class="mr-2">Pending</v-chip>
+                <v-list-item-title class="font-weight-bold text-wrap">{{ club.name }}</v-list-item-title>
+                <div class="d-flex flex-wrap align-center mt-1" style="gap: 8px;">
+                  <v-chip color="warning" size="small" variant="flat">Pending</v-chip>
                   <span class="text-caption text-medium-emphasis">
                     Submitted {{ formatRelativeTime(club.pivot?.created_at) }}
                   </span>
-                </v-list-item-subtitle>
+                </div>
               </v-list-item>
             </v-list>
             <v-divider class="my-6" />
