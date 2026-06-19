@@ -36,7 +36,20 @@
 
       <!-- Display User's Clubs -->
       <div class="clubs pa-4">
-        <h3>My Clubs:</h3>
+        <div class="d-flex align-center justify-space-between mb-2">
+          <h3 class="mb-0">My Clubs:</h3>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            size="small"
+            icon
+            aria-label="Request to join a club"
+            @click="openJoinClubModal"
+          >
+            <v-icon :icon="mdiPlus" />
+            <v-tooltip activator="parent" location="top">Request to join a club</v-tooltip>
+          </v-btn>
+        </div>
         <v-list v-if="profile.clubs && profile.clubs.length" lines="one">
           <v-list-item
             v-for="club in profile.clubs"
@@ -51,7 +64,6 @@
           </v-list-item>
         </v-list>
         <p v-else>You are not a member of any clubs yet.</p>
-        <v-btn color="primary" class="mt-2" @click="openJoinClubModal">Request to Join Club</v-btn>
       </div>
 
       <v-divider />
@@ -238,7 +250,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAlertCircleOutline, mdiCamera, mdiCellphoneCheck, mdiCheckCircle, mdiEarth } from '@mdi/js'
+import { mdiAccountGroup, mdiAlertCircleOutline, mdiCamera, mdiCellphoneCheck, mdiCheckCircle, mdiEarth, mdiPlus } from '@mdi/js'
 import router from '@/router'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
