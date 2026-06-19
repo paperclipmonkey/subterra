@@ -29,11 +29,13 @@ const error = ref('')
 
 const store = useAppStore()
 
-// Send the freshly-authenticated user somewhere useful. Users without a name
-// still need to complete their profile; everyone else goes to their intended
-// destination (or the trips feed).
+// Send the freshly-authenticated user somewhere useful. A real account that
+// still has no name needs to complete its profile; everyone else goes to their
+// intended destination (or the trips feed). Guard on a real id so an
+// unauthenticated placeholder user (e.g. /api/users/me erroring) can never send
+// us to /profile/undefined/edit.
 const redirectAfterLogin = (user) => {
-  if (user && !user.name) {
+  if (user?.id && !(user.name || '').trim()) {
     router.replace({ name: '/profile/[id].edit', params: { id: user.id } })
     return
   }
