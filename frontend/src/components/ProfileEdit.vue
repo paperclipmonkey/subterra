@@ -95,7 +95,7 @@
           hint="Must be exactly 11 digits (07...) or 13 characters (+44...)."
           persistent-hint
         />
-        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency. <strong>You'll need to verify it before creating a callout or joining the duty-officer rota.</strong></p>
+        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency. <strong>You'll need to verify it before creating a callout.</strong></p>
         <v-btn
           v-if="profile.phone && !phoneVerified && !phoneDirty"
           class="mt-2 text-none"
