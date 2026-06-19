@@ -605,7 +605,7 @@ const submitApplication = async () => {
   const payload = {
     date: selectedDate.value,
     notes: application.value.notes,
-    conditions_accepted: true,
+    conditions_accepted: application.value.conditions_accepted,
   }
 
   if (permit.value.requires_bca) {
