@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CaveSystemFileResource;
 use App\Models\CaveSystem;
 use App\Models\CaveSystemFile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -25,17 +27,23 @@ class CaveSystemFileController extends Controller
         'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif',
     ];
 
-    public function index(Request $request, CaveSystem $caveSystem): JsonResponse
+    public function index(Request $request, CaveSystem $caveSystem): AnonymousResourceCollection
     {
         $user = $request->user();
         $canManage = $user && $caveSystem->managedBy($user);
 
+        // Mirror CaveResource's file gate: data admins see everything (incl.
+        // private), approved-club members see public files, everyone else none.
         $query = $caveSystem->files()->orderBy('sort_order')->orderBy('id');
-        if (!$canManage) {
-            $query->where('visibility', 'public');
+        if ($canManage) {
+            $files = $query->get();
+        } elseif ($user?->hasApprovedClub()) {
+            $files = $query->where('visibility', 'public')->get();
+        } else {
+            $files = collect();
         }
 
-        return response()->json(['data' => $query->get()]);
+        return CaveSystemFileResource::collection($files);
     }
 
     public function store(Request $request, CaveSystem $caveSystem): JsonResponse
@@ -83,7 +91,7 @@ class CaveSystemFileController extends Controller
 
         \App\Jobs\GenerateCaveSystemThumbnail::dispatch($record);
 
-        return response()->json(['data' => $record], 201);
+        return (new CaveSystemFileResource($record))->response()->setStatusCode(201);
     }
 
     public function destroy(Request $request, CaveSystem $caveSystem, CaveSystemFile $file): JsonResponse

@@ -49,7 +49,7 @@ class CaveVisibilityTest extends TestCase
     }
 
     #[Test]
-    public function a_guest_gets_404_for_an_admin_only_cave(): void
+    public function an_authenticated_non_admin_gets_404_for_an_admin_only_cave(): void
     {
         $this->actingAs(User::factory()->create());
         $cave = Cave::factory()->create(['visibility' => 'admin_only']);

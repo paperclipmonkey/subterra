@@ -73,23 +73,30 @@ class CaveSystemFileTest extends TestCase
     }
 
     #[Test]
-    public function the_files_index_hides_private_files_from_non_managers(): void
+    public function the_files_index_gates_private_and_public_files_by_viewer(): void
     {
-        [$system, , $editor] = $this->managedSystem();
+        [$system, , $manager] = $this->managedSystem();
         CaveSystemFile::factory()->for($system, 'caveSystem')->create(['title' => 'Public Survey']);
         CaveSystemFile::factory()->for($system, 'caveSystem')->private()->create(['title' => 'Secret Map']);
 
-        // Manager sees both.
-        $this->actingAs($editor)
+        // Manager (data admin) sees both, and the resource shape (is_image present).
+        $this->actingAs($manager)
             ->getJson("/api/cave_systems/{$system->id}/files")
             ->assertStatus(200)
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data')
+            ->assertJsonStructure(['data' => [['id', 'kind', 'visibility', 'is_image']]]);
 
-        // Ordinary user sees only the public one.
-        $response = $this->actingAs(User::factory()->create())
+        // Approved-club non-manager sees the public file only.
+        $response = $this->actingAs(User::factory()->withApprovedClub()->create())
             ->getJson("/api/cave_systems/{$system->id}/files");
         $response->assertStatus(200)->assertJsonCount(1, 'data');
         $this->assertEquals('Public Survey', $response->json('data.0.title'));
+
+        // Unapproved user sees nothing — mirrors the cave page's file gate.
+        $this->actingAs(User::factory()->create())
+            ->getJson("/api/cave_systems/{$system->id}/files")
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'data');
     }
 
     #[Test]

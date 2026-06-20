@@ -17,8 +17,7 @@ class CavePolicy
     public function view(?User $user, Cave $cave): bool
     {
         // admin_only sites (e.g. coal mines) exist for safety but must not be
-        // viewable by guests or ordinary users — only by managers of a group the
-        // cave belongs to (plus platform/global data admins).
+        // viewable by guests or ordinary users — only by data admins.
         if ($cave->visibility === 'admin_only') {
             return $user !== null && $this->canManage($user, $cave);
         }
