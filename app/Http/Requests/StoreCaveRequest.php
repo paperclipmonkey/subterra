@@ -10,7 +10,9 @@ class StoreCaveRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->is_admin ?? false;
+        $user = $this->user();
+
+        return $user !== null && app(\App\Policies\CavePolicy::class)->create($user);
     }
 
     /**
@@ -32,6 +34,7 @@ class StoreCaveRequest extends FormRequest
             'location_name' => ['required', 'string', 'max:255'],
             'location_country' => ['required', 'string', 'max:255'],
             'access_info' => ['nullable', 'string'],
+            'private_notes' => ['nullable', 'string'],
             'hero_image' => ['nullable', 'array'],
             'hero_image.data' => ['nullable', 'file', 'max:512000'],
             'hero_image.title' => ['nullable', 'string', 'max:255'],
@@ -48,6 +51,7 @@ class StoreCaveRequest extends FormRequest
             'hero_video.photographer' => ['nullable', 'string', 'max:255'],
             'hero_video.copyright' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:caves,slug'],
+            'visibility' => ['nullable', 'in:public,admin_only'],
             'tags' => ['nullable', 'array'],
         ];
     }

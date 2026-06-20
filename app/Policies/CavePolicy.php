@@ -16,21 +16,37 @@ class CavePolicy
 
     public function view(?User $user, Cave $cave): bool
     {
-        return true; // Individual caves are publicly viewable
+        // admin_only sites (e.g. coal mines) exist for safety but must not be
+        // viewable by guests or ordinary users — only by managers of a group the
+        // cave belongs to (plus platform/global data admins).
+        if ($cave->visibility === 'admin_only') {
+            return $user !== null && $this->canManage($user, $cave);
+        }
+
+        return true; // Public caves are publicly viewable
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole('data_admin');
+        return $user->hasRole(['platform_admin', 'data_admin']);
     }
 
     public function update(User $user, Cave $cave): bool
     {
-        return $user->hasRole('data_admin');
+        return $this->canManage($user, $cave);
     }
 
     public function delete(User $user, Cave $cave): bool
     {
-        return $user->hasRole('data_admin');
+        return $this->canManage($user, $cave);
+    }
+
+    /**
+     * Data management (edit, delete, see private fields, view admin-only caves)
+     * is restricted to global data admins.
+     */
+    private function canManage(User $user, Cave $cave): bool
+    {
+        return $user->hasRole(['platform_admin', 'data_admin']);
     }
 }

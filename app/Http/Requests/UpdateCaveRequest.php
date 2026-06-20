@@ -10,7 +10,12 @@ class UpdateCaveRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->is_admin ?? false;
+        $user = $this->user();
+        $cave = $this->route('cave');
+
+        return $user !== null
+            && $cave instanceof \App\Models\Cave
+            && app(\App\Policies\CavePolicy::class)->update($user, $cave);
     }
 
     /**
@@ -32,6 +37,7 @@ class UpdateCaveRequest extends FormRequest
             'location_name' => ['sometimes', 'required', 'string', 'max:255'],
             'location_country' => ['sometimes', 'required', 'string', 'max:255'],
             'access_info' => ['nullable', 'string'],
+            'private_notes' => ['sometimes', 'nullable', 'string'],
             'hero_image' => ['nullable', 'array'],
             'hero_image.data' => ['nullable', 'file', 'max:512000'],
             'hero_image.title' => ['nullable', 'string', 'max:255'],
@@ -47,6 +53,7 @@ class UpdateCaveRequest extends FormRequest
             'hero_video.title' => ['nullable', 'string', 'max:255'],
             'hero_video.photographer' => ['nullable', 'string', 'max:255'],
             'hero_video.copyright' => ['nullable', 'string', 'max:255'],
+            'visibility' => ['sometimes', 'in:public,admin_only'],
             'tags' => ['nullable', 'array'],
             'tags.*.category' => ['required_with:tags', 'string'],
             'tags.*.tag' => ['required_with:tags', 'string'],
