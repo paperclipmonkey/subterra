@@ -58,6 +58,15 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->hasMany(Cave::class);
     }
 
+    /**
+     * Whether the given user may manage this system's data (upload/remove files,
+     * see private files). Restricted to global data admins.
+     */
+    public function managedBy(User $user): bool
+    {
+        return $user->hasRole(['platform_admin', 'data_admin']);
+    }
+
     /** @return BelongsToMany<Tag, $this> */
     public function tags(): BelongsToMany
     {

@@ -22,7 +22,14 @@ class CaveSystemFileResource extends JsonResource
             'id' => $this->id,
             'filename' => $this->filename, // The stored filename
             'original_filename' => $this->original_filename, // The original uploaded name
+            'title' => $this->title,
             'details' => $this->details,
+            'kind' => $this->kind,
+            'visibility' => $this->visibility,
+            'photographer' => $this->photographer,
+            'copyright' => $this->copyright,
+            'taken_at' => $this->taken_at,
+            'is_image' => $this->isImage(),
             'mime_type' => $this->mime_type,
             'size' => $this->size,
             'url' => Storage::disk('media')->url("cave_system_files/{$this->cave_system_id}/{$this->filename}"),
