@@ -450,6 +450,9 @@
                             <div class="text-caption text-medium-emphasis">
                               {{ file.kind }}<template v-if="file.details"> · {{ file.details }}</template>
                             </div>
+                            <div v-if="file.photographer || file.copyright" class="text-caption text-medium-emphasis text-truncate">
+                              {{ [file.photographer, file.copyright ? `© ${file.copyright}` : null].filter(Boolean).join(' · ') }}
+                            </div>
                           </div>
                           <v-chip
                             v-if="file.visibility === 'private'"

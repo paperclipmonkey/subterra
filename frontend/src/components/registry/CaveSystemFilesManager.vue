@@ -10,7 +10,7 @@
         </template>
         <v-list-item-title>{{ f.title || f.original_filename }}</v-list-item-title>
         <v-list-item-subtitle>
-          {{ f.kind }} · {{ f.photographer || f.details || 'no credit' }}
+          {{ [f.kind, f.details, f.photographer, f.copyright ? `© ${f.copyright}` : null].filter(Boolean).join(' · ') }}
         </v-list-item-subtitle>
         <template #append>
           <v-chip
