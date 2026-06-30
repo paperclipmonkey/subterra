@@ -40,6 +40,12 @@ router.beforeEach(async (to, from, next) => {
     return next()
   }
 
+  // Public iframe-embeddable pages (e.g. permit availability calendars) must
+  // render on external sites without a Subterra session.
+  if (to.path.startsWith('/embed/')) {
+    return next()
+  }
+
   // Allow offline caves page — still warm the user cache in the background
   // so components don't render with empty user state after a hard refresh.
   if (to.path === '/offline') {

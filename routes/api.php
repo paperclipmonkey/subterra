@@ -194,6 +194,10 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
     ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
 
+// Public embeddable permit calendar (availability only — no personal data).
+// Powers the iframe embed an access officer can drop into an external website.
+Route::get('/embed/permits/{permit}/calendar', [BookingController::class, 'embedCalendar']);
+
 // --- AI Assistant (Pip) ---
 // Open to platform_admin OR users granted the `pip_access` role explicitly.
 // Rate-limited to 50 requests per day (1440 min).
