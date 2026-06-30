@@ -113,7 +113,6 @@ class BookingController extends Controller
                 'name' => $permit->name,
                 'slug' => $permit->slug,
                 'caves' => $permit->caves->map(fn (Cave $cave) => ['name' => $cave->name])->values(),
-                'auto_approve' => $permit->auto_approve,
                 'has_max_groups_per_day' => $permit->has_max_groups_per_day,
                 'max_groups_per_day' => $permit->max_groups_per_day,
                 'has_season' => $permit->has_season,

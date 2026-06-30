@@ -405,11 +405,20 @@ const embedUrl = computed(() =>
   embedPermit.value ? `${window.location.origin}/embed/permits/${embedPermit.value.slug}` : ''
 )
 
+// HTML-escape every attribute-sensitive character so a permit name containing
+// &, <, >, " or ' can't break the snippet or inject attributes when pasted.
+const escapeHtml = (str) => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
+
 // Plain responsive iframe — full width, sensible min-height, scrolls internally
 // on very small screens. No external script needed.
 const embedSnippet = computed(() => {
   if (!embedPermit.value) return ''
-  const title = (embedPermit.value.name || 'Permit').replace(/"/g, '&quot;')
+  const title = escapeHtml(embedPermit.value.name || 'Permit')
   return `<iframe
   src="${embedUrl.value}"
   title="${title} — availability"
