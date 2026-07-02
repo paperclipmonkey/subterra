@@ -24,12 +24,16 @@ class TripResource extends JsonResource
             'description' => $this->description ?? '',
             'system' => $this->system,
             'entrance' => $this->entrance,
-            'exit' => $this->exit,
+            // exit and creator_id only serialize when eager-loaded — falling
+            // back to null instead of running a query per trip on collections.
+            'exit' => $this->relationLoaded('exit') ? $this->exit : null,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'visibility' => $this->visibility,
             'participants' => UserResource::collection($this->participants),
-            'creator_id' => $this->audits()->where('event', 'created')->first()?->user_id,
+            'creator_id' => $this->relationLoaded('audits')
+                ? $this->audits->firstWhere('event', 'created')?->user_id
+                : null,
             'media' => MediaResource::collection($this->media),
             'duration' => $this->duration,
             'entrance_hero_image' => $this->entrance?->heroImage?->filename

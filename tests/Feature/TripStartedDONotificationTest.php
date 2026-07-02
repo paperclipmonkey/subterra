@@ -124,7 +124,7 @@ class TripStartedDONotificationTest extends TestCase
         $do = User::factory()->dutyOfficer()->create();
         $this->shift($do, now()->subHour(), now()->addHour(), true);
 
-        $trip = Trip::factory()->make(['start_time' => null]);
+        $trip = Trip::factory()->create(['start_time' => null]);
         event(new TripCreated($trip, User::factory()->create()));
 
         Mail::assertNotSent(TripStartedDONotification::class);

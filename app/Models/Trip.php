@@ -59,10 +59,27 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         // Whole minutes. Carbon 3's diffInMinutes() returns a float with
         // sub-minute precision, so round to avoid fractional minutes leaking
         // into the UI (e.g. "6h 8.699999999999989m") and into summed totals.
+        // Open-ended trips (no end_time) report 0 rather than diffing against
+        // now(), and negative diffs are clamped to 0 so bad data can never
+        // subtract from summed stats.
         return Attribute::make(
-            get: fn (mixed $value, array $attributes): int => $this->start_time
-                ? (int) round($this->start_time->diffInMinutes($this->end_time))
+            get: fn (mixed $value, array $attributes): int => $this->start_time && $this->end_time
+                ? max(0, (int) round($this->start_time->diffInMinutes($this->end_time)))
                 : 0,
+        );
+    }
+
+    /**
+     * Whether the given cave (or its parent system) carries the Closed access
+     * tag, in which case public trip reports must not be created for it.
+     */
+    public static function caveIsClosed(mixed $caveId): bool
+    {
+        $cave = Cave::with('tags', 'system.tags')->find($caveId);
+
+        return $cave !== null && (
+            $cave->tags->contains('tag', 'Closed')
+            || ($cave->system && $cave->system->tags->contains('tag', 'Closed'))
         );
     }
 

@@ -12,6 +12,7 @@ use App\Models\Medal;
 use App\Services\MedalProgressService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Queue\InteractsWithQueue;
 
 class CheckAndAwardMedals implements ShouldQueue
@@ -28,7 +29,6 @@ class CheckAndAwardMedals implements ShouldQueue
     public function handle(TripParticipantTagged|UserContributed $event): void
     {
         $user = $event->user;
-        $awardedMedals = [];
 
         // Preload all trips and collections with their relations once to avoid repeated queries per medal
         $trips = $user->trips()->with('entrance.tags', 'entrance.system.tags', 'media')->get();
@@ -36,16 +36,25 @@ class CheckAndAwardMedals implements ShouldQueue
 
         $medals = Medal::all();
         foreach ($medals as $medal) {
-            if (!$user->medals->contains($medal)) {
-                if ($this->medalProgress->passes($medal, $user, $trips, $collections)) {
-                    $user->medals()->attach($medal->id, ['awarded_at' => Carbon::now()]);
-                    $awardedMedals[] = $medal;
-                }
+            if ($user->medals->contains($medal)) {
+                continue;
             }
-        }
 
-        // Fire an event for each awarded medal
-        foreach ($awardedMedals as $medal) {
+            if (!$this->medalProgress->passes($medal, $user, $trips, $collections)) {
+                continue;
+            }
+
+            try {
+                $user->medals()->attach($medal->id, ['awarded_at' => Carbon::now()]);
+            } catch (UniqueConstraintViolationException) {
+                // A concurrent worker awarded this medal between our "not yet
+                // earned" check and the attach — it owns the MedalAwarded
+                // event, so skip it here and carry on with the other medals.
+                continue;
+            }
+
+            // Fire immediately per medal so a failure later in the loop can't
+            // swallow notifications for medals already attached.
             event(new MedalAwarded($user, $medal));
         }
     }
