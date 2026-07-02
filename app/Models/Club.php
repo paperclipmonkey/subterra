@@ -66,9 +66,9 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
      */
     public function getMemberCountAttribute(): int
     {
-        // Use the specific relationship for counting approved users
-        // This ensures withCount('users') in controller counts correctly if not overridden.
-        // However, direct access $club->member_count will use this accessor.
+        // Fallback accessor: controllers should prefer preloading the count
+        // via withCount(['approvedUsers as users_count']) — this accessor runs
+        // one COUNT query per club when the count hasn't been preloaded.
         if ($this->relationLoaded('approvedUsers')) {
             return $this->approvedUsers->count();
         }

@@ -28,10 +28,11 @@ class ClubDetailResource extends JsonResource
             // The "Direct Individual Member" catch-all club has its social
             // features (member roster, club trips, stats) hidden in the UI.
             'is_individual_membership' => $this->isIndividualMembership(),
-            // Ensure 'users_count' is loaded via withCount('users') in the controller for efficiency
-            'member_count' => $this->whenCounted('users', $this->member_count), // Use whenCounted if using withCount
+            // Controllers load this via loadCount(['approvedUsers as users_count']).
+            // The closure keeps evaluation lazy so the member_count accessor's
+            // per-club COUNT query never runs when the count is preloaded.
+            'member_count' => $this->whenCounted('users', fn () => $this->users_count),
             'pending_users_count' => $this->whenCounted('pendingUsers'),
-            // 'member_count' => $this->member_count, // Or directly use accessor
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'huts' => $this->whenLoaded('huts'),

@@ -12,6 +12,7 @@ use App\Models\TripMedia;
 use App\Support\MediaUrl;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -20,18 +21,19 @@ class ClubDataController extends Controller
     /**
      * Get the 10 most recent trips for a club.
      */
-    public function recentTrips(Club $club): ResourceCollection
+    public function recentTrips(Request $request, Club $club): ResourceCollection
     {
         // The Direct Individual Member catch-all club has no club trips.
         if ($club->isIndividualMembership()) {
             return TripResource::collection(collect());
         }
 
-        $trips = Trip::whereHas('participants', function ($query) use ($club) {
-            $query->whereIn('user_id', $club->users()->wherePivot('status', 'approved')->pluck('users.id'));
-        })
+        $trips = Trip::visibleTo($request->user())
+            ->whereHas('participants', function ($query) use ($club) {
+                $query->whereIn('user_id', $club->users()->wherePivot('status', 'approved')->pluck('users.id'));
+            })
             ->where('start_time', '>=', Carbon::now()->subYear())
-            ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'participants', 'media'])
+            ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'entrance.tags', 'exit', 'participants.clubs', 'media'])
             ->orderBy('start_time', 'desc')
             ->limit(10)
             ->get();
@@ -50,7 +52,7 @@ class ClubDataController extends Controller
             return UserResource::collection(collect());
         }
 
-        $members = $club->users()->wherePivot('status', 'approved')->orderBy('name')->get();
+        $members = $club->users()->wherePivot('status', 'approved')->with('clubs')->orderBy('name')->get();
 
         // Used by ClubEditModal for club admins who can't access the full admin endpoint
         return UserResource::collection($members->map(function ($user) {
@@ -69,7 +71,7 @@ class ClubDataController extends Controller
      * the heatmap), except the "new caves this year" figure which looks at the
      * club's whole history to decide whether a cave is genuinely new.
      */
-    public function summary(Club $club): JsonResponse
+    public function summary(Request $request, Club $club): JsonResponse
     {
         // The Direct Individual Member catch-all club has no club stats.
         if ($club->isIndividualMembership()) {
@@ -98,14 +100,19 @@ class ClubDataController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth();
         $startOfYear = Carbon::now()->startOfYear();
 
-        // Base query: trips with at least one approved member as a participant.
-        $clubTrips = fn () => Trip::whereHas('participants', function ($query) use ($approvedIds) {
-            $query->whereIn('user_id', $approvedIds);
-        });
+        // Base query: trips with at least one approved member as a participant,
+        // restricted to what the requesting user is allowed to see so private
+        // trips never leak into the stats or the photo wall.
+        $clubTrips = fn () => Trip::visibleTo($request->user())
+            ->whereHas('participants', function ($query) use ($approvedIds) {
+                $query->whereIn('user_id', $approvedIds);
+            });
 
         $recentTrips = $clubTrips()
             ->where('start_time', '>=', $oneYearAgo)
             ->get(['id', 'start_time', 'end_time', 'entrance_cave_id']);
+
+        $tripIds = $recentTrips->pluck('id');
 
         $hoursUnderground = 0.0;
         $tripsThisMonth = 0;
@@ -131,18 +138,16 @@ class ClubDataController extends Controller
             ->count();
 
         // Most active member: most trips in the window, ties broken by name.
+        // Scoped to $tripIds so it only counts trips visible to the viewer.
         $mostActiveRow = DB::table('trip_user')
-            ->join('trips', 'trips.id', '=', 'trip_user.trip_id')
             ->join('users', 'users.id', '=', 'trip_user.user_id')
             ->whereIn('trip_user.user_id', $approvedIds)
-            ->where('trips.start_time', '>=', $oneYearAgo)
+            ->whereIn('trip_user.trip_id', $tripIds)
             ->select('users.id', 'users.name', DB::raw('count(*) as trip_count'))
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('trip_count')
             ->orderBy('users.name')
             ->first();
-
-        $tripIds = $recentTrips->pluck('id');
 
         // Other clubs whose members shared these trips, by distinct trip count.
         $alliedClubs = DB::table('club_user')
@@ -220,7 +225,7 @@ class ClubDataController extends Controller
     /**
      * Get activity heatmap data for a club (hours underground per day in the last year).
      */
-    public function activityHeatmap(Club $club): JsonResponse
+    public function activityHeatmap(Request $request, Club $club): JsonResponse
     {
         // The Direct Individual Member catch-all club has no club activity.
         if ($club->isIndividualMembership()) {
@@ -231,7 +236,8 @@ class ClubDataController extends Controller
         $approvedMemberIdsList = $club->approvedUsers()->pluck('users.id');
         $approvedMemberIds = $approvedMemberIdsList->flip();
 
-        $trips = Trip::with('participants')
+        $trips = Trip::visibleTo($request->user())
+            ->with('participants')
             ->where('start_time', '>=', $oneYearAgo)
             ->whereHas('participants', function ($query) use ($approvedMemberIdsList) {
                 $query->whereIn('users.id', $approvedMemberIdsList);

@@ -11,13 +11,16 @@ class NewsController extends Controller
 {
     public function index(): JsonResponse
     {
-        $newsContent = [];
-        foreach (array_reverse(Storage::disk('news')->files()) as $file) {
-            // Skip non-markdown files
-            if (!str_ends_with($file, '.md')) {
-                continue;
-            }
+        // Files are named by ISO date (YYYY-MM-DD.md), so an explicit
+        // descending string sort gives newest-first regardless of the
+        // order the filesystem happens to list them in.
+        $files = collect(Storage::disk('news')->files())
+            ->filter(fn ($file) => str_ends_with($file, '.md'))
+            ->sortDesc(SORT_STRING)
+            ->values();
 
+        $newsContent = [];
+        foreach ($files as $file) {
             $date = str_replace('.md', '', $file);
             $content = Storage::disk('news')->get($file);
 

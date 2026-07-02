@@ -78,6 +78,23 @@ class CommunicationTest extends TestCase
         $this->assertFalse($user->fresh()->email_platform_news);
     }
 
+    public function test_unsubscribe_link_works_for_deactivated_user()
+    {
+        $user = User::factory()->create(['email_platform_news' => true]);
+        $user->is_active = false;
+        $user->save();
+
+        $url = URL::signedRoute('newsletter.unsubscribe', ['user' => $user->id]);
+
+        // The IsActiveScope must not 404 a deactivated user's signed link.
+        $response = $this->get($url);
+
+        $response->assertStatus(200);
+        $this->assertFalse(
+            User::withoutGlobalScopes()->find($user->id)->email_platform_news
+        );
+    }
+
     public function test_unsubscribe_link_fails_with_invalid_signature()
     {
         $user = User::factory()->create(['email_platform_news' => true]);
