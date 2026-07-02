@@ -43,10 +43,52 @@ parameters:
 			path: app/Console/Commands/ExportPipFeedbackCommand.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/FixCcrSyncArtifacts.php
+
+		-
+			message: '#^Parameter \#1 \$models of method App\\Console\\Commands\\FixCcrSyncArtifacts\:\:decodeStoredText\(\) expects Illuminate\\Support\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Cave\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/FixCcrSyncArtifacts.php
+
+		-
+			message: '#^Parameter \#1 \$models of method App\\Console\\Commands\\FixCcrSyncArtifacts\:\:decodeStoredText\(\) expects Illuminate\\Support\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\CaveSystem\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/FixCcrSyncArtifacts.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Console/Commands/NotifyStartedShifts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$filename\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ReprocessMediaImages.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Console/Commands/ReprocessMediaImages.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$original_filename\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ReprocessMediaImages.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ReprocessMediaImages.php
 
 		-
 			message: '#^Call to an undefined method PHPCoord\\Point\\Point\:\:getLatitude\(\)\.$#'
@@ -91,6 +133,12 @@ parameters:
 			path: app/Http/Controllers/Admin/BookingController.php
 
 		-
+			message: '#^Cannot call method toDateString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Admin/BookingController.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\ApiInteraction\:\:\$count\.$#'
 			identifier: property.notFound
 			count: 1
@@ -131,6 +179,12 @@ parameters:
 			identifier: argument.unresolvableType
 			count: 2
 			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cave\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/IncidentController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
@@ -177,7 +231,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\SuggestedEdit\:\:\$suggestable\.$#'
 			identifier: property.notFound
-			count: 4
+			count: 9
 			path: app/Http/Controllers/Admin/SuggestedEditController.php
 
 		-
@@ -189,7 +243,7 @@ parameters:
 		-
 			message: '#^Relation ''suggestable'' is not found in App\\Models\\SuggestedEdit model\.$#'
 			identifier: larastan.relationExistence
-			count: 1
+			count: 3
 			path: app/Http/Controllers/Admin/SuggestedEditController.php
 
 		-
@@ -217,8 +271,14 @@ parameters:
 			path: app/Http/Controllers/BookingController.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:mapWithKeys\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BookingController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{name\: string\}, Closure\(App\\Models\\Cave\)\: array\{name\: string\} given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/BookingController.php
 
@@ -237,7 +297,7 @@ parameters:
 		-
 			message: '#^Strict comparison using \=\=\= between string and int\<0, max\> will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
-			count: 1
+			count: 2
 			path: app/Http/Controllers/CalloutController.php
 
 		-
@@ -283,6 +343,24 @@ parameters:
 			path: app/Http/Controllers/ClubController.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Trip\:\:\$duration\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ClubDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Trip\:\:\$first_visit\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ClubDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\TripMedia\:\:\$trip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ClubDataController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_club_admin\.$#'
 			identifier: property.notFound
 			count: 1
@@ -291,6 +369,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$pivot\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ClubDataController.php
+
+		-
+			message: '#^Relation ''trip'' is not found in App\\Models\\TripMedia model\.$#'
+			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/ClubDataController.php
 
@@ -331,12 +415,6 @@ parameters:
 			path: app/Http/Controllers/DutyOfficerController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$has_signed_up\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/GoogleLoginController.php
-
-		-
 			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:stateless\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -347,6 +425,18 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/GoogleLoginController.php
+
+		-
+			message: '#^Property App\\Models\\User\:\:\$tos_agreed_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/GoogleLoginController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Route\:\:\$hero_image\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/RouteController.php
 
 		-
 			message: '#^Strict comparison using \=\=\= between mixed and null will always evaluate to false\.$#'
@@ -469,10 +559,16 @@ parameters:
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\Webhook\\ClickSendController\:\:handleSms\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
-			identifier: return.type
-			count: 4
-			path: app/Http/Controllers/Webhook/ClickSendController.php
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cave_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Webhook/TwilioController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>cave_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Webhook/TwilioController.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>is_admin" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
@@ -493,7 +589,7 @@ parameters:
 			path: app/Http/Resources/BookingResource.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:officers\(\)\.$#'
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isOfficer\(\)\.$#'
 			identifier: method.notFound
 			count: 1
 			path: app/Http/Resources/BookingResource.php
@@ -529,12 +625,6 @@ parameters:
 			path: app/Http/Resources/CaveResource.php
 
 		-
-			message: '#^Array has 2 duplicate keys with value ''access_info'' \(''access_info'', ''access_info''\)\.$#'
-			identifier: array.duplicateKey
-			count: 1
-			path: app/Http/Resources/CaveResource.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Tag\:\:\$color\.$#'
 			identifier: property.notFound
 			count: 1
@@ -565,10 +655,40 @@ parameters:
 			path: app/Http/Resources/CaveSystemResource.php
 
 		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$content\.$#'
+			identifier: property.notFound
 			count: 1
-			path: app/Http/Resources/CaveSystemResource.php
+			path: app/Http/Resources/IncidentResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidentResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidentResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidentResource.php
+
+		-
+			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<int, array\{id\: mixed, content\: mixed, created_at\: mixed, user\: App\\Http\\Resources\\UserSummaryResource\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{id\: mixed, content\: mixed, created_at\: mixed, user\: App\\Http\\Resources\\UserSummaryResource\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Resources/IncidentResource.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Resources/IncidentResource.php
 
 		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\TripResource\:\:\$duration\.$#'
@@ -745,10 +865,28 @@ parameters:
 			path: app/Mail/TripStartedDONotification.php
 
 		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\Callout\:\:\$hidden is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$hidden\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/Callout.php
+
+		-
 			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Models/Callout.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/CalloutParticipant.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/CalloutParticipant.php
 
 		-
 			message: '#^Property ''poster_url'' does not exist in model\.$#'
@@ -875,6 +1013,18 @@ parameters:
 			identifier: property.notFound
 			count: 3
 			path: app/Policies/TripPolicy.php
+
+		-
+			message: '#^Method App\\Services\\Assistant\\Tools\\Admin\\CreateCollectionTool\:\:resolveCaves\(\) should return array\{array\<int, array\{description\: string\|null, sort_order\: int\}\>, array\<int, string\>\} but returns array\{array\<int, array\{description\: string\|null, sort_order\: int\<0, max\>\}\>, array\<non\-empty\-string, non\-empty\-string\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Assistant/Tools/Admin/CreateCollectionTool.php
+
+		-
+			message: '#^Method App\\Services\\Assistant\\Tools\\Admin\\UpdateCollectionTool\:\:resolveCaves\(\) should return array\{array\<int, array\{description\: string\|null, sort_order\: int\}\>, array\<int, string\>\} but returns array\{array\<int, array\{description\: string\|null, sort_order\: int\<0, max\>\}\>, array\<non\-empty\-string, non\-empty\-string\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Assistant/Tools/Admin/UpdateCollectionTool.php
 
 		-
 			message: '#^Right side of && is always true\.$#'
@@ -1045,7 +1195,31 @@ parameters:
 			path: app/Services/CalloutService.php
 
 		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/IncidentService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/MedalProgressService.php
+
+		-
+			message: '#^Method App\\Services\\MedalProgressService\:\:progressForUser\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, array\{id\: int, name\: string, description\: string\|null, image_url\: string\|null, earned\: bool, awarded_at\: mixed, progress\: array\{current\: int, target\: int\}\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/MedalProgressService.php
+
+		-
 			message: '#^Property App\\Services\\MediaSuggestionService\:\:\$imageProcessingService is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: app/Services/MediaSuggestionService.php
+
+		-
+			message: '#^Cannot call method lt\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Sms/PhoneVerificationService.php

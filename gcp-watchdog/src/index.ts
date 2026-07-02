@@ -2,6 +2,7 @@
  * Subterra Watchdog Service - GCP Cloud Run Application
  * Monitors callouts and sends emergency alerts when users don't return on time.
  */
+import { timingSafeEqual } from 'crypto';
 import express, { Request, Response } from 'express';
 import { FirestoreClient, CalloutData } from './firestore-client';
 import { TextMagicClient } from './textmagic-client';
@@ -63,8 +64,10 @@ const checkApiKey = (req: Request, res: Response, next: () => void) => {
     }
 
     const providedKey = req.header('X-Watchdog-Key');
+    const providedBuffer = Buffer.from(providedKey ?? '');
+    const expectedBuffer = Buffer.from(apiKey);
 
-    if (providedKey !== apiKey) {
+    if (providedBuffer.length !== expectedBuffer.length || !timingSafeEqual(providedBuffer, expectedBuffer)) {
         console.warn(`Unauthorized access attempt from ${req.ip}`);
         return res.status(401).json({ error: 'Unauthorized: Invalid or missing API Key' });
     }

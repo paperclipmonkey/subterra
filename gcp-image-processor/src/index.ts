@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import express, { Request, Response } from 'express';
 import { Storage } from '@google-cloud/storage';
 import { PubSub } from '@google-cloud/pubsub';
@@ -42,8 +43,10 @@ const checkApiKey = (req: Request, res: Response, next: () => void) => {
     }
 
     const providedKey = req.header('Authorization')?.replace('Bearer ', '');
+    const providedBuffer = Buffer.from(providedKey ?? '');
+    const expectedBuffer = Buffer.from(apiKey);
 
-    if (!providedKey || providedKey !== apiKey) {
+    if (providedBuffer.length !== expectedBuffer.length || !timingSafeEqual(providedBuffer, expectedBuffer)) {
         console.warn(`Unauthorized access attempt from ${req.ip}`);
         return res.status(401).json({ error: 'Unauthorized: Invalid or missing API Key' });
     }
