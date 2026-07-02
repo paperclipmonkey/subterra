@@ -275,28 +275,30 @@ const setupLayers = () => {
   map.on('mouseleave', LAYER_DOT, () => { map.getCanvas().style.cursor = '' })
 }
 
+const escHtml = (str) => { const d = document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML }
+
 const openPopup = (coords, props) => {
-  const img = `<img src="${props.image_url || '/placeholder-cave.jpg'}" style="width:100%;height:96px;object-fit:cover;" />`
+  const img = `<img src="${escHtml(props.image_url || '/placeholder-cave.jpg')}" style="width:100%;height:96px;object-fit:cover;" />`
 
   const duration = props.duration
-    ? `<span style="margin-left:8px;">⏱ ${formatDuration(props.duration)}</span>`
+    ? `<span style="margin-left:8px;">⏱ ${escHtml(formatDuration(props.duration))}</span>`
     : ''
 
   const participants = props.participant_names
-    ? `<div style="font-size:11px;color:#888;margin-top:4px;">👥 ${props.participant_names}${props.participant_count > 3 ? ` +${props.participant_count - 3}` : ''}</div>`
+    ? `<div style="font-size:11px;color:#888;margin-top:4px;">👥 ${escHtml(props.participant_names)}${props.participant_count > 3 ? ` +${props.participant_count - 3}` : ''}</div>`
     : ''
 
   const html = `
     <div style="min-width:210px;max-width:240px;font-family:sans-serif;border-radius:10px;overflow:hidden;">
       ${img}
       <div style="padding:10px 12px 8px;">
-        <div style="font-weight:700;font-size:14px;line-height:1.3;margin-bottom:3px;">${props.name}</div>
-        <div style="font-size:12px;color:#666;margin-bottom:6px;">${props.entrance_name}</div>
-        <div style="font-size:11px;color:#888;">📅 ${formatDate(props.start_time)}${duration}</div>
+        <div style="font-weight:700;font-size:14px;line-height:1.3;margin-bottom:3px;">${escHtml(props.name)}</div>
+        <div style="font-size:12px;color:#666;margin-bottom:6px;">${escHtml(props.entrance_name)}</div>
+        <div style="font-size:11px;color:#888;">📅 ${escHtml(formatDate(props.start_time))}${duration}</div>
         ${participants}
       </div>
       <div style="padding:6px 12px 10px;border-top:1px solid #f0f0f0;">
-        <a href="/trips/${props.id}" style="color:#1976D2;font-weight:600;font-size:13px;text-decoration:none;">View trip →</a>
+        <a href="/trips/${encodeURIComponent(props.id)}" style="color:#1976D2;font-weight:600;font-size:13px;text-decoration:none;">View trip →</a>
       </div>
     </div>`
 

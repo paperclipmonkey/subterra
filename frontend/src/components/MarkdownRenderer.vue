@@ -202,7 +202,10 @@ const renderMermaidDiagrams = async () => {
                 })
             } catch (renderError) {
                 console.error('Mermaid individual render error:', renderError)
-                node.innerHTML = `<div class="text-error">Mermaid error: ${renderError.message}</div>`
+                const errorDiv = document.createElement('div')
+                errorDiv.className = 'text-error'
+                errorDiv.textContent = `Mermaid error: ${renderError.message}`
+                node.replaceChildren(errorDiv)
             }
         }
     } catch (e) {
