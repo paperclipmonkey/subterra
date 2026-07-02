@@ -94,6 +94,19 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
     }
 
     /**
+     * Whether the given user administers this permit. Uses the loaded officers
+     * relation when available to avoid per-row queries on collection endpoints.
+     */
+    public function isOfficer(User $user): bool
+    {
+        if ($this->relationLoaded('officers')) {
+            return $this->officers->contains('id', $user->id);
+        }
+
+        return $this->officers()->where('user_id', $user->id)->exists();
+    }
+
+    /**
      * Get approved bookings for a specific date.
      */
     public function approvedBookingsForDate(string $date): HasMany

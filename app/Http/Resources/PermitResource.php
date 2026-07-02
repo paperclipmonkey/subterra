@@ -28,8 +28,8 @@ class PermitResource extends JsonResource
             'season_end' => $this->season_end,
             'auto_approve' => $this->auto_approve,
             'booking_info' => $this->when(
-                $request->user()?->hasRole(['access_officer', 'platform_admin']) ||
-                $this->officers()->where('user_id', $request->user()?->id)->exists(),
+                $request->user() !== null && ($request->user()->hasRole(['access_officer', 'platform_admin']) ||
+                $this->resource->isOfficer($request->user())),
                 $this->booking_info
             ),
             'is_active' => $this->is_active,

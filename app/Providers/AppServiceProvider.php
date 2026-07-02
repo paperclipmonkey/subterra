@@ -125,5 +125,6 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('webhook-twilio-sms', $perIp(60, 1));
         RateLimiter::for('webhook-twilio-voice', $perIp(120, 1));
         RateLimiter::for('webhook-gcp-media', $perIp(120, 1));
+        RateLimiter::for('embed-calendar', $perIp(60, 1));
     }
 }

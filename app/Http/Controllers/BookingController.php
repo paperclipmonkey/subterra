@@ -119,7 +119,7 @@ class BookingController extends Controller
                 'season_start' => $permit->season_start,
                 'season_end' => $permit->season_end,
             ],
-        ]);
+        ])->header('Cache-Control', 'public, max-age=60');
     }
 
     /**
@@ -175,7 +175,7 @@ class BookingController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'participants' => [
                 'required',
                 'integer',
@@ -202,6 +202,17 @@ class BookingController extends Controller
 
             if (!$permit->isInSeason($date)) {
                 return response()->json(['error' => 'This date is outside the permit season.'], 422);
+            }
+
+            // Guard against double-submits: one live application per user/date.
+            $alreadyBooked = $permit->bookings()
+                ->where('user_id', $request->user()->id)
+                ->whereDate('date', $date)
+                ->whereIn('status', ['pending', 'approved'])
+                ->exists();
+
+            if ($alreadyBooked) {
+                return response()->json(['error' => 'You already have a booking for this date.'], 422);
             }
 
             $booking = Booking::create([
@@ -243,7 +254,7 @@ class BookingController extends Controller
     {
         $bookings = $request->user()
             ->bookings()
-            ->with(['permit'])
+            ->with(['permit.officers'])
             ->orderBy('date', 'desc')
             ->get();
 

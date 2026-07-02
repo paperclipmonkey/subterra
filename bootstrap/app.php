@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ]
         );
         $middleware->prepend(\App\Http\Middleware\SetClientIpFromFly::class);
+        $middleware->web(append: \App\Http\Middleware\SetFrameHeaders::class);
         $middleware->statefulApi();
         $middleware->redirectGuestsTo('/login');
     })
