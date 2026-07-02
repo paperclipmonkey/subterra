@@ -77,6 +77,37 @@ class CaveSystemWithCaveTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_does_not_leave_an_orphaned_system_when_creating_the_cave_fails()
+    {
+        // Occupy the slug so the cave insert violates the unique constraint.
+        \App\Models\Cave::factory()->create(['slug' => 'taken-slug']);
+
+        $payload = [
+            'system' => [
+                'name' => 'Orphan Candidate System',
+                'length' => 100,
+                'vertical_range' => 50,
+            ],
+            'cave' => [
+                'name' => 'Colliding Cave',
+                'location_name' => 'Test Location',
+                'location_country' => 'Testland',
+                'location_lat' => 51.0,
+                'location_lng' => -2.0,
+                'slug' => 'taken-slug',
+            ],
+        ];
+
+        $response = $this->postJson('/api/cave_systems_with_cave', $payload);
+
+        $response->assertServerError();
+
+        // The transaction must roll the system back rather than orphaning it.
+        $this->assertDatabaseMissing('cave_systems', ['name' => 'Orphan Candidate System']);
+        $this->assertDatabaseMissing('caves', ['name' => 'Colliding Cave']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_prevents_non_admin_users_from_creating_a_cave_system_and_cave()
     {
         $this->user = User::factory()->create();

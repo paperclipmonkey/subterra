@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\UpsertsBotSuggestedEdits;
 use App\Models\Cave;
 use App\Models\CaveSystem;
 use App\Models\Tag;
@@ -15,6 +16,8 @@ use Illuminate\Support\Str;
 
 class SyncCcrCaves extends Command
 {
+    use UpsertsBotSuggestedEdits;
+
     /**
      * The name and signature of the console command.
      *
@@ -151,20 +154,50 @@ class SyncCcrCaves extends Command
 
                 $alt = round((float) ($entry['alt'] ?? 0), 1);
 
+                // Build region-prefixed slug (e.g. north_wales_cave_name) and look up
+                // any cave this entry may adopt, before doing system-level work.
+                $regions = $entry->xpath('ancestor::Region');
+                $regionName = $regions ? (string) $regions[0]['name'] : '';
+                $regionNameLower = strtolower($regionName);
+
+                $regionPrefix = '';
+                if (strpos($regionNameLower, 'north wales') !== false) {
+                    $regionPrefix = 'north_wales_';
+                } elseif (
+                    strpos($regionNameLower, 'south') !== false ||
+                    strpos($regionNameLower, 'gower') !== false ||
+                    strpos($regionNameLower, 'northern outcrop') !== false
+                ) {
+                    $regionPrefix = 'south_wales_';
+                }
+
+                $baseSlug = $regionPrefix.Str::slug($name);
+
+                $ccrId = (string) $entry['id'];
+                $existingCave = Cave::where('registry', 'ccr')->where('registry_id', $ccrId)->first()
+                    ?? CaveName::findCaveForRegistry($name, $baseSlug, 'ccr', $lat, $lng);
+
                 // 2. Cave System
                 // Defaulting System to the Cave Name (same as csv importer).
-                $systemName = $name;
-                $systemSlug = Str::slug($systemName);
+                // An adopted cave keeps its real system: find-or-creating one from
+                // the cave name here would orphan references onto an empty system
+                // when the cave belongs to a differently-named system.
+                if ($existingCave && $existingCave->system) {
+                    $system = $existingCave->system;
+                } else {
+                    $systemName = $name;
+                    $systemSlug = Str::slug($systemName);
 
-                $system = CaveName::findSystemForRegistry($systemName, $systemSlug, 'ccr', $lat, $lng);
+                    $system = CaveName::findSystemForRegistry($systemName, $systemSlug, 'ccr', $lat, $lng);
 
-                if (!$system) {
-                    $system = CaveSystem::create([
-                        'name' => $systemName,
-                        'slug' => $this->uniqueSlug($systemSlug, 'cave_systems'),
-                        'length' => $length,
-                        'vertical_range' => $depth,
-                    ]);
+                    if (!$system) {
+                        $system = CaveSystem::create([
+                            'name' => $systemName,
+                            'slug' => $this->uniqueSlug($systemSlug, 'cave_systems'),
+                            'length' => $length,
+                            'vertical_range' => $depth,
+                        ]);
+                    }
                 }
 
                 if ($length > 0 || $depth > 0) {
@@ -229,28 +262,12 @@ class SyncCcrCaves extends Command
                             $suggestedRefs = array_merge($existingRefs, array_map(fn ($r) => '- '.$r, $newRefs));
                             $suggestedValue = implode("\n", $suggestedRefs);
 
-                            $existingPendingEdit = \App\Models\SuggestedEdit::where('suggestable_type', CaveSystem::class)
-                                ->where('suggestable_id', $system->id)
-                                ->where('status', 'pending')
-                                ->first();
-
-                            if ($existingPendingEdit) {
-                                $mergedSuggested = array_merge($existingPendingEdit->suggested_data, ['references' => $suggestedValue]);
-                                $mergedOriginal = array_merge($existingPendingEdit->original_data, ['references' => $system->references]);
-                                $existingPendingEdit->update([
-                                    'original_data' => $mergedOriginal,
-                                    'suggested_data' => $mergedSuggested,
-                                ]);
-                            } else {
-                                \App\Models\SuggestedEdit::create([
-                                    'user_id' => null,
-                                    'suggestable_type' => CaveSystem::class,
-                                    'suggestable_id' => $system->id,
-                                    'original_data' => ['references' => $system->references],
-                                    'suggested_data' => ['references' => $suggestedValue],
-                                    'status' => 'pending',
-                                ]);
-                            }
+                            $this->upsertBotSuggestedEdit(
+                                CaveSystem::class,
+                                $system->id,
+                                ['references' => $system->references],
+                                ['references' => $suggestedValue],
+                            );
                             $this->line("<fg=yellow>  ✏ Suggested references update:</> {$name}");
                             ++$suggestedEditCount;
                         }
@@ -263,24 +280,7 @@ class SyncCcrCaves extends Command
                 // 5. Create/Update Cave
                 // Note: slug and cave_system_id are excluded from diff checking — they are
                 // internal fields that should not appear as suggested edits.
-
-                // Build region-prefixed slug (e.g. north_wales_cave_name)
-                $regions = $entry->xpath('ancestor::Region');
-                $regionName = $regions ? (string) $regions[0]['name'] : '';
-                $regionNameLower = strtolower($regionName);
-
-                $regionPrefix = '';
-                if (strpos($regionNameLower, 'north wales') !== false) {
-                    $regionPrefix = 'north_wales_';
-                } elseif (
-                    strpos($regionNameLower, 'south') !== false ||
-                    strpos($regionNameLower, 'gower') !== false ||
-                    strpos($regionNameLower, 'northern outcrop') !== false
-                ) {
-                    $regionPrefix = 'south_wales_';
-                }
-
-                $baseSlug = $regionPrefix.Str::slug($name);
+                // ($baseSlug, $regionName and $existingCave already computed above)
 
                 $caveData = [
                     'description' => $description,
@@ -291,10 +291,6 @@ class SyncCcrCaves extends Command
                     'location_alt' => $alt,
                     'access_info' => $accessInfo ?: null,
                 ];
-
-                $ccrId = (string) $entry['id'];
-                $existingCave = Cave::where('registry', 'ccr')->where('registry_id', $ccrId)->first()
-                    ?? CaveName::findCaveForRegistry($name, $baseSlug, 'ccr', $lat, $lng);
 
                 if ($existingCave) {
                     // Check for differences. Round both sides before comparing floats to avoid
@@ -307,7 +303,9 @@ class SyncCcrCaves extends Command
                         if (in_array($key, $coordKeys)) {
                             $existingRounded = round((float) $existingCave->$key, 5);
                             $newRounded = round((float) $value, 5);
-                            if ($existingRounded !== $newRounded) {
+                            // A 0 value means the grid-ref parse failed — never propose
+                            // wiping valid stored coordinates with it.
+                            if ($newRounded != 0 && $existingRounded !== $newRounded) {
                                 $differences[$key] = $value;
                             }
                         } elseif (in_array($key, $textKeys)) {
@@ -319,7 +317,9 @@ class SyncCcrCaves extends Command
                             if (!empty($newText) && !$this->textAlreadyContained($newText, $existingText)) {
                                 $differences[$key] = $value;
                             }
-                        } elseif ($existingCave->$key !== $value) {
+                        } elseif (($existingCave->$key ?? '') !== ($value ?? '')) {
+                            // Treat null and '' as equal (e.g. location_name stored as ''
+                            // vs a null region) so a no-op edit isn't regenerated each run.
                             $differences[$key] = $value;
                         }
                     }
@@ -333,28 +333,9 @@ class SyncCcrCaves extends Command
                                 : $val;
                         }
 
-                        $existingPendingEdit = \App\Models\SuggestedEdit::where('suggestable_type', Cave::class)
-                            ->where('suggestable_id', $existingCave->id)
-                            ->where('status', 'pending')
-                            ->first();
-
-                        if ($existingPendingEdit) {
-                            $existingPendingEdit->update([
-                                'original_data' => $originalData,
-                                'suggested_data' => $differences,
-                            ]);
-                            $this->line("<fg=yellow>  ✏ Updated suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
-                        } else {
-                            \App\Models\SuggestedEdit::create([
-                                'user_id' => null,
-                                'suggestable_type' => Cave::class,
-                                'suggestable_id' => $existingCave->id,
-                                'original_data' => $originalData,
-                                'suggested_data' => $differences,
-                                'status' => 'pending',
-                            ]);
-                            $this->line("<fg=yellow>  ✏ Created suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
-                        }
+                        $edit = $this->upsertBotSuggestedEdit(Cave::class, $existingCave->id, $originalData, $differences);
+                        $action = $edit->wasRecentlyCreated ? 'Created' : 'Updated';
+                        $this->line("<fg=yellow>  ✏ {$action} suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
                         ++$suggestedEditCount;
                     } else {
                         $this->line("<fg=blue>  ⊘ No changes:</> {$name}");
@@ -416,7 +397,7 @@ class SyncCcrCaves extends Command
                 DB::rollBack();
                 $this->info("Dry run completed: {$importedCount} would be imported/updated, {$skippedCount} skipped.");
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             $this->error('Error during import: '.$e->getMessage());
             $this->error($e->getTraceAsString());

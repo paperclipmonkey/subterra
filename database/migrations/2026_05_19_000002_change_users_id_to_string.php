@@ -218,6 +218,17 @@ return new class () extends Migration {
             $table->string('id', 7)->nullable(false)->primary()->change();
         });
 
+        // Restore composite indexes that were dropped with the old integer
+        // columns (dropColumnSqlite discards any index referencing them) —
+        // mirrors the recreation in applyPostgres().
+        DB::statement('CREATE UNIQUE INDEX "club_user_club_id_user_id_unique" ON "club_user" ("club_id", "user_id")');
+        DB::statement('CREATE UNIQUE INDEX "medal_user_user_id_medal_id_unique" ON "medal_user" ("user_id", "medal_id")');
+        DB::statement('CREATE UNIQUE INDEX "permit_user_permit_id_user_id_unique" ON "permit_user" ("permit_id", "user_id")');
+        DB::statement('CREATE UNIQUE INDEX "role_user_role_id_user_id_unique" ON "role_user" ("role_id", "user_id")');
+        DB::statement('CREATE INDEX "trip_user_trip_id_user_id_index" ON "trip_user" ("trip_id", "user_id")');
+        DB::statement('CREATE INDEX "trip_user_user_id_trip_id_index" ON "trip_user" ("user_id", "trip_id")');
+        DB::statement('CREATE INDEX "api_interactions_trackable_type_trackable_id_created_at_index" ON "api_interactions" ("trackable_type", "trackable_id", "created_at")');
+
         DB::statement('PRAGMA foreign_keys = ON');
         // Force a WAL checkpoint so all changes land in the main database file.
         // Without this, subsequent test-suite migrate:fresh runs can see the WAL

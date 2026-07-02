@@ -68,6 +68,25 @@ class CaveTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_can_view_a_cave_by_a_fully_numeric_slug()
+    {
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+
+        $cave = Cave::factory()->create([
+            'slug' => '1959',
+        ]);
+
+        // Ensure the slug doesn't accidentally match the cave's own id, so
+        // this genuinely exercises the slug fallback after the id miss.
+        $this->assertNotSame(1959, $cave->id);
+
+        $response = $this->getJson('/api/caves/1959');
+
+        $response->assertOk();
+        $response->assertJsonFragment(['slug' => '1959']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_updates_a_cave_and_syncs_tags()
     {
         $this->actingAs(\App\Models\User::factory()->dataAdmin()->create());
