@@ -42,7 +42,7 @@ class SlackNotificationTest extends TestCase
 
         $calloutData = [
             'cave_id' => $cave->id,
-            'callout_time' => now()->addHours(2)->toDateTimeString(),
+            'callout_time' => now()->addHours(2)->toIso8601String(),
             'trip_plan' => 'Exploring the deep',
             'car_registration' => 'AB12 CDE',
             'car_parking' => 'Layby',
@@ -77,7 +77,7 @@ class SlackNotificationTest extends TestCase
 
         $calloutData = [
             'cave_id' => $cave->id,
-            'callout_time' => now()->addHours(2)->toDateTimeString(),
+            'callout_time' => now()->addHours(2)->toIso8601String(),
             'trip_plan' => 'Solo exploration',
             'car_registration' => 'AB12 CDE',
             'car_parking' => 'Layby',
@@ -108,7 +108,7 @@ class SlackNotificationTest extends TestCase
 
         $calloutData = [
             'cave_id' => $cave->id,
-            'callout_time' => now()->addHours(2)->toDateTimeString(),
+            'callout_time' => now()->addHours(2)->toIso8601String(),
             'trip_plan' => 'Trip with friends',
             'car_registration' => 'AB12 CDE',
             'car_parking' => 'Layby',
@@ -218,7 +218,7 @@ class SlackNotificationTest extends TestCase
 
         $calloutData = [
             'cave_id' => $cave->id,
-            'callout_time' => now()->addHours(2)->toDateTimeString(),
+            'callout_time' => now()->addHours(2)->toIso8601String(),
             'trip_plan' => 'Exploring the deep',
             'car_registration' => 'AB12 CDE',
             'car_parking' => 'Layby',

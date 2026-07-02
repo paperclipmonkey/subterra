@@ -97,6 +97,25 @@ class SmsDeliveryTest extends TestCase
         $this->assertSame('30008', $message->error_code);
     }
 
+    public function test_late_earlier_stage_callback_does_not_regress_terminal_status()
+    {
+        // Twilio callbacks can arrive out of order: a late 'sent' must not overwrite a
+        // terminal 'delivered' (or 'failed'/'undelivered') status.
+        $message = SmsMessage::create([
+            'provider' => 'twilio',
+            'provider_sid' => 'SMlate',
+            'status' => 'delivered',
+            'delivered_at' => now(),
+        ]);
+
+        $this->postJson('/api/webhooks/twilio/sekret/sms/status', [
+            'MessageSid' => 'SMlate',
+            'MessageStatus' => 'sent',
+        ])->assertNoContent();
+
+        $this->assertSame('delivered', $message->fresh()->status);
+    }
+
     public function test_status_callback_rejects_a_bad_secret()
     {
         $this->postJson('/api/webhooks/twilio/wrong-secret/sms/status', [

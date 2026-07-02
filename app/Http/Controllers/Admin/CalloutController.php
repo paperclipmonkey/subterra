@@ -64,7 +64,9 @@ class CalloutController extends Controller
             'data' => $data,
             'watchdog_count' => $watchdogCount,
             'system_count' => $systemCount,
-            'is_watchdog_out_of_sync' => $watchdogCount !== -1 && $watchdogCount !== $systemCount,
+            // Negative counts are sentinels (-1 unreachable, -2 not configured), not a
+            // divergence — only a real count that differs from ours is out of sync.
+            'is_watchdog_out_of_sync' => $watchdogCount >= 0 && $watchdogCount !== $systemCount,
             // Live (read at request time, so it never goes stale) — surfaced as a link on the dashboard.
             'whatsapp_group_url' => config('callouts.whatsapp_group_url'),
             // The numbers alerts are sent from, so duty officers can save them as contacts.

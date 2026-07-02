@@ -58,7 +58,10 @@ class CalloutController extends Controller
         $data = $request->validate([
             'cave_id' => 'nullable|exists:caves,id',
             'exit_cave_id' => 'nullable|exists:caves,id',
-            'callout_time' => 'required|date|after:now',
+            // The explicit-offset regex is safety-critical: a naive "2026-07-02 18:30:00"
+            // is parsed as UTC, so a BST client's panic alarm would fire an hour LATE.
+            // The frontend always sends offset-aware ISO strings (toISOString()).
+            'callout_time' => ['required', 'date', 'after:now', 'regex:/(Z|[+-]\d{2}:?\d{2})$/i'],
             'description' => 'nullable|string',
             'trip_plan' => 'required|string',
             'car_details' => 'nullable|string', // kept for backward compatibility
@@ -72,6 +75,8 @@ class CalloutController extends Controller
             'participants.*.name' => 'required|string',
             'participants.*.phone' => 'nullable|string',
             'participants.*.email' => 'nullable|email',
+        ], [
+            'callout_time.regex' => 'The callout time must include an explicit timezone offset (e.g. 2026-07-02T18:30:00Z or 2026-07-02T19:30:00+01:00).',
         ]);
 
         $data['request_data'] = [
@@ -123,12 +128,16 @@ class CalloutController extends Controller
             }
         }
 
-        // Record cancellation metadata snapshot
-        $callout->update([
-            'cancelled_ip' => $request->ip(),
-            'cancelled_user_agent' => $request->userAgent(),
-            'cancelled_location' => $request->input('location'), // Optional location from frontend
-        ]);
+        // Record cancellation metadata snapshot — but only when this request can actually
+        // perform the cancellation. Repeated hits on this (idempotent, guest-accessible)
+        // route must never overwrite the forensic record of the original cancel.
+        if (!in_array($callout->status, ['cancelled', 'resolved'], true)) {
+            $callout->update([
+                'cancelled_ip' => $request->ip(),
+                'cancelled_user_agent' => $request->userAgent(),
+                'cancelled_location' => $request->input('location'), // Optional location from frontend
+            ]);
+        }
 
         $trip = $this->calloutService->cancel($callout);
 

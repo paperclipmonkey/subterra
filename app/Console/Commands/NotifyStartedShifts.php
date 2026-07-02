@@ -34,6 +34,9 @@ class NotifyStartedShifts extends Command
 
         $shifts = OnCallShift::with('user')
             ->where('start_at', '<=', $now)
+            // Never announce a shift that has already ended (e.g. after scheduler downtime)
+            // — a stale "is now ON CALL" alert would misstate who is covering callouts.
+            ->where('end_at', '>', $now)
             ->whereNull('notified_at')
             ->get();
 

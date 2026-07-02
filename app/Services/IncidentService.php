@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Incident;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class IncidentService
 {
@@ -22,18 +23,29 @@ class IncidentService
             return false;
         }
 
-        $incident->update([
-            'incident_controller_id' => $controller?->id,
-            'acknowledged_at' => now(),
-            'status' => 'managed',
-        ]);
+        // Atomic gate: re-check under a row lock inside a transaction so two duty
+        // officers acknowledging at the same moment can't both "win" — only the first
+        // becomes the Controller; the loser is routed to the already-acknowledged path.
+        return DB::transaction(function () use ($incident, $controller, $source): bool {
+            $locked = Incident::query()->whereKey($incident->getKey())->lockForUpdate()->first();
 
-        $who = $controller?->name ?? 'A duty officer';
-        $incident->notes()->create([
-            'user_id' => $controller?->id,
-            'content' => "{$who} acknowledged the incident via {$source} and is assuming the Controller role.",
-        ]);
+            if (!$locked || $locked->incident_controller_id) {
+                return false;
+            }
 
-        return true;
+            $incident->update([
+                'incident_controller_id' => $controller?->id,
+                'acknowledged_at' => now(),
+                'status' => 'managed',
+            ]);
+
+            $who = $controller?->name ?? 'A duty officer';
+            $incident->notes()->create([
+                'user_id' => $controller?->id,
+                'content' => "{$who} acknowledged the incident via {$source} and is assuming the Controller role.",
+            ]);
+
+            return true;
+        });
     }
 }

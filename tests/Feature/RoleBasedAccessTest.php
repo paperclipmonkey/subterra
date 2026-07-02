@@ -110,8 +110,8 @@ class RoleBasedAccessTest extends TestCase
         $this->actingAs($dutyOfficerAdmin)
             ->postJson('/api/admin/shifts', [
                 'user_id' => $dutyOfficer->id,
-                'start_at' => now()->addDay()->format('Y-m-d H:i:s'),
-                'end_at' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'start_at' => now()->addDay()->toIso8601String(),
+                'end_at' => now()->addDays(2)->toIso8601String(),
             ])
             ->assertStatus(200);
 
@@ -119,8 +119,8 @@ class RoleBasedAccessTest extends TestCase
         $this->actingAs($dutyOfficerAdmin)
             ->postJson('/api/admin/shifts', [
                 'user_id' => $normalUser->id,
-                'start_at' => now()->addDays(3)->format('Y-m-d H:i:s'),
-                'end_at' => now()->addDays(4)->format('Y-m-d H:i:s'),
+                'start_at' => now()->addDays(3)->toIso8601String(),
+                'end_at' => now()->addDays(4)->toIso8601String(),
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['user_id']);

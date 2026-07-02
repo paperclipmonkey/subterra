@@ -301,6 +301,76 @@ class CalloutTest extends TestCase
         $this->assertDatabaseHas('callouts', ['id' => $callout->id, 'status' => 'cancelled']);
     }
 
+    public function test_cancelling_a_resolved_callout_is_a_no_op()
+    {
+        // Regression (H1): Incident::resolve() sets the callout to 'resolved'. A
+        // re-clicked guest cancel link must NOT create a second Trip, re-send
+        // cancellation emails, or flip the status resolved -> cancelled.
+        Mail::fake();
+        $user = User::factory()->create();
+        $callout = Callout::factory()->create(['user_id' => $user->id, 'status' => 'triggered']);
+        $incident = \App\Models\Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+
+        $incident->resolve();
+        $this->assertEquals('resolved', $callout->fresh()->status);
+
+        $tripsBefore = \App\Models\Trip::count();
+
+        $this->postJson("/api/callouts/{$callout->id}/cancel")
+            ->assertStatus(200);
+
+        $this->assertEquals('resolved', $callout->fresh()->status, 'A resolved callout must never be flipped back to cancelled.');
+        $this->assertSame($tripsBefore, \App\Models\Trip::count(), 'Cancelling a resolved callout must not create a trip.');
+        Mail::assertNothingSent();
+    }
+
+    public function test_concurrent_cancels_with_stale_models_only_proceed_once()
+    {
+        // Regression (H2): two requests can both pass the in-memory status guard with
+        // stale models. The transactional row-lock re-check must let only one proceed —
+        // no duplicate Trip and no second email blast.
+        Mail::fake();
+        $user = User::factory()->create();
+        $callout = Callout::factory()->create(['user_id' => $user->id, 'status' => 'active']);
+
+        $service = app(\App\Services\CalloutService::class);
+
+        // Two independent (and soon mutually stale) in-memory copies of the same callout.
+        $copyA = Callout::find($callout->id);
+        $copyB = Callout::find($callout->id);
+
+        $this->assertNotNull($service->cancel($copyA), 'First cancel should proceed.');
+
+        $tripsAfterFirst = \App\Models\Trip::count();
+        $emailsAfterFirst = Mail::sent(\App\Mail\CalloutCancelled::class)->count();
+
+        // copyB still believes the callout is active; the DB gate must stop it.
+        $this->assertNull($service->cancel($copyB), 'Second cancel must be rejected by the atomic status gate.');
+
+        $this->assertSame($tripsAfterFirst, \App\Models\Trip::count(), 'The losing cancel must not create a duplicate trip.');
+        $this->assertSame($emailsAfterFirst, Mail::sent(\App\Mail\CalloutCancelled::class)->count(), 'The losing cancel must not re-send cancellation emails.');
+        $this->assertEquals('cancelled', $callout->fresh()->status);
+    }
+
+    public function test_repeated_cancel_does_not_overwrite_forensic_metadata()
+    {
+        // The forensic snapshot (IP / user agent / location) must record the request
+        // that actually cancelled the callout, not whichever request hit the link last.
+        Mail::fake();
+        $user = User::factory()->create();
+        $callout = Callout::factory()->create(['user_id' => $user->id, 'status' => 'active']);
+
+        $this->postJson("/api/callouts/{$callout->id}/cancel", ['location' => 'Original location'])
+            ->assertStatus(200);
+
+        $this->assertEquals('Original location', $callout->fresh()->cancelled_location);
+
+        $this->postJson("/api/callouts/{$callout->id}/cancel", ['location' => 'Overwritten location'])
+            ->assertStatus(200);
+
+        $this->assertEquals('Original location', $callout->fresh()->cancelled_location, 'A repeated cancel must not overwrite the original forensic record.');
+    }
+
     public function test_user_cannot_cancel_others_callout()
     {
         $owner = User::factory()->create();
@@ -568,6 +638,117 @@ class CalloutTest extends TestCase
         $response->assertJson([
             'message' => 'One or more participants (or you) are already in an active callout. Please resolve the existing callout first.',
         ]);
+    }
+
+    public function test_duplicate_check_matches_differently_formatted_phone_numbers()
+    {
+        // Regression (M4): "+447700900123" and "07700 900 123" are the same phone.
+        // Raw string comparison missed this and allowed a second active callout.
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        $cave = Cave::factory()->create();
+
+        $activeCallout = Callout::factory()->create([
+            'status' => 'active',
+            'callout_time' => Carbon::now()->addHours(2),
+        ]);
+        $activeCallout->participants()->create([
+            'name' => 'Bob',
+            'phone' => '+447700900123',
+        ]);
+
+        $user = User::factory()->withApprovedClub()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Parking',
+            'participants' => [
+                ['name' => 'Bob Again', 'phone' => '07700 900 123'],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'message' => 'One or more participants (or you) are already in an active callout. Please resolve the existing callout first.',
+        ]);
+    }
+
+    public function test_participant_phone_numbers_are_normalised_on_write()
+    {
+        // Regression (M4): a verbatim "07700 900 123" could never be suffix-matched by
+        // the SMS webhook during a live rescue. Phones are normalised before storage.
+        Mail::fake();
+        $user = User::factory()->withApprovedClub()->create();
+        $cave = Cave::factory()->create();
+
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => $cave->id,
+            'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Parking',
+            'participants' => [
+                ['name' => 'Spacey', 'phone' => '07700 900 123'],
+                ['name' => 'Formatted', 'phone' => '+44 (0770) 090-0124'],
+            ],
+        ]);
+
+        $response->assertStatus(201);
+
+        $callout = Callout::where('user_id', $user->id)->firstOrFail();
+        $this->assertDatabaseHas('callout_participants', [
+            'callout_id' => $callout->id,
+            'name' => 'Spacey',
+            'phone' => '07700900123',
+        ]);
+        $this->assertDatabaseHas('callout_participants', [
+            'callout_id' => $callout->id,
+            'name' => 'Formatted',
+            'phone' => '+4407700900124',
+        ]);
+    }
+
+    public function test_callout_time_without_timezone_offset_is_rejected()
+    {
+        // Regression (M8): a naive "2026-07-02 18:30:00" is parsed as UTC, so a BST
+        // client's panic alarm would fire an hour late. An explicit offset is required.
+        $user = User::factory()->withApprovedClub()->create();
+        $cave = Cave::factory()->create();
+
+        $admin = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $admin->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        $response = $this->actingAs($user)->postJson('/api/callouts', [
+            'callout_time' => Carbon::now()->addHours(2)->format('Y-m-d H:i:s'), // naive: no offset
+            'cave_id' => $cave->id,
+            'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Parking',
+            'participants' => [['name' => 'Alice']],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['callout_time']);
+        $this->assertDatabaseMissing('callouts', ['user_id' => $user->id]);
     }
 
     public function test_callout_creation_fails_when_watchdog_is_configured_but_unavailable()
