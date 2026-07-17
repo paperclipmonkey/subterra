@@ -41,8 +41,10 @@ trait HasShortId
             }
         } while ($attempts < $maxAttempts);
 
-        // Fallback to a longer ID if we couldn't generate a unique one
-        return static::generateRandomString(10);
+        // Last resort: one more 8-char attempt — the column is varchar(8), so a
+        // longer fallback would fail the insert anyway. 62^8 keyspace makes a
+        // collision here effectively impossible.
+        return static::generateRandomString(8);
     }
 
     /**

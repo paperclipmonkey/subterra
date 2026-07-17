@@ -111,9 +111,12 @@ class CreateTripReportTool implements AssistantTool
         }
 
         // --- Parse date and times ---
+        // Users give naive wall-clock times, which mean UK local time — parse
+        // them in Europe/London and convert to UTC (avoids the BST drift of
+        // treating them as UTC).
         $dateStr = (string) ($arguments['date'] ?? '');
         try {
-            $date = Carbon::parse($dateStr);
+            $date = Carbon::parse($dateStr, 'Europe/London');
         } catch (\Throwable) {
             return ['error' => "Invalid date format '{$dateStr}'. Use YYYY-MM-DD."];
         }
@@ -123,7 +126,7 @@ class CreateTripReportTool implements AssistantTool
 
         if (!empty($arguments['start_time'])) {
             try {
-                $startTime = Carbon::parse($dateStr.' '.$arguments['start_time'])->utc();
+                $startTime = Carbon::parse($dateStr.' '.$arguments['start_time'], 'Europe/London')->utc();
             } catch (\Throwable) {
                 $startTime = $date->copy()->startOfDay()->utc();
             }
@@ -177,6 +180,12 @@ class CreateTripReportTool implements AssistantTool
             ? $arguments['visibility']
             : 'public';
 
+        // Same rule the trip controller enforces: closed caves must not get
+        // public trip reports.
+        if ($visibility === 'public' && Trip::caveIsClosed($entranceCave->id)) {
+            return ['error' => "'{$entranceCave->name}' is a closed cave, so the trip report cannot be public. Ask the user whether to save it as private or club visibility instead."];
+        }
+
         $tripName = mb_substr(trim((string) ($arguments['name'] ?? '')), 0, 255);
         if ($tripName === '') {
             return ['error' => 'Trip name is required.'];
@@ -197,14 +206,6 @@ class CreateTripReportTool implements AssistantTool
 
             $trip->participants()->sync($allParticipantIds);
 
-            // Fire participant tagged events (for notifications)
-            $participantModels = User::withoutGlobalScopes()->whereIn('id', $allParticipantIds)->get();
-            foreach ($participantModels as $participant) {
-                event(new TripParticipantTagged($trip, $participant, $user));
-            }
-
-            event(new TripCreated($trip, $user));
-
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -212,6 +213,15 @@ class CreateTripReportTool implements AssistantTool
 
             return ['error' => 'Failed to create the trip report. Please try again.'];
         }
+
+        // Fire events only after the commit — queued listeners can run before
+        // an in-flight transaction commits and would not find the trip.
+        $participantModels = User::withoutGlobalScopes()->whereIn('id', $allParticipantIds)->get();
+        foreach ($participantModels as $participant) {
+            event(new TripParticipantTagged($trip, $participant, $user));
+        }
+
+        event(new TripCreated($trip, $user));
 
         $trip->refresh();
 

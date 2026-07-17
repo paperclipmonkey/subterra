@@ -36,15 +36,33 @@ class Collection extends Model
 
         static::creating(function ($collection) {
             if (empty($collection->slug)) {
-                $collection->slug = \Illuminate\Support\Str::slug($collection->name);
+                $collection->slug = static::uniqueSlug(\Illuminate\Support\Str::slug($collection->name));
             }
         });
 
         static::updating(function ($collection) {
             if (empty($collection->slug)) {
-                $collection->slug = \Illuminate\Support\Str::slug($collection->name);
+                $collection->slug = static::uniqueSlug(\Illuminate\Support\Str::slug($collection->name), $collection->getKey());
             }
         });
+    }
+
+    /**
+     * Build a unique slug by appending a numeric suffix when collisions occur.
+     */
+    protected static function uniqueSlug(string $base, mixed $ignoreId = null): string
+    {
+        $slug = $base;
+        $suffix = 2;
+
+        while (static::where('slug', $slug)
+            ->when($ignoreId !== null, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->exists()) {
+            $slug = $base.'-'.$suffix;
+            ++$suffix;
+        }
+
+        return $slug;
     }
 
     public function user(): BelongsTo

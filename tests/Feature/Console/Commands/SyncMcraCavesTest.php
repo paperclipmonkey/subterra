@@ -255,7 +255,7 @@ HTML;
             'status' => 'pending',
         ]);
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         $this->assertNull($edit->user_id);
         $this->assertArrayHasKey('description', $edit->suggested_data);
     }
@@ -282,9 +282,10 @@ HTML;
         $this->artisan('sync:mcra-caves')
             ->assertExitCode(0);
 
-        $this->assertDatabaseCount('suggested_edits', 1);
+        // The pending edit is updated in place — no second cave edit appears.
+        $this->assertSame(1, SuggestedEdit::where('suggestable_type', Cave::class)->count());
 
-        $edit = SuggestedEdit::first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->first();
         $this->assertStringContainsString('Cave in Dolomitic Conglomerate', $edit->suggested_data['description']);
     }
 
@@ -301,7 +302,7 @@ HTML;
         $this->artisan('sync:mcra-caves')
             ->assertExitCode(0);
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('description', $edit->suggested_data);
         }

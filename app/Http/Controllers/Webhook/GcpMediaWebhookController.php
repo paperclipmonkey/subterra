@@ -171,6 +171,19 @@ class GcpMediaWebhookController extends Controller
                 }
             }
 
+            // If no staging object could be read (e.g. expired staging files on
+            // a delayed Pub/Sub redelivery), writing reset([]) === false to the
+            // filename would corrupt the record and hide the image. Return an
+            // error instead so Pub/Sub retries.
+            if (empty($storedPaths)) {
+                Log::error('GcpMediaWebhook: no image variants could be read from staging', [
+                    'media_id' => $mediaId,
+                    'media_model' => $mediaModelLabel,
+                ]);
+
+                return response()->json(['status' => 'error'], 500);
+            }
+
             $primaryPath = $storedPaths['desktop'] ?? reset($storedPaths);
 
             $media->{$filenameAttribute} = $primaryPath;

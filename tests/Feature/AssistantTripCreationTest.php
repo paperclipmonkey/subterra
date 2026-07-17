@@ -384,6 +384,67 @@ class AssistantTripCreationTest extends TestCase
     }
 
     #[Test]
+    public function create_trip_report_rejects_public_trip_for_closed_cave(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [$system, $cave] = $this->makeSystemAndCave();
+        $closedTag = \App\Models\Tag::factory()->create(['tag' => 'Closed', 'type' => 'cave', 'category' => 'access']);
+        $cave->tags()->attach($closedTag);
+
+        $user = User::factory()->create();
+        $tool = new CreateTripReportTool();
+
+        // Default visibility is public — must be refused for a closed cave
+        $result = $tool->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Closed Cave Trip',
+            'description' => 'Should not be public.',
+            'date' => '2024-06-15',
+        ], $user);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertDatabaseMissing('trips', ['name' => 'Closed Cave Trip']);
+
+        // Private trips to closed caves are still allowed
+        $result = $tool->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Closed Cave Private Trip',
+            'description' => 'Kept private.',
+            'date' => '2024-06-15',
+            'visibility' => 'private',
+        ], $user);
+
+        $this->assertTrue($result['success'] ?? false);
+    }
+
+    #[Test]
+    public function create_trip_report_parses_start_time_as_uk_local_time(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [$system, $cave] = $this->makeSystemAndCave();
+        $user = User::factory()->create();
+        $tool = new CreateTripReportTool();
+
+        $tool->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'BST Trip',
+            'description' => 'Timezone check.',
+            'date' => '2024-06-15', // BST (UTC+1)
+            'start_time' => '10:00',
+        ], $user);
+
+        $trip = Trip::where('name', 'BST Trip')->first();
+        $this->assertNotNull($trip);
+        // 10:00 UK wall-clock in June is 09:00 UTC
+        $this->assertSame('2024-06-15 09:00', $trip->start_time->utc()->format('Y-m-d H:i'));
+    }
+
+    #[Test]
     public function create_trip_report_ignores_invalid_participant_ids_gracefully(): void
     {
         Event::fake([TripCreated::class, TripParticipantTagged::class]);

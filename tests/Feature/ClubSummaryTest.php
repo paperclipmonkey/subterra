@@ -145,6 +145,43 @@ class ClubSummaryTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function private_trips_are_excluded_from_stats_and_photo_wall_for_non_participants(): void
+    {
+        // A public trip both members can see.
+        $publicTrip = Trip::factory()->create([
+            'visibility' => 'public',
+            'start_time' => Carbon::now()->subDays(4)->setTime(10, 0),
+            'end_time' => Carbon::now()->subDays(4)->setTime(12, 0),
+        ]);
+        $publicTrip->participants()->attach($this->approvedMember->id);
+
+        // Annie's private trip: its stats, photos and short_id link must not
+        // be exposed to Bob, an approved co-member who wasn't on the trip.
+        $privateTrip = Trip::factory()->create([
+            'visibility' => 'private',
+            'start_time' => Carbon::now()->subDays(2)->setTime(10, 0),
+            'end_time' => Carbon::now()->subDays(2)->setTime(13, 0),
+        ]);
+        $privateTrip->participants()->attach($this->approvedMember->id);
+        $privateTrip->media()->create(['filename' => 'secret_desktop.webp', 'title' => 'Private photo']);
+
+        $this->actingAs($this->secondMember, 'sanctum');
+        $response = $this->getJson($this->url())->assertOk();
+
+        $response->assertJsonPath('stats.trips_logged', 1)
+            ->assertJsonPath('stats.hours_underground', 2)
+            ->assertJsonPath('photo_count', 0)
+            ->assertJsonPath('photos', []);
+        $this->assertStringNotContainsString($privateTrip->short_id, $response->getContent());
+
+        // The participant still sees their own private trip in the stats.
+        $this->actingAs($this->approvedMember, 'sanctum');
+        $response = $this->getJson($this->url())->assertOk();
+        $response->assertJsonPath('stats.trips_logged', 2)
+            ->assertJsonPath('photo_count', 1);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function summary_handles_a_club_with_no_members(): void
     {
         $emptyClub = Club::factory()->create();

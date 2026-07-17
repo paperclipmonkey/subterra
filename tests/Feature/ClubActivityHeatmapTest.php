@@ -34,10 +34,13 @@ class ClubActivityHeatmapTest extends TestCase
         $this->club->users()->attach($this->approvedMember, ['status' => 'approved']);
         $this->club->users()->attach($this->pendingMember, ['status' => 'pending']);
 
-        // Create trips for the approved member to generate heatmap data
+        // Create trips for the approved member to generate heatmap data.
+        // Visibility is pinned to public so the counts below are deterministic
+        // for viewers who aren't participants (e.g. the platform admin).
         // One trip today - 1 hour
         $now = Carbon::now();
         Trip::factory()->create([
+            'visibility' => 'public',
             'start_time' => $now->clone(),
             'end_time' => $now->clone()->addHour(),
         ])->participants()->attach($this->approvedMember->id);
@@ -45,6 +48,7 @@ class ClubActivityHeatmapTest extends TestCase
         // Two trips yesterday - 1 hour each
         $yesterday = Carbon::yesterday();
         Trip::factory()->count(2)->create([
+            'visibility' => 'public',
             'start_time' => $yesterday->clone(),
             'end_time' => $yesterday->clone()->addHour(),
         ])->each(function ($trip) {
@@ -54,12 +58,14 @@ class ClubActivityHeatmapTest extends TestCase
         // One trip 10 days ago - 1 hour
         $tenDaysAgo = Carbon::now()->subDays(10);
         Trip::factory()->create([
+            'visibility' => 'public',
             'start_time' => $tenDaysAgo->clone(),
             'end_time' => $tenDaysAgo->clone()->addHour(),
         ])->participants()->attach($this->approvedMember->id);
 
         // One trip more than a year ago (should not be included)
         Trip::factory()->create([
+            'visibility' => 'public',
             'start_time' => Carbon::now()->subYear()->subDay(),
             'end_time' => Carbon::now()->subYear()->subDay()->addHour(),
         ])->participants()->attach($this->approvedMember->id);
@@ -121,6 +127,35 @@ class ClubActivityHeatmapTest extends TestCase
             '*' => ['date', 'count'],
         ]);
         $response->assertJsonCount(3);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function private_trips_are_excluded_from_heatmap_for_non_participants(): void
+    {
+        $coMember = User::factory()->create();
+        $this->club->users()->attach($coMember, ['status' => 'approved']);
+
+        // A private trip on a day with no other activity: its date must not
+        // appear in the heatmap for a co-member who wasn't a participant.
+        $fiveDaysAgo = Carbon::now()->subDays(5);
+        Trip::factory()->create([
+            'visibility' => 'private',
+            'start_time' => $fiveDaysAgo->clone(),
+            'end_time' => $fiveDaysAgo->clone()->addHour(),
+        ])->participants()->attach($this->approvedMember->id);
+
+        $this->actingAs($coMember, 'sanctum');
+        $response = $this->getJson($this->getEndpointUrl());
+        $response->assertOk();
+        $response->assertJsonCount(3);
+        $response->assertJsonMissing(['date' => $fiveDaysAgo->toDateString()]);
+
+        // The participant still sees their own private trip's day.
+        $this->actingAs($this->approvedMember, 'sanctum');
+        $response = $this->getJson($this->getEndpointUrl());
+        $response->assertOk();
+        $response->assertJsonCount(4);
+        $response->assertJsonFragment(['date' => $fiveDaysAgo->toDateString(), 'count' => 1]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

@@ -62,6 +62,8 @@ class WatchdogTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertEquals(-1, $response->json('watchdog_count'));
+        // A sentinel count is "unknown", not a divergence.
+        $this->assertFalse($response->json('is_watchdog_out_of_sync'));
     }
 
     public function test_it_handles_missing_watchdog_configuration()
@@ -69,11 +71,16 @@ class WatchdogTest extends TestCase
         $admin = User::factory()->dutyOfficer()->create();
         config(['services.gcp_watchdog.url' => null]);
 
+        // An active callout makes system_count 1, which must still not be flagged as
+        // out-of-sync against the -2 "not configured" sentinel (regression, L1).
+        Callout::factory()->create(['status' => 'active']);
+
         $response = $this->actingAs($admin)
             ->getJson('/api/admin/callouts');
 
         $response->assertStatus(200);
         $this->assertEquals(-2, $response->json('watchdog_count'));
+        $this->assertFalse($response->json('is_watchdog_out_of_sync'));
     }
 
     public function test_it_flags_out_of_sync_status()

@@ -13,6 +13,7 @@ use App\Models\CaveSystem;
 use App\Models\Tag;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -158,69 +159,73 @@ class CaveSystemController extends Controller
             'cave.slug' => 'nullable|string|max:255',
         ]);
 
-        $systemData = $request->input('system');
-        $caveSystem = CaveSystem::create($systemData);
+        // Transactional so a failure creating the cave (e.g. slug collision)
+        // doesn't leave behind an orphaned cave system.
+        return DB::transaction(function () use ($request) {
+            $systemData = $request->input('system');
+            $caveSystem = CaveSystem::create($systemData);
 
-        $caveData = $request->input('cave');
-        $caveData['cave_system_id'] = $caveSystem->id;
+            $caveData = $request->input('cave');
+            $caveData['cave_system_id'] = $caveSystem->id;
 
-        $imageData = [
-            'hero_image' => $caveData['hero_image'] ?? null,
-            'entrance_image' => $caveData['entrance_image'] ?? null,
-        ];
-        $tagsData = $caveData['tags'] ?? [];
+            $imageData = [
+                'hero_image' => $caveData['hero_image'] ?? null,
+                'entrance_image' => $caveData['entrance_image'] ?? null,
+            ];
+            $tagsData = $caveData['tags'] ?? [];
 
-        unset($caveData['hero_image'], $caveData['entrance_image'], $caveData['tags']);
+            unset($caveData['hero_image'], $caveData['entrance_image'], $caveData['tags']);
 
-        $cave = Cave::create($caveData);
+            $cave = Cave::create($caveData);
 
-        // Process Images
-        foreach (['hero_image', 'entrance_image'] as $field) {
-            $fileData = $request->file("cave.{$field}.data");
+            // Process Images
+            foreach (['hero_image', 'entrance_image'] as $field) {
+                $fileData = $request->file("cave.{$field}.data");
 
-            if ($fileData || (!empty($imageData[$field]) && is_array($imageData[$field]))) {
-                $type = str_replace('_image', '', $field); // 'hero' or 'entrance'
-                $data = $imageData[$field] ?? [];
+                if ($fileData || (!empty($imageData[$field]) && is_array($imageData[$field]))) {
+                    $type = str_replace('_image', '', $field); // 'hero' or 'entrance'
+                    $data = $imageData[$field] ?? [];
 
-                // Override string data with binary file stream
-                if ($fileData) {
-                    $data['data'] = $fileData;
-                }
+                    // Override string data with binary file stream
+                    if ($fileData) {
+                        $data['data'] = $fileData;
+                    }
 
-                // Check if data key exists and is valid
-                if (!empty($data['data'])) {
-                    $filePath = $this->imageProcessingService->processAndStoreImage($data, 'caves', $type);
+                    // Check if data key exists and is valid
+                    if (!empty($data['data'])) {
+                        $filePath = $this->imageProcessingService->processAndStoreImage($data, 'caves', $type);
 
-                    $cave->media()->create([
-                        'type' => $type,
-                        'filename' => $filePath,
-                        'title' => $data['title'] ?? null,
-                        'photographer' => $data['photographer'] ?? null,
-                        'copyright' => $data['copyright'] ?? null,
-                    ]);
+                        $cave->media()->create([
+                            'type' => $type,
+                            'filename' => $filePath,
+                            'title' => $data['title'] ?? null,
+                            'photographer' => $data['photographer'] ?? null,
+                            'copyright' => $data['copyright'] ?? null,
+                        ]);
+                    }
                 }
             }
-        }
 
-        if (!empty($tagsData)) {
-            $tags = collect($tagsData)->map(function ($tag) {
-                return Tag::where([
-                    'category' => $tag['category'],
-                    'tag' => $tag['tag'],
-                    'assignable' => true,
-                ])->first()?->id;
-            })->filter();
-            $cave->tags()->sync($tags);
-        }
+            if (!empty($tagsData)) {
+                $tags = collect($tagsData)->map(function ($tag) {
+                    return Tag::where([
+                        'category' => $tag['category'],
+                        'tag' => $tag['tag'],
+                        'assignable' => true,
+                    ])->first()?->id;
+                })->filter();
+                $cave->tags()->sync($tags);
+            }
 
-        $caveSystem->load('caves');
+            $caveSystem->load('caves');
 
-        $cave->refresh();
-        $cave->load('tags');
+            $cave->refresh();
+            $cave->load('tags');
 
-        return response()->json([
-            'system' => new CaveSystemResource($caveSystem),
-            'cave' => new CaveResource($cave),
-        ], 201);
+            return response()->json([
+                'system' => new CaveSystemResource($caveSystem),
+                'cave' => new CaveResource($cave),
+            ], 201);
+        });
     }
 }

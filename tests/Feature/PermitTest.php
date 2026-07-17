@@ -337,6 +337,7 @@ class PermitTest extends TestCase
     public function access_officer_can_list_all_bookings()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         Booking::factory()->count(5)->create(['permit_id' => $permit->id]);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
@@ -466,6 +467,7 @@ class PermitTest extends TestCase
     public function admin_can_filter_bookings_by_status()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         Booking::factory()->count(3)->create(['permit_id' => $permit->id, 'status' => 'pending']);
         Booking::factory()->count(2)->approved()->create(['permit_id' => $permit->id]);
 
@@ -481,6 +483,8 @@ class PermitTest extends TestCase
     {
         $permit1 = Permit::factory()->create();
         $permit2 = Permit::factory()->create();
+        $permit1->officers()->attach($this->accessOfficer->id);
+        $permit2->officers()->attach($this->accessOfficer->id);
         Booking::factory()->count(3)->create(['permit_id' => $permit1->id]);
         Booking::factory()->count(2)->create(['permit_id' => $permit2->id]);
 
@@ -648,6 +652,7 @@ class PermitTest extends TestCase
         Mail::fake();
 
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->postJson('/api/admin/bookings', [
@@ -702,6 +707,7 @@ class PermitTest extends TestCase
     public function access_officer_can_manually_create_booking_without_user()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->postJson('/api/admin/bookings', [
@@ -730,6 +736,7 @@ class PermitTest extends TestCase
         Mail::fake();
 
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         $booking = Booking::factory()->create([
             'permit_id' => $permit->id,
             'user_id' => $this->regularUser->id,
@@ -751,6 +758,7 @@ class PermitTest extends TestCase
     public function message_requires_message_field()
     {
         $booking = Booking::factory()->create(['user_id' => $this->regularUser->id]);
+        $booking->permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->postJson("/api/admin/bookings/{$booking->short_id}/message", []);
@@ -762,9 +770,44 @@ class PermitTest extends TestCase
     // --- Admin Cancel Booking ---
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_cannot_act_on_permits_they_do_not_administer()
+    {
+        Mail::fake();
+
+        $permit = Permit::factory()->create();
+        $booking = Booking::factory()->approved()->create(['permit_id' => $permit->id]);
+
+        // Not an officer of this permit: cancel, message, and manual creation
+        // are all refused, and the booking list excludes its bookings.
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/cancel")
+            ->assertStatus(403);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson("/api/admin/bookings/{$booking->short_id}/message", ['message' => 'Hello'])
+            ->assertStatus(403);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/bookings', [
+                'permit_slug' => $permit->slug,
+                'date' => now()->addDays(5)->format('Y-m-d'),
+                'participants' => 1,
+            ])
+            ->assertStatus(403);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->getJson('/api/admin/bookings')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'data');
+
+        Mail::assertNothingQueued();
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function access_officer_can_cancel_booking()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         $booking = Booking::factory()->approved()->create([
             'permit_id' => $permit->id,
             'user_id' => $this->regularUser->id,
@@ -786,6 +829,7 @@ class PermitTest extends TestCase
     public function access_officer_can_cancel_pending_booking()
     {
         $booking = Booking::factory()->create(['status' => 'pending']);
+        $booking->permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
@@ -798,6 +842,7 @@ class PermitTest extends TestCase
     public function cannot_cancel_already_rejected_booking()
     {
         $booking = Booking::factory()->create(['status' => 'rejected']);
+        $booking->permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");

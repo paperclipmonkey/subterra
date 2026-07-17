@@ -138,6 +138,43 @@ class UserSearchTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function pending_club_membership_does_not_expose_the_roster()
+    {
+        $me = User::factory()->create(['name' => 'Tester User']);
+        $club = Club::factory()->create();
+        $member = User::factory()->create(['name' => 'Roster Member', 'visibility_addable' => 'club']);
+
+        // I have merely *requested* to join; the member is approved.
+        $club->users()->attach($me, ['status' => 'pending']);
+        $club->users()->attach($member, ['status' => 'approved']);
+
+        // Suggestions (no search) must not include the club's roster.
+        $response = $this->actingAs($me)->getJson('/api/users');
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+
+        // Nor should searching surface a club-only member to a pending applicant.
+        $response = $this->actingAs($me)->getJson('/api/users?search=Roster');
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function approved_members_do_not_see_pending_applicants_as_club_contacts()
+    {
+        $me = User::factory()->create(['name' => 'Tester User']);
+        $club = Club::factory()->create();
+        $applicant = User::factory()->create(['name' => 'Pending Applicant', 'visibility_addable' => 'club']);
+
+        $club->users()->attach($me, ['status' => 'approved']);
+        $club->users()->attach($applicant, ['status' => 'pending']);
+
+        $response = $this->actingAs($me)->getJson('/api/users?search=Pending');
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_searches_case_insensitively()
     {
         $me = User::factory()->create(['name' => 'Test User']);

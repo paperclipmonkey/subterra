@@ -196,7 +196,8 @@ Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show']
 
 // Public embeddable permit calendar (availability only — no personal data).
 // Powers the iframe embed an access officer can drop into an external website.
-Route::get('/embed/permits/{permit}/calendar', [BookingController::class, 'embedCalendar']);
+Route::get('/embed/permits/{permit}/calendar', [BookingController::class, 'embedCalendar'])
+    ->middleware('throttle:embed-calendar');
 
 // --- AI Assistant (Pip) ---
 // Open to platform_admin OR users granted the `pip_access` role explicitly.

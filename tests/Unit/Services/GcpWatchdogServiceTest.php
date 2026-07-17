@@ -139,4 +139,31 @@ class GcpWatchdogServiceTest extends TestCase
 
         $this->assertFalse($result);
     }
+
+    public function test_active_watchdog_count_excludes_monthly_test_entries()
+    {
+        // TEST- watchdogs exist only on the watchdog side by design; counting them
+        // would make the sync monitor report a false OUT OF SYNC.
+        Http::fake([
+            '*/watchdog' => Http::response([
+                'count' => 3,
+                'data' => [
+                    ['callout_id' => 'abc-123'],
+                    ['callout_id' => 'TEST-2026-07-01-120032'],
+                    ['callout_id' => 'def-456'],
+                ],
+            ], 200),
+        ]);
+
+        $this->assertEquals(2, $this->service->getActiveWatchdogCount());
+    }
+
+    public function test_active_watchdog_count_falls_back_to_count_field_when_data_missing()
+    {
+        Http::fake([
+            '*/watchdog' => Http::response(['count' => 4], 200),
+        ]);
+
+        $this->assertEquals(4, $this->service->getActiveWatchdogCount());
+    }
 }

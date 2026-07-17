@@ -13,6 +13,7 @@ use App\Models\Route;
 use App\Models\SuggestedEdit;
 use App\Services\MediaSuggestionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -127,6 +128,12 @@ class SuggestedEditController extends Controller
 
     public function approve(Request $request, SuggestedEdit $suggestedEdit)
     {
+        // Fail cleanly before any side effects if the target record has been
+        // deleted out from under an edit-of-existing suggestion.
+        if ($suggestedEdit->suggestable_id && !$suggestedEdit->suggestable) {
+            return response()->json(['message' => 'Target record no longer exists.'], 422);
+        }
+
         // Partial approval: if specific fields are provided, only approve those
         $selectedFields = $request->input('fields');
 
@@ -144,11 +151,6 @@ class SuggestedEditController extends Controller
             $remainingOriginal = [];
         }
 
-        // Update the suggestion to contain only the approved fields
-        $suggestedEdit->suggested_data = $approvedData;
-        $suggestedEdit->original_data = array_intersect_key($allOriginalData, $approvedData);
-        $suggestedEdit->save();
-
         $targetDirMap = [
             Cave::class => 'caves',
             CaveSystem::class => 'cave_systems',
@@ -160,82 +162,90 @@ class SuggestedEditController extends Controller
 
         // Promote pending media to permanent storage
         $promotedData = $this->mediaSuggestionService->promotePendingMedia(
-            $suggestedEdit->suggested_data,
+            $approvedData,
             $targetDir
         );
-        $suggestedEdit->suggested_data = $promotedData;
-        $suggestedEdit->save();
 
-        if ($suggestedEdit->suggestable_id) {
-            // Apply changes to the existing target model
-            $data = $suggestedEdit->suggested_data;
-            if ($suggestedEdit->suggestable_type === Cave::class) {
-                $this->handleCaveMediaApproval($suggestedEdit->suggestable, $data);
-                unset($data['hero_image'], $data['entrance_image']);
-            } elseif ($suggestedEdit->suggestable_type === CaveSystem::class) {
-                $this->handleCaveSystemFiles($suggestedEdit->suggestable, $data);
-                unset($data['media'], $data['deleted_files']);
-            }
-            $data = $this->applyTagChanges($suggestedEdit, $data);
-            $data = $this->applySystemMerge($suggestedEdit, $data);
-            if (!empty($data)) {
-                $suggestedEdit->suggestable->update($data);
-            }
-        } else {
-            // Create new item
-            $modelClass = $suggestedEdit->suggestable_type;
+        // All database changes are atomic: the suggestion is only trimmed to
+        // the approved fields once applying them succeeds. A failure part-way
+        // rolls everything back and leaves the suggestion fully pending,
+        // instead of a half-applied edit that has lost the unapproved
+        // remainder.
+        DB::transaction(function () use ($suggestedEdit, $promotedData, $approvedData, $allOriginalData, $remainingData, $remainingOriginal) {
+            $suggestedEdit->suggested_data = $promotedData;
+            $suggestedEdit->original_data = array_intersect_key($allOriginalData, $approvedData);
 
-            if (class_exists($modelClass)) {
-                $data = $suggestedEdit->suggested_data;
-                // Auto-generate slug if missing and name is present
-                if (empty($data['slug']) && !empty($data['name'])) {
-                    $data['slug'] = Str::slug($data['name']);
-                }
-
-                $caveMedia = [];
-                $systemFiles = [];
-
-                if ($modelClass === Cave::class) {
-                    $caveMedia['hero'] = $data['hero_image'] ?? null;
-                    $caveMedia['entrance'] = $data['entrance_image'] ?? null;
+            if ($suggestedEdit->suggestable_id) {
+                // Apply changes to the existing target model
+                $data = $promotedData;
+                if ($suggestedEdit->suggestable_type === Cave::class) {
+                    $this->handleCaveMediaApproval($suggestedEdit->suggestable, $data);
                     unset($data['hero_image'], $data['entrance_image']);
-                } elseif ($modelClass === CaveSystem::class) {
-                    $systemFiles = $data['media'] ?? [];
+                } elseif ($suggestedEdit->suggestable_type === CaveSystem::class) {
+                    $this->handleCaveSystemFiles($suggestedEdit->suggestable, $data);
                     unset($data['media'], $data['deleted_files']);
                 }
-
-                $newItem = $modelClass::create($data);
-
-                if ($modelClass === Cave::class) {
-                    $this->handleCaveMediaApproval($newItem, $caveMedia);
-                } elseif ($modelClass === CaveSystem::class) {
-                    $this->handleCaveSystemFiles($newItem, ['media' => $systemFiles]);
+                $data = $this->applyTagChanges($suggestedEdit, $data);
+                $data = $this->applySystemMerge($suggestedEdit, $data);
+                if (!empty($data)) {
+                    $suggestedEdit->suggestable->update($data);
                 }
+            } else {
+                // Create new item
+                $modelClass = $suggestedEdit->suggestable_type;
 
-                // Update the suggested edit to point to the newly created item
-                $suggestedEdit->suggestable_id = $newItem->id;
-                $suggestedEdit->save();
+                if (class_exists($modelClass)) {
+                    $data = $promotedData;
+                    // Auto-generate slug if missing and name is present
+                    if (empty($data['slug']) && !empty($data['name'])) {
+                        $data['slug'] = Str::slug($data['name']);
+                    }
+
+                    $caveMedia = [];
+                    $systemFiles = [];
+
+                    if ($modelClass === Cave::class) {
+                        $caveMedia['hero'] = $data['hero_image'] ?? null;
+                        $caveMedia['entrance'] = $data['entrance_image'] ?? null;
+                        unset($data['hero_image'], $data['entrance_image']);
+                    } elseif ($modelClass === CaveSystem::class) {
+                        $systemFiles = $data['media'] ?? [];
+                        unset($data['media'], $data['deleted_files']);
+                    }
+
+                    $newItem = $modelClass::create($data);
+
+                    if ($modelClass === Cave::class) {
+                        $this->handleCaveMediaApproval($newItem, $caveMedia);
+                    } elseif ($modelClass === CaveSystem::class) {
+                        $this->handleCaveSystemFiles($newItem, ['media' => $systemFiles]);
+                    }
+
+                    // Update the suggested edit to point to the newly created item
+                    $suggestedEdit->suggestable_id = $newItem->id;
+                }
             }
-        }
 
-        $suggestedEdit->update(['status' => 'approved']);
+            $suggestedEdit->status = 'approved';
+            $suggestedEdit->save();
 
-        // Create a new pending suggestion for any remaining unapproved fields,
-        // preserving AI attribution so the leftover keeps its badge, batch
-        // grouping, and mail-skip behaviour.
-        if (!empty($remainingData)) {
-            SuggestedEdit::create([
-                'user_id' => $suggestedEdit->user_id,
-                'suggestable_type' => $suggestedEdit->suggestable_type,
-                'suggestable_id' => $suggestedEdit->suggestable_id,
-                'original_data' => $remainingOriginal,
-                'suggested_data' => $remainingData,
-                'status' => 'pending',
-                'source' => $suggestedEdit->source ?? 'user',
-                'batch_id' => $suggestedEdit->batch_id,
-                'reasoning' => $suggestedEdit->reasoning,
-            ]);
-        }
+            // Create a new pending suggestion for any remaining unapproved fields,
+            // preserving AI attribution so the leftover keeps its badge, batch
+            // grouping, and mail-skip behaviour.
+            if (!empty($remainingData)) {
+                SuggestedEdit::create([
+                    'user_id' => $suggestedEdit->user_id,
+                    'suggestable_type' => $suggestedEdit->suggestable_type,
+                    'suggestable_id' => $suggestedEdit->suggestable_id,
+                    'original_data' => $remainingOriginal,
+                    'suggested_data' => $remainingData,
+                    'status' => 'pending',
+                    'source' => $suggestedEdit->source ?? 'user',
+                    'batch_id' => $suggestedEdit->batch_id,
+                    'reasoning' => $suggestedEdit->reasoning,
+                ]);
+            }
+        });
 
         // AI proposals were filed by the reviewing admin via Pip — no approval mail needed
         if ($suggestedEdit->user && ($suggestedEdit->source ?? 'user') === 'user') {

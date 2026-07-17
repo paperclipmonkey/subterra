@@ -43,6 +43,38 @@ class UserPhoneConstraintTest extends TestCase
         $response->assertJsonValidationErrors(['phone']);
     }
 
+    public function test_national_format_phone_is_normalised_to_e164()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->putJson("/api/users/{$user->id}", [
+                'phone' => '07123 456 789',
+            ]);
+
+        $response->assertStatus(200);
+        // Stored canonically as +44… so Twilio SMS/voice always gets E.164.
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'phone' => '+447123456789',
+        ]);
+    }
+
+    public function test_duplicate_phone_in_other_format_is_rejected()
+    {
+        $existingUser = User::factory()->create(['phone' => '+447999888777']);
+        $newUser = User::factory()->create(['phone' => null]);
+
+        // Same number in national 07… form must hit the uniqueness rule.
+        $response = $this->actingAs($newUser)
+            ->putJson("/api/users/{$newUser->id}", [
+                'phone' => '07999888777',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['phone']);
+    }
+
     public function test_user_can_keep_own_phone_on_update()
     {
         $user = User::factory()->create(['phone' => '+447111222333']);

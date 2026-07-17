@@ -21,6 +21,14 @@ use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class CalloutService
 {
+    /**
+     * Statuses in which a callout is already finished — cancelling again must be a no-op.
+     * 'resolved' is set by Incident::resolve(), 'cancelled' by this service.
+     *
+     * @var array<int, string>
+     */
+    private const FINISHED_STATUSES = ['cancelled', 'resolved'];
+
     public function __construct(
         private readonly GcpWatchdogService $watchdogService
     ) {
@@ -99,16 +107,28 @@ class CalloutService
         // Also fetch phones for any user_ids provided in participants if phone is missing?
         // For now, rely on provided phones or strictly enforce "One active callout per person"
 
-        if ($phonesToCheck->isNotEmpty()) {
+        // Compare on the normalised digit suffix (same convention as the Twilio webhook)
+        // so formatting differences — "+447700900123" vs "07700 900 123" — still match.
+        $phoneSuffixes = $phonesToCheck
+            ->map(fn ($phone) => $this->phoneSuffix((string) $phone))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($phoneSuffixes->isNotEmpty()) {
+            $matchesPhoneSuffix = function ($q) use ($phoneSuffixes) {
+                $q->where(function ($q) use ($phoneSuffixes) {
+                    foreach ($phoneSuffixes as $suffix) {
+                        $q->orWhere('phone', 'like', "%{$suffix}");
+                    }
+                });
+            };
+
             $existingCallout = Callout::query()
                 ->whereIn('status', ['active', 'triggered'])
-                ->where(function ($query) use ($phonesToCheck) {
-                    $query->whereHas('participants', function ($q) use ($phonesToCheck) {
-                        $q->whereIn('phone', $phonesToCheck);
-                    })
-                    ->orWhereHas('user', function ($q) use ($phonesToCheck) {
-                        $q->whereIn('phone', $phonesToCheck);
-                    });
+                ->where(function ($query) use ($matchesPhoneSuffix) {
+                    $query->whereHas('participants', $matchesPhoneSuffix)
+                        ->orWhereHas('user', $matchesPhoneSuffix);
                 })
                 ->first();
 
@@ -141,7 +161,9 @@ class CalloutService
                     $callout->participants()->create([
                         'user_id' => $p['user_id'] ?? null,
                         'name' => $p['name'],
-                        'phone' => $p['phone'] ?? null,
+                        // Normalised on write so the SMS webhook's suffix matching
+                        // ("OUT SAFE" during a live rescue) can always find them.
+                        'phone' => $this->normalizePhone($p['phone'] ?? null),
                         'email' => $p['email'] ?? null,
                     ]);
                 }
@@ -170,26 +192,34 @@ class CalloutService
                 $callout->update(['watchdog_registered_at' => now()]);
             }
 
-            try {
-                // Collect all emails, falling back to User account if autocomplete only sent user_id
-                $emails = collect($callout->refresh()->load('participants.user')->participants)
-                    ->map(fn ($p) => $p->email ?? $p->user?->email)
-                    ->filter();
-
-                if ($user->email) {
-                    $emails->push($user->email);
-                }
-
-                $emails->unique()->each(function ($email) use ($callout) {
-                    Mail::to($email)->send(new CalloutStarted($callout));
-                });
-            } catch (Exception $e) {
-                Log::error('Email Failure creating callout: '.$e->getMessage());
-                // Don't rollback transaction for email failure
-            }
-
             return $callout;
         });
+
+        // Send participant emails only after the transaction has committed: synchronous
+        // SMTP calls must not hold DB locks, and nobody should be emailed about a callout
+        // that ends up rolled back. Each recipient is isolated so one failing address
+        // can never block the rest, and no email problem may ever fail the (already
+        // committed) callout.
+        try {
+            // Collect all emails, falling back to User account if autocomplete only sent user_id
+            $emails = collect($callout->refresh()->load('participants.user')->participants)
+                ->map(fn ($p) => $p->email ?? $p->user?->email)
+                ->filter();
+
+            if ($user->email) {
+                $emails->push($user->email);
+            }
+
+            $emails->unique()->each(function ($email) use ($callout) {
+                try {
+                    Mail::to($email)->send(new CalloutStarted($callout));
+                } catch (Exception $e) {
+                    Log::error('Email Failure creating callout: '.$e->getMessage());
+                }
+            });
+        } catch (Exception $e) {
+            Log::error('Email Failure creating callout: '.$e->getMessage());
+        }
 
         // Dispatched after the transaction commits so its synchronous listeners
         // (e.g. the Slack alert) can never roll back a successfully created callout.
@@ -215,18 +245,54 @@ class CalloutService
 
     /**
      * Cancel a callout (Mark as resolved/safe).
+     *
+     * $source describes where the cancellation came from (e.g. 'App', 'SMS') and is
+     * recorded in the incident audit note when a rescue is already underway.
      */
-    public function cancel(Callout $callout): ?Trip
+    public function cancel(Callout $callout, string $source = 'App'): ?Trip
     {
-        // Idempotency guard: a callout can only be cancelled once. Without this,
+        // Idempotency guard: a callout can only be finished once. Without this,
         // repeated cancel requests (e.g. an anxious caver double-tapping "I am safe")
         // would each create a duplicate Trip and re-send cancellation emails. Once
-        // the callout is cancelled, treat further cancels as no-ops.
-        if ($callout->status === 'cancelled') {
+        // the callout is cancelled — or resolved by an admin closing the incident —
+        // treat further cancels as no-ops.
+        if (in_array($callout->status, self::FINISHED_STATUSES, true)) {
             return null;
         }
 
-        $trip = $this->createTripFromCallout($callout);
+        // Atomic gate: re-check the status under a row lock inside a transaction so two
+        // concurrent cancels can't both pass the (stale, in-memory) guard above and each
+        // create a Trip + email blast. Only the request holding the lock proceeds, and a
+        // mid-way failure rolls the Trip back rather than leaving it behind with the
+        // callout still active.
+        $trip = DB::transaction(function () use ($callout, $source): ?Trip {
+            $locked = Callout::query()->whereKey($callout->getKey())->lockForUpdate()->first();
+
+            if (!$locked || in_array($locked->status, self::FINISHED_STATUSES, true)) {
+                return null;
+            }
+
+            $trip = $this->createTripFromCallout($callout);
+
+            // Mark as cancelled (instead of deleting)
+            $callout->update(['status' => 'cancelled']);
+
+            if ($callout->incident()->exists()) {
+                // DO NOT DELETE the incident if rescue is underway.
+                // Mark user as safe but leave incident for admin to close.
+                $callout->incident->notes()->create([
+                    'user_id' => null, // System note
+                    'content' => "USER MARKED THEMSELVES SAFE via {$source}. Please verify and resolve incident.",
+                ]);
+            }
+
+            return $trip;
+        });
+
+        // Another request already finished this callout — nothing more to do.
+        if ($trip === null) {
+            return null;
+        }
 
         try {
             $this->watchdogService->cancel($callout);
@@ -254,24 +320,10 @@ class CalloutService
         } catch (Exception $e) {
             Log::error('Email Failure cancelling callout: '.$e->getMessage());
         }
-        if ($callout->incident()->exists()) {
-            // DO NOT DELETE if rescue is underway.
-            // Mark user as safe but leave incident for admin to close.
-            $callout->update(['status' => 'cancelled']);
 
-            // Add system note to incident
-            $callout->incident->notes()->create([
-                'user_id' => null, // System note
-                'content' => 'USER MARKED THEMSELVES SAFE via App. Please verify and resolve incident.',
-            ]);
-
-            return $trip;
+        if (!$callout->incident()->exists()) {
+            CalloutCancelled::dispatch($callout);
         }
-
-        // 5. Mark as cancelled (instead of deleting)
-        $callout->update(['status' => 'cancelled']);
-
-        CalloutCancelled::dispatch($callout);
 
         return $trip;
     }
@@ -314,6 +366,35 @@ class CalloutService
         $trip->participants()->sync($participants);
 
         return $trip;
+    }
+
+    /**
+     * Normalise a phone number for storage: keep digits and a single leading "+"
+     * (international prefix), stripping spaces and formatting characters, so stored
+     * numbers can always be matched by the suffix comparison used in the Twilio
+     * webhook and the duplicate-callout check.
+     */
+    private function normalizePhone(?string $phone): ?string
+    {
+        if ($phone === null) {
+            return null;
+        }
+
+        $normalized = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+        $normalized = (str_starts_with($normalized, '+') ? '+' : '').str_replace('+', '', $normalized);
+
+        return in_array($normalized, ['', '+'], true) ? null : $normalized;
+    }
+
+    /**
+     * The last (up to) 10 digits of a phone number — the same convention the Twilio
+     * webhook uses to match inbound numbers regardless of +44/0 prefix or formatting.
+     */
+    private function phoneSuffix(string $phone): string
+    {
+        $digits = preg_replace('/[^0-9]/', '', $phone) ?? '';
+
+        return strlen($digits) > 10 ? substr($digits, -10) : $digits;
     }
 
     /**

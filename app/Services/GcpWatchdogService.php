@@ -119,6 +119,10 @@ class GcpWatchdogService
 
     /**
      * Get the count of active watchdogs from the watchdog service.
+     *
+     * Monthly TEST- watchdogs (created by watchdog:test-alert) are excluded: they
+     * deliberately exist only on the watchdog side, so counting them would make the
+     * sync monitor report a false OUT OF SYNC against Subterra's active callouts.
      */
     public function getActiveWatchdogCount(): int
     {
@@ -132,6 +136,15 @@ class GcpWatchdogService
                 ->get("{$this->baseUrl}/watchdog");
 
             if ($response->successful()) {
+                $watchdogs = $response->json('data');
+
+                if (is_array($watchdogs)) {
+                    return count(array_filter(
+                        $watchdogs,
+                        fn ($watchdog) => !str_starts_with((string) ($watchdog['callout_id'] ?? ''), 'TEST-'),
+                    ));
+                }
+
                 return $response->json('count', 0);
             }
         } catch (\Exception $e) {

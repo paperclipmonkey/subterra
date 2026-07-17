@@ -521,6 +521,64 @@ class MedalAwardingTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function concurrent_duplicate_award_is_ignored_and_other_medals_still_fire_events()
+    {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\MedalAwarded::class]);
+
+        $user = User::factory()->create();
+        $firstTrip = Medal::create(['name' => 'First Trip', 'description' => 'Awarded for your first trip!']);
+        $nightOwl = Medal::create(['name' => 'Night Owl', 'description' => 'Trip started after 8pm']);
+
+        $trip = Trip::factory()->create(['start_time' => Carbon::parse('2025-04-24 21:00:00')]);
+        $trip->participants()->attach($user);
+
+        // Hydrate the medals relation as empty BEFORE the concurrent award so
+        // the listener's "not yet earned" check passes — mirroring the race
+        // where two workers both pass the check for the same medal.
+        $user->medals;
+        \Illuminate\Support\Facades\DB::table('medal_user')->insert([
+            'user_id' => $user->id,
+            'medal_id' => $firstTrip->id,
+            'awarded_at' => Carbon::now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+
+        $listener = new CheckAndAwardMedals();
+        $listener->handle(new TripParticipantTagged($trip, $user, $user));
+
+        // The duplicate attach is swallowed and the loop carries on, so the
+        // second medal is still awarded and announced.
+        $this->assertTrue($user->fresh()->medals->contains('name', 'Night Owl'));
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\MedalAwarded::class, function ($event) use ($nightOwl) {
+            return $event->medal->id === $nightOwl->id;
+        });
+        // The concurrent worker owns the First Trip announcement — no duplicate event
+        \Illuminate\Support\Facades\Event::assertNotDispatched(\App\Events\MedalAwarded::class, function ($event) use ($firstTrip) {
+            return $event->medal->id === $firstTrip->id;
+        });
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function medal_awarded_email_respects_email_trophies_preference()
+    {
+        $medal = Medal::create(['name' => 'First Trip', 'description' => 'Awarded for your first trip!']);
+        $optedOut = User::factory()->create(['email_trophies' => false]);
+        $optedIn = User::factory()->create(['email_trophies' => true]);
+
+        $listener = new \App\Listeners\SendMedalAwardedNotification();
+        $listener->handle(new \App\Events\MedalAwarded($optedOut, $medal));
+        $listener->handle(new \App\Events\MedalAwarded($optedIn, $medal));
+
+        Mail::assertQueued(\App\Mail\MedalAwardedMail::class, function ($mail) use ($optedIn) {
+            return $mail->hasTo($optedIn->email);
+        });
+        Mail::assertNotQueued(\App\Mail\MedalAwardedMail::class, function ($mail) use ($optedOut) {
+            return $mail->hasTo($optedOut->email);
+        });
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_gets_slate_heart_medal_for_caving_in_north_wales()
     {
         $user = \App\Models\User::factory()->create();

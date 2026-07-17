@@ -46,14 +46,24 @@ class CaveMedia extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function previewUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => ($this->filename && $this->type === 'hero_video') ? \Illuminate\Support\Facades\Storage::disk('media')->url(str_replace(\File::extension($this->filename), 'webm', $this->filename)) : null,
+            get: fn () => ($this->filename && $this->type === 'hero_video') ? \Illuminate\Support\Facades\Storage::disk('media')->url($this->withExtension('webm')) : null,
         );
     }
 
     public function posterUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => ($this->filename && $this->type === 'hero_video') ? \Illuminate\Support\Facades\Storage::disk('media')->url(str_replace(\File::extension($this->filename), 'webp', $this->filename)) : null,
+            get: fn () => ($this->filename && $this->type === 'hero_video') ? \Illuminate\Support\Facades\Storage::disk('media')->url($this->withExtension('webp')) : null,
         );
+    }
+
+    /**
+     * The filename with its extension swapped. Only the trailing extension is
+     * replaced — a plain str_replace on the extension would also corrupt any
+     * directory or UUID segment that happens to contain the same substring.
+     */
+    private function withExtension(string $extension): string
+    {
+        return preg_replace('/\.\w+$/', '.'.$extension, $this->filename);
     }
 }

@@ -61,7 +61,7 @@ class TwilioController extends Controller
         }
 
         if ($command === 'OUT SAFE') {
-            $this->calloutService->cancel($callout);
+            $this->calloutService->cancel($callout, 'SMS');
             $callout->update(['cancelled_location' => 'SMS']);
 
             if ($callout->incident()->exists()) {
@@ -69,7 +69,9 @@ class TwilioController extends Controller
                     'user_id' => null,
                     'content' => "Callout CANCELLED via SMS from {$from} saying 'OUT SAFE'.",
                 ]);
-                $callout->incident->resolve();
+                // Deliberately NOT resolved here: a single inbound SMS must never close
+                // an open incident mid-rescue. Like the in-app cancel path, the incident
+                // stays open for a duty officer to verify and resolve.
             }
 
             return $this->twiml('<Message>Callout cancelled. Glad you are safe.</Message>');
@@ -109,6 +111,14 @@ class TwilioController extends Controller
         if (!$message) {
             Log::info('Twilio status callback for unknown SMS SID.', ['sid' => $sid, 'status' => $status]);
 
+            return response('', 204);
+        }
+
+        // Callbacks can arrive out of order: never let a late earlier-stage status
+        // (e.g. 'sent') regress a terminal one (delivered / failed / undelivered).
+        $terminalStatuses = array_merge(['delivered'], SmsMessage::FAILED_STATUSES);
+
+        if (in_array($message->status, $terminalStatuses, true) && !in_array($status, $terminalStatuses, true)) {
             return response('', 204);
         }
 
@@ -162,6 +172,15 @@ class TwilioController extends Controller
 
         $incident = Incident::find($request->query('incident'));
         $do = User::find($request->query('user'));
+
+        if (!$do) {
+            // Never acknowledge on behalf of nobody: with a null user the incident would
+            // be marked managed with no controller and escalation would silently stop.
+            return $this->twiml(
+                '<Say voice="alice">We could not match this call to a duty officer, so the incident '
+                .'has not been acknowledged. Goodbye.</Say>'
+            );
+        }
 
         if ($incident && !$incident->incident_controller_id) {
             $this->incidentService->acknowledge($incident, $do, 'a voice call');

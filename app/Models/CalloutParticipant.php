@@ -31,4 +31,20 @@ class CalloutParticipant extends Model
     {
         return $this->belongsTo(Callout::class);
     }
+
+    /**
+     * Participants added via autocomplete may only carry a user_id, so notification
+     * routing falls back to the linked account's contact details — an overdue-callout
+     * email must not be silently dropped just because the ad-hoc field is empty.
+     */
+    public function routeNotificationForMail($notification = null): ?string
+    {
+        return $this->email ?? $this->user?->email;
+    }
+
+    /** SMS-channel equivalent of the mail fallback (see App\Channels\SmsChannel). */
+    public function routeNotificationForSms($notification = null): ?string
+    {
+        return $this->phone ?? $this->user?->phone;
+    }
 }

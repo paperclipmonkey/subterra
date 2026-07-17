@@ -129,6 +129,25 @@ class CollectionFeatureTest extends TestCase
             ->assertJsonPath('data.caves.0.pivot.description', 'Initial Note');
     }
 
+    public function test_duplicate_collection_names_get_deduplicated_slugs()
+    {
+        $user = User::factory()->create();
+
+        $first = $this->actingAs($user)->postJson('/api/collections', ['name' => 'Yorkshire Classics']);
+        $first->assertStatus(201)
+            ->assertJsonPath('data.slug', 'yorkshire-classics');
+
+        // A second collection with the same name must not 500 on the unique
+        // slug index — it gets a numeric suffix instead.
+        $second = $this->actingAs($user)->postJson('/api/collections', ['name' => 'Yorkshire Classics']);
+        $second->assertStatus(201)
+            ->assertJsonPath('data.slug', 'yorkshire-classics-2');
+
+        $third = $this->actingAs($user)->postJson('/api/collections', ['name' => 'Yorkshire Classics']);
+        $third->assertStatus(201)
+            ->assertJsonPath('data.slug', 'yorkshire-classics-3');
+    }
+
     public function test_update_preserves_cave_notes()
     {
         $user = User::factory()->admin()->create();

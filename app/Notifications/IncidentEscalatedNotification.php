@@ -52,11 +52,6 @@ class IncidentEscalatedNotification extends Notification implements ShouldQueue
                     ->line('All Duty Officers are being notified. Please log in immediately.');
     }
 
-    public function toSms(object $notifiable): string
-    {
-        return "URGENT: Incident #{$this->incident->id} waiting for Controller >15m! Please log in to Subterra immediately.";
-    }
-
     /**
      * Get the SMS representation of the notification.
      */

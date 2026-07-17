@@ -170,6 +170,39 @@ class TranscoderWebhookControllerTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_returns_500_and_preserves_the_record_when_no_variants_are_readable(): void
+    {
+        $permit = Permit::factory()->create([
+            'photo_path' => 'permits/raw-photo.jpg',
+            'original_filename' => null,
+        ]);
+
+        // No files on the staging disk: simulates expired staging objects on a
+        // delayed Pub/Sub redelivery. The filename must not be corrupted with
+        // a boolean false, and Pub/Sub should be told to retry.
+        $payload = $this->buildPubSubPayload([
+            'status' => 'succeeded',
+            'mediaModel' => 'permit',
+            'mediaId' => $permit->id,
+            'sourcePath' => 'permits/raw-photo.jpg',
+            'originalPath' => 'permits/raw-photo.jpg',
+            'namingBase' => 'permits/raw-photo.jpg',
+            'variants' => [
+                ['name' => 'desktop', 'path' => 'output/perm-uuid/desktop.webp'],
+                ['name' => 'mobile', 'path' => 'output/perm-uuid/mobile.webp'],
+            ],
+        ]);
+
+        $response = $this->postJson('/api/webhooks/gcp/media?token='.self::WEBHOOK_SECRET, $payload);
+
+        $response->assertStatus(500)->assertJson(['status' => 'error']);
+
+        $permit->refresh();
+        $this->assertSame('permits/raw-photo.jpg', $permit->photo_path);
+        $this->assertNull($permit->original_filename);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_200_when_required_labels_are_missing(): void
     {
         $payload = $this->buildPubSubPayload([

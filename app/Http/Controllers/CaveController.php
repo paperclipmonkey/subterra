@@ -344,8 +344,11 @@ class CaveController extends Controller
             'tags', 'collections', 'media', 'heroImage', 'entranceImage', 'heroVideo',
         ]);
 
+        // Clone before constraining: reusing the same builder would stack the
+        // id and slug WHEREs, so a cave with a numeric slug could never be
+        // fetched by that slug.
         if (is_numeric($id)) {
-            $cave = $query->where('id', $id)->first();
+            $cave = (clone $query)->where('id', $id)->first();
         }
 
         if (!isset($cave)) {

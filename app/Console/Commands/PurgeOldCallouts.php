@@ -11,6 +11,14 @@ use Illuminate\Console\Command;
 class PurgeOldCallouts extends Command
 {
     /**
+     * Sentinel values written by the scrub. The selection predicate checks against
+     * these so already-scrubbed callouts stop matching (columns that are NOT NULL
+     * in the schema can't simply be nulled).
+     */
+    private const SCRUBBED_DESCRIPTION = 'Scrubbed';
+    private const SCRUBBED_PARTICIPANT_NAME = 'Scrubbed Participant';
+
+    /**
      * The name and signature of the console command.
      *
      * @var string
@@ -34,11 +42,21 @@ class PurgeOldCallouts extends Command
         $calloutsToScrub = Callout::where('created_at', '<', $cutoffDate)
             ->whereIn('status', ['resolved', 'cancelled'])
             ->where(function ($query) {
-                $query->whereNotNull('car_details')
+                // Match anything still holding personal data, and only that — checking
+                // against the scrub sentinels means an already-scrubbed callout stops
+                // matching, so the command converges instead of rewriting them forever.
+                $query->where('description', '!=', self::SCRUBBED_DESCRIPTION)
+                    ->orWhereNotNull('car_details')
+                    ->orWhereNotNull('car_registration')
+                    ->orWhereNotNull('car_parking')
                     ->orWhereNotNull('team_details')
                     ->orWhereNotNull('trip_plan')
+                    ->orWhereNotNull('location_data')
+                    ->orWhereNotNull('request_data')
+                    ->orWhereNotNull('cancelled_ip')
+                    ->orWhereNotNull('cancelled_user_agent')
                     ->orWhereHas('participants', function ($q) {
-                        $q->whereNotNull('name')
+                        $q->where('name', '!=', self::SCRUBBED_PARTICIPANT_NAME)
                             ->orWhereNotNull('phone')
                             ->orWhereNotNull('email');
                     });
@@ -56,16 +74,26 @@ class PurgeOldCallouts extends Command
 
         foreach ($calloutsToScrub as $callout) {
             $callout->update([
+                // description defaults to the trip_plan text at creation and the
+                // remaining fields are personal data (see the Callout model's $hidden
+                // docblock), so they are all scrubbed together.
+                'description' => self::SCRUBBED_DESCRIPTION,
                 'car_details' => null,
+                'car_registration' => null,
+                'car_parking' => null,
                 'team_details' => null,
                 'trip_plan' => null,
+                'location_data' => null,
+                'request_data' => null,
+                'cancelled_ip' => null,
+                'cancelled_user_agent' => null,
             ]);
 
             foreach ($callout->participants as $participant) {
                 // We keep user_id if present to link to internal profiles,
                 // but scrub the ad-hoc contact details.
                 $participant->update([
-                    'name' => 'Scrubbed Participant',
+                    'name' => self::SCRUBBED_PARTICIPANT_NAME,
                     'phone' => null,
                     'email' => null,
                 ]);
