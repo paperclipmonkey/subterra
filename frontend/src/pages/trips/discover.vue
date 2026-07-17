@@ -275,7 +275,7 @@ const setupLayers = () => {
   map.on('mouseleave', LAYER_DOT, () => { map.getCanvas().style.cursor = '' })
 }
 
-const escHtml = (str) => { const d = document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML }
+const escHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
 const openPopup = (coords, props) => {
   const img = `<img src="${escHtml(props.image_url || '/placeholder-cave.jpg')}" style="width:100%;height:96px;object-fit:cover;" />`

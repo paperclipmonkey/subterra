@@ -163,7 +163,7 @@ const setupLayers = async () => {
     const props = e.features[0].properties
     const coords = e.features[0].geometry.coordinates.slice()
 
-    const escHtml = (str) => { const d = document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML }
+    const escHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
     popup?.remove()
     popup = new maplibregl.Popup({ offset: 10 })
