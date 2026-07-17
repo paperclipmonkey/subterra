@@ -87,12 +87,14 @@ class SearchCavesTool implements AssistantTool
                             ->from('caves')
                             ->whereColumn('caves.cave_system_id', 'cave_systems.id')
                             ->where('caves.name', 'like', "%{$name}%");
+                        \App\Support\CaveVisibility::publicOnly($sub);
                     })
                     ->orWhereExists(function ($sub) use ($normalized) {
                         $sub->select(DB::raw(1))
                             ->from('caves')
                             ->whereColumn('caves.cave_system_id', 'cave_systems.id')
                             ->whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(LOWER(caves.name), '''', ''), '  ', ' '), '  ', ' '), '  ', ' ') LIKE LOWER(?)", ["%{$normalized}%"]);
+                        \App\Support\CaveVisibility::publicOnly($sub);
                     });
             });
         }
@@ -230,6 +232,7 @@ class SearchCavesTool implements AssistantTool
             ->whereIn('cave_system_id', $systemIds)
             ->whereNotNull('location_lat')
             ->whereNotNull('location_lng')
+            ->tap(fn ($q) => \App\Support\CaveVisibility::publicOnly($q))
             ->orderBy('id')
             ->get()
             ->unique('cave_system_id')
@@ -240,6 +243,7 @@ class SearchCavesTool implements AssistantTool
         $entranceCountBySystem = DB::table('caves')
             ->select(['cave_system_id', DB::raw('COUNT(*) as cnt')])
             ->whereIn('cave_system_id', $systemIds)
+            ->tap(fn ($q) => \App\Support\CaveVisibility::publicOnly($q))
             ->groupBy('cave_system_id')
             ->get()
             ->keyBy('cave_system_id');

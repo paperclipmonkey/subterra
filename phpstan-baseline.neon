@@ -571,18 +571,6 @@ parameters:
 			path: app/Http/Controllers/Webhook/TwilioController.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>is_admin" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Requests/StoreCaveRequest.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>is_admin" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Requests/UpdateCaveRequest.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$booking_info\.$#'
 			identifier: property.notFound
 			count: 1

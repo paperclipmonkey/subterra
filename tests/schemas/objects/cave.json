@@ -111,6 +111,16 @@
     "previously_done": {
       "type": "boolean"
     },
+    "can_manage": {
+      "type": "boolean"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["public", "admin_only"]
+    },
+    "private_notes": {
+      "type": ["string", "null"]
+    },
     "collections": {
       "type": "array",
       "items": {

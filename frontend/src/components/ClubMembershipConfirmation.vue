@@ -2,46 +2,26 @@
   <v-container class="pa-4">
     <v-card>
       <v-card-title>
-        {{ step === 1 ? 'Confirm Your Identity' : 'BCA Club Membership' }}
+        BCA Club Membership
       </v-card-title>
       <v-card-text>
-        
-        <!-- Step 1: Name Confirmation -->
-        <div v-if="step === 1">
-          <p class="mb-4">
-            To help club administrators identify you, please provide your real full name.
-            We operate a real-name policy to ensure accountability and safety within the community.
-          </p>
-          <v-text-field
-            v-model="fullName"
-            label="Full Name"
-            variant="outlined"
-            :rules="[v => !!v || 'Name is required', v => v.length >= 2 || 'Name must be at least 2 characters']"
-            required
-          />
-          <v-alert type="info" variant="tonal" class="mt-4" :icon="mdiShieldCheck">
-            This name will be visible to club admins when you request to join.
-          </v-alert>
-        </div>
-
-        <!-- Step 2: Club Selection -->
-        <div v-else>
+        <div>
           <div v-if="pendingClubs && pendingClubs.length">
             <h3 class="text-h6 font-weight-bold mb-4">Your Applications</h3>
             <v-list class="pa-0">
-              <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-0 mb-4 border rounded-lg">
+              <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-3 py-3 mb-4 border rounded-lg">
                 <template #prepend>
-                  <v-avatar color="warning" size="40" class="mr-4">
+                  <v-avatar color="warning" size="40" class="mr-3">
                     <v-icon color="white" :icon="mdiAccountClock" />
                   </v-avatar>
                 </template>
-                <v-list-item-title class="font-weight-bold">{{ club.name }}</v-list-item-title>
-                <v-list-item-subtitle class="mt-1">
-                  <v-chip color="warning" size="small" variant="flat" class="mr-2">Pending</v-chip>
+                <v-list-item-title class="font-weight-bold text-wrap">{{ club.name }}</v-list-item-title>
+                <div class="d-flex flex-wrap align-center mt-1" style="gap: 8px;">
+                  <v-chip color="warning" size="small" variant="flat">Pending</v-chip>
                   <span class="text-caption text-medium-emphasis">
                     Submitted {{ formatRelativeTime(club.pivot?.created_at) }}
                   </span>
-                </v-list-item-subtitle>
+                </div>
               </v-list-item>
             </v-list>
             <v-divider class="my-6" />
@@ -108,10 +88,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn v-if="step === 1" color="primary" :disabled="!fullName || fullName.length < 2 || savingName" :loading="savingName" @click="saveName">
-          Next
-        </v-btn>
-        <v-btn v-else color="primary" :disabled="!selectedClub.length || loading" @click="submit">
+        <v-btn color="primary" :disabled="!selectedClub.length || loading" @click="submit">
           Confirm Membership
         </v-btn>
       </v-card-actions>
@@ -136,10 +113,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['membershipConfirmed'])
 
-const step = ref(1)
-const fullName = ref('')
-const savingName = ref(false)
-
 const availableClubs = ref([])
 const loadingClubs = ref(false)
 const selectedClub = ref([])
@@ -148,29 +121,9 @@ const success = ref(false)
 const error = ref("")
 const clubAutocomplete = ref(null)
 
-// Pre-fill name if user prop changes
-watch(() => props.user, (newUser) => {
-  if (newUser && newUser.name) {
-    fullName.value = newUser.name
-  }
-}, { immediate: true })
-
 const formatRelativeTime = (time) => {
   if (!time) return 'recently'
   return moment(time).fromNow()
-}
-
-const saveName = async () => {
-  if (!fullName.value) return
-  savingName.value = true
-  try {
-    await api.put(`/api/users/${props.user.id}`, { name: fullName.value })
-    step.value = 2 // Proceed to next step
-  } catch (e) {
-    error.value = "Failed to save name. Please try again."
-  } finally {
-    savingName.value = false
-  }
 }
 
 const fetchAllClubs = async () => {

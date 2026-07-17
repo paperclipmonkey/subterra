@@ -45,6 +45,9 @@ class CaveController extends Controller
         $cavesQuery = DB::table('caves')
             ->select(['caves.id', 'caves.slug', 'caves.name', 'caves.location_name', 'caves.location_country', 'caves.location_lat', 'caves.location_lng', 'caves.cave_system_id']);
 
+        // Never surface soft-deleted or admin_only caves on the public list.
+        \App\Support\CaveVisibility::publicOnly($cavesQuery);
+
         if ($request->boolean('curated')) {
             $curatedTagId = DB::table('tags')
                 ->where('tag', 'Curated')
@@ -223,6 +226,7 @@ class CaveController extends Controller
                 DB::raw('CASE WHEN ct_curated.cave_id IS NOT NULL THEN 1 ELSE 0 END as is_curated'),
                 DB::raw('CASE WHEN ct_closed.cave_id IS NOT NULL THEN 1 ELSE 0 END as is_closed'),
             ])
+            ->tap(fn ($q) => \App\Support\CaveVisibility::publicOnly($q))
             ->leftJoin('cave_tag as ct_curated', function ($join) use ($curatedTagId) {
                 $join->on('caves.id', '=', 'ct_curated.cave_id')
                     ->where('ct_curated.tag_id', '=', $curatedTagId);
@@ -351,6 +355,12 @@ class CaveController extends Controller
             $cave = $query->where('slug', $id)->firstOrFail();
         }
 
+        // admin_only sites must not reveal their existence to unauthorised users.
+        if ($cave->visibility === 'admin_only'
+            && !app(\App\Policies\CavePolicy::class)->view(request()->user(), $cave)) {
+            abort(404);
+        }
+
         return new CaveResource($cave);
     }
 
@@ -359,15 +369,19 @@ class CaveController extends Controller
         $data = $request->validated();
         $cave->update($data);
 
-        // Update tags
-        $tags = collect($request->input('tags', []))->map(function ($tag) {
-            return Tag::where([
-                'category' => $tag['category'],
-                'tag' => $tag['tag'],
-                'assignable' => true,
-            ])->first()?->id;
-        })->filter();
-        $cave->tags()->sync($tags);
+        // Update tags only when supplied — a partial update (e.g. name only)
+        // must not silently wipe a cave's tags (which could orphan it from its
+        // registry group and lock a scoped admin out of their own record).
+        if ($request->has('tags')) {
+            $tags = collect($request->input('tags', []))->map(function ($tag) {
+                return Tag::where([
+                    'category' => $tag['category'],
+                    'tag' => $tag['tag'],
+                    'assignable' => true,
+                ])->first()?->id;
+            })->filter();
+            $cave->tags()->sync($tags);
+        }
 
         // Process hero image
         $this->processImageField($request, $cave, 'hero');
@@ -377,6 +391,31 @@ class CaveController extends Controller
 
         // Process hero video
         $this->processVideoField($request, $cave, 'hero_video');
+
+        return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage', 'heroVideo']));
+    }
+
+    public function destroy(\Illuminate\Http\Request $request, Cave $cave): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || !app(\App\Policies\CavePolicy::class)->delete($user, $cave)) {
+            return response()->json(['error' => 'User is not authorised to perform that action'], 403);
+        }
+
+        $cave->delete();
+
+        return response()->json(null, 204);
+    }
+
+    public function restore(\Illuminate\Http\Request $request, Cave $cave): CaveResource
+    {
+        $user = $request->user();
+        // A restore is a management action — gate it like an update/delete.
+        if (!$user || !app(\App\Policies\CavePolicy::class)->delete($user, $cave)) {
+            abort(403, 'User is not authorised to perform that action');
+        }
+
+        $cave->restore();
 
         return new CaveResource($cave->fresh(['media', 'heroImage', 'entranceImage', 'heroVideo']));
     }

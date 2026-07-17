@@ -21,19 +21,22 @@
             rounded="pill"
             bg-color="surface"
           />
-          <v-btn
-            icon
-            variant="flat"
-            color="surface"
-            class="flex-shrink-0"
-            aria-label="Filter caves"
-            @click="showFilterByTagModal = true"
+          <v-badge
+            :model-value="cachedTags.length > 0"
+            color="accent"
+            :content="cachedTags.length"
           >
-            <v-badge v-if="cachedTags.length" color="accent" :content="cachedTags.length">
-              <v-icon :icon="mdiFilterVariant" />
-            </v-badge>
-            <v-icon v-else :icon="mdiFilterOutline" />
-          </v-btn>
+            <v-btn
+              icon
+              variant="flat"
+              color="surface"
+              class="flex-shrink-0"
+              aria-label="Filter caves"
+              @click="showFilterByTagModal = true"
+            >
+              <v-icon :icon="cachedTags.length ? mdiFilterVariant : mdiFilterOutline" />
+            </v-btn>
+          </v-badge>
         </div>
 
         <!-- Compact Horizontal Filter Bar -->
