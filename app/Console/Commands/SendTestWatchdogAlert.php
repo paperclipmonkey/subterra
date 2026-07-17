@@ -36,7 +36,10 @@ class SendTestWatchdogAlert extends Command
         // Create a test callout that will trigger in 1 minute
         $calloutTime = Carbon::now()->addMinute();
 
-        // Create a minimal test callout record (not stored in DB)
+        // Create a minimal test callout record (not stored in DB). The TEST- prefix is
+        // load-bearing: the watchdog labels its alerts as a test, and
+        // GcpWatchdogService::getActiveWatchdogCount() excludes these entries so the
+        // sync monitor doesn't report a false OUT OF SYNC while the test runs.
         $testCalloutData = [
             'callout_id' => 'TEST-'.now()->format('Y-m-d-His'),
             'callout_time' => $calloutTime->toIso8601String(),
@@ -44,6 +47,15 @@ class SendTestWatchdogAlert extends Command
                 'name' => '🧪 Monthly Test Alert',
                 'phone' => config('services.gcp_watchdog.test_phone'),
                 'email' => config('services.gcp_watchdog.test_email'),
+            ],
+            // The overdue check only alerts duty officers, so the test contact must be
+            // listed as one — otherwise the SMS/email delivery leg is never exercised.
+            'duty_officers' => [
+                [
+                    'name' => '🧪 Watchdog Test Contact',
+                    'phone' => config('services.gcp_watchdog.test_phone'),
+                    'email' => config('services.gcp_watchdog.test_email'),
+                ],
             ],
             'participants' => [],
             'trip_plan' => 'This is a MONTHLY TEST ALERT from the Subterra watchdog system. This message confirms the emergency alert system is functioning correctly.',

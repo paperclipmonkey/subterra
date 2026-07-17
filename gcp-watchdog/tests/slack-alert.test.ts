@@ -2,7 +2,7 @@
  * Unit tests for the dedicated backup-watchdog Slack alert.
  */
 import axios from 'axios';
-import { sendOverdueSlackAlert } from '../src/slack-alert';
+import { buildOverdueSlackText, sendOverdueSlackAlert } from '../src/slack-alert';
 import * as secrets from '../src/secrets';
 
 jest.mock('axios');
@@ -78,5 +78,34 @@ describe('sendOverdueSlackAlert', () => {
         await expect(
             sendOverdueSlackAlert([{ callout_id: 'x', cave_name: 'Cave', user: {} }])
         ).resolves.toBeUndefined();
+    });
+});
+
+describe('buildOverdueSlackText', () => {
+    const realCallout = { callout_id: 'abc-123', cave_name: 'Deep Cave', user: { name: 'John Doe' } };
+    const testCallout = {
+        callout_id: 'TEST-2026-07-01-120032',
+        cave_name: '🧪 Test System Check',
+        user: { name: '🧪 Monthly Test Alert' },
+    };
+
+    it('reports TEST- callouts as a scheduled test without @channel', () => {
+        const text = buildOverdueSlackText([testCallout]);
+
+        expect(text).not.toContain('<!channel>');
+        expect(text).not.toContain('OVERDUE CALLOUT(S)');
+        expect(text).toContain('BACKUP WATCHDOG MONTHLY TEST');
+        expect(text).toContain('No action is required');
+        expect(text).toContain('(ID: TEST-2026-07-01-120032)');
+    });
+
+    it('keeps the @channel emergency section when real and test callouts overlap', () => {
+        const text = buildOverdueSlackText([testCallout, realCallout]);
+
+        expect(text).toContain('<!channel>');
+        // The test callout must not inflate the emergency count.
+        expect(text).toContain('BACKUP WATCHDOG: 1 OVERDUE CALLOUT(S)');
+        expect(text).toContain('*Deep Cave* — John Doe (ID: abc-123)');
+        expect(text).toContain('BACKUP WATCHDOG MONTHLY TEST');
     });
 });
