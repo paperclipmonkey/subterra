@@ -11,7 +11,9 @@ use App\Models\Trip;
 use App\Models\TripMedia;
 use App\Models\TripUser;
 use App\Models\User;
+use App\Support\Auditing\StringKeyMorphMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use OwenIt\Auditing\Models\Audit;
 use Tests\TestCase; // Add Schema facade
@@ -149,5 +151,44 @@ class AuditLogTest extends TestCase
 
         $this->assertNotNull($audit, 'Audit record not found for TripUser update.');
         $this->assertEquals($newTrip->id, $audit->new_values['trip_id']);
+    }
+
+    /**
+     * Guards against the Postgres "operator does not exist: character varying =
+     * integer" (SQLSTATE 42883) regression.
+     *
+     * auditable_id is a VARCHAR column, so the audits relationship on an
+     * integer-keyed model must bind the key as a string. On Postgres a plain
+     * integer key produces `whereIntegerInRaw` (`... in (152)`) which fails;
+     * SQLite's loose typing hides that, so we assert on the binding type
+     * directly to catch a regression on any driver.
+     */
+    public function testAuditsEagerLoadBindsAuditableIdAsString(): void
+    {
+        $trip = Trip::factory()->create();
+
+        $this->assertInstanceOf(StringKeyMorphMany::class, $trip->audits());
+
+        DB::enableQueryLog();
+        $trip->load('audits');
+
+        $auditQuery = collect(DB::getQueryLog())
+            ->first(fn ($entry): bool => str_contains($entry['query'], 'auditable_id'));
+
+        DB::disableQueryLog();
+
+        $this->assertNotNull($auditQuery, 'No query against the audits table was executed.');
+        // A raw integer literal (whereIntegerInRaw) would inline the id and
+        // leave no binding — a placeholder plus a string binding is what keeps
+        // the comparison valid against the VARCHAR column.
+        $this->assertStringContainsString('in (?)', $auditQuery['query']);
+        $this->assertContains(
+            (string) $trip->id,
+            $auditQuery['bindings'],
+            'auditable_id should be bound as a string.',
+        );
+        foreach ($auditQuery['bindings'] as $binding) {
+            $this->assertIsString($binding);
+        }
     }
 }

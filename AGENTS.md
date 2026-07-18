@@ -234,6 +234,40 @@ Two GitHub Actions workflows handle testing and deployment:
 
 Backend tests use SQLite in CI. Production uses PostgreSQL 17.
 
+### ⚠️ SQLite (tests) vs PostgreSQL (production) — type strictness
+
+**Tests run on SQLite, production runs on PostgreSQL.** SQLite uses loose
+("duck") typing and silently coerces mismatched types; PostgreSQL is strict and
+will raise errors that never appear locally or in CI. A green test suite does
+**not** guarantee a query works in production.
+
+The most common trap is comparing a column to a value of a different type.
+PostgreSQL has no implicit `varchar = integer` cast and fails with:
+
+```
+SQLSTATE[42883]: operator does not exist: character varying = integer
+```
+
+Concrete example already fixed in this codebase: `audits.auditable_id` is a
+`VARCHAR` (it stores both integer model IDs and the `User` model's string ID),
+so the auditing relationship must compare it as a string. See
+`app/Support/Auditing/StringKeyMorphMany.php` and `app/Models/Concerns/Auditable.php`.
+Eloquent's `whereIntegerInRaw` (used when eager-loading a relation on an
+integer-keyed model) emits an unquoted literal like `... in (152)`, which
+PostgreSQL reads as an integer — the exact thing that broke `$trip->load('audits')`.
+
+When touching queries, migrations, or model relationships, watch for:
+
+- Comparing/joining columns whose types differ (`string` column vs `int` key,
+  or vice versa). Cast one side explicitly.
+- Changing a column's type in a migration without updating every model/query
+  that compares against it.
+- Relying on SQLite coercion for boolean/JSON/date columns.
+- `whereIntegerInRaw` on a non-integer column — force a bound `whereIn` instead.
+
+Where practical, verify schema-sensitive changes against a real PostgreSQL
+instance (the `postgres` service in `docker-compose.yml`), not just SQLite.
+
 ---
 
 ## Important Conventions
