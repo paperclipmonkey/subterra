@@ -16,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use OwenIt\Auditing\Models\Audit;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase; // Add Schema facade
 
 class AuditLogTest extends TestCase
@@ -163,7 +164,8 @@ class AuditLogTest extends TestCase
      * SQLite's loose typing hides that, so we assert on the binding type
      * directly to catch a regression on any driver.
      */
-    public function testAuditsEagerLoadBindsAuditableIdAsString(): void
+    #[Test]
+    public function audits_eager_load_binds_auditable_id_as_string(): void
     {
         $trip = Trip::factory()->create();
 
