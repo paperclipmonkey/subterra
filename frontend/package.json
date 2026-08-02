@@ -45,7 +45,7 @@
     "pinia": "^3.0.4",
     "sass-embedded": "1.100.0",
     "unplugin-auto-import": "^21.0.0",
-    "unplugin-fonts": "^1.4.0",
+    "unplugin-fonts": "^2.0.0",
     "unplugin-vue-components": "^31.0.0",
     "unplugin-vue-router": "^0.19.2",
     "vite": "^7.3.2",
