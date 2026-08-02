@@ -29,24 +29,31 @@
                  router-links inside the Vuetify <label> caused inconsistent toggling (the
                  native label-for click and the control's own handler could both fire),
                  leaving the model checked while the box appeared unticked. -->
-            <div class="d-flex align-center mb-4">
-              <v-checkbox
-                v-model="agreedToToS"
-                color="primary"
-                hide-details
-                density="compact"
-                class="flex-grow-0 me-1"
-                aria-label="I agree to the Terms of Service and Privacy Policy"
-              />
-              <div class="text-body-2">
-                <span class="agree-text" @click="agreedToToS = !agreedToToS">I agree to the</span>
-                <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold">
-                  Terms of Service
-                </router-link>
-                and
-                <router-link to="/pages/privacy-policy" class="text-decoration-none font-weight-bold">
-                  Privacy Policy
-                </router-link>
+            <div class="consent-box rounded-lg pa-3 mb-4"
+                 :class="agreedToToS ? 'consent-box--agreed' : 'consent-box--required'">
+              <div class="d-flex align-center">
+                <v-checkbox
+                  v-model="agreedToToS"
+                  color="primary"
+                  hide-details
+                  density="compact"
+                  class="flex-grow-0 me-1"
+                  aria-label="I agree to the Terms of Service and Privacy Policy"
+                />
+                <div class="text-body-2">
+                  <span class="agree-text" @click="agreedToToS = !agreedToToS">I agree to the</span>
+                  <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold">
+                    Terms of Service
+                  </router-link>
+                  and
+                  <router-link to="/pages/privacy-policy" class="text-decoration-none font-weight-bold">
+                    Privacy Policy
+                  </router-link>
+                </div>
+              </div>
+              <div class="text-caption mt-1 ms-1" :class="agreedToToS ? 'text-success' : 'text-medium-emphasis'">
+                <v-icon size="14" :icon="agreedToToS ? mdiCheckCircle : mdiInformationOutline" class="me-1" />
+                Required before you can sign in with Google or a magic link.
               </div>
             </div>
 
@@ -79,7 +86,10 @@
                 </v-btn>
               </v-form>
               <div class="text-center mt-3">
-                <span class="text-caption grey--text">We'll send you a tailored magic link to log in.</span>
+                <span v-if="!agreedToToS" class="text-caption text-medium-emphasis">
+                  Agree to the terms above to receive your magic link.
+                </span>
+                <span v-else class="text-caption grey--text">We'll send you a tailored magic link to log in.</span>
               </div>
             </v-card>
 
@@ -175,7 +185,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiArrowLeft, mdiEmailCheck, mdiEmailOutline, mdiMapSearch, mdiNotebookCheck, mdiShieldAccount } from '@mdi/js'
+import { mdiAccountGroup, mdiArrowLeft, mdiCheckCircle, mdiEmailCheck, mdiEmailOutline, mdiInformationOutline, mdiMapSearch, mdiNotebookCheck, mdiShieldAccount } from '@mdi/js'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'
@@ -290,6 +300,21 @@ onUnmounted(() => {
 .agree-text {
   cursor: pointer;
   user-select: none;
+}
+
+.consent-box {
+  border: 1px solid transparent;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.consent-box--required {
+  background-color: rgba(var(--v-theme-warning), 0.08);
+  border-color: rgba(var(--v-theme-warning), 0.4);
+}
+
+.consent-box--agreed {
+  background-color: rgba(var(--v-theme-success), 0.08);
+  border-color: rgba(var(--v-theme-success), 0.35);
 }
 
 .google-btn {

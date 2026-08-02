@@ -16,6 +16,11 @@ class SendMedalAwardedNotification implements ShouldQueue
 
     public function handle(MedalAwarded $event): void
     {
+        // Respect the recipient's "email me about trophies" preference
+        if (!$event->user->email_trophies) {
+            return;
+        }
+
         Mail::to($event->user->email)->send(new MedalAwardedMail($event->user, $event->medal));
     }
 }

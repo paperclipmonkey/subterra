@@ -37,13 +37,13 @@ jobs:
         run: |
           cd gcp-watchdog
           docker build -t europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog/subterra-watchdog:${{ github.sha }} .
-          docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog/subterra-watchdog:${{ github.sha }} || echo "Image already exists, skipping push"
+          docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-watchdog/subterra-watchdog:${{ github.sha }}
 
       - name: Build and push Image Processor image
         run: |
           cd gcp-image-processor
           docker build -t europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-image-processor/subterra-image-processor:${{ github.sha }} .
-          docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-image-processor/subterra-image-processor:${{ github.sha }} || echo "Image already exists, skipping push"
+          docker push europe-west2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/subterra-image-processor/subterra-image-processor:${{ github.sha }}
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3

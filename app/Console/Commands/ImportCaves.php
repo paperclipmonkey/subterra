@@ -9,6 +9,7 @@ use App\Models\CaveSystem;
 use App\Models\Tag;
 use App\Support\CaveName;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -27,6 +28,12 @@ class ImportCaves extends Command
      * @var string
      */
     protected $description = 'Import caves from a CSV or TSV file';
+
+    /**
+     * Caves further apart than this (km) are treated as different physical
+     * places despite sharing a name. Mirrors CaveName::SAME_PLACE_KM.
+     */
+    private const SAME_PLACE_KM = 10.0;
 
     /**
      * Execute the console command.
@@ -85,6 +92,28 @@ class ImportCaves extends Command
                     continue;
                 }
 
+                $rowLat = (float) ($row['latitude'] ?? 0);
+                $rowLng = (float) ($row['longitude'] ?? 0);
+
+                // Match case-insensitively so a differently-cased name updates
+                // the existing cave instead of duplicating it.
+                $cave = CaveName::findCave($name);
+
+                // The name match is region-blind: the same name can refer to
+                // two different real caves (e.g. Giant's Cave in Mendip and the
+                // Peak District). When both sides have coordinates and they are
+                // far apart, don't overwrite the existing record — report the
+                // row for manual review instead.
+                if ($cave && $this->locationConflicts($cave, $rowLat, $rowLng)) {
+                    $this->warn(sprintf(
+                        "Skipping '%s': existing cave #%d is more than %skm from the row's coordinates — likely a different cave with the same name.",
+                        $name,
+                        $cave->id,
+                        self::SAME_PLACE_KM
+                    ));
+                    continue;
+                }
+
                 // 1. Handle Cave System
                 $systemName = trim($row['system'] ?? '');
                 if (empty($systemName)) {
@@ -135,23 +164,24 @@ class ImportCaves extends Command
                 }
                 $description = implode("\n\n", $descriptionParts);
 
-                // 4. Create/Update Cave — match case-insensitively so a
-                // differently-cased name updates the existing cave instead of duplicating it.
+                // 4. Create/Update Cave
                 $caveAttributes = [
                     'slug' => Str::slug($name),
                     'description' => $description,
                     'cave_system_id' => $caveSystemId,
                     'location_name' => $locationName,
                     'location_country' => $row['location_country'] ?? 'United Kingdom',
-                    'location_lat' => (float) ($row['latitude'] ?? 0),
-                    'location_lng' => (float) ($row['longitude'] ?? 0),
+                    'location_lat' => $rowLat,
+                    'location_lng' => $rowLng,
                     'location_alt' => (float) ($row['altitude'] ?? 0),
                     'access_info' => $row['access_info'] ?? null,
                 ];
 
-                $cave = CaveName::findCave($name);
                 if ($cave) {
-                    $cave->update($caveAttributes);
+                    // Never rename an existing cave's slug (URLs would break,
+                    // and a unique-index collision would abort the whole
+                    // import) or reassign it to a different system on re-import.
+                    $cave->update(Arr::except($caveAttributes, ['slug', 'cave_system_id']));
                 } else {
                     $cave = Cave::create(array_merge(['name' => $name], $caveAttributes));
                 }
@@ -185,5 +215,35 @@ class ImportCaves extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Whether an incoming row's coordinates place it substantially away from
+     * an existing same-named cave. Rows or caves without usable coordinates
+     * never conflict (there is nothing to compare).
+     */
+    private function locationConflicts(Cave $cave, float $lat, float $lng): bool
+    {
+        if (!$this->hasCoords($lat, $lng) || !$this->hasCoords((float) $cave->location_lat, (float) $cave->location_lng)) {
+            return false;
+        }
+
+        return $this->haversineKm((float) $cave->location_lat, (float) $cave->location_lng, $lat, $lng) > self::SAME_PLACE_KM;
+    }
+
+    /** Coordinates are usable when not the null-island (0,0) placeholder. */
+    private function hasCoords(float $lat, float $lng): bool
+    {
+        return abs($lat) > 0.0001 || abs($lng) > 0.0001;
+    }
+
+    private function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthKm = 6371.0;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        return $earthKm * 2 * asin(min(1.0, sqrt($a)));
     }
 }

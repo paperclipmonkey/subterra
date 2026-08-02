@@ -16,7 +16,9 @@ class RiverLevelService
     private const BASE_URL = 'https://environment.data.gov.uk/flood-monitoring/id';
     private const CACHE_TTL = 900; // 15 minutes (API updates every 15 mins)
     private const METADATA_CACHE_TTL = 86400; // 24h - typical ranges rarely change
-    private const TIMEOUT = 10; // EA flood-monitoring API is slow for non-hot data
+    private const TIMEOUT = 20; // EA flood-monitoring API is slow for non-hot data, especially on first hit
+    private const RETRY_TIMES = 1;
+    private const RETRY_DELAY_MS = 500;
 
     /**
      * Get enhanced reading for a catchment gauge.
@@ -104,10 +106,12 @@ class RiverLevelService
                 $requests = [];
                 if ($needReadings) {
                     $requests[] = $pool->as('readings')->timeout(self::TIMEOUT)
+                        ->retry(self::RETRY_TIMES, self::RETRY_DELAY_MS)
                         ->get(self::BASE_URL."/stations/{$stationRef}/readings?_limit=100&_sorted");
                 }
                 if ($needMetadata) {
                     $requests[] = $pool->as('metadata')->timeout(self::TIMEOUT)
+                        ->retry(self::RETRY_TIMES, self::RETRY_DELAY_MS)
                         ->get(self::BASE_URL."/stations/{$stationRef}/stageScale");
                 }
 
@@ -197,7 +201,7 @@ class RiverLevelService
 
         try {
             $url = self::BASE_URL."/stations?RLOIid={$rloiId}";
-            $response = Http::timeout(self::TIMEOUT)->get($url);
+            $response = Http::timeout(self::TIMEOUT)->retry(self::RETRY_TIMES, self::RETRY_DELAY_MS)->get($url);
 
             if ($response->successful()) {
                 $items = $response->json()['items'] ?? [];

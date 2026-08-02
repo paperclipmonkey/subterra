@@ -19,6 +19,12 @@ class SendTripTaggedEmail implements ShouldQueue
         if ($event->user->id === $event->creator->id) {
             return;
         }
+
+        // Respect the recipient's "email me when I'm tagged" preference
+        if (!$event->user->email_tagged) {
+            return;
+        }
+
         Mail::to($event->user->email)->send(new TripTaggedMail($event->trip, $event->user, $event->creator));
     }
 }

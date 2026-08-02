@@ -16,7 +16,9 @@ class RainfallService
     private const BASE_URL = 'https://environment.data.gov.uk/flood-monitoring/id';
     private const CACHE_TTL = 900; // 15 minutes
     private const METADATA_CACHE_TTL = 86400; // 24h
-    private const TIMEOUT = 10; // EA flood-monitoring API is slow for non-hot data
+    private const TIMEOUT = 20; // EA flood-monitoring API is slow for non-hot data, especially on first hit
+    private const RETRY_TIMES = 1;
+    private const RETRY_DELAY_MS = 500;
 
     /**
      * Fetch readings and station metadata concurrently, hitting only the
@@ -44,10 +46,12 @@ class RainfallService
                 $requests = [];
                 if ($needReadings) {
                     $requests[] = $pool->as('readings')->timeout(self::TIMEOUT)
+                        ->retry(self::RETRY_TIMES, self::RETRY_DELAY_MS)
                         ->get(self::BASE_URL."/stations/{$stationId}/readings?_limit=100&_sorted");
                 }
                 if ($needMetadata) {
                     $requests[] = $pool->as('metadata')->timeout(self::TIMEOUT)
+                        ->retry(self::RETRY_TIMES, self::RETRY_DELAY_MS)
                         ->get(self::BASE_URL."/stations/{$stationId}");
                 }
 

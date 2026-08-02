@@ -46,7 +46,10 @@ class DutyOfficerTestController extends Controller
     /** Send a test SMS + voice call to every active duty officer with a phone number. */
     public function testBroadcast(Request $request): JsonResponse
     {
-        $dutyOfficers = User::whereHas('roles', fn ($q) => $q->where('slug', 'duty_officer'))
+        // Match the escalation recipient list in CheckOverdueCallouts: the rota accepts
+        // platform admins as well as duty officers, so the confidence test must ring
+        // every phone that a real widened escalation would.
+        $dutyOfficers = User::whereHas('roles', fn ($q) => $q->whereIn('slug', ['duty_officer', 'platform_admin']))
             ->where('is_active', true)
             ->whereNotNull('phone')
             ->get();

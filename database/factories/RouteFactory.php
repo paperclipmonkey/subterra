@@ -25,8 +25,9 @@ class RouteFactory extends Factory
 
         return [
             'cave_system_id' => CaveSystem::factory(),
-            'entrance_id' => Cave::factory(),
-            'exit_id' => Cave::factory(),
+            // Entrance and exit must be caves within the route's own system.
+            'entrance_id' => fn (array $attributes) => $this->caveInSystem($attributes['cave_system_id']),
+            'exit_id' => fn (array $attributes) => $this->caveInSystem($attributes['cave_system_id']),
             'name' => $name,
             'slug' => Str::slug($name).'-'.Str::random(6),
             'description' => $this->faker->paragraphs(3, true),
@@ -34,5 +35,14 @@ class RouteFactory extends Factory
             'grade' => $this->faker->numberBetween(1, 5),
             'hero_image' => 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60', // Placeholder cave image
         ];
+    }
+
+    /**
+     * Pick an existing cave from the given system, creating one if it has none.
+     */
+    private function caveInSystem(int $caveSystemId): int
+    {
+        return Cave::where('cave_system_id', $caveSystemId)->inRandomOrder()->value('id')
+            ?? Cave::factory()->create(['cave_system_id' => $caveSystemId])->id;
     }
 }

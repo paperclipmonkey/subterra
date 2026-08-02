@@ -54,8 +54,27 @@
       </v-col>
     </v-row>
 
+    <!-- Admin-only notice — this cave is hidden from the public. -->
+    <v-alert
+      v-if="cave.visibility === 'admin_only'"
+      color="deep-orange-darken-2"
+      variant="tonal"
+      border="start"
+      density="comfortable"
+      :icon="mdiEyeOffOutline"
+      class="mb-4"
+    >
+      <strong>Admin-only cave — not publicly visible.</strong>
+      Only data admins can see this page. It is excluded from Subterra's lists, search, map and the AI assistant.
+    </v-alert>
+
     <!-- Hero Section -->
-    <v-card class="mb-4 rounded-xl position-relative cursor-pointer hero-img" elevation="2" @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }">
+    <v-card
+      class="mb-4 rounded-xl position-relative cursor-pointer hero-img"
+      :class="{ 'hero-img--admin-only': cave.visibility === 'admin_only' }"
+      elevation="2"
+      @click="activeTab = 'media'; if(cave.hero_video) { openImage(cave.hero_video) } else if(cave.hero_image) { openImage(cave.hero_image) }"
+    >
       <div class="cave-hero__media d-flex flex-column" style="width: 100%; position: relative; overflow: hidden; border-radius: inherit;">
         <video
           v-if="cave.hero_video?.preview_url || cave.hero_video?.url"
@@ -113,9 +132,21 @@
                 </v-list>
               </v-menu>
               <h1 class="text-h4 text-md-h3 font-weight-bold mb-2 cave-hero__title">{{ cave.name }}</h1>
-              <div class="cave-hero__location d-inline-flex align-center px-3 py-1">
-                <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
-                <span class="text-body-2 font-weight-medium">{{ cave.location_name }}, {{ cave.location_country }}</span>
+              <div class="d-flex flex-wrap align-center ga-2">
+                <div class="cave-hero__location d-inline-flex align-center px-3 py-1">
+                  <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
+                  <span class="text-body-2 font-weight-medium">{{ cave.location_name }}, {{ cave.location_country }}</span>
+                </div>
+                <v-chip
+                  v-if="cave.visibility === 'admin_only'"
+                  color="deep-orange"
+                  variant="flat"
+                  size="small"
+                  label
+                  :prepend-icon="mdiEyeOffOutline"
+                >
+                  Admin only
+                </v-chip>
               </div>
             </div>
             <div v-if="cave.hero_video?.photographer || cave.hero_image?.photographer" class="text-caption text-right opacity-70">
@@ -204,7 +235,7 @@
                   <div>
                     <div class="text-body-2 text-grey-darken-2">
                       Access information is restricted to approved club members.
-                      <router-link :to="`/profile/${appStore.user.id}`" class="text-decoration-none font-weight-bold">Join a club</router-link> to view details.
+                      <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Join a club</router-link> to view details.
                     </div>
                   </div>
                 </v-alert>
@@ -218,6 +249,23 @@
                 </v-alert>
               </div>
               <p v-else class="text-grey text-body-2">No specific access information provided.</p>
+
+              <!-- Private notes — registry managers only, never shown to the public. -->
+              <template v-if="cave.can_manage">
+                <v-divider class="my-6" />
+                <div class="d-flex align-center mb-3">
+                  <v-icon :icon="mdiEyeOffOutline" color="deep-orange-darken-2" class="mr-2" />
+                  <span class="text-h6 font-weight-bold">Private notes</span>
+                  <v-chip color="deep-orange" size="x-small" variant="flat" label class="ml-2">Admin only</v-chip>
+                </div>
+                <v-alert v-if="cave.private_notes" color="deep-orange-darken-2" variant="tonal" border="start" class="mb-4">
+                  <MarkdownRenderer :source="cave.private_notes" />
+                </v-alert>
+                <p v-else class="text-grey text-body-2 mb-4">
+                  No private notes yet —
+                  <router-link :to="`/caves/${route.params.id}/edit`" class="text-decoration-none font-weight-bold">add some</router-link>.
+                </p>
+              </template>
 
               <!-- Permit Booking Link -->
               <v-alert
@@ -382,9 +430,11 @@
                   </v-card>
                 </div>
 
-                <!-- Files -->
-                <div v-if="appStore.canSuggest && cave.system.files && cave.system.files.length > 0" class="mb-6">
-                  <div class="text-subtitle-1 font-weight-bold mb-2">Surveys & Documents</div>
+                <!-- Files (surveys, documents, historic photos). The API already
+                     scopes which files this viewer receives: managers also get
+                     private files, flagged below. -->
+                <div v-if="cave.system.files && cave.system.files.length > 0" class="mb-6">
+                  <div class="text-subtitle-1 font-weight-bold mb-2">Surveys, Documents & Photos</div>
                   <v-row dense>
                     <v-col v-for="file in cave.system.files" :key="file.id" cols="12" sm="6">
                       <v-card variant="outlined" class="h-100 hover-card" :href="file.url" target="_blank">
@@ -392,13 +442,29 @@
                           <v-avatar v-if="file.thumbnail_url" class="mr-3" rounded size="48">
                             <v-img :src="file.thumbnail_url" cover />
                           </v-avatar>
-                          <v-avatar v-else color="primary-lighten-5" class="mr-3" rounded>
-                            <v-icon color="primary" :icon="mdiFileDocumentOutline" />
+                          <v-avatar v-else :color="file.is_image ? 'indigo-lighten-5' : 'primary-lighten-5'" class="mr-3" rounded>
+                            <v-icon :color="file.is_image ? 'indigo' : 'primary'" :icon="file.is_image ? mdiImage : mdiFileDocumentOutline" />
                           </v-avatar>
                           <div class="flex-grow-1 overflow-hidden">
-                            <div class="text-body-2 font-weight-bold text-truncate">{{ file.original_filename }}</div>
-                            <div class="text-caption text-medium-emphasis">{{ file.details || 'No description' }}</div>
+                            <div class="text-body-2 font-weight-bold text-truncate">{{ file.title || file.original_filename }}</div>
+                            <div class="text-caption text-medium-emphasis">
+                              {{ file.kind }}<template v-if="file.details"> · {{ file.details }}</template>
+                            </div>
+                            <div v-if="file.photographer || file.copyright" class="text-caption text-medium-emphasis text-truncate">
+                              {{ [file.photographer, file.copyright ? `© ${file.copyright}` : null].filter(Boolean).join(' · ') }}
+                            </div>
                           </div>
+                          <v-chip
+                            v-if="file.visibility === 'private'"
+                            color="deep-orange"
+                            size="x-small"
+                            variant="tonal"
+                            label
+                            class="mr-2"
+                            :prepend-icon="mdiEyeOffOutline"
+                          >
+                            Admin only
+                          </v-chip>
                           <v-icon size="small" color="grey" :icon="mdiDownload" />
                         </div>
                       </v-card>
@@ -406,8 +472,8 @@
                   </v-row>
                 </div>
 
-                <!-- Unapproved User Placeholder -->
-                <div v-if="!appStore.canSuggest" class="text-center pa-8 bg-grey-lighten-5 rounded-lg border border-dashed">
+                <!-- Unapproved User Placeholder (only when there's nothing to show) -->
+                <div v-if="!appStore.canSuggest && (!cave.system.files || cave.system.files.length === 0)" class="text-center pa-8 bg-grey-lighten-5 rounded-lg border border-dashed">
                   <v-icon size="48" color="grey-lighten-1" class="mb-3" :icon="mdiShieldLockOutline" />
                   <div class="text-body-1 font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
                   <div class="text-caption text-grey-darken-1 mb-4">
@@ -491,7 +557,7 @@
             <!-- Routes Tab -->
             <v-window-item value="routes">
               <template v-if="cave.system && cave.system.routes && cave.system.routes.length > 0">
-                <RouteList :routes="cave.system.routes" :cave-system-id="cave.system.id" />
+                <RouteList :routes="cave.system.routes" :cave-system-id="cave.system.id" :entrance-count="cave.system.caves?.length || 0" />
               </template>
               <v-alert v-else-if="cave.system" type="info" variant="tonal">
                 <div class="d-flex justify-space-between align-center">
@@ -681,7 +747,7 @@
 <script setup>
 import AppMap from '@/components/AppMap.vue'
 import { api } from '@/plugins/api'
-import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronDown, mdiChevronRight, mdiContentCopy, mdiDownload, mdiFileDocumentOutline, mdiGoogleMaps, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiRefresh, mdiShieldLockOutline, mdiWater } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronDown, mdiChevronRight, mdiContentCopy, mdiDownload, mdiEyeOffOutline, mdiFileDocumentOutline, mdiGoogleMaps, mdiImage, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiRefresh, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { useDisplay } from 'vuetify'
@@ -789,6 +855,15 @@ const allMedia = computed(() => {
       return acc
     }, [])
     mediaList.push(...tripMedia)
+  }
+
+  // Add image files attached to the system (e.g. historic photos). The API only
+  // includes files this viewer is allowed to see.
+  if (cave.value?.system?.files) {
+    const imageFiles = cave.value.system.files
+      .filter(f => f.is_image)
+      .map(f => ({ ...f, type: 'system_file', title: f.title || f.original_filename }))
+    mediaList.push(...imageFiles)
   }
 
   return mediaList
@@ -1219,6 +1294,16 @@ function renderAnnotationOverlays (map) {
 
   &:hover {
     filter: brightness(0.93);
+  }
+}
+
+/* Admin-only caves get a darker, warm-tinted hero + ringed border so they read
+   at a glance as "not public". */
+.hero-img--admin-only {
+  outline: 2px solid rgb(var(--v-theme-deep-orange-darken-2, 216 67 21));
+
+  .cave-hero__media {
+    filter: brightness(0.7) sepia(0.25) hue-rotate(-10deg);
   }
 }
 

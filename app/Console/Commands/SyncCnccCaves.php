@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\UpsertsBotSuggestedEdits;
 use App\Models\Cave;
 use App\Models\CaveSystem;
-use App\Models\SuggestedEdit;
 use App\Models\Tag;
 use App\Support\CaveName;
 use Illuminate\Console\Command;
@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 
 class SyncCnccCaves extends Command
 {
+    use UpsertsBotSuggestedEdits;
+
     protected $signature = 'sync:cncc-caves
                             {--dry-run : Parse without inserting data}
                             {--blocklist= : Comma-separated list of cave names to always skip}';
@@ -109,19 +111,26 @@ class SyncCnccCaves extends Command
                 // -----------------------------------------------------------------
                 // 1. Cave System
                 // -----------------------------------------------------------------
-                $systemName = $name;
-                $systemSlug = Str::slug($systemName);
-                $system = CaveName::findSystemForRegistry($systemName, $systemSlug, 'cncc', $lat, $lng);
-
+                // An adopted cave keeps its real system: find-or-creating one from
+                // the cave name here would orphan references onto an empty system
+                // when the cave belongs to a differently-named system.
                 $systemIsNew = false;
-                if (!$system) {
-                    $system = CaveSystem::create([
-                        'name' => $systemName,
-                        'slug' => $this->uniqueSlug($systemSlug, 'cave_systems'),
-                        'length' => 0,
-                        'vertical_range' => 0,
-                    ]);
-                    $systemIsNew = true;
+                if ($existingCave && $existingCave->system) {
+                    $system = $existingCave->system;
+                } else {
+                    $systemName = $name;
+                    $systemSlug = Str::slug($systemName);
+                    $system = CaveName::findSystemForRegistry($systemName, $systemSlug, 'cncc', $lat, $lng);
+
+                    if (!$system) {
+                        $system = CaveSystem::create([
+                            'name' => $systemName,
+                            'slug' => $this->uniqueSlug($systemSlug, 'cave_systems'),
+                            'length' => 0,
+                            'vertical_range' => 0,
+                        ]);
+                        $systemIsNew = true;
+                    }
                 }
 
                 // -----------------------------------------------------------------
@@ -142,26 +151,12 @@ class SyncCnccCaves extends Command
 
                         $suggestedValue = implode("\n", array_merge($existingRefs, [$registryLinkMd]));
 
-                        $existingPendingEdit = SuggestedEdit::where('suggestable_type', CaveSystem::class)
-                            ->where('suggestable_id', $system->id)
-                            ->where('status', 'pending')
-                            ->first();
-
-                        if ($existingPendingEdit) {
-                            $existingPendingEdit->update([
-                                'original_data' => array_merge($existingPendingEdit->original_data, ['references' => $system->references]),
-                                'suggested_data' => array_merge($existingPendingEdit->suggested_data, ['references' => $suggestedValue]),
-                            ]);
-                        } else {
-                            SuggestedEdit::create([
-                                'user_id' => null,
-                                'suggestable_type' => CaveSystem::class,
-                                'suggestable_id' => $system->id,
-                                'original_data' => ['references' => $system->references],
-                                'suggested_data' => ['references' => $suggestedValue],
-                                'status' => 'pending',
-                            ]);
-                        }
+                        $this->upsertBotSuggestedEdit(
+                            CaveSystem::class,
+                            $system->id,
+                            ['references' => $system->references],
+                            ['references' => $suggestedValue],
+                        );
                         ++$suggestedEditCount;
                     }
                 }
@@ -210,28 +205,9 @@ class SyncCnccCaves extends Command
                                 : $val;
                         }
 
-                        $existingPendingEdit = SuggestedEdit::where('suggestable_type', Cave::class)
-                            ->where('suggestable_id', $existingCave->id)
-                            ->where('status', 'pending')
-                            ->first();
-
-                        if ($existingPendingEdit) {
-                            $existingPendingEdit->update([
-                                'original_data' => $originalData,
-                                'suggested_data' => $differences,
-                            ]);
-                            $this->line("<fg=yellow>  ✏ Updated suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
-                        } else {
-                            SuggestedEdit::create([
-                                'user_id' => null,
-                                'suggestable_type' => Cave::class,
-                                'suggestable_id' => $existingCave->id,
-                                'original_data' => $originalData,
-                                'suggested_data' => $differences,
-                                'status' => 'pending',
-                            ]);
-                            $this->line("<fg=yellow>  ✏ Created suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
-                        }
+                        $edit = $this->upsertBotSuggestedEdit(Cave::class, $existingCave->id, $originalData, $differences);
+                        $action = $edit->wasRecentlyCreated ? 'Created' : 'Updated';
+                        $this->line("<fg=yellow>  ✏ {$action} suggested edit:</> {$name} <fg=gray>[".implode(', ', array_keys($differences)).']</>');
                         ++$suggestedEditCount;
                     } else {
                         $this->line("<fg=blue>  ⊘ No changes:</> {$name}");
@@ -282,7 +258,7 @@ class SyncCnccCaves extends Command
                 DB::rollBack();
                 $this->info("Dry run completed: {$importedCount} would be processed, {$skippedCount} skipped.");
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             $this->error('Error during sync: '.$e->getMessage());
             $this->error($e->getTraceAsString());

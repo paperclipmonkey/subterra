@@ -6,6 +6,10 @@
       </v-btn>
       <h2 class="text-h4 font-weight-bold ml-2">Permits</h2>
       <v-spacer />
+      <v-btn color="primary" variant="text" to="/admin/bookings" class="mr-2">
+        <v-icon :icon="mdiClipboardCheck" class="mr-1" />
+        View and manage bookings
+      </v-btn>
       <v-btn color="primary" @click="openCreateDialog">
         <v-icon :icon="mdiPlus" class="mr-1" />
         New Permit
@@ -58,6 +62,9 @@
       </template>
 
       <template #item.actions="{ item }">
+        <v-btn icon variant="text" size="small" title="Get embed code" @click.stop="openEmbedDialog(item)">
+          <v-icon :icon="mdiCodeTags" size="small" />
+        </v-btn>
         <v-btn icon variant="text" size="small" @click.stop="openEditDialog(item)">
           <v-icon :icon="mdiPencil" size="small" />
         </v-btn>
@@ -109,6 +116,27 @@
               >
                 Remove current photo
               </v-btn>
+
+              <v-row v-if="existingPhotoUrl || photoFile" dense class="mt-1">
+                <v-col cols="12" sm="6">
+                  <v-text-field
+                    v-model="form.photo_photographer"
+                    label="Photographer"
+                    density="compact"
+                    hide-details="auto"
+                    :prepend-inner-icon="mdiCamera"
+                  />
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field
+                    v-model="form.photo_copyright"
+                    label="Licence / Copyright"
+                    density="compact"
+                    hide-details="auto"
+                    :prepend-inner-icon="mdiCopyright"
+                  />
+                </v-col>
+              </v-row>
             </div>
 
             <v-textarea v-model="form.conditions" label="Conditions" rows="3" hint="Applicants must accept these conditions" persistent-hint class="mb-2" />
@@ -212,13 +240,73 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Embed Code -->
+    <v-dialog v-model="embedDialog" max-width="720">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon :icon="mdiCodeTags" class="mr-2" />
+          Embed “{{ embedPermit?.name }}” calendar
+        </v-card-title>
+        <v-card-text>
+          <p class="text-body-2 text-grey-darken-2 mb-3">
+            Paste this HTML into any web page to embed a live, read-only availability
+            calendar for this permit. Visitors can browse months and click through to
+            Subterra to book — no login is required just to view it.
+          </p>
+
+          <v-alert
+            v-if="!embedPermit?.is_active"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+          >
+            This permit is currently <strong>inactive</strong>, so the embedded calendar
+            won’t load until you set it active.
+          </v-alert>
+
+          <v-textarea
+            :model-value="embedSnippet"
+            label="Embed code"
+            readonly
+            auto-grow
+            rows="4"
+            variant="outlined"
+            class="embed-code mb-3"
+          />
+
+          <div class="d-flex ga-2 mb-4">
+            <v-btn :prepend-icon="mdiContentCopy" color="primary" @click="copyEmbed">Copy code</v-btn>
+            <v-btn :prepend-icon="mdiOpenInNew" variant="outlined" :href="embedUrl" target="_blank" rel="noopener">
+              Open preview
+            </v-btn>
+          </div>
+
+          <div class="text-caption text-grey-darken-1 mb-1">Preview</div>
+          <div class="embed-preview">
+            <iframe
+              v-if="embedDialog"
+              :src="embedUrl"
+              :title="`${embedPermit?.name} availability`"
+              style="width: 100%; height: 100%; border: 0;"
+              loading="lazy"
+            />
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="embedDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { mdiArrowLeft, mdiCamera, mdiCheckCircle, mdiCloseCircle, mdiDelete, mdiMagnify, mdiPencil, mdiPlus } from '@mdi/js'
+import { mdiArrowLeft, mdiCamera, mdiCheckCircle, mdiClipboardCheck, mdiCloseCircle, mdiCodeTags, mdiContentCopy, mdiCopyright, mdiDelete, mdiMagnify, mdiOpenInNew, mdiPencil, mdiPlus } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
 
@@ -237,6 +325,8 @@ const allCaves = ref([])
 const allUsers = ref([])
 const dialog = ref(false)
 const deleteDialog = ref(false)
+const embedDialog = ref(false)
+const embedPermit = ref(null)
 const editing = ref(false)
 const editingId = ref(null)
 const deletingPermit = ref(null)
@@ -258,6 +348,8 @@ const defaultForm = () => ({
   name: '',
   slug: '',
   description: '',
+  photo_photographer: '',
+  photo_copyright: '',
   conditions: '',
   has_max_groups_per_day: false,
   max_groups_per_day: 1,
@@ -309,6 +401,45 @@ const openCreateDialog = () => {
   dialog.value = true
 }
 
+const embedUrl = computed(() =>
+  embedPermit.value ? `${window.location.origin}/embed/permits/${embedPermit.value.slug}` : ''
+)
+
+// HTML-escape every attribute-sensitive character so a permit name containing
+// &, <, >, " or ' can't break the snippet or inject attributes when pasted.
+const escapeHtml = (str) => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
+
+// Plain responsive iframe — full width, sensible min-height, scrolls internally
+// on very small screens. No external script needed.
+const embedSnippet = computed(() => {
+  if (!embedPermit.value) return ''
+  const title = escapeHtml(embedPermit.value.name || 'Permit')
+  return `<iframe
+  src="${embedUrl.value}"
+  title="${title} — availability"
+  style="width:100%;min-height:680px;border:0"
+  loading="lazy"></iframe>`
+})
+
+const openEmbedDialog = (permit) => {
+  embedPermit.value = permit
+  embedDialog.value = true
+}
+
+const copyEmbed = async () => {
+  try {
+    await navigator.clipboard.writeText(embedSnippet.value)
+    notificationStore.showSuccess('Embed code copied to clipboard.')
+  } catch (e) {
+    notificationStore.showError('Could not copy — select the code and copy it manually.')
+  }
+}
+
 const openEditDialog = (permit) => {
   editing.value = true
   editingId.value = permit.slug
@@ -316,6 +447,8 @@ const openEditDialog = (permit) => {
     name: permit.name,
     slug: permit.slug,
     description: permit.description || '',
+    photo_photographer: permit.photo?.photographer || '',
+    photo_copyright: permit.photo?.copyright || '',
     conditions: permit.conditions || '',
     has_max_groups_per_day: permit.has_max_groups_per_day,
     max_groups_per_day: permit.max_groups_per_day || 1,
@@ -331,7 +464,7 @@ const openEditDialog = (permit) => {
     officer_ids: (permit.officers || []).map(o => o.id),
   }
   photoFile.value = null
-  existingPhotoUrl.value = permit.photo_url || null
+  existingPhotoUrl.value = permit.photo?.url || null
   dialog.value = true
 }
 
@@ -414,3 +547,18 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.embed-code :deep(textarea) {
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.embed-preview {
+  height: 420px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  overflow: auto;
+  background: #fafafa;
+}
+</style>

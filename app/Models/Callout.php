@@ -60,6 +60,22 @@ class Callout extends Model
         'request_data' => 'array',
     ];
 
+    /**
+     * Forensic/safeguarding metadata captured server-side. This is never part of
+     * an API response — it exists only for internal incident review — so it is
+     * hidden from serialisation as defence in depth, on top of CalloutResource
+     * which already omits it. (`request_data`/`cancelled_ip` contain IP
+     * addresses, which are personal data under UK GDPR.).
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'request_data',
+        'cancelled_ip',
+        'cancelled_user_agent',
+        'cancelled_location',
+    ];
+
     /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {

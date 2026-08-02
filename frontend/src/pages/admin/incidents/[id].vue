@@ -458,6 +458,13 @@ export default {
         }
       },
       immediate: false // fetchIncident calls it manually or via onMapLoad
+    },
+    // The router reuses this component when navigating between incidents, so
+    // mounted() won't re-fire — refetch when the id changes.
+    '$route.params.id'(id, prev) {
+      if (id && id !== prev) {
+        this.fetchIncident()
+      }
     }
   },
   async mounted() {

@@ -224,7 +224,7 @@
 
 <script setup>
 import { mdiArrowLeft, mdiArrowRight, mdiCompare, mdiOpenInNew, mdiRobotOutline } from '@mdi/js'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/plugins/api.js'
 import { useNotificationStore } from '@/stores/notifications'
@@ -532,6 +532,12 @@ const reject = async () => {
 
 onMounted(() => {
     fetchSuggestion()
+})
+
+// The router reuses this component when navigating between suggestions, so
+// onMounted won't re-fire — refetch when the id changes.
+watch(() => route.params.id, (id, prev) => {
+    if (id && id !== prev) fetchSuggestion()
 })
 </script>
 

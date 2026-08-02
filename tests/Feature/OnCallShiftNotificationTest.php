@@ -27,8 +27,8 @@ class OnCallShiftNotificationTest extends TestCase
 
         $this->actingAs($admin)->postJson('/api/admin/shifts', [
             'user_id' => $admin->id,
-            'start_at' => now()->addHours(2)->toDateTimeString(),
-            'end_at' => now()->addHours(10)->toDateTimeString(),
+            'start_at' => now()->addHours(2)->toIso8601String(),
+            'end_at' => now()->addHours(10)->toIso8601String(),
         ]);
 
         SlackAlert::expectNoMessagesSent();
@@ -72,6 +72,27 @@ class OnCallShiftNotificationTest extends TestCase
             ->assertExitCode(0);
 
         SlackAlert::expectNoMessagesSent();
+    }
+
+    public function test_command_ignores_shifts_that_already_ended()
+    {
+        // Regression (L2): after scheduler downtime, a shift that started AND ended in
+        // the meantime must not be announced — a stale "is now ON CALL" alert would
+        // misstate who is covering callouts.
+        $user = User::factory()->dutyOfficer()->create();
+
+        $shift = OnCallShift::create([
+            'user_id' => $user->id,
+            'start_at' => now()->subHours(10),
+            'end_at' => now()->subHours(2),
+        ]);
+
+        $this->artisan('shifts:notify-started')
+            ->doesntExpectOutput("Notified for shift ID: {$shift->id}")
+            ->assertExitCode(0);
+
+        SlackAlert::expectNoMessagesSent();
+        $this->assertNull($shift->refresh()->notified_at);
     }
 
     public function test_command_ignores_future_shifts()

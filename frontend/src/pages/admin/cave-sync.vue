@@ -97,9 +97,15 @@ const registries = [
     url: 'cambriancavingcouncil.org.uk',
     description: 'Cambrian Caving Council — Welsh cave registry.',
   },
+  {
+    id: 'osm',
+    label: 'OpenStreetMap (UK-wide)',
+    url: 'openstreetmap.org',
+    description: 'Named UK cave entrances from OpenStreetMap, licensed under the ODbL (open data, attribution + share-alike).',
+  },
 ]
 
-const loading = reactive({ mcra: false, fod: false, gsg: false, cncc: false, pdc: false, ccr: false })
+const loading = reactive({ mcra: false, fod: false, gsg: false, cncc: false, pdc: false, ccr: false, osm: false })
 
 const snackbar = reactive({ show: false, message: '', color: 'success' })
 

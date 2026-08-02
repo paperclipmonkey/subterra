@@ -176,6 +176,45 @@ class PermitTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function calendar_reports_pending_bookings_separately_and_keeps_day_available()
+    {
+        $permit = Permit::factory()->withMaxGroups(2)->create();
+        $date = now()->format('Y-m-d');
+
+        // One approved + one pending = capacity of 2 would be reached if the
+        // pending one is approved, but the day is still available to apply for now.
+        Booking::factory()->approved()->create(['permit_id' => $permit->id, 'date' => $date]);
+        Booking::factory()->create(['permit_id' => $permit->id, 'date' => $date]); // pending by default
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->getJson("/api/permits/{$permit->slug}/calendar?month=".now()->format('Y-m'));
+
+        $response->assertStatus(200)
+            ->assertJsonPath("data.{$date}.booking_count", 1)
+            ->assertJsonPath("data.{$date}.pending_count", 1)
+            ->assertJsonPath("data.{$date}.available", true);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function calendar_marks_day_full_when_approved_bookings_reach_capacity()
+    {
+        $permit = Permit::factory()->withMaxGroups(2)->create();
+        $date = now()->format('Y-m-d');
+
+        Booking::factory()->approved()->count(2)->create(['permit_id' => $permit->id, 'date' => $date]);
+        // Pending applications on an already-full day must not inflate the approved count.
+        Booking::factory()->create(['permit_id' => $permit->id, 'date' => $date]);
+
+        $response = $this->actingAs($this->regularUser, 'sanctum')
+            ->getJson("/api/permits/{$permit->slug}/calendar?month=".now()->format('Y-m'));
+
+        $response->assertStatus(200)
+            ->assertJsonPath("data.{$date}.booking_count", 2)
+            ->assertJsonPath("data.{$date}.pending_count", 1)
+            ->assertJsonPath("data.{$date}.available", false);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_can_submit_booking_application()
     {
         Mail::fake();
@@ -298,6 +337,7 @@ class PermitTest extends TestCase
     public function access_officer_can_list_all_bookings()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         Booking::factory()->count(5)->create(['permit_id' => $permit->id]);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
@@ -427,6 +467,7 @@ class PermitTest extends TestCase
     public function admin_can_filter_bookings_by_status()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         Booking::factory()->count(3)->create(['permit_id' => $permit->id, 'status' => 'pending']);
         Booking::factory()->count(2)->approved()->create(['permit_id' => $permit->id]);
 
@@ -442,6 +483,8 @@ class PermitTest extends TestCase
     {
         $permit1 = Permit::factory()->create();
         $permit2 = Permit::factory()->create();
+        $permit1->officers()->attach($this->accessOfficer->id);
+        $permit2->officers()->attach($this->accessOfficer->id);
         Booking::factory()->count(3)->create(['permit_id' => $permit1->id]);
         Booking::factory()->count(2)->create(['permit_id' => $permit2->id]);
 
@@ -609,6 +652,7 @@ class PermitTest extends TestCase
         Mail::fake();
 
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->postJson('/api/admin/bookings', [
@@ -663,6 +707,7 @@ class PermitTest extends TestCase
     public function access_officer_can_manually_create_booking_without_user()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->postJson('/api/admin/bookings', [
@@ -691,6 +736,7 @@ class PermitTest extends TestCase
         Mail::fake();
 
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         $booking = Booking::factory()->create([
             'permit_id' => $permit->id,
             'user_id' => $this->regularUser->id,
@@ -712,6 +758,7 @@ class PermitTest extends TestCase
     public function message_requires_message_field()
     {
         $booking = Booking::factory()->create(['user_id' => $this->regularUser->id]);
+        $booking->permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->postJson("/api/admin/bookings/{$booking->short_id}/message", []);
@@ -723,9 +770,44 @@ class PermitTest extends TestCase
     // --- Admin Cancel Booking ---
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_cannot_act_on_permits_they_do_not_administer()
+    {
+        Mail::fake();
+
+        $permit = Permit::factory()->create();
+        $booking = Booking::factory()->approved()->create(['permit_id' => $permit->id]);
+
+        // Not an officer of this permit: cancel, message, and manual creation
+        // are all refused, and the booking list excludes its bookings.
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/cancel")
+            ->assertStatus(403);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson("/api/admin/bookings/{$booking->short_id}/message", ['message' => 'Hello'])
+            ->assertStatus(403);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/bookings', [
+                'permit_slug' => $permit->slug,
+                'date' => now()->addDays(5)->format('Y-m-d'),
+                'participants' => 1,
+            ])
+            ->assertStatus(403);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->getJson('/api/admin/bookings')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'data');
+
+        Mail::assertNothingQueued();
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function access_officer_can_cancel_booking()
     {
         $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
         $booking = Booking::factory()->approved()->create([
             'permit_id' => $permit->id,
             'user_id' => $this->regularUser->id,
@@ -747,6 +829,7 @@ class PermitTest extends TestCase
     public function access_officer_can_cancel_pending_booking()
     {
         $booking = Booking::factory()->create(['status' => 'pending']);
+        $booking->permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
@@ -759,6 +842,7 @@ class PermitTest extends TestCase
     public function cannot_cancel_already_rejected_booking()
     {
         $booking = Booking::factory()->create(['status' => 'rejected']);
+        $booking->permit->officers()->attach($this->accessOfficer->id);
 
         $response = $this->actingAs($this->accessOfficer, 'sanctum')
             ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
@@ -777,5 +861,80 @@ class PermitTest extends TestCase
             ->putJson("/api/admin/bookings/{$booking->short_id}/cancel");
 
         $response->assertStatus(403);
+    }
+
+    // --- Permit photo & credits ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function access_officer_can_save_photo_credits_on_a_permit()
+    {
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/permits/{$permit->slug}", [
+                'photo_photographer' => 'Bartek Biela',
+                'photo_copyright' => 'CC BY-SA 4.0',
+            ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('permits', [
+            'id' => $permit->id,
+            'photo_photographer' => 'Bartek Biela',
+            'photo_copyright' => 'CC BY-SA 4.0',
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function uploading_a_permit_photo_stores_it_and_dispatches_conversion()
+    {
+        \Illuminate\Support\Facades\Storage::fake('media');
+        \Illuminate\Support\Facades\Bus::fake([\App\Jobs\ProcessImageCloudJob::class]);
+
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('permit.jpg');
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson("/api/admin/permits/{$permit->slug}/photo", ['photo' => $file]);
+
+        $response->assertStatus(200);
+
+        $permit->refresh();
+        $this->assertNotNull($permit->photo_path);
+        \Illuminate\Support\Facades\Storage::disk('media')->assertExists($permit->photo_path);
+
+        // The photo is exposed as a structured object (url/srcset/credits), not a bare string.
+        $response->assertJsonStructure(['photo' => ['url', 'srcset', 'photographer', 'copyright']]);
+
+        \Illuminate\Support\Facades\Bus::assertDispatched(
+            \App\Jobs\ProcessImageCloudJob::class,
+            fn ($job) => $job->filePath === $permit->photo_path
+                && $job->mediaModel === \App\Models\Permit::class
+                && $job->mediaId === $permit->id
+        );
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function deleting_a_permit_photo_clears_path_and_original()
+    {
+        \Illuminate\Support\Facades\Storage::fake('media');
+
+        $permit = Permit::factory()->create([
+            'photo_path' => 'permits/example_desktop.webp',
+            'original_filename' => 'permits/example.jpg',
+        ]);
+        $permit->officers()->attach($this->accessOfficer->id);
+
+        $response = $this->actingAs($this->accessOfficer, 'sanctum')
+            ->deleteJson("/api/admin/permits/{$permit->slug}/photo");
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('permits', [
+            'id' => $permit->id,
+            'photo_path' => null,
+            'original_filename' => null,
+        ]);
     }
 }

@@ -12,7 +12,19 @@ rr
 frankenphp
 vendor
 
-# 2. Ignore common files/directories we don't need
+# 2. Never ship secrets or local dev state
+gcp-key.json
+**/.env
+**/.env.*
+terraform/
+gcp-watchdog/
+gcp-image-processor/
+database.sqlite
+fly_database/
+tests/
+docs/
+
+# 3. Ignore common files/directories we don't need
 fly.toml
 .vscode
 .idea

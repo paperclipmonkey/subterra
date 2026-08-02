@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,7 @@ class ClubController extends Controller
      */
     public function index(): ResourceCollection
     {
-        $clubs = Club::withCount('users')
+        $clubs = Club::withCount(['approvedUsers as users_count'])
                      ->where('is_active', true)
                      ->orderBy('name')
                      ->get();
@@ -39,7 +40,7 @@ class ClubController extends Controller
      */
     public function adminIndex(): ResourceCollection
     {
-        $clubs = Club::withCount('users')
+        $clubs = Club::withCount(['approvedUsers as users_count'])
                      ->orderBy('name')
                      ->get();
 
@@ -54,7 +55,7 @@ class ClubController extends Controller
         if (!$club->is_active && !(auth()->check() && auth()->user()->is_admin)) {
             return response()->json(['message' => 'Club not found or access denied.'], 404);
         }
-        $club->loadCount('users');
+        $club->loadCount(['approvedUsers as users_count']);
 
         if (auth()->check()) {
             $user = auth()->user();
@@ -91,7 +92,7 @@ class ClubController extends Controller
         $validatedData['is_active'] = $request->input('is_active', true);
 
         $club = Club::create($validatedData);
-        $club->loadCount('users');
+        $club->loadCount(['approvedUsers as users_count']);
 
         return response()->json(new ClubDetailResource($club), 201);
     }
@@ -121,7 +122,7 @@ class ClubController extends Controller
 
         $club->update($validator->validated());
 
-        return response()->json(new ClubDetailResource($club->fresh()->loadCount('users')));
+        return response()->json(new ClubDetailResource($club->fresh()->loadCount(['approvedUsers as users_count'])));
     }
 
     /**
@@ -146,7 +147,7 @@ class ClubController extends Controller
         $club->is_active = !$club->is_active;
         $club->save();
 
-        return response()->json(new ClubDetailResource($club->fresh()->loadCount('users')));
+        return response()->json(new ClubDetailResource($club->fresh()->loadCount(['approvedUsers as users_count'])));
     }
 
     /**
@@ -163,7 +164,14 @@ class ClubController extends Controller
             return response()->json(['message' => 'You are already a member or your request is pending.'], 409);
         }
 
-        $club->users()->attach($user->id, ['status' => 'pending']);
+        try {
+            $club->users()->attach($user->id, ['status' => 'pending']);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            // Check-then-attach race (e.g. a double-click): the row already
+            // exists, so return the same conflict response instead of a 500.
+            return response()->json(['message' => 'You are already a member or your request is pending.'], 409);
+        }
+
         event(new ClubAccessRequested($club, $user));
 
         return response()->json(['message' => 'Join request sent successfully.'], 201);
@@ -211,7 +219,31 @@ class ClubController extends Controller
         }
 
         try {
-            $club->approvedUsers()->sync($syncData);
+            DB::transaction(function () use ($club, $syncData) {
+                // Diff against the unfiltered relation: a member in the list
+                // who currently has a pending row must be promoted via an
+                // update, not re-attached (which would hit the unique index).
+                $currentStatuses = $club->users()->pluck('club_user.status', 'users.id');
+
+                // Detach approved members omitted from the list. Pending
+                // requests are managed separately and stay untouched.
+                $removeIds = $currentStatuses
+                    ->filter(fn ($status) => $status === 'approved')
+                    ->keys()
+                    ->diff(array_keys($syncData));
+
+                if ($removeIds->isNotEmpty()) {
+                    $club->users()->detach($removeIds->all());
+                }
+
+                foreach ($syncData as $userId => $pivot) {
+                    if ($currentStatuses->has($userId)) {
+                        $club->users()->updateExistingPivot($userId, $pivot);
+                    } else {
+                        $club->users()->attach($userId, $pivot);
+                    }
+                }
+            });
 
             return $this->getApprovedMembers($club);
         } catch (\Exception $e) {
@@ -237,6 +269,17 @@ class ClubController extends Controller
 
     public function approveMember(Club $club, User $user): UserDetailEmailResource
     {
+        // Only a genuinely pending request can be approved — otherwise the
+        // update is a silent no-op yet the "approved" email would still fire.
+        $isPending = $club->users()
+            ->where('user_id', $user->id)
+            ->wherePivot('status', 'pending')
+            ->exists();
+
+        if (!$isPending) {
+            abort(422, 'User has no pending membership request for this club.');
+        }
+
         $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
         event(new ClubAccessResponded($club, $user, 'approved'));
 
@@ -245,6 +288,15 @@ class ClubController extends Controller
 
     public function rejectMember(Request $request, Club $club, User $user): JsonResponse
     {
+        $isPending = $club->users()
+            ->where('user_id', $user->id)
+            ->wherePivot('status', 'pending')
+            ->exists();
+
+        if (!$isPending) {
+            return response()->json(['message' => 'User has no pending membership request for this club.'], 422);
+        }
+
         $club->users()->detach($user->id);
         $reason = $request->input('reason');
         event(new ClubAccessResponded($club, $user, 'rejected', $reason));

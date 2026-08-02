@@ -38,7 +38,7 @@
       <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? mdiAccountClock : mdiAccountPlus }}</v-icon>
       <span class="font-weight-bold">{{ hasPendingApprovals ? 'MEMBERSHIP PENDING' : 'MEMBERSHIP REQUIRED' }}</span>
       <v-spacer />
-      <span>{{ hasPendingApprovals ? 'Your club application is being reviewed' : 'Join a club to unlock full access' }}</span>
+      <span class="d-none d-sm-inline">{{ hasPendingApprovals ? 'Your club application is being reviewed' : 'Join a club to unlock full access' }}</span>
       <v-btn variant="text" size="small" class="ml-4" to="/waitlist" color="white" border>
         {{ hasPendingApprovals ? 'Check Status' : 'Join Club' }}
       </v-btn>

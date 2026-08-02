@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\IncidentResource;
 use App\Models\Incident;
 use App\Services\IncidentService;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class IncidentController extends Controller
             ->take(20)
             ->get();
 
-        return response()->json(['data' => $incidents]);
+        return IncidentResource::collection($incidents);
     }
 
     /**
@@ -42,7 +43,7 @@ class IncidentController extends Controller
         ])->findOrFail($id);
 
         return response()->json([
-            'data' => $incident,
+            'data' => new IncidentResource($incident),
             // Region-specific 999 / cave-rescue guidance for the Rescue Protocol script.
             'rescue_info' => app(\App\Services\CaveRescueService::class)->forCave($incident->callout?->cave),
             // Per-recipient SMS delivery for this incident's callout (most recent first).
@@ -67,7 +68,7 @@ class IncidentController extends Controller
 
         app(IncidentService::class)->acknowledge($incident, Auth::user(), 'the dashboard');
 
-        return response()->json(['data' => $incident->fresh()->load('controller')]);
+        return response()->json(['data' => new IncidentResource($incident->fresh()->load('controller'))]);
     }
 
     /**

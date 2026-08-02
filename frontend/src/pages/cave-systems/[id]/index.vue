@@ -2,17 +2,6 @@
   <div>
     <div class="d-flex justify-end pa-4">
       <v-btn
-        v-if="canUsePip && caveSystem"
-        color="deep-purple"
-        variant="text"
-        size="small"
-        :prepend-icon="mdiRobotOutline"
-        :to="`/pip?context=${encodeURIComponent('Tell me about ' + caveSystem.name + '. What should I know before visiting?')}`"
-        class="mr-2"
-      >
-        Ask Pip
-      </v-btn>
-      <v-btn
         v-if="appStore.user && (appStore.user.is_admin || appStore.canSuggest)"
         color="primary"
         variant="text"
@@ -56,7 +45,12 @@
       </v-row>
       <v-row>
         <v-col cols="12">
-          <RouteList :routes="caveSystem.routes" :cave-system-id="caveSystem.id" />
+          <SystemCaveList :caves="caveSystem.caves" />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
+          <RouteList :routes="caveSystem.routes" :cave-system-id="caveSystem.id" :entrance-count="caveSystem.caves?.length || 0" />
         </v-col>
       </v-row>
     </v-container>
@@ -64,11 +58,12 @@
 </template>
 
 <script setup>
-import { mdiPencil, mdiPencilOff, mdiRobotOutline } from '@mdi/js'
+import { mdiPencil, mdiPencilOff } from '@mdi/js'
 
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
+import SystemCaveList from '@/components/cave-systems/SystemCaveList.vue'
 import AnnotationMapViewer from '@/components/cave-systems/AnnotationMapViewer.vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
@@ -76,11 +71,6 @@ import { api } from '@/plugins/api'
 const appStore = useAppStore()
 const route = useRoute()
 const caveSystem = ref(null)
-
-const canUsePip = computed(() => {
-  const roles = appStore.user?.roles ?? []
-  return roles.some(r => r.slug === 'platform_admin' || r.slug === 'pip_access')
-})
 
 const load = async () => {
   try {

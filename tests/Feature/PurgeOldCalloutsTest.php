@@ -26,9 +26,16 @@ class PurgeOldCalloutsTest extends TestCase
         $callout = Callout::factory()->create([
             'created_at' => $oldDate,
             'status' => 'cancelled',
+            'description' => 'Going to Swildons via short round',
             'car_details' => 'Blue Ford Focus ABC 123',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Bull Pot Farm',
             'team_details' => 'Medical condition: Asthma',
             'trip_plan' => 'Going to Swildons via short round',
+            'location_data' => ['latitude' => 54.2, 'longitude' => -2.5],
+            'request_data' => ['ip' => '203.0.113.7', 'user_agent' => 'Mozilla/5.0'],
+            'cancelled_ip' => '203.0.113.9',
+            'cancelled_user_agent' => 'Mozilla/5.0 (cancel)',
             'user_id' => $user->id,
         ]);
 
@@ -54,9 +61,16 @@ class PurgeOldCalloutsTest extends TestCase
 
         // 4. Assertion: Verify old callout is scrubbed
         $callout->refresh();
+        $this->assertEquals('Scrubbed', $callout->description);
         $this->assertNull($callout->car_details);
+        $this->assertNull($callout->car_registration);
+        $this->assertNull($callout->car_parking);
         $this->assertNull($callout->team_details);
         $this->assertNull($callout->trip_plan);
+        $this->assertNull($callout->location_data);
+        $this->assertNull($callout->request_data);
+        $this->assertNull($callout->cancelled_ip);
+        $this->assertNull($callout->cancelled_user_agent);
 
         // Verify old participant is scrubbed
         $participant->refresh();
@@ -68,5 +82,34 @@ class PurgeOldCalloutsTest extends TestCase
         // Verify recent callout is NOT scrubbed
         $recentCallout->refresh();
         $this->assertEquals('Stay here', $recentCallout->car_details);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_converges_and_does_not_rescrub_already_scrubbed_callouts()
+    {
+        // Regression (L9): the selection predicate used to match already-scrubbed
+        // callouts forever (participants.name is rewritten, never nulled). A second run
+        // must find nothing left to scrub.
+        $callout = Callout::factory()->create([
+            'created_at' => Carbon::now()->subDays(31),
+            'status' => 'resolved',
+            'description' => 'Original plan',
+            'trip_plan' => 'Original plan',
+        ]);
+
+        CalloutParticipant::create([
+            'callout_id' => $callout->id,
+            'name' => 'John Doe',
+            'phone' => '07123456789',
+            'email' => 'john@example.com',
+        ]);
+
+        $this->artisan('callouts:purge-sensitive-data')
+            ->expectsOutput('Successfully scrubbed sensitive data from 1 callouts and their participants.')
+            ->assertExitCode(0);
+
+        $this->artisan('callouts:purge-sensitive-data')
+            ->expectsOutput('No old callouts require scrubbing.')
+            ->assertExitCode(0);
     }
 }

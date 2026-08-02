@@ -24,11 +24,14 @@ class UserController extends Controller
         $currentUser = auth()->user();
         $search = $request->input('search');
 
-        // Get IDs of users in the same clubs
+        // Get IDs of users in the same clubs. Both sides must be *approved*
+        // memberships — a pending join request must not expose a club's roster
+        // (nor expose pending applicants to the club's members).
         $clubUserIds = collect();
         if ($currentUser) {
             $clubUserIds = $currentUser->clubs()
-            ->with('users:id')
+            ->wherePivot('status', 'approved')
+            ->with(['users' => fn ($query) => $query->select('users.id')->wherePivot('status', 'approved')])
             ->get()
             ->pluck('users')
             ->flatten()
@@ -292,6 +295,17 @@ class UserController extends Controller
      */
     public function store(User $user, Request $request): UserDetailEmailResource
     {
+        // Normalise UK numbers to canonical E.164 (+44...) before validation,
+        // so 07... and +44... forms of the same number can't both pass the
+        // uniqueness check, and outbound SMS/voice (Twilio) always gets E.164.
+        if (is_string($request->input('phone'))) {
+            $phone = preg_replace('/\s+/', '', $request->input('phone'));
+            if (preg_match('/^07[0-9]{9}$/', $phone)) {
+                $phone = '+44'.substr($phone, 1);
+            }
+            $request->merge(['phone' => $phone]);
+        }
+
         $validatedData = $request->validate([
             'bio' => ['nullable', 'string'],
             'name' => [
@@ -373,7 +387,7 @@ class UserController extends Controller
                 $query->where('user_id', $user->id);
             })
             ->where('start_time', '>=', Carbon::now()->subYear())
-            ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'participants', 'media'])
+            ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'entrance.tags', 'exit', 'participants.clubs', 'media'])
             ->orderBy('start_time', 'desc')
             ->limit(10)
             ->get();
@@ -390,9 +404,12 @@ class UserController extends Controller
 
         $oneYearAgo = Carbon::now()->subYear();
 
-        $activity = Trip::whereHas('participants', function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })
+        // Match recentTrips above: only aggregate trips the viewer may see,
+        // so private trip dates aren't leaked via the heatmap.
+        $activity = Trip::visibleTo(auth()->user())
+            ->whereHas('participants', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->where('start_time', '>=', $oneYearAgo)
             ->whereNotNull('end_time') // Ensure we have an end time
             ->get()

@@ -104,13 +104,26 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::get('/caves/{cave}/weather/forecast', [App\Http\Controllers\CaveWeatherController::class, 'forecast']);
     Route::get('/caves/{cave}/weather/historic', [App\Http\Controllers\CaveWeatherController::class, 'historic']);
 
-    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store'])->middleware(ApiIsAdmin::class.':data_admin');
-    Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update'])->middleware(ApiIsAdmin::class.':data_admin');
+    // Authorization is handled by CavePolicy inside the FormRequests / controller
+    // (data_admin), which also covers admin-only visibility and private fields.
+    Route::post('/caves', [App\Http\Controllers\CaveController::class, 'store']);
+    Route::put('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'update']);
+    Route::delete('/caves/{cave}', [App\Http\Controllers\CaveController::class, 'destroy']);
+    // Restore a soft-deleted cave (withTrashed so binding resolves the trashed record).
+    Route::post('/caves/{cave}/restore', [App\Http\Controllers\CaveController::class, 'restore'])->withTrashed();
 
     Route::get('/cave_systems', [App\Http\Controllers\CaveSystemController::class, 'index']);
     Route::get('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'show']);
     Route::put('/cave_systems/{cave_system}', [App\Http\Controllers\CaveSystemController::class, 'update'])->middleware(ApiIsAdmin::class);
     Route::post('/cave_systems_with_cave', [App\Http\Controllers\CaveSystemController::class, 'storeWithCave'])->middleware(ApiIsAdmin::class);
+
+    // Cave-system files — the single home for extra media & documents (surveys,
+    // historic photos, reports). Public ones surface on the system/cave pages;
+    // private files and uploads/deletes are restricted to data admins
+    // (enforced in the controller).
+    Route::get('/cave_systems/{cave_system}/files', [App\Http\Controllers\CaveSystemFileController::class, 'index']);
+    Route::post('/cave_systems/{cave_system}/files', [App\Http\Controllers\CaveSystemFileController::class, 'store']);
+    Route::delete('/cave_systems/{cave_system}/files/{file}', [App\Http\Controllers\CaveSystemFileController::class, 'destroy']);
 
     // Cave System Annotations
     Route::get('/cave_systems/{cave_system}/annotations', [App\Http\Controllers\CaveSystemAnnotationController::class, 'show']);
@@ -180,6 +193,11 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
 // Public Trip Access
 Route::get('/trips/{trip}', [App\Http\Controllers\TripController::class, 'show'])
     ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Trip::class);
+
+// Public embeddable permit calendar (availability only — no personal data).
+// Powers the iframe embed an access officer can drop into an external website.
+Route::get('/embed/permits/{permit}/calendar', [BookingController::class, 'embedCalendar'])
+    ->middleware('throttle:embed-calendar');
 
 // --- AI Assistant (Pip) ---
 // Open to platform_admin OR users granted the `pip_access` role explicitly.

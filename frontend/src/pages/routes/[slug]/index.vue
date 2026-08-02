@@ -2,7 +2,7 @@
   <v-container>
     <v-row>
       <v-col cols="12" class="d-flex justify-space-between align-center">
-        <v-btn variant="text" size="small" :to="`/caves/${routeDetail?.entrance?.id || routeDetail?.exit?.id}`" class="mb-4">
+        <v-btn variant="text" size="small" :to="`/caves/${routeDetail?.entrance?.slug || routeDetail?.exit?.slug}`" class="mb-4">
           <v-icon start :icon="mdiArrowLeft" />
           Back to Cave
         </v-btn>
@@ -50,21 +50,28 @@
     <v-row v-else-if="routeDetail">
       <v-col cols="12">
         <v-card>
-          <v-img 
-            v-if="routeDetail.hero_image" 
-            :src="routeDetail.hero_image" 
-            height="300" 
-            cover 
-            class="align-end"
+          <v-img
+            v-if="routeDetail.hero_image?.url"
+            :src="routeDetail.hero_image.url"
+            height="300"
+            cover
+            class="align-end cursor-pointer"
+            @click="openHeroImage"
           >
             <div class="fill-height gradient-overlay d-flex align-end">
-              <div class="pa-4 w-100">
-                <div v-if="routeDetail.cave_system" class="text-subtitle-1 text-white font-weight-bold opacity-80 mb-1">
-                  {{ routeDetail.cave_system.name }}
+              <div class="pa-4 w-100 d-flex justify-space-between align-end">
+                <div>
+                  <div v-if="routeDetail.cave_system" class="text-subtitle-1 text-white font-weight-bold opacity-80 mb-1">
+                    {{ routeDetail.cave_system.name }}
+                  </div>
+                  <v-card-title class="text-white text-h4 font-weight-bold pa-0 w-100">
+                    {{ routeDetail.name }}
+                  </v-card-title>
                 </div>
-                <v-card-title class="text-white text-h4 font-weight-bold pa-0 w-100">
-                  {{ routeDetail.name }}
-                </v-card-title>
+                <div v-if="routeDetail.hero_image.photographer" class="text-caption text-white text-right opacity-70 flex-shrink-0 ml-2">
+                  <v-icon size="x-small" class="mr-1" :icon="mdiCamera" />
+                  {{ routeDetail.hero_image.photographer }}
+                </div>
               </div>
             </div>
           </v-img>
@@ -93,12 +100,12 @@
             <v-row class="mt-2">
               <v-col cols="12" md="8">
                 <h3 class="text-h6 mb-2">Details</h3>
-                <v-table density="compact">
+                <v-table v-if="showEntrances" density="compact">
                   <tbody>
                     <tr v-if="routeDetail.entrance">
                       <th class="text-left font-weight-bold" style="width: 120px">Entrance:</th>
                       <td>
-                        <router-link :to="`/caves/${routeDetail.entrance.id}`" class="text-decoration-none">
+                        <router-link :to="`/caves/${routeDetail.entrance.slug}`" class="text-decoration-none">
                           {{ routeDetail.entrance.name }}
                         </router-link>
                       </td>
@@ -106,7 +113,7 @@
                     <tr v-if="routeDetail.exit">
                       <th class="text-left font-weight-bold">Exit:</th>
                       <td>
-                        <router-link :to="`/caves/${routeDetail.exit.id}`" class="text-decoration-none">
+                        <router-link :to="`/caves/${routeDetail.exit.slug}`" class="text-decoration-none">
                           {{ routeDetail.exit.name }}
                         </router-link>
                       </td>
@@ -179,14 +186,17 @@
     <v-alert v-else type="error">
       Failed to load route details.
     </v-alert>
+
+    <MediaViewModal v-model="showHeroModal" :media="heroMedia" />
   </v-container>
 </template>
 
 <script setup>
-import { mdiArrowLeft, mdiClockOutline, mdiFilePdfBox, mdiPencil, mdiPencilOff, mdiHelpCircleOutline, mdiShieldHalfFull, mdiStairs } from '@mdi/js'
-import { ref, onMounted } from 'vue'
+import { mdiArrowLeft, mdiCamera, mdiClockOutline, mdiFilePdfBox, mdiPencil, mdiPencilOff, mdiHelpCircleOutline, mdiShieldHalfFull, mdiStairs } from '@mdi/js'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import MediaViewModal from '@/components/MediaViewModal.vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
 
@@ -194,6 +204,24 @@ const appStore = useAppStore()
 const route = useRoute()
 const loading = ref(true)
 const routeDetail = ref(null)
+const showHeroModal = ref(false)
+
+// In/Out is only meaningful when the system has more than one entrance.
+const showEntrances = computed(() => (routeDetail.value?.cave_system?.caves_count ?? 0) > 1)
+
+const heroMedia = computed(() => ({
+  url: routeDetail.value?.hero_image?.url,
+  title: routeDetail.value?.name,
+  photographer: routeDetail.value?.hero_image?.photographer,
+  copyright: routeDetail.value?.hero_image?.copyright,
+  type: 'image',
+}))
+
+const openHeroImage = () => {
+  if (routeDetail.value?.hero_image?.url) {
+    showHeroModal.value = true
+  }
+}
 
 const load = async () => {
   loading.value = true
@@ -208,6 +236,12 @@ const load = async () => {
 }
 
 onMounted(load)
+
+// The router reuses this component when navigating between routes, so
+// onMounted won't re-fire — refetch when the slug changes.
+watch(() => route.params.slug, (slug, prev) => {
+  if (slug && slug !== prev) load()
+})
 
 const getGradeDescription = (grade) => {
   const grades = {

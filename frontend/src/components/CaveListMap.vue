@@ -163,26 +163,28 @@ const setupLayers = async () => {
     const props = e.features[0].properties
     const coords = e.features[0].geometry.coordinates.slice()
 
+    const escHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
     popup?.remove()
     popup = new maplibregl.Popup({ offset: 10 })
       .setLngLat(coords)
       .setHTML(`
         <div style="min-width:200px; font-family: sans-serif;">
           ${props.hero_image_url
-            ? `<img src="${props.hero_image_url}" style="width:100%;height:80px;object-fit:cover;border-radius:4px 4px 0 0;" />`
+            ? `<img src="${escHtml(props.hero_image_url)}" style="width:100%;height:80px;object-fit:cover;border-radius:4px 4px 0 0;" />`
             : ''}
           <div style="padding:8px 10px 4px;">
-            <strong style="font-size:14px;">${props.name}</strong><br>
-            <span style="font-size:12px;color:#666;">${props.location_name ?? ''}</span>
+            <strong style="font-size:14px;">${escHtml(props.name)}</strong><br>
+            <span style="font-size:12px;color:#666;">${escHtml(props.location_name ?? '')}</span>
           </div>
           <div style="padding:0 10px 6px;font-size:12px;color:#444;">
             ${props.length != null ? `Length: ${Math.round(props.length / 100) / 10} km` : ''}
-            ${props.vertical_range != null ? ` &nbsp;Depth: ${props.vertical_range} m` : ''}
+            ${props.vertical_range != null ? ` &nbsp;Depth: ${escHtml(props.vertical_range)} m` : ''}
           </div>
           <div style="padding:4px 10px 10px;display:flex;gap:8px;align-items:center;">
-            <a href="/caves/${props.slug}" style="font-size:12px;color:#1976D2;font-weight:600;text-decoration:none;">View</a>
-            <a href="https://www.google.com/maps?q=${props.lat},${props.lng}" target="_blank" style="font-size:12px;color:#1976D2;text-decoration:none;">Google Maps</a>
-            <a href="https://maps.apple.com/?q=${props.lat},${props.lng}" target="_blank" style="font-size:12px;color:#1976D2;text-decoration:none;">Apple Maps</a>
+            <a href="/caves/${encodeURIComponent(props.slug)}" style="font-size:12px;color:#1976D2;font-weight:600;text-decoration:none;">View</a>
+            <a href="https://www.google.com/maps?q=${encodeURIComponent(props.lat)},${encodeURIComponent(props.lng)}" target="_blank" style="font-size:12px;color:#1976D2;text-decoration:none;">Google Maps</a>
+            <a href="https://maps.apple.com/?q=${encodeURIComponent(props.lat)},${encodeURIComponent(props.lng)}" target="_blank" style="font-size:12px;color:#1976D2;text-decoration:none;">Apple Maps</a>
           </div>
         </div>
       `)

@@ -227,6 +227,37 @@ describe('Watchdog API', () => {
             expect(response.body.alerts_sent[0].alerted).toBe(false);
         });
 
+        it('labels monthly TEST- callouts as a test instead of an emergency', async () => {
+            const callout = {
+                callout_id: 'TEST-2026-07-01-120032',
+                callout_time: { toDate: () => new Date('2026-07-01T12:01:00Z') },
+                user: { name: '🧪 Monthly Test Alert' },
+                participants: [],
+                duty_officers: [{ name: '🧪 Watchdog Test Contact', phone: '+44712345', email: 'test@x.com' }],
+                cave_name: '🧪 Test System Check',
+            };
+
+            mockFirestore.getOverdueCallouts = jest.fn().mockResolvedValue([callout]);
+            mockSms.sendSms = jest.fn().mockResolvedValue(true);
+            mockEmail.sendAlertEmail = jest.fn().mockResolvedValue(true);
+            mockFirestore.markAsAlerted = jest.fn().mockResolvedValue(undefined);
+
+            const response = await request(app)
+                .post('/check')
+                .set('X-Watchdog-Key', 'test-api-key');
+
+            expect(response.status).toBe(200);
+            // The test contact still receives real SMS + email — that's the point of
+            // the monthly test — but the SMS must not read as a live emergency.
+            const [phone, message] = mockSms.sendSms.mock.calls[0];
+            expect(phone).toBe('+44712345');
+            expect(message).toContain('WATCHDOG TEST');
+            expect(message).toContain('No action is required');
+            expect(message).not.toContain('EMERGENCY');
+            expect(mockEmail.sendAlertEmail).toHaveBeenCalledWith('test@x.com', callout);
+            expect(mockFirestore.markAsAlerted).toHaveBeenCalledWith('TEST-2026-07-01-120032');
+        });
+
         it('still sends email and marks alerted when an SMS send throws', async () => {
             const callout = {
                 callout_id: 'c1',

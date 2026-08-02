@@ -30,11 +30,12 @@ class StoreTripRequest extends FormRequest
             'entrance_cave_id' => 'required|exists:caves,id',
             'exit_cave_id' => 'required|exists:caves,id',
             'start_time' => 'nullable|date',
-            'end_time' => 'nullable|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
             'visibility' => 'in:public,private,club',
             'media' => 'nullable|array',
             'media.*.data' => 'required|file|max:512000|mimes:jpeg,jpg,png,gif,webp,bmp,tiff,tif,heic,heif', // Images only, 512MB max
-            'participants' => 'array|min:1',
+            'participants' => 'required|array|min:1',
+            'participants.*' => 'string|exists:users,id',
         ];
     }
 

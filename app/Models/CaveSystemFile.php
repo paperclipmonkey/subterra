@@ -4,24 +4,44 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage; // Added for URL accessor
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // Added for URL accessor
+use Illuminate\Support\Facades\Storage;
 
-class CaveSystemFile extends Model
+class CaveSystemFile extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
+    use Auditable;
     use HasFactory;
 
     protected $fillable = [
         'cave_system_id',
         'filename',
         'details',
+        'kind',
+        'visibility',
+        'title',
+        'photographer',
+        'copyright',
+        'taken_at',
+        'sort_order',
         'original_filename',
         'mime_type',
         'size',
         'thumbnail_filename',
     ];
+
+    protected $casts = [
+        'taken_at' => 'date',
+        'size' => 'integer',
+        'sort_order' => 'integer',
+    ];
+
+    public function isImage(): bool
+    {
+        return $this->mime_type !== null && str_starts_with($this->mime_type, 'image/');
+    }
 
     /**
      * The attributes that should be appended to the model's array form.

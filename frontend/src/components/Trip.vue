@@ -228,7 +228,7 @@ import moment from 'moment'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { api } from '@/plugins/api'
@@ -310,8 +310,9 @@ const openMedia = (item) => {
   showMediaModal.value = true
 }
 
-onMounted(async () => {
+const loadTrip = async () => {
   loading.value = true
+  error.value = null
   try {
     const response = await api.get(`/api/trips/${route.params.id}`)
     trip.value = response.data.data
@@ -325,6 +326,14 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+}
+
+onMounted(loadTrip)
+
+// The router reuses this component when navigating between trips, so
+// onMounted won't re-fire — refetch when the id changes.
+watch(() => route.params.id, (id, prev) => {
+  if (id && id !== prev) loadTrip()
 })
 </script>
 

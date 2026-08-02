@@ -34,14 +34,16 @@ class ClubRecentTripsTest extends TestCase
         $this->club->users()->attach($this->approvedMember, ['status' => 'approved']);
         $this->club->users()->attach($this->pendingMember, ['status' => 'pending']);
 
-        // Create some trips for the club, ensuring some are recent
-        Trip::factory()->count(3)->create()->each(function ($trip) {
+        // Create some trips for the club, ensuring some are recent.
+        // Visibility is pinned to public so the counts below are deterministic
+        // for viewers who aren't participants (e.g. the platform admin).
+        Trip::factory()->count(3)->create(['visibility' => 'public'])->each(function ($trip) {
             $trip->participants()->attach($this->approvedMember->id);
             $trip->start_time = Carbon::now()->subDays(rand(1, 30)); // Recent trips
             $trip->save();
         });
         // Create older trips that shouldn't appear in "recent" if logic is strict (e.g. last year)
-        Trip::factory()->count(2)->create()->each(function ($trip) {
+        Trip::factory()->count(2)->create(['visibility' => 'public'])->each(function ($trip) {
             $trip->participants()->attach($this->approvedMember->id);
             $trip->start_time = Carbon::now()->subMonths(13); // Older trips
             $trip->save();
@@ -104,5 +106,31 @@ class ClubRecentTripsTest extends TestCase
             ],
         ]);
         $response->assertJsonCount(3, 'data');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function private_trips_are_hidden_from_co_members_who_did_not_participate(): void
+    {
+        $coMember = User::factory()->create();
+        $this->club->users()->attach($coMember, ['status' => 'approved']);
+
+        $privateTrip = Trip::factory()->create([
+            'visibility' => 'private',
+            'start_time' => Carbon::now()->subDays(2),
+        ]);
+        $privateTrip->participants()->attach($this->approvedMember->id);
+
+        // The non-participating co-member must not see the private trip.
+        $this->actingAs($coMember, 'sanctum');
+        $response = $this->getJson($this->getEndpointUrl());
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+        $response->assertJsonMissing(['id' => $privateTrip->short_id]);
+
+        // The participant themselves still sees it.
+        $this->actingAs($this->approvedMember, 'sanctum');
+        $response = $this->getJson($this->getEndpointUrl());
+        $response->assertOk();
+        $response->assertJsonCount(4, 'data');
     }
 }

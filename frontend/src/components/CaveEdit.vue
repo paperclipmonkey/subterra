@@ -35,11 +35,57 @@
         </v-col>
       </v-row>
 
+      <v-row v-if="cave.can_manage">
+        <v-col cols="12">
+          <v-card>
+            <v-card-title class="d-flex align-center">
+              <v-icon :icon="mdiShieldLock" size="small" color="deep-orange" class="mr-2" />
+              Registry (private)
+            </v-card-title>
+            <v-card-subtitle>Settings only visible to data admins.</v-card-subtitle>
+            <v-card-text>
+              <div class="text-subtitle-2 mb-1">Visibility</div>
+              <v-select
+                v-model="cave.visibility"
+                :items="visibilityChoices"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                class="mb-1"
+              />
+              <p class="text-caption text-grey mb-4">
+                <strong>Public</strong> caves appear on Subterra as normal.
+                <strong>Admin only</strong> caves (e.g. closed mines) are hidden from everyone except data admins.
+              </p>
+
+              <div class="text-subtitle-2 mb-1">Private notes</div>
+              <v-textarea
+                v-model="cave.private_notes"
+                variant="outlined"
+                rows="3"
+                auto-grow
+                density="comfortable"
+                placeholder="Landowner contacts, key locations, access caveats…"
+                hide-details
+                class="mb-4"
+              />
+
+              <div class="text-subtitle-2 mb-1">Files &amp; documents</div>
+              <p class="text-caption text-grey mb-2">
+                Surveys, historic photos and documents are stored against the whole system
+                (<strong>{{ cave.system?.name }}</strong>) so they're shared across its entrances.
+              </p>
+              <CaveSystemFilesManager v-if="cave.system?.id" :system-id="cave.system.id" />
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
       <v-row>
         <v-col>
           <v-card-text>
             <v-btn type="submit" color="primary" block size="large" :loading="loading">
-              {{ appStore.user?.is_admin ? 'Save' : 'Suggest Changes' }}
+              {{ canEditDirectly ? 'Save' : 'Suggest Changes' }}
             </v-btn>
           </v-card-text>
         </v-col>
@@ -56,12 +102,13 @@
 </template>
 
 <script setup>
-import { mdiArrowLeft } from '@mdi/js'
+import { mdiArrowLeft, mdiShieldLock } from '@mdi/js'
 
 import { ref, onMounted, watch, computed } from "vue"
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import CaveForm from '@/components/CaveForm.vue'
+import CaveSystemFilesManager from '@/components/registry/CaveSystemFilesManager.vue'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { toFormData } from '@/utilities'
@@ -120,8 +167,19 @@ const cave = ref({
   location_alt: 0,
   access_info: '',
   slug: '',
-  tags: []
+  tags: [],
+  can_manage: false,
+  private_notes: '',
+  visibility: 'public'
 })
+
+const visibilityChoices = [
+  { title: 'Public — shown on Subterra', value: 'public' },
+  { title: 'Admin only — hidden from everyone except data admins', value: 'admin_only' },
+]
+
+// Data admins may edit directly; everyone else submits a suggested edit.
+const canEditDirectly = computed(() => appStore.user?.is_admin || cave.value.can_manage)
 
 const fetchCave = async () => {
   try {
@@ -141,7 +199,12 @@ const saveCave = async () => {
   try {
     const submitData = await caveFormRef.value.prepareForSubmit()
 
-    if (appStore.user?.is_admin) {
+    if (canEditDirectly.value) {
+      // Managers can also set the private registry fields directly.
+      if (cave.value.can_manage) {
+        submitData.private_notes = cave.value.private_notes
+        submitData.visibility = cave.value.visibility
+      }
       const formData = toFormData(submitData)
       formData.append('_method', 'PUT')
 

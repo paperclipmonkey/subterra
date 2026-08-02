@@ -42,6 +42,14 @@ class Route extends Model
         'duration',
         'grade',
         'hero_image',
+        'hero_image_photographer',
+        'hero_image_copyright',
+    ];
+
+    // Exposed only via the nested hero_image object below.
+    protected $hidden = [
+        'hero_image_photographer',
+        'hero_image_copyright',
     ];
 
     protected function heroImage(): Attribute
@@ -53,11 +61,15 @@ class Route extends Model
                 }
 
                 // If it's already a full URL, return it (backward compatibility or external images)
-                if (filter_var($value, FILTER_VALIDATE_URL)) {
-                    return $value;
-                }
+                $url = filter_var($value, FILTER_VALIDATE_URL)
+                    ? $value
+                    : Storage::disk('media')->url($value);
 
-                return Storage::disk('media')->url($value);
+                return [
+                    'url' => $url,
+                    'photographer' => $this->attributes['hero_image_photographer'] ?? null,
+                    'copyright' => $this->attributes['hero_image_copyright'] ?? null,
+                ];
             },
         );
     }

@@ -64,8 +64,10 @@ describe('ClubMembershipConfirmation', () => {
         // Wait for clubs to fetch via fetchAllClubs onMounted
         await new Promise(resolve => setTimeout(resolve, 0))
         expect(wrapper.exists()).toBe(true)
-        // The component defaults to step 1 (name confirmation)
-        expect(wrapper.text()).toContain('Confirm Your Identity')
+        // Identity confirmation is handled by onboarding now; the component goes
+        // straight to club selection.
+        expect(wrapper.text()).toContain('BCA Club Membership')
+        expect(wrapper.text()).toContain('Confirm Membership')
     })
 
     it('sends join requests for selected clubs', async () => {
@@ -76,9 +78,6 @@ describe('ClubMembershipConfirmation', () => {
                 pendingClubs: []
             }
         })
-
-        // Move to step 2 directly to bypass name update API call
-        wrapper.vm.step = 2
 
         // Wait for clubs to fetch
         await new Promise(resolve => setTimeout(resolve, 0))

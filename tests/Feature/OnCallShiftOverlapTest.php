@@ -35,8 +35,8 @@ class OnCallShiftOverlapTest extends TestCase
         // Same user tries shift 11:00 - 13:00 (Overlap start)
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $this->user->id,
-            'start_at' => '2025-01-01 11:00:00',
-            'end_at' => '2025-01-01 13:00:00',
+            'start_at' => '2025-01-01T11:00:00Z',
+            'end_at' => '2025-01-01T13:00:00Z',
         ]);
 
         $response->assertStatus(409);
@@ -54,8 +54,8 @@ class OnCallShiftOverlapTest extends TestCase
         // Same user tries shift 09:00 - 11:00 (Overlap end)
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $this->user->id,
-            'start_at' => '2025-01-01 09:00:00',
-            'end_at' => '2025-01-01 11:00:00',
+            'start_at' => '2025-01-01T09:00:00Z',
+            'end_at' => '2025-01-01T11:00:00Z',
         ]);
 
         $response->assertStatus(409);
@@ -73,8 +73,8 @@ class OnCallShiftOverlapTest extends TestCase
         // Same user tries shift 10:30 - 11:30 (Inside)
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $this->user->id,
-            'start_at' => '2025-01-01 10:30:00',
-            'end_at' => '2025-01-01 11:30:00',
+            'start_at' => '2025-01-01T10:30:00Z',
+            'end_at' => '2025-01-01T11:30:00Z',
         ]);
 
         $response->assertStatus(409);
@@ -92,8 +92,8 @@ class OnCallShiftOverlapTest extends TestCase
         // Same user tries shift 09:00 - 13:00 (Surrounding)
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $this->user->id,
-            'start_at' => '2025-01-01 09:00:00',
-            'end_at' => '2025-01-01 13:00:00',
+            'start_at' => '2025-01-01T09:00:00Z',
+            'end_at' => '2025-01-01T13:00:00Z',
         ]);
 
         $response->assertStatus(409);
@@ -113,8 +113,8 @@ class OnCallShiftOverlapTest extends TestCase
 
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $userB->id,
-            'start_at' => '2025-01-01 11:00:00',
-            'end_at' => '2025-01-01 13:00:00',
+            'start_at' => '2025-01-01T11:00:00Z',
+            'end_at' => '2025-01-01T13:00:00Z',
         ]);
 
         // This should fail now as we want NO overlapping shifts at all
@@ -135,8 +135,8 @@ class OnCallShiftOverlapTest extends TestCase
 
         $response = $this->postJson('/api/admin/shifts', [
             'user_id' => $userB->id,
-            'start_at' => '2025-01-01 12:00:00',
-            'end_at' => '2025-01-01 14:00:00',
+            'start_at' => '2025-01-01T12:00:00Z',
+            'end_at' => '2025-01-01T14:00:00Z',
         ]);
 
         $response->assertStatus(200);

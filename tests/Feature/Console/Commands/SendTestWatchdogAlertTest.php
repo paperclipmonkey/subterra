@@ -42,6 +42,25 @@ class SendTestWatchdogAlertTest extends TestCase
         });
     }
 
+    public function test_it_registers_the_test_contact_as_a_duty_officer()
+    {
+        // The watchdog's overdue check only alerts duty officers, so the test contact
+        // must be listed as one for the SMS/email delivery leg to be exercised.
+        Http::fake([
+            'https://mock-watchdog.test/watchdog' => Http::response(['message' => 'success'], 201),
+        ]);
+
+        $this->artisan('watchdog:test-alert')->assertExitCode(0);
+
+        Http::assertSent(function ($request) {
+            $dutyOfficers = $request['duty_officers'] ?? [];
+
+            return count($dutyOfficers) === 1 &&
+                   $dutyOfficers[0]['phone'] === '+447911123456' &&
+                   $dutyOfficers[0]['email'] === 'test@example.com';
+        });
+    }
+
     public function test_it_logs_error_and_returns_failure_on_http_error()
     {
         Log::shouldReceive('error')

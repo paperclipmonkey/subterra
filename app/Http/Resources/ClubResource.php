@@ -25,9 +25,10 @@ class ClubResource extends JsonResource
             'website' => $this->website,
             'location' => $this->location,
             'is_active' => $this->is_active,
-            // Ensure 'users_count' is loaded via withCount('users') in the controller for efficiency
-            'member_count' => $this->whenCounted('users', $this->member_count), // Use whenCounted if using withCount
-            // 'member_count' => $this->member_count, // Or directly use accessor (less efficient in loops)
+            // Controllers load this via withCount(['approvedUsers as users_count']).
+            // The closure keeps evaluation lazy so the member_count accessor's
+            // per-club COUNT query never runs when the count is preloaded.
+            'member_count' => $this->whenCounted('users', fn () => $this->users_count),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -68,13 +68,14 @@ class CheckOverdueCallouts extends Command
 
     private function checkImminent(): void
     {
-        $startWindow = now()->addMinutes(14);
-        $endWindow = now()->addMinutes(16);
-
+        // Warn for anything due within the next 16 minutes that hasn't been warned yet
+        // and isn't already overdue (checkOverdue handles those). A fixed two-minute
+        // (now+14, now+16] window would be skipped permanently whenever the scheduler
+        // missed a couple of ticks; warned_at keeps this idempotent instead.
         $imminentCallouts = Callout::active()
             ->whereNull('warned_at')
-            ->where('callout_time', '>', $startWindow)
-            ->where('callout_time', '<=', $endWindow)
+            ->where('callout_time', '>', now())
+            ->where('callout_time', '<=', now()->addMinutes(16))
             ->get();
 
         foreach ($imminentCallouts as $callout) {
@@ -239,13 +240,29 @@ class CheckOverdueCallouts extends Command
         // the triggered status or the incident record (which would leave an overdue caver
         // with no persisted incident, and re-trigger duplicate alerts on the next run).
         $incident = DB::transaction(function () use ($callout) {
-            $callout->update(['status' => 'triggered']);
+            // Atomic active -> triggered gate: a callout cancelled between our (unlocked)
+            // fetch and this update must NOT be resurrected to 'triggered' and falsely
+            // alert duty officers.
+            $updated = Callout::query()
+                ->whereKey($callout->id)
+                ->where('status', 'active')
+                ->update(['status' => 'triggered']);
+
+            if ($updated === 0) {
+                return;
+            }
 
             return Incident::firstOrCreate(
                 ['callout_id' => $callout->id],
                 ['id' => str()->random(6), 'status' => 'open']
             );
         });
+
+        if ($incident === null) {
+            $this->info("Callout ID: {$callout->id} is no longer active; skipping trigger.");
+
+            return;
+        }
 
         $callout->refresh();
 
@@ -314,12 +331,14 @@ class CheckOverdueCallouts extends Command
     }
 
     /**
-     * Get all active duty officers.
+     * Get all active duty officers. The rota accepts both duty officers and platform
+     * admins (see Admin\OnCallController's user_id validation), so widened escalation
+     * must include both — an all-platform-admin rota must never leave nobody to alert.
      */
     private function getAllDutyOfficers(): \Illuminate\Support\Collection
     {
         return User::whereHas('roles', function ($query) {
-            $query->whereIn('slug', ['duty_officer']);
+            $query->whereIn('slug', ['duty_officer', 'platform_admin']);
         })->where('is_active', true)->get();
     }
 }

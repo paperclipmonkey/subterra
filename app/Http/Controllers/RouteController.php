@@ -20,7 +20,10 @@ class RouteController extends Controller
 
     public function show(Route $route)
     {
-        return $route->load(['entrance', 'exit', 'tackle', 'media', 'tags', 'caveSystem']);
+        return $route->load([
+            'entrance', 'exit', 'tackle', 'media', 'tags',
+            'caveSystem' => fn ($query) => $query->withCount('caves'),
+        ]);
     }
 
     public function store(Request $request, CaveSystem $caveSystem)
@@ -32,7 +35,10 @@ class RouteController extends Controller
             'exit_id' => 'nullable|exists:caves,id',
             'duration' => 'nullable|string',
             'grade' => 'nullable|integer|min:1|max:5',
-            'hero_image' => 'nullable|file',
+            'hero_image' => 'nullable|array',
+            'hero_image.data' => 'nullable|file|image|max:512000',
+            'hero_image.photographer' => 'nullable|string|max:255',
+            'hero_image.copyright' => 'nullable|string|max:255',
             'tackle' => 'array',
             'tackle.*.description' => 'required|string',
             'tackle.*.type' => 'required|string',
@@ -45,11 +51,12 @@ class RouteController extends Controller
             'media.*.type' => 'nullable|string',
         ]);
 
-        if ($request->hasFile('hero_image')) {
-            $validated['hero_image'] = $this->handleImageUpload($request->file('hero_image'), 'route_hero');
+        $heroImagePath = null;
+        if ($heroFile = $request->file('hero_image.data')) {
+            $heroImagePath = $this->handleImageUpload($heroFile, 'route_hero');
         }
 
-        return DB::transaction(function () use ($validated, $caveSystem, $request) {
+        return DB::transaction(function () use ($validated, $caveSystem, $request, $heroImagePath) {
             $route = $caveSystem->routes()->create([
                 'name' => $validated['name'],
                 'slug' => Str::slug($validated['name']).'-'.Str::random(6),
@@ -58,7 +65,9 @@ class RouteController extends Controller
                 'exit_id' => $validated['exit_id'] ?? null,
                 'duration' => $validated['duration'] ?? null,
                 'grade' => $validated['grade'] ?? null,
-                'hero_image' => $validated['hero_image'] ?? null,
+                'hero_image' => $heroImagePath,
+                'hero_image_photographer' => $validated['hero_image']['photographer'] ?? null,
+                'hero_image_copyright' => $validated['hero_image']['copyright'] ?? null,
             ]);
 
             if (!empty($validated['tackle'])) {
@@ -96,8 +105,16 @@ class RouteController extends Controller
             'exit_id' => 'nullable|exists:caves,id',
             'duration' => 'nullable|string',
             'grade' => 'nullable|integer|min:1|max:5',
-            'hero_image' => 'nullable|file',
+            'hero_image' => 'nullable|array',
+            'hero_image.data' => 'nullable|file|image|max:512000',
+            'hero_image.photographer' => 'nullable|string|max:255',
+            'hero_image.copyright' => 'nullable|string|max:255',
             'tackle' => 'array',
+            'tackle.*.description' => 'required|string',
+            'tackle.*.type' => 'required|string',
+            'tackle.*.length' => 'nullable|integer',
+            'tackle.*.optional' => 'boolean',
+            'tackle.*.quantity' => 'integer',
             'media' => 'array',
             'media.*.data' => 'nullable|file',
             'media.*.caption' => 'nullable|string',
@@ -106,10 +123,15 @@ class RouteController extends Controller
             'deleted_media.*' => 'integer',
         ]);
 
-        if ($request->hasFile('hero_image') && $request->file('hero_image')->isValid()) {
-            $validated['hero_image'] = $this->handleImageUpload($request->file('hero_image'), 'route_hero');
-        } else {
-            unset($validated['hero_image']);
+        // The hero image is handled manually so we never mass-assign the array.
+        unset($validated['hero_image']);
+
+        if ($request->has('hero_image')) {
+            if (($heroFile = $request->file('hero_image.data')) && $heroFile->isValid()) {
+                $route->hero_image = $this->handleImageUpload($heroFile, 'route_hero');
+            }
+            $route->hero_image_photographer = $request->input('hero_image.photographer');
+            $route->hero_image_copyright = $request->input('hero_image.copyright');
         }
 
         return DB::transaction(function () use ($validated, $route, $request) {
