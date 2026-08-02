@@ -557,7 +557,10 @@ const calendarCells = computed(() => {
 
   let startOffset = (firstDay.getDay() + 6) % 7
   const cells = []
-  const todayStr = new Date().toISOString().split('T')[0]
+  // Build keys from local date parts — toISOString() shifts to UTC and lands
+  // on the previous day during BST.
+  const toDateStr = (d) => [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+  const todayStr = toDateStr(new Date())
 
   for (let i = startOffset - 1; i >= 0; i--) {
     const d = new Date(year, month, -i)
@@ -566,7 +569,7 @@ const calendarCells = computed(() => {
 
   for (let i = 1; i <= lastDay.getDate(); i++) {
     const d = new Date(year, month, i)
-    const dateStr = d.toISOString().split('T')[0]
+    const dateStr = toDateStr(d)
     const dayBookings = filteredBookings.value.filter(b => b.date === dateStr)
     cells.push({
       day: i,

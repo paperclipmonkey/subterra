@@ -61,7 +61,25 @@ export class SMTPClient {
         const user = callout.user || {};
         const calloutTime = callout.callout_time.toDate().toISOString();
 
-        const subject = '🚨 SUBTERRA EMERGENCY: Callout Overdue';
+        // Monthly TEST- callouts (from watchdog:test-alert) run through this same
+        // path deliberately — label everything so the email cannot be mistaken for a
+        // live emergency. The body layout stays identical so the test exercises the
+        // real rendering.
+        const isTest = String(callout.callout_id || '').startsWith('TEST-');
+
+        const subject = isTest
+            ? '🧪 SUBTERRA WATCHDOG TEST: Scheduled Monthly Test'
+            : '🚨 SUBTERRA EMERGENCY: Callout Overdue';
+        const headline = isTest
+            ? 'TEST: Subterra Watchdog Monthly Test'
+            : 'URGENT: Subterra Callout Overdue';
+        const intro = isTest
+            ? 'This is the scheduled monthly test of the Subterra backup watchdog. Receiving it confirms the overdue-alert delivery path is working. No action is required.'
+            : 'This message was sent because a Subterra Callout has become 15 minutes overdue and the on-call Duty Officer has not acknowledged the event.';
+        const footer = isTest
+            ? 'This was a scheduled test. No action is required.'
+            : 'Please contact the team immediately. If unreachable, initiate emergency protocols.';
+        const bannerColor = isTest ? '#2e7d32' : '#d32f2f';
 
         // Build readable participant list and their phones if provided
         let participantText = '';
@@ -85,9 +103,9 @@ export class SMTPClient {
         }
 
         // Plain text version
-        const text = `URGENT: Subterra Callout Overdue
+        const text = `${headline}
 
-This message was sent because a Subterra Callout has become 15 minutes overdue and the on-call Duty Officer has not acknowledged the event.
+${intro}
 
 Callout ID: ${callout.callout_id || 'Unknown'}
 Initiator: ${user.name || 'Unknown'} (${user.phone || 'No phone'})
@@ -107,17 +125,17 @@ Team Details/Notes:
 ${callout.team_details || 'No additional team details.'}
 
 This is an automated message from the Subterra Redundant Safety System.
-Please contact the team immediately. If unreachable, initiate emergency protocols.`;
+${footer}`;
 
         // HTML version
         const html = `
 <html>
 <body style="font-family: Arial, sans-serif; color: #333;">
-    <div style="background-color: #d32f2f; color: white; padding: 20px; border-radius: 5px;">
-        <h1 style="margin: 0;">🚨 SUBTERRA EMERGENCY: Callout Overdue</h1>
+    <div style="background-color: ${bannerColor}; color: white; padding: 20px; border-radius: 5px;">
+        <h1 style="margin: 0;">${subject}</h1>
     </div>
     <div style="padding: 20px; background-color: #f5f5f5; margin-top: 10px; border-radius: 5px;">
-        <p style="color: #d32f2f; font-weight: bold;">This message was sent because a Subterra Callout has become 15 minutes overdue and the on-call Duty Officer has not acknowledged the event.</p>
+        <p style="color: ${bannerColor}; font-weight: bold;">${intro}</p>
         <p><strong>Callout ID:</strong> ${callout.callout_id || 'Unknown'}</p>
         <p><strong>Initiator:</strong> ${user.name || 'Unknown'} (${user.phone || 'No phone'})</p>
         <p><strong>Expected Return:</strong> ${calloutTime}</p>
@@ -144,7 +162,7 @@ Please contact the team immediately. If unreachable, initiate emergency protocol
     </div>
     <div style="padding: 20px; margin-top: 10px; font-size: 12px; color: #666;">
         <p>This is an automated message from the Subterra Redundant Safety System.</p>
-        <p><strong>Please contact the team immediately. If unreachable, initiate emergency protocols.</strong></p>
+        <p><strong>${footer}</strong></p>
     </div>
 </body>
 </html>`;

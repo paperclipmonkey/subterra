@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OnCallShiftResource;
 use App\Models\Callout;
 use App\Models\OnCallShift;
 use App\Models\User;
@@ -27,9 +28,7 @@ class OnCallController extends Controller
             ->orderBy('start_at')
             ->get();
 
-        return response()->json([
-            'data' => $shifts,
-        ]);
+        return OnCallShiftResource::collection($shifts)->response();
     }
 
     /**
@@ -37,7 +36,7 @@ class OnCallController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate($this->shiftValidationRules());
+        $data = $request->validate($this->shiftValidationRules(), $this->shiftValidationMessages());
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
         $data['start_at'] = Carbon::parse($data['start_at'])->utc();
@@ -58,7 +57,7 @@ class OnCallController extends Controller
 
         return response()->json([
             'message' => 'Shift created',
-            'data' => $shift->load('user'),
+            'data' => new OnCallShiftResource($shift->load('user')),
         ]);
     }
 
@@ -69,7 +68,7 @@ class OnCallController extends Controller
     {
         $shift = OnCallShift::findOrFail($id);
 
-        $data = $request->validate($this->shiftValidationRules());
+        $data = $request->validate($this->shiftValidationRules(), $this->shiftValidationMessages());
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
         $data['start_at'] = Carbon::parse($data['start_at'])->utc();
@@ -99,7 +98,7 @@ class OnCallController extends Controller
 
         return response()->json([
             'message' => 'Shift updated',
-            'data' => $shift->load('user'),
+            'data' => new OnCallShiftResource($shift->load('user')),
         ]);
     }
 
@@ -185,9 +184,25 @@ class OnCallController extends Controller
                     }
                 },
             ],
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after:start_at',
+            // The explicit-offset regex matters: a naive "2026-07-02 18:30:00" is parsed
+            // as UTC, silently shifting a BST rota entry by an hour — which can leave a
+            // callout without the on-call coverage the duty officer thinks they set up.
+            'start_at' => ['required', 'date', 'regex:/(Z|[+-]\d{2}:?\d{2})$/i'],
+            'end_at' => ['required', 'date', 'after:start_at', 'regex:/(Z|[+-]\d{2}:?\d{2})$/i'],
             'notify_do' => 'boolean',
+        ];
+    }
+
+    /**
+     * Shared validation messages for store and update.
+     */
+    private function shiftValidationMessages(): array
+    {
+        $offsetMessage = 'must include an explicit timezone offset (e.g. 2026-07-02T18:30:00Z or 2026-07-02T19:30:00+01:00).';
+
+        return [
+            'start_at.regex' => 'The shift start '.$offsetMessage,
+            'end_at.regex' => 'The shift end '.$offsetMessage,
         ];
     }
 }

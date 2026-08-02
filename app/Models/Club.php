@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use OwenIt\Auditing\Auditable;
 
 class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
     use HasFactory;
     use Auditable;
+
+    /**
+     * Slug of the "Direct Individual Member" catch-all club. It collects cavers
+     * who aren't members of a real club, so it deliberately has none of the
+     * social features (member roster, club trips, stats) a normal club has.
+     */
+    public const SLUG_DIRECT_INDIVIDUAL = 'dim';
 
     /**
      * The attributes that are mass assignable.
@@ -59,9 +66,9 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
      */
     public function getMemberCountAttribute(): int
     {
-        // Use the specific relationship for counting approved users
-        // This ensures withCount('users') in controller counts correctly if not overridden.
-        // However, direct access $club->member_count will use this accessor.
+        // Fallback accessor: controllers should prefer preloading the count
+        // via withCount(['approvedUsers as users_count']) — this accessor runs
+        // one COUNT query per club when the count hasn't been preloaded.
         if ($this->relationLoaded('approvedUsers')) {
             return $this->approvedUsers->count();
         }
@@ -99,5 +106,14 @@ class Club extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * Whether this is the "Direct Individual Member" catch-all club, which has
+     * its social features (member roster, club trips, stats) disabled.
+     */
+    public function isIndividualMembership(): bool
+    {
+        return $this->slug === self::SLUG_DIRECT_INDIVIDUAL;
     }
 }

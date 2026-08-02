@@ -699,6 +699,195 @@ class TripTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function duration_is_zero_for_open_ended_or_inverted_times()
+    {
+        // Open-ended trips must not diff against now() (ever-growing duration)
+        $openEnded = Trip::factory()->create([
+            'start_time' => now()->subHours(3),
+            'end_time' => null,
+        ]);
+
+        // Bad data with end before start must not produce a negative duration
+        $inverted = Trip::factory()->create([
+            'start_time' => '2024-01-02 10:00:00',
+            'end_time' => '2024-01-01 10:00:00',
+        ]);
+
+        $this->assertSame(0, $openEnded->duration);
+        $this->assertSame(0, $inverted->duration);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_end_time_before_start_time_on_store()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+
+        $tripData = [
+            'name' => 'Backwards Trip',
+            'start_time' => '2024-01-02 10:00:00',
+            'end_time' => '2024-01-01 10:00:00',
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$user->id],
+        ];
+
+        $this->actingAs($user);
+        $response = $this->postJson('/api/trips', $tripData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['end_time']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_end_time_before_start_time_on_update()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+        $trip = Trip::factory()->create(['entrance_cave_id' => $entrance->id]);
+        $trip->participants()->attach($user);
+
+        $updateData = [
+            'name' => 'Backwards Trip',
+            'start_time' => '2024-01-02 10:00:00',
+            'end_time' => '2024-01-01 10:00:00',
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+        ];
+
+        $this->actingAs($user);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['end_time']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_requires_participants_when_storing_a_trip()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+
+        $tripData = [
+            'name' => 'No Participants Trip',
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+        ];
+
+        $this->actingAs($user);
+        $response = $this->postJson('/api/trips', $tripData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['participants']);
+
+        // Unknown participant IDs are rejected too
+        $tripData['participants'] = ['00000000-0000-0000-0000-000000000000'];
+        $response = $this->postJson('/api/trips', $tripData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['participants.0']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function update_omitting_existing_media_preserves_photos()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+        $trip = Trip::factory()->create(['entrance_cave_id' => $entrance->id]);
+        $trip->participants()->attach($user);
+
+        $media = $trip->media()->create(['filename' => 'keep-me.webp']);
+
+        $updateData = [
+            'name' => 'Renamed Trip',
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$user->id],
+            // existing_media deliberately omitted
+        ];
+
+        $this->actingAs($user);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
+        $response->assertOk();
+
+        $this->assertDatabaseHas('trip_media', ['id' => $media->id]);
+        $this->assertCount(1, $trip->fresh()->media);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function update_validation_failure_does_not_delete_media()
+    {
+        $user = User::factory()->create();
+
+        $closedTag = \App\Models\Tag::factory()->create(['tag' => 'Closed', 'type' => 'cave', 'category' => 'access']);
+        $closedCave = Cave::factory()->create();
+        $closedCave->tags()->attach($closedTag);
+
+        $trip = Trip::factory()->create([
+            'entrance_cave_id' => $closedCave->id,
+            'visibility' => 'private',
+        ]);
+        $trip->participants()->attach($user);
+
+        $media = $trip->media()->create(['filename' => 'keep-me.webp']);
+
+        $updateData = [
+            'name' => 'Should Fail',
+            'cave_system_id' => $closedCave->cave_system_id,
+            'entrance_cave_id' => $closedCave->id,
+            'exit_cave_id' => $closedCave->id,
+            'visibility' => 'public',
+            'participants' => [$user->id],
+            'existing_media' => [],
+        ];
+
+        $this->actingAs($user);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, $updateData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['visibility']);
+
+        // The 422 must not leave the trip's photos deleted
+        $this->assertDatabaseHas('trip_media', ['id' => $media->id]);
+        $this->assertCount(1, $trip->fresh()->media);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function trip_user_pivot_rejects_duplicate_participants()
+    {
+        $user = User::factory()->create();
+        $trip = Trip::factory()->create();
+        $trip->participants()->attach($user);
+
+        $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
+        \Illuminate\Support\Facades\DB::table('trip_user')->insert([
+            'trip_id' => $trip->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function trip_tagged_email_respects_email_tagged_preference()
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $creator = User::factory()->create();
+        $optedOut = User::factory()->create(['email_tagged' => false]);
+        $optedIn = User::factory()->create(['email_tagged' => true]);
+        $trip = Trip::factory()->create();
+
+        $listener = new \App\Listeners\SendTripTaggedEmail();
+        $listener->handle(new \App\Events\TripParticipantTagged($trip, $optedOut, $creator));
+        $listener->handle(new \App\Events\TripParticipantTagged($trip, $optedIn, $creator));
+
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\TripTaggedMail::class, function ($mail) use ($optedIn) {
+            return $mail->hasTo($optedIn->email);
+        });
+        \Illuminate\Support\Facades\Mail::assertNotQueued(\App\Mail\TripTaggedMail::class, function ($mail) use ($optedOut) {
+            return $mail->hasTo($optedOut->email);
+        });
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_dispatches_event_when_new_participant_added_on_update()
     {
         $user = User::factory()->create();

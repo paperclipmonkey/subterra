@@ -95,16 +95,36 @@ class CheckOverdueCalloutsTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Callout due at 12:05 (too close, likely already warned or missed)
-        // Although the command only checks specific window.
-        Callout::factory()->create([
+        $this->artisan('callouts:check-overdue');
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_warns_even_if_scheduler_missed_the_exact_window()
+    {
+        // Regression: the imminent check used a fixed (now+14, now+16] window, so a
+        // scheduler outage of a couple of minutes skipped the warning permanently.
+        // Anything unwarned and due within 16 minutes (but not yet overdue) must warn.
+        Notification::fake();
+        Carbon::setTestNow('2025-01-01 12:00:00');
+
+        $do = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $do->id,
+            'start_at' => now()->startOfDay(),
+            'end_at' => now()->endOfDay(),
+        ]);
+
+        // Due in 5 minutes — inside 16m but past the old two-minute window.
+        $callout = Callout::factory()->create([
             'callout_time' => now()->addMinutes(5),
             'status' => 'active',
         ]);
 
         $this->artisan('callouts:check-overdue');
 
-        Notification::assertNothingSent();
+        Notification::assertSentTo([$do], CalloutImminentNotification::class);
+        $this->assertNotNull($callout->fresh()->warned_at);
     }
 
     public function test_warns_all_duty_officers_if_imminent_and_no_shift_coverage()
@@ -136,15 +156,19 @@ class CheckOverdueCalloutsTest extends TestCase
         );
     }
 
-    public function test_platform_admins_do_not_receive_alerts()
+    public function test_platform_admins_receive_alerts_when_escalation_widens()
     {
+        // The rota accepts platform admins as well as duty officers, so the widened
+        // (no-shift-coverage) escalation must include them — otherwise a rota staffed
+        // only by platform admins would leave nobody to alert.
         Notification::fake();
         Carbon::setTestNow('2025-01-01 12:00:00');
 
         $admin = User::factory()->admin()->create(['is_active' => true]); // Platform Admin only
         $do = User::factory()->dutyOfficer()->create(['is_active' => true]);
+        $user = User::factory()->create(); // Regular users still never receive alerts
 
-        // NO SHIFT CREATED so it should fall back to all DOs
+        // NO SHIFT CREATED so it should fall back to all rota-eligible users
 
         $callout = Callout::factory()->create([
             'callout_time' => now()->addMinutes(15),
@@ -154,12 +178,12 @@ class CheckOverdueCalloutsTest extends TestCase
         $this->artisan('callouts:check-overdue');
 
         Notification::assertSentTo(
-            [$do],
+            [$do, $admin],
             CalloutImminentNotification::class
         );
 
         Notification::assertNotSentTo(
-            [$admin],
+            [$user],
             CalloutImminentNotification::class
         );
     }

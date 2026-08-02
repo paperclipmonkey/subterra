@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use OwenIt\Auditing\Auditable;
 
 class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
@@ -21,6 +21,8 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'slug',
         'description',
         'photo_path',
+        'photo_photographer',
+        'photo_copyright',
         'conditions',
         'has_max_groups_per_day',
         'max_groups_per_day',
@@ -48,17 +50,24 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
         ];
     }
 
-    public function getPhotoUrlAttribute(): ?string
+    /**
+     * The permit photo as a structured object: responsive URL/srcset plus
+     * credits. Mirrors the route hero-image shape. Null when no photo is set.
+     *
+     * @return array{url: string|null, srcset: string|null, photographer: string|null, copyright: string|null}|null
+     */
+    public function getPhotoAttribute(): ?array
     {
         if (!$this->photo_path) {
             return null;
         }
 
-        if (str_starts_with($this->photo_path, 'http')) {
-            return $this->photo_path;
-        }
-
-        return \Illuminate\Support\Facades\Storage::disk('media')->url($this->photo_path);
+        return [
+            'url' => \App\Support\MediaUrl::url($this->photo_path),
+            'srcset' => \App\Support\MediaUrl::srcset($this->photo_path),
+            'photographer' => $this->photo_photographer,
+            'copyright' => $this->photo_copyright,
+        ];
     }
 
     public function caves(): BelongsToMany
@@ -82,6 +91,19 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
     public function officers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'permit_user')->withTimestamps();
+    }
+
+    /**
+     * Whether the given user administers this permit. Uses the loaded officers
+     * relation when available to avoid per-row queries on collection endpoints.
+     */
+    public function isOfficer(User $user): bool
+    {
+        if ($this->relationLoaded('officers')) {
+            return $this->officers->contains('id', $user->id);
+        }
+
+        return $this->officers()->where('user_id', $user->id)->exists();
     }
 
     /**

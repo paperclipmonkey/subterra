@@ -105,4 +105,36 @@ class UserActivityHeatmapTest extends TestCase
         $response->assertOk();
         $response->assertJsonCount(0);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_hides_private_trips_of_other_users(): void
+    {
+        // A private trip must not leak its existence/date to other viewers,
+        // while a public trip on another day remains visible.
+        Trip::factory()->create([
+            'visibility' => 'private',
+            'start_time' => Carbon::today()->setHour(10),
+            'end_time' => Carbon::today()->setHour(12),
+        ])->participants()->attach($this->otherUser->id);
+
+        Trip::factory()->create([
+            'visibility' => 'public',
+            'start_time' => Carbon::yesterday()->setHour(10),
+            'end_time' => Carbon::yesterday()->setHour(11),
+        ])->participants()->attach($this->otherUser->id);
+
+        $this->actingAs($this->user, 'sanctum');
+        $response = $this->getJson($this->getEndpointUrl($this->otherUser));
+
+        $response->assertOk();
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['date' => Carbon::yesterday()->toDateString()]);
+        $response->assertJsonMissing(['date' => Carbon::today()->toDateString()]);
+
+        // The owner still sees both days.
+        $this->actingAs($this->otherUser, 'sanctum');
+        $response = $this->getJson($this->getEndpointUrl($this->otherUser));
+        $response->assertOk();
+        $response->assertJsonCount(2);
+    }
 }

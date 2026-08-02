@@ -98,6 +98,77 @@ class GenericImportTest extends TestCase
         $this->assertDatabaseMissing('caves', ['name' => 'Cave C']);
     }
 
+    public function test_reimport_does_not_change_an_existing_caves_slug_or_system()
+    {
+        $existing = Cave::factory()->create([
+            'name' => 'Cave A',
+            'slug' => 'cave-a-yorkshire',
+            'description' => 'Old description',
+            'location_lat' => 51.0,
+            'location_lng' => -3.0,
+        ]);
+        $originalSystemId = $existing->cave_system_id;
+
+        $content = "name,system,length,depth,latitude,longitude,location_name,description\n";
+        $content .= "Cave A,System A,100,10,51.0,-3.0,Town A,Desc A\n";
+        File::put($this->csvPath, $content);
+
+        $this->artisan('import:caves', ['file' => $this->csvPath])
+            ->assertExitCode(0);
+
+        $existing->refresh();
+        // Other fields update, but the slug (public URL) and system are kept.
+        $this->assertSame('Desc A', $existing->description);
+        $this->assertSame('cave-a-yorkshire', $existing->slug);
+        $this->assertSame($originalSystemId, $existing->cave_system_id);
+        $this->assertDatabaseCount('caves', 1);
+    }
+
+    public function test_it_skips_rows_whose_coordinates_are_far_from_the_existing_same_named_cave()
+    {
+        $existing = Cave::factory()->create([
+            'name' => 'Giants Cave',
+            'description' => 'Mendip original',
+            'location_lat' => 51.28,
+            'location_lng' => -2.71,
+        ]);
+
+        // Same name but ~230km away in the Peak District — a different cave.
+        $content = "name,latitude,longitude,description\n";
+        $content .= "Giants Cave,53.25,-1.78,Peak District import\n";
+        File::put($this->csvPath, $content);
+
+        $this->artisan('import:caves', ['file' => $this->csvPath])
+            ->expectsOutputToContain("Skipping 'Giants Cave'")
+            ->assertExitCode(0);
+
+        $existing->refresh();
+        $this->assertSame('Mendip original', $existing->description);
+        $this->assertDatabaseCount('caves', 1);
+    }
+
+    public function test_it_updates_an_existing_cave_when_coordinates_are_close()
+    {
+        $existing = Cave::factory()->create([
+            'name' => 'Cave E',
+            'description' => 'Old',
+            'location_lat' => 51.280,
+            'location_lng' => -2.710,
+        ]);
+
+        // Within the same-place threshold — same cave, refine in place.
+        $content = "name,latitude,longitude,description\n";
+        $content .= "Cave E,51.281,-2.712,Refreshed\n";
+        File::put($this->csvPath, $content);
+
+        $this->artisan('import:caves', ['file' => $this->csvPath])
+            ->assertExitCode(0);
+
+        $existing->refresh();
+        $this->assertSame('Refreshed', $existing->description);
+        $this->assertDatabaseCount('caves', 1);
+    }
+
     public function test_it_creates_system_if_missing()
     {
         $content = "name,length\nCave D,50";

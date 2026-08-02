@@ -177,7 +177,8 @@ class UserTest extends TestCase
         $response->assertOk();
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
-            'phone' => '07123456789',
+            // Phones are normalised to E.164 on save
+            'phone' => '+447123456789',
             'email_trophies' => false,
             'email_tagged' => false,
             'email_platform_news' => false,
@@ -233,7 +234,8 @@ class UserTest extends TestCase
         $response->assertOk();
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
-            'phone' => '07123456789',
+            // Phones are normalised to E.164 on save
+            'phone' => '+447123456789',
             'email_trophies' => false,
         ]);
     }
@@ -500,7 +502,7 @@ class UserTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function private_trips_are_counted_in_user_activity_heatmap_for_other_users()
+    public function private_trips_are_not_counted_in_user_activity_heatmap_for_other_users()
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -517,8 +519,14 @@ class UserTest extends TestCase
         $response = $this->getJson("/api/users/{$user->id}/activity-heatmap");
 
         $response->assertOk();
-        // Heatmap returns a list of {date, count}
-        // Private trips SHOULD be counted
+        // Heatmap returns a list of {date, count}. Private trips must not
+        // leak their existence/dates to other users (matches recent-trips).
+        $response->assertJsonMissing(['date' => now()->subDay()->format('Y-m-d')]);
+
+        // The participant still sees their own private trip's day.
+        $this->actingAs($user, 'sanctum');
+        $response = $this->getJson("/api/users/{$user->id}/activity-heatmap");
+        $response->assertOk();
         $response->assertJsonFragment(['date' => now()->subDay()->format('Y-m-d')]);
     }
 }

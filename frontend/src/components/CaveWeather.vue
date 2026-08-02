@@ -1,7 +1,12 @@
 <template>
   <v-container fluid class="pa-0">
-    <v-progress-circular v-if="loading" indeterminate color="primary" class="ma-4" />
-    
+    <div v-if="loading" class="d-flex flex-column align-center text-center pa-4">
+      <v-progress-circular indeterminate color="primary" class="mb-3" />
+      <span class="text-caption text-medium-emphasis">
+        Fetching weather and rainfall data&hellip; this can take a little longer than usual, as the Environment Agency's service is sometimes slow to respond.
+      </span>
+    </div>
+
     <v-alert v-else-if="error" type="error" variant="tonal" class="ma-4">
       {{ error }}
     </v-alert>

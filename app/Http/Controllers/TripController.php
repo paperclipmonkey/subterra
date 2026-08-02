@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -50,7 +51,7 @@ class TripController extends Controller
         $userId = $user->id;
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with(['entrance.heroImage', 'entrance.entranceImage', 'media'])->visibleTo($user)->orderBy('start_time', 'desc')->get();
+        })->with(['participants.clubs', 'entrance.heroImage', 'entrance.entranceImage', 'media'])->visibleTo($user)->orderBy('start_time', 'desc')->get();
 
         return TripSummaryResource::collection($trips);
     }
@@ -87,7 +88,7 @@ class TripController extends Controller
                 $query->where('user_id', $userId);
             })
             ->visibleTo($user)
-            ->with(['entrance', 'system'])
+            ->with(['entrance', 'system', 'participants'])
             ->chunk(200, function ($trips) use ($handle) {
                 foreach ($trips as $trip) {
                     fputcsv($handle, [
@@ -127,30 +128,35 @@ class TripController extends Controller
 
         $this->validateClosedAccess($tripData['entrance_cave_id'], $tripData['visibility']);
 
-        $trip = Trip::create($tripData);
-        $trip->save();
-
         $participants = $request->input('participants', []);
         $participantIds = User::withoutGlobalScopes()
             ->whereIn('id', $participants)
             ->pluck('id')
             ->toArray();
 
-        $trip->participants()->sync($participantIds);
+        $trip = DB::transaction(function () use ($tripData, $participantIds) {
+            $trip = Trip::create($tripData);
+            $trip->participants()->sync($participantIds);
 
-        // Fire TripParticipantTagged event for each participant including the creator
+            return $trip;
+        });
+
+        $mediaMetadata = $request->input('media', []);
+        $mediaFiles = $request->file('media', []);
+        $this->storeMedia($mediaMetadata, $mediaFiles, $trip);
+
+        // Only announce the trip once it is fully persisted (participants and
+        // media included) so queued listeners never see a half-created trip.
         $creator = User::withoutGlobalScopes()->find(auth()->id());
         $participantModels = User::withoutGlobalScopes()->whereIn('id', $participantIds)->get();
         foreach ($participantModels as $participant) {
             event(new TripParticipantTagged($trip, $participant, $creator));
         }
 
-        $mediaMetadata = $request->input('media', []);
-        $mediaFiles = $request->file('media', []);
-        $this->storeMedia($mediaMetadata, $mediaFiles, $trip);
-
         // Dispatch event instead of calling SlackAlert directly
         event(new TripCreated($trip, $creator));
+
+        $trip->load(['exit', 'audits']);
 
         return new TripResource($trip);
     }
@@ -193,36 +199,15 @@ class TripController extends Controller
             abort(404, 'Trip not found');
         }
 
-        $trip->load(['system', 'entrance.heroImage', 'entrance.entranceImage', 'exit', 'participants', 'media']);
+        $trip->load(['system', 'entrance.heroImage', 'entrance.entranceImage', 'exit', 'participants', 'media', 'audits']);
 
         return new TripResource($trip);
     }
 
     public function update(UpdateTripRequest $request, Trip $trip): TripResource
     {
-        $existingMedia = $request->input('existing_media', []);
-
-        if (count($existingMedia) === 0) {
-            $trip->media()->delete();
-        } else {
-            $existingMediaIds = array_column($existingMedia, 'id');
-            $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
-
-            foreach ($existingMedia as $mediaData) {
-                if (isset($mediaData['id'])) {
-                    $mediaRecord = $trip->media()->find($mediaData['id']);
-                    if ($mediaRecord) {
-                        $mediaRecord->update([
-                            'title' => $mediaData['title'] ?? $mediaRecord->title,
-                            'copyright' => $mediaData['copyright'] ?? $mediaRecord->copyright,
-                            'photographer' => $mediaData['photographer'] ?? $mediaRecord->photographer,
-                        ]);
-                    }
-                }
-            }
-        }
-
-        // Validate Closed Access
+        // Run ALL validation before touching anything — a validation failure
+        // below must never leave media already deleted.
         $data = $request->validated();
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
@@ -237,14 +222,27 @@ class TripController extends Controller
         $visibility = $data['visibility'] ?? $trip->visibility;
         $this->validateClosedAccess($entranceCaveId, $visibility);
 
-        $trip->update($data);
-
         $participants = $request->input('participants', []);
         $participantIds = User::withoutGlobalScopes()
             ->whereIn('id', $participants)
             ->pluck('id')
             ->toArray();
-        $syncResult = $trip->participants()->sync($participantIds);
+
+        $syncResult = DB::transaction(function () use ($request, $trip, $data, $participantIds) {
+            // Only prune media when the client explicitly sent existing_media —
+            // a request omitting the field must not wipe the trip's photos.
+            if ($request->has('existing_media')) {
+                $this->pruneExistingMedia($trip, $request->input('existing_media') ?? []);
+            }
+
+            $trip->update($data);
+
+            return $trip->participants()->sync($participantIds);
+        });
+
+        $mediaMetadata = $request->input('media', []);
+        $mediaFiles = $request->file('media', []);
+        $this->storeMedia($mediaMetadata, $mediaFiles, $trip);
 
         $newParticipantIds = $syncResult['attached'];
         if (!empty($newParticipantIds)) {
@@ -255,11 +253,35 @@ class TripController extends Controller
                 event(new TripParticipantTagged($trip, $participant, $creator));
             }
         }
-        $mediaMetadata = $request->input('media', []);
-        $mediaFiles = $request->file('media', []);
-        $this->storeMedia($mediaMetadata, $mediaFiles, $trip);
+
+        $trip->load(['exit', 'audits']);
 
         return new TripResource($trip);
+    }
+
+    private function pruneExistingMedia(Trip $trip, array $existingMedia): void
+    {
+        if (count($existingMedia) === 0) {
+            $trip->media()->delete();
+
+            return;
+        }
+
+        $existingMediaIds = array_column($existingMedia, 'id');
+        $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
+
+        foreach ($existingMedia as $mediaData) {
+            if (isset($mediaData['id'])) {
+                $mediaRecord = $trip->media()->find($mediaData['id']);
+                if ($mediaRecord) {
+                    $mediaRecord->update([
+                        'title' => $mediaData['title'] ?? $mediaRecord->title,
+                        'copyright' => $mediaData['copyright'] ?? $mediaRecord->copyright,
+                        'photographer' => $mediaData['photographer'] ?? $mediaRecord->photographer,
+                    ]);
+                }
+            }
+        }
     }
 
     public function destroy(DeleteTripRequest $request, Trip $trip): JsonResponse
@@ -273,18 +295,10 @@ class TripController extends Controller
 
     private function validateClosedAccess($caveId, $visibility): void
     {
-        if ($visibility === 'public') {
-            $cave = \App\Models\Cave::with('tags', 'system.tags')->find($caveId);
-            if ($cave) {
-                $isClosed = $cave->tags->contains('tag', 'Closed') ||
-                           ($cave->system && $cave->system->tags->contains('tag', 'Closed'));
-
-                if ($isClosed) {
-                    throw ValidationException::withMessages([
-                        'visibility' => ['Closed caves cannot have public trip reports.'],
-                    ]);
-                }
-            }
+        if ($visibility === 'public' && Trip::caveIsClosed($caveId)) {
+            throw ValidationException::withMessages([
+                'visibility' => ['Closed caves cannot have public trip reports.'],
+            ]);
         }
     }
 }

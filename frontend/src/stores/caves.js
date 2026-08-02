@@ -15,6 +15,12 @@ export const useCaveStore = defineStore('caves', {
     isOfflineData: false,
   }),
 
+  getters: {
+    // True when the active filter only shows caves the user hasn't done yet, so
+    // a cave just marked done no longer belongs in the list and should be removed.
+    hidesDoneCaves: (state) => (state.savedFilter || []).includes('Not Done Yet'),
+  },
+
   actions: {
     async getList() {
       try {
@@ -40,6 +46,45 @@ export const useCaveStore = defineStore('caves', {
 
         return error
       }
+    },
+
+    /**
+     * Optimistically flag a cave as done in the in-memory lists, without a
+     * refetch. A full refresh() re-downloads the entire cave list, flips the
+     * loading spinner, and resets the infinite-scroll pagination — which throws
+     * the user back to the top of a list that can be thousands of caves long.
+     * Mutating the cave in place keeps their scroll position intact.
+     */
+    markDoneLocally(caveId) {
+      for (const list of [this.caves, this.allCaves]) {
+        const cave = list.find(c => c.id === caveId)
+        if (cave) this.applyDoneState(cave)
+      }
+    },
+
+    /**
+     * Drop a cave from the currently displayed list after it's been marked done
+     * — used when the active filter only shows not-yet-done caves. Splices the
+     * cave out in place (rather than reassigning `caves`, which would reset the
+     * infinite-scroll pagination), so the user's scroll position is preserved.
+     * Also updates allCaves so the cave doesn't reappear if filters are
+     * re-applied locally before the next server fetch.
+     */
+    removeCaveFromList(caveId) {
+      const source = this.allCaves.find(c => c.id === caveId)
+      if (source) this.applyDoneState(source)
+      const index = this.caves.findIndex(c => c.id === caveId)
+      if (index !== -1) this.caves.splice(index, 1)
+    },
+
+    // Mirror the server's done bookkeeping on a single cave: flag it done and
+    // swap its computed "Not Done Yet" tag for "Previously Done".
+    applyDoneState(cave) {
+      cave.previously_done = true
+      cave.tags = [
+        ...(cave.tags || []).filter(t => t.tag !== 'Not Done Yet'),
+        { tag: 'Previously Done' },
+      ]
     },
 
     /**

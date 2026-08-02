@@ -41,51 +41,15 @@ class GoogleLoginController extends Controller
 
         $user = User::withoutGlobalScopes()->where('email', $googleUser->email)->first();
 
-        if (!$user || !$user->has_signed_up) {
-            $photoUrl = null;
-
-            try {
-                // SECURITY: Validate avatar URL to prevent SSRF attacks
-                $avatarUrl = $googleUser->avatar;
-
-                if (filter_var($avatarUrl, FILTER_VALIDATE_URL) &&
-                    str_starts_with($avatarUrl, 'https://')) {
-                    // Use HTTP client with timeout and security constraints
-                    $response = Http::timeout(5)
-                        ->withOptions([
-                            'max_redirects' => 0,  // Prevent redirect attacks
-                            'verify' => true,       // Verify SSL certificates
-                        ])
-                        ->get($avatarUrl);
-
-                    // Validate response size (5MB limit)
-                    if ($response->successful() &&
-                        strlen($response->body()) < 5242880 &&
-                        $response->header('Content-Type') &&
-                        str_starts_with($response->header('Content-Type'), 'image/')) {
-                        $photoContents = $response->body();
-
-                        // Server-side image validation
-                        $image = @imagecreatefromstring($photoContents);
-                        if ($image !== false) {
-                            imagedestroy($image);
-
-                            // Save validated image
-                            $filename = 'user_'.uniqid().'.jpg';
-                            $photoPath = 'profile/'.$filename;
-                            Storage::disk('media')->put($photoPath, $photoContents);
-                            $photoUrl = Storage::disk('media')->url($photoPath);
-                        }
-                    }
-                }
-            } catch (\Exception $e) {
-                // Log security event
-                Log::warning('Failed to fetch Google avatar', [
-                    'url' => $googleUser->avatar ?? 'null',
-                    'error' => $e->getMessage(),
-                ]);
-                // Keep photoUrl as null
-            }
+        // Only brand-new users and placeholder accounts (created via trip
+        // tagging with no profile yet, or deactivated) go through the signup
+        // flow. Established users just log in — their profile is untouched.
+        if (!$user || empty($user->name) || empty($user->photo) || !$user->is_active) {
+            // Only download the Google avatar when we could actually use it —
+            // never to replace an existing photo.
+            $photoUrl = (!$user || empty($user->photo))
+                ? $this->fetchGoogleAvatar($googleUser->avatar ?? null)
+                : null;
 
             if (!$user) {
                 $user = User::create([
@@ -100,12 +64,27 @@ class GoogleLoginController extends Controller
 
                 event(new UserCreated($user));
             } else {
-                $user->update([
-                    'name' => $googleUser->name,
-                    'photo' => $photoUrl,
-                ]);
+                // Fill in missing profile fields only: never overwrite an
+                // existing name, and never null out an existing photo when
+                // the avatar fetch fails.
+                $updates = [];
+                if (empty($user->name)) {
+                    $updates['name'] = $googleUser->name;
+                }
+                if (empty($user->photo) && $photoUrl !== null) {
+                    $updates['photo'] = $photoUrl;
+                }
+                if ($updates !== []) {
+                    $user->update($updates);
+                }
 
                 if (!$user->is_active) {
+                    // Reactivating via Google is the user's implicit "sign up"
+                    // action, so record ToS agreement just like first-time
+                    // creation does (mirrors the magic-link path).
+                    if ($user->tos_agreed_at === null) {
+                        $user->tos_agreed_at = now();
+                    }
                     $user->is_active = true;
                     $user->save();
                     event(new UserCreated($user));
@@ -116,5 +95,54 @@ class GoogleLoginController extends Controller
         Auth::login($user);
 
         return redirect(config('app.url'));
+    }
+
+    /**
+     * Download and validate a Google avatar, returning the stored URL or null.
+     */
+    private function fetchGoogleAvatar(?string $avatarUrl): ?string
+    {
+        try {
+            // SECURITY: Validate avatar URL to prevent SSRF attacks
+            if (filter_var($avatarUrl, FILTER_VALIDATE_URL) &&
+                str_starts_with($avatarUrl, 'https://')) {
+                // Use HTTP client with timeout and security constraints
+                $response = Http::timeout(5)
+                    ->withOptions([
+                        'max_redirects' => 0,  // Prevent redirect attacks
+                        'verify' => true,       // Verify SSL certificates
+                    ])
+                    ->get($avatarUrl);
+
+                // Validate response size (5MB limit)
+                if ($response->successful() &&
+                    strlen($response->body()) < 5242880 &&
+                    $response->header('Content-Type') &&
+                    str_starts_with($response->header('Content-Type'), 'image/')) {
+                    $photoContents = $response->body();
+
+                    // Server-side image validation
+                    $image = @imagecreatefromstring($photoContents);
+                    if ($image !== false) {
+                        imagedestroy($image);
+
+                        // Save validated image
+                        $filename = 'user_'.uniqid().'.jpg';
+                        $photoPath = 'profile/'.$filename;
+                        Storage::disk('media')->put($photoPath, $photoContents);
+
+                        return Storage::disk('media')->url($photoPath);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Log security event
+            Log::warning('Failed to fetch Google avatar', [
+                'url' => $avatarUrl ?? 'null',
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return null;
     }
 }

@@ -140,8 +140,10 @@ class CaveSystemController extends Controller
             // Delete routes
             $caveSystem->routes()->delete();
 
-            // Delete caves
-            $caveSystem->caves()->delete();
+            // Hard-delete caves. Caves are soft-deletable, but tearing down a
+            // whole system removes them for good (and a soft-deleted row would
+            // violate the caves.cave_system_id FK when the system row is removed).
+            $caveSystem->caves()->forceDelete();
 
             // Detach tags
             $caveSystem->tags()->detach();

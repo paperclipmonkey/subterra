@@ -444,6 +444,37 @@ class ClubTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function sync_promotes_a_pending_member_included_in_the_list()
+    {
+        $club = Club::factory()->create();
+        $approvedUser = User::factory()->create();
+        $pendingUser = User::factory()->create();
+
+        $club->users()->attach($approvedUser->id, ['status' => 'approved', 'is_admin' => false]);
+        $club->users()->attach($pendingUser->id, ['status' => 'pending']);
+
+        // Including a currently-pending member used to attach() a duplicate
+        // pivot row (unique violation -> 500) after removals had already been
+        // applied. It must instead promote the existing row to approved.
+        $syncData = [
+            'members' => [
+                ['id' => $approvedUser->id, 'is_admin' => false],
+                ['id' => $pendingUser->id, 'is_admin' => false],
+            ],
+        ];
+
+        $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members", $syncData);
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(2)
+                 ->assertJsonFragment(['id' => $pendingUser->id, 'is_club_admin' => false]);
+
+        $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $pendingUser->id, 'status' => 'approved']);
+        // Only one pivot row may exist for the promoted user.
+        $this->assertSame(1, $club->users()->where('user_id', $pendingUser->id)->count());
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_sync_members()
     {
         $club = Club::factory()->create();
@@ -550,6 +581,26 @@ class ClubTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function approving_a_user_without_a_pending_request_fails_and_sends_no_email()
+    {
+        Event::fake();
+        $club = Club::factory()->create();
+
+        // No pivot row at all.
+        $outsider = User::factory()->create();
+        $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$outsider->id}/approve");
+        $response->assertStatus(422);
+
+        // Already approved.
+        $approvedUser = User::factory()->create();
+        $club->users()->attach($approvedUser->id, ['status' => 'approved']);
+        $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$approvedUser->id}/approve");
+        $response->assertStatus(422);
+
+        Event::assertNotDispatched(ClubAccessResponded::class);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_approve_a_member()
     {
         $club = Club::factory()->create();
@@ -586,6 +637,27 @@ class ClubTest extends TestCase
         Event::assertDispatched(ClubAccessResponded::class, function ($event) use ($club, $pendingUser) {
             return $event->club->id === $club->id && $event->user->id === $pendingUser->id && $event->status === 'rejected';
         });
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function rejecting_a_user_without_a_pending_request_fails_and_sends_no_email()
+    {
+        Event::fake();
+        $club = Club::factory()->create();
+
+        // No pivot row at all.
+        $outsider = User::factory()->create();
+        $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$outsider->id}/reject");
+        $response->assertStatus(422);
+
+        // Already approved members can't be "rejected" via this endpoint.
+        $approvedUser = User::factory()->create();
+        $club->users()->attach($approvedUser->id, ['status' => 'approved']);
+        $response = $this->actingAs($this->adminUser, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members/{$approvedUser->id}/reject");
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $approvedUser->id, 'status' => 'approved']);
+
+        Event::assertNotDispatched(ClubAccessResponded::class);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

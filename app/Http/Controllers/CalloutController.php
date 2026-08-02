@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CalloutResource;
 use App\Models\Callout;
 use App\Services\CalloutService;
 use Exception;
@@ -57,7 +58,10 @@ class CalloutController extends Controller
         $data = $request->validate([
             'cave_id' => 'nullable|exists:caves,id',
             'exit_cave_id' => 'nullable|exists:caves,id',
-            'callout_time' => 'required|date|after:now',
+            // The explicit-offset regex is safety-critical: a naive "2026-07-02 18:30:00"
+            // is parsed as UTC, so a BST client's panic alarm would fire an hour LATE.
+            // The frontend always sends offset-aware ISO strings (toISOString()).
+            'callout_time' => ['required', 'date', 'after:now', 'regex:/(Z|[+-]\d{2}:?\d{2})$/i'],
             'description' => 'nullable|string',
             'trip_plan' => 'required|string',
             'car_details' => 'nullable|string', // kept for backward compatibility
@@ -71,6 +75,8 @@ class CalloutController extends Controller
             'participants.*.name' => 'required|string',
             'participants.*.phone' => 'nullable|string',
             'participants.*.email' => 'nullable|email',
+        ], [
+            'callout_time.regex' => 'The callout time must include an explicit timezone offset (e.g. 2026-07-02T18:30:00Z or 2026-07-02T19:30:00+01:00).',
         ]);
 
         $data['request_data'] = [
@@ -81,9 +87,12 @@ class CalloutController extends Controller
         try {
             $callout = $this->calloutService->create($request->user(), $data);
 
+            // The creator is entitled to see the full detail of the callout they just raised.
+            $callout->loadMissing(['participants', 'cave', 'exitCave']);
+
             return response()->json([
                 'message' => 'Callout activated successfully.',
-                'callout' => $callout,
+                'callout' => (new CalloutResource($callout))->withContact(true),
             ], 201);
         } catch (Exception $e) {
             Log::error('Callout creation failed', ['error' => $e->getMessage(), 'user' => $request->user()->id]);
@@ -119,12 +128,16 @@ class CalloutController extends Controller
             }
         }
 
-        // Record cancellation metadata snapshot
-        $callout->update([
-            'cancelled_ip' => $request->ip(),
-            'cancelled_user_agent' => $request->userAgent(),
-            'cancelled_location' => $request->input('location'), // Optional location from frontend
-        ]);
+        // Record cancellation metadata snapshot — but only when this request can actually
+        // perform the cancellation. Repeated hits on this (idempotent, guest-accessible)
+        // route must never overwrite the forensic record of the original cancel.
+        if (!in_array($callout->status, ['cancelled', 'resolved'], true)) {
+            $callout->update([
+                'cancelled_ip' => $request->ip(),
+                'cancelled_user_agent' => $request->userAgent(),
+                'cancelled_location' => $request->input('location'), // Optional location from frontend
+            ]);
+        }
 
         $trip = $this->calloutService->cancel($callout);
 
@@ -150,7 +163,21 @@ class CalloutController extends Controller
             ]]);
         }
 
-        return response()->json(['data' => $callout]);
+        // Sensitive trip detail and participant contact info are only for the
+        // creator, a fellow participant, or a duty officer/admin — not every
+        // authenticated holder of the callout's (capability-token) id.
+        $user = auth()->user();
+        $canSeeContact = $user && (
+            $user->id === $callout->user_id
+            || $callout->participants->contains('user_id', $user->id)
+            || $user->is_admin
+            || $user->hasRole(['duty_officer', 'platform_admin'])
+        );
+
+        return (new CalloutResource($callout))
+            ->withContact($canSeeContact)
+            ->response()
+            ->setStatusCode(200);
     }
 
     /**

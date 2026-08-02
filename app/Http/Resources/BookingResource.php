@@ -13,8 +13,8 @@ class BookingResource extends JsonResource
     public function toArray(Request $request): array
     {
         $user = $request->user();
-        $isOfficer = $user?->hasRole(['access_officer', 'platform_admin']) ||
-            ($this->relationLoaded('permit') && $this->permit->officers()->where('user_id', $user?->id)->exists());
+        $isOfficer = $user !== null && ($user->hasRole(['access_officer', 'platform_admin']) ||
+            ($this->relationLoaded('permit') && $this->permit->isOfficer($user)));
 
         return [
             'id' => $this->short_id,

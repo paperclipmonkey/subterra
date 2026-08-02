@@ -30,6 +30,12 @@ class CaveResource extends JsonResource
     public function toArray(Request $request): array
     {
         $user = $request->user();
+
+        // Whether the requesting user may manage this cave (a data admin). Gates
+        // the private fields (visibility, private notes) and tells the client to
+        // allow direct editing rather than suggest-edit.
+        $canManage = $user !== null && app(\App\Policies\CavePolicy::class)->update($user, $this->resource);
+
         $hasDone = false;
 
         if ($this->relationLoaded('trips')) {
@@ -114,7 +120,20 @@ class CaveResource extends JsonResource
                 }) : [],
                 'tags' => $this->system->relationLoaded('tags') ? TagResource::collection($this->system->tags->merge($systemLengthTags)) : TagResource::collection($systemLengthTags),
                 'references' => $request->user()?->hasApprovedClub() ? $this->system->references : [],
-                'files' => $request->user()?->hasApprovedClub() && $this->system->relationLoaded('files') && $this->system->files->isNotEmpty() ? CaveSystemFileResource::collection($this->system->files) : [],
+                // Files: data admins see everything (incl. private); approved-club
+                // members see public files; everyone else sees none.
+                'files' => $this->when($this->system->relationLoaded('files'), function () use ($request, $canManage) {
+                    $files = $this->system->files;
+                    if ($canManage) {
+                        // managers see all files
+                    } elseif ($request->user()?->hasApprovedClub()) {
+                        $files = $files->where('visibility', 'public');
+                    } else {
+                        return [];
+                    }
+
+                    return CaveSystemFileResource::collection($files->values());
+                }, []),
                 'routes' => $this->system->relationLoaded('routes') ? $this->system->routes : [],
                 'annotation' => $this->system->relationLoaded('annotation') ? $this->system->annotation : null,
                 'map_overlays' => $this->system->relationLoaded('mapOverlays') ? CaveSystemMapOverlayResource::collection($this->system->mapOverlays) : [],
@@ -129,6 +148,11 @@ class CaveResource extends JsonResource
                 ];
             }),
             'is_ticked' => $this->when(isset($this->is_ticked), $this->is_ticked),
+            // Management flag: present for everyone (false for normal users);
+            // visibility and private notes are only included for data admins.
+            'can_manage' => $canManage,
+            'visibility' => $this->when($canManage, fn () => $this->visibility),
+            'private_notes' => $this->when($canManage, fn () => $this->private_notes),
         ];
     }
 }

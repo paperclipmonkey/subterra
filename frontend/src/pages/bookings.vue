@@ -101,7 +101,8 @@
             <v-card class="rounded-lg overflow-hidden fill-height d-flex flex-column" hover>
               <router-link :to="`/permits/${permit.slug}`" class="text-decoration-none">
                 <v-img
-                  :src="permit.photo_url || '/placeholder-cave.jpg'"
+                  :src="permit.photo?.url || '/placeholder-cave.jpg'"
+                  :srcset="permit.photo?.srcset || undefined"
                   height="170"
                   cover
                   class="align-end"

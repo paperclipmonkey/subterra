@@ -793,7 +793,7 @@ export default {
     },
     async convertToTrip() {
       this.$router.push({
-        name: 'create-trip',
+        name: '/create-trip',
         query: {
           cave_id: this.activeCallout.cave_id,
           exit_cave_id: this.activeCallout.exit_cave_id,

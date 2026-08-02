@@ -6,7 +6,9 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Events\ConnectionEstablished;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -49,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         $this->configureRateLimiters();
+        $this->bindDatabaseStatementTimeouts();
 
         \App\Models\Incident::observe(\App\Observers\IncidentObserver::class);
         \App\Models\IncidentNote::observe(\App\Observers\IncidentNoteObserver::class);
@@ -125,5 +128,80 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('webhook-twilio-sms', $perIp(60, 1));
         RateLimiter::for('webhook-twilio-voice', $perIp(120, 1));
         RateLimiter::for('webhook-gcp-media', $perIp(120, 1));
+        RateLimiter::for('embed-calendar', $perIp(60, 1));
+    }
+
+    /**
+     * Bound how long any Postgres statement will wait to ACQUIRE a lock (and, as a
+     * backstop, how long it may run) before it aborts.
+     *
+     * Postgres' default is to wait forever. The scheduler is the worst case: the cron
+     * loop runs every due command sequentially inside a single `schedule:run`, so one
+     * blocked transaction — e.g. an every-minute callout safety check colliding with a
+     * deploy migration or the other machine during a blue-green cutover — freezes the
+     * entire loop, which silently stops the Better Stack heartbeat until the process is
+     * killed by hand. A bounded lock wait turns that indefinite hang into a fast, logged
+     * failure that simply retries on the next tick (and protects web/queue connections
+     * from the same fate).
+     *
+     * Migrations are exempt: they legitimately take heavy DDL locks and can run long data
+     * back-fills, and a timed-out migration would fail the release or leave the schema
+     * half-applied.
+     */
+    private function bindDatabaseStatementTimeouts(): void
+    {
+        Event::listen(function (ConnectionEstablished $event): void {
+            $connection = $event->connection;
+
+            // Only Postgres has these knobs; the sqlite connection used in tests has no
+            // equivalent, so this is a no-op there.
+            if ($connection->getDriverName() !== 'pgsql') {
+                return;
+            }
+
+            if ($this->runningMigrations()) {
+                return;
+            }
+
+            $lockTimeout = $this->pgDuration($connection->getConfig('lock_timeout'), '10s');
+            $statementTimeout = $this->pgDuration($connection->getConfig('statement_timeout'), '30s');
+
+            // SET accepts only literals, not bound parameters; pgDuration() has already
+            // constrained both values to a safe `<int><unit>` shape before interpolation.
+            $connection->unprepared(
+                "SET lock_timeout = '{$lockTimeout}'; SET statement_timeout = '{$statementTimeout}';"
+            );
+        });
+    }
+
+    /**
+     * True when the current console invocation is running database migrations, which must
+     * not inherit the statement/lock timeouts above.
+     */
+    private function runningMigrations(): bool
+    {
+        if (!$this->app->runningInConsole()) {
+            return false;
+        }
+
+        foreach ($_SERVER['argv'] ?? [] as $arg) {
+            if ($arg === 'migrate' || \str_starts_with((string) $arg, 'migrate:')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Constrain an operator-supplied timeout to a safe Postgres duration literal (a
+     * positive integer optionally followed by ms/s/min), falling back to $default. This
+     * guards the value that is interpolated into the raw SET statement above.
+     */
+    private function pgDuration(mixed $value, string $default): string
+    {
+        $value = \trim((string) $value);
+
+        return \preg_match('/^\d+(ms|s|min)?$/', $value) === 1 ? $value : $default;
     }
 }

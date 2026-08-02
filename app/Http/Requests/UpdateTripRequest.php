@@ -25,6 +25,12 @@ class UpdateTripRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Compare end_time against the incoming start_time, falling back to the
+        // trip's stored start_time when the request doesn't change it, so a
+        // negative duration can never be saved.
+        $startTime = $this->input('start_time')
+            ?? $this->route('trip')?->start_time?->toIso8601String();
+
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -32,7 +38,12 @@ class UpdateTripRequest extends FormRequest
             'entrance_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
             'exit_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
             'start_time' => ['sometimes', 'required', 'date'],
-            'end_time' => ['sometimes', 'required', 'date'],
+            'end_time' => array_merge(
+                ['sometimes', 'required', 'date'],
+                $this->filled('start_time')
+                    ? ['after_or_equal:start_time']
+                    : ($startTime ? ['after_or_equal:'.$startTime] : [])
+            ),
             'visibility' => ['sometimes', 'in:public,private,club'],
             'participants' => ['sometimes', 'array'],
             'participants.*' => ['string', 'exists:users,id'],

@@ -15,6 +15,7 @@ class GcpMediaWebhookController extends Controller
         'cave_media' => ['class' => \App\Models\CaveMedia::class, 'attribute' => 'filename'],
         'trip_media' => ['class' => \App\Models\TripMedia::class, 'attribute' => 'filename'],
         'route_media' => ['class' => \App\Models\RouteMedia::class, 'attribute' => 'path'],
+        'permit' => ['class' => \App\Models\Permit::class, 'attribute' => 'photo_path'],
     ];
 
     /**
@@ -168,6 +169,19 @@ class GcpMediaWebhookController extends Controller
                     }
                     $storedPaths[$variant['name']] = $destPath;
                 }
+            }
+
+            // If no staging object could be read (e.g. expired staging files on
+            // a delayed Pub/Sub redelivery), writing reset([]) === false to the
+            // filename would corrupt the record and hide the image. Return an
+            // error instead so Pub/Sub retries.
+            if (empty($storedPaths)) {
+                Log::error('GcpMediaWebhook: no image variants could be read from staging', [
+                    'media_id' => $mediaId,
+                    'media_model' => $mediaModelLabel,
+                ]);
+
+                return response()->json(['status' => 'error'], 500);
             }
 
             $primaryPath = $storedPaths['desktop'] ?? reset($storedPaths);

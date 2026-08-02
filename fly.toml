@@ -27,7 +27,7 @@ console_command = 'php /var/www/html/artisan tinker'
   SESSION_SECURE_COOKIE = 'true'
   GOOGLE_REDIRECT_URL="https://subterra.world/api/google/callback"
   QUEUE_CONNECTION="database"
-  SMS_ENABLED='false'
+  TWILIO_ENABLED='false'
   APP_NAME='Subterra.world'
 
 

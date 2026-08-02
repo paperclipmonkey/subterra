@@ -142,7 +142,7 @@
 import AppMap from '@/components/AppMap.vue'
 
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiGoogleMaps, mdiHomeGroup, mdiShieldAccount, mdiWeb } from '@mdi/js'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRoute } from 'vue-router'
 import { useHutStore } from '@/stores/huts'
@@ -158,6 +158,12 @@ const userStore = useAppStore()
 
 onMounted(() => {
   hutStore.fetchHut(route.params.id)
+})
+
+// The router reuses this component when navigating between huts, so
+// onMounted won't re-fire — refetch when the id changes.
+watch(() => route.params.id, (id, prev) => {
+  if (id && id !== prev) hutStore.fetchHut(id)
 })
 
 const hut = computed(() => hutStore.currentHut)

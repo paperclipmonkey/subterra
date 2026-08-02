@@ -57,7 +57,7 @@ class Route extends Model
         return Attribute::make(
             get: function ($value) {
                 if (!$value) {
-                    return null;
+                    return;
                 }
 
                 // If it's already a full URL, return it (backward compatibility or external images)

@@ -39,4 +39,47 @@ class CalloutParticipantNotificationTest extends TestCase
             CalloutImminentContactNotification::class
         );
     }
+
+    public function test_notification_routing_falls_back_to_linked_user_contact_details()
+    {
+        // Regression (L5): participants added via autocomplete may only carry a user_id.
+        // Mail/SMS routing must fall back to the linked account rather than silently
+        // dropping an overdue-callout warning.
+        $linkedUser = User::factory()->create([
+            'email' => 'linked@example.com',
+            'phone' => '+447700900555',
+        ]);
+        $callout = Callout::factory()->create();
+
+        $participant = CalloutParticipant::create([
+            'callout_id' => $callout->id,
+            'user_id' => $linkedUser->id,
+            'name' => 'Autocomplete Person',
+            'phone' => null,
+            'email' => null,
+        ]);
+
+        $this->assertSame('linked@example.com', $participant->routeNotificationForMail());
+        $this->assertSame('+447700900555', $participant->routeNotificationForSms());
+    }
+
+    public function test_notification_routing_prefers_ad_hoc_contact_details()
+    {
+        $linkedUser = User::factory()->create([
+            'email' => 'linked@example.com',
+            'phone' => '+447700900555',
+        ]);
+        $callout = Callout::factory()->create();
+
+        $participant = CalloutParticipant::create([
+            'callout_id' => $callout->id,
+            'user_id' => $linkedUser->id,
+            'name' => 'Ad-hoc Person',
+            'phone' => '+447700900666',
+            'email' => 'adhoc@example.com',
+        ]);
+
+        $this->assertSame('adhoc@example.com', $participant->routeNotificationForMail());
+        $this->assertSame('+447700900666', $participant->routeNotificationForSms());
+    }
 }

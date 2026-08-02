@@ -75,28 +75,8 @@ class BookingController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $month = $request->input('month');
-        $startDate = $month.'-01';
-        $endDate = date('Y-m-t', strtotime($startDate));
-
-        $bookings = $permit->bookings()
-            ->where('status', 'approved')
-            ->whereDate('date', '>=', $startDate)
-            ->whereDate('date', '<=', $endDate)
-            ->select('date')
-            ->selectRaw('count(*) as booking_count')
-            ->groupBy('date')
-            ->get();
-
-        $calendarData = $bookings->mapWithKeys(function ($item) use ($permit) {
-            return [$item->date->toDateString() => [
-                'booking_count' => $item->booking_count,
-                'available' => !$permit->has_max_groups_per_day || $item->booking_count < $permit->max_groups_per_day,
-            ]];
-        });
-
         return response()->json([
-            'data' => $calendarData,
+            'data' => $this->buildCalendarData($permit, $request->input('month')),
             'permit' => [
                 'has_max_groups_per_day' => $permit->has_max_groups_per_day,
                 'max_groups_per_day' => $permit->max_groups_per_day,
@@ -105,6 +85,84 @@ class BookingController extends Controller
                 'season_end' => $permit->season_end,
             ],
         ]);
+    }
+
+    /**
+     * Public, unauthenticated calendar data for embedding a permit's
+     * availability on an external website (iframe). Returns booking counts and
+     * availability only — no personal data — plus the display fields the embed
+     * needs for its header and "book on Subterra" call to action.
+     */
+    public function embedCalendar(Request $request, Permit $permit): JsonResponse
+    {
+        abort_unless($permit->is_active, 404);
+
+        $validator = Validator::make($request->all(), [
+            'month' => 'required|date_format:Y-m',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $permit->loadMissing('caves');
+
+        return response()->json([
+            'data' => $this->buildCalendarData($permit, $request->input('month')),
+            'permit' => [
+                'name' => $permit->name,
+                'slug' => $permit->slug,
+                'caves' => $permit->caves->map(fn (Cave $cave) => ['name' => $cave->name])->values(),
+                'has_max_groups_per_day' => $permit->has_max_groups_per_day,
+                'max_groups_per_day' => $permit->max_groups_per_day,
+                'has_season' => $permit->has_season,
+                'season_start' => $permit->season_start,
+                'season_end' => $permit->season_end,
+            ],
+        ])->header('Cache-Control', 'public, max-age=60');
+    }
+
+    /**
+     * Build the per-day booking counts and availability map for a permit over a
+     * single month (keyed by Y-m-d).
+     *
+     * Approved bookings determine availability; pending ones are surfaced so
+     * applicants can see a day may fill once outstanding applications are reviewed.
+     *
+     * @return array<string, array{booking_count: int, pending_count: int, available: bool}>
+     */
+    private function buildCalendarData(Permit $permit, string $month): array
+    {
+        $startDate = $month.'-01';
+        $endDate = date('Y-m-t', strtotime($startDate));
+
+        $bookings = $permit->bookings()
+            ->whereIn('status', ['approved', 'pending'])
+            ->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
+            ->select('date', 'status')
+            ->selectRaw('count(*) as booking_count')
+            ->groupBy('date', 'status')
+            ->get();
+
+        $calendarData = [];
+        foreach ($bookings as $item) {
+            $key = $item->date->toDateString();
+            $calendarData[$key] ??= ['booking_count' => 0, 'pending_count' => 0, 'available' => true];
+
+            if ($item->status === 'approved') {
+                $calendarData[$key]['booking_count'] = $item->booking_count;
+            } else {
+                $calendarData[$key]['pending_count'] = $item->booking_count;
+            }
+        }
+
+        foreach ($calendarData as &$day) {
+            $day['available'] = !$permit->has_max_groups_per_day || $day['booking_count'] < $permit->max_groups_per_day;
+        }
+        unset($day);
+
+        return $calendarData;
     }
 
     /**
@@ -117,7 +175,7 @@ class BookingController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'participants' => [
                 'required',
                 'integer',
@@ -144,6 +202,17 @@ class BookingController extends Controller
 
             if (!$permit->isInSeason($date)) {
                 return response()->json(['error' => 'This date is outside the permit season.'], 422);
+            }
+
+            // Guard against double-submits: one live application per user/date.
+            $alreadyBooked = $permit->bookings()
+                ->where('user_id', $request->user()->id)
+                ->whereDate('date', $date)
+                ->whereIn('status', ['pending', 'approved'])
+                ->exists();
+
+            if ($alreadyBooked) {
+                return response()->json(['error' => 'You already have a booking for this date.'], 422);
             }
 
             $booking = Booking::create([
@@ -185,7 +254,7 @@ class BookingController extends Controller
     {
         $bookings = $request->user()
             ->bookings()
-            ->with(['permit'])
+            ->with(['permit.officers'])
             ->orderBy('date', 'desc')
             ->get();
 

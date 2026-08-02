@@ -86,6 +86,42 @@ class RouteTest extends TestCase
         $this->assertDatabaseHas('routes', ['id' => $route->id, 'name' => 'Updated Route Name']);
     }
 
+    public function test_admin_can_replace_tackle_on_update()
+    {
+        $admin = User::factory()->admin()->create();
+        $route = Route::factory()->create();
+        $route->tackle()->create(['description' => 'Old pitch', 'type' => 'rope', 'length' => 15, 'quantity' => 1]);
+
+        $response = $this->actingAs($admin)->putJson("/api/routes/{$route->id}", [
+            'tackle' => [
+                ['description' => 'New pitch', 'type' => 'srt_rope', 'length' => 25, 'quantity' => 1],
+            ],
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('route_tackles', ['route_id' => $route->id, 'description' => 'New pitch']);
+        $this->assertDatabaseMissing('route_tackles', ['route_id' => $route->id, 'description' => 'Old pitch']);
+    }
+
+    public function test_update_rejects_tackle_items_missing_required_fields()
+    {
+        $admin = User::factory()->admin()->create();
+        $route = Route::factory()->create();
+        $route->tackle()->create(['description' => 'Existing pitch', 'type' => 'rope', 'length' => 15, 'quantity' => 1]);
+
+        $response = $this->actingAs($admin)->putJson("/api/routes/{$route->id}", [
+            'tackle' => [
+                ['length' => 20], // no description or type — must 422, not 500
+            ],
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['tackle.0.description', 'tackle.0.type']);
+
+        // The existing tackle must be untouched by the failed update
+        $this->assertDatabaseHas('route_tackles', ['route_id' => $route->id, 'description' => 'Existing pitch']);
+    }
+
     public function test_admin_can_delete_route()
     {
         $admin = User::factory()->admin()->create();

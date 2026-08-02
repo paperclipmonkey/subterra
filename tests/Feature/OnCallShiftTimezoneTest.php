@@ -53,6 +53,21 @@ class OnCallShiftTimezoneTest extends TestCase
         $this->assertEquals('2025-06-15 22:30:00', $shift->end_at->toDateTimeString());
     }
 
+    public function test_shift_with_naive_datetime_is_rejected(): void
+    {
+        // Regression (M8): a naive "2025-06-15 07:30:00" is parsed as UTC, silently
+        // shifting a BST rota entry by an hour. An explicit offset is required.
+        $response = $this->postJson('/api/admin/shifts', [
+            'user_id' => $this->user->id,
+            'start_at' => '2025-06-15 07:30:00',
+            'end_at' => '2025-06-15 23:30:00',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['start_at', 'end_at']);
+        $this->assertSame(0, OnCallShift::count());
+    }
+
     public function test_shift_overlap_detection_works_across_timezone_offsets(): void
     {
         // Create shift: 06:30-22:30 UTC (07:30-23:30 BST)

@@ -77,6 +77,14 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            // Bound how long a statement waits to ACQUIRE a lock (and, as a backstop, how
+            // long it may run) before it aborts. Postgres' default is to wait forever, so a
+            // single contended lock can wedge a process indefinitely — see the
+            // ConnectionEstablished listener in AppServiceProvider. Applied to every
+            // connection except migrations. Read via getConfig() (not env() at runtime) so
+            // it survives config:cache in production.
+            'lock_timeout' => env('DB_LOCK_TIMEOUT', '10s'),
+            'statement_timeout' => env('DB_STATEMENT_TIMEOUT', '30s'),
         ],
     ],
 

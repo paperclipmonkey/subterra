@@ -16,7 +16,8 @@
     <template v-else-if="permit">
       <!-- Hero -->
       <v-img
-        :src="permit.photo_url || '/placeholder-cave.jpg'"
+        :src="permit.photo?.url || '/placeholder-cave.jpg'"
+        :srcset="permit.photo?.srcset || undefined"
         height="300"
         cover
         class="align-end"
@@ -54,6 +55,12 @@
             {{ permit.caves.map(c => c.name).join(', ') }}
           </div>
         </v-container>
+        <div v-if="permit.photo?.photographer || permit.photo?.copyright" class="photo-credit text-caption">
+          <v-icon size="x-small" :icon="mdiCamera" class="mr-1" />
+          <span v-if="permit.photo.photographer">{{ permit.photo.photographer }}</span>
+          <span v-if="permit.photo.photographer && permit.photo.copyright"> · </span>
+          <span v-if="permit.photo.copyright">{{ permit.photo.copyright }}</span>
+        </div>
       </v-img>
 
       <v-container class="py-6">
@@ -122,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   mdiAccountClock,
@@ -131,6 +138,7 @@ import {
   mdiArrowLeft,
   mdiCalendarCheck,
   mdiCalendarRange,
+  mdiCamera,
   mdiCheckDecagram,
   mdiClipboardCheckOutline,
   mdiInformationOutline,
@@ -179,4 +187,24 @@ const loadPermit = async () => {
 }
 
 onMounted(loadPermit)
+
+// The router reuses this component when navigating between permits, so
+// onMounted won't re-fire — refetch when the slug changes.
+watch(() => route.params.slug, (slug, prev) => {
+  if (slug && slug !== prev) loadPermit()
+})
 </script>
+
+<style scoped>
+.backdrop-blur {
+  backdrop-filter: blur(4px);
+}
+
+.photo-credit {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.75);
+}
+</style>

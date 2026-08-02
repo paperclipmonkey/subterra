@@ -591,6 +591,80 @@ class SuggestedEditTest extends TestCase
         $this->assertArrayHasKey('access_info', $remaining->suggested_data);
     }
 
+    public function test_approving_a_suggestion_whose_target_was_deleted_fails_cleanly()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create();
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => ['description' => $cave->description],
+            'suggested_data' => ['description' => 'New Description'],
+            'status' => 'pending',
+        ]);
+
+        $cave->delete();
+
+        Mail::fake();
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve");
+
+        $response->assertStatus(422);
+
+        // The suggestion must remain fully pending with no side effects.
+        $this->assertDatabaseHas('suggested_edits', [
+            'id' => $suggestion->id,
+            'status' => 'pending',
+        ]);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_failed_partial_approval_rolls_back_and_keeps_the_suggestion_intact()
+    {
+        $admin = User::factory()->admin()->create();
+        $system = \App\Models\CaveSystem::factory()->create(['description' => 'Original']);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => null,
+            'suggestable_type' => \App\Models\CaveSystem::class,
+            'suggestable_id' => $system->id,
+            'original_data' => ['description' => 'Original'],
+            'suggested_data' => [
+                'description' => 'Updated',
+                'references' => 'Updated references',
+                // Points at a system that no longer exists, so applying the
+                // approval throws part-way through.
+                'merge_source_system_id' => 999999,
+            ],
+            'source' => 'pip',
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve", [
+                'fields' => ['description', 'merge_source_system_id'],
+            ]);
+
+        $response->assertStatus(500);
+
+        // Everything rolls back: the suggestion stays pending, still holds ALL
+        // of its fields (the unapproved remainder is not lost), no leftover
+        // partial suggestion is created, and the target is unchanged.
+        $suggestion->refresh();
+        $this->assertSame('pending', $suggestion->status);
+        $this->assertArrayHasKey('description', $suggestion->suggested_data);
+        $this->assertArrayHasKey('references', $suggestion->suggested_data);
+        $this->assertArrayHasKey('merge_source_system_id', $suggestion->suggested_data);
+        $this->assertDatabaseCount('suggested_edits', 1);
+        $this->assertSame('Original', $system->fresh()->description);
+        Mail::assertNothingQueued();
+    }
+
     public function test_partial_approval_of_robot_suggestion_does_not_send_email()
     {
         $admin = User::factory()->admin()->create();

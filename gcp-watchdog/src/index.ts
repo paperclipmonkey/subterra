@@ -2,6 +2,7 @@
  * Subterra Watchdog Service - GCP Cloud Run Application
  * Monitors callouts and sends emergency alerts when users don't return on time.
  */
+import { timingSafeEqual } from 'crypto';
 import express, { Request, Response } from 'express';
 import { FirestoreClient, CalloutData } from './firestore-client';
 import { TextMagicClient } from './textmagic-client';
@@ -63,8 +64,10 @@ const checkApiKey = (req: Request, res: Response, next: () => void) => {
     }
 
     const providedKey = req.header('X-Watchdog-Key');
+    const providedBuffer = Buffer.from(providedKey ?? '');
+    const expectedBuffer = Buffer.from(apiKey);
 
-    if (providedKey !== apiKey) {
+    if (providedBuffer.length !== expectedBuffer.length || !timingSafeEqual(providedBuffer, expectedBuffer)) {
         console.warn(`Unauthorized access attempt from ${req.ip}`);
         return res.status(401).json({ error: 'Unauthorized: Invalid or missing API Key' });
     }
@@ -264,8 +267,20 @@ app.post('/check', async (req: Request, res: Response) => {
                 if (dofficer.email) emails.push(dofficer.email);
             }
 
-            // Create alert message
-            const alertMessage = `🚨 SUBTERRA EMERGENCY: Callout Overdue
+            // Create alert message. Monthly TEST- callouts (from watchdog:test-alert)
+            // exercise this exact path on purpose — label them so nobody treats the
+            // test as a live emergency.
+            const isTest = String(calloutId).startsWith('TEST-');
+            const alertMessage = isTest
+                ? `🧪 SUBTERRA WATCHDOG TEST: Scheduled Monthly Test
+
+Initiator: ${user.name || 'Unknown'}
+Cave: ${callout.cave_name || 'Unknown'}
+
+This is the scheduled monthly test of the backup watchdog. Receiving it confirms the full overdue-alert path (registration → overdue detection → SMS/email) is working. No action is required.
+
+Callout ID: ${calloutId}`
+                : `🚨 SUBTERRA EMERGENCY: Callout Overdue
 
 Initiator: ${user.name || 'Unknown'} (Ph: ${user.phone || 'Unknown'})
 Expected return: ${callout.callout_time.toDate().toISOString()}

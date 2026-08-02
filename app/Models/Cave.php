@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use OwenIt\Auditing\Auditable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property float|null $length
@@ -18,8 +19,9 @@ use OwenIt\Auditing\Auditable;
  */
 class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory;
     use Auditable;
+    use HasFactory;
+    use SoftDeletes;
 
     protected static function booted()
     {
@@ -32,7 +34,11 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
 
     public $timestamps = false;
     protected $appends = ['caving_region'];
-    protected $hidden = ['registry', 'registry_id'];
+    // Internal/admin-only columns kept out of any default Cave serialization
+    // (e.g. a trip's nested entrance/exit cave). CaveResource re-exposes
+    // visibility/private_notes to data admins via explicit property access,
+    // which $hidden does not affect.
+    protected $hidden = ['registry', 'registry_id', 'private_notes', 'visibility', 'deleted_at'];
 
     protected $fillable = [
         'name',
@@ -46,7 +52,9 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'registry_id',
         'cave_system_id',
         'slug',
+        'visibility',
         'access_info',
+        'private_notes',
         'length',
         'depth',
         'latitude',

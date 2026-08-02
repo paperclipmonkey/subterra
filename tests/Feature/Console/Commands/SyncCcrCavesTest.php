@@ -113,7 +113,7 @@ XML;
             'status' => 'pending',
         ]);
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         $this->assertNull($edit->user_id);
         $this->assertArrayHasKey('description', $edit->suggested_data);
         $this->assertStringContainsString('A test cave description.', $edit->suggested_data['description']);
@@ -140,9 +140,10 @@ XML;
         $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
-        $this->assertDatabaseCount('suggested_edits', 1);
+        // The pending edit is updated in place — no second cave edit appears.
+        $this->assertSame(1, SuggestedEdit::where('suggestable_type', Cave::class)->count());
 
-        $edit = SuggestedEdit::first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->first();
         $this->assertStringContainsString('A test cave description.', $edit->suggested_data['description']);
     }
 
@@ -162,7 +163,7 @@ XML;
 
         // Description should NOT appear in suggested edits because CCR text
         // is already contained within the longer Subterra text
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('description', $edit->suggested_data);
         }
@@ -184,7 +185,7 @@ XML;
 
         // Description should NOT appear because the Desc text is found and
         // the CC registry ID is already referenced (even with different formatting)
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('description', $edit->suggested_data);
         }
@@ -203,7 +204,7 @@ XML;
         $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         $this->assertNotNull($edit);
         $this->assertArrayHasKey('description', $edit->suggested_data);
     }
@@ -221,7 +222,7 @@ XML;
         $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('access_info', $edit->suggested_data);
         }
@@ -263,7 +264,7 @@ XML, 200),
             ->assertExitCode(0);
 
         // No suggested edit should be created — the only difference is \r\n vs \n.
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('access_info', $edit->suggested_data);
         }
@@ -303,7 +304,7 @@ XML, 200),
         $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('access_info', $edit->suggested_data);
         }
@@ -327,7 +328,7 @@ XML, 200),
         // not create a duplicate cave
         $this->assertEquals(1, Cave::where('name', 'Test Cave One')->count());
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         $this->assertNotNull($edit);
         $this->assertNull($edit->user_id);
     }
@@ -373,7 +374,7 @@ XML, 200),
         $this->artisan('sync:ccr-caves --min-length=250')
             ->assertExitCode(0);
 
-        $edit = SuggestedEdit::where('suggestable_id', $cave->id)->first();
+        $edit = SuggestedEdit::where('suggestable_type', Cave::class)->where('suggestable_id', $cave->id)->first();
         if ($edit) {
             $this->assertArrayNotHasKey('description', $edit->suggested_data);
         }
