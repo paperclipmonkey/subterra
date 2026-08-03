@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-background" :class="{ 'cave-page--map': tab === 'map' }">
+  <div class="bg-background" :class="{ 'cave-page--map': tab === 'map' }" :style="{ '--caves-header-h': headerHeight + 'px' }">
     <!-- Branded page header -->
-    <div class="caves-header">
+    <div ref="headerRef" class="caves-header">
       <div class="caves-header__inner px-4 pt-3 pt-sm-4 pb-4 mx-auto">
         <div v-show="tab !== 'map'" class="mb-2">
           <h1 class="text-h6 text-sm-h5 text-md-h4 font-weight-bold text-white">Caves</h1>
@@ -84,13 +84,13 @@
     </div>
 
     <!-- Offline data notice -->
-    <v-alert v-if="caveStore.isOfflineData" type="info" variant="tonal" density="compact" class="mx-4 mt-4 mb-0">
+    <v-alert v-if="caveStore.isOfflineData" type="info" variant="tonal" density="compact" class="mx-4 mt-4 mb-0 cave-offline-alert">
       <div class="d-flex align-center">
         <span class="text-body-2">Showing {{ caveStore.caves.length }} downloaded cave(s). <router-link to="/offline" class="text-decoration-none font-weight-bold">Manage offline data</router-link></span>
       </div>
     </v-alert>
 
-    <div class="d-flex justify-center mt-3 mb-2">
+    <div class="d-flex justify-center mt-3 mb-2 cave-view-toggle">
       <v-btn-toggle
         v-model="tab"
         mandatory
@@ -128,7 +128,7 @@ import { mdiChevronDown, mdiFilterOutline, mdiFilterVariant, mdiMagnify, mdiMapO
 import { useCaveStore } from '@/stores/caves'
 import { useTagStore } from '@/stores/tags'
 import FilterByTagModal from './FilterByTagModal.vue'
-import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 // Lazily load the map (and MapLibre GL, ~hundreds of KB) only when the user
@@ -144,6 +144,13 @@ const router = useRouter()
 // Initialize search and tags from query parameter
 const search = ref(route.query.search || '')
 const catchmentId = ref(route.query.catchment || null)
+
+// In map mode the map fills the page and runs behind the floating header, so the
+// map's top controls must be offset below it. The header height varies by
+// breakpoint and when filter chips wrap, so measure it and expose it as a CSS var.
+const headerRef = ref(null)
+const headerHeight = ref(0)
+let headerResizeObserver = null
 
 const showFilterByTagModal = ref(false)
 const targetCategory = ref(null)
@@ -233,6 +240,15 @@ watch(() => route.query.catchment, async (newCatchment) => {
 })
 
 onMounted(async () => {
+  // Track the header height so the map controls can clear the floating header
+  if (headerRef.value) {
+    headerHeight.value = headerRef.value.offsetHeight
+    headerResizeObserver = new ResizeObserver(() => {
+      headerHeight.value = headerRef.value?.offsetHeight ?? 0
+    })
+    headerResizeObserver.observe(headerRef.value)
+  }
+
   // Ensure search and view parameters are applied on reload
   search.value = route.query.search || ''
   tab.value = route.query.view || 'list'
@@ -252,6 +268,11 @@ onMounted(async () => {
   } else {
     caveStore.applyFilters(tags, search.value, catchmentId.value)
   }
+})
+
+onBeforeUnmount(() => {
+  headerResizeObserver?.disconnect()
+  headerResizeObserver = null
 })
 </script>
 
@@ -275,6 +296,7 @@ onMounted(async () => {
    bottom one with a negative margin so the map runs underneath the dock
    without making the page scrollable. */
 .cave-page--map {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: calc(100dvh - var(--v-layout-top, 0px));
@@ -282,14 +304,32 @@ onMounted(async () => {
   overflow: hidden;
 }
 
+/* The map fills the whole page and runs up behind the header and toggle,
+   which float above it. */
 .cave-page--map :deep(.v-window) {
-  flex: 1 1 auto;
+  position: absolute;
+  inset: 0;
   min-height: 0;
+  z-index: 1;
 }
 
 .cave-page--map :deep(.v-window__container),
 .cave-page--map :deep(.v-window-item) {
   height: 100%;
+}
+
+/* Keep the header, offline notice and toggle stacked above the map */
+.cave-page--map .caves-header,
+.cave-page--map .cave-offline-alert,
+.cave-page--map .cave-view-toggle {
+  position: relative;
+  z-index: 2;
+}
+
+/* The toggle now sits over the map — give it an opaque, floating look */
+.cave-page--map .cave-view-toggle .view-toggle {
+  background: rgb(var(--v-theme-surface));
+  box-shadow: 0 4px 14px rgba(12, 24, 18, 0.22);
 }
 
 /* Deep-green branded header with a faint topographic-contour texture */

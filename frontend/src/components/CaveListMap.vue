@@ -263,6 +263,13 @@ onUnmounted(() => {
   bottom: 74px;
 }
 
+// The map also runs up behind the floating header — push the top controls
+// down so they clear it (--caves-header-h is measured by the caves page).
+.map-container .maplibregl-ctrl-top-left,
+.map-container .maplibregl-ctrl-top-right {
+  top: var(--caves-header-h, 0px);
+}
+
 .maplibregl-popup .maplibregl-popup-content {
   padding: 0;
   background: #fff;
