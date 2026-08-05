@@ -36,6 +36,8 @@
             </p>
 
             <v-form ref="nameForm" v-model="nameValid" @submit.prevent="nextStep">
+              <!-- No hint here: the alert below already explains why we need a
+                   legal first and last name, and saying it twice reads as nagging. -->
               <v-text-field
                 v-model="userName"
                 label="Your full name (first and last)"
@@ -44,8 +46,6 @@
                 color="primary"
                 :rules="nameRules"
                 :prepend-inner-icon="mdiAccountOutline"
-                hint="Please use your full name so others can identify you correctly when selecting callout members."
-                persistent-hint
                 class="mb-4"
               />
             </v-form>
