@@ -32,8 +32,11 @@ vi.mock('@/stores/app', () => ({
   })
 }))
 
-// Sample trips data for testing filtering
-const mockTrips = [
+// Sample trips data for testing filtering. The mocked store hands out this
+// exact array, so tests that mutate it (see "correctly identifies stubbed
+// trips") must not leak into their neighbours — beforeEach restores it from
+// BASE_TRIPS below.
+const BASE_TRIPS = [
   {
     id: 1,
     name: 'Expedition to Great Cave',
@@ -57,6 +60,10 @@ const mockTrips = [
   }
 ]
 
+// Kept as a stable reference so the mocked store always hands back the same
+// array identity; its contents are reset before every test.
+const mockTrips = []
+
 vi.mock('@/stores/trips', () => ({
   useTripStore: () => ({
     getTrips: vi.fn().mockResolvedValue([]),
@@ -68,6 +75,7 @@ vi.mock('@/stores/trips', () => ({
 describe('TripList', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    mockTrips.splice(0, mockTrips.length, ...structuredClone(BASE_TRIPS))
   })
 
   it('initializes with empty search', () => {

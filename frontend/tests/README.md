@@ -1,29 +1,55 @@
 # Vue Frontend Testing
 
-This project uses Vitest for testing Vue components and frontend interactions.
+This project uses Vitest for testing Vue components, stores and frontend logic.
 
 ## Testing Framework
 
 - **Vitest**: Modern test runner optimized for Vite
 - **Vue Test Utils**: Official testing utilities for Vue.js
 - **jsdom**: Browser environment simulation for testing
+- **fake-indexeddb**: In-memory IndexedDB for the offline store
+- **@vitest/coverage-v8**: Coverage instrumentation and thresholds
 
 ## Test Scripts
 
-- `npm run test` - Run tests in watch mode
-- `npm run test:run` - Run tests once
-- `npm run test:ui` - Run tests with UI dashboard
+- `yarn test` — run tests in watch mode
+- `yarn test:run` — run tests once
+- `yarn test:coverage` — run tests once with a coverage report (enforces thresholds)
+- `yarn test:ui` — run tests with the UI dashboard
 
 ## Test Structure
 
-Tests are located in the `tests/unit/components/` directory:
+```
+tests/unit/
+  components/   Component tests (mounted with @vue/test-utils)
+  pages/        Route-level page tests
+  stores/       Pinia store tests — pure logic, no mounting
+  composables/  Composable tests
+  utilities/    Framework-free helpers (FormData conversion, MapLibre controls)
+  plugins/      The axios instance and its error-notification interceptor
+  router/       The navigation guard's auth, role and offline redirect rules
+```
 
-- `AdminIndex.test.js` - Tests for admin dashboard component
-- `AddParticipantManual.test.js` - Tests for adding trip participants
-- `CaveTripListItem.test.js` - Tests for trip list item display
-- `TripList.test.js` - Tests for trip list functionality
-- `WaitList.test.js` - Tests for club membership waiting
-- `TestingExamples.test.js` - Examples demonstrating testing patterns
+A few tests also live next to the code they cover, under `src/**/__tests__/`.
+
+## Coverage
+
+`yarn test:coverage` writes an HTML report to `frontend/coverage/` and fails if
+coverage drops below the thresholds in `vite.config.mjs`.
+
+Thresholds are **ratchets, not targets**: they sit just below current coverage so
+a regression fails CI while normal work doesn't. Raise them as coverage improves
+— never lower them to make a build pass.
+
+The framework-free layers (`src/stores`, `src/composables`, `src/utilities`,
+`src/plugins/api.js`, `src/router/guard.js`) are held to a much higher bar than
+the component/page layer, because they're cheap to test and carry the logic that
+breaks quietly.
+
+Bootstrap modules with no branching of their own (`src/main.js`, the plugin and
+store barrels, `src/router/index.js`) are excluded. The router's actual decisions
+live in `src/router/guard.js`, which is tested directly — that's why the guard is
+a separate module from the router it's registered on.
 
 ## Writing Tests
 
@@ -42,145 +68,130 @@ describe('MyComponent', () => {
 })
 ```
 
-### Testing Props
+### Store Test
+
+Stores need an active Pinia, and their `api` import should be mocked so no test
+touches the network:
 
 ```javascript
-it('accepts props', () => {
-  const wrapper = mount(MyComponent, {
-    props: {
-      title: 'Test Title'
-    }
-  })
-  
-  expect(wrapper.props('title')).toBe('Test Title')
+const apiMock = { get: vi.fn() }
+vi.mock('@/plugins/api', () => ({ api: apiMock }))
+
+const { useCaveStore } = await import('@/stores/caves')
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+  apiMock.get.mockReset()
 })
 ```
 
-### Testing User Interactions
+Note the dynamic `import()` after the `vi.mock()` call. Stores that read
+`localStorage` at module scope (e.g. `assistant.js`) additionally need
+`vi.resetModules()` before re-importing, so seeded storage is picked up.
+
+### Simulating offline
+
+`navigator.onLine` is read directly by several stores. Override it per test:
 
 ```javascript
-it('handles click events', async () => {
-  const wrapper = mount(MyComponent)
-  
-  await wrapper.find('button').trigger('click')
-  
-  expect(wrapper.emitted('click')).toBeTruthy()
-})
+Object.defineProperty(window.navigator, 'onLine', { value: false, configurable: true })
 ```
 
-### Testing Form Inputs
+### Testing the axios interceptor
+
+Swap in an adapter so the request runs through the real axios pipeline (and
+therefore the response interceptor) without hitting the network:
 
 ```javascript
-it('handles form input', async () => {
-  const wrapper = mount(MyComponent)
-  
-  const input = wrapper.find('input')
-  await input.setValue('test value')
-  
-  expect(wrapper.vm.inputValue).toBe('test value')
-})
+api.defaults.adapter = (config) => Promise.reject(
+  Object.assign(new Error('...'), { response: { status: 403, data: {} }, config })
+)
 ```
+
+The `config` must be the one axios handed the adapter — the interceptor reads
+`error.config.suppressErrorNotification` from it.
 
 ## Mocking
 
-### Global Mocks
+### Global setup
 
-The test setup includes mocks for:
-- CSS imports
-- Vuetify components
-- Router functionality
-- Global fetch API
+`tests/setup.js` provides:
+
+- CSS import mocks
+- Stubs for every Vuetify component (avoids CSS loading and resolution warnings)
+- A mock `$router` / `$route`
+- `IntersectionObserver` and a writable `window.location`
 
 ### Component Stubs
 
-Vuetify components are automatically stubbed to avoid CSS loading issues:
-
 ```javascript
-// All v-* components are stubbed by default
-// Custom stubs can be added per test if needed
 const wrapper = mount(MyComponent, {
   global: {
-    stubs: {
-      'custom-component': true
-    }
+    stubs: { 'custom-component': true }
   }
 })
 ```
 
-### Store Mocking
+## Keeping tests deterministic
 
-For components using Pinia stores:
+Tests must pass in any order. The suite is verified with
+`vitest run --sequence.shuffle` — if a test only passes because of where it sits
+in the run, that's a bug in the test.
 
-```javascript
-vi.mock('@/stores/myStore', () => ({
-  useMyStore: () => ({
-    myMethod: vi.fn().mockResolvedValue({}),
-    myData: []
-  })
-}))
-```
-
-## Test Configuration
-
-Test configuration is in `vite.config.mjs`:
+The usual cause is a module-level fixture that a test mutates. Reset it in
+`beforeEach` rather than relying on run order:
 
 ```javascript
-test: {
-  globals: true,
-  environment: 'jsdom',
-  setupFiles: ['./tests/setup.js']
-}
+const BASE_TRIPS = [/* ... */]
+const mockTrips = []                 // stable identity for the mocked store
+
+beforeEach(() => {
+  mockTrips.splice(0, mockTrips.length, ...structuredClone(BASE_TRIPS))
+})
 ```
 
-The setup file (`tests/setup.js`) includes:
-- Global component stubs
-- Mock configurations
-- Test utilities
+Also avoid real timers, real network calls, and assertions on wall-clock time.
+`testTimeout` is 10s so a hung `await` fails its own test instead of the job.
 
 ## Best Practices
 
-1. **Focus on behavior**: Test what the component does, not how it's implemented
+1. **Focus on behavior**: Test what the code does, not how it's implemented
 2. **Use descriptive test names**: Clearly state what is being tested
-3. **Test user interactions**: Focus on how users interact with components
+3. **Prefer store/composable tests over component tests** where the logic allows
+   — they're faster, less brittle, and cover more per test
 4. **Mock external dependencies**: Keep tests isolated and fast
-5. **Test edge cases**: Include tests for error states and edge conditions
+5. **Test edge cases**: Include tests for error states, offline behaviour and
+   permission boundaries
 
 ## Running Specific Tests
 
 ```bash
-# Run tests for a specific file
-npm run test -- AdminIndex.test.js
-
-# Run tests matching a pattern
-npm run test -- --grep "renders correctly"
-
-# Run tests in a specific directory
-npm run test -- tests/unit/components/
+yarn test:run tests/unit/stores
 ```
-
-## Coverage
-
-To run tests with coverage reporting:
 
 ```bash
-npm run test -- --coverage
+yarn test:run -t "marks a cave as done"
 ```
+
+## CI
+
+`.github/workflows/_test.yaml` runs `yarn test:coverage` on every pull request,
+publishes a pass/fail and coverage table to the job summary, uploads the HTML
+coverage report as an artifact, and then builds the frontend. The job is capped
+at 15 minutes; the suite itself takes well under a minute.
 
 ## Troubleshooting
 
 ### CSS Import Errors
 
-If you encounter CSS import errors, ensure the setup file includes CSS mocking:
-
-```javascript
-vi.mock('*.css', () => ({}))
-vi.mock('*.scss', () => ({}))
-```
+Ensure the setup file includes CSS mocking — `vite.config.mjs` also aliases
+`*.css` to `tests/styleMock.js` when running in test mode.
 
 ### Component Not Found
 
-Make sure the component path is correct and uses the `@/` alias for the src directory.
+Make sure the component path is correct and uses the `@/` alias for `src`.
 
 ### Store Errors
 
-When testing components that use stores, ensure proper mocking or use a test instance of Pinia.
+Call `setActivePinia(createPinia())` in `beforeEach`, or mock the store module
+outright.
