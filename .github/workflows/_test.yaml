@@ -4,7 +4,7 @@ on:
 permissions:
   contents: read
 jobs:
-  backend-tests:
+  lint-php:
     runs-on: ubuntu-latest
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
@@ -15,7 +15,88 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
-          extensions: mbstring, bcmath, sqlite3
+          extensions: mbstring, bcmath, sqlite3, pdo_pgsql
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+      - name: Copy .env if needed
+        run: |
+          if [ ! -f .env ]; then cp .env.example .env; fi
+      - name: Generate app key
+        run: php artisan key:generate
+      # --test makes Pint report-only; without it Pint rewrites files and exits
+      # 0, so a style regression would pass CI unnoticed.
+      - name: Check formatting (Pint)
+        run: vendor/bin/pint --test
+      - name: Static analysis (PHPStan)
+        run: vendor/bin/phpstan analyse --no-progress --error-format=github
+
+  lint-js:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: |
+            frontend/yarn.lock
+            gcp-watchdog/yarn.lock
+            gcp-image-processor/yarn.lock
+      - name: Install frontend dependencies
+        run: cd frontend && yarn install --frozen-lockfile
+      # `yarn lint` is `eslint . --fix`, which mutates files and always exits 0.
+      # lint:ci is the report-only variant.
+      - name: Lint frontend (ESLint)
+        run: cd frontend && yarn lint:ci
+      - name: Install watchdog dependencies
+        run: cd gcp-watchdog && yarn install --frozen-lockfile
+      - name: Typecheck watchdog
+        run: cd gcp-watchdog && yarn typecheck
+      - name: Install image processor dependencies
+        run: cd gcp-image-processor && yarn install --frozen-lockfile
+      - name: Typecheck image processor
+        run: cd gcp-image-processor && yarn typecheck
+
+  backend-tests:
+    # Production runs PostgreSQL 17 while the suite has historically only run on
+    # SQLite, whose loose typing hides errors Postgres raises (see AGENTS.md).
+    # Both legs must pass: SQLite for fast feedback, Postgres for fidelity.
+    name: backend-tests (${{ matrix.database }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, pgsql]
+    services:
+      # Started for both legs — GitHub Actions has no conditional services —
+      # but only the pgsql leg connects to it.
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: subterra
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: subterra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, bcmath, sqlite3, pdo_pgsql
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
       - name: Copy .env if needed
@@ -24,14 +105,31 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
       - name: Set up SQLite database
+        if: matrix.database == 'sqlite'
         run: |
           touch database.sqlite
+      # Only exported on the pgsql leg. phpunit.xml's <env> entries do not use
+      # force="true", so they apply only when the variable is otherwise unset —
+      # which is exactly how the sqlite leg keeps its existing configuration.
+      - name: Configure Postgres connection
+        if: matrix.database == 'pgsql'
+        run: |
+          {
+            echo "DB_CONNECTION=pgsql"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=5432"
+            echo "DB_DATABASE=subterra_test"
+            echo "DB_USERNAME=subterra"
+            echo "DB_PASSWORD=password"
+          } >> "$GITHUB_ENV"
       - name: Run migrations
         run: php artisan migrate --force
       - name: Run tests
         run: vendor/bin/phpunit --log-junit /tmp/junit-backend.xml
       - name: Publish backend test report
         if: always()
+        env:
+          DATABASE_DRIVER: ${{ matrix.database }}
         run: |
           if [ -f /tmp/junit-backend.xml ]; then
             python3 - <<'EOF'
@@ -45,7 +143,7 @@ jobs:
           skipped  = int(suite.get('skipped', 0))
           passed   = tests - failures - errors - skipped
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
-              f.write('## PHPUnit Test Report\n\n')
+              f.write(f"## PHPUnit Test Report — {os.environ['DATABASE_DRIVER']}\n\n")
               f.write('| Result | Count |\n| --- | --- |\n')
               f.write(f'| ✅ Passed | {passed} |\n')
               f.write(f'| ❌ Failed | {failures + errors} |\n')
@@ -178,3 +276,105 @@ jobs:
             echo "| ⏭️ Skipped | $(jq '.numPendingTests' /tmp/jest-image-processor.json) |" >> "$GITHUB_STEP_SUMMARY"
             echo "| **Total** | **$(jq '.numTotalTests' /tmp/jest-image-processor.json)** |" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  e2e-tests:
+    # System tests against the real stack: the Vue SPA is built into Laravel's
+    # public/ exactly as the Dockerfile does it, then served by Laravel over a
+    # seeded PostgreSQL database. Nothing is mocked.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: subterra
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: subterra_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+      # Laravel loads .env.e2e when APP_ENV=e2e, and `artisan serve` forwards
+      # APP_ENV to the PHP process that actually handles requests. Shell DB_*
+      # variables would NOT survive that hop — ServeCommand filters the child
+      # environment through an allowlist.
+      APP_ENV: e2e
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, bcmath, sqlite3, pdo_pgsql
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: |
+            frontend/yarn.lock
+            e2e/yarn.lock
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+      - name: Configure the e2e environment
+        run: |
+          cp e2e/env.e2e.example .env.e2e
+          php artisan key:generate --force
+      - name: Migrate and seed
+        run: php artisan migrate --force --seed
+      - name: Build the frontend into public/
+        # Mirrors the Dockerfile: dist/ is merged into public/, where the
+        # fallback route in routes/web.php serves index.html.
+        run: |
+          cd frontend && yarn install --frozen-lockfile && yarn build
+          cd .. && rsync -ar frontend/dist/ public/
+      - name: Install Playwright
+        run: cd e2e && yarn install --frozen-lockfile && npx playwright install --with-deps chromium
+      - name: Run system tests
+        run: cd e2e && npx playwright test
+      - name: Publish e2e test report
+        if: always()
+        run: |
+          if [ -f e2e/test-results/results.json ]; then
+            python3 - <<'EOF'
+          import json, os
+          with open('e2e/test-results/results.json') as f:
+              report = json.load(f)
+          counts = {}
+          def walk(suite):
+              for spec in suite.get('specs', []):
+                  for test in spec.get('tests', []):
+                      counts[test.get('status', 'unknown')] = counts.get(test.get('status', 'unknown'), 0) + 1
+              for child in suite.get('suites', []):
+                  walk(child)
+          for suite in report.get('suites', []):
+              walk(suite)
+          total = sum(counts.values())
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('## Playwright System Tests\n\n')
+              f.write('| Result | Count |\n| --- | --- |\n')
+              f.write(f"| ✅ Passed | {counts.get('expected', 0)} |\n")
+              f.write(f"| ❌ Failed | {counts.get('unexpected', 0)} |\n")
+              f.write(f"| ⚠️ Flaky | {counts.get('flaky', 0)} |\n")
+              f.write(f"| ⏭️ Skipped | {counts.get('skipped', 0)} |\n")
+              f.write(f'| **Total** | **{total}** |\n')
+          EOF
+          fi
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          # Includes traces, screenshots and video for any failing spec, which
+          # is the only practical way to debug a CI-only failure.
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+          if-no-files-found: ignore
