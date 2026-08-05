@@ -66,6 +66,16 @@ const loading = ref(true)
 const success = ref(false)
 const errorMessage = ref('')
 
+// This page is a spinner with no way out, so a router call that throws or rejects
+// would strand an already-signed-in user on it. Fall back to a hard page load.
+const navigate = (target) => {
+  try {
+    router.push(target).catch(() => window.location.assign('/trips'))
+  } catch {
+    window.location.assign('/trips')
+  }
+}
+
 onMounted(async () => {
   try {
     // Get the magic link token from the URL parameters
@@ -86,13 +96,13 @@ onMounted(async () => {
     // Check if user needs to complete their profile
     if (data.data.needs_profile) {
       setTimeout(() => {
-        router.push({ name: '/profile/[id].edit', params: { id: store.user.id } })
+        navigate({ name: '/profile/[id].edit', params: { id: store.user.id } })
       }, 2000)
     } else {
       const redirect = sessionStorage.getItem('redirectAfterLogin')
       sessionStorage.removeItem('redirectAfterLogin')
       setTimeout(() => {
-        router.push(redirect || { name: '/trips' })
+        navigate(redirect || '/trips')
       }, 2000)
     }
   } catch (error) {
