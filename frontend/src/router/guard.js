@@ -159,11 +159,29 @@ export async function authGuard(to, from, next) {
 /**
  * Reset per-navigation UI state. Clearing the dynamic-reload retry flag lets a
  * subsequent chunk-load failure trigger another reload.
+ *
+ * Scrolling is NOT done here — it belongs in the router's scrollBehavior, which
+ * runs after the DOM has updated and is handed the position to restore.
  */
 export function afterEachHook() {
   document.title = 'subterra.world'
-  window.scrollTo(0, 0)
   localStorage.removeItem('vuetify:dynamic-reload')
+}
+
+/**
+ * Where to put the viewport after a navigation.
+ *
+ * - Back/forward returns to where the user was, so a long list (the caves page
+ *   especially) can be explored without losing your place every time you open
+ *   a cave and come back.
+ * - Query-only changes are filter and tab updates on the page you are already
+ *   on; yanking the viewport to the top for those is just disorienting.
+ */
+export function scrollBehavior(to, from, savedPosition) {
+  if (savedPosition) return savedPosition
+  if (to.hash) return { el: to.hash }
+  if (to.path === from.path) return false
+  return { top: 0 }
 }
 
 /**

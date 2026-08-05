@@ -106,7 +106,7 @@
     </div>
     <v-tabs-window v-model="tab">
       <v-tabs-window-item value="list">
-        <CaveListList :has-filters="cachedTags.length > 0 || !!search" @tag-click="toggleTag" @clear-filters="clearTagsOnly" />
+        <CaveListList ref="listRef" :has-filters="cachedTags.length > 0 || !!search" @tag-click="toggleTag" @clear-filters="clearTagsOnly" />
       </v-tabs-window-item>
       <v-tabs-window-item value="map">
         <CaveListMap v-if="tab === 'map'" />
@@ -128,8 +128,8 @@ import { mdiChevronDown, mdiFilterOutline, mdiFilterVariant, mdiMagnify, mdiMapO
 import { useCaveStore } from '@/stores/caves'
 import { useTagStore } from '@/stores/tags'
 import FilterByTagModal from './FilterByTagModal.vue'
-import { ref, computed, watch, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 
 // Lazily load the map (and MapLibre GL, ~hundreds of KB) only when the user
 // switches to the map tab — keeps it out of the initial caves-list bundle.
@@ -155,6 +155,34 @@ let headerResizeObserver = null
 const showFilterByTagModal = ref(false)
 const targetCategory = ref(null)
 const tagsAvailable = computed(() => tagStore.tags)
+
+// Exploring a long cave list means opening a cave and coming straight back.
+// Remember how far down the list the user had scrolled and how many pages they
+// had loaded, and put them back exactly there.
+const listRef = ref(null)
+
+onBeforeRouteLeave(() => {
+  caveStore.rememberListState({
+    fullPath: route.fullPath,
+    displayCount: listRef.value?.displayCount ?? 0,
+    scrollY: window.scrollY,
+  })
+})
+
+// Only restore when the user returns to the very same list — arriving at
+// /caves fresh from the nav should start at the top, not halfway down the
+// results of a filter they've since left behind.
+const restoreListPosition = async () => {
+  const saved = caveStore.listStateFor(route.fullPath)
+  if (!saved || (!saved.scrollY && !saved.displayCount)) return
+
+  listRef.value?.restoreDisplayCount(saved.displayCount)
+  // Two ticks: one for the extra cards to render, one for layout to settle
+  // before the browser can scroll to a position that now exists.
+  await nextTick()
+  await nextTick()
+  window.scrollTo(0, saved.scrollY)
+}
 
 const cachedTags = ref([])
 
@@ -268,6 +296,8 @@ onMounted(async () => {
   } else {
     caveStore.applyFilters(tags, search.value, catchmentId.value)
   }
+
+  await restoreListPosition()
 })
 
 onBeforeUnmount(() => {

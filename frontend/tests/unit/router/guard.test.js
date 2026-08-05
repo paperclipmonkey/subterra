@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 const getUser = vi.fn()
 vi.mock('@/stores/app', () => ({ useAppStore: () => ({ getUser }) }))
 
-const { authGuard, afterEachHook, handleRouterError } = await import('@/router/guard')
+const { authGuard, afterEachHook, handleRouterError, scrollBehavior } = await import('@/router/guard')
 
 const setOnline = (value) => {
   Object.defineProperty(window.navigator, 'onLine', { value, configurable: true })
@@ -326,16 +326,50 @@ describe('router auth guard', () => {
 })
 
 describe('afterEachHook', () => {
-  it('resets the title, scrolls to top and clears the reload flag', () => {
+  it('resets the title and clears the reload flag', () => {
     document.title = 'Something - subterra.world'
     localStorage.setItem('vuetify:dynamic-reload', 'true')
-    window.scrollTo = vi.fn()
 
     afterEachHook()
 
     expect(document.title).toBe('subterra.world')
-    expect(window.scrollTo).toHaveBeenCalledWith(0, 0)
     expect(localStorage.getItem('vuetify:dynamic-reload')).toBeNull()
+  })
+
+  it('leaves scrolling to scrollBehavior', () => {
+    // Scrolling here fought scroll restoration: it ran on every navigation,
+    // including the back-navigation whose position we want to keep.
+    window.scrollTo = vi.fn()
+
+    afterEachHook()
+
+    expect(window.scrollTo).not.toHaveBeenCalled()
+  })
+})
+
+describe('scrollBehavior', () => {
+  it('returns to where the user was on back/forward', () => {
+    const saved = { top: 2400, left: 0 }
+    expect(scrollBehavior({ path: '/caves' }, { path: '/caves/swildons' }, saved)).toBe(saved)
+  })
+
+  it('scrolls to the top when opening a different page', () => {
+    expect(scrollBehavior({ path: '/caves/swildons' }, { path: '/caves' }, null)).toEqual({ top: 0 })
+  })
+
+  it('stays put when only the query changes', () => {
+    // Filter and view-toggle updates on the caves page rewrite the query; the
+    // user is still looking at the same page and should not be thrown to the top.
+    expect(scrollBehavior(
+      { path: '/caves', query: { tags: 'Yorkshire' } },
+      { path: '/caves', query: {} },
+      null,
+    )).toBe(false)
+  })
+
+  it('honours an anchor', () => {
+    expect(scrollBehavior({ path: '/pages/terms', hash: '#privacy' }, { path: '/' }, null))
+      .toEqual({ el: '#privacy' })
   })
 })
 
