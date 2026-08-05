@@ -117,9 +117,16 @@ export async function authGuard(to, from, next) {
     }
   }
 
-  // Callout access — platform_admin OR duty_officer OR callout_access role explicitly granted.
+  // Callout access — platform_admin OR duty_officer OR callout_access role explicitly granted,
+  // and only while the feature is switched on globally.
+  // /callout/active stays reachable either way: someone underground when the
+  // flag flips still needs to be able to stand their callout down.
   if (to.path.startsWith('/callout') && to.path !== '/callout/active') {
     const hasRoleSlug = (slug) => user.roles && user.roles.some(r => r.slug === slug)
+    const calloutsEnabled = user.features?.callouts !== false
+    if (!calloutsEnabled) {
+      return next({ path: '/trips' })
+    }
     if (!hasRoleSlug('platform_admin') && !hasRoleSlug('duty_officer') && !hasRoleSlug('callout_access')) {
       return next({ path: '/trips' })
     }

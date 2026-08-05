@@ -552,6 +552,7 @@ const loading = ref(false)
 // Whether the user can use callouts — only then do we ask them to verify a phone during
 // onboarding. New users are granted callout_access by default (see the backend feature flag).
 const hasCalloutAccess = computed(() => {
+  if (!store.calloutsEnabled) return false
   const roles = store.user?.roles || []
   return roles.some(r => ['platform_admin', 'duty_officer', 'callout_access'].includes(r.slug))
 })

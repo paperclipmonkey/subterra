@@ -246,6 +246,26 @@ describe('router auth guard', () => {
 
       expect(await navigate('/callout/active')).toHaveBeenCalledWith()
     })
+
+    it('turns everyone away when callouts are switched off globally', async () => {
+      getUser.mockResolvedValue({ ...withRoles('duty_officer'), features: { callouts: false } })
+
+      expect(await navigate('/callout/create')).toHaveBeenCalledWith({ path: '/trips' })
+    })
+
+    it('still lets an in-flight callout be stood down when the feature is off', async () => {
+      // Turning the feature off must never strand someone underground.
+      getUser.mockResolvedValue({ ...user(), features: { callouts: false } })
+
+      expect(await navigate('/callout/active')).toHaveBeenCalledWith()
+    })
+
+    it('treats a missing features block as enabled', async () => {
+      // A user record cached before the flag existed should not hide a live feature.
+      getUser.mockResolvedValue(withRoles('duty_officer'))
+
+      expect(await navigate('/callout/create')).toHaveBeenCalledWith()
+    })
   })
 
   describe('incomplete profile', () => {

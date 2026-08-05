@@ -125,9 +125,16 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      * Whether the user is allowed to create and manage callouts.
      * Platform admins and duty officers always have access; other users must be
      * explicitly opted in via the `callout_access` role by an admin.
+     *
+     * The `features.callouts` master switch overrides all of that — when the
+     * feature is off globally, nobody has access, roles notwithstanding.
      */
     public function canUseCallout(): bool
     {
+        if (!config('features.callouts')) {
+            return false;
+        }
+
         return $this->hasRole(['platform_admin', 'duty_officer', 'callout_access']);
     }
 
