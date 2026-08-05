@@ -79,10 +79,16 @@ export const useCaveStore = defineStore('caves', {
 
     // Mirror the server's done bookkeeping on a single cave: flag it done and
     // swap its computed "Not Done Yet" tag for "Previously Done".
+    //
+    // Idempotent: `caves` and `allCaves` share cave object references, so
+    // markDoneLocally applies this twice to the same cave. Stripping any
+    // existing "Previously Done" before re-adding it keeps the tag from
+    // rendering twice (and makes a cave the server already flagged safe to
+    // pass through).
     applyDoneState(cave) {
       cave.previously_done = true
       cave.tags = [
-        ...(cave.tags || []).filter(t => t.tag !== 'Not Done Yet'),
+        ...(cave.tags || []).filter(t => t.tag !== 'Not Done Yet' && t.tag !== 'Previously Done'),
         { tag: 'Previously Done' },
       ]
     },

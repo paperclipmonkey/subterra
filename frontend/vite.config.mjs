@@ -203,6 +203,10 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['./tests/setup.js'],
+      // Keep CI runs bounded: a hung await should fail its own test rather than
+      // stall the job until GitHub's 6h job timeout.
+      testTimeout: 10000,
+      hookTimeout: 10000,
       css: {
         modules: {
           classNameStrategy: 'stable'
@@ -210,7 +214,40 @@ export default defineConfig(({ mode }) => {
       },
       deps: {
         inline: ['vuetify']
-      }
+      },
+      coverage: {
+        provider: 'v8',
+        reporter: ['text-summary', 'json-summary', 'html'],
+        reportsDirectory: './coverage',
+        include: ['src/**'],
+        exclude: [
+          // Bootstrap/wiring modules with no branching logic of their own.
+          // The router's actual decisions live in src/router/guard.js.
+          'src/main.js',
+          'src/plugins/index.js',
+          'src/plugins/vuetify.js',
+          'src/stores/index.js',
+          'src/router/index.js',
+          // Route entry points are thin wrappers around components tested directly.
+          'src/pages/**/*.edit.vue',
+        ],
+        // Ratchets, not targets. Set just below current coverage so a
+        // regression fails CI while normal work doesn't. Raise them as
+        // coverage improves — never lower them to make a build pass.
+        thresholds: {
+          statements: 32,
+          branches: 28,
+          functions: 25,
+          lines: 33,
+          // The framework-free logic layers are held to a much higher bar.
+          'src/stores/**': { statements: 95, branches: 80, functions: 90, lines: 95 },
+          'src/composables/**': { statements: 95, branches: 90, functions: 90, lines: 95 },
+          'src/utilities/**': { statements: 95, branches: 70, functions: 95, lines: 95 },
+          'src/utilities.js': { statements: 95, branches: 90, functions: 95, lines: 95 },
+          'src/plugins/api.js': { statements: 95, branches: 90, functions: 90, lines: 95 },
+          'src/router/guard.js': { statements: 95, branches: 90, functions: 90, lines: 95 },
+        },
+      },
     },
     build: {
       cssCodeSplit: true,

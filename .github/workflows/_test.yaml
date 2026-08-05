@@ -56,6 +56,9 @@ jobs:
 
   frontend-tests:
     runs-on: ubuntu-latest
+    # The suite runs in well under a minute locally; this only exists so a hung
+    # test fails fast instead of burning the default 6h job budget.
+    timeout-minutes: 15
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
@@ -70,7 +73,47 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && yarn install --frozen-lockfile
       - name: Run frontend tests
-        run: cd frontend && yarn test:run
+        run: cd frontend && yarn test:coverage --reporter=default --reporter=junit --outputFile.junit=/tmp/junit-frontend.xml
+      - name: Publish frontend test report
+        if: always()
+        run: |
+          if [ -f /tmp/junit-frontend.xml ]; then
+            python3 - <<'EOF'
+          import xml.etree.ElementTree as ET, os, json
+          root = ET.parse('/tmp/junit-frontend.xml').getroot()
+          suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
+          tests = sum(int(s.get('tests', 0)) for s in suites)
+          failures = sum(int(s.get('failures', 0)) for s in suites)
+          errors = sum(int(s.get('errors', 0)) for s in suites)
+          skipped = sum(int(s.get('skipped', 0)) for s in suites)
+          passed = tests - failures - errors - skipped
+          lines = ['## Vitest Test Report — Frontend\n\n',
+                   '| Result | Count |\n| --- | --- |\n',
+                   f'| ✅ Passed | {passed} |\n',
+                   f'| ❌ Failed | {failures + errors} |\n',
+                   f'| ⏭️ Skipped | {skipped} |\n',
+                   f'| **Total** | **{tests}** |\n']
+          try:
+              with open('frontend/coverage/coverage-summary.json') as f:
+                  total = json.load(f)['total']
+              lines += ['\n### Coverage\n\n', '| Metric | Covered | % |\n| --- | --- | --- |\n']
+              for metric in ('statements', 'branches', 'functions', 'lines'):
+                  m = total[metric]
+                  lines.append(f"| {metric.title()} | {m['covered']}/{m['total']} | {m['pct']}% |\n")
+          except (OSError, KeyError, ValueError):
+              pass
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.writelines(lines)
+          EOF
+          fi
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Build frontend
         run: cd frontend && yarn run build
 

@@ -282,9 +282,14 @@ export const useOfflineStore = defineStore('offline', {
     },
 
     async getOfflineCave(caveIdOrSlug) {
-      // Try by ID first
-      const byId = await dbGet(STORES.caves, Number(caveIdOrSlug))
-      if (byId) return byId
+      // Try by ID first. A slug coerces to NaN, which is not a valid IndexedDB
+      // key — passing it to store.get() throws DataError rather than missing,
+      // so guard before the lookup and let the slug search below handle it.
+      const numericId = Number(caveIdOrSlug)
+      if (Number.isFinite(numericId)) {
+        const byId = await dbGet(STORES.caves, numericId)
+        if (byId) return byId
+      }
       // Fall back to slug search
       const allCaves = await dbGetAll(STORES.caves)
       return allCaves.find(c => c.slug === caveIdOrSlug || String(c.id) === String(caveIdOrSlug))
