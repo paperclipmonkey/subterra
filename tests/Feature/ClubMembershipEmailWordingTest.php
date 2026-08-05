@@ -48,6 +48,27 @@ class ClubMembershipEmailWordingTest extends TestCase
     }
 
     #[Test]
+    public function the_admin_email_links_straight_to_the_confirmation_screen(): void
+    {
+        [$club, $user, $admin] = $this->fixtures();
+
+        $mail = new ClubAccessRequestMail($club, $user, $admin);
+        $mail->build();
+        $html = $mail->render();
+
+        preg_match_all('/href="([^"]*\/club\/[^"]*)"/', $html, $matches);
+        $this->assertNotEmpty($matches[1], 'The email should link to the club.');
+
+        $href = $matches[1][0];
+        $this->assertStringContainsString('/club/'.$club->slug.'?confirm=members', $href);
+
+        // A single parameter on purpose: HTML mail escapes & as &amp;, and
+        // clients that pass that through literally used to turn `tab` into
+        // `amp;tab` and land the admin on the wrong tab.
+        $this->assertStringNotContainsString('&amp;', $href);
+    }
+
+    #[Test]
     public function the_approval_email_says_the_membership_was_confirmed(): void
     {
         [$club, $user] = $this->fixtures();

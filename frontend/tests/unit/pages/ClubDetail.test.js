@@ -1,15 +1,19 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { reactive } from 'vue'
 import { api } from '@/plugins/api'
 
-const currentUser = { id: 'aB3dEfG', is_admin: false, clubs: [] }
+// Reactive, like the real Pinia store — the page's isClubAdmin computed has to
+// re-evaluate when the session's roles land.
+const currentUser = reactive({ id: 'aB3dEfG', is_admin: false, clubs: [] })
+const routeQuery = { value: {} }
 
 vi.mock('@/plugins/api', () => ({
   api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }))
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: { slug: 'mendip-caving-group' }, query: {} }),
+  useRoute: () => ({ params: { slug: 'mendip-caving-group' }, get query () { return routeQuery.value } }),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }))
 
@@ -76,6 +80,7 @@ describe('club/[slug].vue', () => {
     vi.clearAllMocks()
     currentUser.is_admin = false
     currentUser.clubs = []
+    routeQuery.value = {}
   })
 
   it('clears the loading spinner for an approved member who is not a club admin', async () => {
@@ -112,5 +117,72 @@ describe('club/[slug].vue', () => {
 
     expect(wrapper.text()).toContain('Club not found')
     expect(wrapper.find('.loading-spinner').exists()).toBe(false)
+  })
+
+  describe('the "Confirm Membership" email deep link', () => {
+    const asClubAdmin = () => {
+      currentUser.clubs = [{ slug: 'mendip-caving-group', status: 'approved', is_admin: true }]
+      mockClubRequests({ memberDataOk: true })
+    }
+
+    const openedTab = async () => {
+      const wrapper = mount(ClubDetail, { global: { stubs } })
+      await flushPromises()
+      return wrapper.vm.showEditClubModal ? wrapper.vm.editClubTab : null
+    }
+
+    it('opens straight onto the member-confirmation tab', async () => {
+      routeQuery.value = { confirm: 'members' }
+      asClubAdmin()
+
+      expect(await openedTab()).toBe('pending')
+    })
+
+    it('still honours the older two-parameter link', async () => {
+      routeQuery.value = { editClub: '1', tab: 'pending' }
+      asClubAdmin()
+
+      expect(await openedTab()).toBe('pending')
+    })
+
+    it('recovers when a mail client mangles the escaped ampersand', async () => {
+      // "?editClub=1&amp;tab=pending" passed through literally parses as an
+      // `amp;tab` key, which used to drop the admin on the Details tab.
+      routeQuery.value = { editClub: '1', 'amp;tab': 'pending' }
+      asClubAdmin()
+
+      expect(await openedTab()).toBe('pending')
+    })
+
+    it('opens even when the club loads before the session is known', async () => {
+      routeQuery.value = { confirm: 'members' }
+      mockClubRequests({ memberDataOk: true })
+
+      const wrapper = mount(ClubDetail, { global: { stubs } })
+      await flushPromises()
+
+      // Roles arrive late — the modal should still open rather than having
+      // missed its one chance during onMounted.
+      expect(wrapper.vm.showEditClubModal).toBe(false)
+      currentUser.clubs = [{ slug: 'mendip-caving-group', status: 'approved', is_admin: true }]
+      await flushPromises()
+
+      expect(wrapper.vm.showEditClubModal).toBe(true)
+      expect(wrapper.vm.editClubTab).toBe('pending')
+    })
+
+    it('does not open anything for an ordinary visit', async () => {
+      asClubAdmin()
+
+      expect(await openedTab()).toBeNull()
+    })
+
+    it('does not open the admin modal for a member who is not a club admin', async () => {
+      routeQuery.value = { confirm: 'members' }
+      currentUser.clubs = [{ slug: 'mendip-caving-group', status: 'approved', is_admin: false }]
+      mockClubRequests({ memberDataOk: true })
+
+      expect(await openedTab()).toBeNull()
+    })
   })
 })

@@ -307,6 +307,31 @@ function openEditClubModal(tab = 'details') {
   showEditClubModal.value = true
 }
 
+// Which tab an inbound deep link (from the "Confirm Membership" email) wants,
+// or null if this is an ordinary visit.
+//
+// `?confirm=members` is the current form. The older `?editClub=1&tab=pending`
+// is still honoured for links sitting in inboxes — including the case where a
+// mail client passed the HTML-escaped ampersand through literally and left us
+// with an `amp;tab` key instead of `tab`.
+const requestedModalTab = (query) => {
+  if (query.confirm === 'members') return 'pending'
+  if (!query.editClub) return null
+  const tab = query.tab ?? query['amp;tab']
+  return tab === 'pending' ? 'pending' : 'details'
+}
+
+const pendingModalTab = ref(null)
+
+// Open as soon as we know the viewer is a club admin, rather than checking once
+// on mount: the club and the user session resolve independently, and losing
+// that race silently dropped the admin on the page with nothing opened.
+watch([club, isClubAdmin], ([loadedClub, admin]) => {
+  if (!pendingModalTab.value || !loadedClub || !admin) return
+  openEditClubModal(pendingModalTab.value)
+  pendingModalTab.value = null
+})
+
 function onClubEditSaved() {
   // Refetch club data after save
   fetchClubData()
@@ -360,13 +385,11 @@ async function fetchClubData() {
 }
 
 onMounted(async () => {
+  // Register the deep-link intent before anything is awaited, so the watcher
+  // above fires whichever of the club or the session lands last.
+  pendingModalTab.value = requestedModalTab(route.query)
   await appStore.getUser()
   await fetchClubData()
-  // Check for ?editClub=1&tab=pending in query
-  const { editClub, tab } = route.query
-  if (editClub && isClubAdmin.value) {
-    openEditClubModal(tab === 'pending' ? 'pending' : 'details')
-  }
 })
 
 // The router reuses this component when navigating between clubs (e.g. via the

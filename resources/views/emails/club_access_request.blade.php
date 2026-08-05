@@ -13,7 +13,11 @@ Please confirm whether that's right:
 - **Club:** {{ $club->name }}
 </x-mail::panel>
 
-<x-mail::button :url="url('/club/' . $club->slug . '?editClub=1&tab=pending')" color="primary">
+{{-- One query parameter, deliberately. The previous two-parameter link
+     ("?editClub=1&tab=pending") renders as &amp; in HTML mail and some clients
+     and link rewriters pass that through literally, which turned `tab` into
+     `amp;tab` and dropped the admin on the wrong tab. --}}
+<x-mail::button :url="url('/club/' . $club->slug . '?confirm=members')" color="primary">
 Confirm Membership
 </x-mail::button>
 
