@@ -356,159 +356,6 @@
             <PhoneVerify v-model="showVerify" :phone="phone" @verified="onVerified" />
           </v-card-text>
         </v-window-item>
-
-        <!-- Feature Tour -->
-        <v-window-item value="features">
-          <v-card-text class="pa-8">
-            <div class="text-center mb-6">
-              <v-avatar color="success" size="64" class="mb-4 elevation-2">
-                <v-icon size="36" color="white" :icon="mdiCompassOutline" />
-              </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">What you can do</h2>
-              <p class="text-body-2 text-medium-emphasis">
-                Here's a taste of Subterra. Some features unlock once your club membership is approved.
-              </p>
-            </div>
-
-            <div class="feature-tour-grid">
-              <!-- Logbook -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 33, 150, 243;">
-                <div class="tour-preview pa-3 d-flex align-center" style="gap: 12px;">
-                  <div class="mock-cave-row d-flex align-center flex-grow-1 pa-2 rounded-lg">
-                    <v-avatar size="28" color="blue-lighten-4" class="mr-2">
-                      <v-icon size="18" color="blue-darken-2" :icon="mdiImageFilterHdr" />
-                    </v-avatar>
-                    <div class="flex-grow-1">
-                      <div class="text-caption font-weight-bold">Swildon's Hole</div>
-                      <div class="mock-bar" />
-                    </div>
-                    <v-chip size="x-small" color="success" variant="flat" :prepend-icon="mdiCheck">Done</v-chip>
-                  </div>
-                </div>
-                <div class="pa-3 pt-0 d-flex align-start">
-                  <v-icon :icon="mdiNotebookOutline" color="blue" class="mr-3 mt-1" />
-                  <div>
-                    <div class="font-weight-bold text-subtitle-2">My Trips &amp; Logbook</div>
-                    <div class="text-caption text-medium-emphasis">Mark any cave as done to build your personal caving logbook.</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Cave details -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 67, 160, 71;">
-                <div class="tour-preview pa-3">
-                  <div class="mock-map rounded-lg d-flex align-end pa-2">
-                    <v-chip size="x-small" color="white" variant="flat" :prepend-icon="mdiMapMarkerOutline">12 entrances</v-chip>
-                  </div>
-                </div>
-                <div class="pa-3 pt-0 d-flex align-start">
-                  <v-icon :icon="mdiImageFilterHdr" color="green" class="mr-3 mt-1" />
-                  <div>
-                    <div class="font-weight-bold text-subtitle-2">Cave Details &amp; Maps</div>
-                    <div class="text-caption text-medium-emphasis">Descriptions, history and photos. Detailed surveys unlock after club approval.</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Collections -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 94, 53, 177;">
-                <div class="tour-preview pa-3">
-                  <div class="mock-collection rounded-lg pa-2">
-                    <div class="d-flex align-center mb-1">
-                      <v-icon size="14" color="deep-purple" :icon="mdiFormatListChecks" class="mr-1" />
-                      <span class="text-caption font-weight-bold">Yorkshire Big Three</span>
-                      <v-spacer />
-                      <span class="text-caption text-medium-emphasis">2 / 3</span>
-                    </div>
-                    <v-progress-linear :model-value="66" color="deep-purple" height="5" rounded />
-                  </div>
-                </div>
-                <div class="pa-3 pt-0 d-flex align-start">
-                  <v-icon :icon="mdiFormatListChecks" color="deep-purple" class="mr-3 mt-1" />
-                  <div>
-                    <div class="font-weight-bold text-subtitle-2">Cave Collections</div>
-                    <div class="text-caption text-medium-emphasis">Browse curated lists of caves to explore — like the classic Yorkshire trips — and track your progress ticking them off.</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Permits -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 0, 150, 136;">
-                <div class="tour-preview pa-3">
-                  <div class="mock-permit rounded-lg pa-2 d-flex align-center" style="gap: 8px;">
-                    <v-avatar size="28" color="teal-lighten-4" class="mr-1">
-                      <v-icon size="18" color="teal-darken-2" :icon="mdiTicketConfirmationOutline" />
-                    </v-avatar>
-                    <div class="flex-grow-1">
-                      <div class="text-caption font-weight-bold">Redhouse Lane Permit</div>
-                      <div class="text-caption text-medium-emphasis">Sat 21 Jun · 4 cavers</div>
-                    </div>
-                    <v-chip size="x-small" color="success" variant="flat" :prepend-icon="mdiCheck">Approved</v-chip>
-                  </div>
-                </div>
-                <div class="pa-3 pt-0 d-flex align-start">
-                  <v-icon :icon="mdiTicketConfirmationOutline" color="teal" class="mr-3 mt-1" />
-                  <div>
-                    <div class="font-weight-bold text-subtitle-2">Access Permits</div>
-                    <div class="text-caption text-medium-emphasis">Some caves need a permit. Check availability and book your spot for a date — the permit's access officers are notified to approve it.</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Callouts -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 251, 140, 0;">
-                <div class="tour-preview pa-3">
-                  <div class="mock-callout rounded-lg pa-2 d-flex align-center" style="gap: 8px;">
-                    <v-icon :icon="mdiAlertOctagram" color="white" size="20" />
-                    <div class="flex-grow-1">
-                      <div class="text-caption font-weight-bold text-white">Callout active</div>
-                      <div class="text-caption text-white" style="opacity: 0.85;">Back by 18:00 · 3 cavers</div>
-                    </div>
-                    <v-chip size="x-small" color="white" variant="flat">On time</v-chip>
-                  </div>
-                </div>
-                <div class="pa-3 pt-0 d-flex align-start">
-                  <v-icon :icon="mdiAlertOctagram" color="orange" class="mr-3 mt-1" />
-                  <div>
-                    <div class="font-weight-bold text-subtitle-2">Safety Callouts</div>
-                    <div class="text-caption text-medium-emphasis">Set a deadline and contacts before a trip; if you're overdue, your contacts are alerted. Unlocks after club approval.</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Medals -->
-              <div class="tour-item border rounded-lg overflow-hidden mb-4" style="--tour-accent: 142, 36, 170;">
-                <div class="tour-preview pa-3 d-flex align-center justify-center" style="gap: 10px;">
-                  <v-avatar v-for="m in ['amber','blue-grey','deep-orange']" :key="m" size="34" :color="m + '-lighten-4'">
-                    <v-icon :color="m + '-darken-2'" :icon="mdiMedalOutline" />
-                  </v-avatar>
-                  <v-avatar size="34" color="grey-lighten-3">
-                    <v-icon color="grey" :icon="mdiLockOutline" size="18" />
-                  </v-avatar>
-                </div>
-                <div class="pa-3 pt-0 d-flex align-start">
-                  <v-icon :icon="mdiTrophyOutline" color="purple" class="mr-3 mt-1" />
-                  <div>
-                    <div class="font-weight-bold text-subtitle-2">Medals &amp; Stats</div>
-                    <div class="text-caption text-medium-emphasis">Earn medals and track caves visited, trips and hours underground as you log more.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <v-alert
-              color="primary"
-              variant="tonal"
-              :icon="mdiHelpCircleOutline"
-              class="mt-2"
-              density="compact"
-            >
-              <div class="text-caption">
-                <strong>Pro Tip:</strong> Visit any cave page to read its description. Once you've been, tap the <strong>checkmark</strong> to mark it <em>Done</em> and keep your logbook up to date!
-              </div>
-            </v-alert>
-          </v-card-text>
-        </v-window-item>
       </v-window>
 
       <!-- Footer Actions -->
@@ -538,7 +385,7 @@
 </template>
 
 <script setup>
-import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOctagram, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiCompassOutline, mdiEarth, mdiEmailOutline, mdiFormatListChecks, mdiHelpCircleOutline, mdiImageFilterHdr, mdiInformationOutline, mdiLockOutline, mdiMagnify, mdiMapMarkerOutline, mdiMedalOutline, mdiNotebookOutline, mdiTagOutline, mdiTextBoxOutline, mdiTicketConfirmationOutline, mdiTrophyOutline } from '@mdi/js'
+import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiEarth, mdiEmailOutline, mdiInformationOutline, mdiMagnify, mdiTagOutline, mdiTextBoxOutline, mdiTrophyOutline } from '@mdi/js'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
@@ -566,13 +413,15 @@ const STEP_TITLES = {
   email: 'Emails',
   findability: 'Findability',
   phone: 'Phone',
-  features: 'Features',
 }
 
+// The feature tour that used to close this wizard now lives on the login page,
+// where it reaches people deciding whether to sign up at all. It was also the
+// one step that asked nothing of the user, and its cards animated on hover
+// while doing nothing when clicked.
 const stepKeys = computed(() => {
   const keys = ['welcome', 'profile', 'club', 'email', 'findability']
   if (hasCalloutAccess.value) keys.push('phone')
-  keys.push('features')
   return keys
 })
 
@@ -769,10 +618,12 @@ const nextStep = async () => {
     } finally {
       loading.value = false
     }
-  } else if (key !== 'features') {
+  } else if (step.value < totalSteps.value) {
     step.value++
   } else {
-    // Final step — persist profile + preferences and complete onboarding
+    // Last step — whichever it is. Keyed on position rather than a step name so
+    // adding or removing a step can't strand the user with no way to finish.
+    // Persist profile + preferences and complete onboarding.
     loading.value = true
     try {
       const now = new Date().toISOString()
@@ -874,53 +725,5 @@ const nextStep = async () => {
     color: rgb(var(--v-theme-primary));
     font-weight: 600;
   }
-}
-
-.tour-item {
-  // Each card carries its own accent via the --tour-accent custom property
-  // (an "R, G, B" triple) so the feature previews read as distinct and pop.
-  --tour-accent: var(--v-theme-on-surface);
-  border-color: rgba(var(--tour-accent), 0.35) !important;
-  border-left-width: 4px !important;
-  transition: transform 0.2s;
-
-  &:hover {
-    transform: translateX(4px);
-  }
-}
-
-.tour-preview {
-  background: rgba(var(--tour-accent), 0.12);
-  border-bottom: 1px solid rgba(var(--tour-accent), 0.2);
-}
-
-.mock-cave-row {
-  background: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
-
-.mock-bar {
-  height: 6px;
-  width: 60%;
-  margin-top: 4px;
-  border-radius: 3px;
-  background: rgba(var(--v-theme-on-surface), 0.1);
-}
-
-.mock-map {
-  height: 70px;
-  background:
-    linear-gradient(135deg, rgba(var(--v-theme-success), 0.18), rgba(var(--v-theme-info), 0.18)),
-    repeating-linear-gradient(45deg, rgba(var(--v-theme-on-surface), 0.04) 0 8px, transparent 8px 16px);
-}
-
-.mock-callout {
-  background: linear-gradient(135deg, rgb(var(--v-theme-warning)), rgb(var(--v-theme-error)));
-}
-
-.mock-collection,
-.mock-permit {
-  background: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 </style>
