@@ -1,5 +1,5 @@
 <template>
-  <v-card v-if="hasAnnotations" class="annotation-map-container mb-4">
+  <v-card v-if="hasContent" class="annotation-map-container mb-4">
     <v-card-title class="text-h6">Map Annotations</v-card-title>
     <v-card-text class="annotation-map-holder">
       <AppMap
@@ -10,6 +10,12 @@
         :max-zoom="18"
         @map:load="onMapLoad"
       />
+      <OverlayTogglePanel
+        :overlays="overlayList"
+        :visibility="overlays.visibility"
+        :loading="overlays.loading"
+        @toggle="overlays.toggle"
+      />
     </v-card-text>
   </v-card>
 </template>
@@ -18,6 +24,8 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import AppMap from '@/components/AppMap.vue'
 import maplibregl from 'maplibre-gl'
+import OverlayTogglePanel from '@/components/cave-systems/OverlayTogglePanel.vue'
+import { useMapOverlays } from '@/composables/useMapOverlays'
 
 const props = defineProps({
   annotation: {
@@ -28,12 +36,20 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  overlays: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const style = ref('https://api.maptiler.com/maps/hybrid/style.json?key=0gGMv4po9Mjrpd64A528')
 const mapRef = ref(null)
 const mapInstance = ref(null)
 let activePopup = null
+
+// GeoTIFF overlay rendering (shared with the individual cave map)
+const overlays = useMapOverlays(() => mapInstance.value, () => props.overlays)
+const overlayList = overlays.overlayList
 
 // Pre-create icon image data (synchronous, reusable)
 const parkingIcon = createParkingIcon()
@@ -42,6 +58,10 @@ const caveIcon = createCaveIcon()
 
 const hasAnnotations = computed(() => {
   return props.annotation?.geojson?.features?.length > 0
+})
+
+const hasContent = computed(() => {
+  return hasAnnotations.value || overlayList.value.length > 0
 })
 
 const center = computed(() => {
@@ -155,6 +175,7 @@ function showPopup (map, lngLat, html, offset = 16) {
 
 function onMapLoad (e) {
   mapInstance.value = e.map
+  overlays.render()
   renderAnnotations()
 }
 
@@ -385,6 +406,11 @@ function fitBounds () {
     }
   })
 
+  // Include overlay extents (uses stored WGS84 bounds — no decode required)
+  if (overlays.extendBounds(bounds)) {
+    hasPoints = true
+  }
+
   if (hasPoints) {
     map.fitBounds(bounds, { padding: 50, maxZoom: 15 })
   }
@@ -432,9 +458,18 @@ watch(style, () => {
   const map = mapInstance.value
   if (!map) return
   map.once('style.load', () => {
+    overlays.render()
     renderAnnotations()
   })
 })
+
+// Re-render overlays when the overlay list changes (e.g. data loads after mount)
+watch(() => props.overlays, () => {
+  if (mapInstance.value) {
+    overlays.render()
+    fitBounds()
+  }
+}, { deep: true })
 
 onBeforeUnmount(() => {
   if (activePopup) activePopup.remove()
@@ -449,6 +484,7 @@ onBeforeUnmount(() => {
 .annotation-map-holder {
   padding: 0 !important;
   height: calc(100% - 48px);
+  position: relative;
 }
 </style>
 

@@ -130,6 +130,12 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::post('/cave_systems/{cave_system}/annotations', [App\Http\Controllers\CaveSystemAnnotationController::class, 'store'])->middleware(ApiIsAdmin::class);
     Route::delete('/cave_systems/{cave_system}/annotations', [App\Http\Controllers\CaveSystemAnnotationController::class, 'destroy'])->middleware(ApiIsAdmin::class);
 
+    // Cave System Map Overlays (GeoTIFF)
+    Route::get('/cave_systems/{cave_system}/map_overlays', [App\Http\Controllers\CaveSystemMapOverlayController::class, 'index']);
+    Route::post('/cave_systems/{cave_system}/map_overlays', [App\Http\Controllers\CaveSystemMapOverlayController::class, 'store'])->middleware(ApiIsAdmin::class);
+    Route::put('/cave_systems/{cave_system}/map_overlays/{overlay}', [App\Http\Controllers\CaveSystemMapOverlayController::class, 'update'])->middleware(ApiIsAdmin::class);
+    Route::delete('/cave_systems/{cave_system}/map_overlays/{overlay}', [App\Http\Controllers\CaveSystemMapOverlayController::class, 'destroy'])->middleware(ApiIsAdmin::class);
+
     Route::post('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'store'])->middleware(ApiIsAdmin::class);
     Route::put('/routes/{route}', [App\Http\Controllers\RouteController::class, 'update'])->middleware(ApiIsAdmin::class);
     Route::delete('/routes/{route}', [App\Http\Controllers\RouteController::class, 'destroy'])->middleware(ApiIsAdmin::class);

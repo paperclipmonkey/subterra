@@ -341,7 +341,10 @@
             <v-window-item v-if="smAndDown" value="map">
               <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
-                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" :geolocate="true" @map:load="onMapLoad" />
+                  <div class="cave-map-overlay-wrap">
+                    <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" :geolocate="true" @map:load="onMapLoad" />
+                    <OverlayTogglePanel :overlays="overlays.overlayList.value" :visibility="overlays.visibility" :loading="overlays.loading" @toggle="overlays.toggle" />
+                  </div>
                 </template>
                 <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
                   <div class="text-center pa-4">
@@ -617,7 +620,10 @@
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg overflow-hidden" elevation="2">
           <template v-if="appStore.canSuggest">
-            <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" :geolocate="true" @map:load="onMapLoad" />
+            <div class="cave-map-overlay-wrap">
+              <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" :geolocate="true" @map:load="onMapLoad" />
+              <OverlayTogglePanel :overlays="overlays.overlayList.value" :visibility="overlays.visibility" :loading="overlays.loading" @toggle="overlays.toggle" />
+            </div>
           </template>
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
             <div class="text-center pa-4">
@@ -746,6 +752,8 @@
 
 <script setup>
 import AppMap from '@/components/AppMap.vue'
+import OverlayTogglePanel from '@/components/cave-systems/OverlayTogglePanel.vue'
+import { useMapOverlays } from '@/composables/useMapOverlays'
 import { api } from '@/plugins/api'
 import { mdiAlertCircleOutline, mdiArrowLeft, mdiCalendarCheck, mdiCamera, mdiCloudDownload, mdiTunnel, mdiCheck, mdiChevronDown, mdiChevronRight, mdiContentCopy, mdiDownload, mdiEyeOffOutline, mdiFileDocumentOutline, mdiGoogleMaps, mdiImage, mdiImageOff, mdiLock, mdiLockAlert, mdiMapMarker, mdiPencil, mdiPencilOff, mdiPlus, mdiRefresh, mdiShieldLockOutline, mdiWater } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
@@ -1014,6 +1022,9 @@ watch(
 let mapInstance = null
 let caveMarkerInstances = []
 
+// GeoTIFF overlays from the parent cave system (shared logic with the system map)
+const overlays = useMapOverlays(() => mapInstance, () => cave.value?.system?.map_overlays)
+
 const makeEntrancePopupHtml = (lat, lng, ent, isSelected) => {
   const e = (s) => { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML }
   const lines = []
@@ -1064,6 +1075,7 @@ watch(cave, (newCave) => {
     mapInstance.flyTo({ center: [newCave.location_lng, newCave.location_lat], zoom: 14 })
   }
   renderAnnotationOverlays(mapInstance)
+  overlays.render()
 })
 
 const downloadGeoJSON = () => {
@@ -1111,9 +1123,11 @@ const onMapLoad = (event) => {
 
   mapInstance.on('style.load', () => {
     renderAnnotationOverlays(mapInstance)
+    overlays.render()
   })
 
   renderAnnotationOverlays(mapInstance)
+  overlays.render()
 }
 
 function renderAnnotationOverlays (map) {
@@ -1381,6 +1395,10 @@ function renderAnnotationOverlays (map) {
 .cave-map-mobile {
   margin-left: -16px;
   margin-right: -16px;
+}
+
+.cave-map-overlay-wrap {
+  position: relative;
 }
 
 .annotation-popup .maplibregl-popup-content {
