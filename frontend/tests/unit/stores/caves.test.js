@@ -348,4 +348,81 @@ describe('Cave Store', () => {
       expect(store.caves.map(c => c.id)).toEqual([1])
     })
   })
+
+  describe('remembering the user\'s place in the list', () => {
+    let store
+
+    beforeEach(() => {
+      setActivePinia(createPinia())
+      store = useCaveStore()
+    })
+
+    it('returns the saved position only for the URL it was captured on', () => {
+      store.rememberListState({ fullPath: '/caves?tags=Yorkshire', displayCount: 96, scrollY: 2400 })
+
+      expect(store.listStateFor('/caves?tags=Yorkshire')).toMatchObject({ displayCount: 96, scrollY: 2400 })
+      // Arriving at /caves fresh from the nav should start at the top.
+      expect(store.listStateFor('/caves')).toBeNull()
+    })
+
+    it('keeps the same filter signature across refetches so pagination survives', async () => {
+      apiMock.get.mockResolvedValue({ data: { data: [cave(1, 'Swildons')] } })
+
+      store.applyFilters(['Curated'], 'swild', 1)
+      const before = store.filterSignature
+
+      await store.getList()
+
+      // `caves` is reassigned by the refetch, but nothing about *what* is being
+      // listed changed — the list must not jump back to its first page.
+      expect(store.filterSignature).toBe(before)
+    })
+
+    it('changes signature when the filters actually change', () => {
+      store.applyFilters(['Curated'], '', null)
+      const before = store.filterSignature
+
+      store.applyFilters(['Yorkshire'], '', null)
+
+      expect(store.filterSignature).not.toBe(before)
+    })
+
+    it('is order-insensitive about tags', () => {
+      store.applyFilters(['Curated', 'Yorkshire'], '', null)
+      const a = store.filterSignature
+
+      store.applyFilters(['Yorkshire', 'Curated'], '', null)
+
+      expect(store.filterSignature).toBe(a)
+    })
+
+    it('keeps the current caves on screen while refreshing in the background', async () => {
+      store.allCaves = [cave(1, 'Swildons')]
+      store.caves = [cave(1, 'Swildons')]
+
+      let loadingDuringFetch = null
+      apiMock.get.mockImplementation(() => {
+        loadingDuringFetch = store.loading
+        return Promise.resolve({ data: { data: [cave(1, 'Swildons'), cave(2, 'Eastwater')] } })
+      })
+
+      await store.getList()
+
+      // A spinner here collapses the page height and loses the scroll position.
+      expect(loadingDuringFetch).toBe(false)
+      expect(store.caves).toHaveLength(2)
+    })
+
+    it('still shows a spinner on a genuinely cold load', async () => {
+      let loadingDuringFetch = null
+      apiMock.get.mockImplementation(() => {
+        loadingDuringFetch = store.loading
+        return Promise.resolve({ data: { data: [cave(1, 'Swildons')] } })
+      })
+
+      await store.getList()
+
+      expect(loadingDuringFetch).toBe(true)
+    })
+  })
 })

@@ -284,6 +284,43 @@ const isImageField = (key) => {
     return ['hero_image', 'entrance_image', 'photo_path', 'photo_data'].includes(key)
 }
 
+// Reduce an image field to what actually distinguishes one picture from another.
+// The cave form round-trips the whole media object and merges the metadata
+// inputs into it, which adds a `data: null` key the stored record never had — a
+// raw JSON comparison then reported an untouched hero photo as changed. Only a
+// pending upload in `data` genuinely replaces the picture; otherwise the image
+// is identified by the media row it points at.
+const normalizeImageValue = (val) => {
+    if (val === null || val === undefined || val === '') return null
+
+    if (typeof val === 'string') {
+        return { ref: val, title: null, photographer: null, copyright: null }
+    }
+
+    if (typeof val !== 'object') return null
+
+    const upload = typeof val.data === 'string' && val.data.trim() !== '' ? val.data : null
+    const existing = val.id != null ? `id:${val.id}` : (val.filename || val.url || null)
+    const ref = upload || existing
+
+    if (!ref) return null
+
+    return {
+        ref,
+        title: val.title || null,
+        photographer: val.photographer || null,
+        copyright: val.copyright || null,
+    }
+}
+
+const imageFieldChanged = (oldVal, newVal) => {
+    const a = normalizeImageValue(oldVal)
+    const b = normalizeImageValue(newVal)
+    if (!a && !b) return false
+    if (!a || !b) return true
+    return JSON.stringify(a) !== JSON.stringify(b)
+}
+
 const normalizeTags = (tags) => {
     if (!Array.isArray(tags)) return []
     return tags
@@ -393,6 +430,23 @@ const changedFields = computed(() => {
             continue
         }
 
+        // Images carry incidental keys the stored record never had, so they need
+        // their own comparison rather than a raw JSON diff.
+        if (isImageField(key)) {
+            if (!imageFieldChanged(oldVal, newVal)) continue
+            fields.push({
+                key,
+                label: key.replace(/_/g, ' ').toUpperCase(),
+                oldValue: oldVal,
+                newValue: newVal,
+                isImage: true,
+                isTags: false,
+                isCaves: false,
+                isLongText: false,
+            })
+            continue
+        }
+
         // Skip if both are empty
         if (isEmpty(oldVal) && isEmpty(newVal)) continue
 
@@ -412,7 +466,6 @@ const changedFields = computed(() => {
         const serialize = (v) => JSON.stringify(v, (_, val) => normalizeValue(val))
         if (serialize(oldVal) === serialize(newVal)) continue
 
-        const isImage = isImageField(key)
         const isSystem = key === 'cave_system' || key === 'system'
 
         let displayOld = isSystem ? (oldVal?.name ?? oldVal) : oldVal
@@ -421,12 +474,12 @@ const changedFields = computed(() => {
         fields.push({
             key,
             label: key.replace(/_/g, ' ').toUpperCase(),
-            oldValue: isImage ? oldVal : formatValue(displayOld),
-            newValue: isImage ? newVal : formatValue(displayNew),
-            isImage,
+            oldValue: formatValue(displayOld),
+            newValue: formatValue(displayNew),
+            isImage: false,
             isTags: false,
             isCaves: false,
-            isLongText: !isImage && !isSystem && (String(oldVal ?? '').length > 50 || String(newVal ?? '').length > 50)
+            isLongText: !isSystem && (String(oldVal ?? '').length > 50 || String(newVal ?? '').length > 50)
         })
     }
 

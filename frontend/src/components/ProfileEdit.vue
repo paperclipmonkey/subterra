@@ -43,11 +43,11 @@
             variant="tonal"
             size="small"
             icon
-            aria-label="Request to join a club"
+            aria-label="Confirm a club membership"
             @click="openJoinClubModal"
           >
             <v-icon :icon="mdiPlus" />
-            <v-tooltip activator="parent" location="top">Request to join a club</v-tooltip>
+            <v-tooltip activator="parent" location="top">Confirm a club membership</v-tooltip>
           </v-btn>
         </div>
         <v-list v-if="profile.clubs && profile.clubs.length" lines="one">
@@ -168,17 +168,17 @@
 
     </v-card>
 
-    <!-- Join Club Modal -->
+    <!-- Confirm Club Membership Modal -->
     <v-dialog v-model="showJoinClubModal" persistent max-width="600px">
       <v-card>
         <v-card-title>
-          <span class="text-h5">Request to Join Club</span>
+          <span class="text-h5">Confirm Club Membership</span>
         </v-card-title>
         <v-card-text>
-          <p class="mb-4">Please note: You should already be an official member of the club you are requesting to join online. A club administrator will need to approve your request before you gain full access.</p>
+          <p class="mb-4">Pick a club you are <strong>already a member of</strong>. One of its administrators will confirm your membership, which unlocks full access.</p>
           <v-autocomplete
             v-model="selectedClubToJoinId"
-            label="Select Club to Join"
+            label="Select your club"
             :items="availableClubs"
             item-title="name" 
             item-value="id"
@@ -209,7 +209,7 @@
             Cancel
           </v-btn>
           <v-btn color="blue-darken-1" variant="text" :disabled="!selectedClubToJoinId" @click="requestToJoinClub">
-            Submit Request
+            Request Confirmation
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -443,7 +443,7 @@ const requestToJoinClub = async () => {
 
     // Success!
     closeJoinClubModal()
-    notifications.showSuccess('Club join request submitted! Awaiting approval.')
+    notifications.showSuccess('Sent to the club — they will confirm your membership.')
     // Re-fetch profile data to show the new pending request
     await fetchProfile()
 

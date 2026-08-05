@@ -34,14 +34,26 @@ const store = useAppStore()
 // intended destination (or the trips feed). Guard on a real id so an
 // unauthenticated placeholder user (e.g. /api/users/me erroring) can never send
 // us to /profile/undefined/edit.
+//
+// Every navigation here is best-effort: this page has no UI beyond a spinner, so
+// a rejected or throwing router call would strand an already-signed-in user on it
+// forever. Fall back to a hard load of /trips instead.
+const goHome = () => {
+  window.location.assign('/trips')
+}
+
 const redirectAfterLogin = (user) => {
-  if (user?.id && !(user.name || '').trim()) {
-    router.replace({ name: '/profile/[id].edit', params: { id: user.id } })
-    return
+  try {
+    if (user?.id && !(user.name || '').trim()) {
+      router.replace({ name: '/profile/[id].edit', params: { id: user.id } }).catch(goHome)
+      return
+    }
+    const redirect = sessionStorage.getItem('redirectAfterLogin')
+    sessionStorage.removeItem('redirectAfterLogin')
+    router.replace(redirect || '/trips').catch(goHome)
+  } catch {
+    goHome()
   }
-  const redirect = sessionStorage.getItem('redirectAfterLogin')
-  sessionStorage.removeItem('redirectAfterLogin')
-  router.replace(redirect || { name: '/trips' })
 }
 
 onMounted(async () => {

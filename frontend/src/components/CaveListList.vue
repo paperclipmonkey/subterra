@@ -202,9 +202,20 @@ const cardImage = (cave) => {
   return { src: '/placeholder-cave.jpg', srcset: undefined, isPlaceholder: true }
 }
 
-// Reset pagination whenever the filtered cave list changes
-watch(() => caveStore.caves, () => {
+// Reset pagination when what's being listed changes — NOT on every reassignment
+// of `caves`. The array identity changes on each fetch and filter pass, so
+// keying off it sent the user back to the first page merely for revisiting the
+// page, undoing any scroll restore.
+watch(() => caveStore.filterSignature, () => {
   displayCount.value = PAGE_SIZE
+})
+
+// Expose the current page depth so the page can restore it on return.
+defineExpose({
+  displayCount,
+  restoreDisplayCount: (count) => {
+    if (count > displayCount.value) displayCount.value = count
+  },
 })
 
 let observer = null

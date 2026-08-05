@@ -9,7 +9,7 @@
           <v-tab value="details">Details</v-tab>
           <v-tab value="members" :disabled="!editMode">Members</v-tab>
           <v-tab value="pending" :disabled="!editMode">
-            Pending Requests
+            Confirm Members
             <v-badge v-if="pendingMembers.length > 0" color="info" :content="pendingMembers.length" inline />
           </v-tab>
         </v-tabs>
@@ -94,7 +94,7 @@
             <v-container>
               <v-row>
                 <v-col>
-                  <p class="mb-2">Review requests from users wanting to join the club.</p>
+                  <p class="mb-2">These people say they are already members of your club. Confirm the ones you recognise.</p>
                   <div v-if="loadingPending" class="d-flex justify-center align-center py-6">
                     <v-progress-circular indeterminate color="primary" />
                   </div>
@@ -136,7 +136,7 @@
                       </template>
                     </v-list-item>
                   </v-list>
-                  <p v-else-if="!loadingPending" class="text-grey mt-4">No pending join requests.</p>
+                  <p v-else-if="!loadingPending" class="text-grey mt-4">No members waiting to be confirmed.</p>
                 </v-col>
               </v-row>
             </v-container>
@@ -157,18 +157,18 @@
       <!-- Reject Member Reason Dialog -->
       <v-dialog v-model="rejectDialog" max-width="500px">
         <v-card>
-          <v-card-title class="headline">Reject Membership Request</v-card-title>
+          <v-card-title class="headline">Can't Confirm This Member</v-card-title>
           <v-card-text>
-            <p>Please select a reason for rejecting <strong>{{ selectedRejectUser?.name }}</strong>:</p>
+            <p>Why can't you confirm <strong>{{ selectedRejectUser?.name }}</strong> as a member?</p>
             <v-radio-group v-model="rejectReason">
-              <v-radio label="Incorrect Name (Requires full legal name)" value="incorrect_name" />
+              <v-radio label="Name not recognised (needs their full legal name)" value="incorrect_name" />
               <v-radio label="Other / No reason specified" value="" />
             </v-radio-group>
           </v-card-text>
           <v-card-actions>
             <v-spacer />
             <v-btn color="grey" variant="text" @click="closeRejectDialog">Cancel</v-btn>
-            <v-btn color="error" variant="text" @click="confirmReject">Reject</v-btn>
+            <v-btn color="error" variant="text" @click="confirmReject">Don't Confirm</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

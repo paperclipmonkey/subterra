@@ -35,4 +35,34 @@ class Medal extends Model
 
         return Storage::disk('medals')->url($this->image_path);
     }
+
+    /**
+     * URL of a raster version of the badge, for contexts that can't render SVG
+     * (email clients, overwhelmingly). Returns null rather than a URL to a file
+     * that isn't there, so callers can omit the image instead of emitting a
+     * broken one — which is how the archivist medal shipped without a picture.
+     */
+    public function rasterImageUrl(): ?string
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->image_path, 'http')) {
+            return $this->image_path;
+        }
+
+        $rasterPath = preg_replace('/\.svg$/i', '.png', $this->image_path);
+
+        $disk = Storage::disk('medals');
+
+        if ($disk->exists($rasterPath)) {
+            return $disk->url($rasterPath);
+        }
+
+        // No raster available — only offer the original if it is already one.
+        return str_ends_with(strtolower($this->image_path), '.svg')
+            ? null
+            : $disk->url($this->image_path);
+    }
 }

@@ -13,29 +13,58 @@ export const useCaveStore = defineStore('caves', {
     savedSearch: '',
     savedCatchmentId: null,
     isOfflineData: false,
+    // Where the user had got to in the list, so opening a cave and coming back
+    // doesn't dump them at the top of a list thousands of caves long. Only
+    // restored when they return to the exact same URL (see CaveList).
+    listState: {
+      fullPath: null,
+      displayCount: 0,
+      scrollY: 0,
+    },
   }),
 
   getters: {
     // True when the active filter only shows caves the user hasn't done yet, so
     // a cave just marked done no longer belongs in the list and should be removed.
     hidesDoneCaves: (state) => (state.savedFilter || []).includes('Not Done Yet'),
+
+    // Identifies *what* is being listed. The `caves` array is reassigned on
+    // every fetch and filter pass, so pagination keys off this instead —
+    // otherwise simply revisiting the page would reset it to the first page.
+    filterSignature: (state) => JSON.stringify([
+      [...(state.savedFilter || [])].sort(),
+      state.savedSearch || '',
+      state.savedCatchmentId || '',
+    ]),
   },
 
   actions: {
+    /** Remember where the user was in the list before they navigate away. */
+    rememberListState({ fullPath, displayCount, scrollY }) {
+      this.listState = { fullPath, displayCount, scrollY }
+    },
+
+    /** The remembered position, but only for the URL it was captured on. */
+    listStateFor(fullPath) {
+      return this.listState.fullPath === fullPath ? this.listState : null
+    },
+
     async getList() {
+      // Keep whatever is already on screen while refreshing in the background.
+      // Flipping to a spinner collapses the page height, which loses both the
+      // user's scroll position and their place in the list.
+      const hasCached = this.caves.length > 0
       try {
-        this.loading = true
+        this.loading = !hasCached
         this.isOfflineData = false
         this.allCavesLoaded = false
         // Fetch curated caves only — fast default payload
-        this.caves = (await api.get('/api/caves?curated=1')).data.data
-        this.allCaves = this.caves
+        this.allCaves = (await api.get('/api/caves?curated=1')).data.data
         this.loading = false
 
-        // Apply saved filters after loading caves
-        if (this.savedFilter.length > 0 || this.savedSearch || this.savedCatchmentId) {
-          this.applyFilters(this.savedFilter, this.savedSearch, this.savedCatchmentId)
-        }
+        // Assign `caves` exactly once, via the filter pass, so the list never
+        // flashes an unfiltered intermediate state.
+        this.applyFilters(this.savedFilter, this.savedSearch, this.savedCatchmentId)
       } catch (error) {
         this.loading = false
 
@@ -115,9 +144,8 @@ export const useCaveStore = defineStore('caves', {
         return
       }
       try {
-        this.loading = true
-        this.caves = (await api.get('/api/caves')).data.data
-        this.allCaves = this.caves
+        this.loading = this.caves.length === 0
+        this.allCaves = (await api.get('/api/caves')).data.data
         this.allCavesLoaded = true
         this.loading = false
         this.applyFilters(tags ?? this.savedFilter, search ?? this.savedSearch, catchmentId ?? this.savedCatchmentId)

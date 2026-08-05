@@ -551,7 +551,7 @@
               </v-row>
               <v-alert v-else type="info" variant="text">No photos available.</v-alert>
               
-              <MediaViewModal v-model="showMediaModal" :media="selectedMedia" />
+              <MediaViewModal v-model="showMediaModal" :media="selectedMedia" :items="allMedia" />
             </v-window-item>
             
             <!-- Routes Tab -->
@@ -832,12 +832,25 @@ const visibleTripsCount = computed(() => {
   ).length
 })
 
+// The cave's own media comes back in insertion order, which buries the hero and
+// entrance shots among later uploads. Lead with them — they're the pictures that
+// represent the cave — then everything else in its existing order.
+const CAVE_MEDIA_ORDER = ['hero_video', 'hero', 'entrance']
+
+const byCaveMediaType = (a, b) => {
+  const rank = (item) => {
+    const index = CAVE_MEDIA_ORDER.indexOf(item?.type)
+    return index === -1 ? CAVE_MEDIA_ORDER.length : index
+  }
+  return rank(a) - rank(b)
+}
+
 const allMedia = computed(() => {
   const mediaList = []
 
   // Add Cave-specific media (Hero, Entrance, etc.)
   if (cave.value?.media) {
-    mediaList.push(...cave.value.media)
+    mediaList.push(...[...cave.value.media].sort(byCaveMediaType))
   }
 
   // Add Trip-related media

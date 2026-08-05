@@ -33,6 +33,7 @@ import { useAppStore } from '@/stores/app'
 const userStore = useAppStore()
 
 const canUseCallout = computed(() => {
+  if (!userStore.calloutsEnabled) return false
   const roles = userStore.user?.roles ?? []
   return roles.some(r => r.slug === 'platform_admin' || r.slug === 'duty_officer' || r.slug === 'callout_access')
 })

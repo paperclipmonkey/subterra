@@ -65,7 +65,7 @@
             <v-divider />
             <v-card-text class="pa-4">
               <v-row dense>
-                <v-col v-for="media in trip.media" :key="media.filename" cols="6" sm="4" md="3">
+                <v-col v-for="media in galleryMedia" :key="media.filename" cols="6" sm="4" md="3">
                   <v-hover v-slot="{ isHovering, props }">
                     <v-card v-bind="props" flat
                             class="rounded-lg border cursor-pointer overflow-hidden transition-swing"
@@ -201,7 +201,7 @@
       </v-card>
     </v-dialog>
 
-    <MediaViewModal v-model="showMediaModal" :media="selectedMedia" />
+    <MediaViewModal v-model="showMediaModal" :media="selectedMedia" :items="galleryMedia" />
   </div>
 
   <!-- Loading State -->
@@ -258,8 +258,12 @@ const heroImage = computed(() => {
   if (trip.value?.media && trip.value.media.length > 0) {
     return trip.value.media[0].url
   }
-  // Fall back to the default cave image (matching the caves list) rather than a flat gradient.
-  return '/placeholder-cave.jpg'
+  // No trip photos — borrow the entrance's hero (then entrance) shot, matching
+  // what trip cards in the list already show, before giving up on the default
+  // cave image rather than a flat gradient.
+  return trip.value?.entrance_hero_image
+    || trip.value?.entrance_entrance_image
+    || '/placeholder-cave.jpg'
 })
 
 const formatDate = (date) => {
@@ -300,13 +304,20 @@ const confirmDelete = async () => {
   }
 }
 
-const openMedia = (item) => {
-  selectedMedia.value = {
+// Enrich once so the grid and the modal's carousel share the same objects —
+// the modal locates the opened photo within this list.
+const galleryMedia = computed(() => {
+  if (!trip.value?.media) return []
+  return trip.value.media.map(item => ({
     ...item,
     trip_id: trip.value.id,
     trip_name: trip.value.name,
     photographer: item.photographer || (item.user_id ? trip.value.participants.find(p => p.id === item.user_id)?.name : null)
-  }
+  }))
+})
+
+const openMedia = (item) => {
+  selectedMedia.value = item
   showMediaModal.value = true
 }
 

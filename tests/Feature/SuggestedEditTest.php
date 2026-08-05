@@ -693,4 +693,105 @@ class SuggestedEditTest extends TestCase
         Mail::assertNotSent(SuggestionApprovedMail::class);
         Mail::assertNothingQueued();
     }
+
+    public function test_admin_show_includes_the_caves_current_images_for_the_diff()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create();
+
+        $hero = $cave->media()->create([
+            'type' => 'hero',
+            'filename' => 'caves/hero-abc.jpg',
+            'title' => 'Main chamber',
+        ]);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => $this->createApprovedUser()->id,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => null,
+            'suggested_data' => ['description' => 'A better description'],
+            'status' => 'pending',
+        ]);
+
+        // Without the current hero image in the payload the review page has no
+        // before-value, so an untouched photo echoed back in suggested_data
+        // rendered as "Empty -> <the photo that is already there>".
+        $this->actingAs($admin)
+            ->getJson("/api/admin/suggested-edits/{$suggestion->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('suggestable.hero_image.id', $hero->id)
+            ->assertJsonPath('suggestable.hero_image.filename', 'caves/hero-abc.jpg')
+            ->assertJsonPath('suggestable.hero_image.title', 'Main chamber');
+    }
+
+    public function test_approval_email_names_the_cave_that_changed()
+    {
+        $user = $this->createApprovedUser();
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create(['name' => "Swildon's Hole", 'description' => 'Original']);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => $user->id,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => ['description' => 'Original'],
+            'suggested_data' => ['description' => 'Approved Description'],
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve")
+            ->assertStatus(200);
+
+        Mail::assertQueued(SuggestionApprovedMail::class, function (SuggestionApprovedMail $mail) {
+            $mail->build();
+            // The mail CSS inliner rewrites tags, so compare the text content.
+            $body = strip_tags($mail->render());
+
+            return str_contains($mail->subject, "Swildon's Hole")
+                // The old copy bolded the bare type: "your suggested change for cave".
+                && str_contains($body, "Your suggested change to the cave Swildon's Hole");
+        });
+    }
+
+    public function test_approval_email_falls_back_to_the_proposed_name_for_a_new_item()
+    {
+        $user = $this->createApprovedUser();
+        $admin = User::factory()->admin()->create();
+        $system = \App\Models\CaveSystem::factory()->create();
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => $user->id,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => null,
+            'original_data' => null,
+            'suggested_data' => [
+                'name' => 'Rhino Rift',
+                'description' => 'A new cave',
+                'cave_system_id' => $system->id,
+                'location_name' => 'Mendip',
+                'location_country' => 'UK',
+                'location_lat' => 51.27,
+                'location_lng' => -2.68,
+                'location_alt' => 0,
+            ],
+            'status' => 'pending',
+        ]);
+
+        Mail::fake();
+
+        $this->actingAs($admin)
+            ->postJson("/api/admin/suggested-edits/{$suggestion->id}/approve")
+            ->assertStatus(200);
+
+        Mail::assertQueued(SuggestionApprovedMail::class, function (SuggestionApprovedMail $mail) {
+            $mail->build();
+
+            return str_contains($mail->subject, 'Rhino Rift')
+                && str_contains(strip_tags($mail->render()), 'Your suggested change to the cave Rhino Rift');
+        });
+    }
 }

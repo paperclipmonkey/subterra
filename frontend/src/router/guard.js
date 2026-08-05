@@ -117,9 +117,16 @@ export async function authGuard(to, from, next) {
     }
   }
 
-  // Callout access — platform_admin OR duty_officer OR callout_access role explicitly granted.
+  // Callout access — platform_admin OR duty_officer OR callout_access role explicitly granted,
+  // and only while the feature is switched on globally.
+  // /callout/active stays reachable either way: someone underground when the
+  // flag flips still needs to be able to stand their callout down.
   if (to.path.startsWith('/callout') && to.path !== '/callout/active') {
     const hasRoleSlug = (slug) => user.roles && user.roles.some(r => r.slug === slug)
+    const calloutsEnabled = user.features?.callouts !== false
+    if (!calloutsEnabled) {
+      return next({ path: '/trips' })
+    }
     if (!hasRoleSlug('platform_admin') && !hasRoleSlug('duty_officer') && !hasRoleSlug('callout_access')) {
       return next({ path: '/trips' })
     }
@@ -159,11 +166,29 @@ export async function authGuard(to, from, next) {
 /**
  * Reset per-navigation UI state. Clearing the dynamic-reload retry flag lets a
  * subsequent chunk-load failure trigger another reload.
+ *
+ * Scrolling is NOT done here — it belongs in the router's scrollBehavior, which
+ * runs after the DOM has updated and is handed the position to restore.
  */
 export function afterEachHook() {
   document.title = 'subterra.world'
-  window.scrollTo(0, 0)
   localStorage.removeItem('vuetify:dynamic-reload')
+}
+
+/**
+ * Where to put the viewport after a navigation.
+ *
+ * - Back/forward returns to where the user was, so a long list (the caves page
+ *   especially) can be explored without losing your place every time you open
+ *   a cave and come back.
+ * - Query-only changes are filter and tab updates on the page you are already
+ *   on; yanking the viewport to the top for those is just disorienting.
+ */
+export function scrollBehavior(to, from, savedPosition) {
+  if (savedPosition) return savedPosition
+  if (to.hash) return { el: to.hash }
+  if (to.path === from.path) return false
+  return { top: 0 }
 }
 
 /**
