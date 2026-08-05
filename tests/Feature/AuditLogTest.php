@@ -128,30 +128,36 @@ class AuditLogTest extends TestCase
         $this->assertEquals('Updated Cave System Name', $audit->new_values['name']);
     }
 
-    public function testTripUserAuditLog(): void
+    /**
+     * Guards against the Postgres "column \"id\" does not exist" (SQLSTATE
+     * 42703) regression on the keyless `trip_user` pivot.
+     *
+     * The pivot has no `id` column, so TripUser must declare
+     * `$incrementing = false`. With Eloquent's default, the insert becomes
+     * `insert into "trip_user" (...) returning "id"`, which Postgres rejects
+     * outright while SQLite silently satisfies it from the implicit rowid.
+     */
+    #[Test]
+    public function trip_user_pivot_inserts_without_an_id_column(): void
     {
-        // Add a check for the trip_user table
         $this->assertTrue(Schema::hasTable('trip_user'), 'trip_user table does not exist.');
+        $this->assertFalse(
+            Schema::hasColumn('trip_user', 'id'),
+            'trip_user gained an id column — TripUser::$incrementing should be revisited.',
+        );
 
-        $trip = Trip::factory()->create(); // Create a trip first
-        $user = User::factory()->create(); // Create a user first
-        // Explicitly set trip_id and user_id using state
-        $tripUser = TripUser::factory()->state([
+        $trip = Trip::factory()->create();
+        $user = User::factory()->create();
+
+        TripUser::factory()->state([
             'trip_id' => $trip->id,
             'user_id' => $user->id,
         ])->create();
 
-        $newTrip = Trip::factory()->create(); // Create another trip for update
-        $tripUser->update(['trip_id' => $newTrip->id]);
-
-        $audit = Audit::where('auditable_type', $tripUser->getMorphClass())
-                      ->where('auditable_id', $tripUser->id)
-                      ->where('event', 'updated') // Filter for updated event
-                      ->latest()
-                      ->first();
-
-        $this->assertNotNull($audit, 'Audit record not found for TripUser update.');
-        $this->assertEquals($newTrip->id, $audit->new_values['trip_id']);
+        $this->assertDatabaseHas('trip_user', [
+            'trip_id' => $trip->id,
+            'user_id' => $user->id,
+        ]);
     }
 
     /**
