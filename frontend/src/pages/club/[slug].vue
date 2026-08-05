@@ -44,10 +44,11 @@
             </div>
           </v-card-text>
         </v-card>
-        <!-- Club Edit Modal -->
-        <ClubEditModal v-if="club && isClubAdmin" v-model="showEditClubModal" :club-slug="club.slug" :initial-tab="editClubTab"
-                       @saved="onClubEditSaved" />
-        <!-- Loading/Error State for Club Info -->
+        <!-- Loading/Error State for Club Info.
+             Keep this chained directly to the club card's v-if above — an element
+             with its own v-if in between (as the edit modal once was) silently
+             re-parents the v-else-if/v-else onto *that* condition, which left
+             every non-club-admin staring at the spinner forever. -->
         <v-container v-else-if="error" class="text-center mt-6">
           <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
           <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
@@ -57,6 +58,10 @@
           </v-btn>
         </v-container>
         <v-progress-circular v-else indeterminate color="primary" />
+
+        <!-- Club Edit Modal -->
+        <ClubEditModal v-if="club && isClubAdmin" v-model="showEditClubModal" :club-slug="club.slug" :initial-tab="editClubTab"
+                       @saved="onClubEditSaved" />
       </v-col>
     </v-row>
 
