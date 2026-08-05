@@ -426,5 +426,26 @@ describe('Cave Component', () => {
 
             expect(wrapper.vm.allMedia.map(m => m.id)).toEqual([1, 2])
         })
+
+        it('preserves the upload order of everything that is not a hero or entrance shot', async () => {
+            // The prioritised types move to the front; the long tail must keep
+            // its original relative order rather than being shuffled. Well past
+            // the 10-element threshold where engines historically switched to an
+            // unstable sort (Array#sort has been stable since ES2019).
+            const others = Array.from({ length: 40 }, (_, i) => ({ id: 100 + i, type: 'other', url: `o${i}.jpg` }))
+            const wrapper = await mountCave({
+                ...mockCave,
+                media: [
+                    ...others.slice(0, 20),
+                    { id: 4, type: 'hero', url: 'hero.jpg' },
+                    ...others.slice(20),
+                    { id: 2, type: 'entrance', url: 'entrance.jpg' },
+                ],
+            })
+
+            const ids = wrapper.vm.allMedia.map(m => m.id)
+            expect(ids.slice(0, 2)).toEqual([4, 2])
+            expect(ids.slice(2)).toEqual(others.map(o => o.id))
+        })
     })
 })
