@@ -258,8 +258,12 @@ const heroImage = computed(() => {
   if (trip.value?.media && trip.value.media.length > 0) {
     return trip.value.media[0].url
   }
-  // Fall back to the default cave image (matching the caves list) rather than a flat gradient.
-  return '/placeholder-cave.jpg'
+  // No trip photos — borrow the entrance's hero (then entrance) shot, matching
+  // what trip cards in the list already show, before giving up on the default
+  // cave image rather than a flat gradient.
+  return trip.value?.entrance_hero_image
+    || trip.value?.entrance_entrance_image
+    || '/placeholder-cave.jpg'
 })
 
 const formatDate = (date) => {
