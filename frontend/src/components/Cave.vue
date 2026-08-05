@@ -551,7 +551,7 @@
               </v-row>
               <v-alert v-else type="info" variant="text">No photos available.</v-alert>
               
-              <MediaViewModal v-model="showMediaModal" :media="selectedMedia" />
+              <MediaViewModal v-model="showMediaModal" :media="selectedMedia" :items="allMedia" />
             </v-window-item>
             
             <!-- Routes Tab -->
