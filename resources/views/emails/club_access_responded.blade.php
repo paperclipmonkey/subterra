@@ -1,10 +1,10 @@
 <x-mail::message>
-# Club Access Request Update
+@if ($status === 'approved')
+# Membership Confirmed
 
 Hello {{ $user->name }},
 
-@if ($status === 'approved')
-Good news! Your request to join **{{ $club->name }}** has been **approved**.
+Good news! **{{ $club->name }}** has confirmed you as one of their members.
 
 You now have access to the club's member features! 🚀
 
@@ -18,23 +18,25 @@ You now have access to the club's member features! 🚀
 View Club Page
 </x-mail::button>
 @else
-We’re sorry, but your request to join **{{ $club->name }}** has been **rejected**.
+# Membership Not Confirmed
+
+Hello {{ $user->name }},
+
+We're sorry — **{{ $club->name }}** wasn't able to confirm your membership.
 
 @if (isset($reason) && $reason === 'incorrect_name')
 <x-mail::panel>
-**Reason: Invalid Name**
+**Reason: Name not recognised**
 
-We require members to use their full legal first and last name to ensure everyone is correctly identified and tagged in emergency safety callouts and trip logs.
+We require members to use their full legal first and last name, so club administrators can recognise you on their membership list and so you're correctly identified in emergency safety callouts and trip logs.
 </x-mail::panel>
 
-Please update your name in your profile and feel free to re-apply to join the club.
+Please update your name in your profile, then ask the club to confirm your membership again.
 @else
-If you believe this is a mistake, you may contact a club administrator for more information.
+If you believe this is a mistake, contact a club administrator — they can confirm your membership at any time.
 @endif
 @endif
 
-Thank you for your interest in Subterra clubs!
-
-Best regards,<br>
+Thanks,<br>
 {{ config('app.name') }}
 </x-mail::message>

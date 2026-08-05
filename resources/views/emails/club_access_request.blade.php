@@ -1,21 +1,23 @@
 <x-mail::message>
-# Club Access Request
+# Confirm a Member
 
 Hello {{ $admin->name }},
 
-**{{ $user->name }}** ({{ $user->email }}) has requested to join the club **{{ $club->name }}**.
+**{{ $user->name }}** ({{ $user->email }}) has signed up to Subterra and says they are already a member of **{{ $club->name }}**.
 
-Please review their request:
+Please confirm whether that's right:
 
 <x-mail::panel>
-- **User Name:** {{ $user->name }}
-- **User Email:** {{ $user->email }}
-- **Requested Club:** {{ $club->name }}
+- **Name:** {{ $user->name }}
+- **Email:** {{ $user->email }}
+- **Club:** {{ $club->name }}
 </x-mail::panel>
 
 <x-mail::button :url="url('/club/' . $club->slug . '?editClub=1&tab=pending')" color="primary">
-Review Membership Requests
+Confirm Membership
 </x-mail::button>
+
+Confirming a member unlocks the club's cave data and safety features for them.
 
 Thank you,<br>
 {{ config('app.name') }}

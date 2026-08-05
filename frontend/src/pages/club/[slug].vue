@@ -38,7 +38,7 @@
               </v-btn>
               <v-btn v-if="isClubAdmin" class="ml-2" color="info" variant="outlined"
                      size="small" @click="openEditClubModal('pending')">
-                <v-icon start :icon="mdiAccountClock" /> Pending Requests <span
+                <v-icon start :icon="mdiAccountClock" /> Confirm Members <span
                   v-if="club.pending_users_count > 0">({{ club.pending_users_count }})</span>
               </v-btn>
             </div>
@@ -197,7 +197,7 @@
       <v-row v-else>
         <v-col cols="12">
           <v-alert type="info" variant="tonal">
-            You must be an approved member to see club activity and member details.
+            Your membership must be confirmed by the club before you can see its activity and member details.
           </v-alert>
         </v-col>
       </v-row>

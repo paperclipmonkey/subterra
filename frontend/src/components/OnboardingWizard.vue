@@ -121,8 +121,8 @@
                 density="compact"
               >
                 <div class="text-caption">
-                  <strong>How it works:</strong> Find the club you're <strong>already a member of</strong> and request to confirm.
-                  Your club's administrator reviews and <strong>approves</strong> you — then you'll gain full access to all protected cave data and platform features!
+                  <strong>How it works:</strong> Find the club you're <strong>already a member of</strong> and ask them to confirm it.
+                  One of your club's administrators confirms you're a member — then you'll gain full access to all protected cave data and platform features!
                 </div>
               </v-alert>
 
@@ -171,7 +171,7 @@
                     <v-icon end :icon="mdiCheck" />
                   </v-btn>
                   <v-chip v-else :color="getStatus(club) === 'approved' ? 'success' : 'warning'" size="small" variant="flat">
-                    {{ getStatus(club) === 'approved' ? 'Approved' : 'Pending' }}
+                    {{ getStatus(club) === 'approved' ? 'Confirmed' : 'Awaiting confirmation' }}
                   </v-chip>
                 </template>
               </v-list-item>
@@ -302,7 +302,7 @@
               </v-avatar>
               <h2 class="text-h5 font-weight-bold mb-2">Verify your phone</h2>
               <p class="text-body-2 text-medium-emphasis">
-                Callouts rely on us being able to reach you. Verify your mobile now and you'll be ready to create callouts the moment your club membership is approved. This is optional — you can do it later from your profile.
+                Callouts rely on us being able to reach you. Verify your mobile now and you'll be ready to create callouts the moment your club confirms your membership. This is optional — you can do it later from your profile.
               </p>
             </div>
 
@@ -315,7 +315,7 @@
                 class="text-left"
               >
                 <div class="text-body-2">
-                  <strong>{{ phone }}</strong> is verified. You're all set for callouts once your club approves you.
+                  <strong>{{ phone }}</strong> is verified. You're all set for callouts once your club confirms your membership.
                 </div>
               </v-alert>
             </div>

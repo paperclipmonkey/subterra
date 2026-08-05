@@ -5,7 +5,7 @@
         <div class="text-center mb-6">
           <h1 class="text-h4 font-weight-bold mb-2">Membership Status</h1>
           <p class="text-medium-emphasis">
-            Track your club applications and learn about the features you'll unlock upon approval.
+            Track your club membership confirmations and learn about the features they unlock.
           </p>
         </div>
         <ClubMembershipConfirmation
