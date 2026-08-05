@@ -694,6 +694,37 @@ class SuggestedEditTest extends TestCase
         Mail::assertNothingQueued();
     }
 
+    public function test_admin_show_includes_the_caves_current_images_for_the_diff()
+    {
+        $admin = User::factory()->admin()->create();
+        $cave = Cave::factory()->create();
+
+        $hero = $cave->media()->create([
+            'type' => 'hero',
+            'filename' => 'caves/hero-abc.jpg',
+            'title' => 'Main chamber',
+        ]);
+
+        $suggestion = SuggestedEdit::create([
+            'user_id' => $this->createApprovedUser()->id,
+            'suggestable_type' => Cave::class,
+            'suggestable_id' => $cave->id,
+            'original_data' => null,
+            'suggested_data' => ['description' => 'A better description'],
+            'status' => 'pending',
+        ]);
+
+        // Without the current hero image in the payload the review page has no
+        // before-value, so an untouched photo echoed back in suggested_data
+        // rendered as "Empty -> <the photo that is already there>".
+        $this->actingAs($admin)
+            ->getJson("/api/admin/suggested-edits/{$suggestion->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('suggestable.hero_image.id', $hero->id)
+            ->assertJsonPath('suggestable.hero_image.filename', 'caves/hero-abc.jpg')
+            ->assertJsonPath('suggestable.hero_image.title', 'Main chamber');
+    }
+
     public function test_approval_email_names_the_cave_that_changed()
     {
         $user = $this->createApprovedUser();
