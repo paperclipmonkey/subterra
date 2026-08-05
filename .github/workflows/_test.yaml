@@ -106,8 +106,13 @@ jobs:
         run: php artisan key:generate
       - name: Set up SQLite database
         if: matrix.database == 'sqlite'
+        # phpunit.xml sets DB_DATABASE=database/database.sqlite, which Laravel
+        # resolves against the base path. The file is not tracked, so it has to
+        # be created here — touching database.sqlite in the repo root instead
+        # left a stray unused file and relied on PDO happening to create the
+        # real one on connect.
         run: |
-          touch database.sqlite
+          touch database/database.sqlite
       # Only exported on the pgsql leg. phpunit.xml's <env> entries do not use
       # force="true", so they apply only when the variable is otherwise unset —
       # which is exactly how the sqlite leg keeps its existing configuration.
