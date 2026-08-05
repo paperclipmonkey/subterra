@@ -26,6 +26,12 @@ class SuggestionApprovedMail extends Mailable implements ShouldQueue
     {
         $type = str_replace('_', ' ', strtolower(class_basename($this->suggestedEdit->suggestable_type)));
 
+        // Name the thing that changed. Prefer the live record; a suggestion that
+        // creates a brand-new item has no suggestable yet, so fall back to the
+        // name it proposed. Either way the email should never just say "cave".
+        $itemName = $this->suggestedEdit->suggestable?->name
+            ?: ($this->suggestedEdit->suggested_data['name'] ?? null);
+
         $base = config('app.url');
         $id = $this->suggestedEdit->suggestable_id;
         $slug = $this->suggestedEdit->suggestable->slug ?? null;
@@ -49,11 +55,14 @@ class SuggestionApprovedMail extends Mailable implements ShouldQueue
 
         $itemUrl = $path ? rtrim($base, '/').$path : null;
 
-        return $this->subject('Your suggestion was approved!')
+        return $this->subject($itemName
+                ? "Your suggestion for {$itemName} was approved!"
+                : 'Your suggestion was approved!')
             ->markdown('emails.suggestion_approved')
             ->with([
                 'suggestedEdit' => $this->suggestedEdit,
                 'type' => $type,
+                'itemName' => $itemName,
                 'itemUrl' => $itemUrl,
             ]);
     }
