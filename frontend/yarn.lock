@@ -7743,10 +7743,10 @@ vue@^3.5.20, vue@^3.5.32:
     "@vue/server-renderer" "3.5.34"
     "@vue/shared" "3.5.34"
 
-vuetify@^3.11.8:
-  version "3.12.6"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.12.6.tgz#ae972a63744cdbb8a3ebd8bcef29daf29410c91e"
-  integrity sha512-ARfflEJu+pKk+vya059qsUT/xUnYf0K6sIZdJwVh5w+kR6CJCXMQN1MONABb3Jm2kmhN/AXB4W5/MjYiKnVAFg==
+vuetify@^4.1.7:
+  version "4.1.7"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-4.1.7.tgz#0c1a62270326ff8765267e044d2f0671d6a87b3c"
+  integrity sha512-07qxu0S1oxPjmknP/Yn5276PtIhlCvHnpcp7HuOKEHni89/6BGiM2aVdKlEGeyM5RfytDkiv0SNieabGT2D8qQ==
 
 w3c-keyname@^2.2.0, w3c-keyname@^2.2.4:
   version "2.2.8"
