@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@mdi/js": "^7.4.47",
-    "@milkdown/crepe": "^7.18.0",
+    "@milkdown/crepe": "^7.22.0",
     "@milkdown/ctx": "^7.18.0",
     "@milkdown/kit": "^7.18.0",
     "@milkdown/plugin-listener": "^7.18.0",
