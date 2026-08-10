@@ -42,7 +42,7 @@
     "@vitest/ui": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
     "eslint": "^10.4.0",
-    "eslint-plugin-vue": "^10.8.0",
+    "eslint-plugin-vue": "^10.10.0",
     "fake-indexeddb": "6.2.2",
     "globals": "17.9.0",
     "jsdom": "^28.1.0",
