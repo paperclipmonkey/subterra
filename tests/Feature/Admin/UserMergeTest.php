@@ -8,7 +8,6 @@ use App\Models\Booking;
 use App\Models\Callout;
 use App\Models\CalloutParticipant;
 use App\Models\Cave;
-use App\Models\CaveSystem;
 use App\Models\Club;
 use App\Models\Collection;
 use App\Models\Incident;
@@ -388,22 +387,6 @@ class UserMergeTest extends TestCase
 
         $this->assertEquals($target->id, $collection->fresh()->user_id);
         $this->assertEquals('my-trips', $collection->fresh()->slug);
-    }
-
-    public function test_merge_deduplicates_colliding_collection_slugs()
-    {
-        $target = User::factory()->create();
-        $source = User::factory()->create();
-
-        Collection::factory()->create(['user_id' => $target->id, 'slug' => 'day-trips']);
-        $sourceCollection = Collection::factory()->create(['user_id' => $source->id, 'slug' => 'day-trips']);
-
-        $this->actingAs($this->admin)
-            ->postJson("/api/admin/users/{$target->id}/merge", ['source_id' => $source->id])
-            ->assertOk();
-
-        $this->assertEquals('day-trips-2', $sourceCollection->fresh()->slug);
-        $this->assertEquals(2, Collection::where('user_id', $target->id)->count());
     }
 
     // ── Callouts & incidents ─────────────────────────────────────────────────

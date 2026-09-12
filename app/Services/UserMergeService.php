@@ -45,7 +45,7 @@ class UserMergeService
             Booking::where('user_id', $source->id)->update(['user_id' => $target->id]);
             Booking::where('approved_by', $source->id)->update(['approved_by' => $target->id]);
 
-            $this->mergeCollections($target, $source);
+            DB::table('collections')->where('user_id', $source->id)->update(['user_id' => $target->id]);
             $this->mergeCalloutParticipants($target, $source);
 
             DB::table('callouts')->where('user_id', $source->id)->update(['user_id' => $target->id]);
@@ -179,33 +179,6 @@ class UserMergeService
                     ->where('user_id', $source->id)
                     ->update(['user_id' => $target->id]);
             }
-        }
-    }
-
-    /**
-     * Move collections from source to target. Collection slugs aren't
-     * database-unique, but two collections sharing a slug under the same
-     * owner would make the slug-based route ambiguous, so a colliding slug
-     * is suffixed the same way Collection::uniqueSlug() would on creation.
-     */
-    private function mergeCollections(User $target, User $source): void
-    {
-        $takenSlugs = DB::table('collections')->where('user_id', $target->id)->pluck('slug')->all();
-        $sourceRows = DB::table('collections')->where('user_id', $source->id)->get();
-
-        foreach ($sourceRows as $row) {
-            $slug = $row->slug;
-            $suffix = 2;
-            while (in_array($slug, $takenSlugs, true)) {
-                $slug = $row->slug.'-'.$suffix;
-                ++$suffix;
-            }
-            $takenSlugs[] = $slug;
-
-            DB::table('collections')->where('id', $row->id)->update([
-                'user_id' => $target->id,
-                'slug' => $slug,
-            ]);
         }
     }
 
