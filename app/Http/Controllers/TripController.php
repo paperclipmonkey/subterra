@@ -122,8 +122,14 @@ class TripController extends Controller
             $tripData['end_time'] = Carbon::parse($tripData['end_time'])->utc();
         }
 
+        // Default visibility comes from the creator, not a constant: under-18s
+        // default to club-only so a child's trip report — a named person at a
+        // precise location on a known date — is not world-readable by default.
         if (!isset($tripData['visibility'])) {
-            $tripData['visibility'] = 'public';
+            $creator = $request->user();
+            $tripData['visibility'] = $creator instanceof User
+                ? $creator->defaultTripVisibility()
+                : 'public';
         }
 
         $this->validateClosedAccess($tripData['entrance_cave_id'], $tripData['visibility']);

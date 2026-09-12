@@ -36,6 +36,15 @@
             "null"
           ]
         },
+        "date_of_birth": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_minor": {
+          "type": "boolean"
+        },
         "phone": {
           "type": [
             "string",

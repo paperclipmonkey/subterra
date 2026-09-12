@@ -31,6 +31,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         'email',
         'photo',
         'bio',
+        'date_of_birth',
         'phone',
         'tos_agreed_at',
         'privacy_policy_agreed_at',
@@ -91,6 +92,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     protected function casts(): array
     {
         return [
+            'date_of_birth' => 'date',
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'phone_verification_sent_at' => 'datetime',
@@ -109,6 +111,63 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     public function phoneVerified(): bool
     {
         return !empty($this->phone) && $this->phone_verified_at !== null;
+    }
+
+    /** The user's age in whole years, or null if they have not told us their date of birth. */
+    public function age(): ?int
+    {
+        if ($this->date_of_birth === null) {
+            return null;
+        }
+
+        // Absolute whole years. Carbon 3's diffInYears returns a signed float,
+        // so pass $absolute and truncate rather than round.
+        return (int) $this->date_of_birth->diffInYears(now(), true);
+    }
+
+    /**
+     * Whether this account belongs to someone under 18.
+     *
+     * Returns false when the date of birth is unknown. That is a deliberate
+     * trade-off, not an oversight: accounts created before this field existed
+     * all have a null date of birth, and treating them as children would
+     * retroactively restrict the whole existing membership. Use
+     * hasDeclaredAge() to find the accounts still needing a declaration —
+     * they should be prompted for one, and until they are, their age-based
+     * protections are not in force.
+     */
+    public function isMinor(): bool
+    {
+        $age = $this->age();
+
+        return $age !== null && $age < 18;
+    }
+
+    /** Whether the user has told us their date of birth. */
+    public function hasDeclaredAge(): bool
+    {
+        return $this->date_of_birth !== null;
+    }
+
+    /**
+     * The visibility a newly created trip should get when the client does not
+     * specify one. Under-18s default to club-only: a public trip report ties a
+     * named child to a precise location at a known date and time, and the
+     * Children's Code expects high privacy by default rather than on request.
+     */
+    public function defaultTripVisibility(): string
+    {
+        return $this->isMinor() ? 'club' : 'public';
+    }
+
+    /**
+     * The default for who may find this user by name and add them to a trip.
+     * Under-18s are limited to fellow members of their own clubs rather than
+     * being searchable by any logged-in member.
+     */
+    public function defaultVisibilityAddable(): string
+    {
+        return $this->isMinor() ? 'club' : 'public';
     }
 
     /**

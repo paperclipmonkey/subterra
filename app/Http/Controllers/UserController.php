@@ -407,6 +407,9 @@ class UserController extends Controller
 
         $validatedData = $request->validate([
             'bio' => ['nullable', 'string'],
+            // Self-declared, and only ever narrowed by the account owner. `before:today`
+            // rejects future dates; the 120-year floor rejects typos like 1066.
+            'date_of_birth' => ['nullable', 'date', 'before:today', 'after:'.now()->subYears(120)->toDateString()],
             'name' => [
                 'sometimes',
                 'required',
@@ -460,7 +463,32 @@ class UserController extends Controller
         // explicitly rather than through update().)
         $phoneChanged = array_key_exists('phone', $validatedData) && $validatedData['phone'] !== $user->phone;
 
+        // Captured before the update so the date-of-birth transition can be detected
+        // below. The profile form always submits visibility_addable, so "was it in the
+        // request" cannot distinguish a deliberate choice from the form echoing back
+        // the value it loaded — comparing against the stored value can.
+        $dobBefore = $user->date_of_birth?->toDateString();
+        $addableBefore = $user->visibility_addable;
+
         $user->update($validatedData);
+
+        $dobChanged = array_key_exists('date_of_birth', $validatedData)
+            && $user->date_of_birth?->toDateString() !== $dobBefore;
+        $addableChosen = array_key_exists('visibility_addable', $validatedData)
+            && $validatedData['visibility_addable'] !== null
+            && $validatedData['visibility_addable'] !== $addableBefore;
+
+        // When an account first declares (or corrects) a date of birth that makes it an
+        // under-18, narrow who can find them and add them to trips. The column default
+        // is 'public' and is applied at insert, long before any date of birth is known,
+        // so the narrowing has to happen here. A deliberate change to the setting in the
+        // same request wins — a 17-year-old may legitimately want to stay findable.
+        if ($dobChanged && !$addableChosen) {
+            $default = $user->defaultVisibilityAddable();
+            if ($user->isMinor() && $user->visibility_addable !== $default) {
+                $user->update(['visibility_addable' => $default]);
+            }
+        }
 
         if ($phoneChanged) {
             $user->forceFill([
