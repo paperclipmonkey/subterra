@@ -241,6 +241,12 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::put('/users/{user_without_scopes}/toggle-role/{role}', [UserController::class, 'toggleRole'])
             ->withoutScopedBindings()
             ->name('admin.users.toggle-role');
+        Route::get('/users/{user_without_scopes}/merge-preview', [UserController::class, 'mergePreview'])
+            ->withoutScopedBindings()
+            ->name('admin.users.merge-preview');
+        Route::post('/users/{user_without_scopes}/merge', [UserController::class, 'merge'])
+            ->withoutScopedBindings()
+            ->name('admin.users.merge');
 
         // Pip feedback (flagged conversations) review UI
         Route::get('/pip-feedback', [App\Http\Controllers\Admin\PipFeedbackController::class, 'index'])->name('admin.pip-feedback.index');

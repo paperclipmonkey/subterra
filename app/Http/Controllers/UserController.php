@@ -8,6 +8,7 @@ use App\Http\Resources\TripResource;
 use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Resources\UserDetailResource;
 use App\Http\Resources\UserResource;
+use App\Models\Booking;
 use App\Models\Role;
 use App\Models\Trip;
 use App\Models\User;
@@ -252,6 +253,104 @@ class UserController extends Controller
         $user->load('roles');
 
         return new UserDetailEmailResource($user);
+    }
+
+    /**
+     * Preview what will happen when merging a source user into this one.
+     * Used by the admin UI to show counts before confirming a destructive merge.
+     */
+    public function mergePreview(Request $request, User $user_without_scopes): JsonResponse
+    {
+        $target = $user_without_scopes;
+
+        $request->validate([
+            'source_id' => 'required|string|exists:users,id',
+        ]);
+
+        $sourceId = $request->input('source_id');
+
+        if ($sourceId === $target->id) {
+            return response()->json(['error' => 'Cannot merge a user into themselves.'], 422);
+        }
+
+        $source = User::withoutGlobalScopes()->findOrFail($sourceId);
+
+        $counts = fn (User $user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'trips_count' => $user->trips()->count(),
+            'clubs_count' => $user->clubs()->count(),
+            'medals_count' => $user->medals()->count(),
+            'roles_count' => $user->roles()->count(),
+            'bookings_count' => Booking::where('user_id', $user->id)->count(),
+            'callouts_count' => DB::table('callouts')->where('user_id', $user->id)->count(),
+            'collections_count' => $user->collections()->count(),
+        ];
+
+        $targetCounts = $counts($target);
+        $sourceCounts = $counts($source);
+
+        $sharedClubIds = $target->clubs()->pluck('clubs.id')->intersect($source->clubs()->pluck('clubs.id'));
+        $sharedTripIds = $target->trips()->pluck('trips.id')->intersect($source->trips()->pluck('trips.id'));
+
+        return response()->json([
+            'target' => $targetCounts,
+            'source' => $sourceCounts,
+            'result' => [
+                'trips_count' => $targetCounts['trips_count'] + $sourceCounts['trips_count'] - $sharedTripIds->count(),
+                'clubs_count' => $targetCounts['clubs_count'] + $sourceCounts['clubs_count'] - $sharedClubIds->count(),
+                'medals_count' => $targetCounts['medals_count'] + $sourceCounts['medals_count'],
+                'roles_count' => $targetCounts['roles_count'] + $sourceCounts['roles_count'],
+                'bookings_count' => $targetCounts['bookings_count'] + $sourceCounts['bookings_count'],
+                'callouts_count' => $targetCounts['callouts_count'] + $sourceCounts['callouts_count'],
+                'collections_count' => $targetCounts['collections_count'] + $sourceCounts['collections_count'],
+                'shared_trips_count' => $sharedTripIds->count(),
+                'shared_clubs_count' => $sharedClubIds->count(),
+                'source_will_be_deleted' => true,
+            ],
+        ]);
+    }
+
+    /**
+     * Merge another user's account into this one.
+     *
+     * Reassigns trips, club/medal/role/permit memberships, bookings, callouts,
+     * incidents, on-call shifts, collections, pages, and more from the source
+     * account to the target, then deletes the source. Used to consolidate two
+     * profiles belonging to the same person (e.g. after they lost access to an
+     * old account and signed up again).
+     */
+    public function merge(Request $request, User $user_without_scopes): JsonResponse
+    {
+        $target = $user_without_scopes;
+
+        $request->validate([
+            'source_id' => 'required|string|exists:users,id',
+        ]);
+
+        $sourceId = $request->input('source_id');
+
+        if ($sourceId === $target->id) {
+            return response()->json(['error' => 'Cannot merge a user into themselves.'], 422);
+        }
+
+        $source = User::withoutGlobalScopes()->findOrFail($sourceId);
+
+        try {
+            app(\App\Services\UserMergeService::class)->merge($target, $source);
+
+            $target->load(['roles', 'clubs', 'medals']);
+
+            return response()->json([
+                'message' => "\"{$source->name}\" has been merged into \"{$target->name}\".",
+                'data' => new UserDetailEmailResource($target),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Merge failed: '.$e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
