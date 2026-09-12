@@ -100,7 +100,10 @@ describe('Admin Users Page', () => {
         // Find delete button for User One (id: 1)
         const userRows = wrapper.findAll('.user-row')
         const firstUserRow = userRows.find(row => row.text().includes('User One'))
-        const deleteBtn = firstUserRow.find('.v-btn') // Deletion button is in actions slot
+        // The actions slot now also renders a "Merge" button before the delete
+        // button, so pick the delete button by its tooltip text rather than
+        // assuming it's the first '.v-btn'.
+        const deleteBtn = firstUserRow.findAll('.v-btn').find(btn => btn.text().includes('Delete User'))
 
         // Check if dialog is hidden
         expect(wrapper.find('.v-dialog').exists()).toBe(false)
