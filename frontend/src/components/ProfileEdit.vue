@@ -1,5 +1,9 @@
 <template>
-  <v-container class="pa-4">
+  <v-container v-if="loading" class="pa-4 fill-height d-flex justify-center align-center">
+    <v-progress-circular indeterminate color="primary" />
+  </v-container>
+
+  <v-container v-else class="pa-4">
     <v-card class="profile">
       <v-card-title>
         <v-avatar size="64" class="cursor-pointer" @click="triggerPhotoUpload">
@@ -255,6 +259,7 @@ import router from '@/router'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
+import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
 import { useFormErrors } from '@/composables/useFormErrors'
 import PhoneVerify from '@/components/PhoneVerify.vue'
@@ -263,6 +268,9 @@ const { setErrors, clearErrors, errorMessages } = useFormErrors()
 
 const route = useRoute()
 const notifications = useNotificationStore()
+const appStore = useAppStore()
+
+const loading = ref(true)
 
 const profile = ref({
   "name": "",
@@ -397,6 +405,7 @@ const confirmAndSave = () => {
 }
 
 const fetchProfile = async () => {
+  loading.value = true
   try {
     const response = await api.get(`/api/users/me`)
     profile.value = response.data.data
@@ -404,6 +413,8 @@ const fetchProfile = async () => {
   } catch (error) {
     console.error("Error fetching profile:", error)
     // Global interceptor handles the toast
+  } finally {
+    loading.value = false
   }
 }
 
@@ -494,6 +505,14 @@ onMounted(async () => {
 // so onMounted won't re-fire — refetch when the id changes.
 watch(() => route.params.id, (id, prev) => {
   if (id && id !== prev) fetchProfile()
+})
+
+// New users land here underneath the global OnboardingWizard dialog (see App.vue), which
+// saves their name/bio/etc. and closes itself without navigating anywhere. Without this,
+// the form would keep showing the empty profile it fetched before the wizard ran. Refetch
+// once the wizard marks onboarding complete so the form reflects what was just saved.
+watch(() => appStore.user?.onboarding_completed_at, (completedAt, prev) => {
+  if (completedAt && !prev) fetchProfile()
 })
 </script>
 
