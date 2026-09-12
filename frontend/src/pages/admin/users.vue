@@ -117,6 +117,16 @@
               icon
               variant="text"
               size="small"
+              color="primary"
+              @click.stop="openMergeDialog(item)"
+            >
+              <v-icon :icon="mdiCallMerge" />
+              <v-tooltip activator="parent" location="top">Merge Duplicate Account</v-tooltip>
+            </v-btn>
+            <v-btn
+              icon
+              variant="text"
+              size="small"
               color="error"
               :loading="item.loadingDelete"
               @click.stop="confirmDelete(item)"
@@ -147,12 +157,135 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Merge Duplicate Account Dialog -->
+    <v-dialog v-model="mergeDialog" max-width="640" @update:model-value="onMergeDialogToggle">
+      <v-card>
+        <v-card-title class="text-h5">
+          Merge Duplicate Account
+        </v-card-title>
+        <v-card-text>
+          <p class="text-body-2 mb-4">
+            Use this when the same person has two profiles — for example, they lost access to
+            their old account and signed up again. All trips, club/medal/role memberships,
+            bookings, callouts and other data will be moved onto the account you keep, and the
+            other account will be permanently deleted.
+          </p>
+
+          <div class="d-flex align-center ga-2 mb-2">
+            <v-autocomplete
+              v-model="mergeSourceId"
+              :items="mergeableUsers(mergeTargetId)"
+              item-title="name"
+              item-value="id"
+              label="Duplicate account (will be deleted)"
+              :prepend-inner-icon="mdiAccountRemove"
+              density="comfortable"
+              clearable
+              @update:model-value="fetchMergePreview"
+            >
+              <template #item="{ props, item }">
+                <v-list-item v-bind="props" :subtitle="item.raw.email" />
+              </template>
+            </v-autocomplete>
+            <v-btn
+              icon
+              variant="text"
+              :disabled="!mergeSourceId || !mergeTargetId"
+              @click="swapMergeSides"
+            >
+              <v-icon :icon="mdiSwapHorizontal" />
+              <v-tooltip activator="parent" location="top">Swap</v-tooltip>
+            </v-btn>
+          </div>
+
+          <v-autocomplete
+            v-model="mergeTargetId"
+            :items="mergeableUsers(mergeSourceId)"
+            item-title="name"
+            item-value="id"
+            label="Account to keep (merge target)"
+            :prepend-inner-icon="mdiAccountCheck"
+            density="comfortable"
+            clearable
+            class="mb-2"
+            @update:model-value="fetchMergePreview"
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props" :subtitle="item.raw.email" />
+            </template>
+          </v-autocomplete>
+
+          <v-alert v-if="mergeError" type="error" variant="tonal" class="mb-4">
+            {{ mergeError }}
+          </v-alert>
+
+          <v-skeleton-loader v-if="mergePreviewLoading" type="article" />
+
+          <template v-else-if="mergePreview">
+            <v-alert type="warning" variant="tonal" class="mb-4">
+              <strong>{{ mergePreview.source.name }}</strong> ({{ mergePreview.source.email }})
+              will be permanently deleted. This cannot be undone.
+            </v-alert>
+
+            <v-table density="compact" class="mb-2">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th class="text-right">Keep ({{ mergePreview.target.name }})</th>
+                  <th class="text-right">Duplicate ({{ mergePreview.source.name }})</th>
+                  <th class="text-right">After merge</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in mergePreviewRows" :key="row.key">
+                  <td>{{ row.label }}</td>
+                  <td class="text-right">{{ mergePreview.target[row.key] }}</td>
+                  <td class="text-right">{{ mergePreview.source[row.key] }}</td>
+                  <td class="text-right">{{ mergePreview.result[row.key] }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+
+            <p v-if="mergePreview.result.shared_trips_count || mergePreview.result.shared_clubs_count" class="text-caption text-medium-emphasis">
+              Shared memberships (same trip or club on both accounts) are combined rather than duplicated.
+            </p>
+          </template>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="mergeDialog = false">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :disabled="!mergePreview"
+            :loading="mergeSubmitting"
+            @click="executeMerge"
+          >
+            Merge Accounts
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 
 </template>
 
 <script setup>
-import { mdiAlertOctagram, mdiDatabaseEdit, mdiDelete, mdiKey, mdiMagnify, mdiPhoneInTalk, mdiRobotOutline, mdiShieldCrown } from '@mdi/js'
+import {
+  mdiAccountCheck,
+  mdiAccountRemove,
+  mdiAlertOctagram,
+  mdiCallMerge,
+  mdiDatabaseEdit,
+  mdiDelete,
+  mdiKey,
+  mdiMagnify,
+  mdiPhoneInTalk,
+  mdiRobotOutline,
+  mdiShieldCrown,
+  mdiSwapHorizontal,
+} from '@mdi/js'
 
 import moment from 'moment'
 import { ref, onMounted } from 'vue'
@@ -251,6 +384,96 @@ const updateUserInList = (updatedUser) => {
       loadingRole: null,
       loadingDelete: false
     }
+  }
+}
+
+// Merge Duplicate Account State
+const mergeDialog = ref(false)
+const mergeSourceId = ref(null)
+const mergeTargetId = ref(null)
+const mergePreview = ref(null)
+const mergePreviewLoading = ref(false)
+const mergeSubmitting = ref(false)
+const mergeError = ref('')
+
+const mergePreviewRows = [
+  { key: 'trips_count', label: 'Trips' },
+  { key: 'clubs_count', label: 'Clubs' },
+  { key: 'medals_count', label: 'Medals' },
+  { key: 'roles_count', label: 'Roles' },
+  { key: 'bookings_count', label: 'Bookings' },
+  { key: 'callouts_count', label: 'Callouts' },
+  { key: 'collections_count', label: 'Collections' },
+]
+
+// Users selectable for the "other side" of the merge — excludes whichever
+// account is already picked for the opposite role.
+const mergeableUsers = (excludeId) => users.value.filter(u => u.id !== excludeId)
+
+const openMergeDialog = (user) => {
+  mergeSourceId.value = user.id
+  mergeTargetId.value = null
+  mergePreview.value = null
+  mergeError.value = ''
+  mergeDialog.value = true
+}
+
+const onMergeDialogToggle = (isOpen) => {
+  if (!isOpen) {
+    mergeSourceId.value = null
+    mergeTargetId.value = null
+    mergePreview.value = null
+    mergeError.value = ''
+  }
+}
+
+const swapMergeSides = () => {
+  const previousSource = mergeSourceId.value
+  mergeSourceId.value = mergeTargetId.value
+  mergeTargetId.value = previousSource
+  fetchMergePreview()
+}
+
+const fetchMergePreview = async () => {
+  mergePreview.value = null
+  mergeError.value = ''
+
+  if (!mergeSourceId.value || !mergeTargetId.value || mergeSourceId.value === mergeTargetId.value) {
+    return
+  }
+
+  mergePreviewLoading.value = true
+  try {
+    const response = await api.get(`/api/admin/users/${mergeTargetId.value}/merge-preview`, {
+      params: { source_id: mergeSourceId.value },
+      suppressErrorNotification: true,
+    })
+    mergePreview.value = response.data
+  } catch (error) {
+    mergeError.value = error.response?.data?.error || error.response?.data?.message || 'Could not load merge preview.'
+  } finally {
+    mergePreviewLoading.value = false
+  }
+}
+
+const executeMerge = async () => {
+  if (!mergeSourceId.value || !mergeTargetId.value) return
+
+  mergeSubmitting.value = true
+  mergeError.value = ''
+  try {
+    const response = await api.post(`/api/admin/users/${mergeTargetId.value}/merge`, {
+      source_id: mergeSourceId.value,
+    }, { suppressErrorNotification: true })
+
+    users.value = users.value.filter(u => u.id !== mergeSourceId.value)
+    updateUserInList(response.data.data || response.data)
+    notificationStore.showSuccess(response.data.message || 'Accounts merged successfully.')
+    mergeDialog.value = false
+  } catch (error) {
+    mergeError.value = error.response?.data?.error || error.response?.data?.message || 'Merge failed. Please try again.'
+  } finally {
+    mergeSubmitting.value = false
   }
 }
 
