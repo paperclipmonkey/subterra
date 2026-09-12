@@ -49,14 +49,40 @@ describe('Offline Store', () => {
   })
 
   describe('init', () => {
-    it('tracks online/offline window events', () => {
+    it('tracks online/offline window events', async () => {
+      // navigator.onLine reports online, so init() does not probe on startup.
       store.init()
+      await Promise.resolve()
 
+      // The offline event is confirmed with a real request before being trusted.
+      global.fetch = vi.fn().mockResolvedValue({ ok: false })
       window.dispatchEvent(new Event('offline'))
-      expect(store.isOnline).toBe(false)
+      await vi.waitFor(() => expect(store.isOnline).toBe(false))
 
       window.dispatchEvent(new Event('online'))
       expect(store.isOnline).toBe(true)
+    })
+
+    it('does not show offline when navigator.onLine is wrong but the network is reachable', async () => {
+      vi.stubGlobal('navigator', { ...navigator, onLine: false })
+      global.fetch = vi.fn().mockResolvedValue({ ok: true })
+
+      store.init()
+
+      await vi.waitFor(() => expect(store.isOnline).toBe(true))
+      expect(global.fetch).toHaveBeenCalledWith('/api/livez', expect.objectContaining({ cache: 'no-store' }))
+
+      vi.unstubAllGlobals()
+    })
+
+    it('confirms an offline event actually failed before showing the banner', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('network down'))
+      store.init()
+      await Promise.resolve()
+
+      window.dispatchEvent(new Event('offline'))
+
+      await vi.waitFor(() => expect(store.isOnline).toBe(false))
     })
   })
 
