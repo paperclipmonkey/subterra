@@ -119,6 +119,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('duty-officer-test-broadcast', $perUser(3, 5)); // 3 per 5 min
         RateLimiter::for('phone-verify-send', $perUser(5, 5));  // 5 code sends per 5 min
         RateLimiter::for('phone-verify', $perUser(10, 1));      // 10 confirm attempts per min
+        // Generous on purpose: reporting is a safety mechanism, and someone
+        // working through several bad posts in one sitting must not be blocked.
+        RateLimiter::for('report-store', $perUser(20, 60));      // 20 per hour
 
         // Per-IP limiters for guest/webhook endpoints.
         $perIp = fn (int $max, int $decayMinutes) => fn (Request $request) => Limit::perMinutes($decayMinutes, $max)

@@ -71,6 +71,15 @@
               <v-icon :icon="mdiLogout" />
             </v-btn>
           </div>
+
+          <!-- Reporting is offered on other members' profiles only. -->
+          <div v-else class="d-flex gap-1 mt-4 mt-sm-0 flex-wrap justify-center">
+            <v-btn v-tooltip="'Report this member'" icon variant="text"
+                   color="grey-darken-1" aria-label="Report this member"
+                   @click="showReportModal = true">
+              <v-icon :icon="mdiFlagOutline" />
+            </v-btn>
+          </div>
         </div>
       </v-card>
 
@@ -283,6 +292,8 @@
       </v-card>
     </v-dialog>
 
+    <ReportModal v-model="showReportModal" reportable-type="user" :reportable-id="profile.id" />
+
     <!-- Profile Photo Modal -->
     <v-dialog v-model="showPhotoModal" max-width="500">
       <v-card class="rounded-xl overflow-hidden">
@@ -297,7 +308,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAccountGroupOutline, mdiAlertCircleOutline, mdiArrowLeft, mdiArrowRight, mdiChevronRight, mdiClockTimeFourOutline, mdiDatabaseExport, mdiDownload, mdiFileExport, mdiFire, mdiFlashlight, mdiHiking, mdiHistory, mdiLogout, mdiMapMarker, mdiMedalOutline, mdiPencil, mdiShieldAccount } from '@mdi/js'
+import { mdiAccountGroup, mdiAccountGroupOutline, mdiAlertCircleOutline, mdiArrowLeft, mdiArrowRight, mdiChevronRight, mdiClockTimeFourOutline, mdiDatabaseExport, mdiDownload, mdiFileExport, mdiFire, mdiFlagOutline, mdiFlashlight, mdiHiking, mdiHistory, mdiLogout, mdiMapMarker, mdiMedalOutline, mdiPencil, mdiShieldAccount } from '@mdi/js'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/plugins/api'
@@ -305,6 +316,7 @@ import { CalendarHeatmap } from "vue3-calendar-heatmap"
 import moment from 'moment'
 import { useAppStore } from '@/stores/app'
 import { usePageTitle } from '@/composables/usePageTitle'
+import ReportModal from '@/components/ReportModal.vue'
 
 const appStore = useAppStore()
 
@@ -324,6 +336,7 @@ usePageTitle(pageTitle)
 
 const loading = ref(true)
 const error = ref(null)
+const showReportModal = ref(false)
 
 const recentTrips = ref([])
 const heatmapData = ref([])

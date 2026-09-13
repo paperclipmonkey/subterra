@@ -101,6 +101,11 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
     Route::post('/suggested-edits', [App\Http\Controllers\SuggestedEditController::class, 'store']);
 
+    // Reporting content or conduct. Rate-limited generously rather than tightly —
+    // see the 'report-store' limiter for why.
+    Route::post('/reports', [App\Http\Controllers\ReportController::class, 'store'])
+        ->middleware('throttle:report-store')->name('reports.store');
+
     // Users
     Route::get('/users', [App\Http\Controllers\UserController::class, 'index'])->name('users.index');
     Route::get('/duty-officers/current', [App\Http\Controllers\DutyOfficerController::class, 'current']);
@@ -249,6 +254,12 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
             ->name('admin.users.merge');
 
         // Pip feedback (flagged conversations) review UI
+        // Moderation queue: reports raised by members, plus data-protection
+        // objections raised from the placeholder-account notice email.
+        Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reports.index');
+        Route::get('/reports/counts', [App\Http\Controllers\Admin\ReportController::class, 'counts'])->name('admin.reports.counts');
+        Route::put('/reports/{report}', [App\Http\Controllers\Admin\ReportController::class, 'update'])->name('admin.reports.update');
+
         Route::get('/pip-feedback', [App\Http\Controllers\Admin\PipFeedbackController::class, 'index'])->name('admin.pip-feedback.index');
         Route::get('/pip-feedback/{feedback}', [App\Http\Controllers\Admin\PipFeedbackController::class, 'show'])->name('admin.pip-feedback.show');
         Route::put('/pip-feedback/{feedback}/reviewed', [App\Http\Controllers\Admin\PipFeedbackController::class, 'markReviewed'])->name('admin.pip-feedback.reviewed');

@@ -13,6 +13,11 @@ Route::get('/auth/magic-link', [MagicLinkController::class, 'handleWebCallback']
 
 Route::get('/newsletter/unsubscribe/{user}', [App\Http\Controllers\NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
+// Article 14 objection route, reached from the placeholder-account notice email.
+// Server-rendered rather than part of the SPA: the recipient has never logged in.
+Route::get('/data-objection/{user}', [App\Http\Controllers\DataObjectionController::class, 'show'])->name('data-objection');
+Route::post('/data-objection/{user}', [App\Http\Controllers\DataObjectionController::class, 'store'])->name('data-objection.store');
+
 // Vue Spa routing
 Route::fallback(function (\Illuminate\Http\Request $request) {
     // If it's an API request that reached here, it means it didn't match any API route.

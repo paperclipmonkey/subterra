@@ -14,6 +14,10 @@
           <v-btn :icon="mdiDelete" variant="tonal" color="error" class="backdrop-blur text-white"
                  @click="showDeleteConfirmDialog = true" />
         </template>
+        <!-- Reporting your own trip report is meaningless, so it is offered to
+             everyone else instead of sitting next to Edit and Delete. -->
+        <v-btn v-else :icon="mdiFlagOutline" variant="tonal" color="white" class="backdrop-blur"
+               aria-label="Report this trip report" @click="showReportModal = true" />
       </div>
       <!-- Hero Content -->
       <v-container class="pb-6">
@@ -202,6 +206,8 @@
     </v-dialog>
 
     <MediaViewModal v-model="showMediaModal" :media="selectedMedia" :items="galleryMedia" />
+
+    <ReportModal v-model="showReportModal" reportable-type="trip" :reportable-id="trip.id" />
   </div>
 
   <!-- Loading State -->
@@ -221,9 +227,10 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiCalendar, mdiClockOutline, mdiDelete, mdiEarth, mdiFountainPenTip, mdiImageMultipleOutline, mdiLocationEnter, mdiLocationExit, mdiLock, mdiMapMarker, mdiPencil, mdiTextBoxOutline, mdiTimerOutline } from '@mdi/js'
+import { mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiCalendar, mdiClockOutline, mdiDelete, mdiEarth, mdiFlagOutline, mdiFountainPenTip, mdiImageMultipleOutline, mdiLocationEnter, mdiLocationExit, mdiLock, mdiMapMarker, mdiPencil, mdiTextBoxOutline, mdiTimerOutline } from '@mdi/js'
 
 import MediaViewModal from '@/components/MediaViewModal.vue'
+import ReportModal from '@/components/ReportModal.vue'
 import moment from 'moment'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -242,6 +249,7 @@ const trip = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const showDeleteConfirmDialog = ref(false)
+const showReportModal = ref(false)
 
 const pageTitle = computed(() => trip.value?.name)
 usePageTitle(pageTitle)

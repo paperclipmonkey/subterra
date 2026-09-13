@@ -93,6 +93,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         return [
             'date_of_birth' => 'date',
+            'placeholder_notice_sent_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'phone_verification_sent_at' => 'datetime',

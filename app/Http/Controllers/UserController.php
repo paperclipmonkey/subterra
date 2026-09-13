@@ -375,6 +375,12 @@ class UserController extends Controller
 
         event(new \App\Events\UserCreated($user));
 
+        // The record describes someone who has not signed up and did not give us
+        // their details, so Article 14 requires telling them. Fired here rather
+        // than on trip save because the placeholder is created the moment a member
+        // adds a participant — abandon the trip form and the record still exists.
+        event(new \App\Events\PlaceholderUserCreated($user, $request->user()));
+
         return new UserDetailEmailResource($user);
     }
 
