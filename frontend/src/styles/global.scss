@@ -14,17 +14,6 @@
   }
 }
 
-// Softer corners on regular buttons; icon buttons/FABs stay circular and
-// explicit rounded-* utilities (e.g. pills) are left alone.
-.v-btn:not(.v-btn--icon):not([class*="rounded-"]) {
-  border-radius: 8px;
-}
-
-// Buttons inside a segmented group are clipped by the group's own radius.
-.v-btn-group .v-btn {
-  border-radius: 0;
-}
-
 // --- Surfaces & elevation ----------------------------------------------------
 
 // Replace Material's harsh single shadows with a soft layered shadow so
