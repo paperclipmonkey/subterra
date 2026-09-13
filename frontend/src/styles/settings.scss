@@ -8,6 +8,11 @@
 @use 'vuetify/settings' with (
   $body-font-family: ('Inter', 'Roboto', -apple-system, 'Segoe UI', sans-serif),
   $heading-font-family: ('Plus Jakarta Sans', 'Inter', 'Roboto', sans-serif),
+  // Softer corners on buttons than Material's 4px default. This has to go
+  // through Vuetify's own variable: a global `.v-btn { border-radius }` rule
+  // outranks the framework's contextual ones, which square off the inner
+  // edges of buttons in a v-btn-group and keep icon buttons circular.
+  $button-border-radius: 8px,
 );
 
 .metric-item {
