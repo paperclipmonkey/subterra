@@ -13,6 +13,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
+/**
+ * Static types for the date columns this model casts. Larastan does not read the
+ * casts() method, so without these it infers the raw column type (string) and
+ * rejects every Carbon call made on them.
+ *
+ * @property \Illuminate\Support\Carbon|null $date_of_birth
+ * @property \Illuminate\Support\Carbon|null $placeholder_notice_sent_at
+ */
 #[ScopedBy([IsActiveScope::class])]
 class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditable
 {
