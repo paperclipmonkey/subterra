@@ -83,6 +83,34 @@
       </div>
       <v-divider />
 
+      <!-- Date of birth. Used only to apply the stronger privacy defaults that
+           under-18 accounts get; never shown to other members. -->
+      <div class="date-of-birth pa-4">
+        <h3>Date of Birth:</h3>
+        <p class="text-body-2 mb-4">
+          We use this only to apply the right privacy defaults to your account. It is never shown to other members.
+        </p>
+        <v-text-field
+          v-model="profile.date_of_birth"
+          label="Date of birth"
+          type="date"
+          outlined
+          :max="today"
+          :error-messages="errorMessages('date_of_birth')"
+        />
+        <v-alert
+          v-if="profile.is_minor"
+          type="info"
+          variant="tonal"
+          density="comfortable"
+          class="mt-2"
+        >
+          Because you are under 18, your trip reports default to club-only and only members of
+          your own clubs can find you to add you to a trip. You can change both at any time.
+        </v-alert>
+      </div>
+      <v-divider />
+
       <!-- Phone Number section -->
       <div class="phone-edit pa-4">
         <h3 class="d-flex align-center" style="gap: 8px;">
@@ -272,6 +300,9 @@ const appStore = useAppStore()
 
 const loading = ref(true)
 
+// Upper bound for the date-of-birth picker, so a future date can't be entered.
+const today = new Date().toISOString().slice(0, 10)
+
 const profile = ref({
   "name": "",
   "id": 0,
@@ -279,6 +310,8 @@ const profile = ref({
   "stats": {},
   "clubs": [],
   "bio": "",
+  "date_of_birth": null,
+  "is_minor": false,
   "phone": "",
   "email_trophies": true,
   "email_tagged": true,
@@ -363,6 +396,11 @@ const save = async () => {
     const formData = new FormData()
     formData.append('name', profile.value.name || '')
     formData.append('bio', profile.value.bio || '')
+    // Only sent when set — an empty string would fail the `date` rule, and the
+    // field must stay optional for members who would rather not say.
+    if (profile.value.date_of_birth) {
+      formData.append('date_of_birth', profile.value.date_of_birth)
+    }
     formData.append('phone', profile.value.phone || '')
     formData.append('email_trophies', profile.value.email_trophies ? '1' : '0')
     formData.append('email_tagged', profile.value.email_tagged ? '1' : '0')
@@ -380,6 +418,8 @@ const save = async () => {
     // Merge updated data carefully, especially if API doesn't return full profile
     profile.value.name = updatedProfile.name
     profile.value.bio = updatedProfile.bio
+    profile.value.date_of_birth = updatedProfile.date_of_birth
+    profile.value.is_minor = updatedProfile.is_minor
     profile.value.phone = updatedProfile.phone
     profile.value.email_trophies = updatedProfile.email_trophies
     profile.value.email_tagged = updatedProfile.email_tagged

@@ -128,7 +128,7 @@ describe('OnboardingWizard.vue', () => {
         expect(new Date(sentTimestamp).toString()).not.toBe('Invalid Date')
     })
 
-    it('sends name when completing step 1', async () => {
+    it('sends name and date of birth when completing step 1', async () => {
         const wrapper = mount(OnboardingWizard, mountOptions)
 
         wrapper.vm.step = 1
@@ -143,8 +143,68 @@ describe('OnboardingWizard.vue', () => {
 
         expect(mockPut).toHaveBeenCalledWith(
             '/api/users/me',
-            { name: 'Joe Bloggs' }
+            { name: 'Joe Bloggs', date_of_birth: null }
         )
+    })
+
+    describe('under-18 privacy defaults', () => {
+        const yearsAgo = years => {
+            const d = new Date()
+            d.setFullYear(d.getFullYear() - years)
+            return d.toISOString().slice(0, 10)
+        }
+
+        const completeFirstStep = async (wrapper, dob) => {
+            wrapper.vm.step = 1
+            wrapper.vm.visible = true
+            wrapper.vm.userName = 'Joe Bloggs'
+            wrapper.vm.nameValid = true
+            wrapper.vm.dateOfBirth = dob
+            await wrapper.vm.$nextTick()
+
+            await wrapper.vm.nextStep()
+            await new Promise(resolve => setTimeout(resolve, 0))
+            await wrapper.vm.$nextTick()
+        }
+
+        it('flags a date of birth under 18 as a minor', async () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            wrapper.vm.dateOfBirth = yearsAgo(14)
+            await wrapper.vm.$nextTick()
+
+            expect(wrapper.vm.isMinorLocal).toBe(true)
+        })
+
+        it('does not flag an adult date of birth as a minor', async () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            wrapper.vm.dateOfBirth = yearsAgo(30)
+            await wrapper.vm.$nextTick()
+
+            expect(wrapper.vm.isMinorLocal).toBe(false)
+        })
+
+        it('pre-selects club-only findability for an under-18', async () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            await completeFirstStep(wrapper, yearsAgo(15))
+
+            expect(wrapper.vm.visibilityAddable).toBe('club')
+        })
+
+        it('leaves findability public for an adult', async () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            await completeFirstStep(wrapper, yearsAgo(40))
+
+            expect(wrapper.vm.visibilityAddable).toBe('public')
+        })
+
+        it('does not override a findability choice the user already made', async () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            wrapper.vm.visibilityAddable = 'public'
+            wrapper.vm.addableTouched = true
+            await completeFirstStep(wrapper, yearsAgo(16))
+
+            expect(wrapper.vm.visibilityAddable).toBe('public')
+        })
     })
 
     describe('nameRules validation', () => {

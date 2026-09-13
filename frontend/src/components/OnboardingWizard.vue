@@ -48,6 +48,21 @@
                 :prepend-inner-icon="mdiAccountOutline"
                 class="mb-4"
               />
+              <!-- Asked here, before the findability step, so an under-18 account
+                   arrives at that step with the safer default already selected. -->
+              <v-text-field
+                v-model="dateOfBirth"
+                label="Date of birth"
+                type="date"
+                variant="outlined"
+                color="primary"
+                :max="today"
+                :rules="dateOfBirthRules"
+                :prepend-inner-icon="mdiCakeVariantOutline"
+                hint="Used only to set your privacy defaults. Never shown to other members."
+                persistent-hint
+                class="mb-4"
+              />
             </v-form>
             <v-alert
               color="warning"
@@ -260,6 +275,7 @@
               color="primary"
               variant="text"
               class="findability-toggle mb-4"
+              @update:model-value="addableTouched = true"
             >
               <v-btn value="public" class="text-none">
                 <v-icon start :icon="mdiEarth" />
@@ -385,7 +401,7 @@
 </template>
 
 <script setup>
-import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiEarth, mdiEmailOutline, mdiInformationOutline, mdiMagnify, mdiTagOutline, mdiTextBoxOutline, mdiTrophyOutline } from '@mdi/js'
+import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCakeVariantOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiEarth, mdiEmailOutline, mdiInformationOutline, mdiMagnify, mdiTagOutline, mdiTextBoxOutline, mdiTrophyOutline } from '@mdi/js'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
@@ -457,6 +473,20 @@ const emailPlatformNews = ref(true)
 // Findability
 const visibilityAddable = ref('public')
 
+// Date of birth drives the stronger privacy defaults under-18 accounts get.
+const dateOfBirth = ref('')
+const today = new Date().toISOString().slice(0, 10)
+const isMinorLocal = computed(() => {
+  if (!dateOfBirth.value) return false
+  const dob = new Date(dateOfBirth.value)
+  if (Number.isNaN(dob.getTime())) return false
+  const eighteenth = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate())
+  return eighteenth > new Date()
+})
+// Tracks whether the user has actively chosen a findability setting, so the
+// minor-aware default below never overrides a deliberate choice.
+const addableTouched = ref(false)
+
 // Phone verification (optional, callout-access users only)
 const phone = ref('')
 const phoneVerifiedLocal = ref(false)
@@ -467,6 +497,11 @@ const phoneError = ref('')
 const PHONE_PATTERN = /^(07[0-9]{9}|\+44[0-9]{10})$/
 const phoneRules = [
   v => !v || PHONE_PATTERN.test(v) || 'Must be 11 digits (07…) or 13 characters (+44…) long',
+]
+
+const dateOfBirthRules = [
+  v => !!v || 'Date of birth is required.',
+  v => !v || new Date(v) <= new Date() || 'Date of birth cannot be in the future.',
 ]
 
 const nameRules = [
@@ -510,7 +545,11 @@ const checkOnboarding = () => {
   if (store.user.email_trophies !== undefined) emailTrophies.value = !!store.user.email_trophies
   if (store.user.email_tagged !== undefined) emailTagged.value = !!store.user.email_tagged
   if (store.user.email_platform_news !== undefined) emailPlatformNews.value = !!store.user.email_platform_news
-  if (store.user.visibility_addable) visibilityAddable.value = store.user.visibility_addable
+  if (store.user.visibility_addable) {
+    visibilityAddable.value = store.user.visibility_addable
+    addableTouched.value = true
+  }
+  dateOfBirth.value = store.user.date_of_birth || ''
   phone.value = store.user.phone || ''
   phoneVerifiedLocal.value = !!store.user.phone_verified
   fetchClubs()
@@ -610,8 +649,18 @@ const nextStep = async () => {
 
     loading.value = true
     try {
-      await api.put('/api/users/me', { name: userName.value })
+      await api.put('/api/users/me', {
+        name: userName.value,
+        date_of_birth: dateOfBirth.value || null,
+      })
       store.user.name = userName.value
+      store.user.date_of_birth = dateOfBirth.value || null
+      // Pre-select club-only findability for under-18s, unless they have already
+      // chosen for themselves. The server applies the same default, so a skipped
+      // or stale client cannot end up with the laxer setting.
+      if (isMinorLocal.value && !addableTouched.value) {
+        visibilityAddable.value = 'club'
+      }
       step.value++
     } catch (error) {
       console.error('Error updating name:', error)
@@ -633,7 +682,10 @@ const nextStep = async () => {
       formData.append('email_trophies', emailTrophies.value ? '1' : '0')
       formData.append('email_tagged', emailTagged.value ? '1' : '0')
       formData.append('email_platform_news', emailPlatformNews.value ? '1' : '0')
-      formData.append('visibility_addable', visibilityAddable.value || 'public')
+      formData.append('visibility_addable', visibilityAddable.value || (isMinorLocal.value ? 'club' : 'public'))
+      if (dateOfBirth.value) {
+        formData.append('date_of_birth', dateOfBirth.value)
+      }
       // The phone is persisted (and uniqueness-validated) via the phone step's "Send code"
       // action, not here — so a taken/invalid number can't silently fail this final save
       // and block onboarding.
