@@ -260,6 +260,18 @@
         "open_callouts_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "features": {
+          "type": "object",
+          "properties": {
+            "callouts": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "callouts"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -281,6 +293,7 @@
         "on_call",
         "on_call_until",
         "open_callouts_count",
+        "features",
         "created_at",
         "updated_at"
       ],

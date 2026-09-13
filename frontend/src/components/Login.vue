@@ -1,8 +1,8 @@
 <template>
-  <v-container class="fill-height pa-0" fluid>
-    <v-row no-gutters class="fill-height">
+  <v-container class="login-page pa-0" fluid>
+    <v-row no-gutters class="login-hero-row">
       <!-- Left Column: Login Form -->
-      <v-col cols="12" md="6" lg="5" class="d-flex align-center justify-center bg-white fill-height position-relative">
+      <v-col ref="signInColumn" cols="12" md="6" lg="5" class="d-flex align-center justify-center bg-white fill-height position-relative">
         <div class="login-container pa-6 pa-md-10">
           <!-- Logo & Brand -->
           <div class="text-center mb-8">
@@ -136,48 +136,55 @@
 
         <!-- Hero Content -->
         <div class="hero-content position-relative z-index-2 text-white mw-600">
-          <h2 class="text-h2 font-weight-black mb-6 text-shadow">
+          <h2 class="text-h2 font-weight-black mb-4 text-shadow">
             Explore the<br>Depths Together
           </h2>
+          <p class="text-h6 font-weight-regular opacity-80 text-shadow">
+            The UK's shared record of caves, trips and the people who explore them —
+            with the safety tools to get you back out again.
+          </p>
+        </div>
+      </v-col>
+    </v-row>
 
-          <v-row class="features-grid">
-            <v-col cols="12" sm="6" class="mb-4">
-              <div class="d-flex align-start">
-                <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
-                  <v-icon color="white" :icon="mdiMapSearch" />
+    <!-- What Subterra actually does. Shown to everyone, before signing up:
+         visitors shouldn't have to create an account to find out what the
+         platform is for. -->
+    <v-row no-gutters class="features-section">
+      <v-col cols="12">
+        <div class="features-inner mx-auto px-4 px-md-8 py-10 py-md-14">
+          <div class="text-center mb-8 mb-md-10">
+            <h2 class="text-h4 text-md-h3 font-weight-bold mb-3">What you can do on Subterra</h2>
+            <p class="text-body-1 text-medium-emphasis mw-720 mx-auto">
+              A logbook, a cave database and a safety net in one place. Some features open up
+              once your caving club confirms you're one of their members.
+            </p>
+          </div>
+
+          <v-row>
+            <v-col v-for="feature in features" :key="feature.title" cols="12" sm="6" lg="4">
+              <div class="feature-card h-100 pa-5 rounded-lg" :style="{ '--feature-accent': feature.accent }">
+                <v-avatar size="44" rounded="lg" class="feature-card__icon mb-4">
+                  <v-icon :icon="feature.icon" size="24" />
                 </v-avatar>
-                <div>
-                  <div class="font-weight-bold text-subtitle-1">Discover Caves</div>
-                  <div class="text-body-2 opacity-80">Access detailed cave data, surveys, and conditions across the UK.
-                  </div>
-                </div>
-              </div>
-            </v-col>
-            <v-col cols="12" sm="6" class="mb-4">
-              <div class="d-flex align-start">
-                <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
-                  <v-icon color="white" :icon="mdiNotebookCheck" />
-                </v-avatar>
-                <div>
-                  <div class="font-weight-bold text-subtitle-1">Plan & Track</div>
-                  <div class="text-body-2 opacity-80">Organize trips and utilize our live callout tracking for safer
-                    expeditions.</div>
-                </div>
-              </div>
-            </v-col>
-            <v-col cols="12" sm="6" class="mb-4">
-              <div class="d-flex align-start">
-                <v-avatar color="white" size="40" class="mr-3 bg-opacity-20">
-                  <v-icon color="white" :icon="mdiAccountGroup" />
-                </v-avatar>
-                <div>
-                  <div class="font-weight-bold text-subtitle-1">Community Logbook</div>
-                  <div class="text-body-2 opacity-80">Share trip reports, photos, and contribute to the national record.
-                  </div>
+                <h3 class="text-subtitle-1 font-weight-bold mb-1">{{ feature.title }}</h3>
+                <p class="text-body-2 text-medium-emphasis mb-0">{{ feature.description }}</p>
+                <div v-if="feature.requiresClub" class="text-caption mt-3 feature-card__lock d-flex align-center">
+                  <v-icon :icon="mdiLockOutline" size="14" class="mr-1" />
+                  Unlocks once your club confirms you
                 </div>
               </div>
             </v-col>
           </v-row>
+
+          <div class="text-center mt-8">
+            <p class="text-body-2 text-medium-emphasis mb-2">
+              Subterra is free and open source, run by cavers for the caving community.
+            </p>
+            <v-btn variant="tonal" color="primary" class="text-none" @click="scrollToSignIn">
+              Sign in or join
+            </v-btn>
+          </div>
         </div>
       </v-col>
     </v-row>
@@ -185,7 +192,7 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiArrowLeft, mdiCheckCircle, mdiEmailCheck, mdiEmailOutline, mdiInformationOutline, mdiMapSearch, mdiNotebookCheck, mdiShieldAccount } from '@mdi/js'
+import { mdiAlertOctagram, mdiArrowLeft, mdiCheckCircle, mdiEmailCheck, mdiEmailOutline, mdiFormatListChecks, mdiImageFilterHdr, mdiInformationOutline, mdiLockOutline, mdiMedalOutline, mdiNotebookOutline, mdiShieldAccount, mdiTicketConfirmationOutline } from '@mdi/js'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'
@@ -193,6 +200,56 @@ import { api } from '@/plugins/api'
 
 const router = useRouter()
 const store = useAppStore()
+
+// The feature tour that used to sit at the *end* of onboarding, where it only
+// reached people who had already signed up and committed to the platform.
+const features = [
+  {
+    title: 'Trips & logbook',
+    description: 'Log every trip, or just tap a cave as done. Your caving history in one place, with photos and reports.',
+    icon: mdiNotebookOutline,
+    accent: '33, 150, 243',
+  },
+  {
+    title: 'Cave details & maps',
+    description: 'Descriptions, history, photos and locations for caves across the UK, kept up to date by cavers.',
+    icon: mdiImageFilterHdr,
+    accent: '67, 160, 71',
+  },
+  {
+    title: 'Collections',
+    description: 'Curated lists of caves to work through — the classic Yorkshire trips and more — with your progress ticked off.',
+    icon: mdiFormatListChecks,
+    accent: '94, 53, 177',
+  },
+  {
+    title: 'Access permits',
+    description: 'Some caves need a permit. Check availability and book a date; the access officers are notified to approve it.',
+    icon: mdiTicketConfirmationOutline,
+    accent: '0, 150, 136',
+    requiresClub: true,
+  },
+  {
+    title: 'Safety callouts',
+    description: 'Set a deadline and contacts before you go underground. If you are overdue, your contacts are alerted automatically.',
+    icon: mdiAlertOctagram,
+    accent: '251, 140, 0',
+    requiresClub: true,
+  },
+  {
+    title: 'Medals & stats',
+    description: 'Earn medals and track caves visited, trips logged and hours underground as your logbook grows.',
+    icon: mdiMedalOutline,
+    accent: '142, 36, 170',
+  },
+]
+
+const signInColumn = ref(null)
+
+const scrollToSignIn = () => {
+  const el = signInColumn.value?.$el ?? signInColumn.value
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 
 // Hero Slideshow
 const currentHeroIndex = ref(0)
@@ -292,6 +349,17 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* The page now has content below the fold, so it stacks its rows rather than
+   being a single viewport-height flex row (Vuetify's .fill-height container
+   centres and lays its children out in a row, which put the two side by side). */
+.login-page.v-container {
+  display: block;
+}
+
+.login-hero-row {
+  min-height: 100vh;
+}
+
 .login-container {
   width: 100%;
   max-width: 480px;
@@ -392,5 +460,37 @@ onUnmounted(() => {
 
 .mw-600 {
   max-width: 600px;
+}
+
+.mw-720 {
+  max-width: 720px;
+}
+
+/* Feature introduction below the fold */
+.features-section {
+  background-color: rgb(var(--v-theme-background));
+  border-top: 1px solid rgba(24, 38, 31, 0.08);
+}
+
+.features-inner {
+  max-width: 1180px;
+}
+
+/* Informational, not interactive — no hover lift or pointer cursor. The
+   equivalent cards in the onboarding wizard read as clickable and weren't,
+   which is exactly what we're avoiding here. */
+.feature-card {
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--feature-accent), 0.28);
+  border-left-width: 4px;
+}
+
+.feature-card__icon {
+  background-color: rgba(var(--feature-accent), 0.14) !important;
+  color: rgb(var(--feature-accent));
+}
+
+.feature-card__lock {
+  color: rgba(var(--v-theme-on-surface), 0.6);
 }
 </style>

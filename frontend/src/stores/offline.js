@@ -117,6 +117,24 @@ async function cacheImageAsBlob(url) {
   }
 }
 
+// navigator.onLine only reflects whether the OS reports an active network
+// interface, not whether the internet is actually reachable — Chrome is
+// known to report `false` while genuinely connected (VPNs, some routers,
+// waking from sleep), and can stay stuck that way with no further
+// online/offline event to correct it. So treat "offline" as a hint that
+// needs confirming with a real request before we trust it.
+async function probeConnectivity() {
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    const response = await fetch('/api/livez', { cache: 'no-store', signal: controller.signal })
+    clearTimeout(timeout)
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
 function detectPwa() {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
   return (
@@ -147,12 +165,22 @@ export const useOfflineStore = defineStore('offline', {
   actions: {
     init() {
       window.addEventListener('online', () => { this.isOnline = true })
-      window.addEventListener('offline', () => { this.isOnline = false })
+      window.addEventListener('offline', () => { this.confirmOffline() })
       if (typeof window.matchMedia === 'function') {
         const mq = window.matchMedia('(display-mode: standalone)')
         mq.addEventListener('change', (e) => { this.isPwa = e.matches || window.navigator.standalone === true })
       }
       this.loadDownloadedCaveIds()
+
+      // navigator.onLine can already be wrong by the time the app loads, so
+      // don't show the offline banner off that alone — confirm it first.
+      if (!navigator.onLine) {
+        this.confirmOffline()
+      }
+    },
+
+    async confirmOffline() {
+      this.isOnline = await probeConnectivity()
     },
 
     async loadDownloadedCaveIds() {
@@ -282,9 +310,14 @@ export const useOfflineStore = defineStore('offline', {
     },
 
     async getOfflineCave(caveIdOrSlug) {
-      // Try by ID first
-      const byId = await dbGet(STORES.caves, Number(caveIdOrSlug))
-      if (byId) return byId
+      // Try by ID first. A slug coerces to NaN, which is not a valid IndexedDB
+      // key — passing it to store.get() throws DataError rather than missing,
+      // so guard before the lookup and let the slug search below handle it.
+      const numericId = Number(caveIdOrSlug)
+      if (Number.isFinite(numericId)) {
+        const byId = await dbGet(STORES.caves, numericId)
+        if (byId) return byId
+      }
       // Fall back to slug search
       const allCaves = await dbGetAll(STORES.caves)
       return allCaves.find(c => c.slug === caveIdOrSlug || String(c.id) === String(caveIdOrSlug))

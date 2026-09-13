@@ -190,5 +190,83 @@ describe('SuggestedEdit [id] page — changedFields comparison', () => {
         expect(wrapper.text()).toContain('LOCATION LAT')
         expect(wrapper.text()).not.toContain('LOCATION LNG')
     })
+
+    describe('hero image diffing', () => {
+        // What the cave form posts back for an image the user never touched: the
+        // media object it was given, with the metadata inputs merged in — which
+        // adds a `data: null` the stored record never had.
+        const storedHero = {
+            id: 9,
+            type: 'hero',
+            filename: 'caves/hero-abc.jpg',
+            url: 'https://cdn/caves/hero-abc.jpg',
+            title: 'Main chamber',
+            photographer: 'A Caver',
+            copyright: null,
+        }
+        const echoedHero = { ...storedHero, srcset: 'https://cdn/caves/hero-abc.jpg 1x', data: null }
+
+        const withHero = (suggestedHero, storedHeroValue = storedHero) => ({
+            suggestable: {
+                id: 42,
+                name: 'Test Cave',
+                slug: 'test-cave',
+                description: 'The original description.',
+                access_info: 'Original access info.',
+                location_lat: 51.8158,
+                location_lng: -3.57995,
+                location_alt: 304,
+                tags: [],
+                hero_image: storedHeroValue,
+            },
+            suggested_data: {
+                name: 'Test Cave',
+                description: 'The original description.',
+                access_info: 'Original access info.',
+                location_lat: '51.8158',
+                location_lng: '-3.57995',
+                location_alt: '304',
+                tags: [],
+                hero_image: suggestedHero,
+            },
+        })
+
+        it('does not flag a hero image the user never touched', async () => {
+            const wrapper = await mountAndFetch(withHero(echoedHero))
+
+            expect(wrapper.text()).not.toContain('HERO IMAGE')
+            expect(wrapper.text()).toContain('no differences')
+        })
+
+        it('flags a hero image that carries a new upload', async () => {
+            const wrapper = await mountAndFetch(
+                withHero({ ...echoedHero, data: 'https://cdn/pending_edits/new-hero.jpg' })
+            )
+
+            expect(wrapper.text()).toContain('HERO IMAGE')
+        })
+
+        it('flags a hero image swapped for a different media record', async () => {
+            const wrapper = await mountAndFetch(
+                withHero({ ...echoedHero, id: 12, filename: 'caves/hero-xyz.jpg', url: 'https://cdn/caves/hero-xyz.jpg' })
+            )
+
+            expect(wrapper.text()).toContain('HERO IMAGE')
+        })
+
+        it('flags a hero image whose caption was edited', async () => {
+            const wrapper = await mountAndFetch(
+                withHero({ ...echoedHero, photographer: 'Someone Else' })
+            )
+
+            expect(wrapper.text()).toContain('HERO IMAGE')
+        })
+
+        it('flags a hero image being added where there was none', async () => {
+            const wrapper = await mountAndFetch(withHero(echoedHero, null))
+
+            expect(wrapper.text()).toContain('HERO IMAGE')
+        })
+    })
 })
 

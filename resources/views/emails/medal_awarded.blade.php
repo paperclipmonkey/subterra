@@ -6,8 +6,8 @@ Hi {{ $user->name }},
 Congratulations! You have earned a new medal:
 
 <x-mail::panel>
-@if($medal->image_path)
-<img src="{{ Storage::disk('medals')->url(str_replace('.svg', '.png', $medal->image_path)) }}" alt="{{ $medal->name }}" style="height:64px;vertical-align:middle;margin-right:12px;border-radius:8px;background:#fff;box-shadow:0 2px 8px #eee;" />
+@if($medalImageUrl)
+<img src="{{ $medalImageUrl }}" alt="{{ $medal->name }}" style="height:64px;vertical-align:middle;margin-right:12px;border-radius:8px;background:#fff;box-shadow:0 2px 8px #eee;" />
 @endif
 **{{ $medal->name }}**
 </x-mail::panel>

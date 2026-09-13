@@ -22,4 +22,23 @@ return [
 
     'callout_access_default' => env('FEATURE_CALLOUT_ACCESS_DEFAULT', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Callouts, globally
+    |--------------------------------------------------------------------------
+    |
+    | The master switch for the whole callout feature. When disabled, nobody
+    | can use callouts regardless of their roles: the UI hides every entry
+    | point (nav item, cave page actions, the onboarding phone step) and the
+    | callout API refuses requests, so the feature can't be reached by a
+    | remembered URL or a stale client either.
+    |
+    | Unlike `callout_access_default` — which only sets the default for *new*
+    | accounts and leaves everyone else alone — this applies to every user
+    | immediately.
+    |
+    */
+
+    'callouts' => env('FEATURE_CALLOUTS', true),
+
 ];

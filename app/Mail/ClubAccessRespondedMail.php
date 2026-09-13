@@ -31,7 +31,9 @@ class ClubAccessRespondedMail extends Mailable implements ShouldQueue
 
     public function build()
     {
-        $subject = $this->status === 'approved' ? 'Your Club Access Request Was Approved' : 'Your Club Access Request Was Rejected';
+        $subject = $this->status === 'approved'
+            ? 'Your membership of '.$this->club->name.' is confirmed'
+            : 'We could not confirm your membership of '.$this->club->name;
 
         return $this->subject($subject)
             ->markdown('emails.club_access_responded')

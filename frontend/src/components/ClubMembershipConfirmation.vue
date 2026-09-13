@@ -7,7 +7,7 @@
       <v-card-text>
         <div>
           <div v-if="pendingClubs && pendingClubs.length">
-            <h3 class="text-h6 font-weight-bold mb-4">Your Applications</h3>
+            <h3 class="text-h6 font-weight-bold mb-4">Awaiting confirmation</h3>
             <v-list class="pa-0">
               <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-3 py-3 mb-4 border rounded-lg">
                 <template #prepend>
@@ -27,13 +27,13 @@
             <v-divider class="my-6" />
           </div>
           <p class="mb-4">
-            Please confirm which BCA club(s) you are a member of. Your request will be sent to the club administrators for approval.
+            Tell us which BCA club(s) you already belong to. Their administrators will confirm your membership.
           </p>
-          
+
           <v-alert type="info" variant="tonal" class="mb-6" border="start" :icon="mdiShieldCheck">
-            <div class="text-subtitle-1 font-weight-bold mb-2">Why join a club?</div>
+            <div class="text-subtitle-1 font-weight-bold mb-2">Why confirm your club?</div>
             <p class="text-body-2 mb-4">
-              Subterra is a community-driven platform. Many features are restricted to verified club members to ensure the privacy and security of sensitive cave data.
+              Subterra is a community-driven platform. Many features are restricted to confirmed club members to ensure the privacy and security of sensitive cave data.
             </p>
             <v-row dense>
               <v-col cols="12" sm="6">
@@ -45,7 +45,7 @@
                 </ul>
               </v-col>
               <v-col cols="12" sm="6">
-                <div class="font-weight-bold mb-1 text-success">After Approval:</div>
+                <div class="font-weight-bold mb-1 text-success">Once confirmed:</div>
                 <ul class="ml-4 text-body-2">
                   <li><strong>Interactive Maps</strong>: View precise cave locations.</li>
                   <li><strong>Access Info</strong>: Read detailed landowner contacts.</li>
@@ -78,7 +78,7 @@
             </template>
           </v-autocomplete>
           <v-alert v-if="success" type="success" class="mt-4">
-            Club administrators have been notified. You will receive an email once your account has been approved.
+            Club administrators have been notified. You will receive an email once they have confirmed your membership.
           </v-alert>
           <v-alert v-if="error" type="error" class="mt-4">
             {{ error }}

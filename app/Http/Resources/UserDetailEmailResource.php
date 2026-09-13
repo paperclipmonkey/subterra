@@ -57,6 +57,11 @@ class UserDetailEmailResource extends JsonResource
                 'name' => $role->name,
                 'slug' => $role->slug,
             ]),
+            // Global feature switches. The client hides a feature's entry points
+            // when it is off, so a disabled feature doesn't just 403 on click.
+            'features' => [
+                'callouts' => (bool) config('features.callouts'),
+            ],
             'stats' => [
                 'trips' => $this->trips->count(),
                 'caves' => $this->trips->pluck('cave_system_id')->unique()->count(),

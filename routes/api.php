@@ -12,6 +12,7 @@ use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\ApiIsAdmin;
 use App\Http\Middleware\ApiIsAuthenticated;
+use App\Http\Middleware\CalloutsEnabled;
 use App\Http\Middleware\ClubAdminOrAdmin;
 use App\Http\Middleware\CurrentUserOrAdmin;
 use App\Http\Middleware\PipAccess;
@@ -42,7 +43,15 @@ Route::post('/webhooks/gcp/media', [\App\Http\Controllers\Webhook\GcpMediaWebhoo
     ->middleware('throttle:webhook-gcp-media');
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store']);
+    // Creating a callout is gated on the global feature switch, so turning
+    // callouts off can't be bypassed with a bookmarked URL or a stale client.
+    // Deliberately NOT applied to the routes below: viewing and cancelling an
+    // existing callout must keep working even if the feature is switched off
+    // mid-trip, or someone underground when the flag flips could be left unable
+    // to stand their callout down — a false rescue is far worse than the flag
+    // leaking a little.
+    Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store'])
+        ->middleware(CalloutsEnabled::class);
     Route::get('/callouts/active', [App\Http\Controllers\CalloutController::class, 'active']);
     Route::get('/callouts/contact-numbers', [App\Http\Controllers\CalloutController::class, 'contactNumbers']);
 });
@@ -238,6 +247,12 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::put('/users/{user_without_scopes}/toggle-role/{role}', [UserController::class, 'toggleRole'])
             ->withoutScopedBindings()
             ->name('admin.users.toggle-role');
+        Route::get('/users/{user_without_scopes}/merge-preview', [UserController::class, 'mergePreview'])
+            ->withoutScopedBindings()
+            ->name('admin.users.merge-preview');
+        Route::post('/users/{user_without_scopes}/merge', [UserController::class, 'merge'])
+            ->withoutScopedBindings()
+            ->name('admin.users.merge');
 
         // Pip feedback (flagged conversations) review UI
         Route::get('/pip-feedback', [App\Http\Controllers\Admin\PipFeedbackController::class, 'index'])->name('admin.pip-feedback.index');

@@ -10,14 +10,20 @@
         />
       </v-card-title>
       <v-card-text>
-        <sub>Entrance information. E.g. Where to find it, where to park. Information about access.</sub>
-        <div class="text-subtitle-2 mt-4 mb-1">Description</div>
+        <div class="text-subtitle-2 mb-1">Description</div>
+        <p class="text-caption text-grey mb-2">
+          What the cave is like underground — its character, notable features and history.
+        </p>
         <MilkdownEditor
           v-model="internalCave.description"
           placeholder="Detailed description of the cave..."
           class="mb-4"
         />
         <div class="text-subtitle-2 mt-4 mb-1">Access Info</div>
+        <p class="text-caption text-grey mb-2">
+          How to find the entrance and get in — parking, the walk in, gate keys, permits
+          and any landowner arrangements.
+        </p>
         <MilkdownEditor
           v-model="internalCave.access_info"
           placeholder="Entrance information. E.g. Where to find it, where to park."

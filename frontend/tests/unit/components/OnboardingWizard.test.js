@@ -174,4 +174,46 @@ describe('OnboardingWizard.vue', () => {
             expect(results).toContain('Name is required')
         })
     })
+
+    describe('steps', () => {
+        it('no longer ends on a passive feature tour', () => {
+            // That content now lives on the login page, where it reaches people
+            // deciding whether to sign up at all.
+            const wrapper = mount(OnboardingWizard, mountOptions)
+
+            expect(wrapper.vm.stepKeys).not.toContain('features')
+            expect(wrapper.vm.stepKeys).toEqual(
+                ['welcome', 'profile', 'club', 'email', 'findability']
+            )
+            expect(wrapper.vm.totalSteps).toBe(5)
+        })
+
+        it('finishes on the last step rather than a named one', async () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            wrapper.vm.step = wrapper.vm.totalSteps
+            await wrapper.vm.$nextTick()
+
+            expect(wrapper.vm.nextLabel).toBe('Get Started')
+
+            await wrapper.vm.nextStep()
+
+            // The final save runs as multipart, so it goes through post().
+            expect(mockPost).toHaveBeenCalledWith(
+                '/api/users/me',
+                expect.any(FormData),
+                expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } })
+            )
+        })
+
+        it('advances rather than saving while steps remain', async () => {
+            const wrapper = mount(OnboardingWizard, mountOptions)
+            wrapper.vm.step = 2
+            await wrapper.vm.$nextTick()
+
+            await wrapper.vm.nextStep()
+
+            expect(wrapper.vm.step).toBe(3)
+            expect(mockPost).not.toHaveBeenCalled()
+        })
+    })
 })

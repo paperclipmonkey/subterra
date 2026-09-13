@@ -95,6 +95,10 @@ Or via the VS Code task: **php: test**
 - `tests/Feature/Console/` — Artisan command tests
 - `tests/Unit/` — Unit tests for services (e.g. `CalloutServiceTest.php`)
 - `tests/schemas/` — JSON schema files used for API response validation
+- `e2e/` — Playwright system tests driving the built SPA against a real
+  Laravel + PostgreSQL stack. See `e2e/README.md` before adding one; several
+  non-obvious constraints apply (Sanctum's Origin check, `artisan serve`'s
+  environment allowlist, and MapLibre never loading headless).
 
 All tests use `RefreshDatabase` and PHPUnit annotations. Use the **latest PHPUnit attribute syntax** (e.g. `#[Test]`, `#[DataProvider(...)]`) rather than docblock annotations.
 
@@ -230,16 +234,50 @@ Two GitHub Actions workflows handle testing and deployment:
 
 - `.github/workflows/test.yaml` — runs on every PR and push to `main`/`develop`; calls the reusable test workflow.
 - `.github/workflows/deploy.yaml` — runs on push to `main`; calls the same reusable tests then deploys to **Fly.io** (Laravel API) and **GCP** (microservices via Terraform).
-- `.github/workflows/_test.yaml` — reusable workflow with four parallel jobs: `backend-tests`, `frontend-tests`, `watchdog-tests`, `image-processor-tests`.
+- `.github/workflows/_test.yaml` — reusable workflow with parallel jobs:
+  - `lint-php` — Pint (`--test`, report-only) and PHPStan
+  - `lint-js` — ESLint (`yarn lint:ci`, report-only) and `tsc --noEmit` for both GCP services
+  - `backend-tests` — PHPUnit, as a matrix over `sqlite` and `pgsql`
+  - `frontend-tests`, `watchdog-tests`, `image-processor-tests`
+  - `e2e-tests` — Playwright system tests (see `e2e/README.md`)
 
-Backend tests use SQLite in CI. Production uses PostgreSQL 17.
+Note that `yarn lint` and `pint` (without `--test`) both rewrite files and exit
+0, so CI uses the report-only variants. A style regression would otherwise pass
+unnoticed.
 
-### ⚠️ SQLite (tests) vs PostgreSQL (production) — type strictness
+Backend tests run against **both** SQLite and PostgreSQL 17 — both legs must
+pass. See the type-strictness warning below for why the Postgres leg exists.
 
-**Tests run on SQLite, production runs on PostgreSQL.** SQLite uses loose
-("duck") typing and silently coerces mismatched types; PostgreSQL is strict and
-will raise errors that never appear locally or in CI. A green test suite does
-**not** guarantee a query works in production.
+### ⚠️ SQLite (local) vs PostgreSQL (production) — type strictness
+
+**Local runs default to SQLite, production runs on PostgreSQL.** SQLite uses
+loose ("duck") typing and silently coerces mismatched types; PostgreSQL is
+strict and will raise errors that never appear locally. CI now runs the suite
+against both, so a Postgres-only failure is caught in review — but a green
+**local** run still does not guarantee a query works in production.
+
+To run the suite against Postgres yourself:
+
+```sh
+docker exec subterra-postgres-1 psql -U sail -d postgres -c "CREATE DATABASE subterra_citest;"
+```
+
+```sh
+docker exec -e DB_CONNECTION=pgsql -e DB_HOST=postgres -e DB_DATABASE=subterra_citest -e DB_USERNAME=sail -e DB_PASSWORD=password subterra-laravel.test-1 ./vendor/bin/phpunit
+```
+
+Two classes of bug this has already caught, both worth recognising:
+
+- **A model on a keyless table.** `trip_user` has no `id` column, so `TripUser`
+  must declare `$incrementing = false` — otherwise Eloquent emits
+  `insert ... returning "id"` and Postgres raises SQLSTATE 42703. SQLite's
+  implicit rowid satisfies it silently.
+- **Catching a constraint violation inside a transaction.** Postgres aborts the
+  *whole* transaction on a failed statement (SQLSTATE 25P02) and rejects
+  everything after it; SQLite carries on. Code that catches
+  `UniqueConstraintViolationException` and continues must wrap the failing
+  statement in its own `DB::transaction()` so it runs in a SAVEPOINT — see
+  `app/Listeners/CheckAndAwardMedals.php`.
 
 The most common trap is comparing a column to a value of a different type.
 PostgreSQL has no implicit `varchar = integer` cast and fails with:

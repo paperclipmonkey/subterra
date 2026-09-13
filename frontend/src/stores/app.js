@@ -11,6 +11,7 @@ export const useAppStore = defineStore('app', {
       clubs: [],
       roles: [],
       onboarding_completed_at: null,
+      features: {},
     },
     userFetched: false,
     loading: false,
@@ -21,7 +22,11 @@ export const useAppStore = defineStore('app', {
       if (!state.user || !state.user.id) return false
       if (state.user.is_admin) return true
       return !!(state.user.clubs && state.user.clubs.some(c => c.status === 'approved'))
-    }
+    },
+
+    // The server's master switch for callouts. Defaults to enabled so a cached
+    // user record from before this field existed doesn't hide a live feature.
+    calloutsEnabled: (state) => state.user?.features?.callouts !== false,
   },
 
   actions: {

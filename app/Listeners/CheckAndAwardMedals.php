@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\DB;
 
 class CheckAndAwardMedals implements ShouldQueue
 {
@@ -45,7 +46,16 @@ class CheckAndAwardMedals implements ShouldQueue
             }
 
             try {
-                $user->medals()->attach($medal->id, ['awarded_at' => Carbon::now()]);
+                // Wrapped in its own transaction so the attach runs inside a
+                // SAVEPOINT whenever a caller already has one open. Postgres
+                // aborts the *entire* transaction on a constraint violation
+                // (SQLSTATE 25P02) and rejects every later statement, so
+                // without the savepoint one lost race would take down the
+                // caller's whole unit of work. SQLite tolerates it either way.
+                DB::transaction(fn () => $user->medals()->attach(
+                    $medal->id,
+                    ['awarded_at' => Carbon::now()],
+                ));
             } catch (UniqueConstraintViolationException) {
                 // A concurrent worker awarded this medal between our "not yet
                 // earned" check and the attach — it owns the MedalAwarded

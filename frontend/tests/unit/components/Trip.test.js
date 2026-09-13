@@ -208,5 +208,56 @@ describe('Trip', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Failed to load trip')
   })
+
+  describe('hero image', () => {
+    const mountWith = async (trip) => {
+      api.get.mockResolvedValueOnce({ data: { data: trip } })
+      const wrapper = mount(Trip, {
+        global: { plugins: [createPinia()], stubs: getStubsConfig() }
+      })
+      await flushPromises()
+      return wrapper
+    }
+
+    it("prefers the trip's own first photo", async () => {
+      const wrapper = await mountWith({
+        ...mockTrip,
+        media: [{ filename: 'a.webp', url: 'https://cdn/trip-photo.webp' }],
+        entrance_hero_image: 'https://cdn/cave-hero.webp',
+      })
+
+      expect(wrapper.vm.heroImage).toBe('https://cdn/trip-photo.webp')
+    })
+
+    it("falls back to the entrance's hero photo when the trip has no photos", async () => {
+      const wrapper = await mountWith({
+        ...mockTrip,
+        entrance_hero_image: 'https://cdn/cave-hero.webp',
+        entrance_entrance_image: 'https://cdn/cave-entrance.webp',
+      })
+
+      expect(wrapper.vm.heroImage).toBe('https://cdn/cave-hero.webp')
+    })
+
+    it("falls back to the entrance photo when there is no hero photo", async () => {
+      const wrapper = await mountWith({
+        ...mockTrip,
+        entrance_hero_image: null,
+        entrance_entrance_image: 'https://cdn/cave-entrance.webp',
+      })
+
+      expect(wrapper.vm.heroImage).toBe('https://cdn/cave-entrance.webp')
+    })
+
+    it('uses the placeholder when the cave has no photos either', async () => {
+      const wrapper = await mountWith({
+        ...mockTrip,
+        entrance_hero_image: null,
+        entrance_entrance_image: null,
+      })
+
+      expect(wrapper.vm.heroImage).toBe('/placeholder-cave.jpg')
+    })
+  })
 })
 

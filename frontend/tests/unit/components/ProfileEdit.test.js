@@ -23,6 +23,13 @@ vi.mock('@/stores/notifications', () => ({
     })
 }))
 
+// Mock app store
+vi.mock('@/stores/app', () => ({
+    useAppStore: () => ({
+        user: { id: 1, onboarding_completed_at: '2024-01-01T00:00:00Z' },
+    })
+}))
+
 // Mock router
 const mockPush = vi.fn()
 vi.mock('@/router', () => ({
@@ -135,8 +142,10 @@ describe('ProfileEdit.vue', () => {
         })
     })
 
-    it('renders the cave rescue legal name note', () => {
+    it('renders the cave rescue legal name note', async () => {
         const wrapper = mount(ProfileEdit, mountOptions)
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
         expect(wrapper.text()).toContain('cave rescue')
         expect(wrapper.text()).toContain('legal first and last name')
     })

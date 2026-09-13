@@ -97,8 +97,12 @@ class SuggestedEditController extends Controller
         if ($suggestedEdit->suggestable) {
             $type = $suggestedEdit->suggestable_type;
             if ($type === Cave::class) {
-                // Cave model uses 'system' relationship
-                $suggestedEdit->suggestable->load(['system', 'tags']);
+                // Cave model uses 'system' relationship.
+                // heroImage/entranceImage matter for the diff: a suggestion echoes
+                // the cave's existing hero_image back unchanged, so without a
+                // before-value to compare against, every edit looked like it was
+                // replacing the photo with the one already there.
+                $suggestedEdit->suggestable->load(['system', 'tags', 'heroImage', 'entranceImage']);
             } elseif ($type === Route::class) {
                 // Route model uses 'caveSystem' relationship
                 $suggestedEdit->suggestable->load(['caveSystem', 'entrance', 'exit', 'tags']);

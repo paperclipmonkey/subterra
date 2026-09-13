@@ -38,16 +38,17 @@
               </v-btn>
               <v-btn v-if="isClubAdmin" class="ml-2" color="info" variant="outlined"
                      size="small" @click="openEditClubModal('pending')">
-                <v-icon start :icon="mdiAccountClock" /> Pending Requests <span
+                <v-icon start :icon="mdiAccountClock" /> Confirm Members <span
                   v-if="club.pending_users_count > 0">({{ club.pending_users_count }})</span>
               </v-btn>
             </div>
           </v-card-text>
         </v-card>
-        <!-- Club Edit Modal -->
-        <ClubEditModal v-if="club && isClubAdmin" v-model="showEditClubModal" :club-slug="club.slug" :initial-tab="editClubTab"
-                       @saved="onClubEditSaved" />
-        <!-- Loading/Error State for Club Info -->
+        <!-- Loading/Error State for Club Info.
+             Keep this chained directly to the club card's v-if above — an element
+             with its own v-if in between (as the edit modal once was) silently
+             re-parents the v-else-if/v-else onto *that* condition, which left
+             every non-club-admin staring at the spinner forever. -->
         <v-container v-else-if="error" class="text-center mt-6">
           <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
           <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
@@ -57,6 +58,10 @@
           </v-btn>
         </v-container>
         <v-progress-circular v-else indeterminate color="primary" />
+
+        <!-- Club Edit Modal -->
+        <ClubEditModal v-if="club && isClubAdmin" v-model="showEditClubModal" :club-slug="club.slug" :initial-tab="editClubTab"
+                       @saved="onClubEditSaved" />
       </v-col>
     </v-row>
 
@@ -192,7 +197,7 @@
       <v-row v-else>
         <v-col cols="12">
           <v-alert type="info" variant="tonal">
-            You must be an approved member to see club activity and member details.
+            Your membership must be confirmed by the club before you can see its activity and member details.
           </v-alert>
         </v-col>
       </v-row>
@@ -302,6 +307,31 @@ function openEditClubModal(tab = 'details') {
   showEditClubModal.value = true
 }
 
+// Which tab an inbound deep link (from the "Confirm Membership" email) wants,
+// or null if this is an ordinary visit.
+//
+// `?confirm=members` is the current form. The older `?editClub=1&tab=pending`
+// is still honoured for links sitting in inboxes — including the case where a
+// mail client passed the HTML-escaped ampersand through literally and left us
+// with an `amp;tab` key instead of `tab`.
+const requestedModalTab = (query) => {
+  if (query.confirm === 'members') return 'pending'
+  if (!query.editClub) return null
+  const tab = query.tab ?? query['amp;tab']
+  return tab === 'pending' ? 'pending' : 'details'
+}
+
+const pendingModalTab = ref(null)
+
+// Open as soon as we know the viewer is a club admin, rather than checking once
+// on mount: the club and the user session resolve independently, and losing
+// that race silently dropped the admin on the page with nothing opened.
+watch([club, isClubAdmin], ([loadedClub, admin]) => {
+  if (!pendingModalTab.value || !loadedClub || !admin) return
+  openEditClubModal(pendingModalTab.value)
+  pendingModalTab.value = null
+})
+
 function onClubEditSaved() {
   // Refetch club data after save
   fetchClubData()
@@ -355,13 +385,11 @@ async function fetchClubData() {
 }
 
 onMounted(async () => {
+  // Register the deep-link intent before anything is awaited, so the watcher
+  // above fires whichever of the club or the session lands last.
+  pendingModalTab.value = requestedModalTab(route.query)
   await appStore.getUser()
   await fetchClubData()
-  // Check for ?editClub=1&tab=pending in query
-  const { editClub, tab } = route.query
-  if (editClub && isClubAdmin.value) {
-    openEditClubModal(tab === 'pending' ? 'pending' : 'details')
-  }
 })
 
 // The router reuses this component when navigating between clubs (e.g. via the

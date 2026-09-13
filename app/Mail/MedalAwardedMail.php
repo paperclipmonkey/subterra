@@ -32,6 +32,7 @@ class MedalAwardedMail extends Mailable implements ShouldQueue
             ->with([
                 'user' => $this->user,
                 'medal' => $this->medal,
+                'medalImageUrl' => $this->medal->rasterImageUrl(),
             ]);
     }
 }

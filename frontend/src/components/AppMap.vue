@@ -6,6 +6,7 @@
       :zoom="zoom"
       :max-zoom="maxZoom"
       :height="height"
+      :attribution-control="{ compact: true }"
       @map:load="onMapLoad"
     >
       <slot />
@@ -87,6 +88,14 @@ const onMapLoad = (event) => {
     }),
     'top-right'
   )
+
+  // MapLibre renders the compact attribution expanded on first load; collapse it
+  // to just the "(i)" toggle so it stays out of the way (users can click to open).
+  const attribEl = event.map.getContainer().querySelector('.maplibregl-ctrl-attrib.maplibregl-compact')
+  if (attribEl) {
+    attribEl.classList.remove('maplibregl-compact-show')
+    attribEl.removeAttribute('open')
+  }
 
   // Set up ResizeObserver to handle container size changes (tab switches, layout shifts)
   if (containerRef.value) {

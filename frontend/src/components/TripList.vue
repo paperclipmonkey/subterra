@@ -191,14 +191,25 @@ const getGradientClass = (id) => {
 const route = useRoute()
 const tripsUser = ref(null)
 
+// User ids are random alphanumeric strings (see User::booted), so the only ids
+// worth rejecting are the stringified placeholders a stale link can produce.
+const PLACEHOLDER_IDS = new Set(['undefined', 'null', 'NaN', 'false'])
+const isValidUserId = (id) => {
+  const value = String(id)
+  return /^[A-Za-z0-9_-]{1,36}$/.test(value) && !PLACEHOLDER_IDS.has(value)
+}
+
 const loadTrips = async () => {
   tripStore.loading = true
   await store.getUser()
 
   const query = { ...route.query }
 
-  // Guard against non-numeric user_id (e.g. the string "undefined" from a stale link)
-  if (query.user_id && !/^\d+$/.test(String(query.user_id))) {
+  // Guard against a junk user_id (e.g. the string "undefined" from a stale link).
+  // User ids are random 7-character alphanumeric strings, NOT integers — matching
+  // /^\d+$/ here rejected every real id and silently fell through to the logged-in
+  // user, so "View All" on someone else's profile showed your own trips.
+  if (query.user_id && !isValidUserId(query.user_id)) {
     delete query.user_id
   }
 
