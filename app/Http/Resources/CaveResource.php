@@ -136,6 +136,7 @@ class CaveResource extends JsonResource
                 }, []),
                 'routes' => $this->system->relationLoaded('routes') ? $this->system->routes : [],
                 'annotation' => $this->system->relationLoaded('annotation') ? $this->system->annotation : null,
+                'map_overlays' => $this->system->relationLoaded('mapOverlays') ? CaveSystemMapOverlayResource::collection($this->system->mapOverlays) : [],
             ],
             'trips' => TripSummaryResource::collection($this->whenLoaded('trips')),
             'previously_done' => optional($previoslyDoneTag)->tag === 'Previously Done',
