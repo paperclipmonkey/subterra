@@ -33,7 +33,7 @@
     "vue-chartjs": "^5.3.4",
     "vue-markdown-render": "^2.3.0",
     "vue3-calendar-heatmap": "^2.0.5",
-    "vuetify": "^3.11.8"
+    "vuetify": "^4.2.1"
   },
   "devDependencies": {
     "@indoorequal/vue-maplibre-gl": "^8.4.2",
