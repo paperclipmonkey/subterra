@@ -17,7 +17,7 @@ class SearchUsersTool implements AssistantTool
             'function' => [
                 'name' => 'search_users',
                 'description' => 'Search for Subterra users by name to tag them as participants on a trip report. '
-                    .'Returns users who are searchable (visibility_addable = true) or share a club with the current user. '
+                    .'Returns users who are searchable (visibility_addable is public) or share a club with the current user. '
                     .'Use this when the user mentions caving companions by name and you need their user IDs to tag them.',
                 'parameters' => [
                     'type' => 'object',
@@ -52,14 +52,16 @@ class SearchUsersTool implements AssistantTool
             ->toArray();
 
         // Search for users whose name matches AND who are either:
-        //   a) publicly searchable (visibility_addable = true), OR
+        //   a) publicly searchable (visibility_addable is public), OR
         //   b) share an approved club membership with the current user
         $results = DB::table('users')
             ->where('users.is_active', true)
             ->where('users.id', '!=', $user->id)
             ->where(DB::raw('LOWER(users.name)'), 'like', '%'.mb_strtolower($query).'%')
             ->where(function ($q) use ($userClubIds) {
-                $q->where('users.visibility_addable', true);
+                // A string column ('public'/'club'), not a boolean: comparing it to
+                // `true` silently matched nobody.
+                $q->where('users.visibility_addable', 'public');
                 if (!empty($userClubIds)) {
                     $q->orWhereExists(function ($sub) use ($userClubIds) {
                         $sub->select(DB::raw(1))

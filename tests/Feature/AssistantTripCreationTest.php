@@ -42,8 +42,8 @@ class AssistantTripCreationTest extends TestCase
     public function search_users_returns_visibility_addable_users(): void
     {
         $user = User::factory()->create();
-        $visible = User::factory()->create(['name' => 'Alice Blackshaw', 'visibility_addable' => true]);
-        $hidden = User::factory()->create(['name' => 'Alice Hidden', 'visibility_addable' => false]);
+        $visible = User::factory()->create(['name' => 'Alice Blackshaw', 'visibility_addable' => 'public']);
+        $hidden = User::factory()->create(['name' => 'Alice Hidden', 'visibility_addable' => 'club']);
 
         $tool = new SearchUsersTool();
         $result = $tool->handle(['query' => 'Alice'], $user);
@@ -64,7 +64,7 @@ class AssistantTripCreationTest extends TestCase
             ['user_id' => $user->id, 'club_id' => $club->id, 'status' => 'approved'],
         ]);
 
-        $clubMate = User::factory()->create(['name' => 'Bob Caveman', 'visibility_addable' => false]);
+        $clubMate = User::factory()->create(['name' => 'Bob Caveman', 'visibility_addable' => 'club']);
         \Illuminate\Support\Facades\DB::table('club_user')->insert([
             ['user_id' => $clubMate->id, 'club_id' => $club->id, 'status' => 'approved'],
         ]);
@@ -79,7 +79,7 @@ class AssistantTripCreationTest extends TestCase
     #[Test]
     public function search_users_does_not_return_current_user(): void
     {
-        $user = User::factory()->create(['name' => 'Charlie Caver', 'visibility_addable' => true]);
+        $user = User::factory()->create(['name' => 'Charlie Caver', 'visibility_addable' => 'public']);
 
         $tool = new SearchUsersTool();
         $result = $tool->handle(['query' => 'Charlie'], $user);
@@ -93,7 +93,7 @@ class AssistantTripCreationTest extends TestCase
     {
         $user = User::factory()->create();
         $club = Club::factory()->create(['name' => 'Mendip Cave Club', 'is_active' => true]);
-        $target = User::factory()->create(['name' => 'Dave Digger', 'visibility_addable' => true]);
+        $target = User::factory()->create(['name' => 'Dave Digger', 'visibility_addable' => 'public']);
 
         \Illuminate\Support\Facades\DB::table('club_user')->insert([
             ['user_id' => $target->id, 'club_id' => $club->id, 'status' => 'approved'],
