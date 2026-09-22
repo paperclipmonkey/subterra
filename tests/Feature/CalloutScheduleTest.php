@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Artisan;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -61,5 +62,23 @@ class CalloutScheduleTest extends TestCase
         $this->assertNotNull($event, 'callouts:check-watchdog-sync must be scheduled');
         $this->assertTrue($event->withoutOverlapping);
         $this->assertLessThanOrEqual(15, $event->expiresAt);
+    }
+
+    #[Test]
+    public function every_scheduled_task_runs_on_one_server_only(): void
+    {
+        Artisan::call('schedule:list');
+
+        $events = app(Schedule::class)->events();
+        $this->assertNotEmpty($events);
+
+        foreach ($events as $event) {
+            // A scheduler runs on every Fly machine; without this each machine would
+            // run the task (e.g. duplicate monthly watchdog test alerts).
+            $this->assertTrue(
+                $event->onOneServer,
+                ($event->command ?? $event->description).' must use onOneServer()'
+            );
+        }
     }
 }

@@ -15,16 +15,21 @@ use Illuminate\Support\Facades\Schedule;
 // A short expiry means a crashed lock self-heals within minutes. Overlap is already safe
 // because trigger/imminent/escalation each commit their guard (status / warned_at /
 // escalated_at) BEFORE notifying, so a concurrent run skips work that's already done.
-Schedule::command('callouts:check-overdue')->everyMinute()->withoutOverlapping(5);
-Schedule::command('shifts:notify-started')->everyMinute()->withoutOverlapping(5);
-Schedule::command('callouts:purge-sensitive-data')->daily();
+//
+// Every entry is onOneServer(): supervisor runs a scheduler on each Fly machine, and a
+// bluegreen deploy briefly runs old and new machines side by side. Without it, jobs such
+// as the monthly watchdog test alert fire once per machine. The lock lives in the shared
+// cache store (database by default), the same one withoutOverlapping() already relies on.
+Schedule::command('callouts:check-overdue')->everyMinute()->withoutOverlapping(5)->onOneServer();
+Schedule::command('shifts:notify-started')->everyMinute()->withoutOverlapping(5)->onOneServer();
+Schedule::command('callouts:purge-sensitive-data')->daily()->onOneServer();
 
 // Monitor the monitor: alert if the independent backup watchdog drifts out of sync,
 // becomes unreachable, or if any active callout is missing backup coverage.
-Schedule::command('callouts:check-watchdog-sync')->everyFifteenMinutes()->withoutOverlapping(10);
+Schedule::command('callouts:check-watchdog-sync')->everyFifteenMinutes()->withoutOverlapping(10)->onOneServer();
 
 // Monthly test alert at 12:00 on the 1st to verify watchdog system is working
-Schedule::command('watchdog:test-alert')->monthlyOn(1, '12:00');
+Schedule::command('watchdog:test-alert')->monthlyOn(1, '12:00')->onOneServer();
 
 // Ping Better Stack heartbeat every minute. If this stops, Better Stack will alert us
 // that the scheduler is down — catching cron/environment failures early.
@@ -33,4 +38,4 @@ Schedule::call(function () {
     if ($url) {
         Http::timeout(5)->get($url);
     }
-})->everyMinute()->name('betterstack-heartbeat')->withoutOverlapping(5);
+})->everyMinute()->name('betterstack-heartbeat')->withoutOverlapping(5)->onOneServer();
