@@ -17,20 +17,20 @@
 
       <!-- Profile Header Card -->
       <v-card class="rounded-xl mb-6 overflow-hidden" elevation="0" border>
-        <div class="bg-gradient-primary px-6 pt-4 pb-12 pt-sm-10 pb-sm-16" />
-        <div class="px-6 pb-6 mt-n10 mt-sm-n12 d-flex flex-column flex-sm-row align-center align-sm-end">
+        <div class="bg-gradient-primary px-6 pt-4 pb-12 pt-md-10 pb-md-16" />
+        <div class="px-6 pb-6 mt-n10 mt-md-n12 d-flex flex-column flex-md-row align-center align-md-end">
 
-          <v-avatar size="100" class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-sm-0 d-sm-none cursor-pointer" @click="showPhotoModal = true">
+          <v-avatar size="100" class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-md-0 d-md-none cursor-pointer" @click="showPhotoModal = true">
             <v-img :src="profile.photo || '/default-avatar.png'" cover />
           </v-avatar>
           <v-avatar size="140"
-                    class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-sm-0 d-none d-sm-flex cursor-pointer" @click="showPhotoModal = true">
+                    class="border-lg elevation-2 bg-white flex-shrink-0 mx-auto mx-md-0 d-none d-md-flex cursor-pointer" @click="showPhotoModal = true">
             <v-img :src="profile.photo || '/default-avatar.png'" cover />
           </v-avatar>
 
-          <div class="ml-sm-6 mt-4 mt-sm-0 flex-grow-1 text-center text-sm-left" style="min-width: 0;">
-            <h1 class="text-h5 text-sm-h4 font-weight-bold text-grey-darken-4 mb-1">{{ profile.name }}</h1>
-            <div class="d-flex flex-column align-center align-sm-start gap-2">
+          <div class="ml-md-6 mt-4 mt-md-0 flex-grow-1 text-center text-md-left" style="min-width: 0;">
+            <h1 class="profile-name font-weight-bold text-grey-darken-4 mb-1">{{ profile.name }}</h1>
+            <div class="d-flex flex-column align-center align-md-start gap-2">
               <v-chip v-if="profile.clubs && profile.clubs.length > 0" color="primary" variant="flat"
                       size="small" :prepend-icon="mdiAccountGroupOutline" class="font-weight-medium">
                 {{ profile.clubs[0].name }}
@@ -45,7 +45,7 @@
           </div>
 
           <!-- Actions -->
-          <div v-if="profile.id === user.id" class="d-flex gap-1 mt-4 mt-sm-0 flex-wrap justify-center">
+          <div v-if="profile.id === user.id" class="d-flex gap-1 mt-4 mt-md-0 flex-nowrap flex-shrink-0 justify-center">
             <!-- Edit -->
             <v-btn v-tooltip="'Edit Profile'" icon variant="text"
                    color="grey-darken-1" @click="$router.push('/profile/' + profile.id + '/edit')">
@@ -73,7 +73,7 @@
           </div>
 
           <!-- Reporting is offered on other members' profiles only. -->
-          <div v-else class="d-flex gap-1 mt-4 mt-sm-0 flex-wrap justify-center">
+          <div v-else class="d-flex gap-1 mt-4 mt-md-0 flex-nowrap flex-shrink-0 justify-center">
             <v-btn v-tooltip="'Report this member'" icon variant="text"
                    color="grey-darken-1" aria-label="Report this member"
                    @click="showReportModal = true">
@@ -451,6 +451,16 @@ const formatDuration = (minutes) => {
 </script>
 
 <style scoped>
+/* The name scales fluidly between Vuetify's h5 and h4 sizes rather than
+   jumping a step at a breakpoint, which used to leave it wrapped over two
+   lines across a wide band of window widths. */
+.profile-name {
+  font-size: clamp(1.5rem, 0.86rem + 1.7vw, 2.125rem);
+  line-height: 1.2;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+}
+
 .bg-gradient-primary {
   background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgb(var(--v-theme-secondary)) 100%);
   height: 60px;
