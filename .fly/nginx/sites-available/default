@@ -26,8 +26,19 @@ server {
         fastcgi_buffer_size  32k;
     }
 
+    # The SPA shell. "/" is served from here by nginx (never PHP), so it needs its
+    # own frame protection, and must be revalidated so a deploy isn't masked by a
+    # heuristically cached index.html pointing at hashed assets that are gone.
+    location = /index.html {
+        include snippets/security-headers.conf;
+        add_header X-Frame-Options         "SAMEORIGIN" always;
+        add_header Content-Security-Policy "frame-ancestors 'self'" always;
+        add_header Cache-Control           "no-cache" always;
+    }
+
     location = /favicon.ico {
         expires 7d;
+        include snippets/security-headers.conf;
         add_header Cache-Control "public, max-age=604800";
         log_not_found off;
         access_log    off;
@@ -41,6 +52,7 @@ server {
     # Vite build assets have content-hash filenames — cache aggressively
     location ~* ^/build/ {
         expires 1y;
+        include snippets/security-headers.conf;
         add_header Cache-Control "public, max-age=31536000, immutable";
         access_log off;
         log_not_found off;
@@ -51,6 +63,7 @@ server {
     # to cache forever and mark immutable so repeat visitors never re-request.
     location ~* ^/assets/ {
         expires 1y;
+        include snippets/security-headers.conf;
         add_header Cache-Control "public, max-age=31536000, immutable";
         access_log off;
         log_not_found off;
@@ -59,6 +72,7 @@ server {
 
     location ~* \.(?:css(\.map)?|js(\.map)?|jpe?g|png|gif|ico|cur|heic|webp|tiff?|mp3|m4a|aac|ogg|midi?|wav|mp4|mov|webm|mpe?g|avi|ogv|flv|wmv)$ {
         expires    30d;
+        include snippets/security-headers.conf;
         add_header Cache-Control "public, max-age=2592000";
         access_log off;
         log_not_found off;
@@ -67,6 +81,7 @@ server {
     }
 
     location ~* \.(?:svgz?|ttf|ttc|otf|eot|woff2?)$ {
+        include snippets/security-headers.conf;
         add_header Access-Control-Allow-Origin "*";
         expires    7d;
         access_log off;
@@ -76,7 +91,5 @@ server {
         deny all;
     }
 
-    add_header X-Frame-Options           "SAMEORIGIN" always;
-    add_header X-Content-Type-Options    "nosniff" always;
-    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    include snippets/security-headers.conf;
 }
