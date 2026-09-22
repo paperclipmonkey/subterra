@@ -243,6 +243,12 @@ class TripController extends Controller
 
             $trip->update($data);
 
+            // participants is optional on update: a request that omits it (e.g. a
+            // visibility-only change) must not strip everyone from the trip.
+            if (!$request->has('participants')) {
+                return ['attached' => []];
+            }
+
             return $trip->participants()->sync($participantIds);
         });
 
