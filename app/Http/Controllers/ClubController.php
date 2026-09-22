@@ -9,10 +9,12 @@ use App\Events\ClubAccessResponded;
 use App\Http\Resources\ClubDetailResource;
 use App\Http\Resources\ClubResource;
 use App\Http\Resources\UserDetailEmailResource;
+use App\Http\Resources\UserResource;
 use App\Models\Club;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -267,7 +269,7 @@ class ClubController extends Controller
         }));
     }
 
-    public function approveMember(Club $club, User $user): UserDetailEmailResource
+    public function approveMember(Request $request, Club $club, User $user): JsonResource
     {
         // Only a genuinely pending request can be approved — otherwise the
         // update is a silent no-op yet the "approved" email would still fire.
@@ -283,7 +285,14 @@ class ClubController extends Controller
         $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
         event(new ClubAccessResponded($club, $user, 'approved'));
 
-        return new UserDetailEmailResource($user->fresh());
+        // Club admins are ordinary members: they must not receive the applicant's
+        // private profile (phone, date of birth, email). Only platform admins get
+        // the detailed resource, which the admin users table uses to refresh its row.
+        if ($request->user()->hasRole('platform_admin')) {
+            return new UserDetailEmailResource($user->fresh());
+        }
+
+        return new UserResource($user->fresh());
     }
 
     public function rejectMember(Request $request, Club $club, User $user): JsonResponse
