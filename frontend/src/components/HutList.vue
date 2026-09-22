@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-background" :class="{ 'map-page--fullscreen': tab === 'map' }" :style="{ '--map-page-header-h': headerHeight + 'px' }">
+  <div class="map-page bg-background" :class="{ 'map-page--fullscreen': tab === 'map' }" :style="{ '--map-page-header-h': headerHeight + 'px' }">
     <!-- Branded page header -->
     <div ref="headerRef" class="map-page__header">
       <div class="map-page__header-inner px-4 pt-3 pt-sm-4 pb-4 mx-auto">
