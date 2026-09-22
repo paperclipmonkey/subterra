@@ -1,16 +1,16 @@
 <x-mail::message>
 # New Booking Request
 
-Hello {{ $officer->name }},
+Hello {{ \App\Support\MailMarkdown::escape($officer->name) }},
 
-**{{ $booking->applicant->name }}** has submitted a booking request for **{{ $booking->permit->name }}**.
+**{{ \App\Support\MailMarkdown::escape($booking->applicant->name) }}** has submitted a booking request for **{{ \App\Support\MailMarkdown::escape($booking->permit->name) }}**.
 
 <x-mail::panel>
 - **Date:** {{ $booking->date->format('l, j F Y') }}
-- **Participants:** {{ $booking->participants }}
+- **Participants:** {{ \App\Support\MailMarkdown::escape($booking->participants) }}
 - **Status:** {{ ucfirst($status) }}
 @if($booking->notes)
-- **Notes:** {{ $booking->notes }}
+- **Notes:** {{ \App\Support\MailMarkdown::escape($booking->notes) }}
 @endif
 </x-mail::panel>
 

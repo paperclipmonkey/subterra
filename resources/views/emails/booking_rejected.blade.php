@@ -1,13 +1,13 @@
 <x-mail::message>
 # Booking Update
 
-Hello {{ $booking->applicant->name }},
+Hello {{ \App\Support\MailMarkdown::escape($booking->applicant->name) }},
 
-Unfortunately, your booking for **{{ $booking->permit->name }}** on **{{ $booking->date->format('l, j F Y') }}** has not been approved.
+Unfortunately, your booking for **{{ \App\Support\MailMarkdown::escape($booking->permit->name) }}** on **{{ $booking->date->format('l, j F Y') }}** has not been approved.
 
 @if($booking->rejection_reason)
 <x-mail::panel>
-**Reason:** {{ $booking->rejection_reason }}
+**Reason:** {{ \App\Support\MailMarkdown::escape($booking->rejection_reason) }}
 </x-mail::panel>
 @endif
 

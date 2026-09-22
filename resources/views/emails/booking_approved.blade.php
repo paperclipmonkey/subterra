@@ -1,9 +1,9 @@
 <x-mail::message>
 # Booking Approved
 
-Hello {{ $booking->applicant->name }},
+Hello {{ \App\Support\MailMarkdown::escape($booking->applicant->name) }},
 
-Your booking for **{{ $booking->permit->name }}** on **{{ $booking->date->format('l, j F Y') }}** has been approved.
+Your booking for **{{ \App\Support\MailMarkdown::escape($booking->permit->name) }}** on **{{ $booking->date->format('l, j F Y') }}** has been approved.
 
 @if($booking->permit->booking_info)
 <x-mail::panel>
@@ -16,7 +16,7 @@ Your booking for **{{ $booking->permit->name }}** on **{{ $booking->date->format
 <x-mail::panel>
 - **Booking Reference:** {{ $booking->short_id }}
 - **Date:** {{ $booking->date->format('l, j F Y') }}
-- **Participants:** {{ $booking->participants }}
+- **Participants:** {{ \App\Support\MailMarkdown::escape($booking->participants) }}
 </x-mail::panel>
 
 <x-mail::button :url="url('/bookings')" color="primary">

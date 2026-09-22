@@ -1,9 +1,9 @@
 <x-mail::message>
 # You've been added to Subterra
 
-Hi{{ $user->name ? ' '.$user->name : '' }},
+Hi{{ \App\Support\MailMarkdown::escape($user->name ? ' '.$user->name : '') }},
 
-**{{ $creator->name }}** added you as a caving contact on [Subterra]({{ url('/') }}), a
+**{{ \App\Support\MailMarkdown::escape($creator->name) }}** added you as a caving contact on [Subterra]({{ url('/') }}), a
 platform cavers use to log trips and plan safely. That means a record now exists
 for you, even though you haven't signed up yourself. We're required to tell you
 that, and we'd want to anyway.
@@ -11,13 +11,13 @@ that, and we'd want to anyway.
 ## What we hold
 
 <x-mail::panel>
-**Name:** {{ $user->name ?? 'Not provided' }}<br>
-**Email:** {{ $user->email }}<br>
-**Added by:** {{ $creator->name }}<br>
+**Name:** {{ \App\Support\MailMarkdown::escape($user->name ?? 'Not provided') }}<br>
+**Email:** {{ \App\Support\MailMarkdown::escape($user->email) }}<br>
+**Added by:** {{ \App\Support\MailMarkdown::escape($creator->name) }}<br>
 **Added on:** {{ $user->created_at?->format('j F Y') }}
 </x-mail::panel>
 
-That's everything. We collected it from {{ $creator->name }}, not from you. It lets
+That's everything. We collected it from {{ \App\Support\MailMarkdown::escape($creator->name) }}, not from you. It lets
 them record you as a participant on their trip reports, and lets cave rescue reach
 the right people if a trip is overdue.
 
