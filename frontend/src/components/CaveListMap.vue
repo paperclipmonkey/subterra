@@ -249,27 +249,6 @@ onUnmounted(() => {
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
-// Fills the flex column set up by the caves page in map mode; the
-// min-height is a fallback so the map stays usable if that ever breaks.
-.map-container {
-  height: 100%;
-  min-height: 420px;
-}
-
-// The map runs underneath the floating nav dock — keep MapLibre's
-// attribution and bottom controls visible above it.
-.map-container .maplibregl-ctrl-bottom-left,
-.map-container .maplibregl-ctrl-bottom-right {
-  bottom: 74px;
-}
-
-// The map also runs up behind the floating header — push the top controls
-// down so they clear it (--caves-header-h is measured by the caves page).
-.map-container .maplibregl-ctrl-top-left,
-.map-container .maplibregl-ctrl-top-right {
-  top: var(--caves-header-h, 0px);
-}
-
 .maplibregl-popup .maplibregl-popup-content {
   padding: 0;
   background: #fff;

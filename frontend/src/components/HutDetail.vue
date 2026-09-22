@@ -11,7 +11,7 @@
                @click="$router.push('/huts')" />
       </div>
       <div class="position-absolute top-0 right-0 pa-4" style="z-index: 1;">
-        <HutEditModal v-if="canEdit" :hut="hut" class="backdrop-blur" />
+        <HutEditModal v-if="canEdit" :hut="hut" variant="tonal" color="white" class="backdrop-blur" />
       </div>
       <div class="d-flex fill-height align-end">
         <div class="bg-black-transparent pa-4 w-100">
@@ -212,7 +212,10 @@ const onMapLoad = (event) => {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
 }
 
-.backdrop-blur {
+/* :deep() so the scrim also reaches the Edit button, which HutEditModal
+   renders inside its activator slot rather than on its own root element. */
+.backdrop-blur,
+:deep(.backdrop-blur) {
   backdrop-filter: blur(4px);
   background-color: rgba(0, 0, 0, 0.3) !important;
 }

@@ -1,13 +1,30 @@
 <template>
-  <v-card flat>
-    <template #text>
-      <div class="d-flex align-center">
-        <v-text-field v-model="search" label="Search" :prepend-inner-icon="mdiMagnify" variant="outlined"
-                      hide-details single-line density="compact" class="flex-grow-1" />
-      </div>
-    </template>
+  <div class="bg-background" :class="{ 'map-page--fullscreen': tab === 'map' }" :style="{ '--map-page-header-h': headerHeight + 'px' }">
+    <!-- Branded page header -->
+    <div ref="headerRef" class="map-page__header">
+      <div class="map-page__header-inner px-4 pt-3 pt-sm-4 pb-4 mx-auto">
+        <div v-show="tab !== 'map'" class="mb-2">
+          <h1 class="text-h6 text-sm-h5 text-md-h4 font-weight-bold text-white">Club Huts</h1>
+          <div class="map-page__count text-caption text-sm-body-2">{{ headerSubtitle }}</div>
+        </div>
 
-    <div class="d-flex justify-center mt-3 mb-2">
+        <v-text-field
+          v-model="search"
+          placeholder="Search by name, club, or description..."
+          :prepend-inner-icon="mdiMagnify"
+          variant="solo"
+          flat
+          hide-details
+          single-line
+          class="map-page__search"
+          density="compact"
+          rounded="pill"
+          bg-color="surface"
+        />
+      </div>
+    </div>
+
+    <div class="d-flex justify-center mt-3 mb-2 map-page__toggle">
       <v-btn-toggle
         v-model="tab"
         mandatory
@@ -23,10 +40,6 @@
     </div>
 
     <v-tabs-window v-model="tab">
-      <v-tabs-window-item value="map">
-        <HutListMap v-if="tab === 'map'" :huts="huts" />
-      </v-tabs-window-item>
-
       <v-tabs-window-item value="list">
         <v-container class="pb-8">
           <div v-if="loading" class="d-flex justify-center my-4">
@@ -35,30 +48,52 @@
           <HutListList v-else :huts="huts" />
         </v-container>
       </v-tabs-window-item>
+
+      <v-tabs-window-item value="map">
+        <HutListMap v-if="tab === 'map'" :huts="huts" />
+      </v-tabs-window-item>
     </v-tabs-window>
-  </v-card>
+  </div>
 </template>
 
 <script setup>
 import { mdiMagnify, mdiMapOutline, mdiViewGridOutline } from '@mdi/js'
 
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useHutStore } from '@/stores/huts'
-import { useAppStore } from '@/stores/app'
 import { useRoute, useRouter } from 'vue-router'
 import HutListMap from '@/components/HutListMap.vue'
 import HutListList from '@/components/HutListList.vue'
 
 const hutStore = useHutStore()
-const userStore = useAppStore()
 const route = useRoute()
 const router = useRouter()
 
 const tab = ref(route.query.view || 'list')
 const search = ref(route.query.search || '')
 
+// In map mode the map fills the page and runs behind the floating header, so
+// the map's top controls must be offset below it. The header height varies by
+// breakpoint, so measure it and expose it as a CSS var.
+const headerRef = ref(null)
+const headerHeight = ref(0)
+let headerResizeObserver = null
+
 onMounted(() => {
+  if (headerRef.value) {
+    headerHeight.value = headerRef.value.offsetHeight
+    headerResizeObserver = new ResizeObserver(() => {
+      headerHeight.value = headerRef.value?.offsetHeight ?? 0
+    })
+    headerResizeObserver.observe(headerRef.value)
+  }
+
   hutStore.fetchHuts()
+})
+
+onBeforeUnmount(() => {
+  headerResizeObserver?.disconnect()
+  headerResizeObserver = null
 })
 
 watch(tab, (newTab) => {
@@ -79,10 +114,10 @@ const huts = computed(() => {
   )
 })
 const loading = computed(() => hutStore.loading)
-</script>
 
-<style scoped>
-.view-toggle {
-  border: 1px solid rgba(24, 38, 31, 0.12);
-}
-</style>
+const headerSubtitle = computed(() => {
+  if (loading.value) return 'Finding huts…'
+  const total = huts.value.length
+  return `${total} ${total === 1 ? 'hut' : 'huts'}`
+})
+</script>

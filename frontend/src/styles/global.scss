@@ -77,3 +77,114 @@
     background: transparent;
   }
 }
+
+// --- Full-screen map pages ---------------------------------------------------
+
+// Shared chrome for the list/map pages (caves, huts). In map mode the page is
+// locked to the viewport and the map fills it edge to edge, with a branded
+// header and the List/Map toggle floating on top. These rules live here rather
+// than in a scoped block because they have to reach into the v-window and map
+// markup the page's children render.
+
+// Deep-green branded header with a faint topographic-contour texture.
+.map-page__header {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='220' viewBox='0 0 420 220'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='1.4'%3E%3Cpath d='M0 30 Q 70 8 140 28 T 280 26 T 420 30'/%3E%3Cpath d='M0 70 Q 80 44 160 66 T 320 62 T 420 70'/%3E%3Cpath d='M0 110 Q 60 88 130 108 T 270 104 T 420 110'/%3E%3Cpath d='M0 150 Q 90 124 170 146 T 330 142 T 420 150'/%3E%3Cpath d='M0 190 Q 70 168 140 188 T 280 184 T 420 190'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(150deg, #2e6b50 0%, #1d4634 75%);
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 8px 24px rgba(24, 38, 31, 0.18);
+}
+
+.map-page__header-inner {
+  max-width: 1280px;
+}
+
+.map-page__count {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.map-page__search .v-field {
+  box-shadow: 0 4px 14px rgba(12, 24, 18, 0.22);
+}
+
+// Filter chips that sit on the dark header
+.map-page__chip {
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.map-page__chip--active {
+  background: #fff !important;
+  color: #1d4634 !important;
+  font-weight: 600;
+}
+
+.view-toggle {
+  border: 1px solid rgba(24, 38, 31, 0.12);
+}
+
+// Map mode: lock the page to the viewport and let the map fill the rest.
+// v-main pads the layout for app bars (--v-layout-top) and the floating nav
+// dock (--v-layout-bottom); subtract the top inset and swallow the bottom one
+// with a negative margin so the map runs underneath the dock without making
+// the page scrollable.
+.map-page--fullscreen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--v-layout-top, 0px));
+  margin-bottom: calc(-1 * var(--v-layout-bottom, 0px));
+  overflow: hidden;
+}
+
+// The map fills the whole page and runs up behind the header and toggle,
+// which float above it.
+.map-page--fullscreen .v-window {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  z-index: 1;
+}
+
+.map-page--fullscreen .v-window__container,
+.map-page--fullscreen .v-window-item {
+  height: 100%;
+}
+
+// Keep the header, any notices and the toggle stacked above the map
+.map-page--fullscreen .map-page__header,
+.map-page--fullscreen .map-page__notice,
+.map-page--fullscreen .map-page__toggle {
+  position: relative;
+  z-index: 2;
+}
+
+// The toggle now sits over the map — give it an opaque, floating look
+.map-page--fullscreen .map-page__toggle .view-toggle {
+  background: rgb(var(--v-theme-surface));
+  box-shadow: 0 4px 14px rgba(12, 24, 18, 0.22);
+}
+
+// Fills the flex column set up by the page in map mode; the min-height is a
+// fallback so the map stays usable if that ever breaks. Qualified by the page
+// class because several other components ship their own unscoped, fixed-height
+// `.map-container` rule.
+.map-page--fullscreen .map-container {
+  height: 100%;
+  min-height: 420px;
+}
+
+// The map runs underneath the floating nav dock — keep MapLibre's attribution
+// and bottom controls visible above it.
+.map-page--fullscreen .maplibregl-ctrl-bottom-left,
+.map-page--fullscreen .maplibregl-ctrl-bottom-right {
+  bottom: 74px;
+}
+
+// The map also runs up behind the floating header — push the top controls down
+// so they clear it (--map-page-header-h is measured by the page).
+.map-page--fullscreen .maplibregl-ctrl-top-left,
+.map-page--fullscreen .maplibregl-ctrl-top-right {
+  top: var(--map-page-header-h, 0px);
+}
