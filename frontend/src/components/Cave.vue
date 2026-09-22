@@ -44,7 +44,7 @@
           v-else
           variant="text"
           color="primary"
-          to="/login"
+          to="/"
           :prepend-icon="mdiPencil"
           class="text-none mr-2"
           size="small"

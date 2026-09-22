@@ -35,7 +35,7 @@
           color="primary"
           variant="text"
           :prepend-icon="mdiPencil"
-          to="/login"
+          to="/"
           class="mr-2"
         >
           Log in to Suggest Edit
