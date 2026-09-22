@@ -86,6 +86,137 @@ abstract class SyncCaveRegistryBaseCommand extends Command
     }
 
     // -----------------------------------------------------------------------
+    // Placemark sources
+    // -----------------------------------------------------------------------
+
+    /**
+     * Whether this registry can be enumerated by walking sitedetails.php IDs
+     * when the KML feed is unavailable. Off by default: the sweep assumes a
+     * contiguous, reasonably small ID space.
+     */
+    protected function supportsSiteIdSweepFallback(): bool
+    {
+        return false;
+    }
+
+    /** Highest site ID the sweep will consider before giving up. */
+    protected function siteIdSweepMax(): int
+    {
+        return 2000;
+    }
+
+    /**
+     * Consecutive missing IDs that end the sweep. The registry's IDs are
+     * contiguous, so this only needs to absorb the occasional deleted entry.
+     */
+    protected function siteIdSweepMissTolerance(): int
+    {
+        return 25;
+    }
+
+    /**
+     * Fetch and merge every configured KML feed.
+     *
+     * @return array<int, array<string, mixed>>|null null if any feed could not be fetched or parsed
+     */
+    private function fetchPlacemarksFromKml(): ?array
+    {
+        $placemarks = [];
+
+        foreach ($this->kmlUrls() as $url) {
+            try {
+                $response = Http::withHeaders(['User-Agent' => self::GOOGLE_EARTH_UA])->get($url);
+                if (!$response->successful()) {
+                    $this->error("Failed to download KML from: {$url} (status {$response->status()})");
+
+                    return null;
+                }
+            } catch (\Exception $e) {
+                $this->error('HTTP request failed: '.$e->getMessage());
+
+                return null;
+            }
+
+            $parsed = $this->parsePlacemarks($response->body());
+            if ($parsed === null) {
+                $this->error("Failed to parse KML from: {$url}");
+
+                return null;
+            }
+
+            $placemarks = array_merge($placemarks, $parsed);
+            $this->line('  Found '.count($parsed)." entries in {$url}.");
+        }
+
+        return $placemarks;
+    }
+
+    /**
+     * Rebuild the placemark list by walking sitedetails.php IDs.
+     *
+     * Every field the KML supplies (name, coordinates) is also present on the
+     * site-details page, so this yields the same placemark shape. Pages are
+     * cached so the per-cave detail fetch later in handle() is not repeated.
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function fetchPlacemarksBySiteIdSweep(): ?array
+    {
+        $placemarks = [];
+        $consecutiveMisses = 0;
+        $withoutCoordinates = 0;
+        $requestFailures = 0;
+
+        for ($id = 1; $id <= $this->siteIdSweepMax(); ++$id) {
+            $html = $this->fetchSiteDetailsHtml((string) $id);
+
+            if ($html === null) {
+                ++$requestFailures;
+                ++$consecutiveMisses;
+            } else {
+                $details = $this->parseSiteDetails($html);
+
+                if ($details['name'] === null) {
+                    ++$consecutiveMisses;
+                } else {
+                    $consecutiveMisses = 0;
+                    $this->siteDetailsCache[(string) $id] = $details;
+
+                    if ($details['lat'] === null || $details['lng'] === null) {
+                        ++$withoutCoordinates;
+                    } else {
+                        $placemarks[] = [
+                            'name' => $details['name'],
+                            'registry_id' => (string) $id,
+                            'lat' => $details['lat'],
+                            'lng' => $details['lng'],
+                            'description' => $details['description'] ?? '',
+                        ];
+                    }
+                }
+            }
+
+            if ($consecutiveMisses >= $this->siteIdSweepMissTolerance()) {
+                break;
+            }
+
+            if (!app()->environment('testing')) {
+                usleep(100000); // 100ms — be polite to the registry server
+            }
+        }
+
+        if ($placemarks === []) {
+            return null;
+        }
+
+        $this->line('  Sweep found '.count($placemarks).' sites with coordinates'
+            .($withoutCoordinates > 0 ? ", {$withoutCoordinates} without" : '')
+            .($requestFailures > 0 ? ", {$requestFailures} request failure(s)" : '').'.');
+
+        return $placemarks;
+    }
+
+    // -----------------------------------------------------------------------
     // Entry point
     // -----------------------------------------------------------------------
 
@@ -101,30 +232,22 @@ abstract class SyncCaveRegistryBaseCommand extends Command
 
         $this->info("Fetching {$registryId} cave placemarks...");
 
-        $placemarks = [];
-        foreach ($this->kmlUrls() as $url) {
-            try {
-                $response = Http::withHeaders(['User-Agent' => self::GOOGLE_EARTH_UA])->get($url);
-                if (!$response->successful()) {
-                    $this->error("Failed to download KML from: {$url} (status {$response->status()})");
+        $placemarks = $this->fetchPlacemarksFromKml();
 
-                    return 1;
-                }
-            } catch (\Exception $e) {
-                $this->error('HTTP request failed: '.$e->getMessage());
-
+        if ($placemarks === null) {
+            if (!$this->supportsSiteIdSweepFallback()) {
                 return 1;
             }
 
-            $parsed = $this->parsePlacemarks($response->body());
-            if ($parsed === null) {
-                $this->error("Failed to parse KML from: {$url}");
+            $this->warn('  KML feed unavailable — falling back to a site-ID sweep.');
+
+            $placemarks = $this->fetchPlacemarksBySiteIdSweep();
+
+            if ($placemarks === null) {
+                $this->error('Site-ID sweep fallback failed; no placemarks could be retrieved.');
 
                 return 1;
             }
-
-            $placemarks = array_merge($placemarks, $parsed);
-            $this->line('  Found '.count($parsed)." entries in {$url}.");
         }
 
         $this->info('Total placemarks found: '.count($placemarks));
@@ -443,7 +566,17 @@ abstract class SyncCaveRegistryBaseCommand extends Command
      *
      * @return array{length: float, depth: float, altitude: float, location_name: string|null}|null
      */
-    private function fetchSiteDetails(string $registryEntryId): ?array
+    /**
+     * Site-details pages already fetched during a sweep, keyed by registry ID.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    private array $siteDetailsCache = [];
+
+    /**
+     * Download one site-details page, or null if it could not be fetched.
+     */
+    private function fetchSiteDetailsHtml(string $registryEntryId): ?string
     {
         $url = $this->baseUrl().'/sitedetails.php?id='.$registryEntryId;
 
@@ -460,8 +593,35 @@ abstract class SyncCaveRegistryBaseCommand extends Command
             return null;
         }
 
-        $html = $response->body();
+        return $response->body();
+    }
 
+    private function fetchSiteDetails(string $registryEntryId): ?array
+    {
+        if (isset($this->siteDetailsCache[$registryEntryId])) {
+            return $this->siteDetailsCache[$registryEntryId];
+        }
+
+        $html = $this->fetchSiteDetailsHtml($registryEntryId);
+
+        if ($html === null) {
+            return null;
+        }
+
+        return $this->siteDetailsCache[$registryEntryId] = $this->parseSiteDetails($html);
+    }
+
+    /**
+     * Pull every field we use off a site-details page.
+     *
+     * A missing name means the ID does not exist — the registry serves a stub
+     * page rather than a 404. Coordinates are absent for entries recorded as
+     * "Not recorded", which is why they are nullable rather than defaulted.
+     *
+     * @return array<string, mixed>
+     */
+    private function parseSiteDetails(string $html): array
+    {
         $length = 0.0;
         $depth = 0.0;
         $altitude = 0.0;
@@ -479,16 +639,43 @@ abstract class SyncCaveRegistryBaseCommand extends Command
             $altitude = (float) $m[1];
         }
 
+        $name = null;
+        if (preg_match('/<h1>([^<]+)<\/h1>/', $html, $m)) {
+            $name = trim(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            $name = $name !== '' ? $name : null;
+        }
+
+        $lat = null;
+        $lng = null;
+        if (preg_match('/WGS84:<\/td><td[^>]*>\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/', $html, $m)) {
+            $lat = (float) $m[1];
+            $lng = (float) $m[2];
+        }
+
         $locationName = null;
         if (preg_match('/<h1>[^<]+<\/h1>.*?<p><strong>([^<]+)<\/strong><\/p>/s', $html, $m)) {
             $locationName = rtrim(trim(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8')), '.');
         }
 
+        $description = '';
+        if (preg_match_all('/<p>((?:(?!<\/p>).)*?)<\/p>/s', $html, $m)) {
+            foreach ($m[1] as $paragraph) {
+                $text = trim(html_entity_decode(strip_tags($paragraph), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if ($text !== '' && mb_strlen($text) > mb_strlen($description)) {
+                    $description = $text;
+                }
+            }
+        }
+
         return [
+            'name' => $name,
+            'lat' => $lat,
+            'lng' => $lng,
             'length' => $length,
             'depth' => $depth,
             'altitude' => $altitude,
             'location_name' => $locationName,
+            'description' => $description,
         ];
     }
 
