@@ -43,7 +43,9 @@ console_command = 'php /var/www/html/artisan tinker'
   interval = "15s"
   method = "GET"
   timeout = "5s"
-  path = "/"
+  # /up boots Laravel via php-fpm (without touching the DB). "/" is the static
+  # SPA index.html served straight by nginx, so it stayed green while PHP was down.
+  path = "/up"
 
 [[vm]]
   size = 'shared-cpu-1x'
