@@ -204,8 +204,11 @@ class CalloutController extends Controller
                     $lng = $callout->location_data['longitude'];
                 }
 
+                // Deliberately no 'id': the callout id is the capability token that
+                // authorises the guest-accessible cancel route, and this list is visible
+                // to every logged-in user. Exposing it would let anyone stand down every
+                // party currently underground.
                 return [
-                    'id' => $callout->id,
                     'cave_name' => $caveName,
                     'lat' => $lat,
                     'lng' => $lng,

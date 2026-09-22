@@ -1,7 +1,7 @@
 <template>
   <div class="map-container">
     <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
-      <mgl-marker v-for="(callout) in validCallouts" :key="callout.id"
+      <mgl-marker v-for="(callout, index) in validCallouts" :key="callout.id ?? index"
                   :coordinates="[callout.lng, callout.lat]">
         <mgl-popup>
           <v-card width="200px">
