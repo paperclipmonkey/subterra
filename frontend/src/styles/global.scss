@@ -85,6 +85,11 @@
 // header and the List/Map toggle floating on top. These rules live here rather
 // than in a scoped block because they have to reach into the v-window and map
 // markup the page's children render.
+//
+// This file loads before Vuetify's component CSS, so a lone class here loses to
+// Vuetify's own single-class rules (`.v-chip--variant-outlined`, `.v-btn-group`)
+// at equal specificity. Rules that restyle Vuetify components are therefore
+// nested under the page's `.map-page` root.
 
 // Deep-green branded header with a faint topographic-contour texture.
 .map-page__header {
@@ -107,21 +112,23 @@
   box-shadow: 0 4px 14px rgba(12, 24, 18, 0.22);
 }
 
-// Filter chips that sit on the dark header
-.map-page__chip {
-  color: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
-}
+.map-page {
+  // Filter chips that sit on the dark header
+  .map-page__chip {
+    color: rgba(255, 255, 255, 0.92);
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.08);
+  }
 
-.map-page__chip--active {
-  background: #fff !important;
-  color: #1d4634 !important;
-  font-weight: 600;
-}
+  .map-page__chip--active {
+    background: #fff !important;
+    color: #1d4634 !important;
+    font-weight: 600;
+  }
 
-.view-toggle {
-  border: 1px solid rgba(24, 38, 31, 0.12);
+  .view-toggle {
+    border: 1px solid rgba(24, 38, 31, 0.12);
+  }
 }
 
 // Map mode: lock the page to the viewport and let the map fill the rest.
