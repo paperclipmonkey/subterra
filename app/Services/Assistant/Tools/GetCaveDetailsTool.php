@@ -47,15 +47,24 @@ class GetCaveDetailsTool implements AssistantTool
         // table (length/vertical_range live on the system and are returned at
         // the top level of this payload). Including always-null keys here was
         // teaching the model that cave-level measurements might exist.
-        $caves = $system->caves->map(fn (Cave $cave) => [
+        // Same gates as CaveResource: admin_only sites only for data admins,
+        // coordinates and access info only for approved-club members.
+        $canManage = $system->managedBy($user);
+        $canSeeLocations = $canManage || $user->hasApprovedClub();
+
+        $visibleCaves = $system->caves
+            ->reject(fn (Cave $cave) => !$canManage && $cave->visibility === 'admin_only')
+            ->values();
+
+        $caves = $visibleCaves->map(fn (Cave $cave) => [
             'id' => $cave->id,
             'name' => $cave->name,
             'slug' => $cave->slug,
             'cave_url' => "/caves/{$cave->slug}",
             'location_name' => $cave->location_name,
-            'access_info' => $cave->access_info,
-            'latitude' => $cave->location_lat ? (float) $cave->location_lat : null,
-            'longitude' => $cave->location_lng ? (float) $cave->location_lng : null,
+            'access_info' => $canSeeLocations ? $cave->access_info : null,
+            'latitude' => $canSeeLocations && $cave->location_lat ? (float) $cave->location_lat : null,
+            'longitude' => $canSeeLocations && $cave->location_lng ? (float) $cave->location_lng : null,
             'image_url' => $cave->heroImage?->url ?? $cave->entranceImage?->url ?? null,
         ])->values();
 
@@ -75,7 +84,7 @@ class GetCaveDetailsTool implements AssistantTool
         // as the system level. Merge both so callers see the full tag picture —
         // notably the caving region, which is only ever applied to caves.
         $tags = $system->tags
-            ->concat($system->caves->flatMap->tags)
+            ->concat($visibleCaves->flatMap->tags)
             ->unique(fn ($t) => $t->tag.'|'.$t->category)
             ->map(fn ($t) => [
                 'tag' => $t->tag,
@@ -87,9 +96,11 @@ class GetCaveDetailsTool implements AssistantTool
             ? mb_substr(strip_tags($system->description), 0, 1000)
             : null;
 
-        // Most recent visible trip reports — useful for surfacing conditions, water levels, etc.
+        // Most recent trip reports this user may see — useful for surfacing conditions,
+        // water levels, etc. Club-only reports (the under-18 default) must come only
+        // from clubs the user shares, exactly as on the trips pages.
         $recentReports = Trip::where('cave_system_id', $system->id)
-            ->whereIn('visibility', ['public', 'club'])
+            ->visibleTo($user)
             ->whereNotNull('description')
             ->where('description', '!=', '')
             ->orderByDesc('start_time')
