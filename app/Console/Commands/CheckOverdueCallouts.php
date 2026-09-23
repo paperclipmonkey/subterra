@@ -13,7 +13,6 @@ use App\Notifications\CalloutImminentNotification;
 use App\Notifications\CalloutOverdueContactNotification;
 use App\Notifications\OverdueCalloutNotification;
 use App\Notifications\UnmanagedIncidentNotification;
-use App\Services\GcpWatchdogService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -288,14 +287,13 @@ class CheckOverdueCallouts extends Command
             Log::error('Failed to send Overdue Slack Alert: '.$e->getMessage());
         }
 
-        // Cancel the GCP watchdog now that Laravel has handled this callout.
-        // A watchdog failure here is tolerated — a duplicate backup alert is far safer
-        // than a missed one.
-        try {
-            app(GcpWatchdogService::class)->cancel($callout);
-        } catch (\Exception $e) {
-            Log::error("Failed to cancel GCP watchdog for callout {$callout->id}: {$e->getMessage()}");
-        }
+        // Deliberately NOT cancelling the GCP watchdog here. Queuing or even sending
+        // alerts doesn't mean anyone has seen them, and the watchdog (a separate
+        // provider) only fires if the callout is still unacknowledged 15 minutes after
+        // callout_time. It is stood down when a duty officer acknowledges the incident
+        // (IncidentObserver) or the party marks themselves safe (CalloutService::cancel).
+        // An unacknowledged incident therefore gets both alerts — a duplicate is far
+        // safer than a missed one.
     }
 
     /**
