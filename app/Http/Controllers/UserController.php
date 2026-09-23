@@ -636,6 +636,22 @@ class UserController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // Deleting the user cascades to their callouts and incidents. Mid-trip that
+        // would silently remove the primary safety net (and any live incident record),
+        // so refuse until the callout is finished and any incident resolved.
+        $hasLiveCallout = $user->callouts()
+            ->where(function ($q) {
+                $q->whereIn('status', ['active', 'triggered'])
+                    ->orWhereHas('incident', fn ($i) => $i->where('status', '!=', 'resolved'));
+            })
+            ->exists();
+
+        if ($hasLiveCallout) {
+            return response()->json([
+                'message' => 'This account has an active callout or an unresolved incident. Cancel the callout (or wait for the incident to be resolved) before deleting the account.',
+            ], 409);
+        }
+
         // 1. Delete user photo if it's not the default
         if ($user->photo &&
             !str_contains($user->photo, 'default.webp') &&
