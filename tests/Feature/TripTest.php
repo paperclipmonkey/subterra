@@ -50,7 +50,8 @@ class TripTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_includes_entrance_coordinates_in_trip_summary()
     {
-        $user = User::factory()->create();
+        // Coordinates are for approved-club members only (see TripLocationVisibilityTest).
+        $user = User::factory()->withApprovedClub()->create();
         $entrance = Cave::factory()->create([
             'location_lat' => 54.1234,
             'location_lng' => -2.5678,

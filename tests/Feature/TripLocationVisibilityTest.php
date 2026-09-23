@@ -77,4 +77,28 @@ class TripLocationVisibilityTest extends TestCase
         $this->assertSame('Ask the farmer', $data['entrance']['access_info']);
         $this->assertSame('Survey ref', $data['system']['references']);
     }
+
+    #[Test]
+    public function the_trips_list_hides_entrance_locations_from_users_without_an_approved_club(): void
+    {
+        // /api/trips requires a login, so only the logged-in case applies.
+        $this->actingAs(User::factory()->create());
+
+        $trip = collect($this->getJson('/api/trips')->assertOk()->json('data'))->firstWhere('id', $this->trip->short_id);
+
+        $this->assertNotNull($trip['entrance']['name']);
+        $this->assertNull($trip['entrance']['location_lat']);
+        $this->assertNull($trip['entrance']['location_lng']);
+    }
+
+    #[Test]
+    public function the_trips_list_shows_entrance_locations_to_approved_club_members(): void
+    {
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+
+        $trip = collect($this->getJson('/api/trips')->assertOk()->json('data'))->firstWhere('id', $this->trip->short_id);
+
+        $this->assertEquals(54.1, $trip['entrance']['location_lat']);
+        $this->assertEquals(-2.4, $trip['entrance']['location_lng']);
+    }
 }
