@@ -93,6 +93,17 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     ];
 
     /**
+     * Secrets never belong in the audit trail (config/audit.php isn't strict, so
+     * $hidden alone doesn't keep them out). A six-digit code's hash is trivially
+     * brute-forced by anyone who can read audits.
+     *
+     * @var array<int, string>
+     */
+    protected $auditExclude = [
+        'phone_verification_code',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
