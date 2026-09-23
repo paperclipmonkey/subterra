@@ -7,6 +7,11 @@ app = 'subterra'
 primary_region = 'lhr'
 console_command = 'php /var/www/html/artisan tinker'
 
+# A safety margin, not extra capacity: up to 10 php-fpm children (256M limit
+# each), the queue worker and the scheduler share 1 GB. Without swap a burst of
+# heavy requests gets the machine OOM-killed rather than briefly slowed.
+swap_size_mb = 512
+
 [deploy]
   release_command = "php /var/www/html/artisan migrate --force"
   strategy = "bluegreen"
