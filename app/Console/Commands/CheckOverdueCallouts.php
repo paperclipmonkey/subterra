@@ -302,12 +302,19 @@ class CheckOverdueCallouts extends Command
      * Send a notification to each recipient in isolation. A failure to reach one
      * recipient (e.g. a downed SMS/email provider) is logged but never aborts the
      * remaining sends, and never propagates to roll back any surrounding DB writes.
+     *
+     * Sent NOW, bypassing the queue, even though the notifications implement
+     * ShouldQueue: production has a single low-priority worker shared with image
+     * processing and registry syncs (jobs of up to 10 minutes), so a queued safety
+     * alert could sit behind them — or never go out if the worker is down — while
+     * the caller believes it was delivered. A send failure is also only visible
+     * here when it happens synchronously.
      */
     private function safeNotify(iterable $notifiables, $notification, string $context): void
     {
         foreach ($notifiables as $notifiable) {
             try {
-                Notification::send([$notifiable], $notification);
+                Notification::sendNow([$notifiable], $notification);
             } catch (\Throwable $e) {
                 Log::error("Failed to send {$context} to a recipient: {$e->getMessage()}");
             }
