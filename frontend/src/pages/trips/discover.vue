@@ -2,7 +2,23 @@
   <div class="discover-root">
     <!-- ─── Map area ─────────────────────────────────────────── -->
     <div class="map-area">
+      <!-- Trip locations are cave locations, so the map follows the same rule as
+           the caves map: approved club members only (the API also withholds the
+           coordinates). The trip strip below still works for everyone. -->
+      <div v-if="!canSeeMap" class="map-locked d-flex align-center justify-center flex-column text-center pa-6">
+        <v-icon size="64" color="grey" class="mb-4" :icon="hasPendingApprovals ? mdiAccountClock : mdiLock" />
+        <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
+        <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 320px;">
+          {{ hasPendingApprovals
+            ? 'Your club is confirming your membership. The trip map will unlock once they confirm you.'
+            : 'The trip map shows cave locations, so it unlocks once your club confirms your membership.' }}
+        </p>
+        <v-btn color="primary" to="/waitlist" class="text-none">
+          {{ hasPendingApprovals ? 'Check Status' : 'Confirm Club' }}
+        </v-btn>
+      </div>
       <AppMap
+        v-else
         ref="mapRef"
         v-model="mapStyle"
         :center="[-2.5, 53.5]"
@@ -40,7 +56,7 @@
       </div>
 
       <!-- Age legend -->
-      <div class="legend-overlay">
+      <div v-if="canSeeMap" class="legend-overlay">
         <span class="legend-item"><span class="legend-dot" style="background:#FF6B35;box-shadow:0 0 6px #FF6B35aa;" />This week</span>
         <span class="legend-item"><span class="legend-dot" style="background:#FFB300;" />This month</span>
         <span class="legend-item"><span class="legend-dot" style="background:#26C6DA;" />This year</span>
@@ -83,7 +99,7 @@
               <v-icon size="9" :icon="mdiClockOutline" />
               {{ formatDuration(trip.duration) }}
             </div>
-            <div v-if="!trip.entrance?.location_lat" class="mini-card-no-location" title="No map location">
+            <div v-if="canSeeMap && !trip.entrance?.location_lat" class="mini-card-no-location" title="No map location">
               <v-icon size="11" :icon="mdiMapMarkerOff" />
             </div>
           </div>
@@ -110,13 +126,21 @@ import {
   mdiAccountGroup,
   mdiCompass,
   mdiMapMarkerOff,
+  mdiLock,
+  mdiAccountClock,
 } from '@mdi/js'
 import moment from 'moment'
 import maplibregl from 'maplibre-gl'
 import AppMap from '@/components/AppMap.vue'
 import { api } from '@/plugins/api'
+import { useAppStore } from '@/stores/app'
 
 const router = useRouter()
+const appStore = useAppStore()
+
+// Mirrors the API: entrance coordinates only come back for approved club members.
+const canSeeMap = computed(() => !!appStore.user?.clubs?.some(c => c.status === 'approved'))
+const hasPendingApprovals = computed(() => !!appStore.user?.clubs?.some(c => c.status === 'pending'))
 
 // ── State ──────────────────────────────────────────────────────────────
 // Overview map — default to terrain (topo) like the caves list.
@@ -463,6 +487,13 @@ onUnmounted(() => {
   flex: 1;
   position: relative;
   min-height: 0;
+}
+
+.map-locked {
+  height: 100%;
+  /* Clear the stats overlay pinned to the top of the map area. */
+  padding-top: 96px !important;
+  background: rgb(var(--v-theme-surface-variant), 0.12);
 }
 
 /* ── Top glass overlay ───────────────────────────────── */

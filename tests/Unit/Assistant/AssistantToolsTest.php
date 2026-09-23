@@ -334,6 +334,52 @@ class AssistantToolsTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function get_cave_details_applies_the_cave_and_trip_visibility_gates(): void
+    {
+        $system = CaveSystem::factory()->create();
+        Cave::factory()->create([
+            'cave_system_id' => $system->id,
+            'name' => 'Public Entrance',
+            'location_lat' => 54.1,
+            'location_lng' => -2.4,
+            'access_info' => 'Ask the farmer',
+        ]);
+        Cave::factory()->create(['cave_system_id' => $system->id, 'name' => 'Old Coal Mine', 'visibility' => 'admin_only']);
+
+        // A club-only report by someone in a club the viewer isn't in.
+        $stranger = User::factory()->create();
+        $otherClub = \App\Models\Club::factory()->create();
+        $stranger->clubs()->attach($otherClub->id, ['status' => 'approved']);
+        $clubTrip = Trip::factory()->create([
+            'cave_system_id' => $system->id,
+            'visibility' => 'club',
+            'description' => 'Club-only report',
+        ]);
+        $clubTrip->participants()->attach($stranger);
+        Trip::factory()->create(['cave_system_id' => $system->id, 'visibility' => 'public', 'description' => 'Public report']);
+
+        $tool = new GetCaveDetailsTool();
+
+        // No approved club: no hidden sites, locations, or other clubs' reports.
+        $result = $tool->handle(['cave_system_id' => $system->id], User::factory()->create());
+        $this->assertSame(['Public Entrance'], collect($result['entrances'])->pluck('name')->all());
+        $this->assertNull($result['entrances'][0]['latitude']);
+        $this->assertNull($result['entrances'][0]['access_info']);
+        $this->assertSame(['Public report'], array_column($result['recent_reports'], 'description'));
+
+        // Approved-club member (of a different club): locations, still no hidden site or club report.
+        $result = $tool->handle(['cave_system_id' => $system->id], User::factory()->withApprovedClub()->create());
+        $this->assertSame(['Public Entrance'], collect($result['entrances'])->pluck('name')->all());
+        $this->assertSame(54.1, $result['entrances'][0]['latitude']);
+        $this->assertSame('Ask the farmer', $result['entrances'][0]['access_info']);
+        $this->assertSame(['Public report'], array_column($result['recent_reports'], 'description'));
+
+        // Data admin sees the admin_only site.
+        $result = $tool->handle(['cave_system_id' => $system->id], User::factory()->dataAdmin()->create());
+        $this->assertCount(2, $result['entrances']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function get_cave_details_returns_zero_id_error(): void
     {
         $user = User::factory()->create();

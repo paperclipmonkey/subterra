@@ -23,7 +23,7 @@
           v-else
           color="primary"
           variant="text"
-          to="/login"
+          to="/"
           :prepend-icon="mdiPlus"
         >
           Log in to Suggest

@@ -25,6 +25,11 @@ test.describe('callout lifecycle', () => {
   test('raises, surfaces and cancels a callout', async ({ page }) => {
     await page.goto('/')
 
+    // Retries and earlier specs can leave callouts open, so compare counts
+    // rather than assuming the list starts empty.
+    const before = await apiGet(page, '/api/callouts/active')
+    expect(before.status).toBe(200)
+
     const caves = await apiGet(page, '/api/caves')
     expect(caves.status).toBe(200)
     const caveId = caves.body.data[0].id
@@ -48,11 +53,13 @@ test.describe('callout lifecycle', () => {
     const calloutId = created.body.callout.id
     expect(calloutId).toBeTruthy()
 
-    // The active endpoint is what the app polls to decide whether someone is
-    // still underground.
+    // The active endpoint feeds the open-trips map. The new callout must show
+    // up there, but never with its id: the id is the capability token the
+    // guest-accessible cancel route trusts.
     const active = await apiGet(page, '/api/callouts/active')
     expect(active.status).toBe(200)
-    expect(JSON.stringify(active.body)).toContain(calloutId)
+    expect(active.body.data).toHaveLength(before.body.data.length + 1)
+    expect(JSON.stringify(active.body)).not.toContain(calloutId)
 
     await page.goto('/callout/active')
     await expect(page.getByText('E2E: descend to the first pitch and return.')).toBeVisible()
@@ -61,6 +68,6 @@ test.describe('callout lifecycle', () => {
     expect(cancelled.status, JSON.stringify(cancelled.body)).toBe(200)
 
     const afterCancel = await apiGet(page, '/api/callouts/active')
-    expect(JSON.stringify(afterCancel.body)).not.toContain(calloutId)
+    expect(afterCancel.body.data).toHaveLength(before.body.data.length)
   })
 })

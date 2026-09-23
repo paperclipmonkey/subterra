@@ -27,7 +27,7 @@
         color="primary"
         variant="text"
         :prepend-icon="mdiPencil"
-        to="/login"
+        to="/"
       >
         Log in to Suggest Edit
       </v-btn>

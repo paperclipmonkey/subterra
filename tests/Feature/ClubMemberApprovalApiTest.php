@@ -63,7 +63,13 @@ class ClubMemberApprovalApiTest extends TestCase
         $response = $this->putJson("/api/admin/clubs/{$club->slug}/members/{$user->id}/approve");
 
         $response->assertStatus(200);
-        $this->assertEquals('approved', $response->json('data.clubs.0.status'));
+        $this->assertEquals('approved', $user->fresh()->clubs->first()->pivot->status);
+
+        // A club admin is an ordinary member and must not receive the applicant's
+        // private profile.
+        foreach (['email', 'phone', 'date_of_birth', 'is_minor', 'roles'] as $field) {
+            $response->assertJsonMissingPath("data.{$field}");
+        }
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

@@ -1,7 +1,7 @@
 <x-mail::message>
 # Medal Awarded
 
-Hi {{ $user->name }},
+Hi {{ \App\Support\MailMarkdown::escape($user->name) }},
 
 Congratulations! You have earned a new medal:
 
@@ -9,11 +9,11 @@ Congratulations! You have earned a new medal:
 @if($medalImageUrl)
 <img src="{{ $medalImageUrl }}" alt="{{ $medal->name }}" style="height:64px;vertical-align:middle;margin-right:12px;border-radius:8px;background:#fff;box-shadow:0 2px 8px #eee;" />
 @endif
-**{{ $medal->name }}**
+**{{ \App\Support\MailMarkdown::escape($medal->name) }}**
 </x-mail::panel>
 
 @if($medal->description)
-{{ $medal->description }}
+{{ \App\Support\MailMarkdown::escape($medal->description) }}
 @endif
 
 <x-mail::button :url="config('app.url') . '/profile/' . $user->id" color="primary">

@@ -34,9 +34,12 @@ vi.mock('@/plugins/api', () => ({
 }))
 
 // Mock Store
+const storeState = vi.hoisted(() => ({ canSuggest: true }))
 vi.mock('@/stores/app', () => ({
     useAppStore: () => ({
-        getUser: vi.fn(),
+        getUser: vi.fn(() => Promise.resolve()),
+        // Approved club member (or admin) — the only users shown open trips.
+        get canSuggest() { return storeState.canSuggest },
         user: { id: 1, name: 'Test User', active_callout: null, phone: '+447700900000', phone_verified: true }
     })
 }))
@@ -154,5 +157,38 @@ describe('Callout Index Page', () => {
 
         // Verify it shows the new messaging
         expect(wrapper.text()).toContain('Callouts cannot be created at this time')
+    })
+
+    describe('open trips map', () => {
+        const openTrip = { cave_name: 'Swildons Hole', lat: 51.2, lng: -2.6 }
+
+        const mountWithOpenTrips = async () => {
+            api.get.mockClear()
+            api.get.mockImplementation((url) => {
+                if (url === '/api/callouts/active') return Promise.resolve({ data: { data: [openTrip] } })
+                if (url === '/api/duty-officers/current') return Promise.resolve({ data: { data: mockDutyOfficer } })
+                return Promise.resolve({ data: {} })
+            })
+            const wrapper = mount(CalloutIndex, { global: { stubs: getStubConfig() } })
+            await flushPromises()
+            return wrapper
+        }
+
+        it('is shown to approved club members', async () => {
+            storeState.canSuggest = true
+            const wrapper = await mountWithOpenTrips()
+
+            expect(wrapper.find('.active-callout-map').exists()).toBe(true)
+            expect(wrapper.text()).toContain('1 Open Trips')
+        })
+
+        it('is neither fetched nor shown for users not confirmed in a club', async () => {
+            storeState.canSuggest = false
+            const wrapper = await mountWithOpenTrips()
+
+            expect(api.get).not.toHaveBeenCalledWith('/api/callouts/active')
+            expect(wrapper.find('.active-callout-map').exists()).toBe(false)
+            storeState.canSuggest = true
+        })
     })
 })

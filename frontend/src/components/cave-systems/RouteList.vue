@@ -32,7 +32,7 @@
           size="small"
           variant="text"
           :prepend-icon="mdiPlus"
-          to="/login"
+          to="/"
         >
           Log in to Suggest Route
         </v-btn>
