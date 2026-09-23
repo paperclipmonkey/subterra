@@ -145,7 +145,9 @@
           <v-card class="mb-4 rounded-lg" elevation="1">
             <v-card-title class="text-subtitle-1 font-weight-bold">External Resources</v-card-title>
             <v-list density="compact">
-              <v-list-item 
+              <!-- Built from the entrance coordinates, which only approved club members receive. -->
+              <v-list-item
+                v-if="location.lat"
                 :prepend-icon="mdiWeatherWindy" 
                 title="Windy.com - Rain Accumulation"
                 subtitle="View detailed rain accumulation maps"
