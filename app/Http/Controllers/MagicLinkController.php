@@ -48,21 +48,11 @@ class MagicLinkController extends Controller
                 $user->save();
 
                 event(new \App\Events\UserCreated($user));
-            } else {
-                // If user exists but is inactive, reactivate them.
-                //
-                // This is intentional behaviour: users can be created in a deactivated state
-                // when another member tags them in a trip (creating a placeholder account).
-                // The first time they request a magic link, they are reactivated — this is
-                // their implicit "sign up" action. Admins cannot permanently block a user
-                // via the is_active flag alone; the expectation is that account removal is
-                // handled separately if required.
-                if (!$user->is_active) {
-                    $user->is_active = true;
-                    $user->save();
-                    event(new \App\Events\UserCreated($user));
-                }
             }
+            // An existing inactive account (a placeholder, or one hidden by a data
+            // objection) is NOT reactivated here: anyone who knows the address can
+            // request a link. It's reactivated in handleCallback, once the link has
+            // actually been used — proof the person controls the inbox.
 
             // Note: In v2.25.1+, actions are serialized with HMAC signing, making it
             // impractical to query by user ID. We rely on the lifetime expiry instead.
@@ -133,12 +123,23 @@ class MagicLinkController extends Controller
             $authIdentifierProperty->setAccessible(true);
             $userId = $authIdentifierProperty->getValue($action);
 
-            $user = User::find($userId);
+            $user = User::withoutGlobalScope(\App\Models\Scopes\IsActiveScope::class)->find($userId);
 
             if (!$user) {
                 return response()->json([
                     'error' => 'User not found',
                 ], 404);
+            }
+
+            // Reactivate an inactive account on first use of a valid link. This is
+            // intentional: placeholder accounts (created when a member tags someone in
+            // a trip) are inactive until the person signs in — their implicit sign-up.
+            // Admins can't permanently block a user via is_active alone; account
+            // removal is handled separately.
+            if (!$user->is_active) {
+                $user->is_active = true;
+                $user->save();
+                event(new \App\Events\UserCreated($user));
             }
 
             // Authenticate the user using Laravel's session-based auth

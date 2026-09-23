@@ -244,10 +244,11 @@ class MagicLinkAuthenticationTest extends TestCase
                      'success' => true,
                  ]);
 
-        // Verify user is reactivated after the request
+        // Requesting a link must NOT reactivate the account: anyone who knows the
+        // address can request one. It is reactivated when the link is used.
         $this->assertDatabaseHas('users', [
             'email' => 'inactive@example.com',
-            'is_active' => true,
+            'is_active' => false,
         ]);
 
         Mail::assertSent(\App\Mail\MagicLinkMail::class, function ($mail) {
@@ -281,10 +282,23 @@ class MagicLinkAuthenticationTest extends TestCase
         $userCountAfter = User::withoutGlobalScopes()->where('email', 'inactive@example.com')->count();
         $this->assertEquals(1, $userCountAfter);
 
-        // Verify the existing user was reactivated
+        // Still inactive until the link is actually used.
         $this->assertDatabaseHas('users', [
             'email' => 'inactive@example.com',
-            'is_active' => true,
+            'is_active' => false,
         ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function using_the_link_reactivates_an_inactive_account(): void
+    {
+        $user = User::factory()->create(['email' => 'inactive@example.com', 'is_active' => false]);
+        $magicLink = \MagicLink\MagicLink::create(new \MagicLink\Actions\LoginAction($user), 30);
+
+        $this->getJson('/api/auth/magic-link-callback?token='.$magicLink->id.':'.$magicLink->token)
+            ->assertOk();
+
+        $this->assertDatabaseHas('users', ['email' => 'inactive@example.com', 'is_active' => true]);
+        $this->assertAuthenticatedAs($user);
     }
 }
