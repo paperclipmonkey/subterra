@@ -2,6 +2,7 @@
  * SMTP email client for sending emergency alerts.
  */
 import nodemailer from 'nodemailer';
+import { escapeHtml, formatUkTime } from './format';
 import type { Transporter } from 'nodemailer';
 import type { CalloutDocument } from './firestore-client';
 import { getSecret } from './secrets';
@@ -31,6 +32,11 @@ export class SMTPClient {
                 user: username,
                 pass: password,
             },
+            // nodemailer's defaults (2 min connect, 10 min socket) let one hung mail
+            // server hold up every later alert in the run, past Cloud Run's timeout.
+            connectionTimeout: 15_000,
+            greetingTimeout: 15_000,
+            socketTimeout: 20_000,
         });
     }
 
@@ -59,7 +65,7 @@ export class SMTPClient {
 
     async sendAlertEmail(to: string, callout: CalloutDocument): Promise<boolean> {
         const user = callout.user || {};
-        const calloutTime = callout.callout_time.toDate().toISOString();
+        const calloutTime = formatUkTime(callout.callout_time.toDate());
 
         // Monthly TEST- callouts (from watchdog:test-alert) run through this same
         // path deliberately — label everything so the email cannot be mistaken for a
@@ -88,7 +94,7 @@ export class SMTPClient {
             callout.participants.forEach((p, idx) => {
                 const phone = p.phone ? ` (${p.phone})` : '';
                 participantText += `\nParticipant ${idx + 1}: ${p.name || 'Unknown'}${phone}`;
-                participantHtml += `<li>${p.name || 'Unknown'} ${phone}</li>`;
+                participantHtml += `<li>${escapeHtml(p.name || 'Unknown')} ${escapeHtml(phone)}</li>`;
             });
         } else {
             participantText = '\nNo additional participants listed.';
@@ -99,7 +105,9 @@ export class SMTPClient {
         let locationHtml = '';
         if (callout.location_data && callout.location_data.lat && callout.location_data.lng) {
             locationText = `\nGPS Coordinates logged at start: ${callout.location_data.lat}, ${callout.location_data.lng}`;
-            locationHtml = `<p><strong>GPS Coordinates logged at start:</strong> <a href="https://maps.google.com/?q=${callout.location_data.lat},${callout.location_data.lng}">${callout.location_data.lat}, ${callout.location_data.lng}</a></p>`;
+            const lat = encodeURIComponent(String(callout.location_data.lat));
+            const lng = encodeURIComponent(String(callout.location_data.lng));
+            locationHtml = `<p><strong>GPS Coordinates logged at start:</strong> <a href="https://maps.google.com/?q=${lat},${lng}">${escapeHtml(callout.location_data.lat)}, ${escapeHtml(callout.location_data.lng)}</a></p>`;
         }
 
         // Plain text version
@@ -136,10 +144,10 @@ ${footer}`;
     </div>
     <div style="padding: 20px; background-color: #f5f5f5; margin-top: 10px; border-radius: 5px;">
         <p style="color: ${bannerColor}; font-weight: bold;">${intro}</p>
-        <p><strong>Callout ID:</strong> ${callout.callout_id || 'Unknown'}</p>
-        <p><strong>Initiator:</strong> ${user.name || 'Unknown'} (${user.phone || 'No phone'})</p>
-        <p><strong>Expected Return:</strong> ${calloutTime}</p>
-        <p><strong>Cave:</strong> ${callout.cave_name || 'Unknown'}</p>
+        <p><strong>Callout ID:</strong> ${escapeHtml(callout.callout_id || 'Unknown')}</p>
+        <p><strong>Initiator:</strong> ${escapeHtml(user.name || 'Unknown')} (${escapeHtml(user.phone || 'No phone')})</p>
+        <p><strong>Expected Return:</strong> ${escapeHtml(calloutTime)}</p>
+        <p><strong>Cave:</strong> ${escapeHtml(callout.cave_name || 'Unknown')}</p>
         
         <hr/>
         <h3>Party Members:</h3>
@@ -147,17 +155,17 @@ ${footer}`;
         
         <hr/>
         <h3>Vehicle & Location:</h3>
-        <p><strong>Parking:</strong> ${callout.car_parking || 'Unknown'}</p>
-        <p><strong>Registration:</strong> ${callout.car_registration || 'Unknown'}</p>
+        <p><strong>Parking:</strong> ${escapeHtml(callout.car_parking || 'Unknown')}</p>
+        <p><strong>Registration:</strong> ${escapeHtml(callout.car_registration || 'Unknown')}</p>
         ${locationHtml}
 
         <hr/>
         <h3>Trip Plan:</h3>
-        <p>${callout.trip_plan || 'No trip plan provided'}</p>
+        <p style="white-space: pre-wrap;">${escapeHtml(callout.trip_plan || 'No trip plan provided')}</p>
 
         <hr/>
         <h3>Team Details/Notes:</h3>
-        <p>${callout.team_details || 'No additional team details'}</p>
+        <p style="white-space: pre-wrap;">${escapeHtml(callout.team_details || 'No additional team details')}</p>
 
     </div>
     <div style="padding: 20px; margin-top: 10px; font-size: 12px; color: #666;">

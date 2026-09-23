@@ -166,6 +166,41 @@ class WebhookTest extends TestCase
         $this->assertEquals('managed', $incident->status);
     }
 
+    public function test_ack_matches_a_platform_admin_on_the_rota()
+    {
+        $admin = User::factory()->admin()->create(['phone' => '07222222222']);
+        $callout = Callout::factory()->create(['status' => 'triggered']);
+        $incident = Incident::create(['callout_id' => $callout->id, 'status' => 'open']);
+
+        $this->post($this->smsUrl($this->secret), ['From' => '+447222222222', 'Body' => 'ACK'])
+            ->assertStatus(200)->assertSee('incident controller', false);
+
+        $this->assertEquals($admin->id, $incident->fresh()->incident_controller_id);
+    }
+
+    public function test_ack_refuses_to_guess_between_several_open_incidents()
+    {
+        User::factory()->dutyOfficer()->create(['phone' => '07111111111']);
+        $first = Incident::create(['callout_id' => Callout::factory()->create(['status' => 'triggered'])->id, 'status' => 'open']);
+        $second = Incident::create(['callout_id' => Callout::factory()->create(['status' => 'triggered'])->id, 'status' => 'open']);
+
+        $this->post($this->smsUrl($this->secret), ['From' => '+447111111111', 'Body' => 'ACK'])
+            ->assertStatus(200)->assertSee('More than one incident', false);
+
+        $this->assertSame('open', $first->fresh()->status);
+        $this->assertSame('open', $second->fresh()->status);
+    }
+
+    public function test_a_sender_without_a_usable_number_matches_nobody()
+    {
+        $callout = Callout::factory()->create(['status' => 'active']);
+
+        $this->post($this->smsUrl($this->secret), ['From' => 'Unknown', 'Body' => 'OUT SAFE'])
+            ->assertStatus(200)->assertSee('could not match', false);
+
+        $this->assertSame('active', $callout->fresh()->status);
+    }
+
     // ---- voice -------------------------------------------------------------
 
     public function test_voice_twiml_contains_gather_and_acknowledge_prompt()

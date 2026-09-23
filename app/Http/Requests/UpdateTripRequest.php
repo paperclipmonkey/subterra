@@ -10,8 +10,9 @@ class UpdateTripRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Check if the user was a trip participant or is an admin
-        if ($this->user()->is_admin) {
+        // A trip participant, or a platform admin. Not is_admin: that is true for
+        // every staff role (duty/access officer, data admin).
+        if ($this->user()->hasRole('platform_admin')) {
             return true;
         }
 

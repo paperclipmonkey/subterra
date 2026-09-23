@@ -578,44 +578,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function export(Request $request): JsonResponse
+    public function export(Request $request, \App\Services\UserDataExportService $exporter): JsonResponse
     {
-        $user = $request->user();
-
-        $data = [
-            'profile' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'bio' => $user->bio,
-                'is_active' => $user->is_active,
-                'tos_agreed_at' => $user->tos_agreed_at,
-                'created_at' => $user->created_at,
-            ],
-            'clubs' => $user->clubs->map(fn ($club) => [
-                'name' => $club->name,
-                'status' => $club->pivot->status,
-                'is_admin' => $club->pivot->is_admin,
-            ]),
-            'medals' => $user->medals->map(fn ($medal) => [
-                'name' => $medal->name,
-                'description' => $medal->description,
-                'awarded_at' => $medal->pivot->awarded_at,
-            ]),
-            'trips' => $user->trips->map(fn ($trip) => [
-                'id' => $trip->id,
-                'start_time' => $trip->start_time,
-                'end_time' => $trip->end_time,
-                'description' => $trip->description,
-                'visibility' => $trip->visibility,
-            ]),
-            'callouts' => $user->callouts->map(fn ($callout) => [
-                'id' => $callout->id,
-                'callout_time' => $callout->callout_time,
-                'description' => $callout->description,
-                'status' => $callout->status,
-                'car_registration' => $callout->car_registration,
-            ]),
-        ];
+        $data = $exporter->export($request->user());
 
         $filename = 'subterra_data_export_'.now()->format('Y-m-d').'.json';
 
@@ -632,8 +597,24 @@ class UserController extends Controller
     {
         $user = $user_without_scopes;
         // Only allow the user themselves or an admin to delete
-        if ($request->user()->id !== $user->id && !$request->user()->is_admin) {
+        if ($request->user()->id !== $user->id && !$request->user()->hasRole('platform_admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Deleting the user cascades to their callouts and incidents. Mid-trip that
+        // would silently remove the primary safety net (and any live incident record),
+        // so refuse until the callout is finished and any incident resolved.
+        $hasLiveCallout = $user->callouts()
+            ->where(function ($q) {
+                $q->whereIn('status', ['active', 'triggered'])
+                    ->orWhereHas('incident', fn ($i) => $i->where('status', '!=', 'resolved'));
+            })
+            ->exists();
+
+        if ($hasLiveCallout) {
+            return response()->json([
+                'message' => 'This account has an active callout or an unresolved incident. Cancel the callout (or wait for the incident to be resolved) before deleting the account.',
+            ], 409);
         }
 
         // 1. Delete user photo if it's not the default

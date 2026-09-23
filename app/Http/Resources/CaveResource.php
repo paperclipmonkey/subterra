@@ -109,7 +109,10 @@ class CaveResource extends JsonResource
                 'catchment_name' => $this->system->relationLoaded('catchment') ? $this->system->catchment?->name : null,
                 'length' => $this->system->length,
                 'vertical_range' => $this->system->vertical_range,
-                'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->map(function ($cave) use ($request) {
+                // Sibling entrances: admin_only sites (e.g. coal mines) only for data admins.
+                'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->reject(
+                    fn ($cave) => !$canManage && $cave->visibility === 'admin_only'
+                )->values()->map(function ($cave) use ($request) {
                     return [
                         'id' => $cave->id,
                         'name' => $cave->name,

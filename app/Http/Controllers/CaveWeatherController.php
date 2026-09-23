@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Cave;
+use App\Policies\CavePolicy;
 use App\Services\RainfallService;
 use App\Services\RiverLevelService;
 use App\Services\WeatherService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CaveWeatherController extends Controller
 {
@@ -22,8 +24,11 @@ class CaveWeatherController extends Controller
     /**
      * Get current weather forecast for a cave.
      */
-    public function forecast(Cave $cave): JsonResponse
+    public function forecast(Request $request, Cave $cave): JsonResponse
     {
+        // admin_only sites (e.g. coal mines) must not be discoverable here.
+        abort_unless(app(CavePolicy::class)->view($request->user(), $cave), 404);
+
         if (!$cave->location_lat || !$cave->location_lng) {
             return response()->json([
                 'error' => 'Cave location coordinates not available',
@@ -87,8 +92,10 @@ class CaveWeatherController extends Controller
         return response()->json([
             'data' => [
                 'cave_name' => $cave->name,
-                'latitude' => $cave->location_lat,
-                'longitude' => $cave->location_lng,
+                // The forecast is computed from the entrance location, but the exact
+                // coordinates follow CaveResource's gate: approved-club members only.
+                'latitude' => $request->user()?->hasApprovedClub() ? $cave->location_lat : null,
+                'longitude' => $request->user()?->hasApprovedClub() ? $cave->location_lng : null,
                 'currently' => $forecast['currently'] ?? null,
                 'hourly' => $forecast['hourly'] ?? null,
                 'daily' => $forecast['daily'] ?? null,
@@ -101,8 +108,10 @@ class CaveWeatherController extends Controller
     /**
      * Get historic rain data for a cave (last 7 days).
      */
-    public function historic(Cave $cave): JsonResponse
+    public function historic(Request $request, Cave $cave): JsonResponse
     {
+        abort_unless(app(CavePolicy::class)->view($request->user(), $cave), 404);
+
         if (!$cave->location_lat || !$cave->location_lng) {
             return response()->json([
                 'error' => 'Cave location coordinates not available',

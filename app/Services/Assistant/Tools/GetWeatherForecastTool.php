@@ -65,6 +65,11 @@ class GetWeatherForecastTool implements AssistantTool
                 ->first();
         }
 
+        // admin_only sites (e.g. coal mines) are invisible outside data admins.
+        if ($cave && !app(\App\Policies\CavePolicy::class)->view($user, $cave)) {
+            $cave = null;
+        }
+
         if (!$cave) {
             $idLabel = $caveId > 0 ? "cave_id={$caveId}" : ($caveSystemId > 0 ? "cave_system_id={$caveSystemId}" : '(none)');
 
@@ -183,7 +188,10 @@ class GetWeatherForecastTool implements AssistantTool
             'cave_id' => $cave->id,
             'cave_slug' => $cave->slug,
             'cave_system' => $cave->system?->name,
-            'location' => ['lat' => $cave->location_lat, 'lng' => $cave->location_lng],
+            // Same gate as CaveResource: exact coordinates for approved-club members only.
+            'location' => $user->hasApprovedClub() || $user->hasRole(['platform_admin', 'data_admin'])
+                ? ['lat' => $cave->location_lat, 'lng' => $cave->location_lng]
+                : null,
             'forecast_available' => !empty($dailyForecast),
             'currently' => $currently,
             'daily_forecast' => $dailyForecast,

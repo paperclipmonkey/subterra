@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Jobs\CancelWatchdogJob;
+use App\Models\Callout;
 use App\Models\Incident;
 use Illuminate\Support\Facades\DB;
 use Spatie\SlackAlerts\Facades\SlackAlert;
@@ -15,6 +17,18 @@ class IncidentObserver
      */
     public function updated(Incident $incident): void
     {
+        // Leaving 'open' means a duty officer has acknowledged or taken control (or
+        // resolved it), so stand down the independent GCP watchdog. Until then it
+        // must stay armed as the backup in case our own alerts went unseen.
+        if ($incident->wasChanged('status') && $incident->getOriginal('status') === 'open') {
+            DB::afterCommit(function () use ($incident) {
+                $callout = $incident->callout;
+                if ($callout instanceof Callout) {
+                    CancelWatchdogJob::cancelOrRetry($callout);
+                }
+            });
+        }
+
         // Check if Status Changed
         if ($incident->wasChanged('status')) {
             // Capture the status now; dispatch only after the surrounding transaction

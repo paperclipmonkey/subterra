@@ -96,4 +96,21 @@ class CaveSystemVisibilityTest extends TestCase
         $this->assertEqualsCanonicalizing(['Public Entrance', 'Old Coal Mine'], array_column($data['caves'], 'name'));
         $this->assertEqualsCanonicalizing(['Public Survey', 'Private Map'], array_column($data['files'], 'title'));
     }
+
+    #[Test]
+    public function a_cave_page_does_not_list_admin_only_siblings_to_ordinary_users(): void
+    {
+        $public = $this->system->caves()->where('name', 'Public Entrance')->first();
+
+        $siblings = $this->actingAs(User::factory()->withApprovedClub()->create())
+            ->getJson("/api/caves/{$public->slug}")
+            ->assertOk()
+            ->json('data.system.caves');
+        $this->assertSame(['Public Entrance'], array_column($siblings, 'name'));
+
+        $siblings = $this->actingAs(User::factory()->dataAdmin()->create())
+            ->getJson("/api/caves/{$public->slug}")
+            ->json('data.system.caves');
+        $this->assertEqualsCanonicalizing(['Public Entrance', 'Old Coal Mine'], array_column($siblings, 'name'));
+    }
 }

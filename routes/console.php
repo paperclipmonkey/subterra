@@ -39,3 +39,6 @@ Schedule::call(function () {
         Http::timeout(5)->get($url);
     }
 })->everyMinute()->name('betterstack-heartbeat')->withoutOverlapping(5)->onOneServer();
+
+// Keep failed_jobs from growing forever; a month is plenty for investigating a failure.
+Schedule::command('queue:prune-failed', ['--hours' => 720])->daily()->onOneServer();

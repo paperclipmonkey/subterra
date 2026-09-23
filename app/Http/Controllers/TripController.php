@@ -273,14 +273,16 @@ class TripController extends Controller
 
     private function pruneExistingMedia(Trip $trip, array $existingMedia): void
     {
+        // Delete row by row (not a query-builder delete) so TripMedia's deleted hook
+        // also removes the photo files from storage.
         if (count($existingMedia) === 0) {
-            $trip->media()->delete();
+            $trip->media()->get()->each->delete();
 
             return;
         }
 
         $existingMediaIds = array_column($existingMedia, 'id');
-        $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
+        $trip->media()->whereNotIn('id', $existingMediaIds)->get()->each->delete();
 
         foreach ($existingMedia as $mediaData) {
             if (isset($mediaData['id'])) {

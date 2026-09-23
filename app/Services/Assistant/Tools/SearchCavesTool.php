@@ -58,6 +58,8 @@ class SearchCavesTool implements AssistantTool
 
     public function handle(array $arguments, User $user): array
     {
+        $canSeeLocations = $user->hasApprovedClub() || $user->hasRole(['platform_admin', 'data_admin']);
+
         $query = DB::table('cave_systems')
             ->select([
                 'cave_systems.id',
@@ -279,7 +281,7 @@ class SearchCavesTool implements AssistantTool
                 ->map(fn ($rows) => $rows->pluck('grade')->join(', '));
         }
 
-        $mapped = $systems->map(function ($system) use ($tagsBySystem, $gradesBySystem, $primaryCaveBySystem, $entranceCountBySystem, $imageBySystem) {
+        $mapped = $systems->map(function ($system) use ($tagsBySystem, $gradesBySystem, $primaryCaveBySystem, $entranceCountBySystem, $imageBySystem, $canSeeLocations) {
             $tags = ($tagsBySystem[$system->id] ?? collect())->map(fn ($t) => $t->tag)->values();
             $grades = $gradesBySystem[$system->id] ?? null;
             $primary = $primaryCaveBySystem[$system->id] ?? null;
@@ -313,8 +315,9 @@ class SearchCavesTool implements AssistantTool
                 'primary_cave_slug' => $primary?->slug,
                 'primary_cave_url' => $primary?->slug ? "/caves/{$primary->slug}" : null,
                 'location_name' => $primary?->location_name,
-                'latitude' => $primary ? (float) $primary->location_lat : null,
-                'longitude' => $primary ? (float) $primary->location_lng : null,
+                // Same gate as CaveResource: coordinates for approved-club members only.
+                'latitude' => $primary && $canSeeLocations ? (float) $primary->location_lat : null,
+                'longitude' => $primary && $canSeeLocations ? (float) $primary->location_lng : null,
                 'image_url' => $imageUrl,
             ];
         });
