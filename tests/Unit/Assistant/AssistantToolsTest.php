@@ -122,6 +122,40 @@ class AssistantToolsTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function search_caves_only_returns_coordinates_to_approved_club_members(): void
+    {
+        $system = CaveSystem::factory()->create();
+        Cave::factory()->create(['cave_system_id' => $system->id, 'location_lat' => 54.1, 'location_lng' => -2.4]);
+        $tool = new SearchCavesTool();
+
+        $result = $tool->handle(['include_obscure' => true], User::factory()->create());
+        $this->assertNull($result['cave_systems'][0]['latitude']);
+        $this->assertNull($result['cave_systems'][0]['longitude']);
+
+        $result = $tool->handle(['include_obscure' => true], User::factory()->withApprovedClub()->create());
+        $this->assertSame(54.1, $result['cave_systems'][0]['latitude']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function weather_forecast_tool_hides_admin_only_sites_and_gates_coordinates(): void
+    {
+        config(['services.pirate_weather.api_key' => 'test-key']);
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response(['currently' => [], 'daily' => ['data' => []]], 200)]);
+        $tool = app(\App\Services\Assistant\Tools\GetWeatherForecastTool::class);
+
+        $mine = Cave::factory()->create(['location_lat' => 53.0, 'location_lng' => -2.0, 'visibility' => 'admin_only']);
+        $result = $tool->handle(['cave_id' => $mine->id], User::factory()->withApprovedClub()->create());
+        $this->assertArrayHasKey('error', $result);
+
+        $cave = Cave::factory()->create(['location_lat' => 54.1, 'location_lng' => -2.4]);
+        $result = $tool->handle(['cave_id' => $cave->id], User::factory()->create());
+        $this->assertNull($result['location']);
+
+        $result = $tool->handle(['cave_id' => $cave->id], User::factory()->withApprovedClub()->create());
+        $this->assertEquals(54.1, $result['location']['lat']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function search_caves_filters_to_curated_only_by_default(): void
     {
         $curatedTag = \App\Models\Tag::firstOrCreate(
