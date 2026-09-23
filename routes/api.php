@@ -280,6 +280,9 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     Route::middleware(ApiIsAdmin::class.':platform_admin,data_admin')->group(function () {
         Route::get('/tasks', [App\Http\Controllers\Admin\TaskController::class, 'index'])->name('admin.tasks.index');
         Route::post('/cave-registry-sync/{registry}', [App\Http\Controllers\Admin\CaveRegistrySyncController::class, 'dispatch'])->name('admin.cave-registry-sync');
+        Route::get('/osm/regions', [App\Http\Controllers\Admin\OsmImportController::class, 'regions'])->name('admin.osm.regions');
+        Route::get('/osm/candidates', [App\Http\Controllers\Admin\OsmImportController::class, 'candidates'])->name('admin.osm.candidates');
+        Route::post('/osm/import', [App\Http\Controllers\Admin\OsmImportController::class, 'import'])->name('admin.osm.import');
         Route::apiResource('pages', App\Http\Controllers\PageController::class);
         Route::get('/suggested-edits/batches', [App\Http\Controllers\Admin\SuggestedEditController::class, 'batches']);
         Route::post('/suggested-edits/batches/{batchId}/approve', [App\Http\Controllers\Admin\SuggestedEditController::class, 'approveBatch']);
