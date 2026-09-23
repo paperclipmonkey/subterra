@@ -36,6 +36,16 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'end_time' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        // The trip_media foreign key cascades, but a database cascade fires no model
+        // events, so the photo files would be orphaned in storage. Delete the photos
+        // through the model first so TripMedia removes its files.
+        static::deleting(function (Trip $trip) {
+            $trip->media()->get()->each->delete();
+        });
+    }
+
     /** @return BelongsTo<CaveSystem, $this> */
     public function system(): BelongsTo
     {
