@@ -41,9 +41,9 @@ class OsmImportController extends Controller
 
         $entries = Cache::get($this->cacheKey($region));
         if ($entries === null) {
-            $entries = $this->importer->fetchEntrances(OsmCaveImporter::REGION_BOXES[$region]);
+            $entries = $this->importer->fetchEntrances(OsmCaveImporter::REGION_BOXES[$region], interactive: true);
             if ($entries === null) {
-                return response()->json(['message' => 'OpenStreetMap (Overpass) is not responding. Please try again in a minute.'], 502);
+                return response()->json(['message' => 'OpenStreetMap (Overpass) is busy right now. Please try again in a minute.'], 502);
             }
             Cache::put($this->cacheKey($region), $entries, self::CACHE_SECONDS);
         }
@@ -61,17 +61,26 @@ class OsmImportController extends Controller
     public function import(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'region' => ['nullable', 'string', Rule::in(array_keys(OsmCaveImporter::REGION_BOXES))],
             'node_ids' => ['required', 'array', 'min:1', 'max:'.self::MAX_IMPORT],
             'node_ids.*' => ['required', 'string', 'regex:/^\d{1,15}$/', 'distinct'],
         ]);
 
-        // Re-fetch the chosen nodes from OSM rather than trusting client-sent data.
-        $entries = $this->importer->fetchNodes($validated['node_ids']);
-        if ($entries === null) {
-            return response()->json(['message' => 'OpenStreetMap (Overpass) is not responding. Nothing was imported; please try again.'], 502);
+        // Never trust client-sent cave data: use what this server fetched for the
+        // preview (cached for a few minutes), and fetch any other chosen node from
+        // OSM by id. Public Overpass is often too busy to answer twice in a row.
+        $cached = isset($validated['region']) ? Cache::get($this->cacheKey($validated['region'])) : null;
+        $byId = collect(is_array($cached) ? $cached : [])->keyBy('osm_id')->only($validated['node_ids']);
+
+        $missing = array_values(array_diff($validated['node_ids'], $byId->keys()->all()));
+        if ($missing !== []) {
+            $fetched = $this->importer->fetchNodes($missing, interactive: true);
+            if ($fetched === null) {
+                return response()->json(['message' => 'OpenStreetMap (Overpass) is busy right now. Nothing was imported; please try again in a minute.'], 502);
+            }
+            $byId = $byId->replace(collect($fetched)->keyBy('osm_id')); // replace(), not merge(): ids are numeric keys
         }
 
-        $byId = collect($entries)->keyBy('osm_id');
         $results = [];
 
         foreach ($validated['node_ids'] as $id) {

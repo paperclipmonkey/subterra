@@ -49,6 +49,11 @@ class OsmCaveImporter
 
     private const RETRY_DELAY_SECONDS = 10;
 
+    /** Batch runs (artisan) can wait for a slow Overpass; web requests can't. */
+    private const BATCH_TIMEOUT_SECONDS = 180;
+
+    private const INTERACTIVE_TIMEOUT_SECONDS = 25;
+
     /** Overpass rejects requests without a User-Agent (HTTP 406). */
     private const USER_AGENT = 'Subterra cave sync (+https://subterra.app)';
 
@@ -102,9 +107,9 @@ class OsmCaveImporter
      * @param  array{float, float, float, float}|null  $box  [latMin, latMax, lngMin, lngMax]; null for the whole UK
      * @return list<array{name: string, osm_id: string, lat: float, lng: float, alt: float|null, tags: array<string, string>}>|null null if Overpass failed
      */
-    public function fetchEntrances(?array $box, bool $includeUnnamed = false, ?callable $warn = null): ?array
+    public function fetchEntrances(?array $box, bool $includeUnnamed = false, ?callable $warn = null, bool $interactive = false): ?array
     {
-        $payload = $this->overpass($this->areaQuery($box), $warn);
+        $payload = $this->overpass($this->areaQuery($box), $warn, $interactive);
 
         return $payload === null ? null : $this->parse($payload, $includeUnnamed);
     }
@@ -115,10 +120,10 @@ class OsmCaveImporter
      * @param  list<string>  $nodeIds
      * @return list<array{name: string, osm_id: string, lat: float, lng: float, alt: float|null, tags: array<string, string>}>|null
      */
-    public function fetchNodes(array $nodeIds, ?callable $warn = null): ?array
+    public function fetchNodes(array $nodeIds, ?callable $warn = null, bool $interactive = false): ?array
     {
         $ids = implode(',', array_map('intval', $nodeIds));
-        $payload = $this->overpass("[out:json][timeout:60];node(id:{$ids})[\"natural\"=\"cave_entrance\"];out body;", $warn);
+        $payload = $this->overpass("[out:json][timeout:60];node(id:{$ids})[\"natural\"=\"cave_entrance\"];out body;", $warn, $interactive);
 
         // No same-name de-duplication here: the admin chose each node explicitly.
         return $payload === null ? null : $this->parse($payload, false, dedupe: false);
@@ -292,15 +297,22 @@ class OsmCaveImporter
      * `elements` list. Both are failures: treating them as "no caves" would
      * silently import nothing.
      *
+     * Interactive (web) calls try each endpoint once with a short timeout, so a
+     * busy Overpass gives the admin a prompt "try again" instead of outliving
+     * PHP's execution limit.
+     *
      * @return array<string, mixed>|null
      */
-    private function overpass(string $query, ?callable $warn): ?array
+    private function overpass(string $query, ?callable $warn, bool $interactive = false): ?array
     {
+        $attempts = $interactive ? 1 : self::ATTEMPTS_PER_ENDPOINT;
+        $timeout = $interactive ? self::INTERACTIVE_TIMEOUT_SECONDS : self::BATCH_TIMEOUT_SECONDS;
+
         foreach (self::OVERPASS_ENDPOINTS as $endpoint) {
-            for ($attempt = 1; $attempt <= self::ATTEMPTS_PER_ENDPOINT; ++$attempt) {
+            for ($attempt = 1; $attempt <= $attempts; ++$attempt) {
                 try {
                     $response = Http::withHeaders(['User-Agent' => self::USER_AGENT])
-                        ->timeout(180)
+                        ->timeout($timeout)
                         ->get($endpoint, ['data' => $query]);
 
                     $payload = $response->successful() ? $response->json() : null;
@@ -318,7 +330,7 @@ class OsmCaveImporter
                 $message = "Overpass request to {$endpoint} failed (attempt {$attempt}): {$reason}";
                 $warn ? $warn($message) : Log::warning($message);
 
-                if ($attempt < self::ATTEMPTS_PER_ENDPOINT) {
+                if ($attempt < $attempts) {
                     Sleep::for(self::RETRY_DELAY_SECONDS)->seconds();
                 }
             }

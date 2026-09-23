@@ -107,7 +107,7 @@ describe('admin/osm-import.vue', () => {
     await wrapper.find('.dialog').findAll('button').find(b => b.text() === 'Import').trigger('click')
     await flushPromises()
 
-    expect(api.post).toHaveBeenCalledWith('/api/admin/osm/import', { node_ids: ['501', '502'] }, expect.anything())
+    expect(api.post).toHaveBeenCalledWith('/api/admin/osm/import', { region: 'Devon', node_ids: ['501', '502'] }, expect.anything())
     expect(wrapper.text()).toContain('1 created · 1 linked')
     expect(wrapper.text()).toContain('Linked to OpenStreetMap (data unchanged)')
   })

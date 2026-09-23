@@ -193,7 +193,7 @@ async function runImport() {
   importing.value = true
   error.value = ''
   try {
-    const res = await api.post('/api/admin/osm/import', { node_ids: selected.value }, { suppressErrorNotification: true })
+    const res = await api.post('/api/admin/osm/import', { region: region.value, node_ids: selected.value }, { suppressErrorNotification: true })
     results.value = res.data.data
     await loadCandidates()
   } catch (e) {

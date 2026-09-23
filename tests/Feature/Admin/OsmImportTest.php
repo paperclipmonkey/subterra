@@ -145,6 +145,42 @@ class OsmImportTest extends TestCase
     }
 
     #[Test]
+    public function importing_straight_after_a_preview_uses_the_previewed_data(): void
+    {
+        Http::fake(['*' => Http::response($this->devonPayload())]);
+        $admin = $this->dataAdmin();
+
+        $this->actingAs($admin)->getJson('/api/admin/osm/candidates?region=Devon')->assertOk();
+        $this->actingAs($admin)
+            ->postJson('/api/admin/osm/import', ['region' => 'Devon', 'node_ids' => ['501', '503']])
+            ->assertOk()
+            ->assertJsonPath('data.0.action', 'created')
+            ->assertJsonPath('data.1.action', 'created');
+
+        // Only the preview hit Overpass: busy public servers aren't asked twice.
+        Http::assertSentCount(1);
+        $this->assertEqualsCanonicalizing(['501', '503'], Cave::pluck('osm_node_id')->all());
+    }
+
+    #[Test]
+    public function nodes_missing_from_the_preview_cache_are_fetched_by_id(): void
+    {
+        $payload = $this->devonPayload();
+        Http::fake(['*' => Http::sequence()
+            ->push(['elements' => [$payload['elements'][0]]])   // preview: only 501
+            ->push(['elements' => [$payload['elements'][2]]])]); // by-id fetch: 503
+        $admin = $this->dataAdmin();
+
+        $this->actingAs($admin)->getJson('/api/admin/osm/candidates?region=Devon')->assertOk();
+        $this->actingAs($admin)
+            ->postJson('/api/admin/osm/import', ['region' => 'Devon', 'node_ids' => ['501', '503']])
+            ->assertOk();
+
+        Http::assertSent(fn ($r) => str_contains(urldecode($r->url()), 'node(id:503)'));
+        $this->assertEqualsCanonicalizing(['501', '503'], Cave::pluck('osm_node_id')->all());
+    }
+
+    #[Test]
     public function nodes_osm_no_longer_has_are_reported_not_imported(): void
     {
         Http::fake(['*' => Http::response(['elements' => []])]);
