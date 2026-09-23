@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Jobs\CancelWatchdogJob;
+use App\Models\Callout;
 use App\Models\Incident;
 use Illuminate\Support\Facades\DB;
 use Spatie\SlackAlerts\Facades\SlackAlert;
@@ -21,8 +22,9 @@ class IncidentObserver
         // must stay armed as the backup in case our own alerts went unseen.
         if ($incident->wasChanged('status') && $incident->getOriginal('status') === 'open') {
             DB::afterCommit(function () use ($incident) {
-                if ($incident->callout) {
-                    CancelWatchdogJob::cancelOrRetry($incident->callout);
+                $callout = $incident->callout;
+                if ($callout instanceof Callout) {
+                    CancelWatchdogJob::cancelOrRetry($callout);
                 }
             });
         }
