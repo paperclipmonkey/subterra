@@ -80,7 +80,7 @@ class MediaSuggestionService
                     $value = $this->promotePendingMedia($value, $targetDir);
                 } elseif (is_string($value)) {
                     // Check if it's already a pending file
-                    if (str_starts_with($value, self::PENDING_DIR)) {
+                    if ($this->isPendingPath($value)) {
                         $value = $this->moveFileToPermanent($value, $targetDir);
                     } else {
                         // Fallback: Check if it's raw base64 (or JSON wrapped) that was missed
@@ -108,7 +108,7 @@ class MediaSuggestionService
             } elseif ($key === 'media' && is_array($value)) {
                 foreach ($value as &$mediaItem) {
                     if (isset($mediaItem['data']) && is_string($mediaItem['data'])) {
-                        if (str_starts_with($mediaItem['data'], self::PENDING_DIR)) {
+                        if ($this->isPendingPath($mediaItem['data'])) {
                             $mediaItem['data'] = $this->moveFileToPermanent($mediaItem['data'], $targetDir);
                         } else {
                             $base64 = $this->extractBase64($mediaItem['data']);
@@ -169,7 +169,7 @@ class MediaSuggestionService
 
         try {
             try {
-                $image = Image::read($fileData[1])
+                $image = Image::read($this->decodeImageBytes($fileData[1]))
                     ->scaleDown(1500, 1500)
                     ->encode(new WebpEncoder(quality: 80));
             } catch (\Intervention\Image\Exceptions\DecoderException $e) {
@@ -197,12 +197,12 @@ class MediaSuggestionService
     public function cleanUpPendingMedia(array $data): void
     {
         foreach ($data as $key => $value) {
-            if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path']) && is_string($value) && str_starts_with($value, self::PENDING_DIR)) {
+            if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path']) && $this->isPendingPath($value)) {
                 Storage::Disk('media')->delete($value);
             } elseif ($key === 'media' && is_array($value)) {
                 // ...
                 foreach ($value as $mediaItem) {
-                    if (isset($mediaItem['data']) && is_string($mediaItem['data']) && str_starts_with($mediaItem['data'], self::PENDING_DIR)) {
+                    if (isset($mediaItem['data']) && $this->isPendingPath($mediaItem['data'])) {
                         Storage::Disk('media')->delete($mediaItem['data']);
                     }
                 }
@@ -227,7 +227,7 @@ class MediaSuggestionService
         // Use simple direct storage logic
         try {
             try {
-                $image = Image::read($fileData[1])
+                $image = Image::read($this->decodeImageBytes($fileData[1]))
                     ->scaleDown(1500, 1500)
                     ->encode(new WebpEncoder(quality: 60));
             } catch (\Intervention\Image\Exceptions\DecoderException $e) {
@@ -248,9 +248,47 @@ class MediaSuggestionService
         }
     }
 
+    private const ALLOWED_UPLOAD_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'mp4', 'mov', 'webm'];
+
+    /**
+     * A path we created under PENDING_DIR: "pending_edits/<type>/<file>". Suggestion
+     * data comes from the client, and a bare prefix check let
+     * "pending_edits/../avatars/<victim>.jpg" through — Flysystem normalises it to a
+     * path inside the disk, so rejecting or approving the edit deleted or moved
+     * someone else's file.
+     */
+    private function isPendingPath(mixed $value): bool
+    {
+        return is_string($value)
+            && !str_contains($value, '..')
+            && preg_match('#^'.self::PENDING_DIR.'/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+$#', $value) === 1;
+    }
+
+    /**
+     * Decode the payload to raw bytes before handing it to Intervention. Image::read()
+     * also accepts file paths, so a crafted "data:image,/some/server/file.jpg" would
+     * otherwise copy a server-local image into public storage.
+     */
+    private function decodeImageBytes(string $payload): string
+    {
+        $bytes = base64_decode($payload, true);
+        if ($bytes === false || $bytes === '') {
+            throw new \Intervention\Image\Exceptions\DecoderException('Invalid base64 image data.');
+        }
+
+        return $bytes;
+    }
+
     private function storePendingFile(\Illuminate\Http\UploadedFile $file, string $type, string $key): string
     {
-        $extension = $file->getClientOriginalExtension() ?: $file->guessExtension();
+        // Extension from the detected content type, never the client's filename, so an
+        // HTML/SVG file can't be stored in the public media bucket as-is.
+        $extension = strtolower((string) $file->guessExtension());
+        if (!in_array($extension, self::ALLOWED_UPLOAD_EXTENSIONS, true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'file' => 'Only image or video files can be attached to a suggestion.',
+            ]);
+        }
         $filename = (string) Str::uuid().'_'.$key.'.'.$extension;
         $path = self::PENDING_DIR.'/'.$type.'/'.$filename;
 
