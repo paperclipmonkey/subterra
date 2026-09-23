@@ -632,7 +632,7 @@ class UserController extends Controller
     {
         $user = $user_without_scopes;
         // Only allow the user themselves or an admin to delete
-        if ($request->user()->id !== $user->id && !$request->user()->is_admin) {
+        if ($request->user()->id !== $user->id && !$request->user()->hasRole('platform_admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
