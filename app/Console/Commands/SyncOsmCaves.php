@@ -12,6 +12,7 @@ use App\Support\CaveName;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 
 /**
@@ -39,7 +40,19 @@ class SyncOsmCaves extends Command
 
     private const REGISTRY = 'osm';
 
-    private const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
+    /**
+     * Public Overpass instances, tried in order. The main instance regularly
+     * returns transient errors (dispatcher/rate-limit) or times out, so each is
+     * retried briefly before falling back to the next.
+     */
+    private const OVERPASS_ENDPOINTS = [
+        'https://overpass-api.de/api/interpreter',
+        'https://overpass.private.coffee/api/interpreter',
+    ];
+
+    private const ATTEMPTS_PER_ENDPOINT = 2;
+
+    private const RETRY_DELAY_SECONDS = 10;
 
     /** Overpass rejects requests without a User-Agent (HTTP 406). */
     private const USER_AGENT = 'Subterra cave sync (+https://subterra.app)';
@@ -78,23 +91,14 @@ class SyncOsmCaves extends Command
 
         $this->info('Fetching cave entrances from OpenStreetMap (Overpass API)...');
 
-        try {
-            $response = Http::withHeaders(['User-Agent' => self::USER_AGENT])
-                ->timeout(180)
-                ->get(self::OVERPASS_ENDPOINT, ['data' => $this->overpassQuery()]);
-
-            if (!$response->successful()) {
-                $this->error('Failed to query Overpass API (status '.$response->status().')');
-
-                return 1;
-            }
-        } catch (\Exception $e) {
-            $this->error('HTTP request failed: '.$e->getMessage());
+        $payload = $this->fetchOverpass($this->overpassQuery());
+        if ($payload === null) {
+            $this->error('Failed to query the Overpass API on every endpoint; nothing was imported.');
 
             return 1;
         }
 
-        $entries = $this->parseOverpass($response->json(), $includeUnnamed);
+        $entries = $this->parseOverpass($payload, $includeUnnamed);
 
         if (empty($entries)) {
             $this->warn('No cave entrances found in the OSM response.');
@@ -316,6 +320,49 @@ class SyncOsmCaves extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Run the query against each Overpass endpoint in turn, retrying transient
+     * failures. Returns the decoded payload, or null if every attempt failed.
+     *
+     * Overpass can answer HTTP 200 with an HTML error page, or with JSON whose
+     * `remark` reports a runtime error/timeout and an empty (or truncated)
+     * `elements` list. Both are failures: treating them as "no caves" would
+     * silently import nothing.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function fetchOverpass(string $query): ?array
+    {
+        foreach (self::OVERPASS_ENDPOINTS as $endpoint) {
+            for ($attempt = 1; $attempt <= self::ATTEMPTS_PER_ENDPOINT; ++$attempt) {
+                try {
+                    $response = Http::withHeaders(['User-Agent' => self::USER_AGENT])
+                        ->timeout(180)
+                        ->get($endpoint, ['data' => $query]);
+
+                    $payload = $response->successful() ? $response->json() : null;
+                    $remark = is_array($payload) ? (string) ($payload['remark'] ?? '') : '';
+
+                    if (is_array($payload) && is_array($payload['elements'] ?? null) && !str_contains(strtolower($remark), 'error')) {
+                        return $payload;
+                    }
+
+                    $reason = $remark !== '' ? $remark : 'status '.$response->status();
+                } catch (\Exception $e) {
+                    $reason = $e->getMessage();
+                }
+
+                $this->warn("Overpass request to {$endpoint} failed (attempt {$attempt}): {$reason}");
+
+                if ($attempt < self::ATTEMPTS_PER_ENDPOINT) {
+                    Sleep::for(self::RETRY_DELAY_SECONDS)->seconds();
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

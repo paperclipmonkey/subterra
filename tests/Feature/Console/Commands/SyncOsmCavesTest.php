@@ -11,6 +11,7 @@ use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class SyncOsmCavesTest extends TestCase
@@ -22,6 +23,7 @@ class SyncOsmCavesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Sleep::fake();
 
         Tag::firstOrCreate(['tag' => 'Cave', 'category' => 'type'], ['type' => 'cave']);
         Tag::firstOrCreate(['tag' => 'Northern', 'category' => 'region'], ['type' => 'cave']);
@@ -276,7 +278,34 @@ class SyncOsmCavesTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_handles_a_failed_overpass_request(): void
     {
-        Http::fake([self::OVERPASS_PATTERN => Http::response('', 504)]);
+        Http::fake(['*' => Http::response('', 504)]);
+
+        $this->artisan('sync:osm-caves')->assertExitCode(1);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_retries_and_falls_back_to_another_overpass_endpoint(): void
+    {
+        Http::fake([
+            self::OVERPASS_PATTERN => Http::sequence()
+                ->push('<html>runtime error: open64: Dispatcher_Client</html>', 200)
+                ->push('', 429),
+            '*overpass.private.coffee*' => Http::response($this->mockOverpass(), 200),
+        ]);
+
+        $this->artisan('sync:osm-caves')->assertExitCode(0);
+
+        $this->assertDatabaseHas('caves', ['name' => 'Alum Pot']);
+        Http::assertSentCount(3);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function an_overpass_timeout_remark_is_a_failure_not_an_empty_result(): void
+    {
+        Http::fake(['*' => Http::response([
+            'elements' => [],
+            'remark' => 'runtime error: Query timed out in "query" at line 3 after 181 seconds.',
+        ], 200)]);
 
         $this->artisan('sync:osm-caves')->assertExitCode(1);
     }
