@@ -38,7 +38,7 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
     // (e.g. a trip's nested entrance/exit cave). CaveResource re-exposes
     // visibility/private_notes to data admins via explicit property access,
     // which $hidden does not affect.
-    protected $hidden = ['registry', 'registry_id', 'private_notes', 'visibility', 'deleted_at'];
+    protected $hidden = ['registry', 'registry_id', 'osm_node_id', 'private_notes', 'visibility', 'deleted_at'];
 
     protected $fillable = [
         'name',

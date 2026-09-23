@@ -335,6 +335,57 @@ describe('Cave Component', () => {
         expect(wrapper.text()).not.toContain("This cave's description is a stub")
     })
 
+    describe('OpenStreetMap attribution', () => {
+        const stubs = {
+            'v-container': { template: '<div><slot /></div>' },
+            'v-row': { template: '<div><slot /></div>' },
+            'v-col': { template: '<div><slot /></div>' },
+            'v-card': { template: '<div><slot /></div>' },
+            'v-img': { template: '<div><slot /></div>' },
+            'v-tabs': { template: '<div><slot /></div>' },
+            'v-tab': { template: '<div><slot /></div>' },
+            'v-window': { template: '<div><slot /></div>' },
+            'v-window-item': { template: '<div><slot /></div>' },
+            'v-alert': { template: '<div><slot /></div>' },
+            'v-icon': true, 'v-btn': true, 'v-spacer': true, 'v-badge': true, 'v-divider': true,
+            'v-chip-group': true, 'v-chip': true, 'v-tooltip': true, 'v-list': true, 'v-list-item': true,
+            'v-list-item-title': true, 'v-list-item-subtitle': true, 'v-progress-circular': true, 'v-avatar': true,
+            'v-dialog': true, 'v-card-title': true, 'v-card-text': true, 'v-card-actions': true, 'v-textarea': true,
+            'v-form': true, 'v-snackbar': true, 'CaveTripListItem': true, 'CorrectionModal': true,
+            'CaveWeather': true, 'MarkdownRenderer': true, 'MediaViewModal': true,
+        }
+
+        const mountWith = async (openstreetmap) => {
+            api.get.mockResolvedValue({ data: { data: { ...mockCave, openstreetmap } } })
+            const wrapper = mount(Cave, { global: { stubs } })
+            await new Promise(resolve => setTimeout(resolve, 0))
+            await wrapper.vm.$nextTick()
+            return wrapper
+        }
+
+        it('credits OpenStreetMap contributors and the ODbL for OSM-sourced caves', async () => {
+            const wrapper = await mountWith({ url: 'https://www.openstreetmap.org/node/501', is_source: true })
+            const line = wrapper.find('[data-test="osm-attribution"]')
+
+            expect(line.text()).toContain('OpenStreetMap')
+            expect(line.text()).toContain('Open Database Licence')
+            expect(line.find('a').attributes('href')).toBe('https://www.openstreetmap.org/node/501')
+        })
+
+        it('only links to OpenStreetMap for caves that are merely linked', async () => {
+            const wrapper = await mountWith({ url: 'https://www.openstreetmap.org/node/502', is_source: false })
+            const line = wrapper.find('[data-test="osm-attribution"]')
+
+            expect(line.text()).toBe('View on OpenStreetMap')
+            expect(line.text()).not.toContain('Licence')
+        })
+
+        it('shows nothing for caves with no OSM link', async () => {
+            const wrapper = await mountWith(null)
+            expect(wrapper.find('[data-test="osm-attribution"]').exists()).toBe(false)
+        })
+    })
+
     describe('media ordering', () => {
         const mountCave = async (caveData) => {
             api.get.mockResolvedValue({ data: { data: caveData } })

@@ -73,6 +73,14 @@ class TagSeeder extends Seeder
         ]);
 
         Tag::updateOrCreate([
+            'tag' => 'Northern Ireland',
+            'type' => 'cave',
+            'category' => 'region',
+        ], [
+            'description' => 'Northern Ireland, centred on the Fermanagh uplands — home to the Marble Arch Caves and the Cuilcagh karst.',
+        ]);
+
+        Tag::updateOrCreate([
             'tag' => 'Devon',
             'type' => 'cave',
             'category' => 'region',

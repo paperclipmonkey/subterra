@@ -194,6 +194,17 @@
             <v-window-item value="overview">
               <div class="text-h6 mb-3 font-weight-bold display-1">Description</div>
               <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
+              <!-- Structured OSM attribution: unlike the description text, it can't be
+                   edited away, which ODbL requires for OSM-sourced caves. -->
+              <p v-if="cave.openstreetmap" class="text-caption text-medium-emphasis mt-n4 mb-6" data-test="osm-attribution">
+                <template v-if="cave.openstreetmap.is_source">
+                  Location and details from
+                  <a :href="cave.openstreetmap.url" target="_blank" rel="noopener">OpenStreetMap</a>
+                  contributors, available under the
+                  <a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">Open Database Licence</a>.
+                </template>
+                <a v-else :href="cave.openstreetmap.url" target="_blank" rel="noopener">View on OpenStreetMap</a>
+              </p>
 
               <v-alert v-if="isDescriptionStub" type="info" variant="tonal" class="mb-6">
                 <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between w-100">
