@@ -61,7 +61,7 @@ class CheckOverdueCallouts extends Command
             ->get();
 
         foreach ($overdueCallouts as $callout) {
-            $this->triggerCallout($callout);
+            $this->isolated("trigger overdue callout {$callout->id}", fn () => $this->triggerCallout($callout));
         }
     }
 
@@ -78,10 +78,12 @@ class CheckOverdueCallouts extends Command
             ->get();
 
         foreach ($imminentCallouts as $callout) {
-            // Mark as warned BEFORE notifying so a notification failure cannot cause the
-            // same imminent warning to be re-sent on the next run.
-            $callout->update(['warned_at' => now()]);
-            $this->warnDutyOfficer($callout);
+            $this->isolated("imminent warning for callout {$callout->id}", function () use ($callout) {
+                // Mark as warned BEFORE notifying so a notification failure cannot cause the
+                // same imminent warning to be re-sent on the next run.
+                $callout->update(['warned_at' => now()]);
+                $this->warnDutyOfficer($callout);
+            });
         }
     }
 
@@ -94,7 +96,7 @@ class CheckOverdueCallouts extends Command
             ->get();
 
         foreach ($staleIncidents as $incident) {
-            $this->escalateIncident($incident);
+            $this->isolated("escalate incident {$incident->id}", fn () => $this->escalateIncident($incident));
         }
     }
 
@@ -294,6 +296,21 @@ class CheckOverdueCallouts extends Command
         // (IncidentObserver) or the party marks themselves safe (CalloutService::cancel).
         // An unacknowledged incident therefore gets both alerts — a duplicate is far
         // safer than a missed one.
+    }
+
+    /**
+     * Run one callout/incident's work so that an exception (e.g. a Postgres lock
+     * timeout) is logged loudly but can't abort the loop: otherwise every later
+     * overdue callout — and, because the phases run in sequence, every later phase
+     * — would be skipped until the next minute's run.
+     */
+    private function isolated(string $context, callable $work): void
+    {
+        try {
+            $work();
+        } catch (\Throwable $e) {
+            Log::critical("check-overdue failed to {$context}: {$e->getMessage()}", ['exception' => $e]);
+        }
     }
 
     /**

@@ -49,4 +49,36 @@ class CalloutAlertDeliveryTest extends TestCase
             ->map(fn ($address) => $address->getAddress());
         $this->assertContains($do->email, $recipients);
     }
+
+    #[Test]
+    public function an_error_on_one_callout_does_not_stop_the_others_triggering(): void
+    {
+        Carbon::setTestNow('2025-01-01 12:00:00');
+        Http::fake();
+        \Illuminate\Support\Facades\Notification::fake();
+
+        $do = User::factory()->dutyOfficer()->create();
+        OnCallShift::create(['user_id' => $do->id, 'start_at' => now()->startOfDay(), 'end_at' => now()->endOfDay()]);
+        $cave = Cave::factory()->create();
+
+        // An imminent callout whose warning blows up must not stop the overdue phase.
+        $imminent = Callout::factory()->create(['cave_id' => $cave->id, 'status' => 'active', 'callout_time' => now()->addMinutes(10)]);
+        $first = Callout::factory()->create(['cave_id' => $cave->id, 'status' => 'active', 'callout_time' => now()->subMinutes(2)]);
+        $second = Callout::factory()->create(['cave_id' => $cave->id, 'status' => 'active', 'callout_time' => now()->subMinute()]);
+
+        Callout::updating(function (Callout $callout) use ($imminent) {
+            if ($callout->is($imminent)) {
+                throw new \RuntimeException('simulated lock timeout');
+            }
+        });
+        \App\Models\Incident::creating(function ($incident) use ($first) {
+            if ($incident->callout_id === $first->id) {
+                throw new \RuntimeException('simulated lock timeout');
+            }
+        });
+
+        $this->artisan('callouts:check-overdue')->assertExitCode(0);
+
+        $this->assertSame('triggered', $second->fresh()->status);
+    }
 }
