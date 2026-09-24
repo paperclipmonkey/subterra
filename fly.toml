@@ -45,7 +45,7 @@ swap_size_mb = 512
   processes = ['app']
 [[http_service.checks]]
   grace_period = "10s"
-  interval = "15s"
+  interval = "10s"
   method = "GET"
   timeout = "5s"
   # /up boots Laravel via php-fpm (without touching the DB). "/" is the static
