@@ -123,9 +123,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-      - name: Make HTTP request # Ensure the api is up. Helps with postgres going to sleep
+      # Wake Postgres before the release command migrates. /api/livez runs
+      # SELECT 1 and only returns 200 once the database answers, so stop as soon
+      # as it does instead of sleeping a fixed 15s. Never fails the deploy.
+      - name: Wake the database
         run: |
-          curl -s https://subterra.world/api/livez > /dev/null; sleep 15
+          for attempt in $(seq 1 20); do
+            curl -sf --max-time 10 https://subterra.world/api/livez > /dev/null && exit 0
+            sleep 3
+          done
+          echo "::warning::/api/livez did not return 200; deploying anyway"
       - name: Set up Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy to Fly
