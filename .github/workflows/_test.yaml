@@ -131,8 +131,11 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Run migrations
         run: php artisan migrate --force
+      # Paratest runs test classes across the runner's cores. Laravel gives each
+      # worker its own database (subterra_test_test_<n> on Postgres,
+      # database.sqlite_test_<n> on SQLite) and migrates it on first use.
       - name: Run tests
-        run: vendor/bin/phpunit --log-junit /tmp/junit-backend.xml
+        run: php artisan test --parallel --log-junit /tmp/junit-backend.xml
       - name: Publish backend test report
         if: always()
         env:
