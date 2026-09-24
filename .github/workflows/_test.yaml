@@ -24,9 +24,11 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
       # --test makes Pint report-only; without it Pint rewrites files and exits
-      # 0, so a style regression would pass CI unnoticed.
+      # 0, so a style regression would pass CI unnoticed. --parallel spreads the
+      # files across the runner's cores; serially this step took ~2.5 minutes
+      # and was the slowest job gating every deploy.
       - name: Check formatting (Pint)
-        run: vendor/bin/pint --test
+        run: vendor/bin/pint --test --parallel
       - name: Static analysis (PHPStan)
         run: vendor/bin/phpstan analyse --no-progress --error-format=github
 

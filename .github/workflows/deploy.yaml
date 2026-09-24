@@ -80,8 +80,42 @@ jobs:
           cd terraform/gcp
           terraform apply -auto-approve
 
+  # Builds and pushes the Fly image while the tests run, instead of after them.
+  # Nothing is released here: deploy-fly still waits for the tests and only
+  # then rolls this image out. Layers are cached in the GitHub Actions cache,
+  # so the PHP/apt base layer is rebuilt only when it actually changes.
+  build-fly:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Log in to the Fly registry
+        run: flyctl auth docker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: registry.fly.io/subterra:${{ github.sha }}
+          # Mirrors [build.args] in fly.toml, which only applies when flyctl
+          # builds the image itself.
+          build-args: |
+            NODE_VERSION=24
+            PHP_VERSION=8.4
+          cache-from: type=gha,scope=fly
+          cache-to: type=gha,mode=max,scope=fly
+
   deploy-fly:
-    needs: [tests]
+    needs: [tests, build-fly]
     runs-on: ubuntu-latest
     concurrency: deploy-fly-group
     env:
@@ -95,6 +129,6 @@ jobs:
       - name: Set up Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy to Fly
-        run: flyctl deploy --local-only
+        run: flyctl deploy --image registry.fly.io/subterra:${{ github.sha }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
