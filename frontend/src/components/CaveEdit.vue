@@ -84,9 +84,13 @@
       <v-row>
         <v-col>
           <v-card-text>
-            <v-btn type="submit" color="primary" block size="large" :loading="loading">
+            <v-btn type="submit" color="primary" block size="large" :loading="loading"
+                   :disabled="!canEditDirectly && !isDirty">
               {{ canEditDirectly ? 'Save' : 'Suggest Changes' }}
             </v-btn>
+            <p v-if="!canEditDirectly && !isDirty" class="text-caption text-medium-emphasis text-center mt-2 mb-0">
+              Make a change above to suggest it.
+            </p>
           </v-card-text>
         </v-col>
       </v-row>
@@ -128,10 +132,44 @@ const isSaved = ref(false)
 
 const initialCaveState = ref(null)
 
+// CaveForm reshapes the cave as it loads (tags become {category, tag, type},
+// image objects gain credit fields, coordinates are rounded to the map's
+// precision), so comparing raw JSON called an untouched form "changed" and let
+// empty suggestions through. Compare only what the form edits, normalised.
+const roundToMetre = (val) => (val == null || val === '' ? null : Math.round(Number(val) * 100000) / 100000)
+const text = (val) => (val == null ? '' : String(val))
+const normaliseMedia = (media) => {
+  if (!media) return null
+  const upload = media.data instanceof Blob ? `upload:${media.data.name}:${media.data.size}` : null
+  const ref = upload || (media.id != null ? `id:${media.id}` : (media.filename || media.url || null))
+  const credits = [media.title, media.photographer, media.copyright].map(text)
+  return ref || credits.some(Boolean) ? { ref, credits } : null
+}
+const editableSnapshot = (c) => JSON.stringify({
+  name: text(c.name),
+  slug: text(c.slug),
+  description: text(c.description),
+  access_info: text(c.access_info),
+  location_name: text(c.location_name),
+  location_country: text(c.location_country),
+  location_lat: roundToMetre(c.location_lat),
+  location_lng: roundToMetre(c.location_lng),
+  location_alt: c.location_alt === '' || c.location_alt == null ? null : Number(c.location_alt),
+  tags: (c.tags || [])
+    .filter(t => t.type === 'cave' || !t.type)
+    .map(t => `${t.category}:${t.tag}`)
+    .sort(),
+  hero_image: normaliseMedia(c.hero_image),
+  hero_video: normaliseMedia(c.hero_video),
+  entrance_image: normaliseMedia(c.entrance_image),
+  private_notes: c.can_manage ? text(c.private_notes) : null,
+  visibility: c.can_manage ? text(c.visibility) : null,
+})
+
 const isDirty = computed(() => {
   if (isSaved.value) return false
   if (!initialCaveState.value) return false
-  return JSON.stringify(cave.value) !== initialCaveState.value
+  return editableSnapshot(cave.value) !== initialCaveState.value
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -185,7 +223,7 @@ const fetchCave = async () => {
   try {
     const response = await api.get(`/api/caves/${route.params.id}`)
     cave.value = response.data.data
-    initialCaveState.value = JSON.stringify(response.data.data)
+    initialCaveState.value = editableSnapshot(response.data.data)
   } catch (error) {
     console.error("Error fetching cave:", error)
   }
