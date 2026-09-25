@@ -149,10 +149,6 @@
                   </v-card>
                 </div>
               </div>
-
-              <v-btn variant="text" color="primary" :prepend-icon="mdiPlus" @click="showAddParticipant = true">
-                Add Manual Participant
-              </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
@@ -312,7 +308,7 @@
 </template>
 
 <script setup>
-import { mdiAccountSearch, mdiCamera, mdiClose, mdiContentSave, mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiAccountSearch, mdiCamera, mdiClose, mdiContentSave, mdiDelete } from '@mdi/js'
 import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'

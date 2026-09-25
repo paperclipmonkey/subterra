@@ -16,16 +16,6 @@
         >
           {{ appStore.user?.is_admin ? 'Edit Cave' : 'Suggest Edit' }}
         </v-btn>
-        <v-chip
-          v-if="appStore.user?.is_admin && pendingSuggestionsCount > 0"
-          color="warning"
-          size="small"
-          variant="tonal"
-          class="mr-2 cursor-pointer"
-          :to="`/admin/suggested-edits?cave_id=${cave.id}`"
-        >
-          {{ pendingSuggestionsCount }} pending {{ pendingSuggestionsCount === 1 ? 'edit' : 'edits' }}
-        </v-chip>
         <v-btn
           v-else-if="appStore.user"
           variant="text"
@@ -51,6 +41,19 @@
         >
           Log in to Suggest Edit
         </v-btn>
+        <!-- Kept outside the edit-button v-if chain above: sitting between those
+             buttons, the chain's v-else-if bound to this chip instead, so every
+             non-admin also got the disabled "Suggest Edit" next to the real one. -->
+        <v-chip
+          v-if="appStore.user?.is_admin && pendingSuggestionsCount > 0"
+          color="warning"
+          size="small"
+          variant="tonal"
+          class="mr-2 cursor-pointer"
+          :to="`/admin/suggested-edits?cave_id=${cave.id}`"
+        >
+          {{ pendingSuggestionsCount }} pending {{ pendingSuggestionsCount === 1 ? 'edit' : 'edits' }}
+        </v-chip>
       </v-col>
     </v-row>
 
@@ -184,7 +187,7 @@
             <v-tab value="system">System Info</v-tab>
             <v-tab v-if="smAndDown" value="map">Map</v-tab>
             <v-tab value="media">Media</v-tab>
-            <v-tab value="routes">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1" /></v-tab>
+            <v-tab v-if="showRoutesTab" value="routes">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1" /></v-tab>
             <v-tab v-if="appStore.user.is_admin || (linkedCollections && linkedCollections.length > 0)" value="collections">Collections <v-badge v-if="linkedCollections.length > 0" :content="linkedCollections.length" inline color="grey-lighten-1" /></v-tab>
           </v-tabs>
           <v-divider />
@@ -801,6 +804,16 @@ const isDescriptionStub = computed(() => {
 
 const pageTitle = computed(() => cave.value?.name)
 usePageTitle(pageTitle)
+
+// Hide the Routes tab when the system has none. Admins keep it, like the
+// Collections tab, since its empty state is where they add the first route.
+const showRoutesTab = computed(() => appStore.user?.is_admin || cave.value?.system?.routes?.length > 0)
+
+// A ?tab=routes link to a cave with no routes would otherwise open a tab with
+// no header to show which one is selected.
+watch([showRoutesTab, activeTab], ([show, tab]) => {
+  if (cave.value && !show && tab === 'routes') activeTab.value = 'overview'
+})
 
 // Sync tab changes to URL without adding history
 watch(activeTab, (newTab) => {

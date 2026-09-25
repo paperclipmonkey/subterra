@@ -217,9 +217,12 @@
 
       <v-divider class="my-4" />
       
-      <v-btn type="submit" color="primary" block :loading="loading">
+      <v-btn type="submit" color="primary" block :loading="loading" :disabled="suggestionIsEmpty">
         {{ appStore.user?.is_admin ? 'Save Route' : 'Suggest Changes' }}
       </v-btn>
+      <p v-if="suggestionIsEmpty" class="text-caption text-medium-emphasis text-center mt-2 mb-0">
+        Change the name, grade, description or tackle to suggest an edit.
+      </p>
     </v-form>
   </v-container>
 </template>
@@ -298,6 +301,32 @@ const isDirty = computed(() => {
     heroPhotographer.value !== (props.initialRoute.hero_image?.photographer || '') ||
     heroCopyright.value !== (props.initialRoute.hero_image?.copyright || '')
 })
+
+// What a suggested edit to an existing route actually carries: the backend's
+// suggestion whitelist keeps name, description, grade and tackle, and drops
+// the rest. Normalised so an untouched form compares equal to what was loaded.
+const text = (val) => (val == null ? '' : String(val))
+const suggestableSnapshot = (r) => JSON.stringify({
+  name: text(r.name),
+  description: text(r.description),
+  grade: r.grade == null || r.grade === '' ? null : String(r.grade),
+  tackle: (r.tackle || []).map(t => ({
+    type: text(t.type),
+    description: text(t.description),
+    length: t.length == null || t.length === '' ? null : String(t.length),
+    optional: !!t.optional,
+    quantity: String(t.quantity ?? 1),
+  })),
+})
+const initialSuggestable = suggestableSnapshot(props.initialRoute)
+
+// Only editing an existing route as a non-admin: an unchanged suggestion would
+// land in the review queue as "no differences". New routes (and the parent-
+// managed preventSubmit flow) are always submittable.
+const suggestionIsEmpty = computed(() =>
+  !appStore.user?.is_admin && !props.preventSubmit && !!route.value.id &&
+  suggestableSnapshot(route.value) === initialSuggestable
+)
 
 onBeforeRouteLeave((to, from, next) => {
   if (isDirty.value) {

@@ -31,10 +31,10 @@
           <div class="ml-md-6 mt-4 mt-md-0 flex-grow-1 text-center text-md-left" style="min-width: 0;">
             <h1 class="profile-name font-weight-bold text-grey-darken-4 mb-1">{{ profile.name }}</h1>
             <div class="d-flex flex-column align-center align-md-start gap-2">
-              <v-chip v-if="profile.clubs && profile.clubs.length > 0" color="primary" variant="flat"
+              <v-chip v-if="approvedClubs.length > 0" color="primary" variant="flat"
                       size="small" :prepend-icon="mdiAccountGroupOutline" class="font-weight-medium">
-                {{ profile.clubs[0].name }}
-                <span v-if="profile.clubs.length > 1" class="ml-1 opacity-70">+{{ profile.clubs.length - 1
+                {{ approvedClubs[0].name }}
+                <span v-if="approvedClubs.length > 1" class="ml-1 opacity-70">+{{ approvedClubs.length - 1
                 }}</span>
               </v-chip>
               <div v-if="profile.bio" class="text-body-2 text-medium-emphasis"
@@ -202,6 +202,10 @@
                   </v-list-item-title>
 
                   <template #append>
+                    <v-chip v-if="club.status && club.status !== 'approved'" :color="clubStatusColor(club.status)"
+                            size="x-small" variant="tonal" class="mr-2 text-capitalize club-status">
+                      {{ club.status }}
+                    </v-chip>
                     <v-chip v-if="club.is_admin" color="primary" size="x-small" variant="flat" class="mr-2">
                       Admin
                     </v-chip>
@@ -332,6 +336,13 @@ const profile = ref({
 })
 
 const pageTitle = computed(() => profile.value?.name)
+
+// The clubs list includes memberships still awaiting confirmation (each gets a
+// status pill); the headline club chip only counts confirmed ones.
+const approvedClubs = computed(() => (profile.value.clubs || []).filter(c => c.status === 'approved'))
+
+// Same colours as the status chips on the profile edit page.
+const clubStatusColor = (status) => ({ pending: 'warning', rejected: 'error' }[status] || 'grey')
 usePageTitle(pageTitle)
 
 const loading = ref(true)

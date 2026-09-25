@@ -148,14 +148,18 @@ const setupLayers = async () => {
   addLayerDefs()
 
   // Click cluster → zoom in
-  map.on('click', CLUSTER_LAYER, (e) => {
+  // MapLibre 5 returns a Promise here and silently ignores a callback, which
+  // is how the old callback version left clusters clickable-looking but inert.
+  map.on('click', CLUSTER_LAYER, async (e) => {
     const features = map.queryRenderedFeatures(e.point, { layers: [CLUSTER_LAYER] })
     if (!features.length) return
     const clusterId = features[0].properties.cluster_id
-    map.getSource(SOURCE_ID).getClusterExpansionZoom(clusterId, (err, expandZoom) => {
-      if (err) return
+    try {
+      const expandZoom = await map.getSource(SOURCE_ID).getClusterExpansionZoom(clusterId)
       map.easeTo({ center: features[0].geometry.coordinates, zoom: expandZoom })
-    })
+    } catch {
+      // The cluster can vanish mid-request if the data reloads; nothing to zoom to.
+    }
   })
 
   // Click individual cave → popup

@@ -68,7 +68,7 @@
     <div class="bottom-strip">
       <div class="strip-header">
         <span class="strip-title">Recent Trips</span>
-        <v-btn variant="text" density="compact" size="small" to="/trips" class="text-none text-primary see-all-btn">
+        <v-btn variant="text" density="compact" size="small" :to="ALL_TRIPS_ROUTE" class="text-none text-primary see-all-btn">
           See all →
         </v-btn>
       </div>
@@ -78,13 +78,17 @@
       </div>
 
       <div v-else ref="cardsScrollRef" class="cards-scroll">
-        <div
+        <!-- With the map, a card flies to its trip. Without it (unconfirmed users)
+             there is nothing to fly to, so the card is a plain link to the trip. -->
+        <component
+          :is="canSeeMap ? 'div' : 'router-link'"
           v-for="trip in recentTrips"
           :key="trip.id"
+          :to="canSeeMap ? undefined : `/trips/${trip.id}`"
           :data-trip-id="trip.id"
           class="mini-card"
           :class="{ 'mini-card--selected': selectedTripId === trip.id }"
-          @click="selectTrip(trip)"
+          @click="canSeeMap && selectTrip(trip)"
         >
           <div
             class="mini-card-img"
@@ -104,13 +108,13 @@
             </div>
           </div>
           <div class="mini-card-date">{{ formatDate(trip.start_time) }}</div>
-        </div>
+        </component>
 
         <!-- See-all card -->
-        <div class="mini-card-see-all" @click="$router.push('/trips')">
+        <router-link :to="ALL_TRIPS_ROUTE" class="mini-card-see-all">
           <v-icon size="32" :icon="mdiArrowRight" color="primary" />
           <div class="mini-see-all-label">All trips</div>
-        </div>
+        </router-link>
       </div>
     </div>
   </div>
@@ -137,6 +141,9 @@ import { useAppStore } from '@/stores/app'
 
 const router = useRouter()
 const appStore = useAppStore()
+
+// Every trip the viewer can see, not just their own logbook (see TripList).
+const ALL_TRIPS_ROUTE = { path: '/trips', query: { user_id: 'all' } }
 
 // Mirrors the API: entrance coordinates only come back for approved club members.
 const canSeeMap = computed(() => !!appStore.user?.clubs?.some(c => c.status === 'approved'))
@@ -621,6 +628,9 @@ onUnmounted(() => {
 
 /* ── Mini trip card ──────────────────────────────────── */
 .mini-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
   flex-shrink: 0;
   width: 120px;
   cursor: pointer;
@@ -713,6 +723,7 @@ onUnmounted(() => {
 
 /* ── See-all card ────────────────────────────────────── */
 .mini-card-see-all {
+  text-decoration: none;
   flex-shrink: 0;
   width: 80px;
   height: 100px;
