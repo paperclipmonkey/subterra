@@ -107,6 +107,64 @@ describe('Profile.vue', () => {
         expect(link.exists()).toBe(true)
     })
 
+    it('marks memberships awaiting confirmation with a pending pill', async () => {
+        mockGet.mockResolvedValue({
+            data: {
+                id: 1,
+                name: 'Test User',
+                clubs: [
+                    { name: 'Caving Club A', slug: 'caving-club-a', is_admin: false, status: 'pending' },
+                    { name: 'Caving Club B', slug: 'caving-club-b', is_admin: false, status: 'pending' },
+                    { name: 'Caving Club C', slug: 'caving-club-c', is_admin: false, status: 'approved' },
+                ],
+                medals: [],
+                stats: { caves: 0, trips: 0, duration: 0 }
+            }
+        })
+        mockRecentTrips.mockResolvedValue({ data: [] })
+
+        const wrapper = mount(Profile, {
+            global: {
+                directives: { tooltip: {} },
+                stubs: {
+                    'v-container': { template: '<div><slot /></div>' },
+                    'v-row': { template: '<div><slot /></div>' },
+                    'v-col': { template: '<div><slot /></div>' },
+                    'v-card': { template: '<div><slot /></div>' },
+                    'v-card-title': { template: '<div><slot /></div>' },
+                    'v-card-text': { template: '<div><slot /></div>' },
+                    'v-avatar': { template: '<div><slot /></div>' },
+                    'v-img': { template: '<div></div>' },
+                    'v-chip': { template: '<div class="v-chip"><slot /></div>' },
+                    'v-icon': { template: '<div></div>' },
+                    'v-btn': { template: '<button><slot /></button>' },
+                    'v-spacer': true,
+                    'v-divider': true,
+                    'v-list': { template: '<div><slot /></div>' },
+                    'v-list-item': {
+                        template: '<div class="club-row" :data-to="to"><slot name="prepend" /><slot /><slot name="append" /></div>',
+                        props: ['to']
+                    },
+                    'v-list-item-title': { template: '<div><slot /></div>' },
+                    'v-list-item-subtitle': { template: '<div><slot /></div>' },
+                    'v-dialog': true,
+                    'v-tooltip': true
+                }
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await wrapper.vm.$nextTick()
+
+        const pillFor = (slug) => wrapper.find(`[data-to="/club/${slug}"] .club-status`)
+        expect(pillFor('caving-club-a').text()).toBe('pending')
+        expect(pillFor('caving-club-b').text()).toBe('pending')
+        expect(pillFor('caving-club-c').exists()).toBe(false)
+
+        // The headline chip only counts confirmed clubs.
+        expect(wrapper.vm.approvedClubs.map(c => c.slug)).toEqual(['caving-club-c'])
+    })
+
     it('hides clubs card when user has no clubs', async () => {
         const mockProfile = {
             id: 1,
