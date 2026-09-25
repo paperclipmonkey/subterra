@@ -524,13 +524,12 @@ export default {
       return text
     },
     isApproved() {
-      // Check store first then local user object
-      const appStore = useAppStore()
-      if (appStore.canSuggest) return true
-      // Check for explicit callout access role
-      const roles = this.currentUser?.roles ?? []
-      if (roles.some(r => r.slug === 'platform_admin' || r.slug === 'duty_officer' || r.slug === 'callout_access')) return true
-      return false
+      // Mirrors CalloutController::store, which refuses anyone without an approved
+      // club membership. Roles don't exempt anyone: new users get callout_access by
+      // default, and letting that through here walked unconfirmed users through the
+      // whole wizard only to be rejected on submit.
+      const clubs = useAppStore().user?.clubs ?? []
+      return clubs.some(c => c.status === 'approved')
     }
   },
   watch: {

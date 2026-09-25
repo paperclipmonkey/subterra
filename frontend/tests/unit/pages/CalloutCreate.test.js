@@ -219,6 +219,40 @@ describe('Callout Wizard', () => {
         // OR simpler: check for specific error UI element
     })
 
+    it.each([
+        ['no club', []],
+        ['a club membership still pending', [{ status: 'pending' }]],
+    ])('blocks the wizard for a user with %s, even with the default callout_access role', async (_label, clubs) => {
+        const originalClubs = mockUserMe.clubs
+        mockUserMe.clubs = clubs
+        try {
+            const wrapper = mount(CalloutIndex, {
+                global: {
+                    stubs: {
+                        'v-container': { template: '<div><slot /></div>' },
+                        'v-row': { template: '<div><slot /></div>' },
+                        'v-col': { template: '<div><slot /></div>' },
+                        'v-card': { template: '<div><slot /></div>' },
+                        'v-card-text': { template: '<div><slot /></div>' },
+                        'v-alert': { template: '<div class="v-alert"><slot /></div>' },
+                        'v-stepper': { template: '<div class="v-stepper"><slot /></div>' },
+                        'v-btn': { props: ['to'], template: '<a class="btn" :href="to"><slot /></a>' },
+                        'v-progress-circular': true,
+                        'v-icon': true,
+                    },
+                }
+            })
+            await flushPromises()
+
+            expect(mockUserMe.roles).toContainEqual({ slug: 'callout_access' })
+            expect(wrapper.text()).toContain('Member Access Only')
+            expect(wrapper.find('.v-stepper').exists()).toBe(false)
+            expect(wrapper.find('.btn[href="/waitlist"]').exists()).toBe(true)
+        } finally {
+            mockUserMe.clubs = originalClubs
+        }
+    })
+
     it('calculates callout duration hint correctly', async () => {
         const wrapper = mount(CalloutIndex, {
             global: {
