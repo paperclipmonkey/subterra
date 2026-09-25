@@ -36,7 +36,7 @@
           size="small"
         >
           <v-tooltip activator="parent" location="top">
-            {{ !appStore.canSuggest ? 'Your account must be approved' : 'You must confirm your club membership' }} to suggest edits
+            Confirm your club membership to suggest edits
           </v-tooltip>
           Suggest Edit
         </v-btn>
@@ -229,7 +229,7 @@
                     >
                       Suggest Edit
                       <v-tooltip activator="parent" location="top">
-                        Your account must be approved to suggest edits
+                        Confirm your club membership to suggest edits
                       </v-tooltip>
                     </v-btn>
                   </div>
@@ -358,7 +358,7 @@
                   <div class="text-center pa-4">
                     <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
                     <div class="text-h6 text-grey-darken-1">Location Locked</div>
-                    <div class="text-caption text-grey-darken-1">Confirm your club membership to view cave locations and maps</div>
+                    <div class="text-caption text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
                   </div>
                 </div>
               </div>
@@ -489,6 +489,7 @@
                   <div class="text-body-1 font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
                   <div class="text-caption text-grey-darken-1 mb-4">
                     References, surveys, and technical documents are available to approved club members.
+                    <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view them.
                   </div>
                 </div>
 
@@ -634,7 +635,7 @@
             <div class="text-center pa-4">
               <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
               <div class="text-h6 text-grey-darken-1">Location Locked</div>
-              <div class="text-caption text-grey-darken-1">Confirm your club membership to view cave locations and maps</div>
+              <div class="text-caption text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
             </div>
           </div>
           <v-card-text>
