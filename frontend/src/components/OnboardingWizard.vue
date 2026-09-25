@@ -264,7 +264,7 @@
               <v-avatar color="teal" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiAccountSearchOutline" />
               </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">Who can add you?</h2>
+              <h2 class="text-h5 font-weight-bold mb-2">Who can find you?</h2>
               <p class="text-body-2 text-medium-emphasis">
                 This controls whether you appear in search when other cavers build trip reports and safety callouts.
               </p>
