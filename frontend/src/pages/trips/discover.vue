@@ -68,7 +68,7 @@
     <div class="bottom-strip">
       <div class="strip-header">
         <span class="strip-title">Recent Trips</span>
-        <v-btn variant="text" density="compact" size="small" to="/trips" class="text-none text-primary see-all-btn">
+        <v-btn variant="text" density="compact" size="small" :to="ALL_TRIPS_ROUTE" class="text-none text-primary see-all-btn">
           See all →
         </v-btn>
       </div>
@@ -107,10 +107,10 @@
         </div>
 
         <!-- See-all card -->
-        <div class="mini-card-see-all" @click="$router.push('/trips')">
+        <router-link :to="ALL_TRIPS_ROUTE" class="mini-card-see-all">
           <v-icon size="32" :icon="mdiArrowRight" color="primary" />
           <div class="mini-see-all-label">All trips</div>
-        </div>
+        </router-link>
       </div>
     </div>
   </div>
@@ -137,6 +137,9 @@ import { useAppStore } from '@/stores/app'
 
 const router = useRouter()
 const appStore = useAppStore()
+
+// Every trip the viewer can see, not just their own logbook (see TripList).
+const ALL_TRIPS_ROUTE = { path: '/trips', query: { user_id: 'all' } }
 
 // Mirrors the API: entrance coordinates only come back for approved club members.
 const canSeeMap = computed(() => !!appStore.user?.clubs?.some(c => c.status === 'approved'))
@@ -713,6 +716,7 @@ onUnmounted(() => {
 
 /* ── See-all card ────────────────────────────────────── */
 .mini-card-see-all {
+  text-decoration: none;
   flex-shrink: 0;
   width: 80px;
   height: 100px;
