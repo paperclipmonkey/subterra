@@ -64,9 +64,21 @@
                       <v-list-item v-bind="slotProps" :subtitle="item.raw.email" />
                     </template>
                   </v-autocomplete>
-                  <v-list v-if="clubMembers.length > 0" lines="one">
+                  <v-text-field
+                    v-if="clubMembers.length > 0"
+                    v-model="memberSearch"
+                    :prepend-inner-icon="mdiMagnify"
+                    label="Search members"
+                    placeholder="Name or email"
+                    density="compact"
+                    variant="outlined"
+                    clearable
+                    hide-details
+                    class="mt-2 member-search"
+                  />
+                  <v-list v-if="filteredMembers.length > 0" lines="one">
                     <v-list-item
-                      v-for="member in clubMembers"
+                      v-for="member in filteredMembers"
                       :key="member.id"
                       :title="member.name"
                       :subtitle="member.email"
@@ -84,6 +96,7 @@
                       </template>
                     </v-list-item>
                   </v-list>
+                  <p v-else-if="clubMembers.length > 0" class="text-grey mt-4">No members match "{{ memberSearch }}".</p>
                   <p v-else class="text-grey mt-4">No approved members yet.</p>
                 </v-col>
               </v-row>
@@ -177,7 +190,7 @@
 </template>
 
 <script setup>
-import { mdiCheck, mdiClose, mdiDelete } from '@mdi/js'
+import { mdiCheck, mdiClose, mdiDelete, mdiMagnify } from '@mdi/js'
 
 // This script is adapted from the admin/clubs.vue modal logic, but expects props for clubSlug and visibility
 import { ref, computed, watch, onMounted } from 'vue'
@@ -214,6 +227,17 @@ const rules = {
 }
 const editedClub = ref({})
 const clubMembers = ref([])
+
+// Filters the members list (by name or email) so admins can find someone to
+// remove or promote in a large club.
+const memberSearch = ref('')
+const filteredMembers = computed(() => {
+  const query = (memberSearch.value || '').trim().toLowerCase()
+  if (!query) return clubMembers.value
+  return clubMembers.value.filter(m =>
+    (m.name || '').toLowerCase().includes(query) || (m.email || '').toLowerCase().includes(query)
+  )
+})
 const pendingMembers = ref([])
 const availableUsers = ref([])
 const selectedUserToAdd = ref(null)
@@ -256,6 +280,7 @@ const fetchClubMembers = async () => {
     email: m.email,
     is_club_admin: m.is_club_admin || false
   }))
+  memberSearch.value = ''
 
   memberDataChanged.value = false
 }
