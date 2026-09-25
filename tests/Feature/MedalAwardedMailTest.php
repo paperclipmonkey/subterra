@@ -94,7 +94,8 @@ class MedalAwardedMailTest extends TestCase
 
         $rendered = (new MedalAwardedMail(User::factory()->create(), $medal))->build()->render();
 
-        $this->assertStringContainsString('<strong>First Trip</strong>', $rendered);
+        // The mail CSS inliner adds a style attribute, so match the element loosely.
+        $this->assertMatchesRegularExpression('#<strong\b[^>]*>First Trip</strong>#', $rendered);
         $this->assertStringNotContainsString('**First Trip**', $rendered);
     }
 
@@ -109,6 +110,8 @@ class MedalAwardedMailTest extends TestCase
 
         $rendered = (new MedalAwardedMail(User::factory()->create(), $medal))->build()->render();
 
-        $this->assertStringNotContainsString('href="https://evil.example', $rendered);
+        // No real link, from either Markdown or raw HTML; the name shows as typed.
+        $this->assertDoesNotMatchRegularExpression('#<a\b[^>]*href="https://evil\.example#', $rendered);
+        $this->assertStringContainsString('[Claim your prize](https://evil.example) &lt;a href=', $rendered);
     }
 }
