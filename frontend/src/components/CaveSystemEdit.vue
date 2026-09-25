@@ -35,9 +35,13 @@
       <v-row>
         <v-col>
           <v-card-text>
-            <v-btn type="submit" color="primary" block size="large" :loading="loading">
+            <v-btn type="submit" color="primary" block size="large" :loading="loading"
+                   :disabled="!appStore.user?.is_admin && !hasSuggestableChanges">
               {{ appStore.user?.is_admin ? 'Save' : 'Suggest Changes' }}
             </v-btn>
+            <p v-if="!appStore.user?.is_admin && !hasSuggestableChanges" class="text-caption text-medium-emphasis text-center mt-2 mb-0">
+              Change the name or description, or add or remove files, to suggest an edit.
+            </p>
           </v-card-text>
         </v-col>
       </v-row>
@@ -259,6 +263,20 @@ const deleteLoading = ref(false)
 
 const initialSystemState = ref(null)
 
+// What a suggested edit actually carries: the backend's suggestion whitelist
+// keeps the name, description and file additions/removals and drops the rest
+// (length, slug, references...), so changes to those alone made an empty
+// suggestion.
+const text = (val) => (val == null ? '' : String(val))
+const suggestableSnapshot = (s) => JSON.stringify({ name: text(s.name), description: text(s.description) })
+const initialSuggestable = ref(null)
+const hasSuggestableChanges = computed(() => {
+  if (!initialSuggestable.value) return false
+  return suggestableSnapshot(cavesystem.value) !== initialSuggestable.value ||
+    newFiles.value.length > 0 ||
+    filesToDelete.value.length > 0
+})
+
 const isDirty = computed(() => {
   if (isSaved.value) return false
   if (!initialSystemState.value) return false
@@ -312,6 +330,7 @@ const load = async () => {
     cavesystem.value = response.data.data
     cavesystem.value.files = cavesystem.value.files || []
     initialSystemState.value = JSON.stringify(cavesystem.value)
+    initialSuggestable.value = suggestableSnapshot(cavesystem.value)
     filesToDelete.value = []
     newFiles.value = []
     updatedFiles.value = []
