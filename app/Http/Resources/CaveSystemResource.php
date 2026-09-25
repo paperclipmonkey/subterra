@@ -64,6 +64,7 @@ class CaveSystemResource extends JsonResource
             'catchment_id' => $this->catchment_id,
             'files' => $files,
             'annotation' => $this->whenLoaded('annotation'),
+            'map_overlays' => CaveSystemMapOverlayResource::collection($this->whenLoaded('mapOverlays')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
