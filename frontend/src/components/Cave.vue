@@ -16,16 +16,6 @@
         >
           {{ appStore.user?.is_admin ? 'Edit Cave' : 'Suggest Edit' }}
         </v-btn>
-        <v-chip
-          v-if="appStore.user?.is_admin && pendingSuggestionsCount > 0"
-          color="warning"
-          size="small"
-          variant="tonal"
-          class="mr-2 cursor-pointer"
-          :to="`/admin/suggested-edits?cave_id=${cave.id}`"
-        >
-          {{ pendingSuggestionsCount }} pending {{ pendingSuggestionsCount === 1 ? 'edit' : 'edits' }}
-        </v-chip>
         <v-btn
           v-else-if="appStore.user"
           variant="text"
@@ -51,6 +41,19 @@
         >
           Log in to Suggest Edit
         </v-btn>
+        <!-- Kept outside the edit-button v-if chain above: sitting between those
+             buttons, the chain's v-else-if bound to this chip instead, so every
+             non-admin also got the disabled "Suggest Edit" next to the real one. -->
+        <v-chip
+          v-if="appStore.user?.is_admin && pendingSuggestionsCount > 0"
+          color="warning"
+          size="small"
+          variant="tonal"
+          class="mr-2 cursor-pointer"
+          :to="`/admin/suggested-edits?cave_id=${cave.id}`"
+        >
+          {{ pendingSuggestionsCount }} pending {{ pendingSuggestionsCount === 1 ? 'edit' : 'edits' }}
+        </v-chip>
       </v-col>
     </v-row>
 

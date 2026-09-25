@@ -30,8 +30,9 @@ vi.mock('vuetify', () => ({
 
 // Mock Stores
 const user = { id: 1, is_admin: false }
+const storeFlags = { canSuggest: false }
 vi.mock('@/stores/app', () => ({
-    useAppStore: () => ({ user })
+    useAppStore: () => ({ user, get canSuggest () { return storeFlags.canSuggest } })
 }))
 vi.mock('@/stores/collections', () => ({
     useCollectionStore: () => ({})
@@ -553,6 +554,67 @@ describe('Cave Component', () => {
             wrapper.vm.activeTab = 'routes'
             await wrapper.vm.$nextTick()
             expect(wrapper.vm.activeTab).toBe('overview')
+        })
+    })
+
+    describe('Suggest Edit button', () => {
+        const stubs = {
+            'v-container': { template: '<div><slot /></div>' },
+            'v-row': { template: '<div><slot /></div>' },
+            'v-col': { template: '<div><slot /></div>' },
+            'v-card': { template: '<div><slot /></div>' },
+            'v-img': { template: '<div><slot /></div>' },
+            'v-tabs': { template: '<div><slot /></div>' },
+            'v-tab': { template: '<div><slot /></div>' },
+            'v-window': { template: '<div><slot /></div>' },
+            'v-window-item': { template: '<div><slot /></div>' },
+            'v-alert': { template: '<div><slot /></div>' },
+            'v-btn': { props: ['disabled'], template: '<button :disabled="disabled"><slot /></button>' },
+            'v-icon': true, 'v-spacer': true, 'v-badge': true, 'v-divider': true,
+            'v-chip-group': true, 'v-chip': true, 'v-tooltip': true, 'v-list': true, 'v-list-item': true,
+            'v-list-item-title': true, 'v-list-item-subtitle': true, 'v-progress-circular': true, 'v-avatar': true,
+            'v-dialog': true, 'v-card-title': true, 'v-card-text': true, 'v-card-actions': true, 'v-textarea': true,
+            'v-form': true, 'v-snackbar': true, 'CaveTripListItem': true, 'CorrectionModal': true,
+            'CaveWeather': true, 'MarkdownRenderer': true, 'MediaViewModal': true, 'RouteList': true,
+        }
+
+        const mountAs = async ({ admin = false, canSuggest = true } = {}) => {
+            user.is_admin = admin
+            storeFlags.canSuggest = canSuggest
+            api.get.mockResolvedValue({ data: { data: mockCave } })
+            const wrapper = mount(Cave, { global: { stubs } })
+            await new Promise(resolve => setTimeout(resolve, 0))
+            await wrapper.vm.$nextTick()
+            return wrapper
+        }
+
+        const disabledSuggestEdits = (wrapper) =>
+            wrapper.findAll('button[disabled]').filter(b => b.text().includes('Suggest Edit'))
+
+        afterEach(() => {
+            user.is_admin = false
+            storeFlags.canSuggest = false
+        })
+
+        it('shows only the working button to a confirmed member', async () => {
+            // Regression: the disabled button's v-else-if was bound to the admin
+            // "pending edits" chip, so it rendered alongside the real button.
+            const wrapper = await mountAs({ canSuggest: true })
+
+            expect(disabledSuggestEdits(wrapper)).toHaveLength(0)
+            expect(wrapper.findAll('button:not([disabled])').some(b => b.text() === 'Suggest Edit')).toBe(true)
+        })
+
+        it('shows no disabled Suggest Edit to an admin', async () => {
+            const wrapper = await mountAs({ admin: true, canSuggest: true })
+
+            expect(disabledSuggestEdits(wrapper)).toHaveLength(0)
+        })
+
+        it('shows the disabled button to an unconfirmed user', async () => {
+            const wrapper = await mountAs({ canSuggest: false })
+
+            expect(disabledSuggestEdits(wrapper).length).toBeGreaterThan(0)
         })
     })
 })
