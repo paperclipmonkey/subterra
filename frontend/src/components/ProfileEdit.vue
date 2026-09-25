@@ -497,6 +497,9 @@ const requestToJoinClub = async () => {
     notifications.showSuccess('Sent to the club — they will confirm your membership.')
     // Re-fetch profile data to show the new pending request
     await fetchProfile()
+    // And the signed-in user, so the header banner switches to "awaiting
+    // confirmation" and the app starts watching for the club's approval.
+    await appStore.getUser(true)
 
   } catch (error) {
     console.error("Error requesting to join club:", error)
