@@ -117,7 +117,7 @@
           </v-card-text>
         </v-window-item>
 
-        <!-- Join a Club -->
+        <!-- Confirm club membership -->
         <v-window-item value="club">
           <v-card-text class="pa-8">
             <div class="text-center mb-6">
