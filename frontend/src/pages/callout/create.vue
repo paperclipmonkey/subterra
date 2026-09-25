@@ -44,7 +44,7 @@
               <v-icon size="48" color="grey" class="mb-2" :icon="mdiShieldLock" />
               <h3 class="text-h6 mb-2">Member Access Only</h3>
               <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
-              <v-btn color="primary" :to="`/profile/${currentUser?.id}`">Join a Club</v-btn>
+              <v-btn color="primary" to="/waitlist">Confirm Club Membership</v-btn>
             </div>
 
             <div v-else :class="{ 'disabled-content': officerError }">

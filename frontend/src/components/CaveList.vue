@@ -49,6 +49,7 @@
             size="small"
             class="flex-shrink-0 map-page__chip map-page__chip--active"
             variant="flat"
+            :title="tagDescriptions[tag]"
             @click:close="toggleTag(tag)"
           >
             {{ tag }}
@@ -155,6 +156,11 @@ let headerResizeObserver = null
 const showFilterByTagModal = ref(false)
 const targetCategory = ref(null)
 const tagsAvailable = computed(() => tagStore.tags)
+// Tag name -> description, so the active-filter chips can show the same hover
+// text as the chips in the filter modal.
+const tagDescriptions = computed(() => Object.fromEntries(
+  Object.values(tagsAvailable.value || {}).flat().map(t => [t.tag, t.description])
+))
 
 // Exploring a long cave list means opening a cave and coming straight back.
 // Remember how far down the list the user had scrolled and how many pages they

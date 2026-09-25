@@ -548,9 +548,10 @@ watch(() => route.params.id, (id, prev) => {
 })
 
 // New users land here underneath the global OnboardingWizard dialog (see App.vue), which
-// saves their name/bio/etc. and closes itself without navigating anywhere. Without this,
-// the form would keep showing the empty profile it fetched before the wizard ran. Refetch
-// once the wizard marks onboarding complete so the form reflects what was just saved.
+// saves their name/bio/etc. and then sends them on to /caves. Should they come back here
+// (or that navigation not happen), the form would otherwise keep showing the empty profile
+// it fetched before the wizard ran. Refetch once the wizard marks onboarding complete so the
+// form reflects what was just saved.
 watch(() => appStore.user?.onboarding_completed_at, (completedAt, prev) => {
   if (completedAt && !prev) fetchProfile()
 })

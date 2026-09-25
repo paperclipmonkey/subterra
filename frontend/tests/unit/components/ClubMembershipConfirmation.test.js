@@ -97,5 +97,29 @@ describe('ClubMembershipConfirmation', () => {
 
         // Assert event was emitted
         expect(wrapper.emitted()).toHaveProperty('membershipConfirmed')
+
+        // The selection is cleared, so the field doesn't show the submitted
+        // club ids as bare numbers once they drop out of the items list.
+        expect(wrapper.vm.selectedClub).toEqual([])
+    })
+
+    it('keeps the selection when a join request fails so the user can retry', async () => {
+        const wrapper = mount(ClubMembershipConfirmation, {
+            global: globalConfig,
+            props: {
+                user: { id: 1, name: 'John Doe' },
+                pendingClubs: []
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+
+        wrapper.vm.selectedClub = [1]
+        api.post.mockRejectedValueOnce({ response: { data: { message: 'Nope' } } })
+
+        await wrapper.vm.submit()
+
+        expect(wrapper.vm.selectedClub).toEqual([1])
+        expect(wrapper.emitted()).not.toHaveProperty('membershipConfirmed')
     })
 })

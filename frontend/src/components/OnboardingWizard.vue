@@ -46,8 +46,20 @@
                 color="primary"
                 :rules="nameRules"
                 :prepend-inner-icon="mdiAccountOutline"
-                class="mb-4"
+                hide-details="auto"
               />
+              <!-- Directly under the name field, since it's about the name. -->
+              <v-alert
+                color="warning"
+                variant="tonal"
+                :icon="mdiAlertOutline"
+                density="compact"
+                class="mt-2 mb-6 text-left"
+              >
+                <div class="text-caption">
+                  Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
+                </div>
+              </v-alert>
               <!-- Asked here, before the findability step, so an under-18 account
                    arrives at that step with the safer default already selected. -->
               <v-text-field
@@ -64,17 +76,6 @@
                 class="mb-4"
               />
             </v-form>
-            <v-alert
-              color="warning"
-              variant="tonal"
-              :icon="mdiAlertOutline"
-              density="compact"
-              class="mt-4 text-left"
-            >
-              <div class="text-caption">
-                Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
-              </div>
-            </v-alert>
           </v-card-text>
         </v-window-item>
 
@@ -116,7 +117,7 @@
           </v-card-text>
         </v-window-item>
 
-        <!-- Join a Club -->
+        <!-- Confirm club membership -->
         <v-window-item value="club">
           <v-card-text class="pa-8">
             <div class="text-center mb-6">
@@ -263,7 +264,7 @@
               <v-avatar color="teal" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiAccountSearchOutline" />
               </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">Who can add you?</h2>
+              <h2 class="text-h5 font-weight-bold mb-2">Who can find you?</h2>
               <p class="text-body-2 text-medium-emphasis">
                 This controls whether you appear in search when other cavers build trip reports and safety callouts.
               </p>
@@ -403,11 +404,13 @@
 <script setup>
 import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCakeVariantOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiEarth, mdiEmailOutline, mdiInformationOutline, mdiMagnify, mdiTagOutline, mdiTextBoxOutline, mdiTrophyOutline } from '@mdi/js'
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
 import PhoneVerify from '@/components/PhoneVerify.vue'
 
 const store = useAppStore()
+const router = useRouter()
 const visible = ref(false)
 const step = ref(1)
 const loading = ref(false)
@@ -700,6 +703,11 @@ const nextStep = async () => {
       await store.getUser(true) // Refresh user data to update clubs/photo status across the app
       store.user.onboarding_completed_at = now
       visible.value = false
+      // Nameless new users are parked on their profile edit page while the
+      // wizard runs (see router/guard.js). Leaving them there once it closes
+      // looks like a second "save your profile" step, so send them somewhere
+      // worth exploring instead.
+      router.push('/caves')
     } catch (error) {
       console.error('Error completing onboarding:', error)
     } finally {

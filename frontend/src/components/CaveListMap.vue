@@ -6,7 +6,7 @@
       <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
         Cave locations and map features are exclusive to approved club members.
       </p>
-      <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
+      <v-btn color="primary" to="/waitlist">Confirm Club Membership</v-btn>
     </div>
     <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15" @map:load="onMapLoad" />
   </div>
