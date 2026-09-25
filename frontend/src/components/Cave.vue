@@ -521,8 +521,7 @@
                       size="small"
                       color="secondary"
                       variant="tonal"
-                      style="cursor: pointer;"
-                      @click="$router.push({ path: '/caves', query: { tags: tag.tag, view: 'list' } })"
+                      :to="{ path: '/caves', query: { tags: tag.tag, view: 'list' } }"
                     >
                       {{ tag.tag }}
                     </v-chip>
@@ -699,8 +698,7 @@
               size="small"
               color="secondary"
               variant="tonal"
-              style="cursor: pointer;"
-              @click="$router.push({ path: '/caves', query: { tags: tag.tag, view: 'list' } })"
+              :to="{ path: '/caves', query: { tags: tag.tag, view: 'list' } }"
             >
               {{ tag.tag }}
             </v-chip>
