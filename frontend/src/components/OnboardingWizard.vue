@@ -46,8 +46,20 @@
                 color="primary"
                 :rules="nameRules"
                 :prepend-inner-icon="mdiAccountOutline"
-                class="mb-4"
+                hide-details="auto"
               />
+              <!-- Directly under the name field, since it's about the name. -->
+              <v-alert
+                color="warning"
+                variant="tonal"
+                :icon="mdiAlertOutline"
+                density="compact"
+                class="mt-2 mb-6 text-left"
+              >
+                <div class="text-caption">
+                  Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
+                </div>
+              </v-alert>
               <!-- Asked here, before the findability step, so an under-18 account
                    arrives at that step with the safer default already selected. -->
               <v-text-field
@@ -64,17 +76,6 @@
                 class="mb-4"
               />
             </v-form>
-            <v-alert
-              color="warning"
-              variant="tonal"
-              :icon="mdiAlertOutline"
-              density="compact"
-              class="mt-4 text-left"
-            >
-              <div class="text-caption">
-                Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
-              </div>
-            </v-alert>
           </v-card-text>
         </v-window-item>
 
