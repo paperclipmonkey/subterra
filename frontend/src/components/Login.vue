@@ -3,16 +3,16 @@
     <v-row no-gutters class="login-hero-row">
       <!-- Left Column: Login Form -->
       <v-col ref="signInColumn" cols="12" md="6" lg="5" class="d-flex align-center justify-center bg-white fill-height position-relative">
-        <div class="login-container pa-6 pa-md-10">
+        <div class="login-container pa-6 pa-md-8">
           <!-- Logo & Brand -->
-          <div class="text-center mb-8">
-            <v-img src="@/assets/subterra-logo.png" height="160" contain class="mb-4" />
+          <div class="text-center mb-6">
+            <v-img src="@/assets/subterra-logo.png" height="96" contain class="mb-3" />
             <h1 class="text-h3 font-weight-bold primary--text mb-2">Subterra</h1>
             <p class="text-subtitle-1 grey--text text--darken-1">The Community Caving Platform</p>
           </div>
 
           <!-- BCA Requirement Notice -->
-          <v-alert color="amber darken-4" variant="tonal" :icon="mdiShieldAccount" class="mb-8" border="start"
+          <v-alert color="amber darken-4" variant="tonal" :icon="mdiShieldAccount" class="mb-6" border="start"
                    density="comfortable">
             <div class="text-body-2 font-weight-medium">
               Member Access Only
@@ -57,20 +57,22 @@
               </div>
             </div>
 
-            <v-btn href="/api/google/redirect" block size="large" color="white" class="google-btn text-none mb-6"
+            <v-btn href="/api/google/redirect" block size="large" color="white" class="google-btn text-none mb-5"
                    elevation="2" :disabled="!agreedToToS">
               <img src="/google-signin.svg" height="24" class="mr-3">
               Sign in with Google
             </v-btn>
 
-            <div class="d-flex align-center mb-6">
+            <div class="d-flex align-center mb-5">
               <v-divider />
               <span class="mx-4 text-caption grey--text">OR</span>
               <v-divider />
             </div>
 
             <!-- Email Login -->
-            <v-card v-if="!emailSent" elevation="0" class="transparent">
+            <!-- A plain div, not a v-card: v-card clips overflow, which cut off the
+                 outlined field's floating label above its top border. -->
+            <div v-if="!emailSent">
               <v-alert v-if="showError" type="error" variant="tonal" class="mb-4" closable density="compact"
                        @click:close="showError = false">
                 {{ errorMessage }}
@@ -91,7 +93,7 @@
                 </span>
                 <span v-else class="text-caption grey--text">We'll send you a tailored magic link to log in.</span>
               </div>
-            </v-card>
+            </div>
 
             <!-- Email Sent Success -->
             <v-card v-else class="text-center py-4 bg-green-lighten-5" variant="flat">
@@ -106,25 +108,11 @@
             </v-card>
           </div>
 
-          <!-- Footer -->
-          <div class="text-center mt-auto pt-8">
-            <div class="d-flex justify-center gap-4 mb-2">
-              <router-link to="/pages/terms-of-service" class="text-caption text-decoration-none grey--text">Terms</router-link>
-              <span class="text-caption grey--text">•</span>
-              <router-link to="/pages/privacy-policy" class="text-caption text-decoration-none grey--text">Privacy</router-link>
-              <span class="text-caption grey--text">•</span>
-              <a href="https://status.subterra.world/" target="_blank" rel="noopener" class="text-caption text-decoration-none grey--text">Status</a>
-            </div>
-            <div class="text-caption grey--text text--lighten-1">
-              Subterra is <a href="https://github.com/paperclipmonkey/subterra"
-                             class="text-decoration-none primary--text">Open Source</a>. Go underground with a plan.
-            </div>
-          </div>
         </div>
       </v-col>
 
       <!-- Right Column: Hero Image & Features -->
-      <v-col cols="12" md="6" lg="7" class="d-none d-md-flex position-relative align-end pa-10 overflow-hidden">
+      <v-col cols="12" md="6" lg="7" class="hero-column d-none d-md-flex position-relative align-end pa-10">
         <!-- Background Slideshow -->
         <div class="hero-slideshow">
           <div v-for="(image, index) in heroImages" :key="index" class="hero-slide"
@@ -135,7 +123,7 @@
         <div class="hero-overlay" />
 
         <!-- Hero Content -->
-        <div class="hero-content position-relative z-index-2 text-white mw-600">
+        <div class="hero-content z-index-2 text-white mw-600">
           <h2 class="text-h2 font-weight-black mb-4 text-shadow">
             Explore the<br>Depths Together
           </h2>
@@ -188,6 +176,21 @@
         </div>
       </v-col>
     </v-row>
+
+    <!-- Footer -->
+    <footer class="login-footer text-center py-6 px-4">
+      <div class="d-flex justify-center ga-2 mb-2">
+        <router-link to="/pages/terms-of-service" class="text-caption text-decoration-none grey--text">Terms</router-link>
+        <span class="text-caption grey--text">•</span>
+        <router-link to="/pages/privacy-policy" class="text-caption text-decoration-none grey--text">Privacy</router-link>
+        <span class="text-caption grey--text">•</span>
+        <a href="https://status.subterra.world/" target="_blank" rel="noopener" class="text-caption text-decoration-none grey--text">Status</a>
+      </div>
+      <div class="text-caption grey--text text--lighten-1">
+        Subterra is <a href="https://github.com/paperclipmonkey/subterra"
+                       class="text-decoration-none primary--text">Open Source</a>. Go underground with a plan.
+      </div>
+    </footer>
   </v-container>
 </template>
 
@@ -396,7 +399,11 @@ onUnmounted(() => {
   transform: translateY(-1px);
 }
 
-/* Removed .hero-column background-image */
+/* clip, not hidden: overflow: hidden makes the column a scroll container,
+   which stops the sticky .hero-content from tracking the viewport. */
+.hero-column {
+  overflow: clip;
+}
 
 .hero-slideshow {
   position: absolute;
@@ -439,6 +446,14 @@ onUnmounted(() => {
   height: 100%;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.2) 100%);
   z-index: 1;
+}
+
+/* On short screens the sign-in column is taller than the viewport, which
+   pushed the bottom-aligned hero text below the fold. Sticky keeps it pinned
+   to the bottom of the screen until the column itself scrolls past. */
+.hero-content {
+  position: sticky;
+  bottom: 40px;
 }
 
 .z-index-2 {
@@ -492,5 +507,10 @@ onUnmounted(() => {
 
 .feature-card__lock {
   color: rgba(var(--v-theme-on-surface), 0.6);
+}
+
+.login-footer {
+  background-color: rgb(var(--v-theme-background));
+  border-top: 1px solid rgba(24, 38, 31, 0.08);
 }
 </style>
