@@ -404,11 +404,13 @@
 <script setup>
 import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCakeVariantOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiEarth, mdiEmailOutline, mdiInformationOutline, mdiMagnify, mdiTagOutline, mdiTextBoxOutline, mdiTrophyOutline } from '@mdi/js'
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
 import PhoneVerify from '@/components/PhoneVerify.vue'
 
 const store = useAppStore()
+const router = useRouter()
 const visible = ref(false)
 const step = ref(1)
 const loading = ref(false)
@@ -701,6 +703,11 @@ const nextStep = async () => {
       await store.getUser(true) // Refresh user data to update clubs/photo status across the app
       store.user.onboarding_completed_at = now
       visible.value = false
+      // Nameless new users are parked on their profile edit page while the
+      // wizard runs (see router/guard.js). Leaving them there once it closes
+      // looks like a second "save your profile" step, so send them somewhere
+      // worth exploring instead.
+      router.push('/caves')
     } catch (error) {
       console.error('Error completing onboarding:', error)
     } finally {

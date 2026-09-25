@@ -15,6 +15,11 @@ vi.mock('@/plugins/api', () => ({
     }
 }))
 
+const mockRouterPush = vi.fn()
+vi.mock('vue-router', () => ({
+    useRouter: () => ({ push: mockRouterPush }),
+}))
+
 // Mock App Store
 const mockUser = {
     id: 1,
@@ -126,6 +131,18 @@ describe('OnboardingWizard.vue', () => {
 
         // The timestamp should be a valid date
         expect(new Date(sentTimestamp).toString()).not.toBe('Invalid Date')
+    })
+
+    it('navigates to the caves page once onboarding is complete', async () => {
+        const wrapper = mount(OnboardingWizard, mountOptions)
+
+        wrapper.vm.step = wrapper.vm.totalSteps
+        wrapper.vm.visible = true
+        await wrapper.vm.$nextTick()
+
+        await wrapper.vm.nextStep()
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/caves')
     })
 
     it('sends name and date of birth when completing step 1', async () => {
