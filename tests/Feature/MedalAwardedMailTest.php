@@ -10,6 +10,7 @@ use App\Models\User;
 use Database\Seeders\MedalSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -72,5 +73,42 @@ class MedalAwardedMailTest extends TestCase
 
         $this->assertStringNotContainsString('not-rasterised-yet', $rendered);
         $this->assertStringContainsString('Ghost Badge', $rendered);
+    }
+
+    /** @return array<string, array{?string}> */
+    public static function medalImages(): array
+    {
+        return [
+            'with an image' => ['https://cdn.example/medals/first-trip.png'],
+            'without an image' => [null],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('medalImages')]
+    public function the_award_email_shows_the_medal_name_in_bold(?string $imagePath): void
+    {
+        // Regression: "**name**" straight after the <img> line was swallowed into
+        // the image's HTML block, so the asterisks were sent literally.
+        $medal = Medal::factory()->create(['name' => 'First Trip', 'image_path' => $imagePath]);
+
+        $rendered = (new MedalAwardedMail(User::factory()->create(), $medal))->build()->render();
+
+        $this->assertStringContainsString('<strong>First Trip</strong>', $rendered);
+        $this->assertStringNotContainsString('**First Trip**', $rendered);
+    }
+
+    #[Test]
+    #[DataProvider('medalImages')]
+    public function a_hostile_medal_name_cannot_inject_a_link_into_the_award_email(?string $imagePath): void
+    {
+        $medal = Medal::factory()->create([
+            'name' => '[Claim your prize](https://evil.example) <a href="https://evil.example">x</a>',
+            'image_path' => $imagePath,
+        ]);
+
+        $rendered = (new MedalAwardedMail(User::factory()->create(), $medal))->build()->render();
+
+        $this->assertStringNotContainsString('href="https://evil.example', $rendered);
     }
 }
