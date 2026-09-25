@@ -78,13 +78,17 @@
       </div>
 
       <div v-else ref="cardsScrollRef" class="cards-scroll">
-        <div
+        <!-- With the map, a card flies to its trip. Without it (unconfirmed users)
+             there is nothing to fly to, so the card is a plain link to the trip. -->
+        <component
+          :is="canSeeMap ? 'div' : 'router-link'"
           v-for="trip in recentTrips"
           :key="trip.id"
+          :to="canSeeMap ? undefined : `/trips/${trip.id}`"
           :data-trip-id="trip.id"
           class="mini-card"
           :class="{ 'mini-card--selected': selectedTripId === trip.id }"
-          @click="selectTrip(trip)"
+          @click="canSeeMap && selectTrip(trip)"
         >
           <div
             class="mini-card-img"
@@ -104,7 +108,7 @@
             </div>
           </div>
           <div class="mini-card-date">{{ formatDate(trip.start_time) }}</div>
-        </div>
+        </component>
 
         <!-- See-all card -->
         <router-link :to="ALL_TRIPS_ROUTE" class="mini-card-see-all">
@@ -624,6 +628,9 @@ onUnmounted(() => {
 
 /* ── Mini trip card ──────────────────────────────────── */
 .mini-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
   flex-shrink: 0;
   width: 120px;
   cursor: pointer;
