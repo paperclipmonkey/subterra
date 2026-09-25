@@ -148,7 +148,8 @@ const normaliseMedia = (media) => {
 const editableSnapshot = (c) => JSON.stringify({
   name: text(c.name),
   slug: text(c.slug),
-  description: text(c.description),
+  // Trimmed: Milkdown serialises with a trailing newline once touched.
+  description: text(c.description).trim(),
   access_info: text(c.access_info),
   location_name: text(c.location_name),
   location_country: text(c.location_country),

@@ -22,34 +22,24 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ClubMembershipConfirmation from './ClubMembershipConfirmation.vue'
-import { api } from '@/plugins/api'
+import { useAppStore } from '@/stores/app'
 
 const router = useRouter()
+const appStore = useAppStore()
 const pendingClubs = ref([])
 const user = ref({})
 
+// Refresh the user in the shared store, not a local copy: the header banner
+// reads the store, and a new pending request there is what starts the app-wide
+// approval watcher (useClubApprovalWatcher), which takes over from the old
+// 5-second polling loop that lived here and never stopped.
 const fetchPendingClubs = async () => {
-  try {
-    const response = await api.get('/api/users/me')
-    const userData = response.data.data
-    user.value = userData
-    // Filter clubs with status 'pending'
-    pendingClubs.value = (userData.clubs || []).filter(c => c.status === 'pending')
-    let approvedClubs = (userData.clubs || []).filter(c => c.status === 'approved')
+  const userData = await appStore.getUser(true)
+  user.value = userData || {}
+  pendingClubs.value = (userData?.clubs || []).filter(c => c.status === 'pending')
 
-    if (approvedClubs.length > 0) {
-      // If we have an approved club, redirect to /trips
-      router.push('/trips')
-    }
-
-    // If there are pending clubs, refresh the list every 5 seconds until a club is approved, then redirect
-    if (pendingClubs.value.length) {
-      setTimeout(() => {
-        fetchPendingClubs()
-      }, 5000)
-    }
-  } catch (e) {
-    pendingClubs.value = []
+  if ((userData?.clubs || []).some(c => c.status === 'approved')) {
+    router.push('/trips')
   }
 }
 

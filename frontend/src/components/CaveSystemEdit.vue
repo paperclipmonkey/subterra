@@ -268,7 +268,8 @@ const initialSystemState = ref(null)
 // (length, slug, references...), so changes to those alone made an empty
 // suggestion.
 const text = (val) => (val == null ? '' : String(val))
-const suggestableSnapshot = (s) => JSON.stringify({ name: text(s.name), description: text(s.description) })
+// Description trimmed: Milkdown serialises with a trailing newline once touched.
+const suggestableSnapshot = (s) => JSON.stringify({ name: text(s.name), description: text(s.description).trim() })
 const initialSuggestable = ref(null)
 const hasSuggestableChanges = computed(() => {
   if (!initialSuggestable.value) return false
