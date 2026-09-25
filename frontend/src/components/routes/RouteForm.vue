@@ -308,7 +308,8 @@ const isDirty = computed(() => {
 const text = (val) => (val == null ? '' : String(val))
 const suggestableSnapshot = (r) => JSON.stringify({
   name: text(r.name),
-  description: text(r.description),
+  // Trimmed: Milkdown serialises with a trailing newline once touched.
+  description: text(r.description).trim(),
   grade: r.grade == null || r.grade === '' ? null : String(r.grade),
   tackle: (r.tackle || []).map(t => ({
     type: text(t.type),
