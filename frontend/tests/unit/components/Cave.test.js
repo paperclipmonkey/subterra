@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Cave from '@/components/Cave.vue'
 import { api } from '@/plugins/api'
@@ -497,6 +497,62 @@ describe('Cave Component', () => {
             const ids = wrapper.vm.allMedia.map(m => m.id)
             expect(ids.slice(0, 2)).toEqual([4, 2])
             expect(ids.slice(2)).toEqual(others.map(o => o.id))
+        })
+    })
+
+    describe('Routes tab', () => {
+        const stubs = {
+            'v-container': { template: '<div><slot /></div>' },
+            'v-row': { template: '<div><slot /></div>' },
+            'v-col': { template: '<div><slot /></div>' },
+            'v-card': { template: '<div><slot /></div>' },
+            'v-img': { template: '<div><slot /></div>' },
+            'v-tabs': { template: '<div><slot /></div>' },
+            'v-tab': { props: ['value'], template: '<div class="v-tab" :data-tab="value"><slot /></div>' },
+            'v-window': { template: '<div><slot /></div>' },
+            'v-window-item': { template: '<div><slot /></div>' },
+            'v-alert': { template: '<div><slot /></div>' },
+            'v-icon': true, 'v-btn': true, 'v-spacer': true, 'v-badge': true, 'v-divider': true,
+            'v-chip-group': true, 'v-chip': true, 'v-tooltip': true, 'v-list': true, 'v-list-item': true,
+            'v-list-item-title': true, 'v-list-item-subtitle': true, 'v-progress-circular': true, 'v-avatar': true,
+            'v-dialog': true, 'v-card-title': true, 'v-card-text': true, 'v-card-actions': true, 'v-textarea': true,
+            'v-form': true, 'v-snackbar': true, 'CaveTripListItem': true, 'CorrectionModal': true,
+            'CaveWeather': true, 'MarkdownRenderer': true, 'MediaViewModal': true, 'RouteList': true,
+        }
+
+        const mountWithRoutes = async (routes, { admin = false } = {}) => {
+            user.is_admin = admin
+            api.get.mockResolvedValue({ data: { data: { ...mockCave, system: { id: 7, name: 'Test System', routes, caves: [] } } } })
+            const wrapper = mount(Cave, { global: { stubs } })
+            await new Promise(resolve => setTimeout(resolve, 0))
+            await wrapper.vm.$nextTick()
+            return wrapper
+        }
+
+        afterEach(() => {
+            user.is_admin = false
+        })
+
+        it('hides the Routes tab when the system has no routes', async () => {
+            const wrapper = await mountWithRoutes([])
+            expect(wrapper.find('[data-tab="routes"]').exists()).toBe(false)
+        })
+
+        it('shows the Routes tab when the system has routes', async () => {
+            const wrapper = await mountWithRoutes([{ id: 1, name: 'Round trip' }])
+            expect(wrapper.find('[data-tab="routes"]').exists()).toBe(true)
+        })
+
+        it('keeps the Routes tab for admins so they can add the first route', async () => {
+            const wrapper = await mountWithRoutes([], { admin: true })
+            expect(wrapper.find('[data-tab="routes"]').exists()).toBe(true)
+        })
+
+        it('falls back to the overview when the hidden Routes tab is selected', async () => {
+            const wrapper = await mountWithRoutes([])
+            wrapper.vm.activeTab = 'routes'
+            await wrapper.vm.$nextTick()
+            expect(wrapper.vm.activeTab).toBe('overview')
         })
     })
 })
