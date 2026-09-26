@@ -195,6 +195,29 @@
           <v-window v-model="activeTab" class="pa-4">
             <!-- Overview Tab -->
             <v-window-item value="overview">
+              <!-- Permit Booking Link -->
+              <v-alert
+                v-if="cavePermit"
+                :icon="mdiCalendarCheck"
+                type="info"
+                variant="tonal"
+                class="mb-4"
+              >
+                <div class="d-flex align-center justify-space-between">
+                  <div>
+                    <div class="font-weight-bold">{{ cavePermit.name }}</div>
+                    <div class="text-body-2">This cave requires a permit. View availability and apply online.</div>
+                  </div>
+                  <v-btn
+                    color="primary"
+                    variant="flat"
+                    size="small"
+                    :to="`/caves/${route.params.id}/bookings`"
+                  >
+                    View Availability
+                  </v-btn>
+                </div>
+              </v-alert>
               <div class="text-h6 mb-3 font-weight-bold display-1">Description</div>
               <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
               <!-- Structured OSM attribution: unlike the description text, it can't be
@@ -280,30 +303,6 @@
                   <router-link :to="`/caves/${route.params.id}/edit`" class="text-decoration-none font-weight-bold">add some</router-link>.
                 </p>
               </template>
-
-              <!-- Permit Booking Link -->
-              <v-alert
-                v-if="cavePermit"
-                :icon="mdiCalendarCheck"
-                type="info"
-                variant="tonal"
-                class="mt-4"
-              >
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="font-weight-bold">{{ cavePermit.name }}</div>
-                    <div class="text-body-2">This cave requires a permit. View availability and apply online.</div>
-                  </div>
-                  <v-btn
-                    color="primary"
-                    variant="flat"
-                    size="small"
-                    :to="`/caves/${route.params.id}/bookings`"
-                  >
-                    View Availability
-                  </v-btn>
-                </div>
-              </v-alert>
             </v-window-item>
 
             <!-- Trips Tab -->
