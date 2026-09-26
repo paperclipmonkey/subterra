@@ -203,7 +203,8 @@
                 variant="tonal"
                 class="mb-4"
               >
-                <div class="d-flex align-center justify-space-between">
+                <!-- Stacks on phones so the text gets the full width. -->
+                <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between ga-3">
                   <div>
                     <div class="font-weight-bold">{{ cavePermit.name }}</div>
                     <div class="text-body-2">This cave requires a permit. View availability and apply online.</div>
@@ -212,9 +213,10 @@
                     color="primary"
                     variant="flat"
                     size="small"
+                    class="flex-shrink-0"
                     :to="`/caves/${route.params.id}/bookings`"
                   >
-                    View Availability
+                    Book Now
                   </v-btn>
                 </div>
               </v-alert>
