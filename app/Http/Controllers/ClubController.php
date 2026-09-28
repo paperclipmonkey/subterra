@@ -18,6 +18,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -100,7 +101,10 @@ class ClubController extends Controller
     }
 
     /**
-     * Update the specified club (Admin).
+     * Update the specified club (club admin or platform admin).
+     *
+     * Only platform admins may enable or disable a club; a club admin's
+     * is_active is ignored (the edit modal always sends the current value).
      */
     public function update(Request $request, Club $club): JsonResponse
     {
@@ -122,7 +126,12 @@ class ClubController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $club->update($validator->validated());
+        $data = $validator->validated();
+        if (!$request->user()->hasRole('platform_admin')) {
+            unset($data['is_active']);
+        }
+
+        $club->update($data);
 
         return response()->json(new ClubDetailResource($club->fresh()->loadCount(['approvedUsers as users_count'])));
     }
@@ -180,7 +189,7 @@ class ClubController extends Controller
     }
 
     /**
-     * Get the *approved* members of a specific club (Admin).
+     * Get the *approved* members of a specific club, with contact details (club admin or platform admin).
      */
     public function getApprovedMembers(Club $club): JsonResponse
     {
@@ -191,13 +200,19 @@ class ClubController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'photo' => $user->photo ? (str_starts_with($user->photo, 'http') ? $user->photo : Storage::disk('media')->url($user->photo)) : null,
                 'is_club_admin' => (bool) $user->pivot->is_admin,
             ];
         }));
     }
 
     /**
-     * Sync *approved* members and their admin status for a specific club (Admin).
+     * Sync *approved* members and their admin status for a specific club
+     * (club admin or platform admin).
+     *
+     * A club admin may only remove existing members and change who is an
+     * admin: adding people is platform-admin only, and pending requests go
+     * through approveMember so the member is notified.
      */
     public function syncApprovedMembers(Request $request, Club $club): JsonResponse
     {
@@ -212,6 +227,15 @@ class ClubController extends Controller
         }
 
         $membersData = $request->input('members');
+
+        if (!$request->user()->hasRole('platform_admin')) {
+            $approvedIds = $club->approvedUsers()->pluck('users.id');
+            $unknownIds = collect($membersData)->pluck('id')->diff($approvedIds);
+            if ($unknownIds->isNotEmpty()) {
+                return response()->json(['message' => 'Only approved members of this club can be included.'], 422);
+            }
+        }
+
         $syncData = [];
         foreach ($membersData as $member) {
             $syncData[$member['id']] = [
@@ -265,6 +289,7 @@ class ClubController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'photo' => $user->photo ? (str_starts_with($user->photo, 'http') ? $user->photo : Storage::disk('media')->url($user->photo)) : null,
             ];
         }));
     }

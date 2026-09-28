@@ -178,7 +178,10 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::get('/user/export', [App\Http\Controllers\UserController::class, 'export'])->name('users.export');
     Route::delete('/users/{user_without_scopes}', [App\Http\Controllers\UserController::class, 'destroy'])->middleware(CurrentUserOrAdmin::class)->name('users.destroy');
 
-    // --- Club Admin Pending Member Management ---
+    // --- Club Admin Club & Member Management ---
+    Route::get('/admin/clubs/{club}/members', [ClubController::class, 'getApprovedMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.index');
+    Route::put('/admin/clubs/{club}', [ClubController::class, 'update'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.update');
+    Route::put('/admin/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.sync');
     Route::get('/admin/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.pending.index');
     Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
     Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
@@ -266,11 +269,8 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
 
         Route::get('/clubs', [ClubController::class, 'adminIndex'])->name('admin.clubs.index');
         Route::post('/clubs', [ClubController::class, 'store'])->name('admin.clubs.store');
-        Route::put('/clubs/{club}', [ClubController::class, 'update'])->name('admin.clubs.update');
         Route::delete('/clubs/{club}', [ClubController::class, 'destroy'])->name('admin.clubs.destroy');
         Route::put('/clubs/{club}/toggle-active', [ClubController::class, 'toggleActive'])->name('admin.clubs.toggle-active');
-        Route::get('/clubs/{club}/members', [ClubController::class, 'getApprovedMembers'])->name('admin.clubs.members.index');
-        Route::put('/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->name('admin.clubs.members.sync');
         Route::post('/communications/send', [App\Http\Controllers\Admin\CommunicationController::class, 'send'])->name('admin.communications.send');
         Route::get('/dashboard/popular-records', [App\Http\Controllers\Admin\DashboardController::class, 'popularRecords'])->name('admin.dashboard.popular-records');
         Route::get('/dashboard/metrics-overview', [App\Http\Controllers\Admin\DashboardController::class, 'metricsOverview'])->name('admin.dashboard.metrics-overview');

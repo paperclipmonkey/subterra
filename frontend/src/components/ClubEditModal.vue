@@ -83,6 +83,11 @@
                       :title="member.name"
                       :subtitle="member.email"
                     >
+                      <template #prepend>
+                        <v-avatar size="small" class="mr-2">
+                          <v-img :src="member.photo || '/default-avatar.png'" :alt="member.name" />
+                        </v-avatar>
+                      </template>
                       <template #append>
                         <v-switch
                           v-model="member.is_club_admin"
@@ -117,6 +122,11 @@
                       :key="pending.id"
                       :subtitle="pending.email"
                     >
+                      <template #prepend>
+                        <v-avatar size="small" class="mr-2">
+                          <v-img :src="pending.photo || '/default-avatar.png'" :alt="pending.name" />
+                        </v-avatar>
+                      </template>
                       <template #title>
                         <span
                           v-if="appStore.user?.is_admin"
@@ -268,9 +278,9 @@ const fetchAvailableUsers = async () => {
 }
 const fetchClubMembers = async () => {
   if (!props.clubSlug) return
-  // Use the public (but auth-guarded) endpoint which now includes is_club_admin info
-  // This allows Club Admins to see members without needing full platform admin rights
-  const response = await api.get(`/api/clubs/${props.clubSlug}/members`)
+  // Club-admin endpoint: unlike the members-only /api/clubs/{slug}/members
+  // roster, it includes each member's email address.
+  const response = await api.get(`/api/admin/clubs/${props.clubSlug}/members`)
 
   // Map the response to the format expected by the template
   const members = response.data.data || response.data
@@ -278,6 +288,7 @@ const fetchClubMembers = async () => {
     id: m.id,
     name: m.name,
     email: m.email,
+    photo: m.photo,
     is_club_admin: m.is_club_admin || false
   }))
   memberSearch.value = ''
@@ -297,7 +308,7 @@ const fetchPendingMembers = async () => {
 }
 const addUserToClub = (user) => {
   if (user && !clubMembers.value.some(m => m.id === user.id)) {
-    clubMembers.value.push({ id: user.id, name: user.name, email: user.email, is_club_admin: false })
+    clubMembers.value.push({ id: user.id, name: user.name, email: user.email, photo: user.photo, is_club_admin: false })
     markMemberDataChanged()
   }
   selectedUserToAdd.value = null
@@ -380,7 +391,7 @@ const saveClubAndMembers = async () => {
     notifications.showSuccess('Club updated successfully')
   } catch (e) {
     console.error(e)
-    notifications.showError('Failed to update club: ' + (e.message || 'Unknown error'))
+    notifications.showError('Failed to update club: ' + (e.response?.data?.message || e.message || 'Unknown error'))
   } finally {
     saving.value = false
   }
