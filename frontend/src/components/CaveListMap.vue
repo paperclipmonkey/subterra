@@ -170,7 +170,7 @@ const setupLayers = async () => {
     const escHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
     popup?.remove()
-    popup = new maplibregl.Popup({ offset: 10 })
+    popup = new maplibregl.Popup({ offset: 10, className: 'cave-list-popup' })
       .setLngLat(coords)
       .setHTML(`
         <div style="min-width:200px; font-family: sans-serif;">
@@ -253,7 +253,12 @@ onUnmounted(() => {
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
-.maplibregl-popup .maplibregl-popup-content {
+// Unscoped, and qualified by our own popup class: CaveMap, HutListMap and
+// ActiveCalloutMap each ship a global `.maplibregl-popup .maplibregl-popup-content
+// { background: transparent }`. At equal specificity whichever chunk's CSS loaded
+// last won, so after visiting a cave page or the huts map this popup's text
+// panel went see-through. The extra class keeps these rules ahead of theirs.
+.maplibregl-popup.cave-list-popup .maplibregl-popup-content {
   padding: 0;
   background: #fff;
   border-radius: 6px;
@@ -261,7 +266,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 12px rgba(0,0,0,0.25);
 }
 
-.maplibregl-popup-content .maplibregl-popup-close-button {
+.maplibregl-popup.cave-list-popup .maplibregl-popup-close-button {
   right: 6px;
   top: 4px;
   font-size: 16px;
