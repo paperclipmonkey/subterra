@@ -30,6 +30,11 @@
         </div>
 
         <div v-if="!isMarkedAsDoneCTA" class="d-flex align-center text-caption text-medium-emphasis mb-3 flex-wrap ga-4">
+          <div v-if="caveName" class="d-flex align-center font-weight-medium text-high-emphasis trip-cave">
+            <v-icon size="small" start :icon="mdiMapMarker" class="mr-1" />
+            {{ caveName }}
+          </div>
+
           <div class="d-flex align-center">
             <v-icon size="small" start :icon="mdiCalendar" class="mr-1" />
             <span :class="{ 'text-error font-italic': formattedDate === 'Unknown date' }">{{ formattedDate }}</span>
@@ -80,7 +85,7 @@
 </template>
 
 <script setup>
-import { mdiAccountCircleOutline, mdiCalendar, mdiClockOutline, mdiImageOutline, mdiPlus } from '@mdi/js'
+import { mdiAccountCircleOutline, mdiCalendar, mdiClockOutline, mdiImageOutline, mdiMapMarker, mdiPlus } from '@mdi/js'
 import moment from 'moment'
 import { computed } from 'vue'
 import { useAppStore } from '@/stores/app'
@@ -89,6 +94,12 @@ const props = defineProps({
   trip: {
     type: Object,
     required: true
+  },
+  // Name the cave on each card. Off on a cave's own page, where it's implied;
+  // on for mixed lists such as a club's recent trips.
+  showCave: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -99,6 +110,14 @@ const thumbnail = computed(() => {
     return props.trip.media[0].url || props.trip.media[0].filename
   }
   return null
+})
+
+const caveName = computed(() => {
+  if (!props.showCave) return null
+  const entrance = props.trip.entrance?.name
+  if (!entrance) return null
+  const exit = props.trip.exit?.name
+  return exit && exit !== entrance ? `${entrance} → ${exit}` : entrance
 })
 
 const formattedDate = computed(() => {

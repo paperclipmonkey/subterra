@@ -4,9 +4,9 @@ import { mount, flushPromises } from '@vue/test-utils'
 vi.mock('@/plugins/api', () => ({
   api: {
     get: vi.fn((url) => {
-      if (url === '/api/clubs/mendip-cc/members') {
+      if (url === '/api/admin/clubs/mendip-cc/members') {
         return Promise.resolve({ data: { data: [
-          { id: 'a1', name: 'Ada Caver', email: 'ada@example.com', is_club_admin: true },
+          { id: 'a1', name: 'Ada Caver', email: 'ada@example.com', photo: 'https://img.example/ada.jpg', is_club_admin: true },
           { id: 'b2', name: 'Bo Delver', email: 'bo@example.com' },
           { id: 'c3', name: 'Cy Potholer', email: 'cy@mendip.example' },
         ] } })
@@ -38,7 +38,12 @@ const mountModal = async () => {
         'v-row': { template: '<div><slot /></div>' },
         'v-col': { template: '<div><slot /></div>' },
         'v-list': { template: '<div><slot /></div>' },
-        'v-list-item': { props: ['title'], template: '<div class="member">{{ title }}</div>' },
+        'v-list-item': {
+          props: ['title', 'subtitle'],
+          template: '<div class="member"><slot name="prepend" /><span class="name">{{ title }}</span><span class="email">{{ subtitle }}</span></div>',
+        },
+        'v-avatar': { template: '<div><slot /></div>' },
+        'v-img': { props: ['src'], template: '<img :src="src" />' },
         'v-text-field': {
           props: ['modelValue', 'label'],
           template: '<input :data-label="label" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
@@ -50,9 +55,19 @@ const mountModal = async () => {
   return wrapper
 }
 
-const memberNames = (wrapper) => wrapper.findAll('.member').map(m => m.text())
+const memberNames = (wrapper) => wrapper.findAll('.member .name').map(m => m.text())
 
 describe('ClubEditModal member search', () => {
+  it('shows each member\'s email and photo, falling back to the default avatar', async () => {
+    const wrapper = await mountModal()
+    const members = wrapper.findAll('.member')
+
+    expect(members.map(m => m.find('.email').text())).toEqual(['ada@example.com', 'bo@example.com', 'cy@mendip.example'])
+    expect(members.map(m => m.find('img').attributes('src'))).toEqual([
+      'https://img.example/ada.jpg', '/default-avatar.png', '/default-avatar.png',
+    ])
+  })
+
   it('lists every member until a search is entered', async () => {
     const wrapper = await mountModal()
     expect(memberNames(wrapper)).toEqual(['Ada Caver', 'Bo Delver', 'Cy Potholer'])

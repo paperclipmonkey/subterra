@@ -119,7 +119,7 @@
               <span v-if="tripsSummaryLabel" class="text-caption text-medium-emphasis font-weight-regular">{{ tripsSummaryLabel }}</span>
             </v-card-title>
             <v-card-text v-if="recentTrips.length > 0" class="pt-0">
-              <CaveTripListItem v-for="trip in recentTrips" :key="trip.id" :trip="trip" />
+              <CaveTripListItem v-for="trip in recentTrips" :key="trip.id" :trip="trip" show-cave />
             </v-card-text>
             <v-card-text v-else>No recent trips found.</v-card-text>
           </v-card>

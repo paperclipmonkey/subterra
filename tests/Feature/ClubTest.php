@@ -241,6 +241,44 @@ class ClubTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function club_admin_can_update_their_club_but_not_its_active_state()
+    {
+        $club = Club::factory()->enabled()->create();
+        $clubAdmin = User::factory()->create();
+        $club->users()->attach($clubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+
+        $response = $this->actingAs($clubAdmin, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}", [
+            'name' => 'Renamed By Club Admin',
+            'description' => 'New description.',
+            'location' => 'Mendip',
+            'is_active' => false,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('clubs', [
+            'id' => $club->id,
+            'name' => 'Renamed By Club Admin',
+            'description' => 'New description.',
+            'location' => 'Mendip',
+            'is_active' => true,
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function admin_of_another_club_cannot_update_a_club()
+    {
+        $club = Club::factory()->create();
+        $otherClub = Club::factory()->create();
+        $otherClubAdmin = User::factory()->create();
+        $otherClub->users()->attach($otherClubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+
+        $this->actingAs($otherClubAdmin, 'sanctum')
+             ->putJson("/api/admin/clubs/{$club->slug}", ['name' => 'Hijacked'])
+             ->assertStatus(403);
+        $this->assertDatabaseMissing('clubs', ['name' => 'Hijacked']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function update_validates_unique_name_ignoring_self()
     {
         $club1 = Club::factory()->create();
@@ -402,6 +440,54 @@ class ClubTest extends TestCase
         $response->assertStatus(403);
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function club_admin_can_get_approved_members_with_email_and_photo()
+    {
+        $club = Club::factory()->create();
+        $clubAdmin = User::factory()->create();
+        $member = User::factory()->create(['photo' => 'https://example.com/photo.jpg']);
+        $club->users()->attach($clubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+        $club->users()->attach($member->id, ['status' => 'approved', 'is_admin' => false]);
+
+        $response = $this->actingAs($clubAdmin, 'sanctum')->getJson("/api/admin/clubs/{$club->slug}/members");
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(2)
+                 ->assertJsonFragment([
+                     'id' => $member->id,
+                     'name' => $member->name,
+                     'email' => $member->email,
+                     'photo' => 'https://example.com/photo.jpg',
+                     'is_club_admin' => false,
+                 ])
+                 ->assertJsonFragment(['id' => $clubAdmin->id, 'email' => $clubAdmin->email, 'photo' => null, 'is_club_admin' => true]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function ordinary_club_member_cannot_get_approved_members_with_emails()
+    {
+        $club = Club::factory()->create();
+        $member = User::factory()->create();
+        $club->users()->attach($member->id, ['status' => 'approved', 'is_admin' => false]);
+
+        $this->actingAs($member, 'sanctum')
+             ->getJson("/api/admin/clubs/{$club->slug}/members")
+             ->assertStatus(403);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function admin_of_another_club_cannot_get_approved_members()
+    {
+        $club = Club::factory()->create();
+        $otherClub = Club::factory()->create();
+        $otherClubAdmin = User::factory()->create();
+        $otherClub->users()->attach($otherClubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+
+        $this->actingAs($otherClubAdmin, 'sanctum')
+             ->getJson("/api/admin/clubs/{$club->slug}/members")
+             ->assertStatus(403);
+    }
+
     // --- Sync Approved Members Tests ---
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -489,6 +575,69 @@ class ClubTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function club_admin_can_remove_members_and_change_admins()
+    {
+        $club = Club::factory()->create();
+        $clubAdmin = User::factory()->create();
+        $keep = User::factory()->create();
+        $remove = User::factory()->create();
+        $pending = User::factory()->create();
+        $club->users()->attach($clubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+        $club->users()->attach($keep->id, ['status' => 'approved', 'is_admin' => false]);
+        $club->users()->attach($remove->id, ['status' => 'approved', 'is_admin' => false]);
+        $club->users()->attach($pending->id, ['status' => 'pending', 'is_admin' => false]);
+
+        $response = $this->actingAs($clubAdmin, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members", [
+            'members' => [
+                ['id' => $clubAdmin->id, 'is_admin' => true],
+                ['id' => $keep->id, 'is_admin' => true],
+            ],
+        ]);
+
+        $response->assertStatus(200)->assertJsonCount(2);
+        $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $keep->id, 'is_admin' => true]);
+        $this->assertDatabaseMissing('club_user', ['club_id' => $club->id, 'user_id' => $remove->id]);
+        // Pending requests are left for the Confirm Members flow.
+        $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $pending->id, 'status' => 'pending']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function club_admin_cannot_add_non_members_or_approve_pending_requests_via_sync()
+    {
+        $club = Club::factory()->create();
+        $clubAdmin = User::factory()->create();
+        $outsider = User::factory()->create();
+        $pending = User::factory()->create();
+        $club->users()->attach($clubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+        $club->users()->attach($pending->id, ['status' => 'pending', 'is_admin' => false]);
+
+        foreach ([$outsider, $pending] as $user) {
+            $this->actingAs($clubAdmin, 'sanctum')->putJson("/api/admin/clubs/{$club->slug}/members", [
+                'members' => [
+                    ['id' => $clubAdmin->id, 'is_admin' => true],
+                    ['id' => $user->id, 'is_admin' => false],
+                ],
+            ])->assertStatus(422);
+        }
+
+        $this->assertDatabaseMissing('club_user', ['club_id' => $club->id, 'user_id' => $outsider->id]);
+        $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $pending->id, 'status' => 'pending']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function admin_of_another_club_cannot_sync_members()
+    {
+        $club = Club::factory()->create();
+        $otherClub = Club::factory()->create();
+        $otherClubAdmin = User::factory()->create();
+        $otherClub->users()->attach($otherClubAdmin->id, ['status' => 'approved', 'is_admin' => true]);
+
+        $this->actingAs($otherClubAdmin, 'sanctum')
+             ->putJson("/api/admin/clubs/{$club->slug}/members", ['members' => []])
+             ->assertStatus(403);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function sync_members_validates_input()
     {
         $club = Club::factory()->create();
@@ -530,7 +679,7 @@ class ClubTest extends TestCase
     {
         $club = Club::factory()->create();
         $approvedUser = User::factory()->create();
-        $pendingUser = User::factory()->create();
+        $pendingUser = User::factory()->create(['photo' => 'https://example.com/pending.jpg']);
         $club->users()->attach($approvedUser->id, ['status' => 'approved']);
         $club->users()->attach($pendingUser->id, ['status' => 'pending']);
 
@@ -538,7 +687,7 @@ class ClubTest extends TestCase
 
         $response->assertStatus(200)
                  ->assertJsonCount(1) // Only the pending user
-                 ->assertJsonFragment(['id' => $pendingUser->id])
+                 ->assertJsonFragment(['id' => $pendingUser->id, 'email' => $pendingUser->email, 'photo' => 'https://example.com/pending.jpg'])
                  ->assertJsonMissing(['id' => $approvedUser->id]);
     }
 
