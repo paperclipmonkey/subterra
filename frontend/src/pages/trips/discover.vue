@@ -334,7 +334,7 @@ const openPopup = (coords, props) => {
     </div>`
 
   popup?.remove()
-  popup = new maplibregl.Popup({ offset: 12, maxWidth: '260px' })
+  popup = new maplibregl.Popup({ offset: 12, maxWidth: '260px', className: 'discover-popup' })
     .setLngLat(coords)
     .setHTML(html)
     .addTo(map)
@@ -464,15 +464,16 @@ onUnmounted(() => {
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
-/* Popup chrome reset */
-.maplibregl-popup .maplibregl-popup-content {
+/* Popup chrome reset — qualified by this page's popup class, since these
+   rules are global and would otherwise restyle every other map's popups. */
+.maplibregl-popup.discover-popup .maplibregl-popup-content {
   padding: 0;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
-.maplibregl-popup-close-button {
+.maplibregl-popup.discover-popup .maplibregl-popup-close-button {
   font-size: 18px;
   padding: 4px 8px;
   color: #555;

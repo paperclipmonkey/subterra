@@ -3,7 +3,7 @@
     <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15">
       <mgl-marker v-for="(callout, index) in validCallouts" :key="callout.id ?? index"
                   :coordinates="[callout.lng, callout.lat]">
-        <mgl-popup>
+        <mgl-popup class-name="callout-map-popup">
           <v-card width="200px">
             <v-card-title class="subtitle-2">{{ callout.cave_name || 'Unknown Location' }}</v-card-title>
           </v-card>
@@ -103,12 +103,14 @@ watch(() => validCallouts.value, () => {
   }
 }
 
-.maplibregl-popup .maplibregl-popup-content {
+// Qualified by this map's own popup class: these rules are global, and unscoped
+// they made every other map's popups transparent too (see CaveListMap.vue).
+.maplibregl-popup.callout-map-popup .maplibregl-popup-content {
   padding: 0;
   background: transparent;
 }
 
-.maplibregl-popup-content .maplibregl-popup-close-button {
+.maplibregl-popup.callout-map-popup .maplibregl-popup-close-button {
   right: 6px;
   top: 0px;
 }

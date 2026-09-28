@@ -5,7 +5,7 @@
         <mgl-marker v-for="cave in caves" :key="cave.id"
                     :scale="1.2"
                     :coordinates="[cave.location_lng, cave.location_lat]">
-          <mgl-popup ref="popupRefs">
+          <mgl-popup ref="popupRefs" class-name="cave-map-popup">
             <v-card>
               <v-img v-if="cave.hero_image || cave.entrance_image" :src="cave.hero_image?.url || cave.entrance_image?.url" height="80" cover class="rounded-t">
                 <v-card-title class="text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
@@ -130,12 +130,14 @@ watch(() => mapRef.value?.isLoaded, (isLoaded) => {
   height: 100%;
 }
 
-.maplibregl-popup .maplibregl-popup-content {
+// Qualified by this map's own popup class: these rules are global, and unscoped
+// they made every other map's popups transparent too (see CaveListMap.vue).
+.maplibregl-popup.cave-map-popup .maplibregl-popup-content {
   padding: 0;
   background: transparent;
 }
 
-.maplibregl-popup-content .maplibregl-popup-close-button {
+.maplibregl-popup.cave-map-popup .maplibregl-popup-close-button {
   right: 6px;
   top: 0px;
 }
