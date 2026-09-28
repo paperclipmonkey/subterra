@@ -167,8 +167,16 @@
   z-index: 2;
 }
 
+// The toggle's row spans the full width to centre it, but only the pill itself
+// should catch clicks — otherwise the transparent strip either side of it
+// swallows drags and clicks meant for the map underneath.
+.map-page--fullscreen .map-page__toggle {
+  pointer-events: none;
+}
+
 // The toggle now sits over the map — give it an opaque, floating look
 .map-page--fullscreen .map-page__toggle .view-toggle {
+  pointer-events: auto;
   background: rgb(var(--v-theme-surface));
   box-shadow: 0 4px 14px rgba(12, 24, 18, 0.22);
 }
