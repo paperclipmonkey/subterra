@@ -67,7 +67,10 @@ Route::post('/callouts/{id}/cancel', [App\Http\Controllers\CalloutController::cl
 
 Route::get('/users/me', function (Request $request) {
     $user = $request->user();
-    $user->load(['clubs', 'medals', 'roles', 'trips.system']);
+    // Trips are only summed into the stats block, so load just the columns the
+    // stats need. This runs on every page load; hydrating every full trip row (plus its
+    // cave system) for a heavy caver is a lot of memory for three numbers.
+    $user->load(['clubs', 'medals', 'roles', 'trips' => fn ($q) => $q->select('trips.id', 'trips.cave_system_id', 'trips.start_time', 'trips.end_time')]);
 
     return new UserDetailEmailResource($user);
 })->middleware('auth:sanctum')->name('users.me');

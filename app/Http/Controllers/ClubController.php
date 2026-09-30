@@ -218,9 +218,33 @@ class ClubController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'members' => 'present|array',
-            'members.*.id' => 'required|exists:users,id',
+            'members.*.id' => 'required',
             'members.*.is_admin' => 'required|boolean',
         ]);
+
+        // One query for the whole list rather than an `exists` rule per member,
+        // which cost a round trip each on a large club. Like `exists`, it ignores
+        // the User global scopes, so inactive users still count as known.
+        $validator->after(function ($validator) use ($request) {
+            $members = $request->input('members');
+            if (!is_array($members)) {
+                return;
+            }
+            $isKey = fn ($id) => is_string($id) || is_int($id);
+            $ids = collect($members)->pluck('id')->filter($isKey)->map(fn ($id) => (string) $id)->unique();
+            $found = User::withoutGlobalScopes()->whereIn('id', $ids)->pluck('id')->map(fn ($id) => (string) $id)->all();
+            foreach ($members as $index => $member) {
+                $id = is_array($member) ? ($member['id'] ?? null) : null;
+                if ($id === null || $id === '') {
+                    continue; // already reported by `required`
+                }
+                // Anything but a string or int (an array, say) can't be a user id
+                // and would later break the array-keyed sync data.
+                if (!$isKey($id) || !in_array((string) $id, $found, true)) {
+                    $validator->errors()->add("members.$index.id", "The selected members.$index.id is invalid.");
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
@@ -249,12 +273,19 @@ class ClubController extends Controller
                 // Diff against the unfiltered relation: a member in the list
                 // who currently has a pending row must be promoted via an
                 // update, not re-attached (which would hit the unique index).
-                $currentStatuses = $club->users()->pluck('club_user.status', 'users.id');
+                $current = DB::table('club_user')
+                    ->join('users', 'users.id', '=', 'club_user.user_id')
+                    ->where('club_user.club_id', $club->id)
+                    ->get(['club_user.user_id', 'club_user.status', 'club_user.is_admin', 'users.is_active'])
+                    ->keyBy('user_id');
+                $currentStatuses = $current->pluck('status', 'user_id');
 
                 // Detach approved members omitted from the list. Pending
-                // requests are managed separately and stay untouched.
-                $removeIds = $currentStatuses
-                    ->filter(fn ($status) => $status === 'approved')
+                // requests are managed separately and stay untouched, as do
+                // inactive users: the roster (approvedUsers) never lists them,
+                // so their absence from the list is not a removal.
+                $removeIds = $current
+                    ->filter(fn ($row) => $row->status === 'approved' && (bool) $row->is_active)
                     ->keys()
                     ->diff(array_keys($syncData));
 
@@ -264,7 +295,12 @@ class ClubController extends Controller
 
                 foreach ($syncData as $userId => $pivot) {
                     if ($currentStatuses->has($userId)) {
-                        $club->users()->updateExistingPivot($userId, $pivot);
+                        // Skip untouched rows: saving a big roster after changing one
+                        // admin flag shouldn't issue an UPDATE per member.
+                        $existing = $current[$userId];
+                        if ($existing->status !== $pivot['status'] || (bool) $existing->is_admin !== (bool) $pivot['is_admin']) {
+                            $club->users()->updateExistingPivot($userId, $pivot);
+                        }
                     } else {
                         $club->users()->attach($userId, $pivot);
                     }

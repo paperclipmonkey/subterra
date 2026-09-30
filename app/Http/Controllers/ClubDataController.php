@@ -233,21 +233,25 @@ class ClubDataController extends Controller
         }
 
         $oneYearAgo = Carbon::now()->subYear();
-        $approvedMemberIdsList = $club->approvedUsers()->pluck('users.id');
-        $approvedMemberIds = $approvedMemberIdsList->flip();
+        $approvedMemberIds = DB::table('club_user')
+            ->select('user_id')
+            ->where('club_id', $club->id)
+            ->where('status', 'approved');
 
+        // Count the approved participants in SQL instead of hydrating every
+        // participant model of every trip: this endpoint runs on each club page
+        // view and a busy club has hundreds of trips a year.
         $trips = Trip::visibleTo($request->user())
-            ->with('participants')
+            ->select('trips.id', 'trips.start_time', 'trips.end_time')
+            ->withCount(['participants as member_count' => fn ($q) => $q->whereIn('users.id', $approvedMemberIds)])
             ->where('start_time', '>=', $oneYearAgo)
-            ->whereHas('participants', function ($query) use ($approvedMemberIdsList) {
-                $query->whereIn('users.id', $approvedMemberIdsList);
-            })
+            ->whereNotNull('end_time')
+            ->whereHas('participants', fn ($q) => $q->whereIn('users.id', $approvedMemberIds))
             ->get();
 
         $dailyHours = [];
 
         foreach ($trips as $trip) {
-            // Skip invalid dates or times
             if (!$trip->start_time || !$trip->end_time) {
                 continue;
             }
@@ -255,19 +259,7 @@ class ClubDataController extends Controller
             $date = $trip->start_time->toDateString();
             $durationHours = $trip->start_time->diffInMinutes($trip->end_time) / 60;
 
-            $memberCount = 0;
-            foreach ($trip->participants as $participant) {
-                if ($approvedMemberIds->has($participant->id)) {
-                    ++$memberCount;
-                }
-            }
-
-            if ($memberCount > 0) {
-                if (!isset($dailyHours[$date])) {
-                    $dailyHours[$date] = 0;
-                }
-                $dailyHours[$date] += ($durationHours * $memberCount);
-            }
+            $dailyHours[$date] = ($dailyHours[$date] ?? 0) + ($durationHours * (int) $trip->getAttribute('member_count'));
         }
 
         // Transform into array of objects and sort by date

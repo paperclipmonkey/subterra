@@ -384,7 +384,9 @@ class UserController extends Controller
     {
         $user = User::withoutGlobalScopes()
             ->with(['trips' => function ($query) {
-                $query->visibleTo(auth()->user())->with('system');
+                // Only the columns the profile stats need; see UserDetailResource.
+                $query->visibleTo(auth()->user())
+                    ->select('trips.id', 'trips.cave_system_id', 'trips.start_time', 'trips.end_time');
             }, 'clubs', 'medals'])
             ->findOrFail($id);
 
