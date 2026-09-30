@@ -22,7 +22,7 @@ class PermitController extends Controller
 
     public function index(): ResourceCollection
     {
-        $permits = Permit::with(['caves', 'officers'])
+        $permits = Permit::with(Permit::RESOURCE_RELATIONS)
             ->withCount('bookings')
             ->orderBy('name')
             ->get();
@@ -32,11 +32,11 @@ class PermitController extends Controller
 
     public function show(Permit $permit): PermitResource
     {
-        $permit->load(['caves', 'officers', 'bookings' => function ($q) {
+        $permit->load([...Permit::RESOURCE_RELATIONS, 'bookings' => function ($q) {
             $q->where('status', 'approved')
               ->where('date', '>=', now()->toDateString())
               ->orderBy('date');
-        }, 'bookings.applicant']);
+        }, 'bookings.applicant.clubs']);
 
         return new PermitResource($permit);
     }
@@ -84,7 +84,7 @@ class PermitController extends Controller
             $permit->officers()->sync($data['officer_ids']);
         }
 
-        $permit->load(['caves', 'officers']);
+        $permit->load(Permit::RESOURCE_RELATIONS);
 
         return response()->json(new PermitResource($permit), 201);
     }
@@ -131,7 +131,7 @@ class PermitController extends Controller
             $permit->officers()->sync($data['officer_ids'] ?? []);
         }
 
-        $permit->load(['caves', 'officers']);
+        $permit->load(Permit::RESOURCE_RELATIONS);
 
         return response()->json(new PermitResource($permit));
     }
@@ -166,7 +166,7 @@ class PermitController extends Controller
         // photos. The webhook swaps photo_path to the processed variant on success.
         ProcessImageCloudJob::dispatch($path, Permit::class, $permit->id);
 
-        $permit->load(['caves', 'officers']);
+        $permit->load(Permit::RESOURCE_RELATIONS);
 
         return response()->json(new PermitResource($permit));
     }
@@ -185,7 +185,7 @@ class PermitController extends Controller
         $permit->original_filename = null;
         $permit->save();
 
-        $permit->load(['caves', 'officers']);
+        $permit->load(Permit::RESOURCE_RELATIONS);
 
         return response()->json(new PermitResource($permit));
     }

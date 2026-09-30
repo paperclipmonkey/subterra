@@ -33,7 +33,6 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
     }
 
     public $timestamps = false;
-    protected $appends = ['caving_region'];
     // Internal/admin-only columns kept out of any default Cave serialization
     // (e.g. a trip's nested entrance/exit cave). CaveResource re-exposes
     // visibility/private_notes to data admins via explicit property access,

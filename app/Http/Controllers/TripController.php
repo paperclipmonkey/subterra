@@ -23,6 +23,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TripController extends Controller
 {
+    private const TRIP_RESOURCE_RELATIONS = ['system', 'entrance.heroImage', 'entrance.entranceImage', 'exit', 'participants.clubs', 'media', 'audits'];
+
     public function __construct(
         private readonly ImageProcessingService $imageProcessingService
     ) {
@@ -162,7 +164,7 @@ class TripController extends Controller
         // Dispatch event instead of calling SlackAlert directly
         event(new TripCreated($trip, $creator));
 
-        $trip->load(['exit', 'audits']);
+        $trip->load(self::TRIP_RESOURCE_RELATIONS);
 
         return new TripResource($trip);
     }
@@ -205,7 +207,7 @@ class TripController extends Controller
             abort(404, 'Trip not found');
         }
 
-        $trip->load(['system', 'entrance.heroImage', 'entrance.entranceImage', 'exit', 'participants', 'media', 'audits']);
+        $trip->load(self::TRIP_RESOURCE_RELATIONS);
 
         return new TripResource($trip);
     }
@@ -266,7 +268,7 @@ class TripController extends Controller
             }
         }
 
-        $trip->load(['exit', 'audits']);
+        $trip->load(self::TRIP_RESOURCE_RELATIONS);
 
         return new TripResource($trip);
     }

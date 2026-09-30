@@ -28,9 +28,7 @@ class CaveSystemResource extends JsonResource
         $caves = $this->caves
             ->when(!$canManage, fn ($caves) => $caves->reject(fn ($cave) => $cave->visibility === 'admin_only'))
             ->map(function ($cave) use ($canSeeLocations) {
-                // Cave tags are eager loaded only to compute the caving_region append
-                // without per-cave queries; keep them out of the payload.
-                $data = $cave->makeHidden('tags')->toArray();
+                $data = $cave->toArray();
                 if (!$canSeeLocations) {
                     foreach (['location_lat', 'location_lng', 'location_alt', 'access_info'] as $field) {
                         $data[$field] = null;

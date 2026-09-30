@@ -47,11 +47,7 @@ class CaveSystemPerformanceTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonCount(50, 'data');
 
-        // The caving_region append must come from the eager loaded tags,
-        // and the cave tags themselves must stay out of the payload.
-        $firstCave = $response->json('data.0.caves.0');
-        $this->assertSame('Mendip', $firstCave['caving_region']);
-        $this->assertArrayNotHasKey('tags', $firstCave);
+        $this->assertArrayNotHasKey('tags', $response->json('data.0.caves.0'));
 
         // Query count must stay flat regardless of the number of systems/caves.
         if ($queryCount > 15) {

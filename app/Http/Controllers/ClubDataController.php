@@ -33,7 +33,7 @@ class ClubDataController extends Controller
                 $query->whereIn('user_id', $club->users()->wherePivot('status', 'approved')->pluck('users.id'));
             })
             ->where('start_time', '>=', Carbon::now()->subYear())
-            ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'entrance.tags', 'exit', 'participants.clubs', 'media'])
+            ->with(['system', 'entrance.heroImage', 'entrance.entranceImage', 'exit', 'participants.clubs', 'media'])
             ->orderBy('start_time', 'desc')
             ->limit(10)
             ->get();
