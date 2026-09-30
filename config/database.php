@@ -77,6 +77,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            // Without this, pdo_pgsql spends three round trips per query (prepare,
+            // execute, deallocate). Bindings are still sent separately from the SQL.
+            'options' => extension_loaded('pdo_pgsql') ? [PDO::PGSQL_ATTR_DISABLE_PREPARES => true] : [],
             // Bound how long a statement waits to ACQUIRE a lock (and, as a backstop, how
             // long it may run) before it aborts. Postgres' default is to wait forever, so a
             // single contended lock can wedge a process indefinitely — see the
