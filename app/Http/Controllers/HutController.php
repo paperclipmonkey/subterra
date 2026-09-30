@@ -22,7 +22,8 @@ class HutController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user() || !$request->user()->is_admin) {
+        // platform_admin, not is_admin: is_admin covers every staff role.
+        if (!$request->user() || !$request->user()->hasRole('platform_admin')) {
             abort(403, 'Only admins can create huts.');
         }
 
@@ -67,7 +68,7 @@ class HutController extends Controller
 
         $isClubAdmin = $hut->club_id && $user->clubs()->where('club_id', $hut->club_id)->wherePivot('is_admin', true)->exists();
 
-        if (!$user->is_admin && !$isClubAdmin) {
+        if (!$user->hasRole('platform_admin') && !$isClubAdmin) {
             abort(403, 'You do not have permission to edit this hut.');
         }
 
@@ -124,7 +125,7 @@ class HutController extends Controller
         }
 
         $isClubAdmin = $hut->club_id && $user->clubs()->where('club_id', $hut->club_id)->wherePivot('is_admin', true)->exists();
-        if (!$user->is_admin && !$isClubAdmin) {
+        if (!$user->hasRole('platform_admin') && !$isClubAdmin) {
             abort(403, 'You do not have permission to delete this hut.');
         }
 

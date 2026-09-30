@@ -85,6 +85,15 @@ class UserController extends Controller
                 return true;
             }
 
+            // This list feeds the trip/callout participant pickers, so never
+            // offer someone who limits tagging to their clubs (under-18s by
+            // default) to a non-member — not via trip history, not by email.
+            if ($user->visibility_addable === 'club'
+                && $user->id !== $currentUser?->id
+                && !$clubUserIds->contains($user->id)) {
+                return false;
+            }
+
             // Users in shared clubs are visible
             if ($clubUserIds->contains($user->id)) {
                 return true;

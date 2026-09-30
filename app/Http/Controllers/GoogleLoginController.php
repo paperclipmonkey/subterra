@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class GoogleLoginController extends Controller
 {
@@ -28,7 +29,23 @@ class GoogleLoginController extends Controller
         }
 
         try {
-            $googleUser = Socialite::driver('google')->stateless()->user();
+            // Not stateless(): Socialite checks the `state` parameter against the
+            // one it stored in the session on redirect. Without that check an
+            // attacker can feed a victim's browser a callback URL carrying the
+            // attacker's own code and sign the victim into the attacker's account
+            // (login CSRF).
+            /** @var \Laravel\Socialite\Two\User $googleUser */
+            $googleUser = Socialite::driver('google')->user();
+        } catch (InvalidStateException $e) {
+            // The state is single-use (pulled from the session), so a replayed
+            // callback for a user who already signed in lands here too.
+            if (Auth::check()) {
+                return redirect(config('app.url'));
+            }
+
+            Log::warning('Google OAuth callback rejected: state mismatch');
+
+            return redirect(config('app.url').'/login');
         } catch (\Exception $e) {
             // Google authorization codes are single-use. A double-loaded
             // callback (refresh, back button, double click, link prefetch)
@@ -39,10 +56,20 @@ class GoogleLoginController extends Controller
             }
 
             Log::error('Google OAuth callback failed: '.$e->getMessage(), [
-                'request_url' => $request->fullUrl(),
+                'request_url' => $request->url(), // no query string: it carries the auth code
                 'code_present' => $request->has('code'),
                 'exception' => $e,
             ]);
+
+            return redirect(config('app.url').'/login');
+        }
+
+        // Accounts are matched by email alone, so only trust an address Google
+        // has verified — otherwise anyone could claim an account (or a
+        // placeholder created by trip tagging) by using its address unverified.
+        $emailVerified = $googleUser->getRaw()['email_verified'] ?? false;
+        if (empty($googleUser->email) || ($emailVerified !== true && $emailVerified !== 'true')) {
+            Log::warning('Google OAuth callback rejected: email not verified');
 
             return redirect(config('app.url').'/login');
         }
@@ -56,7 +83,7 @@ class GoogleLoginController extends Controller
             // Only download the Google avatar when we could actually use it —
             // never to replace an existing photo.
             $photoUrl = (!$user || empty($user->photo))
-                ? $this->fetchGoogleAvatar($googleUser->avatar ?? null)
+                ? $this->fetchGoogleAvatar($googleUser->getAvatar())
                 : null;
 
             if (!$user) {

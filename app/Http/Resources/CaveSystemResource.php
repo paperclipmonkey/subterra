@@ -19,11 +19,12 @@ class CaveSystemResource extends JsonResource
     {
         // Mirror CaveResource / CaveSystemFileController: data admins see
         // everything; approved-club members see locations, access info,
-        // references and public files; everyone else sees none of those, and
-        // only admins learn that admin_only sites (e.g. coal mines) exist.
+        // references, map annotations and public files; everyone else sees none
+        // of those, and only admins learn that admin_only sites (e.g. coal
+        // mines) exist.
         $user = $request->user();
         $canManage = $user !== null && $this->resource->managedBy($user);
-        $canSeeLocations = $canManage || (bool) $user?->hasApprovedClub();
+        $canSeeLocations = $this->resource->locationsVisibleTo($user);
 
         $caves = $this->caves
             ->when(!$canManage, fn ($caves) => $caves->reject(fn ($cave) => $cave->visibility === 'admin_only'))
@@ -63,7 +64,12 @@ class CaveSystemResource extends JsonResource
             'references' => $canSeeLocations ? $this->references : null,
             'catchment_id' => $this->catchment_id,
             'files' => $files,
-            'annotation' => $this->whenLoaded('annotation'),
+            // Parking, approach paths and the like pinpoint the entrances, so
+            // annotations sit behind the same gate as the coordinates.
+            'annotation' => $this->when(
+                $this->resource->relationLoaded('annotation'),
+                fn () => $canSeeLocations ? $this->annotation : null,
+            ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

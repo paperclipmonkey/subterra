@@ -9,6 +9,7 @@ use App\Models\CaveSystem;
 use App\Models\Route;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\Assistant\Tools\FindNearbyHutsTool;
 use App\Services\Assistant\Tools\GetCaveDetailsTool;
 use App\Services\Assistant\Tools\GetCaveSystemActivityTool;
 use App\Services\Assistant\Tools\GetUpcomingPermitsTool;
@@ -586,6 +587,120 @@ class AssistantToolsTest extends TestCase
         $this->assertArrayHasKey('last_trip_date', $result);
         $this->assertArrayHasKey('most_popular_entrance', $result);
         $this->assertArrayHasKey('avg_trip_duration_mins', $result);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function get_cave_system_activity_only_quotes_trips_the_user_could_open(): void
+    {
+        $system = CaveSystem::factory()->create();
+        $cave = Cave::factory()->create(['cave_system_id' => $system->id]);
+        $clubMate = User::factory()->withApprovedClub()->create();
+        $outsider = User::factory()->create();
+
+        foreach (['public' => 'Public write-up', 'club' => 'Club-only write-up', 'private' => 'Private write-up'] as $visibility => $description) {
+            Trip::factory()->create([
+                'cave_system_id' => $system->id,
+                'entrance_cave_id' => $cave->id,
+                'visibility' => $visibility,
+                'description' => $description,
+            ])->participants()->attach($clubMate->id);
+        }
+
+        $tool = new GetCaveSystemActivityTool();
+        $reports = fn (User $user) => array_column(
+            $tool->handle(['cave_system_id' => $system->id], $user)['recent_reports'],
+            'description'
+        );
+
+        $this->assertSame(['Public write-up'], $reports($outsider));
+        $this->assertEqualsCanonicalizing(
+            ['Public write-up', 'Club-only write-up'],
+            $reports(User::factory()->withApprovedClub()->create())
+        );
+        $this->assertEqualsCanonicalizing(
+            ['Public write-up', 'Club-only write-up', 'Private write-up'],
+            $reports($clubMate)
+        );
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function get_cave_system_activity_does_not_name_admin_only_entrances(): void
+    {
+        $system = CaveSystem::factory()->create();
+        $mine = Cave::factory()->create(['cave_system_id' => $system->id, 'name' => 'Old Coal Mine', 'visibility' => 'admin_only']);
+        Trip::factory()->count(2)->create(['cave_system_id' => $system->id, 'entrance_cave_id' => $mine->id]);
+
+        $tool = new GetCaveSystemActivityTool();
+
+        $this->assertNull($tool->handle(['cave_system_id' => $system->id], User::factory()->withApprovedClub()->create())['most_popular_entrance']);
+        $this->assertSame('Old Coal Mine', $tool->handle(['cave_system_id' => $system->id], User::factory()->dataAdmin()->create())['most_popular_entrance']);
+    }
+
+    // =========================================================================
+    // FindNearbyHutsTool
+    // =========================================================================
+
+    private function systemWithHut(): CaveSystem
+    {
+        $system = CaveSystem::factory()->create();
+        Cave::factory()->create([
+            'cave_system_id' => $system->id,
+            'name' => 'Main Entrance',
+            'location_lat' => 54.1,
+            'location_lng' => -2.4,
+        ]);
+        \App\Models\Hut::factory()->create(['location_lat' => 54.11, 'location_lng' => -2.41]);
+
+        return $system;
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function find_nearby_huts_hides_entrance_location_from_users_without_an_approved_club(): void
+    {
+        $result = (new FindNearbyHutsTool())->handle(
+            ['cave_system_id' => $this->systemWithHut()->id],
+            User::factory()->create()
+        );
+
+        $this->assertNull($result['reference_lat']);
+        $this->assertNull($result['reference_lng']);
+        // Distances to huts at known coordinates would let the entrance be triangulated.
+        $this->assertCount(1, $result['huts']);
+        $this->assertNull($result['huts'][0]['distance_km']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function find_nearby_huts_gives_approved_club_members_the_entrance_location(): void
+    {
+        $result = (new FindNearbyHutsTool())->handle(
+            ['cave_system_id' => $this->systemWithHut()->id],
+            User::factory()->withApprovedClub()->create()
+        );
+
+        $this->assertEquals(54.1, $result['reference_lat']);
+        $this->assertEquals(-2.4, $result['reference_lng']);
+        $this->assertNotNull($result['huts'][0]['distance_km']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function find_nearby_huts_never_uses_an_admin_only_site_as_the_reference_for_others(): void
+    {
+        $system = CaveSystem::factory()->create();
+        Cave::factory()->create([
+            'cave_system_id' => $system->id,
+            'name' => 'Old Coal Mine',
+            'visibility' => 'admin_only',
+            'location_lat' => 54.2,
+            'location_lng' => -2.5,
+        ]);
+
+        $member = (new FindNearbyHutsTool())->handle(['cave_system_id' => $system->id], User::factory()->withApprovedClub()->create());
+        $this->assertNull($member['reference_cave']);
+        $this->assertNull($member['reference_lat']);
+
+        $admin = (new FindNearbyHutsTool())->handle(['cave_system_id' => $system->id], User::factory()->dataAdmin()->create());
+        $this->assertSame('Old Coal Mine', $admin['reference_cave']);
+        $this->assertEquals(54.2, $admin['reference_lat']);
     }
 
     // =========================================================================

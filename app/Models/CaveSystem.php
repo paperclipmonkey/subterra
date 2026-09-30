@@ -67,6 +67,16 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $user->hasRole(['platform_admin', 'data_admin']);
     }
 
+    /**
+     * Whether the user may see where this system's entrances are — coordinates,
+     * access info, references and map annotations. Data admins always can;
+     * otherwise it takes an approved club membership.
+     */
+    public function locationsVisibleTo(?User $user): bool
+    {
+        return $user !== null && ($this->managedBy($user) || $user->hasApprovedClub());
+    }
+
     /** @return BelongsToMany<Tag, $this> */
     public function tags(): BelongsToMany
     {

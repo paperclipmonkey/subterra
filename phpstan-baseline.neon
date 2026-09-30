@@ -421,12 +421,6 @@ parameters:
 			path: app/Http/Controllers/DutyOfficerController.php
 
 		-
-			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:stateless\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Controllers/GoogleLoginController.php
-
-		-
 			message: '#^Method App\\Http\\Controllers\\GoogleLoginController\:\:redirectToGoogle\(\) should return Illuminate\\Http\\RedirectResponse but returns Symfony\\Component\\HttpFoundation\\RedirectResponse\.$#'
 			identifier: return.type
 			count: 1

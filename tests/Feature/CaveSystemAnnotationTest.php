@@ -22,7 +22,7 @@ class CaveSystemAnnotationTest extends TestCase
     {
         parent::setUp();
         $this->admin = User::factory()->admin()->create();
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->withApprovedClub()->create();
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -51,6 +51,49 @@ class CaveSystemAnnotationTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data', null);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function users_without_an_approved_club_cannot_fetch_annotations()
+    {
+        // Parking spots and approach paths pinpoint the entrances, so they sit
+        // behind the same approved-club gate as the coordinates.
+        $this->actingAs(User::factory()->create());
+        $caveSystem = CaveSystem::factory()->create();
+        CaveSystemAnnotation::factory()->create(['cave_system_id' => $caveSystem->id]);
+
+        $this->getJson("/api/cave_systems/{$caveSystem->id}/annotations")
+            ->assertForbidden()
+            ->assertJsonMissingPath('data.geojson');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function data_admins_can_fetch_annotations_without_a_club()
+    {
+        $this->actingAs(User::factory()->dataAdmin()->create());
+        $caveSystem = CaveSystem::factory()->create();
+        CaveSystemAnnotation::factory()->create(['cave_system_id' => $caveSystem->id]);
+
+        $this->getJson("/api/cave_systems/{$caveSystem->id}/annotations")
+            ->assertOk()
+            ->assertJsonPath('data.cave_system_id', $caveSystem->id);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function the_cave_system_page_only_embeds_annotations_for_approved_club_members()
+    {
+        $caveSystem = CaveSystem::factory()->create();
+        CaveSystemAnnotation::factory()->create(['cave_system_id' => $caveSystem->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->getJson("/api/cave_systems/{$caveSystem->slug}")
+            ->assertOk()
+            ->assertJsonPath('data.annotation', null);
+
+        $this->actingAs($this->user)
+            ->getJson("/api/cave_systems/{$caveSystem->slug}")
+            ->assertOk()
+            ->assertJsonPath('data.annotation.cave_system_id', $caveSystem->id);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

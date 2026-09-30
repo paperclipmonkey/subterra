@@ -9,8 +9,14 @@ use Illuminate\Http\Request;
 
 class CaveSystemAnnotationController extends Controller
 {
-    public function show(CaveSystem $caveSystem)
+    public function show(Request $request, CaveSystem $caveSystem)
     {
+        // Annotations mark parking and approach routes, so they would give away
+        // entrance locations: same approved-club gate as CaveSystemResource.
+        if (!$caveSystem->locationsVisibleTo($request->user())) {
+            abort(403, 'You must be an approved club member to see cave locations.');
+        }
+
         $annotation = $caveSystem->annotation;
 
         if (!$annotation) {

@@ -191,6 +191,38 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     }
 
     /**
+     * Of the given user ids, those $actor may NOT add to a trip. A
+     * visibility_addable of 'club' (the default for under-18s) means only
+     * people sharing an approved club with the user may tag them; anyone may
+     * tag themselves.
+     *
+     * @param  iterable<int|string>  $userIds
+     * @return list<int|string>
+     */
+    public static function idsNotAddableBy(self $actor, iterable $userIds): array
+    {
+        $userIds = collect($userIds)->reject(fn ($id) => (string) $id === (string) $actor->id)->values();
+        if ($userIds->isEmpty()) {
+            return [];
+        }
+
+        return static::withoutGlobalScopes()
+            ->whereIn('id', $userIds)
+            ->where('visibility_addable', 'club')
+            ->whereNotExists(function ($q) use ($actor) {
+                $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('club_user as cu1')
+                    ->join('club_user as cu2', 'cu1.club_id', '=', 'cu2.club_id')
+                    ->whereColumn('cu1.user_id', 'users.id')
+                    ->where('cu2.user_id', $actor->id)
+                    ->where('cu1.status', 'approved')
+                    ->where('cu2.status', 'approved');
+            })
+            ->pluck('id')
+            ->all();
+    }
+
+    /**
      * Whether the user is allowed to use the Pip AI assistant.
      * Platform admins always have access; other users must be explicitly opted in
      * via the `pip_access` role by an admin.

@@ -18,12 +18,12 @@ class UserPolicy
         return true;
     }
 
+    // platform_admin, not is_admin: is_admin covers every staff role.
     public function create(User $user): bool
     {
-        return $user->is_admin;
+        return $user->hasRole('platform_admin');
     }
 
-    // platform_admin, not is_admin: is_admin covers every staff role.
     public function update(User $user, User $model): bool
     {
         return $user->hasRole('platform_admin') || $user->id === $model->id;
@@ -36,6 +36,6 @@ class UserPolicy
 
     public function toggleAdmin(User $user): bool
     {
-        return $user->is_admin;
+        return $user->hasRole('platform_admin');
     }
 }

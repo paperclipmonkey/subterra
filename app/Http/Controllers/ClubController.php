@@ -55,14 +55,14 @@ class ClubController extends Controller
      */
     public function show(Club $club): JsonResponse
     {
-        if (!$club->is_active && !(auth()->check() && auth()->user()->is_admin)) {
+        if (!$club->is_active && !(auth()->check() && auth()->user()->hasRole('platform_admin'))) {
             return response()->json(['message' => 'Club not found or access denied.'], 404);
         }
         $club->loadCount(['approvedUsers as users_count']);
 
         if (auth()->check()) {
             $user = auth()->user();
-            $isClubAdmin = $user->is_admin || $club->users()->where('user_id', $user->id)->wherePivot('is_admin', true)->exists();
+            $isClubAdmin = $user->hasRole('platform_admin') || $club->users()->where('user_id', $user->id)->wherePivot('is_admin', true)->exists();
             if ($isClubAdmin) {
                 $club->loadCount('pendingUsers');
             }

@@ -172,6 +172,12 @@ class CreateTripReportTool implements AssistantTool
             }
         }
 
+        // Same rule as the trip controller: people who limit tagging to their
+        // clubs can only be added by a fellow approved member.
+        if (User::idsNotAddableBy($user, $validParticipantIds) !== []) {
+            return ['error' => 'Some of these participants can only be added to trips by members of their own club, so they cannot be tagged. Ask the user whether to save the trip without them.'];
+        }
+
         // Always include the current user
         $allParticipantIds = array_unique(array_merge([$user->id], $validParticipantIds));
 

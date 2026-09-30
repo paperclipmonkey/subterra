@@ -445,6 +445,29 @@ class AssistantTripCreationTest extends TestCase
     }
 
     #[Test]
+    public function create_trip_report_refuses_to_tag_a_club_only_user_from_outside_their_club(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        $this->makeSystemAndCave();
+        $user = User::factory()->create();
+        $minor = User::factory()->create(['visibility_addable' => 'club']);
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Tag Attempt',
+            'description' => 'Should not be saved.',
+            'date' => '2024-06-15',
+            'participant_ids' => [$minor->id],
+        ], $user);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertDatabaseMissing('trips', ['name' => 'Tag Attempt']);
+        Event::assertNotDispatched(TripParticipantTagged::class);
+    }
+
+    #[Test]
     public function create_trip_report_ignores_invalid_participant_ids_gracefully(): void
     {
         Event::fake([TripCreated::class, TripParticipantTagged::class]);

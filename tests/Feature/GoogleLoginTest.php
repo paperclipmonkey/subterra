@@ -43,7 +43,6 @@ class GoogleLoginTest extends TestCase
     {
         $user = User::factory()->create();
         Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
-        Socialite::shouldReceive('stateless')->andReturnSelf();
         Socialite::shouldReceive('user')->andThrow(new \RuntimeException('{"error": "invalid_grant"}'));
 
         $response = $this->actingAs($user)->get('/api/google/callback?code=used');
@@ -54,12 +53,81 @@ class GoogleLoginTest extends TestCase
     public function test_invalid_grant_for_guest_redirects_to_login()
     {
         Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
-        Socialite::shouldReceive('stateless')->andReturnSelf();
         Socialite::shouldReceive('user')->andThrow(new \RuntimeException('{"error": "invalid_grant"}'));
 
         $response = $this->get('/api/google/callback?code=used');
 
         $response->assertRedirect(config('app.url').'/login');
+    }
+
+    public function test_callback_without_matching_session_state_is_rejected()
+    {
+        // Real Socialite driver, no mock: a callback whose state was never
+        // issued to this browser's session (login CSRF) must not sign anyone in
+        // — and must fail before the code is ever exchanged with Google.
+        config(['services.google' => [
+            'client_id' => 'test-client',
+            'client_secret' => 'test-secret',
+            'redirect' => 'http://localhost/api/google/callback',
+        ]]);
+        Http::fake();
+
+        $response = $this->get('/api/google/callback?code=attacker-code&state=attacker-state');
+
+        $response->assertRedirect(config('app.url').'/login');
+        $this->assertGuest();
+        Http::assertNothingSent();
+    }
+
+    public function test_redirect_stores_state_in_session()
+    {
+        config(['services.google' => [
+            'client_id' => 'test-client',
+            'client_secret' => 'test-secret',
+            'redirect' => 'http://localhost/api/google/callback',
+        ]]);
+
+        $response = $this->get('/api/google/redirect');
+
+        $response->assertRedirect();
+        $state = session('state');
+        $this->assertNotEmpty($state);
+        $this->assertStringContainsString('state='.$state, $response->headers->get('Location'));
+    }
+
+    public function test_replayed_callback_with_consumed_state_for_signed_in_user_redirects_home()
+    {
+        $user = User::factory()->create();
+        Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
+        Socialite::shouldReceive('user')->andThrow(new \Laravel\Socialite\Two\InvalidStateException());
+
+        $response = $this->actingAs($user)->get('/api/google/callback?code=used&state=used');
+
+        $response->assertRedirect(config('app.url'));
+    }
+
+    public function test_unverified_google_email_is_rejected()
+    {
+        Event::fake([UserCreated::class]);
+        $existing = User::factory()->create();
+
+        $this->mockGoogleUser($existing->email, 'Impostor', emailVerified: false);
+
+        $response = $this->get('/api/google/callback?code=fake-code');
+
+        $response->assertRedirect(config('app.url').'/login');
+        $this->assertGuest();
+        Event::assertNotDispatched(UserCreated::class);
+    }
+
+    public function test_unverified_google_email_does_not_create_an_account()
+    {
+        $this->mockGoogleUser('unverified@example.com', 'Someone', emailVerified: false);
+
+        $this->get('/api/google/callback?code=fake-code')
+            ->assertRedirect(config('app.url').'/login');
+
+        $this->assertDatabaseMissing('users', ['email' => 'unverified@example.com']);
     }
 
     public function test_established_user_logs_in_without_profile_being_touched()
@@ -197,16 +265,18 @@ class GoogleLoginTest extends TestCase
     /**
      * Stub the Socialite Google driver to return the given profile.
      */
-    private function mockGoogleUser(string $email, string $name, ?string $avatar = 'https://lh3.googleusercontent.com/avatar.jpg'): void
+    private function mockGoogleUser(string $email, string $name, ?string $avatar = 'https://lh3.googleusercontent.com/avatar.jpg', bool $emailVerified = true): void
     {
-        $socialiteUser = (new \Laravel\Socialite\Two\User())->map([
+        $socialiteUser = (new \Laravel\Socialite\Two\User())->setRaw([
+            'email' => $email,
+            'email_verified' => $emailVerified,
+        ])->map([
             'name' => $name,
             'email' => $email,
             'avatar' => $avatar,
         ]);
 
         Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
-        Socialite::shouldReceive('stateless')->andReturnSelf();
         Socialite::shouldReceive('user')->andReturn($socialiteUser);
     }
 }
