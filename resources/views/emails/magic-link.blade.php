@@ -1,12 +1,12 @@
 <x-mail::message>
-# Login to Your Account
+# Log in to Your Account
 
 Hello!
 
 You requested a login link for Subterra. Click the button below to securely log in to your account:
 
 <x-mail::button :url="$magicLinkUrl" color="primary">
-🔐 Login to Subterra
+🔐 Log in to Subterra
 </x-mail::button>
 
 <x-mail::panel>
