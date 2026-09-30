@@ -26,7 +26,7 @@ class AdminUserListTest extends TestCase
             ->assertJsonCount(5, 'data');
 
         $this->assertEqualsCanonicalizing(
-            ['id', 'name', 'email', 'clubs', 'roles', 'created_at'],
+            ['id', 'name', 'email', 'photo', 'clubs', 'roles', 'created_at'],
             array_keys($response->json('data.0')),
         );
     }
