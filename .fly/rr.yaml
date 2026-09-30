@@ -1,0 +1,7 @@
+# Octane passes the address, workers, timeouts and logging on the command line
+# (see supervisor/conf.d/octane.conf); only what it doesn't set lives here.
+version: '3'
+
+http:
+  # In MB. Matches PHP_POST_MAX_SIZE; nginx allows more.
+  max_request_size: 500
