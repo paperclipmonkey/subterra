@@ -91,7 +91,7 @@
           <v-card-text>
             <div v-if="hut.location_lat && hut.location_lng">
               <v-card class="mb-4 rounded-lg" elevation="1">
-                <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" @map:load="onMapLoad">
+                <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" height="300px" @map:load="onMapLoad">
                   <mgl-marker :coordinates="lnglat" color="#cc0000" />
                   
                   

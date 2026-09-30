@@ -8,7 +8,7 @@
       </p>
       <v-btn color="primary" to="/waitlist">Confirm Club Membership</v-btn>
     </div>
-    <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15" @map:load="onMapLoad" />
+    <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" @map:load="onMapLoad" />
   </div>
 </template>
 
