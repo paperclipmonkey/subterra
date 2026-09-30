@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CalloutTest extends TestCase
@@ -220,9 +221,7 @@ class CalloutTest extends TestCase
         // Verify the existing user is stored and their phone number wasn't literally saved as '🔒 Hidden'
         $dbParticipant = $callout->participants()->where('user_id', $registeredParticipant->id)->first();
         $this->assertEquals('Existing User', $dbParticipant->name);
-        $this->assertNotEquals('🔒 Hidden', $dbParticipant->phone);
-        // Backend doesn't currently auto-fill this if passed '🔒 Hidden' unless CalloutController does it,
-        // but let's test what the Controller *actually* does with '🔒 Hidden' payload to ensure it is handled.
+        $this->assertNull($dbParticipant->phone);
 
         // Verify the manual guest is stored with string fields
         $this->assertDatabaseHas('callout_participants', [
@@ -231,6 +230,38 @@ class CalloutTest extends TestCase
             'name' => 'Manual Guest',
             'phone' => '+447999999999',
         ]);
+    }
+
+    #[Test]
+    public function creator_cannot_read_a_tagged_users_hidden_phone(): void
+    {
+        Mail::fake();
+        $creator = User::factory()->withApprovedClub()->create(['phone' => '07111111111']);
+        $victim = User::factory()->create(['phone' => '07700900123']);
+        $dutyOfficer = User::factory()->dutyOfficer()->create();
+        OnCallShift::create([
+            'user_id' => $dutyOfficer->id,
+            'start_at' => Carbon::now()->subHour(),
+            'end_at' => Carbon::now()->addHours(5),
+        ]);
+
+        $response = $this->actingAs($creator)->postJson('/api/callouts', [
+            'callout_time' => Carbon::now()->addHours(2)->toIso8601String(),
+            'cave_id' => Cave::factory()->create()->id,
+            'trip_plan' => 'Plan',
+            'car_registration' => 'AB12 CDE',
+            'car_parking' => 'Layby',
+            'participants' => [
+                ['user_id' => $creator->id, 'name' => 'Me', 'phone' => '07111111111'],
+                ['user_id' => $victim->id, 'name' => 'x', 'phone' => '🔒 Hidden', 'email' => 'attacker@example.com'],
+            ],
+        ]);
+
+        $response->assertCreated();
+        $this->assertStringNotContainsString('7700900123', $response->getContent());
+
+        $calloutId = $response->json('callout.id');
+        $this->assertStringNotContainsString('7700900123', $this->actingAs($creator)->getJson("/api/callouts/{$calloutId}")->getContent());
     }
 
     public function test_create_callout_fails_if_no_admin_coverage()
