@@ -63,7 +63,20 @@
         "participants": {
             "type": "array",
             "items": {
-                "$ref": "user.json"
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "additionalProperties": false
             }
         },
         "media": {

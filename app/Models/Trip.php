@@ -20,6 +20,15 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
     use HasShortId;
     use Auditable;
 
+    /** Eager loads for TripSummaryResource, limited to the columns it reads. */
+    public const SUMMARY_RELATIONS = [
+        'participants:users.id,users.name',
+        'entrance:id,name,slug,location_lat,location_lng',
+        'entrance.heroImage:id,cave_id,filename',
+        'entrance.entranceImage:id,cave_id,filename',
+        'media',
+    ];
+
     protected $fillable = [
         'name',
         'description',
