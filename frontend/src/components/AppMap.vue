@@ -44,7 +44,7 @@ const props = defineProps({
   },
   maxZoom: {
     type: Number,
-    default: 15
+    default: 18
   },
   height: {
     type: String,

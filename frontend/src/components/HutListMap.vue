@@ -1,6 +1,6 @@
 <template>
   <div class="map-container">
-    <AppMap ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15">
+    <AppMap ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom">
       <mgl-marker v-for="hut in huts" :key="hut.id"
                   :scale="1.2"
                   :coordinates="[hut.location_lng, hut.location_lat]">
