@@ -18,7 +18,7 @@
       <v-bottom-navigation bg-color="primary" elevation="4">
         <v-btn to="/" block class="text-none">
           <v-icon start :icon="mdiLogin" />
-          Login or Join to see more
+          Log in or Join to see more
         </v-btn>
       </v-bottom-navigation>
     </v-footer>
