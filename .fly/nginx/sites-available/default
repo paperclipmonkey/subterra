@@ -4,7 +4,7 @@ server {
 
     root /var/www/html/public;
 
-    index index.html index.htm index.php;
+    index index.html index.htm;
 
     server_name _;
 
@@ -15,16 +15,35 @@ server {
     access_log /dev/stdout fly;
 
     location / {
-        try_files $uri $uri/ /index.php?$query_string;
+        try_files $uri $uri/ @octane;
     }
 
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
+    location @octane {
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $http_fly_client_ip;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_buffers 16 16k;
+        proxy_buffer_size 32k;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # Pip streams long SSE replies, so it stays on its own php-fpm pool rather
+    # than holding an Octane worker (see .fly/fpm/pool.d/assistant.conf).
+    location ^~ /api/assistant/ {
+        include fastcgi.conf;
+        fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+        fastcgi_param SCRIPT_NAME /index.php;
         fastcgi_param HTTP_X_FORWARDED_FOR $http_fly_client_ip;
-        # Main pool, or the Pip pool for /api/assistant/* (conf.d/php-fpm-pools.conf).
-        fastcgi_pass $php_fpm_socket;
-        fastcgi_buffers  16 16k;
-        fastcgi_buffer_size  32k;
+        fastcgi_pass unix:/var/run/php/php-fpm-assistant.sock;
+        fastcgi_buffers 16 16k;
+        fastcgi_buffer_size 32k;
+    }
+
+    # Nothing is executed from public/ directly; never serve PHP source.
+    location ~ \.php$ {
+        return 404;
     }
 
     # The SPA shell. "/" is served from here by nginx (never PHP), so it needs its
@@ -78,7 +97,7 @@ server {
         access_log off;
         log_not_found off;
         # Pass to PHP to ensure PHP apps can handle routes that end in these filetypes
-        try_files $uri /index.php?$query_string;
+        try_files $uri @octane;
     }
 
     location ~* \.(?:svgz?|ttf|ttc|otf|eot|woff2?)$ {

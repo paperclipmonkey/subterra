@@ -11,15 +11,15 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /** @mixin \App\Models\Cave */
 class CaveResource extends JsonResource
 {
-    protected static $cachedTags = null;
-
     public static function getCachedTag($label)
     {
-        if (self::$cachedTags === null) {
-            self::$cachedTags = Tag::whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m', '< 250m'])->get()->keyBy('tag');
-        }
+        return self::systemTags()->get($label);
+    }
 
-        return self::$cachedTags->get($label);
+    // once() rather than a static so an Octane worker reloads them each request.
+    private static function systemTags()
+    {
+        return once(fn () => Tag::whereIn('tag', ['Previously Done', 'Not Done Yet', '> 5km', '> 1km', '> 500m', '> 250m', '< 250m'])->get()->keyBy('tag'));
     }
 
     /**
