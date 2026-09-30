@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(\App\Http\Middleware\SetClientIpFromFly::class);
         $middleware->web(append: \App\Http\Middleware\SetFrameHeaders::class);
         $middleware->statefulApi();
+        $middleware->api(prepend: \App\Http\Middleware\ServerTiming::class);
         $middleware->redirectGuestsTo('/login');
     })
     ->withExceptions(function (Exceptions $exceptions) {
