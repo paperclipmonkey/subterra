@@ -75,6 +75,57 @@ class ClubLoadRegressionTest extends TestCase
     }
 
     #[Test]
+    public function member_sync_rejects_non_scalar_ids_with_a_validation_error(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $club = Club::factory()->create();
+
+        $this->actingAs($admin)->putJson("/api/admin/clubs/{$club->slug}/members", [
+            'members' => [['id' => ['not', 'an', 'id'], 'is_admin' => false]],
+        ])->assertStatus(422)->assertJson(['members.0.id' => ['The selected members.0.id is invalid.']]);
+    }
+
+    #[Test]
+    public function member_sync_keeps_inactive_approved_members_the_roster_does_not_list(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $club = Club::factory()->create();
+        $active = User::factory()->create();
+        $inactive = User::factory()->create();
+        $inactive->forceFill(['is_active' => false])->save();
+        $club->users()->attach($active, ['status' => 'approved', 'is_admin' => false]);
+        DB::table('club_user')->insert([
+            'club_id' => $club->id, 'user_id' => $inactive->id, 'status' => 'approved', 'is_admin' => false,
+        ]);
+
+        // The roster the admin edits comes from approvedUsers(), which hides
+        // inactive users, so saving it never lists them.
+        $roster = $this->actingAs($admin)->getJson("/api/admin/clubs/{$club->slug}/members")->assertOk()->json();
+        $this->assertSame([$active->id], array_column($roster, 'id'));
+
+        $this->actingAs($admin)->putJson("/api/admin/clubs/{$club->slug}/members", [
+            'members' => [['id' => $active->id, 'is_admin' => true]],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $inactive->id, 'status' => 'approved']);
+    }
+
+    #[Test]
+    public function platform_admin_can_add_an_inactive_user_as_before(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $club = Club::factory()->create();
+        $inactive = User::factory()->create();
+        $inactive->forceFill(['is_active' => false])->save();
+
+        $this->actingAs($admin)->putJson("/api/admin/clubs/{$club->slug}/members", [
+            'members' => [['id' => $inactive->id, 'is_admin' => false]],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('club_user', ['club_id' => $club->id, 'user_id' => $inactive->id, 'status' => 'approved']);
+    }
+
+    #[Test]
     public function heatmap_multiplies_hours_by_approved_participants_only(): void
     {
         $club = Club::factory()->create();
@@ -113,7 +164,7 @@ class ClubLoadRegressionTest extends TestCase
 
         $expectedCaves = $trips->pluck('cave_system_id')->unique()->count();
 
-        $me = $this->actingAs($user)->getJson('/api/users/me')->assertOk()->json('data.stats') ?? $this->actingAs($user)->getJson('/api/users/me')->json('stats');
+        $me = $this->actingAs($user)->getJson('/api/users/me')->assertOk()->json('data.stats');
         $this->assertSame(['trips' => 2, 'caves' => $expectedCaves, 'duration' => 180], $me);
 
         $profile = $this->actingAs($user)->getJson("/api/users/{$user->id}")->assertOk()->json('data.stats');

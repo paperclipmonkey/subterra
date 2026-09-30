@@ -21,7 +21,8 @@ server {
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
         fastcgi_param HTTP_X_FORWARDED_FOR $http_fly_client_ip;
-        fastcgi_pass unix:/var/run/php/php-fpm.sock;
+        # Main pool, or the Pip pool for /api/assistant/* (conf.d/php-fpm-pools.conf).
+        fastcgi_pass $php_fpm_socket;
         fastcgi_buffers  16 16k;
         fastcgi_buffer_size  32k;
     }
