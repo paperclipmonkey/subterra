@@ -76,6 +76,15 @@
                     hide-details
                     class="mt-2 member-search"
                   />
+                  <div
+                    v-if="filteredMembers.length > 0"
+                    class="member-list-header d-flex align-center text-caption text-medium-emphasis text-uppercase"
+                  >
+                    <span>Member</span>
+                    <v-spacer />
+                    <span class="admin-col text-center">Admin</span>
+                    <span class="delete-col" />
+                  </div>
                   <v-list v-if="filteredMembers.length > 0" lines="one">
                     <v-list-item
                       v-for="member in filteredMembers"
@@ -89,14 +98,18 @@
                         </v-avatar>
                       </template>
                       <template #append>
-                        <v-switch
-                          v-model="member.is_club_admin"
-                          label="Admin"
-                          color="primary"
-                          hide-details
-                          inset
-                          @change="markMemberDataChanged"
-                        />
+                        <div class="admin-col d-flex justify-center">
+                          <v-switch
+                            v-model="member.is_club_admin"
+                            aria-label="Club admin"
+                            color="primary"
+                            density="compact"
+                            class="admin-switch"
+                            hide-details
+                            inset
+                            @change="markMemberDataChanged"
+                          />
+                        </div>
                         <v-btn :icon="mdiDelete" variant="text" color="red" size="small" @click="removeUserFromClub(member)" />
                       </template>
                     </v-list-item>
@@ -413,3 +426,21 @@ onMounted(async () => {
   if (props.initialTab) tab.value = props.initialTab
 })
 </script>
+
+<style scoped>
+/* Header columns line up with the switch and delete button in each row. */
+.member-list-header {
+  padding: 8px 16px 0;
+  letter-spacing: 0.05em;
+}
+.admin-col {
+  width: 56px;
+}
+.delete-col {
+  /* 32px icon button plus the 8px gap the list item leaves before it */
+  width: 40px;
+}
+.admin-switch {
+  transform: scale(0.8);
+}
+</style>
