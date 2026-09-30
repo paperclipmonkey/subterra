@@ -61,6 +61,51 @@ class GoogleLoginTest extends TestCase
         $response->assertRedirect(config('app.url').'/login');
     }
 
+    public function test_callback_without_matching_session_state_is_rejected()
+    {
+        // Real Socialite driver, no mock: a callback whose state was never
+        // issued to this browser's session (login CSRF) must not sign anyone in
+        // — and must fail before the code is ever exchanged with Google.
+        config(['services.google' => [
+            'client_id' => 'test-client',
+            'client_secret' => 'test-secret',
+            'redirect' => 'http://localhost/api/google/callback',
+        ]]);
+        Http::fake();
+
+        $response = $this->get('/api/google/callback?code=attacker-code&state=attacker-state');
+
+        $response->assertRedirect(config('app.url').'/login');
+        $this->assertGuest();
+        Http::assertNothingSent();
+    }
+
+    public function test_redirect_stores_state_in_session()
+    {
+        config(['services.google' => [
+            'client_id' => 'test-client',
+            'client_secret' => 'test-secret',
+            'redirect' => 'http://localhost/api/google/callback',
+        ]]);
+
+        $response = $this->get('/api/google/redirect');
+
+        $response->assertRedirect();
+        $state = session('state');
+        $this->assertNotEmpty($state);
+        $this->assertStringContainsString('state='.$state, $response->headers->get('Location'));
+    }
+
+    public function test_unverified_google_email_does_not_create_an_account()
+    {
+        $this->mockGoogleUser('unverified@example.com', 'Someone', emailVerified: false);
+
+        $this->get('/api/google/callback?code=fake-code')
+            ->assertRedirect(config('app.url').'/login');
+
+        $this->assertDatabaseMissing('users', ['email' => 'unverified@example.com']);
+    }
+
     public function test_established_user_logs_in_without_profile_being_touched()
     {
         config(['app.url' => 'http://localhost']);

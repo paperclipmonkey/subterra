@@ -358,6 +358,14 @@ class CalloutService
 
         $participants = $participants->concat($registeredParticipants)->unique();
 
+        // The logged trip tags everyone, so honour visibility_addable: someone
+        // who limits tagging to their clubs is left off unless they share an
+        // approved club with the callout's creator. Never fail here — this runs
+        // while standing a callout down.
+        if ($callout->user) {
+            $participants = $participants->diff(User::idsNotAddableBy($callout->user, $participants))->values();
+        }
+
         $trip->participants()->sync($participants);
 
         return $trip;

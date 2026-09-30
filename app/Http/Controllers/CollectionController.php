@@ -100,8 +100,9 @@ class CollectionController extends Controller
 
     public function update(Request $request, Collection $collection)
     {
-        // Authorization: Only admin or owner
-        if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
+        // Authorization: only the owner or a platform admin (not is_admin, which
+        // is true for every staff role)
+        if ($request->user()->id !== $collection->user_id && !$request->user()->hasRole('platform_admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -137,7 +138,7 @@ class CollectionController extends Controller
 
     public function destroy(Request $request, Collection $collection)
     {
-        if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
+        if ($request->user()->id !== $collection->user_id && !$request->user()->hasRole('platform_admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -148,7 +149,7 @@ class CollectionController extends Controller
 
     public function addCave(Request $request, Collection $collection)
     {
-        if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
+        if ($request->user()->id !== $collection->user_id && !$request->user()->hasRole('platform_admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -164,7 +165,7 @@ class CollectionController extends Controller
 
     public function removeCave(Request $request, Collection $collection, Cave $cave)
     {
-        if ($request->user()->id !== $collection->user_id && !$request->user()->is_admin) {
+        if ($request->user()->id !== $collection->user_id && !$request->user()->hasRole('platform_admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

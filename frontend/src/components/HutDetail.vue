@@ -172,7 +172,7 @@ const error = computed(() => hutStore.error)
 
 const canEdit = computed(() => {
   if (!userStore.user) return false
-  if (userStore.user.is_admin) return true
+  if (userStore.isPlatformAdmin) return true
   if (hut.value && hut.value.club_id && userStore.user.clubs) {
     return userStore.user.clubs.some(c => c.id === hut.value.club_id && c.is_admin)
   }

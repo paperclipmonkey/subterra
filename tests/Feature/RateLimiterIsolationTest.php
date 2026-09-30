@@ -30,6 +30,9 @@ class RateLimiterIsolationTest extends TestCase
         'assistant-logbook-import',
         'duty-officer-test-self',
         'duty-officer-test-broadcast',
+        'callout-create',
+        'correction-store',
+        'suggested-edit-store',
     ];
 
     private const PER_IP = [
@@ -117,6 +120,9 @@ class RateLimiterIsolationTest extends TestCase
             'assistant-logbook-import' => [20, 1440 * 60],
             'duty-officer-test-self' => [10, 60],
             'duty-officer-test-broadcast' => [3, 5 * 60],
+            'callout-create' => [10, 60 * 60],
+            'correction-store' => [10, 60 * 60],
+            'suggested-edit-store' => [30, 60 * 60],
         ];
 
         foreach ($expected as $name => [$maxAttempts, $decaySeconds]) {
@@ -137,5 +143,37 @@ class RateLimiterIsolationTest extends TestCase
         }
 
         $this->actingAs($user)->postJson('/api/users', [])->assertStatus(429);
+    }
+
+    /**
+     * Routes that send email or Slack messages must be throttled, or one
+     * account could flood duty officers or the data team.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('notifyingRoutes')]
+    public function test_notifying_routes_are_throttled(string $method, string $uri, string $limiter)
+    {
+        $route = app('router')->getRoutes()->match(Request::create($uri, $method));
+
+        $this->assertContains("throttle:{$limiter}", $route->gatherMiddleware());
+    }
+
+    public static function notifyingRoutes(): array
+    {
+        return [
+            'callout create' => ['POST', '/api/callouts', 'callout-create'],
+            'correction' => ['POST', '/api/corrections', 'correction-store'],
+            'suggested edit' => ['POST', '/api/suggested-edits', 'suggested-edit-store'],
+        ];
+    }
+
+    public function test_correction_throttle_enforces_its_limit_over_http()
+    {
+        $user = User::factory()->create();
+
+        for ($i = 0; $i < 10; ++$i) {
+            $this->assertNotSame(429, $this->actingAs($user)->postJson('/api/corrections', [])->status());
+        }
+
+        $this->actingAs($user)->postJson('/api/corrections', [])->assertStatus(429);
     }
 }

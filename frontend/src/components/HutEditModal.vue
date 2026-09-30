@@ -155,7 +155,7 @@ const isNew = computed(() => !props.hut)
 
 const canEdit = computed(() => {
   if (!userStore.user) return false
-  if (userStore.user.is_admin) return true
+  if (userStore.isPlatformAdmin) return true
 
   // For new huts, allow if user is admin of any club
   if (isNew.value) {
