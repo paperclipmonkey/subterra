@@ -11,7 +11,7 @@ jobs:
 
   deploy-gcp:
     needs: [tests]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency: deploy-gcp-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
@@ -85,7 +85,7 @@ jobs:
   # then rolls this image out. Layers are cached in the GitHub Actions cache,
   # so the PHP/apt base layer is rebuilt only when it actually changes.
   build-fly:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
@@ -116,7 +116,7 @@ jobs:
 
   deploy-fly:
     needs: [tests, build-fly]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency: deploy-fly-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
