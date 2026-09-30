@@ -81,13 +81,14 @@ class DutyOfficerController extends Controller
             $q->whereIn('slug', ['duty_officer', 'platform_admin']);
         })->with(['clubs' => function ($q) {
             $q->wherePivot('status', 'approved')->select('clubs.id', 'clubs.name', 'clubs.slug');
-        }])->get(['id', 'name', 'photo', 'bio']);
+        }])->get(['id', 'name', 'photo', 'bio'])->each->setAppends([]);
 
         $shifts = OnCallShift::with('user:id,name,photo')
             ->where('end_at', '>', now())
             ->where('start_at', '<', now()->addWeeks(1))
             ->orderBy('start_at')
             ->get(['id', 'user_id', 'start_at', 'end_at']);
+        $shifts->each(fn ($shift) => $shift->user?->setAppends([]));
 
         return response()->json([
             'data' => [
@@ -104,7 +105,7 @@ class DutyOfficerController extends Controller
     {
         $officers = User::whereHas('roles', function ($q) {
             $q->whereIn('slug', ['duty_officer', 'platform_admin']);
-        })->get(['id', 'name']);
+        })->get(['id', 'name'])->each->setAppends([]);
 
         return response()->json(['data' => $officers]);
     }

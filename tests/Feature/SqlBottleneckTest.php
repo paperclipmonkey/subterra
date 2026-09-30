@@ -307,4 +307,21 @@ class SqlBottleneckTest extends TestCase
             'All new participants should be synced to the trip.'
         );
     }
+
+    public function test_collection_show_query_count_does_not_grow_with_caves(): void
+    {
+        $user = User::factory()->withApprovedClub()->create();
+        $collection = \App\Models\Collection::factory()->create();
+        $caves = Cave::factory()->count(20)->create();
+        foreach ($caves as $i => $cave) {
+            $collection->caves()->attach($cave->id, ['sort_order' => $i]);
+        }
+
+        DB::enableQueryLog();
+        $this->actingAs($user)->getJson("/api/collections/{$collection->slug}")->assertOk();
+        $queryCount = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        $this->assertLessThan(20, $queryCount, "Collection show ran {$queryCount} queries for 20 caves");
+    }
 }

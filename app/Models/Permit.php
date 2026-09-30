@@ -15,6 +15,8 @@ class Permit extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
     use HasFactory;
     use Auditable;
+    /** Relations PermitResource serialises. */
+    public const RESOURCE_RELATIONS = ['caves.system', 'caves.heroImage', 'caves.heroVideo', 'caves.entranceImage', 'officers.clubs'];
 
     protected $fillable = [
         'name',

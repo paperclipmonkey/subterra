@@ -86,6 +86,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     protected $hidden = [
         'remember_token',
         'phone_verification_code',
+        'roles', // loaded by hasRole()/is_admin; resources expose roles explicitly
     ];
 
     protected $appends = [
@@ -308,19 +309,11 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      */
     public function hasRole(string|array $role): bool
     {
-        if ($this->relationLoaded('roles')) {
-            $slugs = $this->roles->pluck('slug');
+        $slugs = $this->loadMissing('roles')->roles->pluck('slug');
 
-            return is_array($role)
-                ? $slugs->intersect($role)->isNotEmpty()
-                : $slugs->contains($role);
-        }
-
-        if (is_array($role)) {
-            return $this->roles()->whereIn('slug', $role)->exists();
-        }
-
-        return $this->roles()->where('slug', $role)->exists();
+        return is_array($role)
+            ? $slugs->intersect($role)->isNotEmpty()
+            : $slugs->contains($role);
     }
 
     /**
@@ -330,6 +323,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         $roleModel = Role::where('slug', $role)->firstOrFail();
         $this->roles()->syncWithoutDetaching([$roleModel->id]);
+        $this->unsetRelation('roles');
     }
 
     /**
@@ -339,6 +333,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         $roleModel = Role::where('slug', $role)->firstOrFail();
         $this->roles()->detach($roleModel->id);
+        $this->unsetRelation('roles');
     }
 
     /**
@@ -348,11 +343,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      */
     public function getIsAdminAttribute(): bool
     {
-        if ($this->relationLoaded('roles')) {
-            return $this->roles->whereNotIn('slug', ['pip_access', 'callout_access'])->isNotEmpty();
-        }
-
-        return $this->roles()->whereNotIn('slug', ['pip_access', 'callout_access'])->exists();
+        return $this->loadMissing('roles')->roles->whereNotIn('slug', ['pip_access', 'callout_access'])->isNotEmpty();
     }
 
     /**

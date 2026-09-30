@@ -37,7 +37,12 @@ class CollectionController extends Controller
             }
 
             // Check if the user has visited this cave (entrance or exit in a trip)
-            $query->with(['heroImage', 'entranceImage', 'tags', 'media', 'system'])
+            $query->with(['heroImage', 'entranceImage', 'heroVideo', 'tags', 'media', 'system'])
+                ->withExists(['trips as has_done' => function ($q) use ($user) {
+                    $q->whereHas('participants', function ($u) use ($user) {
+                        $u->where('users.id', $user->id);
+                    });
+                }])
                 ->withExists(['entranceTrips as is_entrance' => function ($q) use ($user) {
                     $q->whereHas('participants', function ($u) use ($user) {
                         $u->where('users.id', $user->id);
