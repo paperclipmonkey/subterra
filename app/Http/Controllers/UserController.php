@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\AdminUserListResource;
 use App\Http\Resources\TripResource;
 use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Resources\UserDetailResource;
@@ -145,21 +146,16 @@ class UserController extends Controller
     /**
      * Admin endpoint to get all users with detailed info.
      */
+    /**
+     * Admin user table. Returns every active user as a slim row (no trips,
+     * medals or callouts) — the client filters and sorts the list itself.
+     */
     public function adminIndex(): ResourceCollection
     {
-        return UserDetailEmailResource::collection(
+        return AdminUserListResource::collection(
             User::withoutGlobalScopes()
                 ->where('is_active', true)
-                ->with([
-                    'roles',
-                    'clubs',
-                    'medals',
-                    'trips' => fn ($q) => $q->select(['trips.id', 'trips.start_time', 'trips.end_time', 'trips.cave_system_id']),
-                    'activeCallout.cave',
-                    'activeCallout.participants',
-                    'activeCallout.incident',
-                    'currentOnCallShift',
-                ])
+                ->with(['roles', 'clubs'])
                 ->get()
         );
     }
