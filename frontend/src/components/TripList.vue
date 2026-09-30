@@ -228,17 +228,15 @@ const loadTrips = async () => {
   }
 
   if (query.user_id) {
-    try {
-      const response = await api.get(`/api/users/${query.user_id}`)
-      tripsUser.value = response.data.data ?? response.data
-    } catch (e) {
-      console.error('Failed to load user', e)
-    }
-  } else {
-    query.user_id = store.user?.id
-    tripsUser.value = store.user
+    const loadUser = api.get(`/api/users/${query.user_id}`)
+      .then(response => { tripsUser.value = response.data.data ?? response.data })
+      .catch(e => console.error('Failed to load user', e))
+    await Promise.all([loadUser, tripStore.getTrips(query)])
+    return
   }
 
+  query.user_id = store.user?.id
+  tripsUser.value = store.user
   await tripStore.getTrips(query)
 }
 

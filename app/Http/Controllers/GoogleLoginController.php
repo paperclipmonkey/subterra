@@ -29,23 +29,11 @@ class GoogleLoginController extends Controller
         }
 
         try {
-            // Not stateless(): Socialite checks the `state` parameter against the
-            // one it stored in the session on redirect. Without that check an
-            // attacker can feed a victim's browser a callback URL carrying the
-            // attacker's own code and sign the victim into the attacker's account
-            // (login CSRF).
             /** @var \Laravel\Socialite\Two\User $googleUser */
             $googleUser = Socialite::driver('google')->user();
-        } catch (InvalidStateException $e) {
-            // The state is single-use (pulled from the session), so a replayed
-            // callback for a user who already signed in lands here too.
-            if (Auth::check()) {
-                return redirect(config('app.url'));
-            }
-
-            Log::warning('Google OAuth callback rejected: state mismatch');
-
-            return redirect(config('app.url').'/login');
+        } catch (InvalidStateException) {
+            // Also hit by a double-loaded callback after the first load signed the user in.
+            return redirect(config('app.url').(Auth::check() ? '' : '/login'));
         } catch (\Exception $e) {
             // Google authorization codes are single-use. A double-loaded
             // callback (refresh, back button, double click, link prefetch)
@@ -64,12 +52,9 @@ class GoogleLoginController extends Controller
             return redirect(config('app.url').'/login');
         }
 
-        // Accounts are matched by email alone, so only trust an address Google
-        // has verified — otherwise anyone could claim an account (or a
-        // placeholder created by trip tagging) by using its address unverified.
-        $emailVerified = $googleUser->getRaw()['email_verified'] ?? false;
-        if (empty($googleUser->email) || ($emailVerified !== true && $emailVerified !== 'true')) {
-            Log::warning('Google OAuth callback rejected: email not verified');
+        // Accounts are matched on email, so only trust a verified one.
+        if (($googleUser->user['email_verified'] ?? false) !== true) {
+            Log::warning('Google login rejected: email not verified', ['email' => $googleUser->email]);
 
             return redirect(config('app.url').'/login');
         }

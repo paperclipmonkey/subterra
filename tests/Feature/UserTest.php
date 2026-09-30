@@ -487,6 +487,20 @@ class UserTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function active_callout_prefers_the_users_own_over_one_they_are_tagged_in()
+    {
+        $user = User::factory()->create();
+        $tagged = \App\Models\Callout::factory()->create(['status' => 'active']);
+        $tagged->participants()->create(['user_id' => $user->id, 'name' => $user->name]);
+
+        $this->actingAs($user, 'sanctum');
+        $this->getJson(route('users.me'))->assertJsonPath('data.active_callout.id', $tagged->id);
+
+        $own = \App\Models\Callout::factory()->create(['status' => 'triggered', 'user_id' => $user->id]);
+        $this->getJson(route('users.me'))->assertJsonPath('data.active_callout.id', $own->id);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function private_trips_are_not_visible_in_user_recent_trips_for_other_users()
     {
         $user = User::factory()->create();

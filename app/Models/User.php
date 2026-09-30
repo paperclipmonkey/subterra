@@ -86,6 +86,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     protected $hidden = [
         'remember_token',
         'phone_verification_code',
+        'roles', // loaded by hasRole()/is_admin; resources expose roles explicitly
     ];
 
     protected $appends = [
@@ -304,22 +305,13 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
             return $this->getRelation('activeCallout');
         }
 
-        // First check if user created an active callout
-        $callout = $this->callouts()->whereIn('status', ['active', 'triggered'])->first();
-
-        if ($callout) {
-            return $callout->load(['cave', 'participants', 'incident']);
-        }
-
-        // Otherwise check if user is a participant in any active callout
-        $participantCallout = Callout::whereIn('status', ['active', 'triggered'])
-            ->whereHas('participants', function ($query) {
-                $query->where('user_id', $this->id);
-            })
+        // One the user created takes precedence over one they're a participant in.
+        return Callout::whereIn('status', ['active', 'triggered'])
+            ->where(fn ($q) => $q->where('user_id', $this->id)
+                ->orWhereHas('participants', fn ($p) => $p->where('user_id', $this->id)))
+            ->orderByRaw('CASE WHEN user_id = ? THEN 0 ELSE 1 END', [$this->id])
             ->with(['cave', 'participants', 'incident'])
             ->first();
-
-        return $participantCallout;
     }
 
     public function callouts(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -340,19 +332,11 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      */
     public function hasRole(string|array $role): bool
     {
-        if ($this->relationLoaded('roles')) {
-            $slugs = $this->roles->pluck('slug');
+        $slugs = $this->loadMissing('roles')->roles->pluck('slug');
 
-            return is_array($role)
-                ? $slugs->intersect($role)->isNotEmpty()
-                : $slugs->contains($role);
-        }
-
-        if (is_array($role)) {
-            return $this->roles()->whereIn('slug', $role)->exists();
-        }
-
-        return $this->roles()->where('slug', $role)->exists();
+        return is_array($role)
+            ? $slugs->intersect($role)->isNotEmpty()
+            : $slugs->contains($role);
     }
 
     /**
@@ -362,6 +346,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         $roleModel = Role::where('slug', $role)->firstOrFail();
         $this->roles()->syncWithoutDetaching([$roleModel->id]);
+        $this->unsetRelation('roles');
     }
 
     /**
@@ -371,6 +356,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     {
         $roleModel = Role::where('slug', $role)->firstOrFail();
         $this->roles()->detach($roleModel->id);
+        $this->unsetRelation('roles');
     }
 
     /**
@@ -380,11 +366,7 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
      */
     public function getIsAdminAttribute(): bool
     {
-        if ($this->relationLoaded('roles')) {
-            return $this->roles->whereNotIn('slug', ['pip_access', 'callout_access'])->isNotEmpty();
-        }
-
-        return $this->roles()->whereNotIn('slug', ['pip_access', 'callout_access'])->exists();
+        return $this->loadMissing('roles')->roles->whereNotIn('slug', ['pip_access', 'callout_access'])->isNotEmpty();
     }
 
     /**

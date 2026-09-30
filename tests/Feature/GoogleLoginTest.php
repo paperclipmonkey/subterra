@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class GoogleLoginTest extends TestCase
@@ -93,31 +94,6 @@ class GoogleLoginTest extends TestCase
         $state = session('state');
         $this->assertNotEmpty($state);
         $this->assertStringContainsString('state='.$state, $response->headers->get('Location'));
-    }
-
-    public function test_replayed_callback_with_consumed_state_for_signed_in_user_redirects_home()
-    {
-        $user = User::factory()->create();
-        Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
-        Socialite::shouldReceive('user')->andThrow(new \Laravel\Socialite\Two\InvalidStateException());
-
-        $response = $this->actingAs($user)->get('/api/google/callback?code=used&state=used');
-
-        $response->assertRedirect(config('app.url'));
-    }
-
-    public function test_unverified_google_email_is_rejected()
-    {
-        Event::fake([UserCreated::class]);
-        $existing = User::factory()->create();
-
-        $this->mockGoogleUser($existing->email, 'Impostor', emailVerified: false);
-
-        $response = $this->get('/api/google/callback?code=fake-code');
-
-        $response->assertRedirect(config('app.url').'/login');
-        $this->assertGuest();
-        Event::assertNotDispatched(UserCreated::class);
     }
 
     public function test_unverified_google_email_does_not_create_an_account()
@@ -265,12 +241,31 @@ class GoogleLoginTest extends TestCase
     /**
      * Stub the Socialite Google driver to return the given profile.
      */
+    #[Test]
+    public function unverified_google_email_cannot_sign_into_an_existing_account(): void
+    {
+        config(['app.url' => 'http://localhost']);
+        $user = User::factory()->create();
+        $this->mockGoogleUser($user->email, 'Impostor', emailVerified: false);
+
+        $this->get('/api/google/callback?code=fake-code')->assertRedirect('http://localhost/login');
+
+        $this->assertGuest();
+    }
+
+    #[Test]
+    public function replayed_callback_after_state_was_used_redirects_a_signed_in_user_home(): void
+    {
+        config(['app.url' => 'http://localhost']);
+
+        $this->actingAs(User::factory()->create())
+            ->get('/api/google/callback?code=used&state=already-used')
+            ->assertRedirect('http://localhost');
+    }
+
     private function mockGoogleUser(string $email, string $name, ?string $avatar = 'https://lh3.googleusercontent.com/avatar.jpg', bool $emailVerified = true): void
     {
-        $socialiteUser = (new \Laravel\Socialite\Two\User())->setRaw([
-            'email' => $email,
-            'email_verified' => $emailVerified,
-        ])->map([
+        $socialiteUser = (new \Laravel\Socialite\Two\User())->setRaw(['email_verified' => $emailVerified])->map([
             'name' => $name,
             'email' => $email,
             'avatar' => $avatar,

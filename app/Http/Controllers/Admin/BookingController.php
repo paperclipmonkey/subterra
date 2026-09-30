@@ -26,7 +26,7 @@ class BookingController extends Controller
 
     public function index(Request $request): ResourceCollection
     {
-        $query = Booking::with(['permit.caves', 'permit.officers', 'applicant.clubs']);
+        $query = Booking::with([...array_map(fn ($r) => "permit.$r", Permit::RESOURCE_RELATIONS), 'applicant.clubs']);
 
         // Access officers only see bookings for permits they administer.
         if (!$request->user()->hasRole('platform_admin')) {

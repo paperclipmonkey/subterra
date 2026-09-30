@@ -50,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
             '*',
         ]);
 
+        \Illuminate\Database\Eloquent\Model::preventLazyLoading(!$this->app->isProduction());
+
         $this->configureRateLimiters();
         $this->bindDatabaseStatementTimeouts();
 

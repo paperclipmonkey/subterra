@@ -33,7 +33,8 @@ class CommunicationController extends Controller
 
         // Production Send
         $count = 0;
-        User::where('email_platform_news', true)
+        User::with('clubs')
+            ->where('email_platform_news', true)
             ->chunk(100, function ($users) use ($subject, $body, &$count) {
                 foreach ($users as $user) {
                     Mail::to($user)->queue(new PlatformNews($subject, $body, $user));

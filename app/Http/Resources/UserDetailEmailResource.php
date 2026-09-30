@@ -80,7 +80,10 @@ class UserDetailEmailResource extends JsonResource
             'on_call_until' => $this->relationLoaded('currentOnCallShift')
                 ? $this->currentOnCallShift?->end_at
                 : OnCallShift::covering(now())->where('user_id', $this->id)->first()?->end_at,
-            'open_callouts_count' => once(fn () => Callout::whereIn('status', ['active', 'triggered'])->count()),
+            // Only shown in the on-call bar.
+            'open_callouts_count' => $this->relationLoaded('currentOnCallShift') && $this->currentOnCallShift === null
+                ? 0
+                : once(fn () => Callout::whereIn('status', ['active', 'triggered'])->count()),
             'tos_agreed_at' => $this->tos_agreed_at,
             'privacy_policy_agreed_at' => $this->privacy_policy_agreed_at,
             'pip_agreement_signed_at' => $this->pip_agreement_signed_at,
