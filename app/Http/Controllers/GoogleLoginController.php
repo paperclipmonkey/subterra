@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class GoogleLoginController extends Controller
 {
@@ -28,7 +29,18 @@ class GoogleLoginController extends Controller
         }
 
         try {
-            $googleUser = Socialite::driver('google')->stateless()->user();
+            // Not stateless(): Socialite checks the `state` it stored in the
+            // session on redirect, so a callback URL carrying someone else's
+            // code can't sign the visitor into that account (login CSRF).
+            /** @var \Laravel\Socialite\Two\User $googleUser */
+            $googleUser = Socialite::driver('google')->user();
+        } catch (InvalidStateException) {
+            // The state is pulled from the session on first use, so a
+            // double-loaded callback (refresh, back button, link prefetch)
+            // lands here after the first load already signed the user in.
+            // Otherwise it's an expired session or a forged callback — neither
+            // is worth an error alert.
+            return redirect(config('app.url').(Auth::check() ? '' : '/login'));
         } catch (\Exception $e) {
             // Google authorization codes are single-use. A double-loaded
             // callback (refresh, back button, double click, link prefetch)
@@ -47,6 +59,14 @@ class GoogleLoginController extends Controller
             return redirect(config('app.url').'/login');
         }
 
+        // Accounts are matched on email alone, so only trust an address Google
+        // has verified — otherwise it could claim an existing user's account.
+        if (($googleUser->user['email_verified'] ?? false) !== true) {
+            Log::warning('Google login rejected: email not verified', ['email' => $googleUser->email]);
+
+            return redirect(config('app.url').'/login');
+        }
+
         $user = User::withoutGlobalScopes()->where('email', $googleUser->email)->first();
 
         // Only brand-new users and placeholder accounts (created via trip
@@ -56,7 +76,7 @@ class GoogleLoginController extends Controller
             // Only download the Google avatar when we could actually use it —
             // never to replace an existing photo.
             $photoUrl = (!$user || empty($user->photo))
-                ? $this->fetchGoogleAvatar($googleUser->avatar ?? null)
+                ? $this->fetchGoogleAvatar($googleUser->getAvatar())
                 : null;
 
             if (!$user) {

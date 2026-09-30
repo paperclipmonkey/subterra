@@ -187,7 +187,7 @@ class GcpWatchdogService
      */
     private function buildPayload(Callout $callout): array
     {
-        $callout->load(['user', 'participants', 'cave', 'exitCave']);
+        $callout->load(['user', 'participants.user', 'cave', 'exitCave']);
 
         // Same recipients as the app's own escalation (CheckOverdueCallouts::
         // getAllDutyOfficers): platform admins also take duty-officer shifts, so a
@@ -209,10 +209,13 @@ class GcpWatchdogService
                 'email' => $callout->user->email,
             ],
             'duty_officers' => $dutyOfficers,
+            // Linked users usually arrive with no phone/email on the participant
+            // row (the create form hides them), so the backup gets the account's
+            // details — the same fallback CalloutParticipant uses for notifications.
             'participants' => $callout->participants->map(fn ($p) => [
                 'name' => $p->name,
-                'phone' => $p->phone,
-                'email' => $p->email,
+                'phone' => $p->routeNotificationForSms(),
+                'email' => $p->routeNotificationForMail(),
             ])->toArray(),
             'trip_plan' => $callout->trip_plan ?? $callout->description ?? '',
             'cave_name' => $callout->cave_name,

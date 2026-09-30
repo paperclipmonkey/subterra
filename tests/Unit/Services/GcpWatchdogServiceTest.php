@@ -107,6 +107,27 @@ class GcpWatchdogServiceTest extends TestCase
             ->contains(fn ($do) => $do['email'] === 'rota-admin@example.com'));
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function linked_participants_without_contact_details_fall_back_to_their_account(): void
+    {
+        $linked = User::factory()->create(['phone' => '+447700900111', 'email' => 'linked@example.com']);
+        $callout = Callout::factory()->create(['callout_time' => now()->addHours(2)]);
+        $callout->participants()->create(['user_id' => $linked->id, 'name' => 'Linked', 'phone' => null, 'email' => null]);
+        $callout->participants()->create(['name' => 'Guest', 'phone' => '+447700900222', 'email' => 'guest@example.com']);
+
+        Http::fake(['https://test-watchdog.run.app/watchdog' => Http::response(['callout_id' => $callout->id], 200)]);
+
+        $this->service->register($callout);
+
+        Http::assertSent(function ($request) {
+            $participants = collect($request->data()['participants'])->keyBy('name');
+
+            return $participants['Linked']['phone'] === '+447700900111'
+                && $participants['Linked']['email'] === 'linked@example.com'
+                && $participants['Guest']['phone'] === '+447700900222';
+        });
+    }
+
     public function test_register_handles_http_errors()
     {
         $callout = Callout::factory()->create();

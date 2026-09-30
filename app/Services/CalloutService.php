@@ -85,15 +85,15 @@ class CalloutService
             throw new Exception('Cannot create callout: No administrator is on-call at '.$calloutTime->toDateTimeString());
         }
 
-        // Resolve hidden phone numbers for registered users
+        // The create form shows a linked user's phone as "🔒 Hidden" and should
+        // send null in its place. Never copy the linked account's number onto the
+        // participant row: the creator would get it back in the response, which
+        // let anyone read any user's phone by tagging them. SMS routing already
+        // falls back to the linked account (CalloutParticipant::routeNotificationForSms).
         if (!empty($data['participants'])) {
             foreach ($data['participants'] as &$p) {
                 if (($p['phone'] ?? '') === '🔒 Hidden') {
-                    if (!empty($p['user_id'])) {
-                        $p['phone'] = User::find($p['user_id'])?->phone;
-                    } else {
-                        $p['phone'] = null;
-                    }
+                    $p['phone'] = null;
                 }
             }
             unset($p);
