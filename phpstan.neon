@@ -12,3 +12,11 @@ parameters:
     # Bootstrap Laravel for analysis
     bootstrapFiles:
         - bootstrap/app.php
+    ignoreErrors:
+        # Untyped User::clubs()/roles() relations, same as UserDetailEmailResource
+        # (which is covered by the baseline).
+        -
+            identifiers:
+                - property.notFound
+                - argument.unresolvableType
+            path: app/Http/Resources/AdminUserListResource.php

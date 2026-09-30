@@ -15,10 +15,11 @@
           :headers="headers"
           :items="users"
           :loading="loading"
-          :search="search"
-          :items-per-page="1000"
+          :search="appliedSearch"
+          :custom-filter="filterNameOrEmail"
+          :items-per-page="50"
+          :items-per-page-options="[25, 50, 100, { value: -1, title: 'All' }]"
           :sort-by="[{ key: 'created_at', order: 'desc' }]"
-          hide-default-footer  
           class="elevation-1"
           item-value="id"
           @click:row="handleRowClick"
@@ -288,7 +289,7 @@ import {
 } from '@mdi/js'
 
 import moment from 'moment'
-import { ref, onMounted } from 'vue'
+import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { api } from '@/plugins/api'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
@@ -297,6 +298,9 @@ import { useNotificationStore } from '@/stores/notifications'
 const users = ref([])
 const loading = ref(false)
 const search = ref('')
+// The table filters on this, not `search`, so typing doesn't re-filter and
+// re-render the table on every keystroke.
+const appliedSearch = ref('')
 const router = useRouter()
 const currentRoute = useRoute()
 const appStore = useAppStore()
@@ -319,6 +323,22 @@ const headers = [
   { title: 'Joined', key: 'created_at', sortable: true },
   { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
 ]
+
+// Vuetify's default filter tests every column (including the roles/clubs
+// objects); only name and email are worth searching.
+const filterNameOrEmail = (_value, query, item) => {
+  const q = String(query ?? '').trim().toLowerCase()
+  if (!q) return true
+  const { name, email } = item.raw
+  return (name ?? '').toLowerCase().includes(q) || (email ?? '').toLowerCase().includes(q)
+}
+
+let searchTimer
+watch(search, (value) => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { appliedSearch.value = value ?? '' }, 250)
+})
+onBeforeUnmount(() => clearTimeout(searchTimer))
 
 const isSelf = (user) => {
   return appStore.user?.id === user.id
@@ -539,6 +559,7 @@ const handleRowClick = (event, { item }) => {
 onMounted(() => {
   if (currentRoute.query.search) {
     search.value = Array.isArray(currentRoute.query.search) ? currentRoute.query.search[0] : String(currentRoute.query.search)
+    appliedSearch.value = search.value
   }
   fetchUsers()
 })
