@@ -132,7 +132,8 @@ class OnCallController extends Controller
     private function getUncoveredCalloutsAfterModification($shift, $newStart = null, $newEnd = null, $newUser = null, $isDelete = false)
     {
         // 1. Find callouts that were covered by the original shift
-        $callouts = Callout::whereIn('status', ['active', 'triggered'])
+        $callouts = Callout::with(['cave', 'user'])
+            ->whereIn('status', ['active', 'triggered'])
             ->where('callout_time', '>=', $shift->start_at)
             ->where('callout_time', '<=', $shift->end_at)
             ->get();

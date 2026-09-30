@@ -85,15 +85,11 @@ class CalloutService
             throw new Exception('Cannot create callout: No administrator is on-call at '.$calloutTime->toDateTimeString());
         }
 
-        // Resolve hidden phone numbers for registered users
+        // Never resolve a linked user's phone here: it would be returned to the creator.
         if (!empty($data['participants'])) {
             foreach ($data['participants'] as &$p) {
                 if (($p['phone'] ?? '') === '🔒 Hidden') {
-                    if (!empty($p['user_id'])) {
-                        $p['phone'] = User::find($p['user_id'])?->phone;
-                    } else {
-                        $p['phone'] = null;
-                    }
+                    $p['phone'] = null;
                 }
             }
             unset($p);

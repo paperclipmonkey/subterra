@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class GoogleLoginTest extends TestCase
@@ -43,7 +44,6 @@ class GoogleLoginTest extends TestCase
     {
         $user = User::factory()->create();
         Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
-        Socialite::shouldReceive('stateless')->andReturnSelf();
         Socialite::shouldReceive('user')->andThrow(new \RuntimeException('{"error": "invalid_grant"}'));
 
         $response = $this->actingAs($user)->get('/api/google/callback?code=used');
@@ -54,7 +54,6 @@ class GoogleLoginTest extends TestCase
     public function test_invalid_grant_for_guest_redirects_to_login()
     {
         Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
-        Socialite::shouldReceive('stateless')->andReturnSelf();
         Socialite::shouldReceive('user')->andThrow(new \RuntimeException('{"error": "invalid_grant"}'));
 
         $response = $this->get('/api/google/callback?code=used');
@@ -197,16 +196,37 @@ class GoogleLoginTest extends TestCase
     /**
      * Stub the Socialite Google driver to return the given profile.
      */
-    private function mockGoogleUser(string $email, string $name, ?string $avatar = 'https://lh3.googleusercontent.com/avatar.jpg'): void
+    #[Test]
+    public function unverified_google_email_cannot_sign_into_an_existing_account(): void
     {
-        $socialiteUser = (new \Laravel\Socialite\Two\User())->map([
+        config(['app.url' => 'http://localhost']);
+        $user = User::factory()->create();
+        $this->mockGoogleUser($user->email, 'Impostor', emailVerified: false);
+
+        $this->get('/api/google/callback?code=fake-code')->assertRedirect('http://localhost/login');
+
+        $this->assertGuest();
+    }
+
+    #[Test]
+    public function replayed_callback_after_state_was_used_redirects_a_signed_in_user_home(): void
+    {
+        config(['app.url' => 'http://localhost']);
+
+        $this->actingAs(User::factory()->create())
+            ->get('/api/google/callback?code=used&state=already-used')
+            ->assertRedirect('http://localhost');
+    }
+
+    private function mockGoogleUser(string $email, string $name, ?string $avatar = 'https://lh3.googleusercontent.com/avatar.jpg', bool $emailVerified = true): void
+    {
+        $socialiteUser = (new \Laravel\Socialite\Two\User())->setRaw(['email_verified' => $emailVerified])->map([
             'name' => $name,
             'email' => $email,
             'avatar' => $avatar,
         ]);
 
         Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
-        Socialite::shouldReceive('stateless')->andReturnSelf();
         Socialite::shouldReceive('user')->andReturn($socialiteUser);
     }
 }

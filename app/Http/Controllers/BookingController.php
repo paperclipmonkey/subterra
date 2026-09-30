@@ -28,7 +28,7 @@ class BookingController extends Controller
      */
     public function publicPermits(): ResourceCollection
     {
-        $permits = Permit::with(['caves.system', 'officers'])
+        $permits = Permit::with(Permit::RESOURCE_RELATIONS)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -43,7 +43,7 @@ class BookingController extends Controller
     {
         abort_unless($permit->is_active, 404);
 
-        $permit->load(['caves.system', 'officers']);
+        $permit->load(Permit::RESOURCE_RELATIONS);
 
         return response()->json(['data' => new PermitResource($permit)]);
     }
@@ -53,7 +53,7 @@ class BookingController extends Controller
      */
     public function permitForCave(Cave $cave): JsonResponse
     {
-        $permit = $cave->permit()->with('caves')->where('is_active', true)->first();
+        $permit = $cave->permit()->with(Permit::RESOURCE_RELATIONS)->where('is_active', true)->first();
 
         if (!$permit) {
             return response()->json(['data' => null]);
@@ -254,7 +254,7 @@ class BookingController extends Controller
     {
         $bookings = $request->user()
             ->bookings()
-            ->with(['permit.officers'])
+            ->with(['permit.officers.clubs'])
             ->orderBy('date', 'desc')
             ->get();
 

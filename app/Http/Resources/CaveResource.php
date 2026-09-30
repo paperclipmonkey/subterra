@@ -42,6 +42,8 @@ class CaveResource extends JsonResource
             $hasDone = $this->trips->contains(function ($trip) use ($user) {
                 return $trip->participants->contains('id', $user->id);
             });
+        } elseif (array_key_exists('has_done', $this->resource->getAttributes())) {
+            $hasDone = (bool) $this->resource->getAttribute('has_done');
         } elseif ($user) {
             $hasDone = $this->trips()->whereHas('participants', function ($q) use ($user) {
                 $q->where('users.id', $user->id);

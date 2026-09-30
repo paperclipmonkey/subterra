@@ -31,7 +31,7 @@ class CaveSystemController extends Controller
         $request->user()?->loadMissing('roles');
 
         return CaveSystemResource::collection(
-            CaveSystem::with(['caves.tags', 'tags', 'files'])->orderBy('name')->get()
+            CaveSystem::with(['caves', 'tags', 'files'])->orderBy('name')->get()
         );
     }
 
@@ -45,7 +45,7 @@ class CaveSystemController extends Controller
 
     public function show(CaveSystem $caveSystem)
     {
-        $caveSystem->load(['files', 'caves.tags', 'tags', 'annotation', 'mapOverlays']);
+        $caveSystem->load(['files', 'caves', 'tags', 'annotation', 'mapOverlays']);
 
         return new CaveSystemResource($caveSystem);
     }
