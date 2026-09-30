@@ -49,6 +49,10 @@
               <div class="text-body-2">{{ Math.round(weatherData.currently.humidity * 100) }}%</div>
             </v-col>
           </v-row>
+          <div class="text-caption text-blue-grey-lighten-2 mt-4">
+            Forecast and observed rainfall data from
+            <a href="https://pirateweather.net/" target="_blank" rel="noopener" class="text-blue-grey-lighten-4">Pirate Weather</a>
+          </div>
         </v-card-text>
       </v-card>
 
@@ -57,7 +61,7 @@
           <!-- Combined Precipitation Timeline (observed + forecast) -->
           <v-card class="mb-4 rounded-lg" elevation="1">
             <v-card-title class="text-subtitle-1 font-weight-bold">Precipitation at {{ caveName }}</v-card-title>
-            <v-card-subtitle>Last 7 days observed &middot; next 48 hours forecast</v-card-subtitle>
+            <v-card-subtitle>Last 7 days observed &middot; next 48 hours forecast &middot; via Pirate Weather</v-card-subtitle>
             <v-card-text>
               <v-progress-linear v-if="!historicData" indeterminate height="2" class="mb-2" />
               <div style="height: 320px;">
