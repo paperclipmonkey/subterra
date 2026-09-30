@@ -19,8 +19,14 @@ class CaveSystemMapOverlayController extends Controller
      */
     private array $allowedExtensions = ['tif', 'tiff', 'gtiff', 'geotiff'];
 
-    public function index(CaveSystem $caveSystem)
+    public function index(Request $request, CaveSystem $caveSystem)
     {
+        // Georeferenced survey overlays give away entrance locations, so they
+        // sit behind the same approved-club gate as coordinates and annotations.
+        if (!$caveSystem->locationsVisibleTo($request->user())) {
+            abort(403, 'You must be an approved club member to see cave locations.');
+        }
+
         $overlays = $caveSystem->mapOverlays()
             ->orderBy('display_order')
             ->orderBy('id')

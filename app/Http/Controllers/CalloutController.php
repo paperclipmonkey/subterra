@@ -117,11 +117,13 @@ class CalloutController extends Controller
     {
         $callout = Callout::with('participants')->findOrFail($id);
 
-        // If logged in, ensure user is either the creator OR a participant (or admin)
+        // If logged in, ensure user is either the creator OR a participant (or a
+        // duty officer / platform admin). Not is_admin: that is true for every
+        // staff role, including data and access admins.
         if (Auth::check()) {
             $isCreator = Auth::user()->id === $callout->user_id;
             $isParticipant = $callout->participants->contains('user_id', Auth::user()->id);
-            $isAdmin = Auth::user()->is_admin;
+            $isAdmin = Auth::user()->hasRole(['duty_officer', 'platform_admin']);
 
             if (!$isCreator && !$isParticipant && !$isAdmin) {
                 abort(403, 'Unauthorized. You must be a participant in this callout to cancel it.');
@@ -170,7 +172,6 @@ class CalloutController extends Controller
         $canSeeContact = $user && (
             $user->id === $callout->user_id
             || $callout->participants->contains('user_id', $user->id)
-            || $user->is_admin
             || $user->hasRole(['duty_officer', 'platform_admin'])
         );
 
@@ -188,7 +189,7 @@ class CalloutController extends Controller
         // Where parties are currently underground is only for confirmed club members
         // (who are also the only people who can open a callout) and admins.
         $user = $request->user();
-        if (!$user->hasApprovedClub() && !$user->is_admin) {
+        if (!$user->hasApprovedClub() && !$user->hasRole(['duty_officer', 'platform_admin'])) {
             abort(403, 'You must be an approved club member to see open trips.');
         }
 

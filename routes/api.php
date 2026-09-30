@@ -51,7 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // to stand their callout down — a false rescue is far worse than the flag
     // leaking a little.
     Route::post('/callouts', [App\Http\Controllers\CalloutController::class, 'store'])
-        ->middleware(CalloutsEnabled::class);
+        ->middleware([CalloutsEnabled::class, 'throttle:callout-create']);
     Route::get('/callouts/active', [App\Http\Controllers\CalloutController::class, 'active']);
     Route::get('/callouts/contact-numbers', [App\Http\Controllers\CalloutController::class, 'contactNumbers']);
 });
@@ -70,7 +70,7 @@ Route::get('/users/me', function (Request $request) {
     // Trips are only summed into the stats block, so load just the columns the
     // stats need. This runs on every page load; hydrating every full trip row (plus its
     // cave system) for a heavy caver is a lot of memory for three numbers.
-    $user->load(['clubs', 'medals', 'roles', 'trips' => fn ($q) => $q->select('trips.id', 'trips.cave_system_id', 'trips.start_time', 'trips.end_time')]);
+    $user->load(['clubs', 'medals', 'roles', 'currentOnCallShift', 'trips' => fn ($q) => $q->select('trips.id', 'trips.cave_system_id', 'trips.start_time', 'trips.end_time')]);
 
     return new UserDetailEmailResource($user);
 })->middleware('auth:sanctum')->name('users.me');
@@ -101,8 +101,10 @@ Route::get('/routes/{route}', [App\Http\Controllers\RouteController::class, 'sho
 Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function () {
     Route::post('/clubs/{club}/join', [ClubController::class, 'requestJoin'])->name('clubs.join');
 
-    Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store']);
-    Route::post('/suggested-edits', [App\Http\Controllers\SuggestedEditController::class, 'store']);
+    Route::post('/corrections', [App\Http\Controllers\CorrectionController::class, 'store'])
+        ->middleware('throttle:correction-store');
+    Route::post('/suggested-edits', [App\Http\Controllers\SuggestedEditController::class, 'store'])
+        ->middleware('throttle:suggested-edit-store');
 
     // Reporting content or conduct. Rate-limited generously rather than tightly —
     // see the 'report-store' limiter for why.

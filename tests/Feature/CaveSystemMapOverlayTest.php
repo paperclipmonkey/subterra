@@ -24,7 +24,9 @@ class CaveSystemMapOverlayTest extends TestCase
     {
         parent::setUp();
         $this->admin = User::factory()->admin()->create();
-        $this->user = User::factory()->create();
+        // Overlays reveal entrance locations, so listing/viewing them takes an
+        // approved-club membership (same gate as coordinates and annotations).
+        $this->user = User::factory()->withApprovedClub()->create();
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -40,6 +42,29 @@ class CaveSystemMapOverlayTest extends TestCase
 
         $response->assertOk()
             ->assertJsonCount(2, 'data');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function non_approved_users_cannot_list_overlays()
+    {
+        $this->actingAs(User::factory()->create());
+        $caveSystem = CaveSystem::factory()->create();
+        CaveSystemMapOverlay::factory()->create(['cave_system_id' => $caveSystem->id]);
+
+        $this->getJson("/api/cave_systems/{$caveSystem->id}/map_overlays")
+            ->assertForbidden();
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function overlays_are_hidden_from_non_approved_users_in_show()
+    {
+        $this->actingAs(User::factory()->create());
+        $caveSystem = CaveSystem::factory()->create();
+        CaveSystemMapOverlay::factory()->create(['cave_system_id' => $caveSystem->id]);
+
+        $this->getJson("/api/cave_systems/{$caveSystem->id}")
+            ->assertOk()
+            ->assertJsonPath('data.map_overlays', []);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

@@ -141,6 +141,7 @@ class TripController extends Controller
             ->whereIn('id', $participants)
             ->pluck('id')
             ->toArray();
+        $this->assertCanAddParticipants($request->user(), $participantIds);
 
         $trip = DB::transaction(function () use ($tripData, $participantIds) {
             $trip = Trip::create($tripData);
@@ -167,6 +168,20 @@ class TripController extends Controller
         $trip->load(self::TRIP_RESOURCE_RELATIONS);
 
         return new TripResource($trip);
+    }
+
+    /**
+     * Respect each person's visibility_addable setting: someone who limits it
+     * to their clubs (under-18s by default) can only be tagged by a fellow
+     * approved member, whatever the trip's own visibility.
+     */
+    private function assertCanAddParticipants(User $actor, array $userIds): void
+    {
+        if (User::idsNotAddableBy($actor, $userIds) !== []) {
+            throw ValidationException::withMessages([
+                'participants' => 'Some of these people can only be added to trips by members of their own club.',
+            ]);
+        }
     }
 
     private function storeMedia(array $mediaMetadata, array $mediaFiles, Trip $trip): void
@@ -235,6 +250,11 @@ class TripController extends Controller
             ->whereIn('id', $participants)
             ->pluck('id')
             ->toArray();
+        if ($request->has('participants')) {
+            // People already on the trip stay put; only new tags are checked.
+            $existingIds = $trip->participants()->pluck('users.id')->all();
+            $this->assertCanAddParticipants($request->user(), array_diff($participantIds, $existingIds));
+        }
 
         $syncResult = DB::transaction(function () use ($request, $trip, $data, $participantIds) {
             // Only prune media when the client explicitly sent existing_media —

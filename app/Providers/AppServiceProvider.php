@@ -124,6 +124,12 @@ class AppServiceProvider extends ServiceProvider
         // Generous on purpose: reporting is a safety mechanism, and someone
         // working through several bad posts in one sitting must not be blocked.
         RateLimiter::for('report-store', $perUser(20, 60));      // 20 per hour
+        // These send email/SMS/Slack, so bound them. Callout creation is a
+        // safety action: someone genuinely logs one or two a day, so the limit
+        // is far above that and only stops a script paging duty officers.
+        RateLimiter::for('callout-create', $perUser(10, 60));    // 10 per hour
+        RateLimiter::for('correction-store', $perUser(10, 60));  // 10 per hour
+        RateLimiter::for('suggested-edit-store', $perUser(30, 60)); // 30 per hour
 
         // Per-IP limiters for guest/webhook endpoints.
         $perIp = fn (int $max, int $decayMinutes) => fn (Request $request) => Limit::perMinutes($decayMinutes, $max)

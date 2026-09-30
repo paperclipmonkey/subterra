@@ -44,7 +44,7 @@ class GoogleLoginController extends Controller
             }
 
             Log::error('Google OAuth callback failed: '.$e->getMessage(), [
-                'request_url' => $request->fullUrl(),
+                'request_url' => $request->url(), // no query string: it carries the auth code
                 'code_present' => $request->has('code'),
                 'exception' => $e,
             ]);

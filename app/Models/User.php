@@ -192,6 +192,38 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     }
 
     /**
+     * Of the given user ids, those $actor may NOT add to a trip. A
+     * visibility_addable of 'club' (the default for under-18s) means only
+     * people sharing an approved club with the user may tag them; anyone may
+     * tag themselves.
+     *
+     * @param  iterable<int|string>  $userIds
+     * @return list<int|string>
+     */
+    public static function idsNotAddableBy(self $actor, iterable $userIds): array
+    {
+        $userIds = collect($userIds)->reject(fn ($id) => (string) $id === (string) $actor->id)->values();
+        if ($userIds->isEmpty()) {
+            return [];
+        }
+
+        return static::withoutGlobalScopes()
+            ->whereIn('id', $userIds)
+            ->where('visibility_addable', 'club')
+            ->whereNotExists(function ($q) use ($actor) {
+                $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('club_user as cu1')
+                    ->join('club_user as cu2', 'cu1.club_id', '=', 'cu2.club_id')
+                    ->whereColumn('cu1.user_id', 'users.id')
+                    ->where('cu2.user_id', $actor->id)
+                    ->where('cu1.status', 'approved')
+                    ->where('cu2.status', 'approved');
+            })
+            ->pluck('id')
+            ->all();
+    }
+
+    /**
      * Whether the user is allowed to use the Pip AI assistant.
      * Platform admins always have access; other users must be explicitly opted in
      * via the `pip_access` role by an admin.
@@ -273,22 +305,13 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
             return $this->getRelation('activeCallout');
         }
 
-        // First check if user created an active callout
-        $callout = $this->callouts()->whereIn('status', ['active', 'triggered'])->first();
-
-        if ($callout) {
-            return $callout->load(['cave', 'participants', 'incident']);
-        }
-
-        // Otherwise check if user is a participant in any active callout
-        $participantCallout = Callout::whereIn('status', ['active', 'triggered'])
-            ->whereHas('participants', function ($query) {
-                $query->where('user_id', $this->id);
-            })
+        // One the user created takes precedence over one they're a participant in.
+        return Callout::whereIn('status', ['active', 'triggered'])
+            ->where(fn ($q) => $q->where('user_id', $this->id)
+                ->orWhereHas('participants', fn ($p) => $p->where('user_id', $this->id)))
+            ->orderByRaw('CASE WHEN user_id = ? THEN 0 ELSE 1 END', [$this->id])
             ->with(['cave', 'participants', 'incident'])
             ->first();
-
-        return $participantCallout;
     }
 
     public function callouts(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -59,19 +59,26 @@ class GetCaveSystemActivityTool implements AssistantTool
             ->selectRaw($durationExpr)
             ->first();
 
-        // Most popular entrance (cave with most trips as entrance)
+        // Most popular entrance (cave with most trips as entrance). Only admins
+        // learn that admin_only sites exist, as in CaveSystemResource.
         $popularEntrance = DB::table('trips')
             ->join('caves', 'caves.id', '=', 'trips.entrance_cave_id')
             ->where('trips.cave_system_id', $systemId)
             ->whereNotNull('trips.entrance_cave_id')
+            ->when(
+                !$user->hasRole(['platform_admin', 'data_admin']),
+                fn ($q) => $q->where('caves.visibility', '!=', 'admin_only')
+            )
             ->selectRaw('caves.name, COUNT(*) as count')
             ->groupBy('caves.id', 'caves.name')
             ->orderByDesc('count')
             ->first();
 
-        // Recent trip reports (public or club-visible, with descriptions)
-        $recentReports = Trip::where('cave_system_id', $systemId)
-            ->whereIn('visibility', ['public', 'club'])
+        // Recent trip reports with descriptions — only ones this user could open
+        // themselves. Club trips are for members of the participants' clubs, so
+        // Pip must not quote them to anyone else.
+        $recentReports = Trip::visibleTo($user)
+            ->where('cave_system_id', $systemId)
             ->whereNotNull('description')
             ->where('description', '!=', '')
             ->orderByDesc('start_time')

@@ -21,8 +21,9 @@ class ClubPolicy
      */
     public function view(User $user, Club $club)
     {
-        // Allow admins to view any club
-        if ($user->is_admin) {
+        // Allow platform admins to view any club (not is_admin, which is true for
+        // every staff role)
+        if ($user->hasRole('platform_admin')) {
             return true;
         }
 

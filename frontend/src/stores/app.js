@@ -47,6 +47,11 @@ export const useAppStore = defineStore('app', {
       return !!(state.user.clubs && state.user.clubs.some(c => c.status === 'approved'))
     },
 
+    // is_admin is true for ANY staff role (data/access admins, duty officers).
+    // Use this where the server requires platform_admin specifically, e.g.
+    // editing huts or other people's collections.
+    isPlatformAdmin: (state) => !!state.user?.roles?.some(r => r.slug === 'platform_admin'),
+
     // The server's master switch for callouts. Defaults to enabled so a cached
     // user record from before this field existed doesn't hide a live feature.
     calloutsEnabled: (state) => state.user?.features?.callouts !== false,

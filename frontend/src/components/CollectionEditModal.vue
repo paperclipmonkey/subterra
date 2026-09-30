@@ -98,14 +98,14 @@ const activatorText = computed(() => {
     if (isNew.value) {
         return userStore.user?.is_admin ? 'New Collection' : 'Suggest New Collection'
     }
-    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Edit Collection' : 'Suggest Edit'
+    return userStore.isPlatformAdmin || userStore.user?.id === props.collection?.user_id ? 'Edit Collection' : 'Suggest Edit'
 })
 
 const saveButtonText = computed(() => {
     if (isNew.value) {
         return userStore.user?.is_admin ? 'Create Collection' : 'Suggest New Collection'
     }
-    return userStore.user?.is_admin || userStore.user?.id === props.collection?.user_id ? 'Save Changes' : 'Suggest Changes'
+    return userStore.isPlatformAdmin || userStore.user?.id === props.collection?.user_id ? 'Save Changes' : 'Suggest Changes'
 })
 
 const initForm = (newVal) => {
@@ -142,7 +142,7 @@ const save = async () => {
             }))
         }
 
-        if (userStore.user?.is_admin || (props.collection && userStore.user?.id === props.collection.user_id)) {
+        if (isNew.value ? userStore.user?.is_admin : (userStore.isPlatformAdmin || userStore.user?.id === props.collection.user_id)) {
             if (isNew.value) {
                 await collectionStore.createCollection(payload)
                 await collectionStore.fetchCollections()

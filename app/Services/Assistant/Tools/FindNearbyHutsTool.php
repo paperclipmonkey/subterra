@@ -48,9 +48,16 @@ class FindNearbyHutsTool implements AssistantTool
             return ['error' => "Cave system with ID {$systemId} not found."];
         }
 
+        // Same gate as CaveSystemResource: exact entrance coordinates only for
+        // data admins and approved-club members, and admin_only sites (e.g. coal
+        // mines) are never revealed to anyone else — not even by name.
+        $canManage = $system->managedBy($user);
+        $canSeeLocations = $system->locationsVisibleTo($user);
+
         // Find the first entrance with coordinates to use as the reference point
         $referenceCave = $system->caves->first(
             fn ($c) => $c->location_lat && $c->location_lng
+                && ($canManage || $c->visibility !== 'admin_only')
         );
 
         $huts = Hut::with('club')
@@ -97,19 +104,28 @@ class FindNearbyHutsTool implements AssistantTool
             $huts = $huts->take(8)->values();
         }
 
+        if (!$canSeeLocations) {
+            // Hut coordinates are public, so precise distances from several of
+            // them would let the entrance be triangulated. Keep the ordering,
+            // drop the numbers.
+            $huts = $huts->map(fn ($h) => array_merge($h, ['distance_km' => null]));
+        }
+
         return [
             'cave_system' => $system->name,
             'cave_system_slug' => $system->slug,
             'reference_cave' => $referenceCave?->name,
             'reference_cave_url' => $referenceCave ? "/caves/{$referenceCave->slug}" : null,
-            'reference_lat' => $referenceCave?->location_lat,
-            'reference_lng' => $referenceCave?->location_lng,
+            'reference_lat' => $canSeeLocations ? $referenceCave?->location_lat : null,
+            'reference_lng' => $canSeeLocations ? $referenceCave?->location_lng : null,
             'max_distance_km' => $maxDistance,
             'count' => $huts->count(),
             'huts' => $huts,
-            'note' => $referenceCave
-                ? null
-                : 'No entrance coordinates found for this system — huts are listed without distance ordering.',
+            'note' => match (true) {
+                !$referenceCave => 'No entrance coordinates found for this system — huts are listed without distance ordering.',
+                !$canSeeLocations => 'Huts are listed nearest first. Exact entrance locations and distances are only shown to approved club members.',
+                default => null,
+            },
         ];
     }
 

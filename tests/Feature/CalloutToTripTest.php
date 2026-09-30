@@ -70,4 +70,28 @@ class CalloutToTripTest extends TestCase
             'status' => 'cancelled',
         ]);
     }
+
+    public function test_callout_trip_does_not_tag_a_club_only_participant_the_creator_shares_no_club_with()
+    {
+        $user = User::factory()->create();
+        $minor = User::factory()->create(['visibility_addable' => 'club']);
+        $cave = Cave::factory()->create();
+
+        $callout = Callout::factory()->create([
+            'user_id' => $user->id,
+            'cave_id' => $cave->id,
+            'status' => 'active',
+        ]);
+        $callout->participants()->create(['user_id' => $minor->id, 'name' => $minor->name]);
+
+        // Standing the callout down must still succeed; the participant is
+        // simply left off the logged trip.
+        $tripId = $this->actingAs($user)
+            ->postJson("/api/callouts/{$callout->id}/cancel")
+            ->assertOk()
+            ->json('trip_id');
+
+        $trip = Trip::where('short_id', $tripId)->first();
+        $this->assertSame([$user->id], $trip->participants->pluck('id')->all());
+    }
 }

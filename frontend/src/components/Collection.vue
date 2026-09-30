@@ -160,7 +160,7 @@ const progress = computed(() => {
 
 const canEdit = computed(() => {
   if (!collection.value) return false
-  return userStore.user.is_admin || userStore.user.id === collection.value.user_id
+  return userStore.isPlatformAdmin || userStore.user.id === collection.value.user_id
 })
 
 // Media Modal State
