@@ -45,7 +45,7 @@ class UserDetailResource extends JsonResource
             'is_admin' => $this->is_admin,
             'stats' => [
                 'trips' => $this->trips->count(),
-                'caves' => $this->trips->pluck('system.id')->unique()->count(),
+                'caves' => $this->trips->pluck('cave_system_id')->filter()->unique()->count(),
                 'duration' => $this->trips->sum('duration'),
             ],
             'created_at' => $this->created_at,

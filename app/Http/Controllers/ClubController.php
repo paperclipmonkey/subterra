@@ -218,9 +218,26 @@ class ClubController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'members' => 'present|array',
-            'members.*.id' => 'required|exists:users,id',
+            'members.*.id' => 'required',
             'members.*.is_admin' => 'required|boolean',
         ]);
+
+        // One query for the whole list rather than an `exists` rule per member,
+        // which cost a round trip each on a large club.
+        $validator->after(function ($validator) use ($request) {
+            $members = $request->input('members');
+            if (!is_array($members)) {
+                return;
+            }
+            $ids = collect($members)->pluck('id')->filter(fn ($id) => is_string($id) || is_int($id))->map(fn ($id) => (string) $id)->unique();
+            $found = User::whereIn('id', $ids)->pluck('id')->map(fn ($id) => (string) $id)->all();
+            foreach ($members as $index => $member) {
+                $id = $member['id'] ?? null;
+                if ((is_string($id) || is_int($id)) && !in_array((string) $id, $found, true)) {
+                    $validator->errors()->add("members.$index.id", "The selected members.$index.id is invalid.");
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
@@ -249,7 +266,8 @@ class ClubController extends Controller
                 // Diff against the unfiltered relation: a member in the list
                 // who currently has a pending row must be promoted via an
                 // update, not re-attached (which would hit the unique index).
-                $currentStatuses = $club->users()->pluck('club_user.status', 'users.id');
+                $current = DB::table('club_user')->where('club_id', $club->id)->get(['user_id', 'status', 'is_admin'])->keyBy('user_id');
+                $currentStatuses = $current->pluck('status', 'user_id');
 
                 // Detach approved members omitted from the list. Pending
                 // requests are managed separately and stay untouched.
@@ -264,7 +282,12 @@ class ClubController extends Controller
 
                 foreach ($syncData as $userId => $pivot) {
                     if ($currentStatuses->has($userId)) {
-                        $club->users()->updateExistingPivot($userId, $pivot);
+                        // Skip untouched rows: saving a big roster after changing one
+                        // admin flag shouldn't issue an UPDATE per member.
+                        $existing = $current[$userId];
+                        if ($existing->status !== $pivot['status'] || (bool) $existing->is_admin !== (bool) $pivot['is_admin']) {
+                            $club->users()->updateExistingPivot($userId, $pivot);
+                        }
                     } else {
                         $club->users()->attach($userId, $pivot);
                     }

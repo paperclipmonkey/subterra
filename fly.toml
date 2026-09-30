@@ -7,9 +7,8 @@ app = 'subterra'
 primary_region = 'lhr'
 console_command = 'php /var/www/html/artisan tinker'
 
-# A safety margin, not extra capacity: up to 10 php-fpm children (256M limit
-# each), the queue worker and the scheduler share 1 GB. Without swap a burst of
-# heavy requests gets the machine OOM-killed rather than briefly slowed.
+# Swap is only a safety margin. On a shared CPU, swapping stalls every worker
+# (including /up), so size children to fit in RAM rather than leaning on it.
 swap_size_mb = 512
 
 [deploy]
@@ -33,6 +32,12 @@ swap_size_mb = 512
   GOOGLE_REDIRECT_URL="https://subterra.world/api/google/callback"
   QUEUE_CONNECTION="database"
   TWILIO_ENABLED='false'
+  # Children x typical worker RSS (~80-100MB, 256M hard limit) plus nginx, the
+  # queue worker and the scheduler must fit in the VM. 10 children at 1GB did not.
+  PHP_PM_MAX_CHILDREN='8'
+  PHP_PM_START_SERVERS='3'
+  PHP_PM_MIN_SPARE_SERVERS='2'
+  PHP_PM_MAX_SPARE_SERVERS='4'
   APP_NAME='Subterra.world'
 
 
@@ -41,7 +46,7 @@ swap_size_mb = 512
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 2
   processes = ['app']
 [[http_service.checks]]
   grace_period = "10s"
@@ -54,4 +59,4 @@ swap_size_mb = 512
 
 [[vm]]
   size = 'shared-cpu-1x'
-  memory = "1024mb"
+  memory = "2048mb"
