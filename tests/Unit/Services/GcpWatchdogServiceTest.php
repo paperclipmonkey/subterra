@@ -92,6 +92,21 @@ class GcpWatchdogServiceTest extends TestCase
         });
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function platform_admins_on_the_rota_are_backup_recipients_too(): void
+    {
+        $admin = User::factory()->create(['email' => 'rota-admin@example.com']);
+        $admin->assignRole('platform_admin');
+        $callout = Callout::factory()->create(['callout_time' => now()->addHours(2)]);
+
+        Http::fake(['https://test-watchdog.run.app/watchdog' => Http::response(['callout_id' => $callout->id], 200)]);
+
+        $this->service->register($callout);
+
+        Http::assertSent(fn ($request) => collect($request->data()['duty_officers'])
+            ->contains(fn ($do) => $do['email'] === 'rota-admin@example.com'));
+    }
+
     public function test_register_handles_http_errors()
     {
         $callout = Callout::factory()->create();

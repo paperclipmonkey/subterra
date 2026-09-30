@@ -64,26 +64,57 @@
                       <v-list-item v-bind="slotProps" :subtitle="item.raw.email" />
                     </template>
                   </v-autocomplete>
-                  <v-list v-if="clubMembers.length > 0" lines="one">
+                  <v-text-field
+                    v-if="clubMembers.length > 0"
+                    v-model="memberSearch"
+                    :prepend-inner-icon="mdiMagnify"
+                    label="Search members"
+                    placeholder="Name or email"
+                    density="compact"
+                    variant="outlined"
+                    clearable
+                    hide-details
+                    class="mt-2 member-search"
+                  />
+                  <div
+                    v-if="filteredMembers.length > 0"
+                    class="member-list-header d-flex align-center text-caption text-medium-emphasis text-uppercase"
+                  >
+                    <span>Member</span>
+                    <v-spacer />
+                    <span class="admin-col text-center">Admin</span>
+                    <span class="delete-col" />
+                  </div>
+                  <v-list v-if="filteredMembers.length > 0" lines="one">
                     <v-list-item
-                      v-for="member in clubMembers"
+                      v-for="member in filteredMembers"
                       :key="member.id"
                       :title="member.name"
                       :subtitle="member.email"
                     >
+                      <template #prepend>
+                        <v-avatar size="small" class="mr-2">
+                          <v-img :src="member.photo || '/default-avatar.png'" :alt="member.name" />
+                        </v-avatar>
+                      </template>
                       <template #append>
-                        <v-switch
-                          v-model="member.is_club_admin"
-                          label="Admin"
-                          color="primary"
-                          hide-details
-                          inset
-                          @change="markMemberDataChanged"
-                        />
+                        <div class="admin-col d-flex justify-center">
+                          <v-switch
+                            v-model="member.is_club_admin"
+                            aria-label="Club admin"
+                            color="primary"
+                            density="compact"
+                            class="admin-switch"
+                            hide-details
+                            inset
+                            @change="markMemberDataChanged"
+                          />
+                        </div>
                         <v-btn :icon="mdiDelete" variant="text" color="red" size="small" @click="removeUserFromClub(member)" />
                       </template>
                     </v-list-item>
                   </v-list>
+                  <p v-else-if="clubMembers.length > 0" class="text-grey mt-4">No members match "{{ memberSearch }}".</p>
                   <p v-else class="text-grey mt-4">No approved members yet.</p>
                 </v-col>
               </v-row>
@@ -104,6 +135,11 @@
                       :key="pending.id"
                       :subtitle="pending.email"
                     >
+                      <template #prepend>
+                        <v-avatar size="small" class="mr-2">
+                          <v-img :src="pending.photo || '/default-avatar.png'" :alt="pending.name" />
+                        </v-avatar>
+                      </template>
                       <template #title>
                         <span
                           v-if="appStore.user?.is_admin"
@@ -177,7 +213,7 @@
 </template>
 
 <script setup>
-import { mdiCheck, mdiClose, mdiDelete } from '@mdi/js'
+import { mdiCheck, mdiClose, mdiDelete, mdiMagnify } from '@mdi/js'
 
 // This script is adapted from the admin/clubs.vue modal logic, but expects props for clubSlug and visibility
 import { ref, computed, watch, onMounted } from 'vue'
@@ -214,6 +250,17 @@ const rules = {
 }
 const editedClub = ref({})
 const clubMembers = ref([])
+
+// Filters the members list (by name or email) so admins can find someone to
+// remove or promote in a large club.
+const memberSearch = ref('')
+const filteredMembers = computed(() => {
+  const query = (memberSearch.value || '').trim().toLowerCase()
+  if (!query) return clubMembers.value
+  return clubMembers.value.filter(m =>
+    (m.name || '').toLowerCase().includes(query) || (m.email || '').toLowerCase().includes(query)
+  )
+})
 const pendingMembers = ref([])
 const availableUsers = ref([])
 const selectedUserToAdd = ref(null)
@@ -244,9 +291,9 @@ const fetchAvailableUsers = async () => {
 }
 const fetchClubMembers = async () => {
   if (!props.clubSlug) return
-  // Use the public (but auth-guarded) endpoint which now includes is_club_admin info
-  // This allows Club Admins to see members without needing full platform admin rights
-  const response = await api.get(`/api/clubs/${props.clubSlug}/members`)
+  // Club-admin endpoint: unlike the members-only /api/clubs/{slug}/members
+  // roster, it includes each member's email address.
+  const response = await api.get(`/api/admin/clubs/${props.clubSlug}/members`)
 
   // Map the response to the format expected by the template
   const members = response.data.data || response.data
@@ -254,8 +301,10 @@ const fetchClubMembers = async () => {
     id: m.id,
     name: m.name,
     email: m.email,
+    photo: m.photo,
     is_club_admin: m.is_club_admin || false
   }))
+  memberSearch.value = ''
 
   memberDataChanged.value = false
 }
@@ -272,7 +321,7 @@ const fetchPendingMembers = async () => {
 }
 const addUserToClub = (user) => {
   if (user && !clubMembers.value.some(m => m.id === user.id)) {
-    clubMembers.value.push({ id: user.id, name: user.name, email: user.email, is_club_admin: false })
+    clubMembers.value.push({ id: user.id, name: user.name, email: user.email, photo: user.photo, is_club_admin: false })
     markMemberDataChanged()
   }
   selectedUserToAdd.value = null
@@ -355,7 +404,7 @@ const saveClubAndMembers = async () => {
     notifications.showSuccess('Club updated successfully')
   } catch (e) {
     console.error(e)
-    notifications.showError('Failed to update club: ' + (e.message || 'Unknown error'))
+    notifications.showError('Failed to update club: ' + (e.response?.data?.message || e.message || 'Unknown error'))
   } finally {
     saving.value = false
   }
@@ -377,3 +426,21 @@ onMounted(async () => {
   if (props.initialTab) tab.value = props.initialTab
 })
 </script>
+
+<style scoped>
+/* Header columns line up with the switch and delete button in each row. */
+.member-list-header {
+  padding: 8px 16px 0;
+  letter-spacing: 0.05em;
+}
+.admin-col {
+  width: 56px;
+}
+.delete-col {
+  /* 32px icon button plus the 8px gap the list item leaves before it */
+  width: 40px;
+}
+.admin-switch {
+  transform: scale(0.8);
+}
+</style>

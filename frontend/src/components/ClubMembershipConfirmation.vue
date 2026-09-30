@@ -157,6 +157,10 @@ const submit = async () => {
       await api.post(`/api/clubs/${club.slug}/join`, { club_id: club.id })
     }
     success.value = true
+    // Clear the selection: the parent refetches pending clubs on this event,
+    // which drops these clubs from the items list, and the autocomplete then
+    // falls back to rendering the orphaned ids as bare numbers.
+    selectedClub.value = []
     emit('membershipConfirmed')
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'An error occurred.'

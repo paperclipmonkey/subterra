@@ -50,7 +50,8 @@ class TripTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_includes_entrance_coordinates_in_trip_summary()
     {
-        $user = User::factory()->create();
+        // Coordinates are for approved-club members only (see TripLocationVisibilityTest).
+        $user = User::factory()->withApprovedClub()->create();
         $entrance = Cave::factory()->create([
             'location_lat' => 54.1234,
             'location_lng' => -2.5678,
@@ -196,6 +197,23 @@ class TripTest extends TestCase
         $this->actingAs($user);
         $response = $this->putJson('/api/trips/'.$trip->short_id, ['name' => 'Updated Trip']);
         $response->assertStatus(403)->assertJsonFragment(['message' => 'This action is unauthorized.']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function an_update_without_participants_keeps_the_existing_participants()
+    {
+        $user = User::factory()->create();
+        $friend = User::factory()->create();
+        $trip = Trip::factory()->create(['visibility' => 'public']);
+        $trip->participants()->attach([$user->id, $friend->id]);
+
+        $this->actingAs($user)
+            ->putJson('/api/trips/'.$trip->short_id, ['visibility' => 'private'])
+            ->assertOk();
+
+        $trip->refresh();
+        $this->assertSame('private', $trip->visibility);
+        $this->assertEqualsCanonicalizing([$user->id, $friend->id], $trip->participants->pluck('id')->all());
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

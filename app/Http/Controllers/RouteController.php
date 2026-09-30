@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CaveSystem;
 use App\Models\Route;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -13,17 +14,50 @@ use Illuminate\Support\Str;
 
 class RouteController extends Controller
 {
-    public function index(CaveSystem $caveSystem)
+    public function index(Request $request, CaveSystem $caveSystem)
     {
-        return $caveSystem->routes()->with(['entrance', 'exit', 'tackle', 'media', 'tags'])->get();
+        $routes = $caveSystem->routes()->with(['entrance', 'exit', 'tackle', 'media', 'tags'])->get();
+        $routes->each(fn (Route $route) => $this->gateCaves($route, $request->user()));
+
+        return $routes;
     }
 
-    public function show(Route $route)
+    public function show(Request $request, Route $route)
     {
-        return $route->load([
+        $route->load([
             'entrance', 'exit', 'tackle', 'media', 'tags',
             'caveSystem' => fn ($query) => $query->withCount('caves'),
         ]);
+
+        return $this->gateCaves($route, $request->user());
+    }
+
+    /**
+     * These routes are public, but embed raw Cave models. Apply CaveResource's
+     * gates: admin_only sites (e.g. coal mines) only for data admins, and
+     * coordinates / access info only for approved-club members.
+     */
+    private function gateCaves(Route $route, ?User $user): Route
+    {
+        $canManage = $user?->hasRole(['platform_admin', 'data_admin']) ?? false;
+        $canSeeLocations = $canManage || (bool) $user?->hasApprovedClub();
+
+        foreach (['entrance', 'exit'] as $relation) {
+            $cave = $route->getRelation($relation);
+            if ($cave === null) {
+                continue;
+            }
+            if (!$canManage && $cave->visibility === 'admin_only') {
+                $route->setRelation($relation, null);
+
+                continue;
+            }
+            if (!$canSeeLocations) {
+                $cave->makeHidden(['location_lat', 'location_lng', 'location_alt', 'access_info']);
+            }
+        }
+
+        return $route;
     }
 
     public function store(Request $request, CaveSystem $caveSystem)

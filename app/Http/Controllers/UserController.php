@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\AdminUserListResource;
 use App\Http\Resources\TripResource;
 use App\Http\Resources\UserDetailEmailResource;
 use App\Http\Resources\UserDetailResource;
@@ -145,21 +146,16 @@ class UserController extends Controller
     /**
      * Admin endpoint to get all users with detailed info.
      */
+    /**
+     * Admin user table. Returns every active user as a slim row (no trips,
+     * medals or callouts) — the client filters and sorts the list itself.
+     */
     public function adminIndex(): ResourceCollection
     {
-        return UserDetailEmailResource::collection(
+        return AdminUserListResource::collection(
             User::withoutGlobalScopes()
                 ->where('is_active', true)
-                ->with([
-                    'roles',
-                    'clubs',
-                    'medals',
-                    'trips' => fn ($q) => $q->select(['trips.id', 'trips.start_time', 'trips.end_time', 'trips.cave_system_id']),
-                    'activeCallout.cave',
-                    'activeCallout.participants',
-                    'activeCallout.incident',
-                    'currentOnCallShift',
-                ])
+                ->with(['roles', 'clubs'])
                 ->get()
         );
     }
@@ -375,6 +371,12 @@ class UserController extends Controller
 
         event(new \App\Events\UserCreated($user));
 
+        // The record describes someone who has not signed up and did not give us
+        // their details, so Article 14 requires telling them. Fired here rather
+        // than on trip save because the placeholder is created the moment a member
+        // adds a participant — abandon the trip form and the record still exists.
+        event(new \App\Events\PlaceholderUserCreated($user, $request->user()));
+
         return new UserDetailEmailResource($user);
     }
 
@@ -382,7 +384,9 @@ class UserController extends Controller
     {
         $user = User::withoutGlobalScopes()
             ->with(['trips' => function ($query) {
-                $query->visibleTo(auth()->user())->with('system');
+                // Only the columns the profile stats need; see UserDetailResource.
+                $query->visibleTo(auth()->user())
+                    ->select('trips.id', 'trips.cave_system_id', 'trips.start_time', 'trips.end_time');
             }, 'clubs', 'medals'])
             ->findOrFail($id);
 
@@ -407,6 +411,9 @@ class UserController extends Controller
 
         $validatedData = $request->validate([
             'bio' => ['nullable', 'string'],
+            // Self-declared, and only ever narrowed by the account owner. `before:today`
+            // rejects future dates; the 120-year floor rejects typos like 1066.
+            'date_of_birth' => ['nullable', 'date', 'before:today', 'after:'.now()->subYears(120)->toDateString()],
             'name' => [
                 'sometimes',
                 'required',
@@ -460,7 +467,32 @@ class UserController extends Controller
         // explicitly rather than through update().)
         $phoneChanged = array_key_exists('phone', $validatedData) && $validatedData['phone'] !== $user->phone;
 
+        // Captured before the update so the date-of-birth transition can be detected
+        // below. The profile form always submits visibility_addable, so "was it in the
+        // request" cannot distinguish a deliberate choice from the form echoing back
+        // the value it loaded — comparing against the stored value can.
+        $dobBefore = $user->date_of_birth?->toDateString();
+        $addableBefore = $user->visibility_addable;
+
         $user->update($validatedData);
+
+        $dobChanged = array_key_exists('date_of_birth', $validatedData)
+            && $user->date_of_birth?->toDateString() !== $dobBefore;
+        $addableChosen = array_key_exists('visibility_addable', $validatedData)
+            && $validatedData['visibility_addable'] !== null
+            && $validatedData['visibility_addable'] !== $addableBefore;
+
+        // When an account first declares (or corrects) a date of birth that makes it an
+        // under-18, narrow who can find them and add them to trips. The column default
+        // is 'public' and is applied at insert, long before any date of birth is known,
+        // so the narrowing has to happen here. A deliberate change to the setting in the
+        // same request wins — a 17-year-old may legitimately want to stay findable.
+        if ($dobChanged && !$addableChosen) {
+            $default = $user->defaultVisibilityAddable();
+            if ($user->isMinor() && $user->visibility_addable !== $default) {
+                $user->update(['visibility_addable' => $default]);
+            }
+        }
 
         if ($phoneChanged) {
             $user->forceFill([
@@ -544,44 +576,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function export(Request $request): JsonResponse
+    public function export(Request $request, \App\Services\UserDataExportService $exporter): JsonResponse
     {
-        $user = $request->user();
-
-        $data = [
-            'profile' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'bio' => $user->bio,
-                'is_active' => $user->is_active,
-                'tos_agreed_at' => $user->tos_agreed_at,
-                'created_at' => $user->created_at,
-            ],
-            'clubs' => $user->clubs->map(fn ($club) => [
-                'name' => $club->name,
-                'status' => $club->pivot->status,
-                'is_admin' => $club->pivot->is_admin,
-            ]),
-            'medals' => $user->medals->map(fn ($medal) => [
-                'name' => $medal->name,
-                'description' => $medal->description,
-                'awarded_at' => $medal->pivot->awarded_at,
-            ]),
-            'trips' => $user->trips->map(fn ($trip) => [
-                'id' => $trip->id,
-                'start_time' => $trip->start_time,
-                'end_time' => $trip->end_time,
-                'description' => $trip->description,
-                'visibility' => $trip->visibility,
-            ]),
-            'callouts' => $user->callouts->map(fn ($callout) => [
-                'id' => $callout->id,
-                'callout_time' => $callout->callout_time,
-                'description' => $callout->description,
-                'status' => $callout->status,
-                'car_registration' => $callout->car_registration,
-            ]),
-        ];
+        $data = $exporter->export($request->user());
 
         $filename = 'subterra_data_export_'.now()->format('Y-m-d').'.json';
 
@@ -598,8 +595,24 @@ class UserController extends Controller
     {
         $user = $user_without_scopes;
         // Only allow the user themselves or an admin to delete
-        if ($request->user()->id !== $user->id && !$request->user()->is_admin) {
+        if ($request->user()->id !== $user->id && !$request->user()->hasRole('platform_admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Deleting the user cascades to their callouts and incidents. Mid-trip that
+        // would silently remove the primary safety net (and any live incident record),
+        // so refuse until the callout is finished and any incident resolved.
+        $hasLiveCallout = $user->callouts()
+            ->where(function ($q) {
+                $q->whereIn('status', ['active', 'triggered'])
+                    ->orWhereHas('incident', fn ($i) => $i->where('status', '!=', 'resolved'));
+            })
+            ->exists();
+
+        if ($hasLiveCallout) {
+            return response()->json([
+                'message' => 'This account has an active callout or an unresolved incident. Cancel the callout (or wait for the incident to be resolved) before deleting the account.',
+            ], 409);
         }
 
         // 1. Delete user photo if it's not the default

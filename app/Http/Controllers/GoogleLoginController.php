@@ -30,6 +30,14 @@ class GoogleLoginController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
+            // Google authorization codes are single-use. A double-loaded
+            // callback (refresh, back button, double click, link prefetch)
+            // makes the second exchange fail with invalid_grant even though
+            // the first one already signed the user in — so send them on.
+            if (Auth::check() && str_contains($e->getMessage(), 'invalid_grant')) {
+                return redirect(config('app.url'));
+            }
+
             Log::error('Google OAuth callback failed: '.$e->getMessage(), [
                 'request_url' => $request->fullUrl(),
                 'code_present' => $request->has('code'),

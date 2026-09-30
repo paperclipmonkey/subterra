@@ -35,6 +35,16 @@ vi.mock('@/components/PrivacyNotice.vue', () => ({
     default: { template: '<div class="privacy-notice"></div>' }
 }))
 
+// App's other children fetch and log asynchronously on mount (onboarding,
+// offline detection, the service-worker prompt). Left real, that work could
+// still be logging when the test environment tore down, which vitest reports
+// as an unhandled "Closing rpc while onUserConsoleLog was pending" error and
+// fails the run intermittently. These tests are only about the banners.
+vi.mock('@/components/OnboardingWizard.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/components/OfflineBanner.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/components/SwUpdatePrompt.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/stores/offline', () => ({ useOfflineStore: () => ({ init: vi.fn(), isOnline: true }) }))
+
 describe('App.vue Callout Banner', () => {
     beforeEach(() => {
         setActivePinia(createPinia())

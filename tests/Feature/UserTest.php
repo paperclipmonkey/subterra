@@ -394,8 +394,10 @@ class UserTest extends TestCase
         $user->medals()->attach($medal->id, ['awarded_at' => now()]);
 
         // 2. Check Callouts and Cascades
-        $callout = \App\Models\Callout::factory()->create(['user_id' => $user->id]);
-        $incident = \App\Models\Incident::factory()->create(['callout_id' => $callout->id]);
+        // Finished callout/incident: deletion is refused while either is still live
+        // (see AccountDeletionSafetyTest).
+        $callout = \App\Models\Callout::factory()->create(['user_id' => $user->id, 'status' => 'resolved']);
+        $incident = \App\Models\Incident::factory()->create(['callout_id' => $callout->id, 'status' => 'resolved']);
 
         // 3. Check Collections Cascade
         $collection = \App\Models\Collection::factory()->create(['user_id' => $user->id]);

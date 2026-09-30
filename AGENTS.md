@@ -84,6 +84,7 @@ Inside the devcontainer (or any shell inside the `laravel.test` container):
 php artisan test
 php artisan test --filter=CaveTest
 php artisan test tests/Feature/CaveTest.php
+php artisan test --parallel   # as CI runs it; one database per worker
 ```
 
 Or via the VS Code task: **php: test**
@@ -237,7 +238,7 @@ Two GitHub Actions workflows handle testing and deployment:
 - `.github/workflows/_test.yaml` — reusable workflow with parallel jobs:
   - `lint-php` — Pint (`--test`, report-only) and PHPStan
   - `lint-js` — ESLint (`yarn lint:ci`, report-only) and `tsc --noEmit` for both GCP services
-  - `backend-tests` — PHPUnit, as a matrix over `sqlite` and `pgsql`
+  - `backend-tests` — PHPUnit in parallel (`php artisan test --parallel`), as a matrix over `sqlite` and `pgsql`
   - `frontend-tests`, `watchdog-tests`, `image-processor-tests`
   - `e2e-tests` — Playwright system tests (see `e2e/README.md`)
 

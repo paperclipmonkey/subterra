@@ -26,6 +26,12 @@ class UserDetailEmailResource extends JsonResource
             'email' => $this->email,
             'photo' => $this->photo ? (str_starts_with($this->photo, 'http') ? $this->photo : Storage::disk('media')->url($this->photo)) : null,
             'bio' => $this->bio,
+            // Date of birth is returned to the account owner (and admins, who use the
+            // same resource) so it can be shown and corrected. It is deliberately
+            // absent from UserDetailResource — other members see neither the date nor
+            // the derived child status.
+            'date_of_birth' => $this->date_of_birth?->toDateString(),
+            'is_minor' => $this->isMinor(),
             'phone' => $this->phone,
             'phone_verified' => $this->phone_verified_at !== null,
             'email_trophies' => $this->email_trophies,

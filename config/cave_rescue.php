@@ -84,6 +84,12 @@ return [
             'rescue_abbr' => 'SCRO',
             'note' => 'Police may task the local Mountain Rescue Team first and place SCRO on standby — still ask for cave rescue.',
         ],
+        'Northern Ireland' => [
+            'police_force' => 'Police Service of Northern Ireland',
+            'rescue_team' => 'Irish Cave Rescue Organisation',
+            'rescue_abbr' => 'ICRO',
+            'note' => 'ICRO covers the whole island. The Fermanagh/Cuilcagh caves straddle the border — a cave on the Cavan side is in the Republic, where the call goes to An Garda Síochána (999/112) instead of the PSNI.',
+        ],
         'Portland' => [
             'police_force' => 'Dorset Police',
             'rescue_team' => 'Mendip Cave Rescue',

@@ -3,8 +3,8 @@
     <!-- Sticky Header Area -->
     <div class="sticky-header bg-background pt-2 pb-2 px-2 z-index-10 flex-shrink-0">
       <div class="d-flex align-center justify-space-between mb-2">
-        <h1 class="text-h5 font-weight-bold ml-1">{{ tripsUser ? `${tripsUser.name}'s Trips` :
-          (route.query.user_id ? 'User Trips' : 'My Trips') }}</h1>
+        <h1 class="text-h5 font-weight-bold ml-1">{{ isAllTrips ? 'All Trips' : (tripsUser ? `${tripsUser.name}'s Trips` :
+          (route.query.user_id ? 'User Trips' : 'My Trips')) }}</h1>
         <v-menu>
           <template #activator="{ props }">
             <v-btn :icon="mdiDotsVertical" variant="text" v-bind="props" />
@@ -128,7 +128,14 @@ const isStubbed = (trip) => {
   return trip.name === 'Marked as Done'
 }
 
+// ?user_id=all lists every trip the viewer is allowed to see (the API applies
+// Trip::visibleTo), rather than one person's logbook. Real user ids are
+// 7-character random strings, so "all" can't collide with one.
+const ALL_TRIPS = 'all'
+const isAllTrips = computed(() => route.query.user_id === ALL_TRIPS)
+
 const isOwnTrips = computed(() => {
+  if (isAllTrips.value) return false
   if (!tripsUser.value || !store.user) return true
   return String(tripsUser.value.id) === String(store.user.id)
 })
@@ -204,6 +211,13 @@ const loadTrips = async () => {
   await store.getUser()
 
   const query = { ...route.query }
+
+  if (query.user_id === ALL_TRIPS) {
+    delete query.user_id
+    tripsUser.value = null
+    await tripStore.getTrips(query)
+    return
+  }
 
   // Guard against a junk user_id (e.g. the string "undefined" from a stale link).
   // User ids are random 7-character alphanumeric strings, NOT integers — matching

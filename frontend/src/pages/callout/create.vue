@@ -44,7 +44,7 @@
               <v-icon size="48" color="grey" class="mb-2" :icon="mdiShieldLock" />
               <h3 class="text-h6 mb-2">Member Access Only</h3>
               <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
-              <v-btn color="primary" :to="`/profile/${currentUser?.id}`">Join a Club</v-btn>
+              <v-btn color="primary" to="/waitlist">Confirm Club Membership</v-btn>
             </div>
 
             <div v-else :class="{ 'disabled-content': officerError }">
@@ -524,13 +524,12 @@ export default {
       return text
     },
     isApproved() {
-      // Check store first then local user object
-      const appStore = useAppStore()
-      if (appStore.canSuggest) return true
-      // Check for explicit callout access role
-      const roles = this.currentUser?.roles ?? []
-      if (roles.some(r => r.slug === 'platform_admin' || r.slug === 'duty_officer' || r.slug === 'callout_access')) return true
-      return false
+      // Mirrors CalloutController::store, which refuses anyone without an approved
+      // club membership. Roles don't exempt anyone: new users get callout_access by
+      // default, and letting that through here walked unconfirmed users through the
+      // whole wizard only to be rejected on submit.
+      const clubs = useAppStore().user?.clubs ?? []
+      return clubs.some(c => c.status === 'approved')
     }
   },
   watch: {

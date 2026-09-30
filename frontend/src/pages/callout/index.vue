@@ -199,10 +199,14 @@ export default {
   },
   async mounted() {
     await Promise.all([
-      this.fetchActiveCallouts(),
       this.fetchDutyOfficer(),
       this.fetchContactNumbers(),
-      this.appStore.getUser() // Ensure we have the latest user state with active_callout
+      // Ensure we have the latest user state with active_callout. The open-trips
+      // map is only for confirmed club members and admins (the API enforces the
+      // same), so wait for the user before deciding whether to ask for it.
+      this.appStore.getUser().then(() => {
+        if (this.appStore.canSuggest) return this.fetchActiveCallouts()
+      })
     ])
     this.loading = false
   },

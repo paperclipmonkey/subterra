@@ -3,6 +3,7 @@
  * Monitors callouts and sends emergency alerts when users don't return on time.
  */
 import { timingSafeEqual } from 'crypto';
+import { formatUkTime } from './format';
 import express, { Request, Response } from 'express';
 import { FirestoreClient, CalloutData } from './firestore-client';
 import { TextMagicClient } from './textmagic-client';
@@ -283,7 +284,7 @@ Callout ID: ${calloutId}`
                 : `🚨 SUBTERRA EMERGENCY: Callout Overdue
 
 Initiator: ${user.name || 'Unknown'} (Ph: ${user.phone || 'Unknown'})
-Expected return: ${callout.callout_time.toDate().toISOString()}
+Expected return: ${formatUkTime(callout.callout_time.toDate())}
 Cave: ${callout.cave_name || 'Unknown'}
 
 This is a 15m overdue unacknowledged callout. Please contact the team immediately.

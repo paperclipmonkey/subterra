@@ -48,6 +48,12 @@ class TwilioController extends Controller
 
         $normalized = $this->normalizePhone($from);
 
+        // Matching is a suffix LIKE, so a sender with no usable number (normalising to
+        // '' matches every phone) must never be matched to a caver or duty officer.
+        if (strlen($normalized) < self::MIN_PHONE_DIGITS) {
+            return $this->twiml('<Message>We could not match your number.</Message>');
+        }
+
         // Duty officer acknowledging the active incident.
         if ($command === 'ACK') {
             return $this->handleAck($normalized);
@@ -205,15 +211,24 @@ class TwilioController extends Controller
 
     private function handleAck(string $normalizedPhone): Response
     {
-        $do = User::whereHas('roles', fn ($q) => $q->where('slug', 'duty_officer'))
+        // Same duty-officer set as the rota and escalation (platform admins take shifts).
+        $do = User::whereHas('roles', fn ($q) => $q->whereIn('slug', ['duty_officer', 'platform_admin']))
             ->where('phone', 'like', "%{$normalizedPhone}")
             ->first();
 
-        $incident = Incident::where('status', 'open')->doesntHave('controller')->latest()->first();
+        $incidents = Incident::where('status', 'open')->doesntHave('controller')->latest()->limit(2)->get();
 
-        if (!$incident) {
+        if ($incidents->isEmpty()) {
             return $this->twiml('<Message>There is no open incident to acknowledge.</Message>');
         }
+
+        // An SMS "ACK" doesn't say which incident. With more than one open, guessing
+        // would mark the wrong one managed and silently stop its escalation.
+        if ($incidents->count() > 1) {
+            return $this->twiml('<Message>More than one incident is open. Please acknowledge in Subterra or by pressing 1 on the alert call.</Message>');
+        }
+
+        $incident = $incidents->first();
 
         if (!$do) {
             return $this->twiml('<Message>We could not match your number to a duty officer.</Message>');
@@ -236,6 +251,8 @@ class TwilioController extends Controller
             })
             ->first();
     }
+
+    private const MIN_PHONE_DIGITS = 7;
 
     private function normalizePhone(string $phone): string
     {

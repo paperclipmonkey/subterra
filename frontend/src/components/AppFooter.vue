@@ -18,7 +18,7 @@
       <v-bottom-navigation bg-color="primary" elevation="4">
         <v-btn to="/" block class="text-none">
           <v-icon start :icon="mdiLogin" />
-          Login or Join to see more
+          Log in or Join to see more
         </v-btn>
       </v-bottom-navigation>
     </v-footer>
@@ -115,7 +115,7 @@ const items = computed(() => {
   width: min(480px, calc(100vw - 24px)) !important;
   margin: 0 auto 10px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.58) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow:

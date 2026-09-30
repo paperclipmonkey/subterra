@@ -1,19 +1,19 @@
 <x-mail::message>
 # Suggestion Approved!
 
-Hi {{ $suggestedEdit->user?->first_name ?: $suggestedEdit->user?->name ?? 'there' }},
+Hi {{ \App\Support\MailMarkdown::escape($suggestedEdit->user?->first_name ?: $suggestedEdit->user?->name ?? 'there') }},
 
 Thank you for your contribution to Subterra!
 
 @if($itemName)
-Your suggested change to the {{ $type }} **{{ $itemName }}** has been reviewed and approved by an administrator. It is now live on the platform.
+Your suggested change to the {{ $type }} **{{ \App\Support\MailMarkdown::escape($itemName) }}** has been reviewed and approved by an administrator. It is now live on the platform.
 @else
 Your suggested change to a {{ $type }} has been reviewed and approved by an administrator. It is now live on the platform.
 @endif
 
 @if($suggestedEdit->admin_comment)
 <x-mail::panel>
-**Admin Comment:** {{ $suggestedEdit->admin_comment }}
+**Admin Comment:** {{ \App\Support\MailMarkdown::escape($suggestedEdit->admin_comment) }}
 </x-mail::panel>
 @endif
 

@@ -18,6 +18,10 @@ class TripSummaryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Same gate as CaveResource: entrance coordinates only for approved-club
+        // members. This feeds the trip discover map and cave pages' trip lists.
+        $canSeeLocations = (bool) $request->user()?->hasApprovedClub();
+
         return [
             'id' => $this->short_id,
             'name' => $this->name,
@@ -30,8 +34,8 @@ class TripSummaryResource extends JsonResource
                 'id' => $this->entrance->id,
                 'name' => $this->entrance->name,
                 'slug' => $this->entrance->slug,
-                'location_lat' => $this->entrance->location_lat,
-                'location_lng' => $this->entrance->location_lng,
+                'location_lat' => $canSeeLocations ? $this->entrance->location_lat : null,
+                'location_lng' => $canSeeLocations ? $this->entrance->location_lng : null,
             ] : null,
             'media' => MediaResource::collection($this->whenLoaded('media')),
             'entrance_hero_image' => $this->entrance?->heroImage?->filename

@@ -58,6 +58,21 @@ class CollectionFeatureTest extends TestCase
             ->assertJsonPath('data.caves.0.pivot.sort_order', 1);
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function a_collection_does_not_reveal_admin_only_caves_added_to_it(): void
+    {
+        $user = User::factory()->withApprovedClub()->create();
+        $collection = Collection::factory()->create(['user_id' => $user->id]);
+        $collection->caves()->attach(Cave::factory()->create(['name' => 'Public Cave']));
+        $collection->caves()->attach(Cave::factory()->create(['name' => 'Old Coal Mine', 'visibility' => 'admin_only']));
+
+        $names = collect($this->actingAs($user)->getJson("/api/collections/{$collection->slug}")->assertOk()->json('data.caves'))->pluck('name');
+        $this->assertEquals(['Public Cave'], $names->all());
+
+        $names = collect($this->actingAs(User::factory()->dataAdmin()->create())->getJson("/api/collections/{$collection->slug}")->json('data.caves'))->pluck('name');
+        $this->assertEqualsCanonicalizing(['Public Cave', 'Old Coal Mine'], $names->all());
+    }
+
     public function test_collection_progress_calculation()
     {
         $user = User::factory()->create();

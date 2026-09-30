@@ -102,6 +102,16 @@
             </v-card-item>
           </v-card>
         </v-col>
+        <v-col v-if="isPlatformAdmin" cols="12" sm="6" md="4" lg="3">
+          <v-card to="/admin/reports" link hover class="admin-card">
+            <v-card-item title="Reports">
+              <template #prepend>
+                <v-icon color="error" :icon="mdiFlagOutline" />
+              </template>
+              <v-card-subtitle>Moderation queue & objections</v-card-subtitle>
+            </v-card-item>
+          </v-card>
+        </v-col>
         <v-col v-if="isPlatformAdmin || isDataAdmin" cols="12" sm="6" md="4" lg="3">
           <v-card to="/admin/suggested-edits" link hover class="admin-card">
             <v-card-item title="Suggestions">
@@ -139,6 +149,16 @@
                 <v-icon color="blue" :icon="mdiWaves" />
               </template>
               <v-card-subtitle>River gauge monitoring</v-card-subtitle>
+            </v-card-item>
+          </v-card>
+        </v-col>
+        <v-col v-if="isDataAdmin" cols="12" sm="6" md="4" lg="3">
+          <v-card to="/admin/osm-import" link hover class="admin-card">
+            <v-card-item title="OpenStreetMap Import">
+              <template #prepend>
+                <v-icon color="teal" :icon="mdiMapSearch" />
+              </template>
+              <v-card-subtitle>Pick caves to import from OSM</v-card-subtitle>
             </v-card-item>
           </v-card>
         </v-col>
@@ -208,7 +228,7 @@
 </template>
 
 <script setup>
-import { mdiAccountCog, mdiAccountGroup, mdiCalendarCheck, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiDatabaseSync, mdiEmailMultiple, mdiFileCompare, mdiFileDocumentEdit, mdiFileEdit, mdiKeyVariant, mdiMapMarkerPlus, mdiMonitorDashboard, mdiRobotOutline, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
+import { mdiAccountCog, mdiAccountGroup, mdiCalendarCheck, mdiCalendarClock, mdiChartBar, mdiChartLine, mdiClipboardCheck, mdiDatabaseEdit, mdiDatabaseSync, mdiEmailMultiple, mdiFileCompare, mdiFileDocumentEdit, mdiFileEdit, mdiFlagOutline, mdiKeyVariant, mdiMapMarkerPlus, mdiMapSearch, mdiMonitorDashboard, mdiRobotOutline, mdiShieldAlert, mdiShieldHome, mdiWaves } from '@mdi/js'
 import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 

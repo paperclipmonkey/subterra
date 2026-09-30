@@ -7,7 +7,6 @@
         v-model="style"
         :center="center"
         :zoom="12"
-        :max-zoom="18"
         @map:load="onMapLoad"
       />
       <OverlayTogglePanel

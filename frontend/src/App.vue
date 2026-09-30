@@ -80,6 +80,7 @@ import OnboardingWizard from '@/components/OnboardingWizard.vue'
 import OfflineBanner from '@/components/OfflineBanner.vue'
 import SwUpdatePrompt from '@/components/SwUpdatePrompt.vue'
 import { useOfflineStore } from '@/stores/offline'
+import { useClubApprovalWatcher } from '@/composables/useClubApprovalWatcher'
 import moment from 'moment'
 
 const notificationStore = useNotificationStore()
@@ -90,6 +91,10 @@ const route = useRoute()
 
 // Initialize offline detection
 offlineStore.init()
+
+// Notice a club confirming the user from any page: clears the banner and
+// reloads so membership-gated features switch on.
+useClubApprovalWatcher()
 
 // Poll user data every 30s when user is on-call to keep callout count fresh
 let calloutPollInterval = null

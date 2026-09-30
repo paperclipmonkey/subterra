@@ -53,10 +53,33 @@ By uploading media, you confirm that you own it or have the necessary rights and
 ### 3.4 Removal
 You may request removal of your media. We will remove it from active display within a reasonable period, though copies may persist in backups, and we may retain media already incorporated into shared cave records or previously published marketing materials.
 
-## 4. Cave Data
+## 4. Reporting Content and Complaints
+
+If you see something on Subterra that breaks these terms — abusive behaviour, content that
+shares someone's private information, anything involving a person under 18, or anything that
+looks illegal — please report it.
+
+*   **How to report:** use the flag icon on any trip report, member profile, cave record or
+    photo. You will be asked to choose a reason and can add anything else we should know.
+*   **What happens next:** reports go to our moderators. Reports involving under-18s or
+    possible illegal content are prioritised and escalated immediately; everything else is
+    reviewed in turn. We may remove content, contact the people involved, restrict or remove
+    an account, or refer a matter to the police.
+*   **Outcome:** we do not routinely tell reporters what action we took, because that can
+    itself disclose personal information. We will come back to you if we need more from you.
+*   **If you disagree with a decision,** or you want to complain about how we handled a
+    report, contact an administrator through the platform and a different moderator will
+    review it.
+*   **In an emergency,** contact the emergency services on 999 first. Do not wait for us.
+
+If you have been added to Subterra by someone else and do not want a record held about you,
+the notification email we sent you contains a link to have it removed. You can also ask an
+administrator at any time. See our Privacy Policy for your full rights over your data.
+
+## 5. Cave Data
 The cave database, including cave descriptions, access information, and associated metadata, is curated and maintained by Subterra and its administrators. It is provided for your reference and may not be reproduced or redistributed except as permitted by us.
 
-## 5. Pip (AI Assistant)
+## 6. Pip (AI Assistant)
 Subterra offers an AI-powered assistant called "Pip" to help with trip planning, cave information, and general caving questions.
 *   **Beta Feature:** Pip is provided as a beta feature and may be changed or withdrawn at any time.
 *   **General Advice Only:** Pip can make mistakes and provides general information only. It is **not** a substitute for your own judgement. Always independently verify conditions, access, gear, and any safety-critical information before relying on it.
@@ -64,7 +87,7 @@ Subterra offers an AI-powered assistant called "Pip" to help with trip planning,
 *   **Conversations & Training:** Conversations may be stored and used to monitor, improve, and continue training the assistant.
 *   **Fair Use:** Access to Pip may be rate-limited, and misuse may result in access being withdrawn.
 
-## 6. Callout Functionality
+## 7. Callout Functionality
 The "Callout" feature is a safety tool designed to assist in emergency situations.
 *   **How it works:** This feature allows you to notify designated contacts or Duty Officers if you are overdue from a trip.
 *   **Not a Guaranteed or Emergency Service:** Subterra is **not** an emergency service. The Callout feature depends on third-party messaging and email networks and on the availability of volunteers, and we **do not guarantee** that any notification will be delivered, received, or acted upon. You must **not** rely on it as your sole safety mechanism, and it does **not** replace proper, formal cave-rescue callout procedures. In a genuine emergency, contact the emergency services directly.
@@ -72,13 +95,13 @@ The "Callout" feature is a safety tool designed to assist in emergency situation
 *   **Voluntary Service:** Duty Officers perform this role on a voluntary basis. They are fellow cavers donating their time to help keep you safe.
 *   **No Abuse:** This feature must NOT be abused or used for trivial matters. Misuse of the callout system, including false alarms or pranks, is a serious offence and may be reported to the police.
 
-## 7. Liability
+## 8. Liability
 While we strive to provide a reliable service, Subterra provides this platform, including all features described above, "as is" and "as available" without any warranties of any kind. Caving is an inherently dangerous activity, and you are solely responsible for your own safety decisions. To the fullest extent permitted by law, Subterra and its volunteers accept no liability for any loss or harm arising from your use of, or reliance on, the platform or any of its features. Nothing in these terms excludes liability that cannot be excluded by law.
 
-## 8. Changes to These Terms
+## 9. Changes to These Terms
 We may update these terms from time to time. Where changes are material, we will take reasonable steps to notify you. Continued use of the platform after changes take effect constitutes acceptance of the updated terms.
 
-## 9. Governing Law
+## 10. Governing Law
 These terms are governed by the laws of England and Wales, and any disputes are subject to the exclusive jurisdiction of the courts of England and Wales.
 
 By creating an account, you acknowledge that you have read, understood, and agree to these terms.

@@ -189,6 +189,12 @@ export function isHeic(buffer: Buffer): boolean {
     return false;
 }
 
+/** Largest source file we'll download (50 MB; phone photos are well under 20 MB). */
+export const MAX_SOURCE_BYTES = 50 * 1024 * 1024;
+
+/** Largest decoded image (100 MP; a 48 MP phone photo fits comfortably). */
+export const MAX_INPUT_PIXELS = 100_000_000;
+
 /**
  * Core image processing logic.
  * Downloads source → generates WebP variants → uploads → notifies callback.
@@ -198,6 +204,16 @@ export async function processImage(params: ProcessImageParams): Promise<{ varian
     const bucket = storage.bucket(bucketName);
 
     console.log(`Processing image: gs://${bucketName}/${sourcePath}`);
+
+    // The whole source is held in memory on a 1 GiB, single-request instance, so
+    // refuse anything implausibly large up front. A thrown error is acknowledged and
+    // reported as a failed conversion; running out of memory instead crashes the
+    // instance and the event is redelivered, blocking every other upload behind it.
+    const [sourceMetadata] = await bucket.file(sourcePath).getMetadata();
+    const sourceSize = Number(sourceMetadata?.size);
+    if (sourceSize > MAX_SOURCE_BYTES) {
+        throw new Error(`Source image is ${sourceSize} bytes; the limit is ${MAX_SOURCE_BYTES}.`);
+    }
 
     // Download source image into memory (images are typically <20MB)
     const [sourceBuffer] = await bucket.file(sourcePath).download();
@@ -221,7 +237,9 @@ export async function processImage(params: ProcessImageParams): Promise<{ varian
     for (const preset of IMAGE_SIZES) {
         const outputPath = `${outputPrefix.replace(/\/$/, '')}/${preset.name}.webp`;
 
-        const processed = await sharp(inputBuffer)
+        // limitInputPixels makes a decompression bomb (small file, enormous
+        // dimensions) throw instead of exhausting memory.
+        const processed = await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
             .resize(preset.width, undefined, { withoutEnlargement: true, fit: 'inside' })
             .webp({ quality: preset.quality })
             .toBuffer({ resolveWithObject: true });

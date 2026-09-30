@@ -1,8 +1,10 @@
 <template>
   <v-dialog v-model="dialog" max-width="800px">
+    <!-- Attributes land on the activator button rather than the dialog, so a
+         caller can restyle it for the background it sits on. -->
     <template #activator="{ props: activatorProps }">
       <v-btn v-if="canEdit" color="primary" variant="text" :prepend-icon="isNew ? mdiPlus : mdiPencil"
-             v-bind="activatorProps">
+             v-bind="{ ...$attrs, ...activatorProps }">
         {{ isNew ? 'New Hut' : 'Edit Hut' }}
       </v-btn>
     </template>
@@ -79,6 +81,10 @@
     </v-card>
   </v-dialog>
 </template>
+
+<script>
+export default { inheritAttrs: false }
+</script>
 
 <script setup>
 import { mdiCamera, mdiPencil, mdiPlus } from '@mdi/js'

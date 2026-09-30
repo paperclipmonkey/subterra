@@ -13,7 +13,7 @@
       </v-btn>
       <v-btn v-else-if="canEdit" color="grey" variant="text" disabled :prepend-icon="mdiPencilOff">
         <v-tooltip activator="parent" location="top">
-          Your account must be approved to suggest edits
+          Confirm your club membership to suggest edits
         </v-tooltip>
         {{ activatorText }}
       </v-btn>

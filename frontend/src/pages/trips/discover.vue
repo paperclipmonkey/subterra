@@ -2,7 +2,23 @@
   <div class="discover-root">
     <!-- ─── Map area ─────────────────────────────────────────── -->
     <div class="map-area">
+      <!-- Trip locations are cave locations, so the map follows the same rule as
+           the caves map: approved club members only (the API also withholds the
+           coordinates). The trip strip below still works for everyone. -->
+      <div v-if="!canSeeMap" class="map-locked d-flex align-center justify-center flex-column text-center pa-6">
+        <v-icon size="64" color="grey" class="mb-4" :icon="hasPendingApprovals ? mdiAccountClock : mdiLock" />
+        <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
+        <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 320px;">
+          {{ hasPendingApprovals
+            ? 'Your club is confirming your membership. The trip map will unlock once they confirm you.'
+            : 'The trip map shows cave locations, so it unlocks once your club confirms your membership.' }}
+        </p>
+        <v-btn color="primary" to="/waitlist" class="text-none">
+          {{ hasPendingApprovals ? 'Check Status' : 'Confirm Club' }}
+        </v-btn>
+      </div>
       <AppMap
+        v-else
         ref="mapRef"
         v-model="mapStyle"
         :center="[-2.5, 53.5]"
@@ -40,7 +56,7 @@
       </div>
 
       <!-- Age legend -->
-      <div class="legend-overlay">
+      <div v-if="canSeeMap" class="legend-overlay">
         <span class="legend-item"><span class="legend-dot" style="background:#FF6B35;box-shadow:0 0 6px #FF6B35aa;" />This week</span>
         <span class="legend-item"><span class="legend-dot" style="background:#FFB300;" />This month</span>
         <span class="legend-item"><span class="legend-dot" style="background:#26C6DA;" />This year</span>
@@ -52,7 +68,7 @@
     <div class="bottom-strip">
       <div class="strip-header">
         <span class="strip-title">Recent Trips</span>
-        <v-btn variant="text" density="compact" size="small" to="/trips" class="text-none text-primary see-all-btn">
+        <v-btn variant="text" density="compact" size="small" :to="ALL_TRIPS_ROUTE" class="text-none text-primary see-all-btn">
           See all →
         </v-btn>
       </div>
@@ -62,13 +78,17 @@
       </div>
 
       <div v-else ref="cardsScrollRef" class="cards-scroll">
-        <div
+        <!-- With the map, a card flies to its trip. Without it (unconfirmed users)
+             there is nothing to fly to, so the card is a plain link to the trip. -->
+        <component
+          :is="canSeeMap ? 'div' : 'router-link'"
           v-for="trip in recentTrips"
           :key="trip.id"
+          :to="canSeeMap ? undefined : `/trips/${trip.id}`"
           :data-trip-id="trip.id"
           class="mini-card"
           :class="{ 'mini-card--selected': selectedTripId === trip.id }"
-          @click="selectTrip(trip)"
+          @click="canSeeMap && selectTrip(trip)"
         >
           <div
             class="mini-card-img"
@@ -83,18 +103,18 @@
               <v-icon size="9" :icon="mdiClockOutline" />
               {{ formatDuration(trip.duration) }}
             </div>
-            <div v-if="!trip.entrance?.location_lat" class="mini-card-no-location" title="No map location">
+            <div v-if="canSeeMap && !trip.entrance?.location_lat" class="mini-card-no-location" title="No map location">
               <v-icon size="11" :icon="mdiMapMarkerOff" />
             </div>
           </div>
           <div class="mini-card-date">{{ formatDate(trip.start_time) }}</div>
-        </div>
+        </component>
 
         <!-- See-all card -->
-        <div class="mini-card-see-all" @click="$router.push('/trips')">
+        <router-link :to="ALL_TRIPS_ROUTE" class="mini-card-see-all">
           <v-icon size="32" :icon="mdiArrowRight" color="primary" />
           <div class="mini-see-all-label">All trips</div>
-        </div>
+        </router-link>
       </div>
     </div>
   </div>
@@ -110,13 +130,24 @@ import {
   mdiAccountGroup,
   mdiCompass,
   mdiMapMarkerOff,
+  mdiLock,
+  mdiAccountClock,
 } from '@mdi/js'
 import moment from 'moment'
 import maplibregl from 'maplibre-gl'
 import AppMap from '@/components/AppMap.vue'
 import { api } from '@/plugins/api'
+import { useAppStore } from '@/stores/app'
 
 const router = useRouter()
+const appStore = useAppStore()
+
+// Every trip the viewer can see, not just their own logbook (see TripList).
+const ALL_TRIPS_ROUTE = { path: '/trips', query: { user_id: 'all' } }
+
+// Mirrors the API: entrance coordinates only come back for approved club members.
+const canSeeMap = computed(() => !!appStore.user?.clubs?.some(c => c.status === 'approved'))
+const hasPendingApprovals = computed(() => !!appStore.user?.clubs?.some(c => c.status === 'pending'))
 
 // ── State ──────────────────────────────────────────────────────────────
 // Overview map — default to terrain (topo) like the caves list.
@@ -303,7 +334,7 @@ const openPopup = (coords, props) => {
     </div>`
 
   popup?.remove()
-  popup = new maplibregl.Popup({ offset: 12, maxWidth: '260px' })
+  popup = new maplibregl.Popup({ offset: 12, maxWidth: '260px', className: 'discover-popup' })
     .setLngLat(coords)
     .setHTML(html)
     .addTo(map)
@@ -433,15 +464,16 @@ onUnmounted(() => {
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
-/* Popup chrome reset */
-.maplibregl-popup .maplibregl-popup-content {
+/* Popup chrome reset — qualified by this page's popup class, since these
+   rules are global and would otherwise restyle every other map's popups. */
+.maplibregl-popup.discover-popup .maplibregl-popup-content {
   padding: 0;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
-.maplibregl-popup-close-button {
+.maplibregl-popup.discover-popup .maplibregl-popup-close-button {
   font-size: 18px;
   padding: 4px 8px;
   color: #555;
@@ -463,6 +495,13 @@ onUnmounted(() => {
   flex: 1;
   position: relative;
   min-height: 0;
+}
+
+.map-locked {
+  height: 100%;
+  /* Clear the stats overlay pinned to the top of the map area. */
+  padding-top: 96px !important;
+  background: rgb(var(--v-theme-surface-variant), 0.12);
 }
 
 /* ── Top glass overlay ───────────────────────────────── */
@@ -590,6 +629,9 @@ onUnmounted(() => {
 
 /* ── Mini trip card ──────────────────────────────────── */
 .mini-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
   flex-shrink: 0;
   width: 120px;
   cursor: pointer;
@@ -682,6 +724,7 @@ onUnmounted(() => {
 
 /* ── See-all card ────────────────────────────────────── */
 .mini-card-see-all {
+  text-decoration: none;
   flex-shrink: 0;
   width: 80px;
   height: 100px;

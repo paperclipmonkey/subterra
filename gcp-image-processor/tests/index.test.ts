@@ -108,6 +108,38 @@ describe('POST / GCS Trigger Execution', () => {
         }]);
     });
 
+    it('refuses an oversized source without downloading it', async () => {
+        mockGetMetadata.mockResolvedValue([{
+            size: String(200 * 1024 * 1024),
+            metadata: {
+                media_model: 'trip_media',
+                media_id: '104',
+                output_prefix: 'output/trip_media/104_uuid/',
+                file_path: 'trip/original-image.png'
+            }
+        }]);
+
+        const response = await request(app)
+            .post('/')
+            .set('Authorization', 'Bearer test-api-key')
+            .send({ bucket: 'subterra-test-bucket', name: 'input/some-uuid/huge.png' });
+
+        // Acknowledged (so it isn't redelivered) and reported as a failed conversion.
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('status', 'ignored');
+        expect(mockDownload).not.toHaveBeenCalled();
+        expect(mockPublishMessage).toHaveBeenCalled();
+    });
+
+    it('caps decoded pixels so a decompression bomb throws instead of exhausting memory', async () => {
+        await request(app)
+            .post('/')
+            .set('Authorization', 'Bearer test-api-key')
+            .send({ bucket: 'subterra-test-bucket', name: 'input/some-uuid/original-image.png' });
+
+        expect(sharp).toHaveBeenCalledWith(expect.any(Buffer), expect.objectContaining({ limitInputPixels: 100_000_000 }));
+    });
+
     it('successfully downloads image, resizes, and publishes to Pub/Sub', async () => {
         const payload = {
             bucket: 'subterra-test-bucket',

@@ -15,7 +15,7 @@
           :prepend-icon="mdiPlus"
         >
           <v-tooltip activator="parent" location="top">
-            {{ !userStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to contribute
+            Confirm your club membership to contribute
           </v-tooltip>
           Suggest New
         </v-btn>
@@ -23,7 +23,7 @@
           v-else
           color="primary"
           variant="text"
-          to="/login"
+          to="/"
           :prepend-icon="mdiPlus"
         >
           Log in to Suggest

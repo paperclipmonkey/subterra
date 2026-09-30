@@ -39,6 +39,29 @@ class GoogleLoginTest extends TestCase
         $response->assertRedirect('http://localhost/login');
     }
 
+    public function test_replayed_callback_for_signed_in_user_redirects_home()
+    {
+        $user = User::factory()->create();
+        Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
+        Socialite::shouldReceive('stateless')->andReturnSelf();
+        Socialite::shouldReceive('user')->andThrow(new \RuntimeException('{"error": "invalid_grant"}'));
+
+        $response = $this->actingAs($user)->get('/api/google/callback?code=used');
+
+        $response->assertRedirect(config('app.url'));
+    }
+
+    public function test_invalid_grant_for_guest_redirects_to_login()
+    {
+        Socialite::shouldReceive('driver')->with('google')->andReturnSelf();
+        Socialite::shouldReceive('stateless')->andReturnSelf();
+        Socialite::shouldReceive('user')->andThrow(new \RuntimeException('{"error": "invalid_grant"}'));
+
+        $response = $this->get('/api/google/callback?code=used');
+
+        $response->assertRedirect(config('app.url').'/login');
+    }
+
     public function test_established_user_logs_in_without_profile_being_touched()
     {
         config(['app.url' => 'http://localhost']);

@@ -46,20 +46,36 @@
                 color="primary"
                 :rules="nameRules"
                 :prepend-inner-icon="mdiAccountOutline"
+                hide-details="auto"
+              />
+              <!-- Directly under the name field, since it's about the name. -->
+              <v-alert
+                color="warning"
+                variant="tonal"
+                :icon="mdiAlertOutline"
+                density="compact"
+                class="mt-2 mb-6 text-left"
+              >
+                <div class="text-caption">
+                  Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
+                </div>
+              </v-alert>
+              <!-- Asked here, before the findability step, so an under-18 account
+                   arrives at that step with the safer default already selected. -->
+              <v-text-field
+                v-model="dateOfBirth"
+                label="Date of birth"
+                type="date"
+                variant="outlined"
+                color="primary"
+                :max="today"
+                :rules="dateOfBirthRules"
+                :prepend-inner-icon="mdiCakeVariantOutline"
+                hint="Used only to set your privacy defaults. Never shown to other members."
+                persistent-hint
                 class="mb-4"
               />
             </v-form>
-            <v-alert
-              color="warning"
-              variant="tonal"
-              :icon="mdiAlertOutline"
-              density="compact"
-              class="mt-4 text-left"
-            >
-              <div class="text-caption">
-                Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
-              </div>
-            </v-alert>
           </v-card-text>
         </v-window-item>
 
@@ -101,7 +117,7 @@
           </v-card-text>
         </v-window-item>
 
-        <!-- Join a Club -->
+        <!-- Confirm club membership -->
         <v-window-item value="club">
           <v-card-text class="pa-8">
             <div class="text-center mb-6">
@@ -248,7 +264,7 @@
               <v-avatar color="teal" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiAccountSearchOutline" />
               </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">Who can add you?</h2>
+              <h2 class="text-h5 font-weight-bold mb-2">Who can find you?</h2>
               <p class="text-body-2 text-medium-emphasis">
                 This controls whether you appear in search when other cavers build trip reports and safety callouts.
               </p>
@@ -260,6 +276,7 @@
               color="primary"
               variant="text"
               class="findability-toggle mb-4"
+              @update:model-value="addableTouched = true"
             >
               <v-btn value="public" class="text-none">
                 <v-icon start :icon="mdiEarth" />
@@ -385,13 +402,15 @@
 </template>
 
 <script setup>
-import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiEarth, mdiEmailOutline, mdiInformationOutline, mdiMagnify, mdiTagOutline, mdiTextBoxOutline, mdiTrophyOutline } from '@mdi/js'
+import { mdiAccountCircleOutline, mdiAccountGroup, mdiAccountOutline, mdiAccountPlus, mdiAccountSearchOutline, mdiAccountStarOutline, mdiAlertOutline, mdiArrowRight, mdiBullhornOutline, mdiCakeVariantOutline, mdiCamera, mdiCellphone, mdiCellphoneCheck, mdiCheck, mdiCheckCircle, mdiEarth, mdiEmailOutline, mdiInformationOutline, mdiMagnify, mdiTagOutline, mdiTextBoxOutline, mdiTrophyOutline } from '@mdi/js'
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
 import PhoneVerify from '@/components/PhoneVerify.vue'
 
 const store = useAppStore()
+const router = useRouter()
 const visible = ref(false)
 const step = ref(1)
 const loading = ref(false)
@@ -457,6 +476,20 @@ const emailPlatformNews = ref(true)
 // Findability
 const visibilityAddable = ref('public')
 
+// Date of birth drives the stronger privacy defaults under-18 accounts get.
+const dateOfBirth = ref('')
+const today = new Date().toISOString().slice(0, 10)
+const isMinorLocal = computed(() => {
+  if (!dateOfBirth.value) return false
+  const dob = new Date(dateOfBirth.value)
+  if (Number.isNaN(dob.getTime())) return false
+  const eighteenth = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate())
+  return eighteenth > new Date()
+})
+// Tracks whether the user has actively chosen a findability setting, so the
+// minor-aware default below never overrides a deliberate choice.
+const addableTouched = ref(false)
+
 // Phone verification (optional, callout-access users only)
 const phone = ref('')
 const phoneVerifiedLocal = ref(false)
@@ -467,6 +500,11 @@ const phoneError = ref('')
 const PHONE_PATTERN = /^(07[0-9]{9}|\+44[0-9]{10})$/
 const phoneRules = [
   v => !v || PHONE_PATTERN.test(v) || 'Must be 11 digits (07…) or 13 characters (+44…) long',
+]
+
+const dateOfBirthRules = [
+  v => !!v || 'Date of birth is required.',
+  v => !v || new Date(v) <= new Date() || 'Date of birth cannot be in the future.',
 ]
 
 const nameRules = [
@@ -510,7 +548,11 @@ const checkOnboarding = () => {
   if (store.user.email_trophies !== undefined) emailTrophies.value = !!store.user.email_trophies
   if (store.user.email_tagged !== undefined) emailTagged.value = !!store.user.email_tagged
   if (store.user.email_platform_news !== undefined) emailPlatformNews.value = !!store.user.email_platform_news
-  if (store.user.visibility_addable) visibilityAddable.value = store.user.visibility_addable
+  if (store.user.visibility_addable) {
+    visibilityAddable.value = store.user.visibility_addable
+    addableTouched.value = true
+  }
+  dateOfBirth.value = store.user.date_of_birth || ''
   phone.value = store.user.phone || ''
   phoneVerifiedLocal.value = !!store.user.phone_verified
   fetchClubs()
@@ -610,8 +652,18 @@ const nextStep = async () => {
 
     loading.value = true
     try {
-      await api.put('/api/users/me', { name: userName.value })
+      await api.put('/api/users/me', {
+        name: userName.value,
+        date_of_birth: dateOfBirth.value || null,
+      })
       store.user.name = userName.value
+      store.user.date_of_birth = dateOfBirth.value || null
+      // Pre-select club-only findability for under-18s, unless they have already
+      // chosen for themselves. The server applies the same default, so a skipped
+      // or stale client cannot end up with the laxer setting.
+      if (isMinorLocal.value && !addableTouched.value) {
+        visibilityAddable.value = 'club'
+      }
       step.value++
     } catch (error) {
       console.error('Error updating name:', error)
@@ -633,7 +685,10 @@ const nextStep = async () => {
       formData.append('email_trophies', emailTrophies.value ? '1' : '0')
       formData.append('email_tagged', emailTagged.value ? '1' : '0')
       formData.append('email_platform_news', emailPlatformNews.value ? '1' : '0')
-      formData.append('visibility_addable', visibilityAddable.value || 'public')
+      formData.append('visibility_addable', visibilityAddable.value || (isMinorLocal.value ? 'club' : 'public'))
+      if (dateOfBirth.value) {
+        formData.append('date_of_birth', dateOfBirth.value)
+      }
       // The phone is persisted (and uniqueness-validated) via the phone step's "Send code"
       // action, not here — so a taken/invalid number can't silently fail this final save
       // and block onboarding.
@@ -648,6 +703,11 @@ const nextStep = async () => {
       await store.getUser(true) // Refresh user data to update clubs/photo status across the app
       store.user.onboarding_completed_at = now
       visible.value = false
+      // Nameless new users are parked on their profile edit page while the
+      // wizard runs (see router/guard.js). Leaving them there once it closes
+      // looks like a second "save your profile" step, so send them somewhere
+      // worth exploring instead.
+      router.push('/caves')
     } catch (error) {
       console.error('Error completing onboarding:', error)
     } finally {

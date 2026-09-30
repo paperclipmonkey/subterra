@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import CaveListMap from '@/components/CaveListMap.vue'
 
@@ -86,5 +86,45 @@ describe('CaveListMap', () => {
 
         expect(wrapper.findComponent({ name: 'MglMap' }).exists()).toBe(false)
         expect(wrapper.text()).toContain('Map View Locked')
+    })
+
+    it('zooms into a cluster when it is clicked', async () => {
+        mockUseAppStore.mockReturnValue({
+            user: { id: 1, clubs: [{ status: 'approved' }] },
+            canSuggest: true
+        })
+
+        // A minimal stand-in for the MapLibre instance AppMap hands over on load.
+        const handlers = {}
+        const source = { setData: vi.fn(), getClusterExpansionZoom: vi.fn().mockResolvedValue(11) }
+        let sourceAdded = false
+        const map = {
+            hasImage: () => true,
+            addControl: vi.fn(),
+            addLayer: vi.fn(),
+            addSource: vi.fn(() => { sourceAdded = true }),
+            getSource: () => (sourceAdded ? source : undefined),
+            on: vi.fn((event, layerOrHandler, handler) => {
+                if (handler) handlers[`${event}:${layerOrHandler}`] = handler
+            }),
+            queryRenderedFeatures: () => [{ properties: { cluster_id: 42 }, geometry: { coordinates: [-2.3, 54.1] } }],
+            easeTo: vi.fn(),
+            fitBounds: vi.fn(),
+            getCanvas: () => ({ style: {} }),
+        }
+
+        const wrapper = mount(CaveListMap, {
+            global: { stubs: { ...globalStubs, AppMap: { name: 'AppMap', template: '<div />', emits: ['map:load'] } } }
+        })
+        wrapper.findComponent({ name: 'AppMap' }).vm.$emit('map:load', { map })
+        await flushPromises()
+
+        await handlers['click:caves-clusters']({ point: { x: 10, y: 10 } })
+        await flushPromises()
+
+        // MapLibre 5's getClusterExpansionZoom returns a Promise; the old callback
+        // form was never called back, so clusters did nothing when clicked.
+        expect(source.getClusterExpansionZoom).toHaveBeenCalledWith(42)
+        expect(map.easeTo).toHaveBeenCalledWith({ center: [-2.3, 54.1], zoom: 11 })
     })
 })

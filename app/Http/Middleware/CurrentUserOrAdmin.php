@@ -15,7 +15,9 @@ class CurrentUserOrAdmin
         if (!$request->user()) {
             return response()->json(['error' => 'User is not authenticated to perform that action'], 401);
         }
-        if ($request->user()->is_admin) {
+        // platform_admin only: is_admin is true for ANY staff role (duty/access
+        // officer, data admin), none of which should edit or delete other accounts.
+        if ($request->user()->hasRole('platform_admin')) {
             return $next($request);
         }
         $targetUser = $request->route('user') ?? $request->route('user_without_scopes');

@@ -24,8 +24,12 @@ class CaveSystemController extends Controller
     ) {
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        // CaveSystemResource role-checks the viewer per system; load roles once
+        // so that isn't a query per row.
+        $request->user()?->loadMissing('roles');
+
         return CaveSystemResource::collection(
             CaveSystem::with(['caves.tags', 'tags', 'files'])->orderBy('name')->get()
         );

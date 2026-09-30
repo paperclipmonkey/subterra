@@ -183,8 +183,15 @@ class CalloutController extends Controller
     /**
      * Get Open callouts for the public map.
      */
-    public function active()
+    public function active(Request $request)
     {
+        // Where parties are currently underground is only for confirmed club members
+        // (who are also the only people who can open a callout) and admins.
+        $user = $request->user();
+        if (!$user->hasApprovedClub() && !$user->is_admin) {
+            abort(403, 'You must be an approved club member to see open trips.');
+        }
+
         $callouts = Callout::query()
             ->whereIn('status', ['active', 'triggered'])
             ->with(['cave:id,name,location_lat,location_lng,location_name', 'participants'])
@@ -204,8 +211,11 @@ class CalloutController extends Controller
                     $lng = $callout->location_data['longitude'];
                 }
 
+                // Deliberately no 'id': the callout id is the capability token that
+                // authorises the guest-accessible cancel route, and this list is visible
+                // to every logged-in user. Exposing it would let anyone stand down every
+                // party currently underground.
                 return [
-                    'id' => $callout->id,
                     'cave_name' => $caveName,
                     'lat' => $lat,
                     'lng' => $lng,

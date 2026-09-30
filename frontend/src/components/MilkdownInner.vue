@@ -9,7 +9,9 @@ import { languages } from '@codemirror/language-data'
 import { LanguageDescription } from '@codemirror/language'
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
 import { Milkdown, useEditor } from '@milkdown/vue'
-import { replaceAll, getMarkdown } from '@milkdown/kit/utils'
+import { getMarkdown } from '@milkdown/kit/utils'
+import { editorViewCtx, parserCtx } from '@milkdown/kit/core'
+import { Slice } from '@milkdown/kit/prose/model'
 // Import individual theme CSS files instead of the bundle to avoid pulling in
 // latex.css (which imports all KaTeX fonts) since we have Latex feature disabled.
 import '@milkdown/crepe/theme/common/prosemirror.css'
@@ -90,6 +92,23 @@ const { get, loading } = useEditor((root) => {
     return crepe
 })
 
+// Like Milkdown's replaceAll, but marked addToHistory: false. The listener
+// ignores such transactions, so loading content doesn't echo Milkdown's
+// re-serialised markdown (different list markers, escaping, spacing) back
+// as an edit. That echo made every form holding an editor look changed as
+// soon as its data loaded. It also keeps the load out of undo history.
+const loadMarkdown = (markdown) => (ctx) => {
+    const view = ctx.get(editorViewCtx)
+    const doc = ctx.get(parserCtx)(markdown)
+    if (!doc) return
+    const { state } = view
+    view.dispatch(
+        state.tr
+            .replace(0, state.doc.content.size, new Slice(doc.content, 0, 0))
+            .setMeta('addToHistory', false)
+    )
+}
+
 // Handle external value changes (e.g., loading existing trip data)
 // Only update if NOT from user typing - this prevents the feedback loop
 watch(() => props.modelValue, (newValue) => {
@@ -106,8 +125,19 @@ watch(() => props.modelValue, (newValue) => {
         // Only replace if the content is actually different
         // This handles initial load and external data changes
         if (newValue !== currentContent) {
-            editor.action(replaceAll(newValue || ''))
+            editor.action(loadMarkdown(newValue || ''))
         }
+    }
+})
+
+// A value that arrived while the editor was still loading was skipped above
+// and would never be shown (the editor keeps its initial defaultValue), so
+// load it once the editor is ready.
+watch(loading, (isLoading) => {
+    if (isLoading) return
+    const editor = get()
+    if (editor && (props.modelValue || '') !== editor.action(getMarkdown()).trim()) {
+        editor.action(loadMarkdown(props.modelValue || ''))
     }
 })
 </script>

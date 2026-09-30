@@ -2,6 +2,29 @@
 import { defineStore } from 'pinia'
 import { api } from '@/plugins/api'
 
+// Per-user data kept on the device. None of it is keyed by user, so it must be
+// removed on logout or the next person on a shared device inherits it (the
+// service worker even serves the cached /api/users/me when the network is slow).
+const USER_LOCAL_STORAGE_KEYS = [
+  'subterra:cached-user',
+  'pip_conversation_v1',
+  'pip_conversation_history_v1',
+]
+const USER_SW_CACHES = ['user-api-cache']
+
+async function clearLocalUserData() {
+  for (const key of USER_LOCAL_STORAGE_KEYS) {
+    try {
+      localStorage.removeItem(key)
+    } catch {
+      // storage unavailable
+    }
+  }
+  if (typeof caches !== 'undefined') {
+    await Promise.all(USER_SW_CACHES.map(name => caches.delete(name).catch(() => {})))
+  }
+}
+
 export const useAppStore = defineStore('app', {
   state: () => ({
     user: {
@@ -88,12 +111,14 @@ export const useAppStore = defineStore('app', {
         }
         this.userFetched = false
         this.loading = false
+        await clearLocalUserData()
         window.location.href = '/'
       } catch (error) {
         this.loading = false
         console.error('Logout failed:', error)
-        // Even if the API call fails, we should probably clear the local state
-        // or at least redirect to home to force a fresh session check
+        // Even if the API call fails, clear what's on the device and redirect
+        // home to force a fresh session check.
+        await clearLocalUserData()
         window.location.href = '/'
       }
     },

@@ -14,6 +14,41 @@ class CaveWeatherTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function fakeForecast(): void
+    {
+        config(['services.pirate_weather.api_key' => 'test-key']);
+        Http::fake(['api.pirateweather.net/*' => Http::response(['currently' => [], 'hourly' => [], 'daily' => []], 200)]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function the_forecast_only_reveals_coordinates_to_approved_club_members(): void
+    {
+        $this->fakeForecast();
+        $cave = Cave::factory()->create(['location_lat' => 51.4545, 'location_lng' => -2.5879]);
+
+        $this->actingAs(User::factory()->create())
+            ->getJson("/api/caves/{$cave->slug}/weather/forecast")
+            ->assertOk()
+            ->assertJsonPath('data.latitude', null)
+            ->assertJsonPath('data.longitude', null);
+
+        $this->actingAs(User::factory()->withApprovedClub()->create())
+            ->getJson("/api/caves/{$cave->slug}/weather/forecast")
+            ->assertOk()
+            ->assertJsonPath('data.latitude', 51.4545);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function weather_is_not_served_for_admin_only_sites(): void
+    {
+        $this->fakeForecast();
+        $cave = Cave::factory()->create(['location_lat' => 51.4, 'location_lng' => -2.5, 'visibility' => 'admin_only']);
+
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+        $this->getJson("/api/caves/{$cave->slug}/weather/forecast")->assertNotFound();
+        $this->getJson("/api/caves/{$cave->slug}/weather/historic")->assertNotFound();
+    }
+
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_weather_forecast_for_cave_with_coordinates()
     {

@@ -151,6 +151,30 @@ describe('App Store', () => {
       expect(window.location.href).toBe('/')
     })
 
+    it.each([
+      ['succeeds', () => apiMock.post.mockResolvedValue({})],
+      ['fails', () => apiMock.post.mockRejectedValue(new Error('boom'))],
+    ])('clears per-user data from the device when logout %s', async (_, arrange) => {
+      arrange()
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      const cachesDelete = vi.fn().mockResolvedValue(true)
+      vi.stubGlobal('caches', { delete: cachesDelete })
+      localStorage.setItem('subterra:cached-user', '{"name":"Ada"}')
+      localStorage.setItem('pip_conversation_v1', '[]')
+      localStorage.setItem('pip_conversation_history_v1', '[]')
+      localStorage.setItem('subterra_cookies_accepted', 'true')
+
+      await useAppStore().logout()
+
+      expect(localStorage.getItem('subterra:cached-user')).toBeNull()
+      expect(localStorage.getItem('pip_conversation_v1')).toBeNull()
+      expect(localStorage.getItem('pip_conversation_history_v1')).toBeNull()
+      // Device-level preferences survive.
+      expect(localStorage.getItem('subterra_cookies_accepted')).toBe('true')
+      expect(cachesDelete).toHaveBeenCalledWith('user-api-cache')
+      vi.unstubAllGlobals()
+    })
+
     it('still redirects home when the logout request fails', async () => {
       apiMock.post.mockRejectedValue(new Error('boom'))
       vi.spyOn(console, 'error').mockImplementation(() => {})

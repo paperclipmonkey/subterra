@@ -109,7 +109,10 @@ class CaveResource extends JsonResource
                 'catchment_name' => $this->system->relationLoaded('catchment') ? $this->system->catchment?->name : null,
                 'length' => $this->system->length,
                 'vertical_range' => $this->system->vertical_range,
-                'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->map(function ($cave) use ($request) {
+                // Sibling entrances: admin_only sites (e.g. coal mines) only for data admins.
+                'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->reject(
+                    fn ($cave) => !$canManage && $cave->visibility === 'admin_only'
+                )->values()->map(function ($cave) use ($request) {
                     return [
                         'id' => $cave->id,
                         'name' => $cave->name,
@@ -150,6 +153,13 @@ class CaveResource extends JsonResource
             'is_ticked' => $this->when(isset($this->is_ticked), $this->is_ticked),
             // Management flag: present for everyone (false for normal users);
             // visibility and private notes are only included for data admins.
+            // OpenStreetMap link. is_source: this cave's data came from OSM (so it
+            // carries ODbL attribution); otherwise it's a registry/hand-entered
+            // cave that is merely linked to its OSM node.
+            'openstreetmap' => $this->osm_node_id ? [
+                'url' => \App\Services\Osm\OsmCaveImporter::NODE_URL.$this->osm_node_id,
+                'is_source' => $this->registry === \App\Services\Osm\OsmCaveImporter::REGISTRY,
+            ] : null,
             'can_manage' => $canManage,
             'visibility' => $this->when($canManage, fn () => $this->visibility),
             'private_notes' => $this->when($canManage, fn () => $this->private_notes),

@@ -64,9 +64,12 @@ const onSaved = () => {
 onMounted(async () => {
   await load()
 
-  // Simple client-side check, backend enforces properly
-  if (!appStore.user.is_admin) {
-    router.push('/')
+  // Simple client-side check, backend enforces properly. Confirmed club
+  // members may suggest edits (RouteForm submits a suggestion for them); this
+  // used to bounce every non-admin home, so the route page's Suggest Edit
+  // button led nowhere.
+  if (!appStore.user?.is_admin && !appStore.canSuggest) {
+    router.push(`/routes/${route.params.slug}`)
   }
 })
 

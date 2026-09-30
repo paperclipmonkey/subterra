@@ -1,16 +1,16 @@
 <x-mail::message>
 # Confirm a Member
 
-Hello {{ $admin->name }},
+Hello {{ \App\Support\MailMarkdown::escape($admin->name) }},
 
-**{{ $user->name }}** ({{ $user->email }}) has signed up to Subterra and says they are already a member of **{{ $club->name }}**.
+**{{ \App\Support\MailMarkdown::escape($user->name) }}** ({{ \App\Support\MailMarkdown::escape($user->email) }}) has signed up to Subterra and says they are already a member of **{{ \App\Support\MailMarkdown::escape($club->name) }}**.
 
 Please confirm whether that's right:
 
 <x-mail::panel>
-- **Name:** {{ $user->name }}
-- **Email:** {{ $user->email }}
-- **Club:** {{ $club->name }}
+- **Name:** {{ \App\Support\MailMarkdown::escape($user->name) }}
+- **Email:** {{ \App\Support\MailMarkdown::escape($user->email) }}
+- **Club:** {{ \App\Support\MailMarkdown::escape($club->name) }}
 </x-mail::panel>
 
 {{-- One query parameter, deliberately. The previous two-parameter link

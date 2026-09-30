@@ -26,7 +26,7 @@
           class="mr-2"
         >
           <v-tooltip activator="parent" location="top">
-            Your account must be approved to suggest edits
+            Confirm your club membership to suggest edits
           </v-tooltip>
           Suggest Edit
         </v-btn>
@@ -35,7 +35,7 @@
           color="primary"
           variant="text"
           :prepend-icon="mdiPencil"
-          to="/login"
+          to="/"
           class="mr-2"
         >
           Log in to Suggest Edit

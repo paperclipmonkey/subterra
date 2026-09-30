@@ -11,6 +11,7 @@ use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class SyncOsmCavesTest extends TestCase
@@ -22,6 +23,7 @@ class SyncOsmCavesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Sleep::fake();
 
         Tag::firstOrCreate(['tag' => 'Cave', 'category' => 'type'], ['type' => 'cave']);
         Tag::firstOrCreate(['tag' => 'Northern', 'category' => 'region'], ['type' => 'cave']);
@@ -229,34 +231,35 @@ class SyncOsmCavesTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_does_not_duplicate_a_cave_already_held_by_another_registry(): void
+    public function it_only_links_a_cave_already_held_by_another_registry(): void
     {
         $this->fakeDefaultHttp();
 
-        // An existing CNCC cave for Alum Pot, within 10km of the OSM coordinates.
-        $system = CaveSystem::factory()->create(['name' => 'Alum Pot', 'slug' => 'alum-pot']);
+        // An existing CNCC cave for Alum Pot, within 10km of the OSM node but with
+        // different coordinates and no description.
+        $system = CaveSystem::factory()->create(['name' => 'Alum Pot', 'slug' => 'alum-pot', 'references' => null]);
         $cave = Cave::factory()->create([
             'name' => 'Alum Pot',
             'cave_system_id' => $system->id,
             'registry' => 'cncc',
             'registry_id' => 'alum-pot',
-            'location_lat' => 54.17545,
-            'location_lng' => -2.34649,
+            'description' => '',
+            'location_lat' => 54.17000,
+            'location_lng' => -2.34000,
         ]);
 
         $this->artisan('sync:osm-caves')->assertExitCode(0);
 
-        // Only one Alum Pot cave should exist — OSM adopted the CNCC record.
+        // One Alum Pot, still CNCC-owned, linked to its OSM node…
         $this->assertSame(1, Cave::where('name', 'Alum Pot')->count());
-
-        // The existing record keeps its CNCC ownership; OSM proposes changes.
         $cave->refresh();
         $this->assertSame('cncc', $cave->registry);
-        $this->assertDatabaseHas('suggested_edits', [
-            'suggestable_type' => Cave::class,
-            'suggestable_id' => $cave->id,
-            'status' => 'pending',
-        ]);
+        $this->assertSame('1001', $cave->osm_node_id);
+
+        // …and no OSM data proposed for it or its system (ODbL data kept separate).
+        $this->assertDatabaseCount('suggested_edits', 0);
+        $this->assertEquals(54.17000, (float) $cave->location_lat);
+        $this->assertNull($system->fresh()->references);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -276,7 +279,34 @@ class SyncOsmCavesTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_handles_a_failed_overpass_request(): void
     {
-        Http::fake([self::OVERPASS_PATTERN => Http::response('', 504)]);
+        Http::fake(['*' => Http::response('', 504)]);
+
+        $this->artisan('sync:osm-caves')->assertExitCode(1);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_retries_and_falls_back_to_another_overpass_endpoint(): void
+    {
+        Http::fake([
+            self::OVERPASS_PATTERN => Http::sequence()
+                ->push('<html>runtime error: open64: Dispatcher_Client</html>', 200)
+                ->push('', 429),
+            '*overpass.private.coffee*' => Http::response($this->mockOverpass(), 200),
+        ]);
+
+        $this->artisan('sync:osm-caves')->assertExitCode(0);
+
+        $this->assertDatabaseHas('caves', ['name' => 'Alum Pot']);
+        Http::assertSentCount(3);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function an_overpass_timeout_remark_is_a_failure_not_an_empty_result(): void
+    {
+        Http::fake(['*' => Http::response([
+            'elements' => [],
+            'remark' => 'runtime error: Query timed out in "query" at line 3 after 181 seconds.',
+        ], 200)]);
 
         $this->artisan('sync:osm-caves')->assertExitCode(1);
     }
@@ -291,12 +321,10 @@ class SyncOsmCavesTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_does_not_clobber_a_user_owned_pending_suggested_edit(): void
+    public function it_leaves_pending_user_edits_on_a_linked_cave_alone(): void
     {
         $this->fakeDefaultHttp();
 
-        // An existing cave the OSM sync will adopt, with coordinates that differ
-        // from the OSM node so the sync has something to suggest.
         $system = CaveSystem::factory()->create(['name' => 'Alum Pot', 'slug' => 'alum-pot']);
         $cave = Cave::factory()->create([
             'name' => 'Alum Pot',
@@ -319,31 +347,19 @@ class SyncOsmCavesTest extends TestCase
 
         $this->artisan('sync:osm-caves')->assertExitCode(0);
 
-        // The user's pending edit is untouched…
         $userEdit->refresh();
-        $this->assertSame($user->id, $userEdit->user_id);
         $this->assertSame('pending', $userEdit->status);
         $this->assertSame(['description' => 'A community-written description'], $userEdit->suggested_data);
-
-        // …and the sync maintains its own separate bot edit instead.
-        $this->assertTrue(
-            SuggestedEdit::whereNull('user_id')
-                ->where('suggestable_type', Cave::class)
-                ->where('suggestable_id', $cave->id)
-                ->where('status', 'pending')
-                ->exists()
-        );
+        $this->assertSame(1, SuggestedEdit::count());
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_handles_a_pending_system_edit_with_null_original_data(): void
+    public function it_does_not_touch_the_system_of_a_linked_cave(): void
     {
         $this->fakeDefaultHttp();
 
-        // An adoptable cave whose system is missing the OSM reference, so the
-        // sync merges a references suggestion into the existing pending edit.
-        $system = CaveSystem::factory()->create(['name' => 'Alum Pot', 'slug' => 'alum-pot']);
-        $cave = Cave::factory()->create([
+        $system = CaveSystem::factory()->create(['name' => 'Alum Pot', 'slug' => 'alum-pot', 'references' => '- [CNCC](https://cncc.org.uk)']);
+        Cave::factory()->create([
             'name' => 'Alum Pot',
             'cave_system_id' => $system->id,
             'registry' => 'cncc',
@@ -352,21 +368,71 @@ class SyncOsmCavesTest extends TestCase
             'location_lng' => -2.34649,
         ]);
 
-        $botEdit = SuggestedEdit::create([
-            'user_id' => null,
-            'suggestable_type' => CaveSystem::class,
-            'suggestable_id' => $system->id,
-            'original_data' => null,
-            'suggested_data' => ['name' => 'Alum Pot System'],
-            'status' => 'pending',
-        ]);
+        $this->artisan('sync:osm-caves')->assertExitCode(0);
+
+        $this->assertSame('- [CNCC](https://cncc.org.uk)', $system->fresh()->references);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_scopes_the_query_to_one_region(): void
+    {
+        $this->fakeDefaultHttp();
+
+        $this->artisan('sync:osm-caves --region=devon')->assertExitCode(0);
+
+        // Devon box: south 50.25, west -4.55, north 51.05, east -3.4.
+        Http::assertSent(fn ($request) => str_contains(urldecode($request->url()), '(50.25,-4.55,51.05,-3.4)'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_scopes_the_query_to_a_bounding_box(): void
+    {
+        $this->fakeDefaultHttp();
+
+        $this->artisan('sync:osm-caves --bbox="54.1,-2.5,54.3,-2.2"')->assertExitCode(0);
+
+        Http::assertSent(fn ($request) => str_contains(urldecode($request->url()), '(54.1,-2.5,54.3,-2.2)'));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_an_unknown_region_or_a_malformed_bbox(): void
+    {
+        Http::fake();
+
+        $this->artisan('sync:osm-caves --region=Atlantis')->assertExitCode(1);
+        $this->artisan('sync:osm-caves --bbox="54.3,-2.5,54.1,-2.2"')->assertExitCode(1); // south > north
+        $this->artisan('sync:osm-caves --bbox="nonsense"')->assertExitCode(1);
+        $this->artisan('sync:osm-caves --region=Devon --bbox="54.1,-2.5,54.3,-2.2"')->assertExitCode(1);
+
+        Http::assertNothingSent();
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function same_named_caves_far_apart_are_both_imported_but_nearby_entrances_are_one_cave(): void
+    {
+        Http::fake(['*' => Http::response(['elements' => [
+            ['type' => 'node', 'id' => 2001, 'lat' => 54.20, 'lon' => -2.30, 'tags' => ['name' => 'Bone Cave']],   // Yorkshire
+            ['type' => 'node', 'id' => 2002, 'lat' => 54.2005, 'lon' => -2.3005, 'tags' => ['name' => 'Bone Cave']], // second entrance, ~70m away
+            ['type' => 'node', 'id' => 2003, 'lat' => 58.10, 'lon' => -4.90, 'tags' => ['name' => 'Bone Cave']],   // Assynt
+        ]], 200)]);
 
         $this->artisan('sync:osm-caves')->assertExitCode(0);
 
-        // The references suggestion is merged in without wiping earlier fields.
-        $botEdit->refresh();
-        $this->assertSame('Alum Pot System', $botEdit->suggested_data['name']);
-        $this->assertStringContainsString('openstreetmap.org/node/1001', $botEdit->suggested_data['references']);
+        $this->assertEqualsCanonicalizing(['2001', '2003'], Cave::where('name', 'Bone Cave')->pluck('osm_node_id')->all());
+        $this->assertSame(2, CaveSystem::where('name', 'Bone Cave')->count());
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_tags_caves_in_northern_ireland(): void
+    {
+        Http::fake(['*' => Http::response(['elements' => [
+            ['type' => 'node', 'id' => 3001, 'lat' => 54.2587, 'lon' => -7.8103, 'tags' => ['name' => 'Marble Arch Caves']],
+        ]], 200)]);
+
+        $this->artisan('sync:osm-caves --region="Northern Ireland"')->assertExitCode(0);
+
+        $cave = Cave::where('name', 'Marble Arch Caves')->firstOrFail();
+        $this->assertContains('Northern Ireland', $cave->tags->pluck('tag')->all());
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

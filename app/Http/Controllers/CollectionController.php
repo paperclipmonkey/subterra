@@ -27,7 +27,15 @@ class CollectionController extends Controller
         // Calculate progress for the current user
         $user = Auth::user();
 
-        $collection->load(['caves' => function ($query) use ($user) {
+        $canManageCaves = $user?->hasRole(['platform_admin', 'data_admin']) ?? false;
+
+        $collection->load(['caves' => function ($query) use ($user, $canManageCaves) {
+            // Anyone can add any cave id to their own collection, so admin_only sites
+            // (e.g. coal mines) must be filtered here, when the collection is read.
+            if (!$canManageCaves) {
+                $query->where(fn ($q) => $q->whereNull('caves.visibility')->orWhere('caves.visibility', '!=', 'admin_only'));
+            }
+
             // Check if the user has visited this cave (entrance or exit in a trip)
             $query->with(['heroImage', 'entranceImage', 'tags', 'media', 'system'])
                 ->withExists(['entranceTrips as is_entrance' => function ($q) use ($user) {

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\Club;
+use App\Models\Scopes\IsActiveScope;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class UserSeeder extends Seeder
 {
@@ -157,8 +159,9 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        // 7. Inactive User - Deactivated account
-        $inactive = User::firstOrCreate(
+        // 7. Inactive User - Deactivated account. IsActiveScope hides inactive
+        // users, so without dropping it re-seeding would insert a duplicate.
+        $inactive = User::withoutGlobalScope(IsActiveScope::class)->firstOrCreate(
             ['email' => 'inactive@subterra.test'],
             [
                 'name' => 'Inactive User',
@@ -195,6 +198,51 @@ class UserSeeder extends Seeder
             ]
         );
 
+        // Make the accounts usable for agent-driven previews and screenshots:
+        // finish onboarding so the welcome wizard doesn't cover every page,
+        // and give most of them a photo so avatar lists show a mix of photos
+        // and the default avatar. No Club Member stays un-onboarded as the
+        // "brand new user" account; Private User keeps the default avatar.
+        foreach ([$admin, $clubAdmin, $member, $pending, $multiClub] as $user) {
+            $this->prepareForPreview($user, withPhoto: true);
+        }
+        $this->prepareForPreview($privateUser, withPhoto: false);
+
         $this->command->info('Created 8 test users with various roles and configurations.');
+    }
+
+    /**
+     * Only fills blanks, so re-seeding never overwrites edits made while testing.
+     */
+    private function prepareForPreview(User $user, bool $withPhoto): void
+    {
+        $user->onboarding_completed_at ??= now();
+
+        if ($withPhoto && !$user->photo) {
+            $path = "seed-avatars/{$user->id}.svg";
+            Storage::disk('media')->put($path, $this->initialsAvatar($user->name), 'public');
+            $user->photo = $path;
+        }
+
+        $user->saveQuietly();
+    }
+
+    private function initialsAvatar(string $name): string
+    {
+        $initials = collect(explode(' ', $name))->map(fn ($part) => mb_substr($part, 0, 1))->take(2)->implode('');
+        $hue = crc32($name) % 360;
+
+        return <<<SVG
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+              <defs>
+                <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="hsl({$hue}, 55%, 45%)"/>
+                  <stop offset="1" stop-color="hsl({$hue}, 55%, 25%)"/>
+                </linearGradient>
+              </defs>
+              <rect width="128" height="128" fill="url(#g)"/>
+              <text x="64" y="64" dy=".35em" text-anchor="middle" font-family="sans-serif" font-size="52" font-weight="600" fill="#fff">{$initials}</text>
+            </svg>
+            SVG;
     }
 }

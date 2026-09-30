@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Cave from '@/components/Cave.vue'
 import { api } from '@/plugins/api'
@@ -30,8 +30,9 @@ vi.mock('vuetify', () => ({
 
 // Mock Stores
 const user = { id: 1, is_admin: false }
+const storeFlags = { canSuggest: false }
 vi.mock('@/stores/app', () => ({
-    useAppStore: () => ({ user })
+    useAppStore: () => ({ user, get canSuggest () { return storeFlags.canSuggest } })
 }))
 vi.mock('@/stores/collections', () => ({
     useCollectionStore: () => ({})
@@ -335,6 +336,57 @@ describe('Cave Component', () => {
         expect(wrapper.text()).not.toContain("This cave's description is a stub")
     })
 
+    describe('OpenStreetMap attribution', () => {
+        const stubs = {
+            'v-container': { template: '<div><slot /></div>' },
+            'v-row': { template: '<div><slot /></div>' },
+            'v-col': { template: '<div><slot /></div>' },
+            'v-card': { template: '<div><slot /></div>' },
+            'v-img': { template: '<div><slot /></div>' },
+            'v-tabs': { template: '<div><slot /></div>' },
+            'v-tab': { template: '<div><slot /></div>' },
+            'v-window': { template: '<div><slot /></div>' },
+            'v-window-item': { template: '<div><slot /></div>' },
+            'v-alert': { template: '<div><slot /></div>' },
+            'v-icon': true, 'v-btn': true, 'v-spacer': true, 'v-badge': true, 'v-divider': true,
+            'v-chip-group': true, 'v-chip': true, 'v-tooltip': true, 'v-list': true, 'v-list-item': true,
+            'v-list-item-title': true, 'v-list-item-subtitle': true, 'v-progress-circular': true, 'v-avatar': true,
+            'v-dialog': true, 'v-card-title': true, 'v-card-text': true, 'v-card-actions': true, 'v-textarea': true,
+            'v-form': true, 'v-snackbar': true, 'CaveTripListItem': true, 'CorrectionModal': true,
+            'CaveWeather': true, 'MarkdownRenderer': true, 'MediaViewModal': true,
+        }
+
+        const mountWith = async (openstreetmap) => {
+            api.get.mockResolvedValue({ data: { data: { ...mockCave, openstreetmap } } })
+            const wrapper = mount(Cave, { global: { stubs } })
+            await new Promise(resolve => setTimeout(resolve, 0))
+            await wrapper.vm.$nextTick()
+            return wrapper
+        }
+
+        it('credits OpenStreetMap contributors and the ODbL for OSM-sourced caves', async () => {
+            const wrapper = await mountWith({ url: 'https://www.openstreetmap.org/node/501', is_source: true })
+            const line = wrapper.find('[data-test="osm-attribution"]')
+
+            expect(line.text()).toContain('OpenStreetMap')
+            expect(line.text()).toContain('Open Database Licence')
+            expect(line.find('a').attributes('href')).toBe('https://www.openstreetmap.org/node/501')
+        })
+
+        it('only links to OpenStreetMap for caves that are merely linked', async () => {
+            const wrapper = await mountWith({ url: 'https://www.openstreetmap.org/node/502', is_source: false })
+            const line = wrapper.find('[data-test="osm-attribution"]')
+
+            expect(line.text()).toBe('View on OpenStreetMap')
+            expect(line.text()).not.toContain('Licence')
+        })
+
+        it('shows nothing for caves with no OSM link', async () => {
+            const wrapper = await mountWith(null)
+            expect(wrapper.find('[data-test="osm-attribution"]').exists()).toBe(false)
+        })
+    })
+
     describe('media ordering', () => {
         const mountCave = async (caveData) => {
             api.get.mockResolvedValue({ data: { data: caveData } })
@@ -446,6 +498,123 @@ describe('Cave Component', () => {
             const ids = wrapper.vm.allMedia.map(m => m.id)
             expect(ids.slice(0, 2)).toEqual([4, 2])
             expect(ids.slice(2)).toEqual(others.map(o => o.id))
+        })
+    })
+
+    describe('Routes tab', () => {
+        const stubs = {
+            'v-container': { template: '<div><slot /></div>' },
+            'v-row': { template: '<div><slot /></div>' },
+            'v-col': { template: '<div><slot /></div>' },
+            'v-card': { template: '<div><slot /></div>' },
+            'v-img': { template: '<div><slot /></div>' },
+            'v-tabs': { template: '<div><slot /></div>' },
+            'v-tab': { props: ['value'], template: '<div class="v-tab" :data-tab="value"><slot /></div>' },
+            'v-window': { template: '<div><slot /></div>' },
+            'v-window-item': { template: '<div><slot /></div>' },
+            'v-alert': { template: '<div><slot /></div>' },
+            'v-icon': true, 'v-btn': true, 'v-spacer': true, 'v-badge': true, 'v-divider': true,
+            'v-chip-group': true, 'v-chip': true, 'v-tooltip': true, 'v-list': true, 'v-list-item': true,
+            'v-list-item-title': true, 'v-list-item-subtitle': true, 'v-progress-circular': true, 'v-avatar': true,
+            'v-dialog': true, 'v-card-title': true, 'v-card-text': true, 'v-card-actions': true, 'v-textarea': true,
+            'v-form': true, 'v-snackbar': true, 'CaveTripListItem': true, 'CorrectionModal': true,
+            'CaveWeather': true, 'MarkdownRenderer': true, 'MediaViewModal': true, 'RouteList': true,
+        }
+
+        const mountWithRoutes = async (routes, { admin = false } = {}) => {
+            user.is_admin = admin
+            api.get.mockResolvedValue({ data: { data: { ...mockCave, system: { id: 7, name: 'Test System', routes, caves: [] } } } })
+            const wrapper = mount(Cave, { global: { stubs } })
+            await new Promise(resolve => setTimeout(resolve, 0))
+            await wrapper.vm.$nextTick()
+            return wrapper
+        }
+
+        afterEach(() => {
+            user.is_admin = false
+        })
+
+        it('hides the Routes tab when the system has no routes', async () => {
+            const wrapper = await mountWithRoutes([])
+            expect(wrapper.find('[data-tab="routes"]').exists()).toBe(false)
+        })
+
+        it('shows the Routes tab when the system has routes', async () => {
+            const wrapper = await mountWithRoutes([{ id: 1, name: 'Round trip' }])
+            expect(wrapper.find('[data-tab="routes"]').exists()).toBe(true)
+        })
+
+        it('keeps the Routes tab for admins so they can add the first route', async () => {
+            const wrapper = await mountWithRoutes([], { admin: true })
+            expect(wrapper.find('[data-tab="routes"]').exists()).toBe(true)
+        })
+
+        it('falls back to the overview when the hidden Routes tab is selected', async () => {
+            const wrapper = await mountWithRoutes([])
+            wrapper.vm.activeTab = 'routes'
+            await wrapper.vm.$nextTick()
+            expect(wrapper.vm.activeTab).toBe('overview')
+        })
+    })
+
+    describe('Suggest Edit button', () => {
+        const stubs = {
+            'v-container': { template: '<div><slot /></div>' },
+            'v-row': { template: '<div><slot /></div>' },
+            'v-col': { template: '<div><slot /></div>' },
+            'v-card': { template: '<div><slot /></div>' },
+            'v-img': { template: '<div><slot /></div>' },
+            'v-tabs': { template: '<div><slot /></div>' },
+            'v-tab': { template: '<div><slot /></div>' },
+            'v-window': { template: '<div><slot /></div>' },
+            'v-window-item': { template: '<div><slot /></div>' },
+            'v-alert': { template: '<div><slot /></div>' },
+            'v-btn': { props: ['disabled'], template: '<button :disabled="disabled"><slot /></button>' },
+            'v-icon': true, 'v-spacer': true, 'v-badge': true, 'v-divider': true,
+            'v-chip-group': true, 'v-chip': true, 'v-tooltip': true, 'v-list': true, 'v-list-item': true,
+            'v-list-item-title': true, 'v-list-item-subtitle': true, 'v-progress-circular': true, 'v-avatar': true,
+            'v-dialog': true, 'v-card-title': true, 'v-card-text': true, 'v-card-actions': true, 'v-textarea': true,
+            'v-form': true, 'v-snackbar': true, 'CaveTripListItem': true, 'CorrectionModal': true,
+            'CaveWeather': true, 'MarkdownRenderer': true, 'MediaViewModal': true, 'RouteList': true,
+        }
+
+        const mountAs = async ({ admin = false, canSuggest = true } = {}) => {
+            user.is_admin = admin
+            storeFlags.canSuggest = canSuggest
+            api.get.mockResolvedValue({ data: { data: mockCave } })
+            const wrapper = mount(Cave, { global: { stubs } })
+            await new Promise(resolve => setTimeout(resolve, 0))
+            await wrapper.vm.$nextTick()
+            return wrapper
+        }
+
+        const disabledSuggestEdits = (wrapper) =>
+            wrapper.findAll('button[disabled]').filter(b => b.text().includes('Suggest Edit'))
+
+        afterEach(() => {
+            user.is_admin = false
+            storeFlags.canSuggest = false
+        })
+
+        it('shows only the working button to a confirmed member', async () => {
+            // Regression: the disabled button's v-else-if was bound to the admin
+            // "pending edits" chip, so it rendered alongside the real button.
+            const wrapper = await mountAs({ canSuggest: true })
+
+            expect(disabledSuggestEdits(wrapper)).toHaveLength(0)
+            expect(wrapper.findAll('button:not([disabled])').some(b => b.text() === 'Suggest Edit')).toBe(true)
+        })
+
+        it('shows no disabled Suggest Edit to an admin', async () => {
+            const wrapper = await mountAs({ admin: true, canSuggest: true })
+
+            expect(disabledSuggestEdits(wrapper)).toHaveLength(0)
+        })
+
+        it('shows the disabled button to an unconfirmed user', async () => {
+            const wrapper = await mountAs({ canSuggest: false })
+
+            expect(disabledSuggestEdits(wrapper).length).toBeGreaterThan(0)
         })
     })
 })

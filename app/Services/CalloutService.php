@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Events\CalloutCancelled;
 use App\Events\CalloutCreated;
+use App\Jobs\CancelWatchdogJob;
 use App\Mail\CalloutCancelled as CalloutCancelledMail;
 use App\Mail\CalloutStarted;
 use App\Models\Callout;
@@ -294,12 +295,10 @@ class CalloutService
             return null;
         }
 
-        try {
-            $this->watchdogService->cancel($callout);
-        } catch (Exception $e) {
-            Log::error('GCP Watchdog cancellation failed: '.$e->getMessage());
-            // Continue with cancellation even if watchdog fails
-        }
+        // cancel() reports failure by returning false rather than throwing, so a
+        // failed cancel used to be ignored — and the watchdog then raised a false
+        // emergency. Retry until it sticks.
+        CancelWatchdogJob::cancelOrRetry($callout, $this->watchdogService);
 
         try {
             // Ensure participants and attached users are loaded

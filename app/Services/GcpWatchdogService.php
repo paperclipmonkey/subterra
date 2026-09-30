@@ -189,8 +189,11 @@ class GcpWatchdogService
     {
         $callout->load(['user', 'participants', 'cave', 'exitCave']);
 
+        // Same recipients as the app's own escalation (CheckOverdueCallouts::
+        // getAllDutyOfficers): platform admins also take duty-officer shifts, so a
+        // duty_officer-only list could leave the backup with nobody to alert.
         $dutyOfficers = \App\Models\User::whereHas('roles', function ($query) {
-            $query->where('slug', 'duty_officer');
+            $query->whereIn('slug', ['duty_officer', 'platform_admin']);
         })->get()->map(fn ($do) => [
             'name' => $do->name,
             'phone' => $do->phone,

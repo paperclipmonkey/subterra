@@ -78,4 +78,18 @@ describe('TripList user filtering', () => {
     expect(getTrips).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'aB3dEfG' }))
     expect(wrapper.vm.isOwnTrips).toBe(true)
   })
+
+  it('lists every visible trip for user_id=all', async () => {
+    routeQuery.value = { user_id: 'all' }
+
+    const wrapper = mountList()
+    await flushPromises()
+
+    // No user filter is sent: the API returns everything visibleTo the viewer.
+    expect(api.get).not.toHaveBeenCalled()
+    expect(getTrips).toHaveBeenCalledWith({})
+    expect(wrapper.vm.isAllTrips).toBe(true)
+    expect(wrapper.vm.isOwnTrips).toBe(false)
+    expect(wrapper.vm.tripsUser).toBeNull()
+  })
 })

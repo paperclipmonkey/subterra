@@ -24,7 +24,7 @@
 
       <v-row v-else class="px-2">
         <v-col v-for="cave in displayedCaves" :key="cave.id" cols="12" sm="6" md="4" lg="3">
-          <v-hover v-slot="{ isHovering, props: hoverProps }">
+          <v-hover v-slot="{ isHovering, props: hoverProps }" @update:model-value="setVideoPlaying(cave.id, $event)">
             <v-card v-bind="hoverProps" elevation="2"
                     class="fill-height d-flex flex-column cave-card"
                     :class="{ 'cave-card--leaving': leavingIds.has(cave.id) }"
@@ -33,7 +33,7 @@
                 <!-- Video Preview -->
                 <video
                   v-if="cave.hero_video"
-                  :ref="el => { if(el) { videoRefs[cave.id] = el; (!mobile && isHovering) ? el.play() : el.pause() } }"
+                  :ref="el => setVideoRef(cave.id, el)"
                   :src="cave.hero_video.preview_url || cave.hero_video.url"
                   muted loop playsinline
                   class="position-absolute w-100 h-100"
@@ -174,7 +174,28 @@ const appStore = useAppStore()
 const { mobile } = useDisplay()
 const showConfirmModal = ref(false)
 const caveToMark = ref(null)
-const videoRefs = ref({})
+// Plain object, not a ref: the elements are only ever touched imperatively.
+const videoEls = {}
+
+const setVideoRef = (caveId, el) => {
+  if (el) videoEls[caveId] = el
+  else delete videoEls[caveId]
+}
+
+// Play a card's hero video while it's hovered. This has to react to the hover
+// change itself: calling play() from the inline :ref callback relied on Vue
+// re-invoking that callback on every render, which it no longer does, so the
+// video faded in but sat paused on its first frame.
+const setVideoPlaying = (caveId, hovering) => {
+  const el = videoEls[caveId]
+  if (!el) return
+  if (hovering && !mobile.value) {
+    // play() rejects if the pointer leaves before playback starts; harmless.
+    el.play()?.catch(() => {})
+  } else {
+    el.pause()
+  }
+}
 
 const PAGE_SIZE = 24
 const displayCount = ref(PAGE_SIZE)

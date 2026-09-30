@@ -11,7 +11,7 @@ jobs:
 
   deploy-gcp:
     needs: [tests]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency: deploy-gcp-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
@@ -80,21 +80,62 @@ jobs:
           cd terraform/gcp
           terraform apply -auto-approve
 
+  # Builds and pushes the Fly image while the tests run, instead of after them.
+  # Nothing is released here: deploy-fly still waits for the tests and only
+  # then rolls this image out. Layers are cached in the GitHub Actions cache,
+  # so the PHP/apt base layer is rebuilt only when it actually changes.
+  build-fly:
+    runs-on: ubuntu-24.04
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Log in to the Fly registry
+        run: flyctl auth docker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: registry.fly.io/subterra:${{ github.sha }}
+          # Mirrors [build.args] in fly.toml, which only applies when flyctl
+          # builds the image itself.
+          build-args: |
+            NODE_VERSION=24
+            PHP_VERSION=8.4
+          cache-from: type=gha,scope=fly
+          cache-to: type=gha,mode=max,scope=fly
+
   deploy-fly:
-    needs: [tests]
-    runs-on: ubuntu-latest
+    needs: [tests, build-fly]
+    runs-on: ubuntu-24.04
     concurrency: deploy-fly-group
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-      - name: Make HTTP request # Ensure the api is up. Helps with postgres going to sleep
+      # Wake Postgres before the release command migrates. /api/livez runs
+      # SELECT 1 and only returns 200 once the database answers, so stop as soon
+      # as it does instead of sleeping a fixed 15s. Never fails the deploy.
+      - name: Wake the database
         run: |
-          curl -s https://subterra.world/api/livez > /dev/null; sleep 15
+          for attempt in $(seq 1 20); do
+            curl -sf --max-time 10 https://subterra.world/api/livez > /dev/null && exit 0
+            sleep 3
+          done
+          echo "::warning::/api/livez did not return 200; deploying anyway"
       - name: Set up Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy to Fly
-        run: flyctl deploy --local-only
+        run: flyctl deploy --image registry.fly.io/subterra:${{ github.sha }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

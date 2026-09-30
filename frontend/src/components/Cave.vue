@@ -16,16 +16,6 @@
         >
           {{ appStore.user?.is_admin ? 'Edit Cave' : 'Suggest Edit' }}
         </v-btn>
-        <v-chip
-          v-if="appStore.user?.is_admin && pendingSuggestionsCount > 0"
-          color="warning"
-          size="small"
-          variant="tonal"
-          class="mr-2 cursor-pointer"
-          :to="`/admin/suggested-edits?cave_id=${cave.id}`"
-        >
-          {{ pendingSuggestionsCount }} pending {{ pendingSuggestionsCount === 1 ? 'edit' : 'edits' }}
-        </v-chip>
         <v-btn
           v-else-if="appStore.user"
           variant="text"
@@ -36,7 +26,7 @@
           size="small"
         >
           <v-tooltip activator="parent" location="top">
-            {{ !appStore.canSuggest ? 'Your account must be approved' : 'You must join a club' }} to suggest edits
+            Confirm your club membership to suggest edits
           </v-tooltip>
           Suggest Edit
         </v-btn>
@@ -44,13 +34,26 @@
           v-else
           variant="text"
           color="primary"
-          to="/login"
+          to="/"
           :prepend-icon="mdiPencil"
           class="text-none mr-2"
           size="small"
         >
           Log in to Suggest Edit
         </v-btn>
+        <!-- Kept outside the edit-button v-if chain above: sitting between those
+             buttons, the chain's v-else-if bound to this chip instead, so every
+             non-admin also got the disabled "Suggest Edit" next to the real one. -->
+        <v-chip
+          v-if="appStore.user?.is_admin && pendingSuggestionsCount > 0"
+          color="warning"
+          size="small"
+          variant="tonal"
+          class="mr-2 cursor-pointer"
+          :to="`/admin/suggested-edits?cave_id=${cave.id}`"
+        >
+          {{ pendingSuggestionsCount }} pending {{ pendingSuggestionsCount === 1 ? 'edit' : 'edits' }}
+        </v-chip>
       </v-col>
     </v-row>
 
@@ -184,7 +187,7 @@
             <v-tab value="system">System Info</v-tab>
             <v-tab v-if="smAndDown" value="map">Map</v-tab>
             <v-tab value="media">Media</v-tab>
-            <v-tab value="routes">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1" /></v-tab>
+            <v-tab v-if="showRoutesTab" value="routes">Routes <v-badge v-if="cave.system?.routes?.length > 0" :content="cave.system.routes.length" inline color="grey-lighten-1" /></v-tab>
             <v-tab v-if="appStore.user.is_admin || (linkedCollections && linkedCollections.length > 0)" value="collections">Collections <v-badge v-if="linkedCollections.length > 0" :content="linkedCollections.length" inline color="grey-lighten-1" /></v-tab>
           </v-tabs>
           <v-divider />
@@ -192,8 +195,44 @@
           <v-window v-model="activeTab" class="pa-4">
             <!-- Overview Tab -->
             <v-window-item value="overview">
+              <!-- Permit Booking Link -->
+              <v-alert
+                v-if="cavePermit"
+                :icon="mdiCalendarCheck"
+                type="info"
+                variant="tonal"
+                class="mb-4"
+              >
+                <!-- Stacks on phones so the text gets the full width. -->
+                <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between ga-3">
+                  <div>
+                    <div class="font-weight-bold">{{ cavePermit.name }}</div>
+                    <div class="text-body-2">This cave requires a permit. View availability and apply online.</div>
+                  </div>
+                  <v-btn
+                    color="primary"
+                    variant="flat"
+                    size="small"
+                    class="flex-shrink-0"
+                    :to="`/caves/${route.params.id}/bookings`"
+                  >
+                    Book Now
+                  </v-btn>
+                </div>
+              </v-alert>
               <div class="text-h6 mb-3 font-weight-bold display-1">Description</div>
               <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
+              <!-- Structured OSM attribution: unlike the description text, it can't be
+                   edited away, which ODbL requires for OSM-sourced caves. -->
+              <p v-if="cave.openstreetmap" class="text-caption text-medium-emphasis mt-n4 mb-6" data-test="osm-attribution">
+                <template v-if="cave.openstreetmap.is_source">
+                  Location and details from
+                  <a :href="cave.openstreetmap.url" target="_blank" rel="noopener">OpenStreetMap</a>
+                  contributors, available under the
+                  <a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">Open Database Licence</a>.
+                </template>
+                <a v-else :href="cave.openstreetmap.url" target="_blank" rel="noopener">View on OpenStreetMap</a>
+              </p>
 
               <v-alert v-if="isDescriptionStub" type="info" variant="tonal" class="mb-6">
                 <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between w-100">
@@ -218,7 +257,7 @@
                     >
                       Suggest Edit
                       <v-tooltip activator="parent" location="top">
-                        Your account must be approved to suggest edits
+                        Confirm your club membership to suggest edits
                       </v-tooltip>
                     </v-btn>
                   </div>
@@ -235,7 +274,7 @@
                   <div>
                     <div class="text-body-2 text-grey-darken-2">
                       Access information is restricted to approved club members.
-                      <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Join a club</router-link> to view details.
+                      <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view details.
                     </div>
                   </div>
                 </v-alert>
@@ -266,30 +305,6 @@
                   <router-link :to="`/caves/${route.params.id}/edit`" class="text-decoration-none font-weight-bold">add some</router-link>.
                 </p>
               </template>
-
-              <!-- Permit Booking Link -->
-              <v-alert
-                v-if="cavePermit"
-                :icon="mdiCalendarCheck"
-                type="info"
-                variant="tonal"
-                class="mt-4"
-              >
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="font-weight-bold">{{ cavePermit.name }}</div>
-                    <div class="text-body-2">This cave requires a permit. View availability and apply online.</div>
-                  </div>
-                  <v-btn
-                    color="primary"
-                    variant="flat"
-                    size="small"
-                    :to="`/caves/${route.params.id}/bookings`"
-                  >
-                    View Availability
-                  </v-btn>
-                </div>
-              </v-alert>
             </v-window-item>
 
             <!-- Trips Tab -->
@@ -342,7 +357,7 @@
               <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
                   <div class="cave-map-overlay-wrap">
-                    <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="400px" :geolocate="true" @map:load="onMapLoad" />
+                    <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" height="400px" :geolocate="true" @map:load="onMapLoad" />
                     <OverlayTogglePanel :overlays="overlays.overlayList.value" :visibility="overlays.visibility" :loading="overlays.loading" @toggle="overlays.toggle" />
                   </div>
                 </template>
@@ -350,7 +365,7 @@
                   <div class="text-center pa-4">
                     <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
                     <div class="text-h6 text-grey-darken-1">Location Locked</div>
-                    <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
+                    <div class="text-caption text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
                   </div>
                 </div>
               </div>
@@ -481,6 +496,7 @@
                   <div class="text-body-1 font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
                   <div class="text-caption text-grey-darken-1 mb-4">
                     References, surveys, and technical documents are available to approved club members.
+                    <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view them.
                   </div>
                 </div>
 
@@ -512,8 +528,7 @@
                       size="small"
                       color="secondary"
                       variant="tonal"
-                      style="cursor: pointer;"
-                      @click="$router.push({ path: '/caves', query: { tags: tag.tag, view: 'list' } })"
+                      :to="{ path: '/caves', query: { tags: tag.tag, view: 'list' } }"
                     >
                       {{ tag.tag }}
                     </v-chip>
@@ -621,7 +636,7 @@
         <v-card class="mb-4 rounded-lg overflow-hidden" elevation="2">
           <template v-if="appStore.canSuggest">
             <div class="cave-map-overlay-wrap">
-              <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" :max-zoom="15" height="300px" :geolocate="true" @map:load="onMapLoad" />
+              <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" height="300px" :geolocate="true" @map:load="onMapLoad" />
               <OverlayTogglePanel :overlays="overlays.overlayList.value" :visibility="overlays.visibility" :loading="overlays.loading" @toggle="overlays.toggle" />
             </div>
           </template>
@@ -629,7 +644,7 @@
             <div class="text-center pa-4">
               <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
               <div class="text-h6 text-grey-darken-1">Location Locked</div>
-              <div class="text-caption text-grey-darken-1">Join a club to view cave locations and maps</div>
+              <div class="text-caption text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
             </div>
           </div>
           <v-card-text>
@@ -693,8 +708,7 @@
               size="small"
               color="secondary"
               variant="tonal"
-              style="cursor: pointer;"
-              @click="$router.push({ path: '/caves', query: { tags: tag.tag, view: 'list' } })"
+              :to="{ path: '/caves', query: { tags: tag.tag, view: 'list' } }"
             >
               {{ tag.tag }}
             </v-chip>
@@ -799,6 +813,16 @@ const isDescriptionStub = computed(() => {
 
 const pageTitle = computed(() => cave.value?.name)
 usePageTitle(pageTitle)
+
+// Hide the Routes tab when the system has none. Admins keep it, like the
+// Collections tab, since its empty state is where they add the first route.
+const showRoutesTab = computed(() => appStore.user?.is_admin || cave.value?.system?.routes?.length > 0)
+
+// A ?tab=routes link to a cave with no routes would otherwise open a tab with
+// no header to show which one is selected.
+watch([showRoutesTab, activeTab], ([show, tab]) => {
+  if (cave.value && !show && tab === 'routes') activeTab.value = 'overview'
+})
 
 // Sync tab changes to URL without adding history
 watch(activeTab, (newTab) => {

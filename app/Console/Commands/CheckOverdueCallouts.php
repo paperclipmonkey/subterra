@@ -13,7 +13,6 @@ use App\Notifications\CalloutImminentNotification;
 use App\Notifications\CalloutOverdueContactNotification;
 use App\Notifications\OverdueCalloutNotification;
 use App\Notifications\UnmanagedIncidentNotification;
-use App\Services\GcpWatchdogService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -62,7 +61,7 @@ class CheckOverdueCallouts extends Command
             ->get();
 
         foreach ($overdueCallouts as $callout) {
-            $this->triggerCallout($callout);
+            $this->isolated("trigger overdue callout {$callout->id}", fn () => $this->triggerCallout($callout));
         }
     }
 
@@ -79,10 +78,12 @@ class CheckOverdueCallouts extends Command
             ->get();
 
         foreach ($imminentCallouts as $callout) {
-            // Mark as warned BEFORE notifying so a notification failure cannot cause the
-            // same imminent warning to be re-sent on the next run.
-            $callout->update(['warned_at' => now()]);
-            $this->warnDutyOfficer($callout);
+            $this->isolated("imminent warning for callout {$callout->id}", function () use ($callout) {
+                // Mark as warned BEFORE notifying so a notification failure cannot cause the
+                // same imminent warning to be re-sent on the next run.
+                $callout->update(['warned_at' => now()]);
+                $this->warnDutyOfficer($callout);
+            });
         }
     }
 
@@ -95,7 +96,7 @@ class CheckOverdueCallouts extends Command
             ->get();
 
         foreach ($staleIncidents as $incident) {
-            $this->escalateIncident($incident);
+            $this->isolated("escalate incident {$incident->id}", fn () => $this->escalateIncident($incident));
         }
     }
 
@@ -288,13 +289,27 @@ class CheckOverdueCallouts extends Command
             Log::error('Failed to send Overdue Slack Alert: '.$e->getMessage());
         }
 
-        // Cancel the GCP watchdog now that Laravel has handled this callout.
-        // A watchdog failure here is tolerated — a duplicate backup alert is far safer
-        // than a missed one.
+        // Deliberately NOT cancelling the GCP watchdog here. Queuing or even sending
+        // alerts doesn't mean anyone has seen them, and the watchdog (a separate
+        // provider) only fires if the callout is still unacknowledged 15 minutes after
+        // callout_time. It is stood down when a duty officer acknowledges the incident
+        // (IncidentObserver) or the party marks themselves safe (CalloutService::cancel).
+        // An unacknowledged incident therefore gets both alerts — a duplicate is far
+        // safer than a missed one.
+    }
+
+    /**
+     * Run one callout/incident's work so that an exception (e.g. a Postgres lock
+     * timeout) is logged loudly but can't abort the loop: otherwise every later
+     * overdue callout — and, because the phases run in sequence, every later phase
+     * — would be skipped until the next minute's run.
+     */
+    private function isolated(string $context, callable $work): void
+    {
         try {
-            app(GcpWatchdogService::class)->cancel($callout);
-        } catch (\Exception $e) {
-            Log::error("Failed to cancel GCP watchdog for callout {$callout->id}: {$e->getMessage()}");
+            $work();
+        } catch (\Throwable $e) {
+            Log::critical("check-overdue failed to {$context}: {$e->getMessage()}", ['exception' => $e]);
         }
     }
 
@@ -302,12 +317,19 @@ class CheckOverdueCallouts extends Command
      * Send a notification to each recipient in isolation. A failure to reach one
      * recipient (e.g. a downed SMS/email provider) is logged but never aborts the
      * remaining sends, and never propagates to roll back any surrounding DB writes.
+     *
+     * Sent NOW, bypassing the queue, even though the notifications implement
+     * ShouldQueue: production has a single low-priority worker shared with image
+     * processing and registry syncs (jobs of up to 10 minutes), so a queued safety
+     * alert could sit behind them — or never go out if the worker is down — while
+     * the caller believes it was delivered. A send failure is also only visible
+     * here when it happens synchronously.
      */
     private function safeNotify(iterable $notifiables, $notification, string $context): void
     {
         foreach ($notifiables as $notifiable) {
             try {
-                Notification::send([$notifiable], $notification);
+                Notification::sendNow([$notifiable], $notification);
             } catch (\Throwable $e) {
                 Log::error("Failed to send {$context} to a recipient: {$e->getMessage()}");
             }

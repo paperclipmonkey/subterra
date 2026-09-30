@@ -122,6 +122,40 @@ class AssistantToolsTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function search_caves_only_returns_coordinates_to_approved_club_members(): void
+    {
+        $system = CaveSystem::factory()->create();
+        Cave::factory()->create(['cave_system_id' => $system->id, 'location_lat' => 54.1, 'location_lng' => -2.4]);
+        $tool = new SearchCavesTool();
+
+        $result = $tool->handle(['include_obscure' => true], User::factory()->create());
+        $this->assertNull($result['cave_systems'][0]['latitude']);
+        $this->assertNull($result['cave_systems'][0]['longitude']);
+
+        $result = $tool->handle(['include_obscure' => true], User::factory()->withApprovedClub()->create());
+        $this->assertSame(54.1, $result['cave_systems'][0]['latitude']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function weather_forecast_tool_hides_admin_only_sites_and_gates_coordinates(): void
+    {
+        config(['services.pirate_weather.api_key' => 'test-key']);
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response(['currently' => [], 'daily' => ['data' => []]], 200)]);
+        $tool = app(\App\Services\Assistant\Tools\GetWeatherForecastTool::class);
+
+        $mine = Cave::factory()->create(['location_lat' => 53.0, 'location_lng' => -2.0, 'visibility' => 'admin_only']);
+        $result = $tool->handle(['cave_id' => $mine->id], User::factory()->withApprovedClub()->create());
+        $this->assertArrayHasKey('error', $result);
+
+        $cave = Cave::factory()->create(['location_lat' => 54.1, 'location_lng' => -2.4]);
+        $result = $tool->handle(['cave_id' => $cave->id], User::factory()->create());
+        $this->assertNull($result['location']);
+
+        $result = $tool->handle(['cave_id' => $cave->id], User::factory()->withApprovedClub()->create());
+        $this->assertEquals(54.1, $result['location']['lat']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function search_caves_filters_to_curated_only_by_default(): void
     {
         $curatedTag = \App\Models\Tag::firstOrCreate(
@@ -331,6 +365,52 @@ class AssistantToolsTest extends TestCase
 
         $tagNames = collect($result['tags'])->pluck('tag')->all();
         $this->assertContains('Forest of Dean', $tagNames);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function get_cave_details_applies_the_cave_and_trip_visibility_gates(): void
+    {
+        $system = CaveSystem::factory()->create();
+        Cave::factory()->create([
+            'cave_system_id' => $system->id,
+            'name' => 'Public Entrance',
+            'location_lat' => 54.1,
+            'location_lng' => -2.4,
+            'access_info' => 'Ask the farmer',
+        ]);
+        Cave::factory()->create(['cave_system_id' => $system->id, 'name' => 'Old Coal Mine', 'visibility' => 'admin_only']);
+
+        // A club-only report by someone in a club the viewer isn't in.
+        $stranger = User::factory()->create();
+        $otherClub = \App\Models\Club::factory()->create();
+        $stranger->clubs()->attach($otherClub->id, ['status' => 'approved']);
+        $clubTrip = Trip::factory()->create([
+            'cave_system_id' => $system->id,
+            'visibility' => 'club',
+            'description' => 'Club-only report',
+        ]);
+        $clubTrip->participants()->attach($stranger);
+        Trip::factory()->create(['cave_system_id' => $system->id, 'visibility' => 'public', 'description' => 'Public report']);
+
+        $tool = new GetCaveDetailsTool();
+
+        // No approved club: no hidden sites, locations, or other clubs' reports.
+        $result = $tool->handle(['cave_system_id' => $system->id], User::factory()->create());
+        $this->assertSame(['Public Entrance'], collect($result['entrances'])->pluck('name')->all());
+        $this->assertNull($result['entrances'][0]['latitude']);
+        $this->assertNull($result['entrances'][0]['access_info']);
+        $this->assertSame(['Public report'], array_column($result['recent_reports'], 'description'));
+
+        // Approved-club member (of a different club): locations, still no hidden site or club report.
+        $result = $tool->handle(['cave_system_id' => $system->id], User::factory()->withApprovedClub()->create());
+        $this->assertSame(['Public Entrance'], collect($result['entrances'])->pluck('name')->all());
+        $this->assertSame(54.1, $result['entrances'][0]['latitude']);
+        $this->assertSame('Ask the farmer', $result['entrances'][0]['access_info']);
+        $this->assertSame(['Public report'], array_column($result['recent_reports'], 'description'));
+
+        // Data admin sees the admin_only site.
+        $result = $tool->handle(['cave_system_id' => $system->id], User::factory()->dataAdmin()->create());
+        $this->assertCount(2, $result['entrances']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

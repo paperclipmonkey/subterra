@@ -9,13 +9,16 @@ use App\Events\ClubAccessResponded;
 use App\Http\Resources\ClubDetailResource;
 use App\Http\Resources\ClubResource;
 use App\Http\Resources\UserDetailEmailResource;
+use App\Http\Resources\UserResource;
 use App\Models\Club;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -98,7 +101,10 @@ class ClubController extends Controller
     }
 
     /**
-     * Update the specified club (Admin).
+     * Update the specified club (club admin or platform admin).
+     *
+     * Only platform admins may enable or disable a club; a club admin's
+     * is_active is ignored (the edit modal always sends the current value).
      */
     public function update(Request $request, Club $club): JsonResponse
     {
@@ -120,7 +126,12 @@ class ClubController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $club->update($validator->validated());
+        $data = $validator->validated();
+        if (!$request->user()->hasRole('platform_admin')) {
+            unset($data['is_active']);
+        }
+
+        $club->update($data);
 
         return response()->json(new ClubDetailResource($club->fresh()->loadCount(['approvedUsers as users_count'])));
     }
@@ -178,7 +189,7 @@ class ClubController extends Controller
     }
 
     /**
-     * Get the *approved* members of a specific club (Admin).
+     * Get the *approved* members of a specific club, with contact details (club admin or platform admin).
      */
     public function getApprovedMembers(Club $club): JsonResponse
     {
@@ -189,27 +200,66 @@ class ClubController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'photo' => $user->photo ? (str_starts_with($user->photo, 'http') ? $user->photo : Storage::disk('media')->url($user->photo)) : null,
                 'is_club_admin' => (bool) $user->pivot->is_admin,
             ];
         }));
     }
 
     /**
-     * Sync *approved* members and their admin status for a specific club (Admin).
+     * Sync *approved* members and their admin status for a specific club
+     * (club admin or platform admin).
+     *
+     * A club admin may only remove existing members and change who is an
+     * admin: adding people is platform-admin only, and pending requests go
+     * through approveMember so the member is notified.
      */
     public function syncApprovedMembers(Request $request, Club $club): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'members' => 'present|array',
-            'members.*.id' => 'required|exists:users,id',
+            'members.*.id' => 'required',
             'members.*.is_admin' => 'required|boolean',
         ]);
+
+        // One query for the whole list rather than an `exists` rule per member,
+        // which cost a round trip each on a large club. Like `exists`, it ignores
+        // the User global scopes, so inactive users still count as known.
+        $validator->after(function ($validator) use ($request) {
+            $members = $request->input('members');
+            if (!is_array($members)) {
+                return;
+            }
+            $isKey = fn ($id) => is_string($id) || is_int($id);
+            $ids = collect($members)->pluck('id')->filter($isKey)->map(fn ($id) => (string) $id)->unique();
+            $found = User::withoutGlobalScopes()->whereIn('id', $ids)->pluck('id')->map(fn ($id) => (string) $id)->all();
+            foreach ($members as $index => $member) {
+                $id = is_array($member) ? ($member['id'] ?? null) : null;
+                if ($id === null || $id === '') {
+                    continue; // already reported by `required`
+                }
+                // Anything but a string or int (an array, say) can't be a user id
+                // and would later break the array-keyed sync data.
+                if (!$isKey($id) || !in_array((string) $id, $found, true)) {
+                    $validator->errors()->add("members.$index.id", "The selected members.$index.id is invalid.");
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
         $membersData = $request->input('members');
+
+        if (!$request->user()->hasRole('platform_admin')) {
+            $approvedIds = $club->approvedUsers()->pluck('users.id');
+            $unknownIds = collect($membersData)->pluck('id')->diff($approvedIds);
+            if ($unknownIds->isNotEmpty()) {
+                return response()->json(['message' => 'Only approved members of this club can be included.'], 422);
+            }
+        }
+
         $syncData = [];
         foreach ($membersData as $member) {
             $syncData[$member['id']] = [
@@ -223,12 +273,19 @@ class ClubController extends Controller
                 // Diff against the unfiltered relation: a member in the list
                 // who currently has a pending row must be promoted via an
                 // update, not re-attached (which would hit the unique index).
-                $currentStatuses = $club->users()->pluck('club_user.status', 'users.id');
+                $current = DB::table('club_user')
+                    ->join('users', 'users.id', '=', 'club_user.user_id')
+                    ->where('club_user.club_id', $club->id)
+                    ->get(['club_user.user_id', 'club_user.status', 'club_user.is_admin', 'users.is_active'])
+                    ->keyBy('user_id');
+                $currentStatuses = $current->pluck('status', 'user_id');
 
                 // Detach approved members omitted from the list. Pending
-                // requests are managed separately and stay untouched.
-                $removeIds = $currentStatuses
-                    ->filter(fn ($status) => $status === 'approved')
+                // requests are managed separately and stay untouched, as do
+                // inactive users: the roster (approvedUsers) never lists them,
+                // so their absence from the list is not a removal.
+                $removeIds = $current
+                    ->filter(fn ($row) => $row->status === 'approved' && (bool) $row->is_active)
                     ->keys()
                     ->diff(array_keys($syncData));
 
@@ -238,7 +295,12 @@ class ClubController extends Controller
 
                 foreach ($syncData as $userId => $pivot) {
                     if ($currentStatuses->has($userId)) {
-                        $club->users()->updateExistingPivot($userId, $pivot);
+                        // Skip untouched rows: saving a big roster after changing one
+                        // admin flag shouldn't issue an UPDATE per member.
+                        $existing = $current[$userId];
+                        if ($existing->status !== $pivot['status'] || (bool) $existing->is_admin !== (bool) $pivot['is_admin']) {
+                            $club->users()->updateExistingPivot($userId, $pivot);
+                        }
                     } else {
                         $club->users()->attach($userId, $pivot);
                     }
@@ -263,11 +325,12 @@ class ClubController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'photo' => $user->photo ? (str_starts_with($user->photo, 'http') ? $user->photo : Storage::disk('media')->url($user->photo)) : null,
             ];
         }));
     }
 
-    public function approveMember(Club $club, User $user): UserDetailEmailResource
+    public function approveMember(Request $request, Club $club, User $user): JsonResource
     {
         // Only a genuinely pending request can be approved — otherwise the
         // update is a silent no-op yet the "approved" email would still fire.
@@ -283,7 +346,14 @@ class ClubController extends Controller
         $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
         event(new ClubAccessResponded($club, $user, 'approved'));
 
-        return new UserDetailEmailResource($user->fresh());
+        // Club admins are ordinary members: they must not receive the applicant's
+        // private profile (phone, date of birth, email). Only platform admins get
+        // the detailed resource, which the admin users table uses to refresh its row.
+        if ($request->user()->hasRole('platform_admin')) {
+            return new UserDetailEmailResource($user->fresh());
+        }
+
+        return new UserResource($user->fresh());
     }
 
     public function rejectMember(Request $request, Club $club, User $user): JsonResponse

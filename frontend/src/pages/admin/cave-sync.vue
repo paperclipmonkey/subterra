@@ -27,6 +27,9 @@
             {{ reg.description }}
           </v-card-text>
           <v-card-actions>
+            <v-btn v-if="reg.id === 'osm'" variant="text" color="teal" to="/admin/osm-import">
+              Choose caves…
+            </v-btn>
             <v-spacer />
             <v-btn
               color="teal"
@@ -101,7 +104,7 @@ const registries = [
     id: 'osm',
     label: 'OpenStreetMap (UK-wide)',
     url: 'openstreetmap.org',
-    description: 'Named UK cave entrances from OpenStreetMap, licensed under the ODbL (open data, attribution + share-alike).',
+    description: 'Named UK cave entrances from OpenStreetMap (ODbL). "Sync now" imports every named entrance; use "Choose caves…" to pick specific ones. Caves you already have are only linked, never changed.',
   },
 ]
 

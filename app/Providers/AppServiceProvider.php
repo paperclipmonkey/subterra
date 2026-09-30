@@ -119,12 +119,20 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('duty-officer-test-broadcast', $perUser(3, 5)); // 3 per 5 min
         RateLimiter::for('phone-verify-send', $perUser(5, 5));  // 5 code sends per 5 min
         RateLimiter::for('phone-verify', $perUser(10, 1));      // 10 confirm attempts per min
+        // Generous on purpose: reporting is a safety mechanism, and someone
+        // working through several bad posts in one sitting must not be blocked.
+        RateLimiter::for('report-store', $perUser(20, 60));      // 20 per hour
 
         // Per-IP limiters for guest/webhook endpoints.
         $perIp = fn (int $max, int $decayMinutes) => fn (Request $request) => Limit::perMinutes($decayMinutes, $max)
             ->by('ip:'.$request->ip());
 
-        RateLimiter::for('magic-link', $perIp(5, 1));
+        // Per IP, plus per target address: the IP limit alone let anyone rotating
+        // IPs flood a single inbox with sign-in emails.
+        RateLimiter::for('magic-link', fn (Request $request) => [
+            $perIp(5, 1)($request),
+            Limit::perHour(10)->by('magic-link-email:'.sha1(mb_strtolower(trim((string) $request->input('email'))))),
+        ]);
         RateLimiter::for('webhook-twilio-sms', $perIp(60, 1));
         RateLimiter::for('webhook-twilio-voice', $perIp(120, 1));
         RateLimiter::for('webhook-gcp-media', $perIp(120, 1));

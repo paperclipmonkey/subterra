@@ -111,6 +111,15 @@
     "previously_done": {
       "type": "boolean"
     },
+    "openstreetmap": {
+      "type": ["object", "null"],
+      "properties": {
+        "url": { "type": "string" },
+        "is_source": { "type": "boolean" }
+      },
+      "required": ["url", "is_source"],
+      "additionalProperties": false
+    },
     "can_manage": {
       "type": "boolean"
     },

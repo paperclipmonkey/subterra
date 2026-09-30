@@ -6,9 +6,9 @@
       <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
         Cave locations and map features are exclusive to approved club members.
       </p>
-      <v-btn color="primary" :to="`/profile/${appStore.user.id}`">Join a Club</v-btn>
+      <v-btn color="primary" to="/waitlist">Confirm Club Membership</v-btn>
     </div>
-    <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" :max-zoom="15" @map:load="onMapLoad" />
+    <AppMap v-else ref="mapRef" v-model="style" geolocate :center="lnglat" :zoom="zoom" @map:load="onMapLoad" />
   </div>
 </template>
 
@@ -148,14 +148,18 @@ const setupLayers = async () => {
   addLayerDefs()
 
   // Click cluster → zoom in
-  map.on('click', CLUSTER_LAYER, (e) => {
+  // MapLibre 5 returns a Promise here and silently ignores a callback, which
+  // is how the old callback version left clusters clickable-looking but inert.
+  map.on('click', CLUSTER_LAYER, async (e) => {
     const features = map.queryRenderedFeatures(e.point, { layers: [CLUSTER_LAYER] })
     if (!features.length) return
     const clusterId = features[0].properties.cluster_id
-    map.getSource(SOURCE_ID).getClusterExpansionZoom(clusterId, (err, expandZoom) => {
-      if (err) return
+    try {
+      const expandZoom = await map.getSource(SOURCE_ID).getClusterExpansionZoom(clusterId)
       map.easeTo({ center: features[0].geometry.coordinates, zoom: expandZoom })
-    })
+    } catch {
+      // The cluster can vanish mid-request if the data reloads; nothing to zoom to.
+    }
   })
 
   // Click individual cave → popup
@@ -166,7 +170,7 @@ const setupLayers = async () => {
     const escHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
     popup?.remove()
-    popup = new maplibregl.Popup({ offset: 10 })
+    popup = new maplibregl.Popup({ offset: 10, className: 'cave-list-popup' })
       .setLngLat(coords)
       .setHTML(`
         <div style="min-width:200px; font-family: sans-serif;">
@@ -249,28 +253,12 @@ onUnmounted(() => {
 <style lang="scss">
 @import "maplibre-gl/dist/maplibre-gl.css";
 
-// Fills the flex column set up by the caves page in map mode; the
-// min-height is a fallback so the map stays usable if that ever breaks.
-.map-container {
-  height: 100%;
-  min-height: 420px;
-}
-
-// The map runs underneath the floating nav dock — keep MapLibre's
-// attribution and bottom controls visible above it.
-.map-container .maplibregl-ctrl-bottom-left,
-.map-container .maplibregl-ctrl-bottom-right {
-  bottom: 74px;
-}
-
-// The map also runs up behind the floating header — push the top controls
-// down so they clear it (--caves-header-h is measured by the caves page).
-.map-container .maplibregl-ctrl-top-left,
-.map-container .maplibregl-ctrl-top-right {
-  top: var(--caves-header-h, 0px);
-}
-
-.maplibregl-popup .maplibregl-popup-content {
+// Unscoped, and qualified by our own popup class: CaveMap, HutListMap and
+// ActiveCalloutMap each ship a global `.maplibregl-popup .maplibregl-popup-content
+// { background: transparent }`. At equal specificity whichever chunk's CSS loaded
+// last won, so after visiting a cave page or the huts map this popup's text
+// panel went see-through. The extra class keeps these rules ahead of theirs.
+.maplibregl-popup.cave-list-popup .maplibregl-popup-content {
   padding: 0;
   background: #fff;
   border-radius: 6px;
@@ -278,7 +266,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 12px rgba(0,0,0,0.25);
 }
 
-.maplibregl-popup-content .maplibregl-popup-close-button {
+.maplibregl-popup.cave-list-popup .maplibregl-popup-close-button {
   right: 6px;
   top: 4px;
   font-size: 16px;

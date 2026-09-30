@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   lint-php:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
@@ -24,14 +24,16 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
       # --test makes Pint report-only; without it Pint rewrites files and exits
-      # 0, so a style regression would pass CI unnoticed.
+      # 0, so a style regression would pass CI unnoticed. --parallel spreads the
+      # files across the runner's cores; serially this step took ~2.5 minutes
+      # and was the slowest job gating every deploy.
       - name: Check formatting (Pint)
-        run: vendor/bin/pint --test
+        run: vendor/bin/pint --test --parallel
       - name: Static analysis (PHPStan)
         run: vendor/bin/phpstan analyse --no-progress --error-format=github
 
   lint-js:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
@@ -66,7 +68,7 @@ jobs:
     # SQLite, whose loose typing hides errors Postgres raises (see AGENTS.md).
     # Both legs must pass: SQLite for fast feedback, Postgres for fidelity.
     name: backend-tests (${{ matrix.database }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -129,8 +131,11 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Run migrations
         run: php artisan migrate --force
+      # Paratest runs test classes across the runner's cores. Laravel gives each
+      # worker its own database (subterra_test_test_<n> on Postgres,
+      # database.sqlite_test_<n> on SQLite) and migrates it on first use.
       - name: Run tests
-        run: vendor/bin/phpunit --log-junit /tmp/junit-backend.xml
+        run: php artisan test --parallel --log-junit /tmp/junit-backend.xml
       - name: Publish backend test report
         if: always()
         env:
@@ -158,7 +163,7 @@ jobs:
           fi
 
   frontend-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The suite runs in well under a minute locally; this only exists so a hung
     # test fails fast instead of burning the default 6h job budget.
     timeout-minutes: 15
@@ -211,7 +216,7 @@ jobs:
           fi
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage
           path: frontend/coverage
@@ -221,7 +226,7 @@ jobs:
         run: cd frontend && yarn run build
 
   watchdog-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
@@ -252,7 +257,7 @@ jobs:
           fi
 
   image-processor-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
@@ -286,7 +291,7 @@ jobs:
     # System tests against the real stack: the Vue SPA is built into Laravel's
     # public/ exactly as the Dockerfile does it, then served by Laravel over a
     # seeded PostgreSQL database. Nothing is mocked.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
       postgres:
@@ -373,7 +378,7 @@ jobs:
           fi
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           # Includes traces, screenshots and video for any failing spec, which

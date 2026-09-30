@@ -22,7 +22,7 @@ class MailRenderingTest extends TestCase
         $rendered = $mail->render();
 
         $this->assertStringContainsString('subterra-logo.png', $rendered);
-        $this->assertStringContainsString('Login to Your Account', $rendered);
+        $this->assertStringContainsString('Log in to Your Account', $rendered);
     }
 
     public function test_trip_tagged_mail_renders_correctly()

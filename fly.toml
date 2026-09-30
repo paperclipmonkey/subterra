@@ -7,6 +7,10 @@ app = 'subterra'
 primary_region = 'lhr'
 console_command = 'php /var/www/html/artisan tinker'
 
+# Swap is only a safety margin. On a shared CPU, swapping stalls every worker
+# (including /up), so size children to fit in RAM rather than leaning on it.
+swap_size_mb = 512
+
 [deploy]
   release_command = "php /var/www/html/artisan migrate --force"
   strategy = "bluegreen"
@@ -28,6 +32,12 @@ console_command = 'php /var/www/html/artisan tinker'
   GOOGLE_REDIRECT_URL="https://subterra.world/api/google/callback"
   QUEUE_CONNECTION="database"
   TWILIO_ENABLED='false'
+  # Children x typical worker RSS (~80-100MB, 256M hard limit) plus nginx, the
+  # queue worker and the scheduler must fit in the VM. 10 children at 1GB did not.
+  PHP_PM_MAX_CHILDREN='8'
+  PHP_PM_START_SERVERS='3'
+  PHP_PM_MIN_SPARE_SERVERS='2'
+  PHP_PM_MAX_SPARE_SERVERS='4'
   APP_NAME='Subterra.world'
 
 
@@ -36,15 +46,17 @@ console_command = 'php /var/www/html/artisan tinker'
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 2
   processes = ['app']
 [[http_service.checks]]
   grace_period = "10s"
-  interval = "15s"
+  interval = "10s"
   method = "GET"
   timeout = "5s"
-  path = "/"
+  # /up boots Laravel via php-fpm (without touching the DB). "/" is the static
+  # SPA index.html served straight by nginx, so it stayed green while PHP was down.
+  path = "/up"
 
 [[vm]]
   size = 'shared-cpu-1x'
-  memory = "1024mb"
+  memory = "2048mb"

@@ -26,13 +26,13 @@ class TripPolicy
 
     public function update(User $user, Trip $trip): bool
     {
-        // Users can only update trips they participated in or if they're admin
-        return $user->is_admin || $trip->participants()->where('user_id', $user->id)->exists();
+        // Participants, or platform admins (is_admin covers every staff role)
+        return $user->hasRole('platform_admin') || $trip->participants()->where('user_id', $user->id)->exists();
     }
 
     public function delete(User $user, Trip $trip): bool
     {
-        // Users can only delete trips they participated in or if they're admin
-        return $user->is_admin || $trip->participants()->where('user_id', $user->id)->exists();
+        // Participants, or platform admins (is_admin covers every staff role)
+        return $user->hasRole('platform_admin') || $trip->participants()->where('user_id', $user->id)->exists();
     }
 }

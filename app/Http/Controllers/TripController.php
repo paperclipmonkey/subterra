@@ -122,8 +122,14 @@ class TripController extends Controller
             $tripData['end_time'] = Carbon::parse($tripData['end_time'])->utc();
         }
 
+        // Default visibility comes from the creator, not a constant: under-18s
+        // default to club-only so a child's trip report — a named person at a
+        // precise location on a known date — is not world-readable by default.
         if (!isset($tripData['visibility'])) {
-            $tripData['visibility'] = 'public';
+            $creator = $request->user();
+            $tripData['visibility'] = $creator instanceof User
+                ? $creator->defaultTripVisibility()
+                : 'public';
         }
 
         $this->validateClosedAccess($tripData['entrance_cave_id'], $tripData['visibility']);
@@ -237,6 +243,12 @@ class TripController extends Controller
 
             $trip->update($data);
 
+            // participants is optional on update: a request that omits it (e.g. a
+            // visibility-only change) must not strip everyone from the trip.
+            if (!$request->has('participants')) {
+                return ['attached' => []];
+            }
+
             return $trip->participants()->sync($participantIds);
         });
 
@@ -261,14 +273,16 @@ class TripController extends Controller
 
     private function pruneExistingMedia(Trip $trip, array $existingMedia): void
     {
+        // Delete row by row (not a query-builder delete) so TripMedia's deleted hook
+        // also removes the photo files from storage.
         if (count($existingMedia) === 0) {
-            $trip->media()->delete();
+            $trip->media()->get()->each->delete();
 
             return;
         }
 
         $existingMediaIds = array_column($existingMedia, 'id');
-        $trip->media()->whereNotIn('id', $existingMediaIds)->delete();
+        $trip->media()->whereNotIn('id', $existingMediaIds)->get()->each->delete();
 
         foreach ($existingMedia as $mediaData) {
             if (isset($mediaData['id'])) {

@@ -87,4 +87,32 @@ describe('CaveTripListItem', () => {
     expect(wrapper.props('trip').end_time).toBeNull()
     expect(wrapper.props('trip').participants.length).toBe(1)
   })
+
+  describe('cave label', () => {
+    const withCave = { ...mockTrip, entrance: { name: 'Swildons Hole' } }
+    // The global v-card stub drops its slot; render it so the card body exists.
+    const global = { stubs: { 'v-card': { template: '<div><slot /></div>' } } }
+
+    it('is hidden by default, since the cave page already names the cave', () => {
+      const wrapper = mount(CaveTripListItem, { props: { trip: withCave }, global })
+      expect(wrapper.find('.trip-cave').exists()).toBe(false)
+    })
+
+    it('names the cave when show-cave is set', () => {
+      const wrapper = mount(CaveTripListItem, { props: { trip: withCave, showCave: true }, global })
+      expect(wrapper.find('.trip-cave').text()).toBe('Swildons Hole')
+    })
+
+    it('shows entrance → exit for a through trip', () => {
+      const trip = { ...withCave, exit: { name: 'Priddy Green Sink' } }
+      const wrapper = mount(CaveTripListItem, { props: { trip, showCave: true }, global })
+      expect(wrapper.find('.trip-cave').text()).toBe('Swildons Hole → Priddy Green Sink')
+    })
+
+    it('shows just the entrance when the exit is the same cave', () => {
+      const trip = { ...withCave, exit: { name: 'Swildons Hole' } }
+      const wrapper = mount(CaveTripListItem, { props: { trip, showCave: true }, global })
+      expect(wrapper.find('.trip-cave').text()).toBe('Swildons Hole')
+    })
+  })
 })

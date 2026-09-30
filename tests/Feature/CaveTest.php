@@ -316,4 +316,24 @@ class CaveTest extends TestCase
         $response->assertOk();
         $this->assertResponseMatchesSchema($response, 'endpoints/caves-index');
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_exposes_the_openstreetmap_link_and_whether_osm_is_the_source(): void
+    {
+        $this->actingAs(User::factory()->withApprovedClub()->create());
+
+        $osmCave = Cave::factory()->create(['registry' => 'osm']);
+        $osmCave->forceFill(['osm_node_id' => '501'])->save();
+        $linked = Cave::factory()->create(['registry' => 'mcra']);
+        $linked->forceFill(['osm_node_id' => '502'])->save();
+        $plain = Cave::factory()->create();
+
+        $response = $this->getJson("/api/caves/{$osmCave->slug}")->assertOk()
+            ->assertJsonPath('data.openstreetmap.url', 'https://www.openstreetmap.org/node/501')
+            ->assertJsonPath('data.openstreetmap.is_source', true);
+        $this->assertResponseMatchesSchema($response, 'endpoints/caves-show');
+
+        $this->getJson("/api/caves/{$linked->slug}")->assertJsonPath('data.openstreetmap.is_source', false);
+        $this->getJson("/api/caves/{$plain->slug}")->assertJsonPath('data.openstreetmap', null);
+    }
 }
