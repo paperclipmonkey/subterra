@@ -29,17 +29,10 @@ class GoogleLoginController extends Controller
         }
 
         try {
-            // Not stateless(): Socialite checks the `state` it stored in the
-            // session on redirect, so a callback URL carrying someone else's
-            // code can't sign the visitor into that account (login CSRF).
             /** @var \Laravel\Socialite\Two\User $googleUser */
             $googleUser = Socialite::driver('google')->user();
         } catch (InvalidStateException) {
-            // The state is pulled from the session on first use, so a
-            // double-loaded callback (refresh, back button, link prefetch)
-            // lands here after the first load already signed the user in.
-            // Otherwise it's an expired session or a forged callback — neither
-            // is worth an error alert.
+            // Also hit by a double-loaded callback after the first load signed the user in.
             return redirect(config('app.url').(Auth::check() ? '' : '/login'));
         } catch (\Exception $e) {
             // Google authorization codes are single-use. A double-loaded
@@ -59,8 +52,7 @@ class GoogleLoginController extends Controller
             return redirect(config('app.url').'/login');
         }
 
-        // Accounts are matched on email alone, so only trust an address Google
-        // has verified — otherwise it could claim an existing user's account.
+        // Accounts are matched on email, so only trust a verified one.
         if (($googleUser->user['email_verified'] ?? false) !== true) {
             Log::warning('Google login rejected: email not verified', ['email' => $googleUser->email]);
 

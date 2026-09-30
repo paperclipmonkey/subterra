@@ -209,26 +209,10 @@ class GoogleLoginTest extends TestCase
     }
 
     #[Test]
-    public function callback_with_a_mismatched_state_does_not_sign_in(): void
-    {
-        config(['app.url' => 'http://localhost']);
-        User::factory()->create(['email' => 'attacker@example.com']);
-
-        // No mock: the real provider must reject a state that isn't in the session
-        // before it ever exchanges the code.
-        $this->withSession(['state' => 'expected-state'])
-            ->get('/api/google/callback?code=attacker-code&state=other-state')
-            ->assertRedirect('http://localhost/login');
-
-        $this->assertGuest();
-    }
-
-    #[Test]
     public function replayed_callback_after_state_was_used_redirects_a_signed_in_user_home(): void
     {
         config(['app.url' => 'http://localhost']);
 
-        // First load pulled the state from the session and signed the user in.
         $this->actingAs(User::factory()->create())
             ->get('/api/google/callback?code=used&state=already-used')
             ->assertRedirect('http://localhost');

@@ -209,9 +209,6 @@ class GcpWatchdogService
                 'email' => $callout->user->email,
             ],
             'duty_officers' => $dutyOfficers,
-            // Linked users usually arrive with no phone/email on the participant
-            // row (the create form hides them), so the backup gets the account's
-            // details — the same fallback CalloutParticipant uses for notifications.
             'participants' => $callout->participants->map(fn ($p) => [
                 'name' => $p->name,
                 'phone' => $p->routeNotificationForSms(),

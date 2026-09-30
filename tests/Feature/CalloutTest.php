@@ -221,8 +221,6 @@ class CalloutTest extends TestCase
         // Verify the existing user is stored and their phone number wasn't literally saved as '🔒 Hidden'
         $dbParticipant = $callout->participants()->where('user_id', $registeredParticipant->id)->first();
         $this->assertEquals('Existing User', $dbParticipant->name);
-        // The placeholder is dropped, and the linked account's number is not
-        // copied onto the row (it would be echoed back to the creator).
         $this->assertNull($dbParticipant->phone);
 
         // Verify the manual guest is stored with string fields

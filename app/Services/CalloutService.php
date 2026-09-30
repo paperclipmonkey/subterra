@@ -85,11 +85,7 @@ class CalloutService
             throw new Exception('Cannot create callout: No administrator is on-call at '.$calloutTime->toDateTimeString());
         }
 
-        // The create form shows a linked user's phone as "🔒 Hidden" and should
-        // send null in its place. Never copy the linked account's number onto the
-        // participant row: the creator would get it back in the response, which
-        // let anyone read any user's phone by tagging them. SMS routing already
-        // falls back to the linked account (CalloutParticipant::routeNotificationForSms).
+        // Never resolve a linked user's phone here: it would be returned to the creator.
         if (!empty($data['participants'])) {
             foreach ($data['participants'] as &$p) {
                 if (($p['phone'] ?? '') === '🔒 Hidden') {
