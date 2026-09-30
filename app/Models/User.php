@@ -273,22 +273,13 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
             return $this->getRelation('activeCallout');
         }
 
-        // First check if user created an active callout
-        $callout = $this->callouts()->whereIn('status', ['active', 'triggered'])->first();
-
-        if ($callout) {
-            return $callout->load(['cave', 'participants', 'incident']);
-        }
-
-        // Otherwise check if user is a participant in any active callout
-        $participantCallout = Callout::whereIn('status', ['active', 'triggered'])
-            ->whereHas('participants', function ($query) {
-                $query->where('user_id', $this->id);
-            })
+        // One the user created takes precedence over one they're a participant in.
+        return Callout::whereIn('status', ['active', 'triggered'])
+            ->where(fn ($q) => $q->where('user_id', $this->id)
+                ->orWhereHas('participants', fn ($p) => $p->where('user_id', $this->id)))
+            ->orderByRaw('CASE WHEN user_id = ? THEN 0 ELSE 1 END', [$this->id])
             ->with(['cave', 'participants', 'incident'])
             ->first();
-
-        return $participantCallout;
     }
 
     public function callouts(): \Illuminate\Database\Eloquent\Relations\HasMany
