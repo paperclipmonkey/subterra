@@ -75,7 +75,6 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
             'sslmode' => 'prefer',
             // Without this, pdo_pgsql spends three round trips per query (prepare,
             // execute, deallocate). Bindings are still sent separately from the SQL.
