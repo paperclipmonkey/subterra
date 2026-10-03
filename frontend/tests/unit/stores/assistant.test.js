@@ -307,6 +307,7 @@ describe('Assistant Store', () => {
 
   describe('sendMessage', () => {
     it('streams a reply, finalises it and persists the conversation', async () => {
+      document.cookie = 'XSRF-TOKEN=test-token; path=/'
       global.fetch.mockResolvedValue(sseResponse([
         sse('content_chunk', { text: 'Swildons ' }),
         sse('content_chunk', { text: 'is great.' }),
@@ -324,6 +325,8 @@ describe('Assistant Store', () => {
 
       const [url, options] = global.fetch.mock.calls[0]
       expect(url).toBe('/api/assistant/chat')
+      // Raw fetch() must carry the CSRF token axios would add automatically.
+      expect(options.headers['X-XSRF-TOKEN']).toBe('test-token')
       expect(JSON.parse(options.body)).toEqual({
         messages: [{ role: 'user', content: 'Tell me about Swildons' }],
         mode: 'default',

@@ -6,9 +6,9 @@ Hi there,
 A new trip has been started while you are on call as Duty Officer.
 
 <x-mail::panel>
-**Trip:** {{ $trip->name }}<br>
-**Cave:** {{ $trip->entrance?->name ?? 'Unknown Location' }}<br>
-**Started by:** {{ $creator->name }}<br>
+**Trip:** {{ \App\Support\MailMarkdown::escape($trip->name) }}<br>
+**Cave:** {{ \App\Support\MailMarkdown::escape($trip->entrance?->name ?? 'Unknown Location') }}<br>
+**Started by:** {{ \App\Support\MailMarkdown::escape($creator->name) }}<br>
 **Start Time:** {{ $trip->start_time->timezone(config('app.display_timezone'))->format('d M Y H:i') }}<br>
 @if($trip->end_time)
 **Expected Return:** {{ $trip->end_time->timezone(config('app.display_timezone'))->format('d M Y H:i') }}

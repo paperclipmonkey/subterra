@@ -22,10 +22,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
 // Twilio inbound webhooks. Authenticated by a shared secret in the URL path (Twilio
 // cannot send a custom header). Configure these URLs in the Twilio console.
 Route::post('/webhooks/twilio/{secret}/sms', [\App\Http\Controllers\Webhook\TwilioController::class, 'handleSms'])

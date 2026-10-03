@@ -46,8 +46,11 @@ class AppServiceProvider extends ServiceProvider
             unset($GLOBALS['reserved_memory_for_fatal_errors']);
         });
 
+        // Webhooks are authenticated by their own shared secrets, and their callers
+        // (Twilio, GCP) can't hold a CSRF token. Everything else — the SPA's
+        // session-authenticated API calls included — must send X-XSRF-TOKEN.
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::except([
-            '*',
+            'api/webhooks/*',
         ]);
 
         \Illuminate\Database\Eloquent\Model::preventLazyLoading(!$this->app->isProduction());

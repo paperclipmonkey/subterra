@@ -28,7 +28,7 @@ class TwilioSmsService implements SmsSender
         $from = (string) config('services.twilio.from');
 
         if (!config('services.twilio.enabled')) {
-            Log::info('Twilio disabled (services.twilio.enabled=false); SMS not sent.', ['to' => $to]);
+            Log::info('Twilio disabled (services.twilio.enabled=false); SMS not sent.', ['to' => SmsMessage::maskNumber($to)]);
 
             return false;
         }
@@ -68,7 +68,13 @@ class TwilioSmsService implements SmsSender
                 return true;
             }
 
-            Log::error('Twilio SMS API error: '.$response->status().' '.$response->body());
+            // Not the raw body: Twilio echoes the recipient number back in its error
+            // message, and error logs are forwarded to Slack.
+            Log::error('Twilio SMS API error.', [
+                'status' => $response->status(),
+                'code' => $response->json('code'),
+                'to' => SmsMessage::maskNumber($to),
+            ]);
             $this->record($to, $context, null, 'rejected', (string) $response->json('code'));
 
             return false;

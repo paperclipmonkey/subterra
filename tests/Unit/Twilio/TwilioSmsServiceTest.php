@@ -8,6 +8,7 @@ use App\Services\Twilio\TwilioSmsService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class TwilioSmsServiceTest extends TestCase
@@ -68,5 +69,26 @@ class TwilioSmsServiceTest extends TestCase
         Http::fake(fn () => throw new ConnectionException('timeout'));
 
         $this->assertFalse((new TwilioSmsService())->send('+447111111111', 'hi'));
+    }
+
+    public function test_error_log_does_not_contain_the_recipient_number()
+    {
+        // Error logs are forwarded to Slack, and Twilio echoes the number back.
+        $this->configure();
+        Http::fake(['*/Messages.json' => Http::response([
+            'code' => 21211,
+            'message' => "The 'To' number +447111111111 is not a valid phone number.",
+        ], 400)]);
+        Log::spy();
+
+        $this->assertFalse((new TwilioSmsService())->send('+447111111111', 'hi'));
+
+        Log::shouldHaveReceived('error')->withArgs(function (string $message, array $context = []) {
+            $logged = $message.json_encode($context);
+
+            return !str_contains($logged, '7111111111')
+                && !str_contains($logged, 's3cret')
+                && ($context['code'] ?? null) === 21211;
+        })->once();
     }
 }
