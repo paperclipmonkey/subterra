@@ -243,6 +243,10 @@ Route::post('/assistant/logbook-import', [App\Http\Controllers\AssistantControll
     ->middleware('throttle:assistant-logbook-import')
     ->name('assistant.logbook-import');
 
+Route::get('/assistant/import', [App\Http\Controllers\AssistantController::class, 'importStatus'])
+    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
+    ->name('assistant.import.status');
+
 // --- Admin Routes ---
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     // Platform Admin — users, clubs, pages, comms, tasks, dashboard, suggested edits

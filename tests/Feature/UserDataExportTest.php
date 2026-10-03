@@ -52,6 +52,9 @@ class UserDataExportTest extends TestCase
         Report::factory()->create(['reporter_id' => $user->id, 'details' => 'Wrong grade']);
         PipFeedback::create(['user_id' => $user->id, 'rating' => 1, 'comment' => 'Nice', 'transcript' => [['role' => 'user', 'content' => 'hi']]]);
 
+        $import = \App\Models\TripImport::create(['user_id' => $user->id, 'filename' => 'log.csv']);
+        \App\Models\TripImportRow::create(['trip_import_id' => $import->id, 'row_number' => 1, 'cave_name_raw' => 'Swildons', 'description' => 'Staged notes']);
+
         $response = $this->actingAs($user)->getJson('/api/user/export')->assertOk();
         $data = $response->json();
         $raw = $response->getContent();
@@ -68,6 +71,7 @@ class UserDataExportTest extends TestCase
         $this->assertSame('My ticks', $data['collections'][0]['name']);
         $this->assertSame('Wrong grade', $data['reports_filed'][0]['details']);
         $this->assertSame('Nice', $data['pip_feedback'][0]['comment']);
+        $this->assertSame('Staged notes', $data['pip_trip_imports'][0]['rows'][0]['description']);
         $this->assertNotEmpty($data['account_history']);
 
         // No secrets, and no other people's contact details.

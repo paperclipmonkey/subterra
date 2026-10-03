@@ -54,6 +54,7 @@ class UserMergeService
             DB::table('on_call_shifts')->where('user_id', $source->id)->update(['user_id' => $target->id]);
             DB::table('pages')->where('user_id', $source->id)->update(['user_id' => $target->id]);
             DB::table('pip_feedback')->where('user_id', $source->id)->update(['user_id' => $target->id]);
+            DB::table('trip_imports')->where('user_id', $source->id)->update(['user_id' => $target->id]);
             DB::table('suggested_edits')->where('user_id', $source->id)->update(['user_id' => $target->id]);
             DB::table('sms_messages')->where('user_id', $source->id)->update(['user_id' => $target->id]);
             DB::table('audits')->where('user_type', User::class)->where('user_id', $source->id)->update(['user_id' => $target->id]);

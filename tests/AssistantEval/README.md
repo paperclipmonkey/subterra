@@ -38,6 +38,21 @@ Useful flags:
 ... assistant:eval --dataset=tests/AssistantEval/dataset.json --output=/tmp/eval.md
 ```
 
+### Trip importer evals
+
+`dataset.json` exercises the trip planner (`--mode=plan`, the default for this
+command). The trip importer — the mode ordinary Pip users get — has its own
+dataset. Entries can stage a `logbook` (CSV text) before they run, and supply a
+`history` of earlier turns for multi-turn checks such as "user says yes →
+import_ready_trips". Any import the user already has open is discarded first.
+
+```bash
+... assistant:eval --mode=default --dataset=tests/AssistantEval/import-dataset.json --user=<demo caver id>
+```
+
+To compare models, run it once per model with `ASSISTANT_MODEL=...` and compare
+the reports' pass rates and token costs.
+
 Each run needs `OPENROUTER_API_KEY` set and burns real model tokens.
 
 ## Choosing a faster provider

@@ -10,10 +10,10 @@
             <h2 class="pip-title">Pip</h2>
             <v-chip color="warning" variant="tonal" size="x-small" density="compact">Preview</v-chip>
           </div>
-          <p class="pip-subtitle">{{ isDataMode ? 'Data steward — fixes need your approval' : 'Your caving guide' }}</p>
+          <p class="pip-subtitle">{{ modeCopy.subtitle }}</p>
         </div>
         <v-btn-toggle
-          v-if="canUseDataMode"
+          v-if="canUseDataMode || canUsePlanMode"
           :model-value="store.mode"
           density="compact"
           mandatory
@@ -21,10 +21,14 @@
           @update:model-value="switchMode"
         >
           <v-btn value="default" size="small" variant="text" :disabled="store.isLoading">
-            <v-icon :icon="mdiCompassOutline" size="16" class="pip-mode-icon mr-1" />
-            <span class="pip-mode-label">Caving</span>
+            <v-icon :icon="mdiUpload" size="16" class="pip-mode-icon mr-1" />
+            <span class="pip-mode-label">Import</span>
           </v-btn>
-          <v-btn value="data" size="small" variant="text" :disabled="store.isLoading">
+          <v-btn v-if="canUsePlanMode" value="plan" size="small" variant="text" :disabled="store.isLoading">
+            <v-icon :icon="mdiCompassOutline" size="16" class="pip-mode-icon mr-1" />
+            <span class="pip-mode-label">Plan</span>
+          </v-btn>
+          <v-btn v-if="canUseDataMode" value="data" size="small" variant="text" :disabled="store.isLoading">
             <v-icon :icon="mdiDatabaseCogOutline" size="16" class="pip-mode-icon mr-1" />
             <span class="pip-mode-label">Data</span>
           </v-btn>
@@ -54,18 +58,25 @@
       <div v-if="!store.hasMessages && !store.error" class="pip-welcome">
         <img src="/pip.png" alt="Pip" class="pip-welcome-avatar">
 
-        <h3 class="pip-welcome-title">{{ isDataMode ? 'Pip — data steward' : "Hi, I'm Pip" }}</h3>
-        <p class="pip-welcome-tagline">
-          {{ isDataMode
-            ? 'Find and fix data problems — missing lengths, unlinked entrances, tags. Every fix is filed as a suggested edit for your approval.'
-            : 'Cave recommendations, conditions, trip reports and weekend planning — pick a starter or just ask.' }}
-        </p>
+        <h3 class="pip-welcome-title">{{ modeCopy.welcomeTitle }}</h3>
+        <p class="pip-welcome-tagline">{{ modeCopy.tagline }}</p>
+
+        <div v-if="isImportMode && hasOpenImport" class="pip-resume">
+          <div class="pip-resume-text">
+            <strong>You have an import in progress</strong><span v-if="store.openImport.filename"> from {{ store.openImport.filename }}</span>:
+            {{ openImportSummary }}
+          </div>
+          <v-btn size="small" color="primary" variant="flat" @click="sendSuggestion('Let\'s carry on with my import.')">
+            Carry on
+          </v-btn>
+        </div>
+
         <div class="pip-suggestions">
           <button
-            v-for="s in (isDataMode ? dataWelcomeSuggestions : welcomeSuggestions)"
-            :key="s.text"
+            v-for="s in modeCopy.suggestions"
+            :key="s.label"
             class="pip-suggestion"
-            @click="sendSuggestion(s.text)"
+            @click="s.action === 'upload' ? openFilePicker() : sendSuggestion(s.text)"
           >
             <v-icon :icon="s.icon" size="16" class="mr-2" />
             <span>{{ s.label }}</span>
@@ -274,6 +285,13 @@
               </div>
 
               <div
+                v-if="!msg.pending && (msg.trips_imported || msg.import_status)"
+                class="pip-cardrow-wrap"
+              >
+                <ImportProgressAssistantCard :status="msg.import_status" :imported="msg.trips_imported" />
+              </div>
+
+              <div
                 v-if="!msg.pending && msg.collections_changed && msg.collections_changed.length"
                 class="pip-cardrow-wrap"
               >
@@ -350,7 +368,7 @@
           v-model="inputText"
           class="pip-input"
           rows="1"
-          :placeholder="isRecording ? 'Listening…' : (isDataMode ? 'Ask about data issues, or describe a fix…' : 'Ask about caves, conditions, or weekend plans…')"
+          :placeholder="isRecording ? 'Listening…' : modeCopy.placeholder"
           :disabled="store.isLoading"
           @keydown.enter.exact.prevent="send"
           @keydown.shift.enter="inputText += '\n'"
@@ -364,10 +382,11 @@
           @change="onFileSelected"
         >
         <button
+          v-if="isImportMode"
           class="pip-attach"
           :disabled="store.isLoading || csvUploading"
           title="Import caving logbook (CSV)"
-          @click="fileInputEl.click()"
+          @click="openFilePicker"
         >
           <v-progress-circular v-if="csvUploading" size="16" width="2" indeterminate />
           <v-icon v-else :icon="mdiPaperclip" size="20" />
@@ -383,9 +402,7 @@
         </button>
       </div>
       <p class="pip-disclaimer">
-        {{ isDataMode
-          ? 'Cave & system fixes are filed as suggested edits for review; collection changes apply immediately.'
-          : 'Pip can make mistakes — always verify conditions, access and gear before a trip.' }}
+        {{ modeCopy.disclaimer }}
       </p>
     </div>
 
@@ -531,6 +548,7 @@ import CollectionAssistantCard from '@/components/CollectionAssistantCard.vue'
 import CollectionChangedAssistantCard from '@/components/CollectionChangedAssistantCard.vue'
 import HutAssistantCard from '@/components/HutAssistantCard.vue'
 import MedalProgressAssistantCard from '@/components/MedalProgressAssistantCard.vue'
+import ImportProgressAssistantCard from '@/components/ImportProgressAssistantCard.vue'
 import ProposalAssistantCard from '@/components/ProposalAssistantCard.vue'
 import TripCreatedAssistantCard from '@/components/TripCreatedAssistantCard.vue'
 import TripReportAssistantCard from '@/components/TripReportAssistantCard.vue'
@@ -555,6 +573,16 @@ const canUseDataMode = computed(() => {
 })
 const isDataMode = computed(() => store.mode === 'data')
 
+// ── Planner mode (platform admins only) ──────────────────────────────────────
+// Ordinary Pip users only get the trip importer; recommending trips is kept
+// for admins.
+const canUsePlanMode = computed(() => {
+  const roles = appStore.user?.roles || []
+  return roles.some(r => r.slug === 'platform_admin')
+})
+const isPlanMode = computed(() => store.mode === 'plan')
+const isImportMode = computed(() => !isDataMode.value && !isPlanMode.value)
+
 function switchMode(mode) {
   if (!mode || mode === store.mode) return
   store.setMode(mode)
@@ -564,11 +592,26 @@ function switchMode(mode) {
 // mode (e.g. admin role revoked), drop them back to the default assistant —
 // otherwise they'd be stuck in a mode whose toggle is hidden and whose
 // requests 403.
-watch([canUseDataMode, () => appStore.user], ([allowed, user]) => {
-  if (user && !allowed && store.mode === 'data') {
+watch([canUseDataMode, canUsePlanMode, () => appStore.user], ([dataAllowed, planAllowed, user]) => {
+  if (!user) return
+  if ((store.mode === 'data' && !dataAllowed) || (store.mode === 'plan' && !planAllowed)) {
     store.setMode('default')
   }
 }, { immediate: true })
+
+// ── Import in progress ───────────────────────────────────────────────────────
+const hasOpenImport = computed(() => (store.openImport?.counts?.total ?? 0) > 0
+  && ((store.openImport.counts.ready ?? 0) + (store.openImport.counts.needs_review ?? 0) + (store.openImport.counts.duplicate ?? 0)) > 0)
+
+const openImportSummary = computed(() => {
+  const c = store.openImport?.counts || {}
+  return [
+    c.ready && `${c.ready} ready`,
+    c.needs_review && `${c.needs_review} to check`,
+    c.duplicate && `${c.duplicate} possible duplicates`,
+    c.imported && `${c.imported} already imported`,
+  ].filter(Boolean).join(', ') + '.'
+})
 
 // ── Agreement gate ───────────────────────────────────────────────────────────
 const hasAgreed = computed(() => !!appStore.user?.pip_agreement_signed_at)
@@ -702,7 +745,14 @@ function scheduleHeightUpdate() {
 }
 
 // ── Welcome suggestions ──────────────────────────────────────────────────────
-const welcomeSuggestions = [
+const importWelcomeSuggestions = [
+  { icon: mdiUpload,            label: 'Upload my logbook (CSV)',          action: 'upload' },
+  { icon: mdiNotebookOutline,   label: 'Log a trip I did recently',        text: "I'd like to log a caving trip I did recently." },
+  { icon: mdiFormatListChecks,  label: 'What should my logbook look like?', text: 'What format does my logbook spreadsheet need to be in for you to import it?' },
+]
+
+// ── Planner welcome suggestions (admins only) ────────────────────────────────
+const planWelcomeSuggestions = [
   { icon: mdiCompassOutline,    label: 'What should I try next?',         text: 'Based on my caving experience, what cave systems would you recommend I try next?' },
   { icon: mdiCalendarOutline,   label: 'Plan a Yorkshire weekend',        text: 'Can you plan me a caving weekend in the Yorkshire Dales? Two caves over Saturday and Sunday with a hut to stay at.' },
   { icon: mdiSchoolOutline,     label: 'Cave for a beginner',             text: "I'm taking a friend who has never been caving — what's a good first cave for them?" },
@@ -711,7 +761,6 @@ const welcomeSuggestions = [
   { icon: mdiHomeRoof,          label: "Huts near Swildon's",             text: "What caving huts are near Swildon's Hole? I'd like somewhere to stay for a weekend." },
   { icon: mdiWeatherCloudy,     label: 'Streamway conditions this weekend', text: 'Are conditions OK for a streamway trip in the Dales this weekend?' },
   { icon: mdiNotebookOutline,   label: 'Log a trip report',               text: "I'd like to log a trip report. Can you help me?" },
-  { icon: mdiUpload,            label: 'Import my caving logbook',        text: "I have a CSV logbook of my caving trips. Can you help me import them into Subterra?" },
 ]
 
 // ── Data-steward welcome suggestions ─────────────────────────────────────────
@@ -723,9 +772,50 @@ const dataWelcomeSuggestions = [
   { icon: mdiCompassOutline,    label: 'Caves missing region tags',       text: 'Find caves that have no region tag, and suggest the right region from their location.' },
 ]
 
+// ── Per-mode copy ────────────────────────────────────────────────────────────
+const modeCopy = computed(() => {
+  if (isDataMode.value) {
+    return {
+      subtitle: 'Data steward — fixes need your approval',
+      welcomeTitle: 'Pip — data steward',
+      tagline: 'Find and fix data problems — missing lengths, unlinked entrances, tags. Every fix is filed as a suggested edit for your approval.',
+      suggestions: dataWelcomeSuggestions,
+      placeholder: 'Ask about data issues, or describe a fix…',
+      disclaimer: 'Cave & system fixes are filed as suggested edits for review; collection changes apply immediately.',
+    }
+  }
+  if (isPlanMode.value) {
+    return {
+      subtitle: 'Trip planner — admin preview',
+      welcomeTitle: "Hi, I'm Pip",
+      tagline: 'Cave recommendations, conditions, trip reports and weekend planning — pick a starter or just ask.',
+      suggestions: planWelcomeSuggestions,
+      placeholder: 'Ask about caves, conditions, or weekend plans…',
+      disclaimer: 'Pip can make mistakes — always verify conditions, access and gear before a trip.',
+    }
+  }
+  return {
+    subtitle: 'Import your caving trips',
+    welcomeTitle: "Hi, I'm Pip",
+    tagline: "I'll get your past caving trips into Subterra. Upload your logbook spreadsheet, or just tell me about a trip — I'll match the caves and people, and check anything I'm unsure of with you before saving.",
+    suggestions: importWelcomeSuggestions,
+    placeholder: 'Tell me about a trip, or answer my question…',
+    disclaimer: 'Nothing is saved until you confirm. Pip can make mistakes — check the trips it imports.',
+  }
+})
+
 // ── CSV logbook import ───────────────────────────────────────────────────────
 const fileInputEl = ref(null)
 const csvUploading = ref(false)
+
+function openFilePicker() {
+  if (store.isLoading || csvUploading.value) return
+  if (!hasAgreed.value) {
+    agreementDialog.value = true
+    return
+  }
+  fileInputEl.value?.click()
+}
 
 async function onFileSelected(event) {
   const file = event.target.files?.[0]
@@ -806,6 +896,8 @@ onMounted(() => {
     layoutObserver.observe(outerApp)
   }
 
+  store.fetchOpenImport()
+
   // Show the agreement dialog immediately on first arrival if not yet signed.
   if (!hasAgreed.value) {
     agreementDialog.value = true
@@ -822,6 +914,24 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.pip-resume {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0 auto 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #e3f2fd;
+  font-size: 13px;
+  text-align: left;
+}
+
+.pip-resume-text {
+  flex: 1;
+  min-width: 0;
+}
+
 /*
  * Pip — single-page chat shell. Uses dynamic viewport height so we fit
  * cleanly between the platform's app bar and any bottom navigation,
