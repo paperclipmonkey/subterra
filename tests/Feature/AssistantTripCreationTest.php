@@ -161,6 +161,49 @@ class AssistantTripCreationTest extends TestCase
     }
 
     #[Test]
+    public function create_trip_report_treats_an_admin_only_cave_as_not_found(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [, $cave] = $this->makeSystemAndCave();
+        $cave->update(['visibility' => 'admin_only']);
+        $user = User::factory()->create();
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Restricted Trip',
+            'description' => 'Should not be saved.',
+            'date' => '2024-06-15',
+        ], $user);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertStringContainsString('not found', $result['error']);
+        $this->assertDatabaseMissing('trips', ['name' => 'Restricted Trip']);
+    }
+
+    #[Test]
+    public function create_trip_report_lets_a_data_admin_log_an_admin_only_cave(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [, $cave] = $this->makeSystemAndCave();
+        $cave->update(['visibility' => 'admin_only']);
+        $admin = User::factory()->dataAdmin()->create();
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Survey Trip',
+            'description' => 'Data admin visit.',
+            'date' => '2024-06-15',
+        ], $admin);
+
+        $this->assertTrue($result['success'] ?? false);
+        $this->assertDatabaseHas('trips', ['name' => 'Survey Trip', 'entrance_cave_id' => $cave->id]);
+    }
+
+    #[Test]
     public function create_trip_report_always_includes_current_user_as_participant(): void
     {
         Event::fake([TripCreated::class, TripParticipantTagged::class]);

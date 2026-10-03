@@ -99,8 +99,10 @@ class CreateTripReportTool implements AssistantTool
 
         // --- Resolve entrance cave ---
         $entranceSlug = (string) ($arguments['entrance_cave_slug'] ?? '');
+        // Same "not found" for caves the user may not view (admin_only), as the
+        // REST trip validation does, so their existence isn't confirmed either.
         $entranceCave = Cave::where('slug', $entranceSlug)->first();
-        if (!$entranceCave) {
+        if (!$entranceCave || !$user->can('view', $entranceCave)) {
             return ['error' => "Entrance cave '{$entranceSlug}' not found. Use get_cave_details to find the correct slug."];
         }
 
@@ -108,7 +110,7 @@ class CreateTripReportTool implements AssistantTool
         $exitCave = null;
         if (!empty($arguments['exit_cave_slug'])) {
             $exitCave = Cave::where('slug', (string) $arguments['exit_cave_slug'])->first();
-            if (!$exitCave) {
+            if (!$exitCave || !$user->can('view', $exitCave)) {
                 return ['error' => "Exit cave '{$arguments['exit_cave_slug']}' not found."];
             }
         }
