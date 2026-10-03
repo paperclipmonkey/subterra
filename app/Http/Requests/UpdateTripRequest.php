@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Cave;
+use App\Policies\CavePolicy;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTripRequest extends FormRequest
@@ -36,8 +38,8 @@ class UpdateTripRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'cave_system_id' => ['sometimes', 'required', 'exists:cave_systems,id'],
-            'entrance_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
-            'exit_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
+            'entrance_cave_id' => ['sometimes', 'required', 'exists:caves,id', $this->visibleCave()],
+            'exit_cave_id' => ['sometimes', 'required', 'exists:caves,id', $this->visibleCave()],
             'start_time' => ['sometimes', 'required', 'date'],
             'end_time' => array_merge(
                 ['sometimes', 'required', 'date'],
@@ -56,5 +58,29 @@ class UpdateTripRequest extends FormRequest
             'existing_media.*.copyright' => ['nullable', 'string', 'max:255'],
             'existing_media.*.photographer' => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    /**
+     * admin_only sites (e.g. coal mines) pass `exists`, but the trip would then
+     * serialise the cave back to the caller. Reject them for anyone who may not
+     * view them (same message as a missing id, so their existence is not
+     * revealed) — unless the trip already points there, so re-saving an
+     * existing trip whose cave was later restricted still works.
+     */
+    private function visibleCave(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (!is_scalar($value)) {
+                return;
+            }
+            $trip = $this->route('trip');
+            if ($trip !== null && (string) $trip->getAttribute($attribute) === (string) $value) {
+                return;
+            }
+            $cave = Cave::withTrashed()->find($value);
+            if ($cave !== null && !app(CavePolicy::class)->view($this->user(), $cave)) {
+                $fail('validation.exists')->translate();
+            }
+        };
     }
 }

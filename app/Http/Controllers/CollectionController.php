@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Http\Resources\CollectionResource;
 use App\Models\Cave;
 use App\Models\Collection;
+use App\Models\User;
+use App\Policies\CavePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,14 +29,10 @@ class CollectionController extends Controller
         // Calculate progress for the current user
         $user = Auth::user();
 
-        $canManageCaves = $user?->hasRole(['platform_admin', 'data_admin']) ?? false;
-
-        $collection->load(['caves' => function ($query) use ($user, $canManageCaves) {
-            // Anyone can add any cave id to their own collection, so admin_only sites
-            // (e.g. coal mines) must be filtered here, when the collection is read.
-            if (!$canManageCaves) {
-                $query->where(fn ($q) => $q->whereNull('caves.visibility')->orWhere('caves.visibility', '!=', 'admin_only'));
-            }
+        $collection->load(['caves' => function ($query) use ($user) {
+            // A collection may predate a cave being made admin_only (e.g. a coal
+            // mine), so such sites must also be filtered here, when it is read.
+            $this->hideRestrictedCaves($query, $user);
 
             // Check if the user has visited this cave (entrance or exit in a trip)
             $query->with(['heroImage', 'entranceImage', 'heroVideo', 'tags', 'media', 'system'])
@@ -71,7 +69,7 @@ class CollectionController extends Controller
             'photo' => 'nullable',
             'photo_data' => 'nullable|string',
             'caves' => 'nullable|array',
-            'caves.*.id' => 'required|exists:caves,id',
+            'caves.*.id' => ['required', 'exists:caves,id', $this->visibleCave($request)],
             'caves.*.description' => 'nullable|string',
         ]);
 
@@ -90,8 +88,9 @@ class CollectionController extends Controller
             $this->syncCaves($collection, $request->input('caves'));
         }
 
-        // Reload caves with pivot data for consistent response
-        $collection->load(['caves' => function ($query) {
+        // Reload caves with pivot data for consistent response, filtered as in show().
+        $collection->load(['caves' => function ($query) use ($request) {
+            $this->hideRestrictedCaves($query, $request->user());
             $query->orderByPivot('sort_order');
         }]);
 
@@ -112,7 +111,7 @@ class CollectionController extends Controller
             'photo' => 'nullable',
             'photo_data' => 'nullable|string',
             'caves' => 'nullable|array',
-            'caves.*.id' => 'required|exists:caves,id',
+            'caves.*.id' => ['required', 'exists:caves,id', $this->visibleCave($request)],
             'caves.*.description' => 'nullable|string',
         ]);
 
@@ -129,7 +128,8 @@ class CollectionController extends Controller
             $this->syncCaves($collection, $request->input('caves'));
         }
 
-        $collection->load(['caves' => function ($query) {
+        $collection->load(['caves' => function ($query) use ($request) {
+            $this->hideRestrictedCaves($query, $request->user());
             $query->orderByPivot('sort_order');
         }]);
 
@@ -154,7 +154,7 @@ class CollectionController extends Controller
         }
 
         $request->validate([
-            'cave_id' => 'required|exists:caves,id',
+            'cave_id' => ['required', 'exists:caves,id', $this->visibleCave($request)],
         ]);
 
         $count = $collection->caves()->count();
@@ -172,6 +172,39 @@ class CollectionController extends Controller
         $collection->caves()->detach($cave->id);
 
         return response()->json(['message' => 'Cave removed']);
+    }
+
+    /**
+     * admin_only sites (e.g. coal mines) pass `exists`, but the collection then
+     * serialises them back through CaveResource. Reject them for anyone who may
+     * not view them, with the same message as a missing id so their existence
+     * is not revealed.
+     */
+    private function visibleCave(Request $request): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
+            if (!is_scalar($value)) {
+                return;
+            }
+            $cave = Cave::withTrashed()->find($value);
+            if ($cave !== null && !app(CavePolicy::class)->view($request->user(), $cave)) {
+                $fail('validation.exists')->translate();
+            }
+        };
+    }
+
+    /**
+     * Drop admin_only caves from a caves query unless the user may manage them.
+     *
+     * @param  \Illuminate\Database\Eloquent\Relations\BelongsToMany<Cave, Collection>|\Illuminate\Database\Eloquent\Builder<Cave>  $query
+     */
+    private function hideRestrictedCaves($query, ?User $user): void
+    {
+        if ($user?->hasRole(['platform_admin', 'data_admin'])) {
+            return;
+        }
+
+        $query->where(fn ($q) => $q->whereNull('caves.visibility')->orWhere('caves.visibility', '!=', 'admin_only'));
     }
 
     protected function syncCaves(Collection $collection, array $caves)
