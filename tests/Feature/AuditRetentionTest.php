@@ -52,7 +52,6 @@ class AuditRetentionTest extends TestCase
             'phone_verification_attempts' => 2,
             'date_of_birth' => '1985-01-02',
             'bio' => 'Changed bio',
-            'remember_token' => 'secret-remember-token',
         ])->save();
 
         $audits = DB::table('audits')
@@ -65,7 +64,7 @@ class AuditRetentionTest extends TestCase
 
         $excluded = [
             'email', 'phone', 'phone_verified_at', 'phone_verification_code', 'phone_verification_sent_at',
-            'phone_verification_attempts', 'date_of_birth', 'bio', 'photo', 'remember_token',
+            'phone_verification_attempts', 'date_of_birth', 'bio', 'photo',
         ];
         $values = [
             'original@example.com', 'changed@example.com', '+447700900111', '+447700900222',

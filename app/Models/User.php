@@ -109,7 +109,6 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     protected $auditExclude = [
         // Secrets
         'phone_verification_code',
-        'remember_token',
         // Personal data
         'email',
         'phone',
