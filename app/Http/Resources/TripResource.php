@@ -22,18 +22,26 @@ class TripResource extends JsonResource
         // Public trips are readable without logging in, so apply CaveResource's
         // gate: only approved-club members get cave coordinates, access info and
         // survey references.
-        $canSeeLocations = (bool) $request->user()?->hasApprovedClub();
+        $user = $request->user();
+        $canSeeLocations = (bool) $user?->hasApprovedClub();
+        // admin_only sites (e.g. coal mines) can't be picked for a new trip by
+        // anyone who can't see them, but an older trip (or one logged by a data
+        // admin) may still point at one: never give their whereabouts away.
+        // Role check only when needed, so ordinary trips cost no extra query.
+        $canSeeCave = fn (?Model $cave): bool => $canSeeLocations
+            && ($cave?->getAttribute('visibility') !== 'admin_only'
+                || (bool) $user?->hasRole(['platform_admin', 'data_admin']));
 
         return [
             'id' => $this->short_id,
             'name' => $this->name,
             'description' => $this->description ?? '',
             'system' => $this->gated($this->system, ['references'], $canSeeLocations),
-            'entrance' => $this->gated($this->entrance, self::CAVE_LOCATION_FIELDS, $canSeeLocations),
+            'entrance' => $this->gated($this->entrance, self::CAVE_LOCATION_FIELDS, $canSeeCave($this->entrance)),
             // exit and creator_id only serialize when eager-loaded — falling
             // back to null instead of running a query per trip on collections.
             'exit' => $this->relationLoaded('exit')
-                ? $this->gated($this->exit, self::CAVE_LOCATION_FIELDS, $canSeeLocations)
+                ? $this->gated($this->exit, self::CAVE_LOCATION_FIELDS, $canSeeCave($this->exit))
                 : null,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
