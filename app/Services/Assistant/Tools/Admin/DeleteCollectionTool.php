@@ -78,7 +78,7 @@ class DeleteCollectionTool implements AssistantTool
 
     private static function canModify(Collection $collection, User $user): bool
     {
-        return ($collection->user_id !== null && (string) $collection->user_id === (string) $user->id)
+        return (string) $collection->user_id === (string) $user->id
             || $user->hasRole('platform_admin');
     }
 }

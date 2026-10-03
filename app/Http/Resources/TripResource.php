@@ -30,7 +30,7 @@ class TripResource extends JsonResource
         // Role check only when needed, so ordinary trips cost no extra query.
         $canSeeCave = fn (?Model $cave): bool => $canSeeLocations
             && ($cave?->getAttribute('visibility') !== 'admin_only'
-                || (bool) $user?->hasRole(['platform_admin', 'data_admin']));
+                || $user->hasRole(['platform_admin', 'data_admin']));
 
         return [
             'id' => $this->short_id,
