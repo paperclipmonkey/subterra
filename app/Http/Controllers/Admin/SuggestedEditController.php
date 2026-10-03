@@ -446,62 +446,84 @@ class SuggestedEditController extends Controller
     {
         foreach (['hero', 'entrance'] as $type) {
             $key = $type.'_image';
-            if (isset($data[$key])) {
-                $imageData = $data[$key];
+            if (!isset($data[$key])) {
+                continue;
+            }
+            $imageData = $data[$key];
 
-                if (is_array($imageData)) {
-                    $cave->media()->updateOrCreate(
-                        ['type' => $type],
-                        [
-                            'filename' => $imageData['data'] ?? $imageData['filename'] ?? null,
-                            'title' => $imageData['title'] ?? null,
-                            'photographer' => $imageData['photographer'] ?? null,
-                            'copyright' => $imageData['copyright'] ?? null,
-                        ]
-                    );
-                } elseif (is_string($imageData)) {
-                    // Simple string path (backward compatibility or simple mock)
-                    $cave->media()->updateOrCreate(
-                        ['type' => $type],
-                        ['filename' => $imageData]
-                    );
+            // Only a path promotePendingMedia() just wrote may become the image.
+            // Suggested data is client-controlled: a "filename"/"data" pointing at
+            // some other file on the media disk must not be republished as this
+            // cave's photo.
+            $path = is_array($imageData) ? ($imageData['data'] ?? null) : $imageData;
+            $filename = $this->mediaSuggestionService->isPromotedPath($path, 'caves') ? $path : null;
+
+            $attributes = [];
+            if ($filename !== null) {
+                $attributes['filename'] = $filename;
+            }
+            if (is_array($imageData)) {
+                foreach (['title', 'photographer', 'copyright'] as $field) {
+                    if (array_key_exists($field, $imageData)) {
+                        $attributes[$field] = $imageData[$field];
+                    }
                 }
+            }
+
+            if ($filename !== null) {
+                $cave->media()->updateOrCreate(['type' => $type], $attributes);
+            } elseif ($attributes !== []) {
+                // No new file: only update the metadata of an existing image.
+                $cave->media()->where('type', $type)->first()?->update($attributes);
             }
         }
     }
 
     private function handleCaveSystemFiles(CaveSystem $system, array $data): void
     {
+        $disk = Storage::disk('media');
+
         // Handle deletions
         if (!empty($data['deleted_files'])) {
-            $filesToDelete = $system->files()->whereIn('id', $data['deleted_files'])->get();
+            $filesToDelete = $system->files()->whereIn('id', (array) $data['deleted_files'])->get();
             foreach ($filesToDelete as $file) {
-                \Illuminate\Support\Facades\Storage::disk('media')->delete("cave_system_files/{$system->id}/{$file->filename}");
+                $disk->delete("cave_system_files/{$system->id}/{$file->filename}");
                 $file->delete();
             }
         }
 
         // Handle new files (media)
-        if (!empty($data['media'])) {
+        if (!empty($data['media']) && is_array($data['media'])) {
             foreach ($data['media'] as $mediaItem) {
-                if (isset($mediaItem['data'])) {
-                    $tempPath = $mediaItem['data']; // This is the path returned by promotePendingMedia (e.g. cave_systems/file.webp)
-                    $filename = basename($tempPath);
-                    $newPath = "cave_system_files/{$system->id}/{$filename}";
-
-                    // Move file to correct directory
-                    if (\Illuminate\Support\Facades\Storage::disk('media')->exists($tempPath)) {
-                        \Illuminate\Support\Facades\Storage::disk('media')->move($tempPath, $newPath);
-
-                        $system->files()->create([
-                            'filename' => $filename,
-                            'original_filename' => $mediaItem['name'] ?? $filename,
-                            'details' => $mediaItem['details'] ?? null,
-                            'mime_type' => $mediaItem['mime_type'] ?? 'application/octet-stream',
-                            'size' => $mediaItem['size'] ?? 0,
-                        ]);
-                    }
+                if (!is_array($mediaItem)) {
+                    continue;
                 }
+                $tempPath = $mediaItem['data'] ?? null;
+
+                // Only files promotePendingMedia() just moved into cave_systems/ may be
+                // published. Anything else (e.g. "avatars/<victim>.jpg") is ignored so
+                // approval cannot move or republish an arbitrary file on the disk.
+                if (!$this->mediaSuggestionService->isPromotedPath($tempPath, 'cave_systems') || !$disk->exists($tempPath)) {
+                    continue;
+                }
+
+                $filename = basename($tempPath);
+                $newPath = "cave_system_files/{$system->id}/{$filename}";
+
+                $disk->move($tempPath, $newPath);
+
+                $originalName = is_string($mediaItem['name'] ?? null) && $mediaItem['name'] !== ''
+                    ? mb_substr(basename($mediaItem['name']), 0, 255)
+                    : $filename;
+
+                $system->files()->create([
+                    'filename' => $filename,
+                    'original_filename' => $originalName,
+                    'details' => is_string($mediaItem['details'] ?? null) ? $mediaItem['details'] : null,
+                    // Derived server-side, never from the client.
+                    'mime_type' => $disk->mimeType($newPath) ?: 'application/octet-stream',
+                    'size' => $disk->size($newPath),
+                ]);
             }
         }
     }
