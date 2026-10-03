@@ -142,7 +142,29 @@ return [
     |
     */
 
+    // Retention is enforced by age instead, see 'retention_days' below: a
+    // per-model count limit would keep a rarely-edited record's personal data
+    // forever while dropping recent history of busy records.
     'threshold' => 0,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Audit Retention
+    |--------------------------------------------------------------------------
+    |
+    | Audits hold personal data (old/new attribute values, IP address, user
+    | agent). When set, the scheduled `audits:prune` command (routes/console.php)
+    | deletes anything older than this many days. The privacy policy says logs
+    | are kept for up to one year, so 365 is the expected production value.
+    |
+    | Off unless configured: pruning permanently deletes history (trip creators
+    | are derived from their "created" audit, for example), so enabling it is a
+    | deliberate deployment decision. Audits of deleted users are swept
+    | regardless.
+    |
+    */
+
+    'retention_days' => env('AUDIT_RETENTION_DAYS') !== null ? (int) env('AUDIT_RETENTION_DAYS') : null,
 
     /*
     |--------------------------------------------------------------------------

@@ -42,3 +42,8 @@ Schedule::call(function () {
 
 // Keep failed_jobs from growing forever; a month is plenty for investigating a failure.
 Schedule::command('queue:prune-failed', ['--hours' => 720])->daily()->onOneServer();
+
+// Audit-log retention. Always sweeps audits of deleted users; deletes by age only
+// once AUDIT_RETENTION_DAYS is set (config('audit.retention_days')), since that
+// permanently removes history.
+Schedule::command('audits:prune')->daily()->onOneServer();
