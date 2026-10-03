@@ -135,19 +135,19 @@ class AssistantDataModeTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function default_mode_still_caps_history_at_20_messages(): void
+    public function default_mode_still_caps_conversation_length(): void
     {
         $admin = User::factory()->admin()->pipAgreed()->create();
 
         $messages = [];
-        for ($i = 1; $i <= 21; ++$i) {
+        for ($i = 1; $i <= 16; ++$i) {
             $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
         }
 
         $this->actingAs($admin)
             ->postJson(self::ENDPOINT, ['messages' => $messages])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['messages']);
+            ->assertJson(['code' => 'conversation_limit']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -170,6 +170,6 @@ class AssistantDataModeTest extends TestCase
         $this->assertNotContains('scan_data_issues', $toolNames);
         $this->assertNotContains('create_collection', $toolNames);
         $this->assertNotContains('delete_collection', $toolNames);
-        $this->assertContains('search_caves', $toolNames);
+        $this->assertContains('get_import_status', $toolNames);
     }
 }

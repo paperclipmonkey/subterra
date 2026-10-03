@@ -522,6 +522,19 @@ class UserMergeTest extends TestCase
         $this->assertEquals($target->id, $feedback->fresh()->user_id);
     }
 
+    public function test_merge_reassigns_trip_imports()
+    {
+        $target = User::factory()->create();
+        $source = User::factory()->create();
+        $import = \App\Models\TripImport::create(['user_id' => $source->id]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/admin/users/{$target->id}/merge", ['source_id' => $source->id])
+            ->assertOk();
+
+        $this->assertEquals($target->id, $import->fresh()->user_id);
+    }
+
     public function test_merge_reassigns_suggested_edits()
     {
         $target = User::factory()->create();

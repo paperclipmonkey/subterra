@@ -8,6 +8,8 @@ use App\Http\Requests\AssistantChatRequest;
 use App\Http\Requests\AssistantFeedbackRequest;
 use App\Models\PipFeedback;
 use App\Services\AssistantService;
+use App\Services\TripImport\InvalidLogbookException;
+use App\Services\TripImport\TripImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -40,11 +42,31 @@ class AssistantController extends Controller
         $messages = $request->validated()['messages'];
         $mode = $request->validated()['mode'] ?? AssistantService::MODE_DEFAULT;
 
-        // Data-steward mode files data-fix proposals — admins only
-        if ($mode === AssistantService::MODE_DATA && !$user->hasRole(['platform_admin', 'data_admin'])) {
+        // Ordinary Pip users get the trip importer only. Data-steward mode
+        // files data-fix proposals, and the planner recommends trips — both
+        // are restricted to administrators.
+        if (!in_array($mode, AssistantService::modesFor($user), true)) {
             return response()->json([
-                'error' => 'Data-steward mode is restricted to administrators.',
+                'error' => $mode === AssistantService::MODE_DATA
+                    ? 'Data-steward mode is restricted to administrators.'
+                    : 'Pip can only help you import your trips.',
             ], 403);
+        }
+
+        $maxTurns = config(AssistantService::limitsKey($mode).'.max_user_turns');
+        $userTurns = count(array_filter($messages, fn ($m) => ($m['role'] ?? null) === 'user'));
+        if ($maxTurns !== null && $userTurns > (int) $maxTurns) {
+            return response()->json([
+                'error' => 'This conversation has reached its length limit. Start a new conversation to carry on — your import progress is saved.',
+                'code' => 'conversation_limit',
+            ], 422);
+        }
+
+        if (AssistantService::overDailyBudget($user)) {
+            return response()->json([
+                'error' => "You've used today's Pip allowance. It resets at midnight — your import progress is saved.",
+                'code' => 'daily_budget_exceeded',
+            ], 429);
         }
 
         return response()->stream(function () use ($messages, $user, $mode) {
@@ -150,11 +172,14 @@ class AssistantController extends Controller
     }
 
     /**
-     * Accept a CSV or TSV logbook file upload, parse it into structured trip data,
-     * and return the parsed rows as JSON. The frontend passes the content to Pip
-     * as a system message so the model can guide the user through creating trips.
+     * Accept a CSV or TSV logbook upload and stage its trips server-side.
+     *
+     * The file never goes into the chat: it is parsed and matched here, and
+     * Pip works from compact summaries of the staged rows. That keeps every
+     * turn small (and cheap) however long the logbook is, and avoids the old
+     * failure where a pasted CSV blew the 4,000-character message limit.
      */
-    public function importLogbook(Request $request): JsonResponse
+    public function importLogbook(Request $request, TripImportService $imports): JsonResponse
     {
         $user = $request->user();
 
@@ -171,23 +196,49 @@ class AssistantController extends Controller
 
         /** @var \Illuminate\Http\UploadedFile $file */
         $file = $request->file('file');
-
-        // Read up to 2 MB of content — sufficient for even large logbooks
         $content = file_get_contents($file->getPathname());
 
         if ($content === false || trim($content) === '') {
             return response()->json(['error' => 'The uploaded file appears to be empty.'], 422);
         }
 
-        // Enforce a hard size limit to prevent token abuse
         if (strlen($content) > 512_000) {
-            return response()->json(['error' => 'File too large. Maximum 512 KB.'], 422);
+            return response()->json(['error' => 'File too large. Maximum 512 KB — split the logbook into several files.'], 422);
+        }
+
+        $filename = mb_substr($file->getClientOriginalName(), 0, 200);
+
+        try {
+            $staged = $imports->stageFile($user, $content, $filename);
+        } catch (InvalidLogbookException $e) {
+            return response()->json(['error' => $e->getMessage(), 'code' => 'invalid_logbook'], 422);
         }
 
         return response()->json([
-            'csv_content' => $content,
-            'filename' => $file->getClientOriginalName(),
-            'size_bytes' => strlen($content),
+            'import_id' => $staged['import']->id,
+            'filename' => $filename,
+            'rows_added' => $staged['added'],
+            'rows_rejected' => $staged['rejected'],
+            'parse' => $staged['parse'],
+            'counts' => $imports->counts($staged['import']),
+        ]);
+    }
+
+    /**
+     * The user's import in progress, if any, so the UI can offer to resume it.
+     */
+    public function importStatus(Request $request, TripImportService $imports): JsonResponse
+    {
+        $import = $imports->openImportFor($request->user());
+
+        return response()->json([
+            'data' => $import ? [
+                'import_id' => $import->id,
+                'filename' => $import->filename,
+                'default_visibility' => $import->default_visibility,
+                'counts' => $imports->counts($import),
+                'updated_at' => $import->updated_at,
+            ] : null,
         ]);
     }
 }
