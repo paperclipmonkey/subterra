@@ -25,7 +25,7 @@ class CsrfProtectionTest extends TestCase
     {
         parent::setUp();
 
-        $this->app->bind(ValidateCsrfToken::class, fn ($app) => new class($app, $app['encrypter']) extends ValidateCsrfToken {
+        $this->app->bind(ValidateCsrfToken::class, fn ($app) => new class ($app, $app['encrypter']) extends ValidateCsrfToken {
             protected function runningUnitTests()
             {
                 return false;
