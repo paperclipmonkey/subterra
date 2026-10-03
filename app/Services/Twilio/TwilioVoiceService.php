@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Twilio;
 
 use App\Contracts\VoiceCaller;
+use App\Models\SmsMessage;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,7 @@ class TwilioVoiceService implements VoiceCaller
         $from = (string) config('services.twilio.from');
 
         if (!config('services.twilio.enabled')) {
-            Log::info('Twilio disabled (services.twilio.enabled=false); voice call not placed.', ['to' => $to]);
+            Log::info('Twilio disabled (services.twilio.enabled=false); voice call not placed.', ['to' => SmsMessage::maskNumber($to)]);
 
             return null;
         }
@@ -49,12 +50,19 @@ class TwilioVoiceService implements VoiceCaller
 
             if ($response->successful()) {
                 $callSid = $response->json('sid');
-                Log::info('Twilio voice call placed.', ['sid' => $callSid, 'to_url' => $twimlUrl]);
+                // Not the TwiML URL: it carries the webhook secret in its path.
+                Log::info('Twilio voice call placed.', ['sid' => $callSid]);
 
                 return $callSid;
             }
 
-            Log::error('Twilio voice API error: '.$response->status().' '.$response->body());
+            // Not the raw body: Twilio echoes the recipient number back in its error
+            // message, and error logs are forwarded to Slack.
+            Log::error('Twilio voice API error.', [
+                'status' => $response->status(),
+                'code' => $response->json('code'),
+                'to' => SmsMessage::maskNumber($to),
+            ]);
 
             return null;
         } catch (Exception $e) {

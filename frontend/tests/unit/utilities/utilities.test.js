@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { toFormData, convertFileToBase64 } from '@/utilities'
+import { describe, it, expect, afterEach } from 'vitest'
+import { toFormData, convertFileToBase64, xsrfHeaders } from '@/utilities'
 
 const entries = (formData) => [...formData.entries()]
 const asObject = (formData) => Object.fromEntries(entries(formData))
@@ -115,5 +115,20 @@ describe('convertFileToBase64', () => {
     await expect(convertFileToBase64(file)).rejects.toBeDefined()
 
     FileReader.prototype.readAsDataURL = original
+  })
+})
+
+describe('xsrfHeaders', () => {
+  afterEach(() => {
+    document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+  })
+
+  it('echoes the decoded XSRF-TOKEN cookie as X-XSRF-TOKEN', () => {
+    document.cookie = 'XSRF-TOKEN=abc%3D%3D; path=/'
+    expect(xsrfHeaders()).toEqual({ 'X-XSRF-TOKEN': 'abc==' })
+  })
+
+  it('returns no header when the cookie is absent', () => {
+    expect(xsrfHeaders()).toEqual({})
   })
 })
