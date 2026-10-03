@@ -109,6 +109,9 @@
         "cave_system_id": { "type": "integer" },
         "geojson": { "type": "object" }
       }
+    },
+    "map_overlays": {
+      "type": "array"
     }
   },
   "required": [
