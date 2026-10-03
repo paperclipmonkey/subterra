@@ -133,6 +133,7 @@ class AssistantCollectionStewardTest extends TestCase
     public function update_collection_renames_without_changing_the_slug(): void
     {
         $collection = Collection::factory()->create([
+            'user_id' => $this->steward->id,
             'name' => 'Old Name',
             'slug' => 'old-name',
         ]);
@@ -156,7 +157,7 @@ class AssistantCollectionStewardTest extends TestCase
     #[Test]
     public function update_collection_can_be_resolved_by_slug(): void
     {
-        $collection = Collection::factory()->create(['slug' => 'find-me']);
+        $collection = Collection::factory()->create(['user_id' => $this->steward->id, 'slug' => 'find-me']);
 
         $result = app(UpdateCollectionTool::class)->handle([
             'slug' => 'find-me',
@@ -170,7 +171,7 @@ class AssistantCollectionStewardTest extends TestCase
     #[Test]
     public function update_collection_replaces_the_full_cave_list_when_caves_given(): void
     {
-        $collection = Collection::factory()->create();
+        $collection = Collection::factory()->create(['user_id' => $this->steward->id]);
         $original = Cave::factory()->create(['slug' => 'original-cave']);
         $replacement = Cave::factory()->create(['slug' => 'replacement-cave']);
         $collection->caves()->attach($original, ['sort_order' => 0]);
@@ -195,7 +196,7 @@ class AssistantCollectionStewardTest extends TestCase
     #[Test]
     public function update_collection_leaves_caves_untouched_when_caves_omitted(): void
     {
-        $collection = Collection::factory()->create();
+        $collection = Collection::factory()->create(['user_id' => $this->steward->id]);
         $cave = Cave::factory()->create(['slug' => 'kept-cave']);
         $collection->caves()->attach($cave, ['sort_order' => 0]);
 
@@ -213,7 +214,7 @@ class AssistantCollectionStewardTest extends TestCase
     #[Test]
     public function update_collection_empty_caves_array_removes_all_caves(): void
     {
-        $collection = Collection::factory()->create();
+        $collection = Collection::factory()->create(['user_id' => $this->steward->id]);
         $cave = Cave::factory()->create(['slug' => 'doomed-cave']);
         $collection->caves()->attach($cave, ['sort_order' => 0]);
 
@@ -247,7 +248,7 @@ class AssistantCollectionStewardTest extends TestCase
     #[Test]
     public function delete_collection_removes_the_collection_but_keeps_the_caves(): void
     {
-        $collection = Collection::factory()->create(['name' => 'Doomed', 'slug' => 'doomed']);
+        $collection = Collection::factory()->create(['user_id' => $this->steward->id, 'name' => 'Doomed', 'slug' => 'doomed']);
         $cave = Cave::factory()->create(['slug' => 'survivor-cave']);
         $collection->caves()->attach($cave, ['sort_order' => 0]);
 
@@ -266,7 +267,7 @@ class AssistantCollectionStewardTest extends TestCase
     #[Test]
     public function delete_collection_can_be_resolved_by_slug(): void
     {
-        $collection = Collection::factory()->create(['slug' => 'kill-by-slug']);
+        $collection = Collection::factory()->create(['user_id' => $this->steward->id, 'slug' => 'kill-by-slug']);
 
         $result = app(DeleteCollectionTool::class)->handle([
             'slug' => 'kill-by-slug',
@@ -284,6 +285,75 @@ class AssistantCollectionStewardTest extends TestCase
         ], $this->steward);
 
         $this->assertArrayHasKey('error', $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // Ownership: same rule as CollectionController (owner or platform_admin)
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function update_collection_refuses_a_data_admin_editing_someone_elses_collection(): void
+    {
+        $collection = Collection::factory()->create(['name' => 'Not Yours', 'slug' => 'not-yours']);
+        $cave = Cave::factory()->create(['slug' => 'kept-cave']);
+        $collection->caves()->attach($cave, ['sort_order' => 0]);
+
+        $result = app(UpdateCollectionTool::class)->handle([
+            'collection_id' => $collection->id,
+            'name' => 'Hijacked',
+            'caves' => [],
+        ], $this->steward);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertArrayNotHasKey('success', $result);
+        $this->assertSame('Not Yours', $collection->fresh()->name);
+        $this->assertDatabaseHas('cave_collection', ['collection_id' => $collection->id, 'cave_id' => $cave->id]);
+    }
+
+    #[Test]
+    public function update_collection_refuses_by_slug_too(): void
+    {
+        $collection = Collection::factory()->create(['slug' => 'other-users']);
+
+        $result = app(UpdateCollectionTool::class)->handle([
+            'slug' => 'other-users',
+            'description' => 'Defaced',
+        ], $this->steward);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertNotSame('Defaced', $collection->fresh()->description);
+    }
+
+    #[Test]
+    public function delete_collection_refuses_a_data_admin_deleting_someone_elses_collection(): void
+    {
+        $collection = Collection::factory()->create(['slug' => 'protected']);
+        $cave = Cave::factory()->create(['slug' => 'attached-cave']);
+        $collection->caves()->attach($cave, ['sort_order' => 0]);
+
+        $result = app(DeleteCollectionTool::class)->handle(['slug' => 'protected'], $this->steward);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertDatabaseHas('collections', ['id' => $collection->id]);
+        $this->assertDatabaseHas('cave_collection', ['collection_id' => $collection->id, 'cave_id' => $cave->id]);
+    }
+
+    #[Test]
+    public function platform_admin_can_update_and_delete_any_collection_via_pip(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $collection = Collection::factory()->create(['name' => 'Someone Else']);
+
+        $update = app(UpdateCollectionTool::class)->handle([
+            'collection_id' => $collection->id,
+            'name' => 'Admin Renamed',
+        ], $admin);
+        $this->assertTrue($update['success']);
+        $this->assertSame('Admin Renamed', $collection->fresh()->name);
+
+        $delete = app(DeleteCollectionTool::class)->handle(['collection_id' => $collection->id], $admin);
+        $this->assertTrue($delete['success']);
+        $this->assertDatabaseMissing('collections', ['id' => $collection->id]);
     }
 
     // -------------------------------------------------------------------------
