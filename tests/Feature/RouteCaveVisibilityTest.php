@@ -28,7 +28,7 @@ class RouteCaveVisibilityTest extends TestCase
     {
         parent::setUp();
 
-        $this->system = CaveSystem::factory()->create();
+        $this->system = CaveSystem::factory()->create(['references' => 'Secret survey ref']);
         $entrance = Cave::factory()->create([
             'cave_system_id' => $this->system->id,
             'location_lat' => 54.1,
@@ -77,6 +77,27 @@ class RouteCaveVisibilityTest extends TestCase
         foreach ($this->fetchBoth() as $route) {
             $this->assertNotNull($route['exit']);
             $this->assertSame('Ask the farmer', $route['entrance']['access_info']);
+        }
+    }
+
+    #[Test]
+    public function the_embedded_cave_system_hides_references_from_guests_and_unapproved_users(): void
+    {
+        $route = $this->getJson("/api/routes/{$this->route->slug}")->assertOk()->json();
+        $this->assertSame($this->system->id, $route['cave_system']['id']);
+        $this->assertArrayNotHasKey('references', $route['cave_system']);
+
+        $this->actingAs(User::factory()->create());
+        $route = $this->getJson("/api/routes/{$this->route->slug}")->assertOk()->json();
+        $this->assertArrayNotHasKey('references', $route['cave_system']);
+    }
+
+    #[Test]
+    public function approved_club_members_and_data_admins_see_the_system_references(): void
+    {
+        foreach ([User::factory()->withApprovedClub()->create(), User::factory()->dataAdmin()->create()] as $user) {
+            $route = $this->actingAs($user)->getJson("/api/routes/{$this->route->slug}")->assertOk()->json();
+            $this->assertSame('Secret survey ref', $route['cave_system']['references']);
         }
     }
 }

@@ -1,6 +1,40 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import MarkdownRenderer, { parseGeoJSON } from '@/components/MarkdownRenderer.vue'
+
+// Mock maplibre-gl: record every Map so tests can inspect what reached addSource.
+// 'load' handlers fire immediately so the source/layers are added synchronously.
+const maplibreState = vi.hoisted(() => ({ maps: [] }))
+vi.mock('maplibre-gl', () => {
+    class FakeMap {
+        constructor(options) {
+            this.options = options
+            this.addSource = vi.fn()
+            this.addLayer = vi.fn()
+            this.addControl = vi.fn()
+            this.flyTo = vi.fn()
+            this.fitBounds = vi.fn()
+            this.remove = vi.fn()
+            maplibreState.maps.push(this)
+        }
+        on(event, layerOrHandler, handler) {
+            if (event === 'load' && typeof layerOrHandler === 'function') layerOrHandler()
+            return this
+        }
+    }
+    class LngLatBounds {
+        extend() { return this }
+    }
+    return {
+        default: {
+            Map: FakeMap,
+            LngLatBounds,
+            AttributionControl: class {},
+            NavigationControl: class {},
+            Popup: class {},
+        },
+    }
+})
 
 // Mock mermaid
 vi.mock('mermaid', () => ({
@@ -18,6 +52,8 @@ vi.mock('vue-markdown-render', () => ({
         setup(props) {
             // Simulate the plugin processing for mermaid blocks
             let processedSource = props.source || ''
+            processedSource = processedSource.replace(/```geojson\n([\s\S]*?)\n```/g,
+                (_, body) => `<div class="geojson-map" data-geojson="${encodeURIComponent(body.trim())}"></div>`)
             if (processedSource.includes('```mermaid')) {
                 processedSource = processedSource.replace(/```mermaid\n?([\s\S]*?)\n?```/g, '<div class="mermaid">$1</div>')
             }
@@ -129,5 +165,69 @@ describe('MarkdownRenderer', () => {
         plugins.forEach(plugin => md.use(plugin))
 
         expect(md.render('![pic](https://example.com/a.png)')).toContain('<img')
+    })
+
+    describe('geojson maps', () => {
+        const flush = () => new Promise(resolve => setTimeout(resolve, 20))
+
+        it('never passes a string payload to addSource (MapLibre would fetch it as a URL)', async () => {
+            maplibreState.maps.length = 0
+            const wrapper = mount(MarkdownRenderer, {
+                props: {
+                    source: '```geojson\n"https://attacker.example/?d=secret"\n```',
+                    allowImages: false,
+                },
+            })
+            await flush()
+
+            maplibreState.maps.forEach(map => expect(map.addSource).not.toHaveBeenCalled())
+            expect(maplibreState.maps).toHaveLength(0)
+            expect(wrapper.html()).toContain('Invalid GeoJSON')
+        })
+
+        it('still renders a valid FeatureCollection', async () => {
+            maplibreState.maps.length = 0
+            const fc = {
+                type: 'FeatureCollection',
+                features: [
+                    { type: 'Feature', geometry: { type: 'Point', coordinates: [-2.1, 54.1] }, properties: { name: 'A' } },
+                    { type: 'Feature', geometry: { type: 'Point', coordinates: [-2.2, 54.2] }, properties: { name: 'B' } },
+                ],
+            }
+            mount(MarkdownRenderer, {
+                props: { source: '```geojson\n' + JSON.stringify(fc) + '\n```', allowImages: false },
+            })
+            await flush()
+
+            expect(maplibreState.maps).toHaveLength(1)
+            const map = maplibreState.maps[0]
+            expect(map.addSource).toHaveBeenCalledWith('pip-data', { type: 'geojson', data: fc })
+            // The style URL is a fixed constant, never taken from content.
+            expect(map.options.style).toMatch(/^https:\/\/api\.maptiler\.com\//)
+        })
+
+        it.each([
+            ['a URL string', '"https://attacker.example/x"'],
+            ['a number', '42'],
+            ['null', 'null'],
+            ['an array', '["https://attacker.example/x"]'],
+            ['an object without a GeoJSON type', '{"type":"https://attacker.example/x"}'],
+            ['an object with no type', '{"data":"https://attacker.example/x"}'],
+            ['a FeatureCollection with URL features', '{"type":"FeatureCollection","features":"https://attacker.example/x"}'],
+            ['a Feature with a string geometry', '{"type":"Feature","geometry":"https://attacker.example/x"}'],
+            ['invalid JSON', '{not json'],
+        ])('parseGeoJSON rejects %s', (_, raw) => {
+            expect(parseGeoJSON(raw)).toBeNull()
+        })
+
+        it.each([
+            'FeatureCollection', 'Feature', 'Point', 'MultiPoint', 'LineString',
+            'MultiLineString', 'Polygon', 'MultiPolygon', 'GeometryCollection',
+        ])('parseGeoJSON accepts type %s', (type) => {
+            const value = type === 'FeatureCollection'
+                ? { type, features: [] }
+                : type === 'Feature' ? { type, geometry: null, properties: {} } : { type, coordinates: [] }
+            expect(parseGeoJSON(JSON.stringify(value))).toEqual(value)
+        })
     })
 })

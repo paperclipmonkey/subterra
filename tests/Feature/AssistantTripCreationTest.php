@@ -161,6 +161,49 @@ class AssistantTripCreationTest extends TestCase
     }
 
     #[Test]
+    public function create_trip_report_treats_an_admin_only_cave_as_not_found(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [, $cave] = $this->makeSystemAndCave();
+        $cave->update(['visibility' => 'admin_only']);
+        $user = User::factory()->create();
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Restricted Trip',
+            'description' => 'Should not be saved.',
+            'date' => '2024-06-15',
+        ], $user);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertStringContainsString('not found', $result['error']);
+        $this->assertDatabaseMissing('trips', ['name' => 'Restricted Trip']);
+    }
+
+    #[Test]
+    public function create_trip_report_lets_a_data_admin_log_an_admin_only_cave(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [, $cave] = $this->makeSystemAndCave();
+        $cave->update(['visibility' => 'admin_only']);
+        $admin = User::factory()->dataAdmin()->create();
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Survey Trip',
+            'description' => 'Data admin visit.',
+            'date' => '2024-06-15',
+        ], $admin);
+
+        $this->assertTrue($result['success'] ?? false);
+        $this->assertDatabaseHas('trips', ['name' => 'Survey Trip', 'entrance_cave_id' => $cave->id]);
+    }
+
+    #[Test]
     public function create_trip_report_always_includes_current_user_as_participant(): void
     {
         Event::fake([TripCreated::class, TripParticipantTagged::class]);
@@ -313,8 +356,10 @@ class AssistantTripCreationTest extends TestCase
     }
 
     #[Test]
-    public function create_trip_report_defaults_to_public_visibility(): void
+    public function create_trip_report_defaults_to_private_visibility(): void
     {
+        // A public trip reveals where and when the user went caving, so an omitted
+        // visibility (e.g. a model steered by prompt injection) must never publish it.
         Event::fake([TripCreated::class, TripParticipantTagged::class]);
 
         [$system, $cave] = $this->makeSystemAndCave();
@@ -331,8 +376,63 @@ class AssistantTripCreationTest extends TestCase
 
         $this->assertDatabaseHas('trips', [
             'name' => 'Visibility Test',
+            'visibility' => 'private',
+        ]);
+    }
+
+    #[Test]
+    public function create_trip_report_treats_an_unknown_visibility_as_private(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [$system, $cave] = $this->makeSystemAndCave();
+        $user = User::factory()->create();
+
+        (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Odd Visibility',
+            'description' => 'Bogus visibility value.',
+            'date' => '2024-06-15',
+            'visibility' => 'everyone',
+        ], $user);
+
+        $this->assertDatabaseHas('trips', [
+            'name' => 'Odd Visibility',
+            'visibility' => 'private',
+        ]);
+    }
+
+    #[Test]
+    public function create_trip_report_can_still_be_made_public_explicitly(): void
+    {
+        Event::fake([TripCreated::class, TripParticipantTagged::class]);
+
+        [$system, $cave] = $this->makeSystemAndCave();
+        $user = User::factory()->create();
+
+        (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Public Trip',
+            'description' => 'Explicitly public.',
+            'date' => '2024-06-15',
+            'visibility' => 'public',
+        ], $user);
+
+        $this->assertDatabaseHas('trips', [
+            'name' => 'Public Trip',
             'visibility' => 'public',
         ]);
+    }
+
+    #[Test]
+    public function create_trip_report_schema_documents_the_private_default(): void
+    {
+        $schema = CreateTripReportTool::definition()['function']['parameters']['properties']['visibility'];
+
+        $this->assertStringContainsString('private', $schema['description']);
+        $this->assertStringNotContainsString('Default: public', $schema['description']);
     }
 
     #[Test]
@@ -395,13 +495,14 @@ class AssistantTripCreationTest extends TestCase
         $user = User::factory()->create();
         $tool = new CreateTripReportTool();
 
-        // Default visibility is public — must be refused for a closed cave
+        // An explicitly public trip must be refused for a closed cave
         $result = $tool->handle([
             'cave_system_slug' => 'gaping-gill',
             'entrance_cave_slug' => 'main-shaft',
             'name' => 'Closed Cave Trip',
             'description' => 'Should not be public.',
             'date' => '2024-06-15',
+            'visibility' => 'public',
         ], $user);
 
         $this->assertArrayHasKey('error', $result);

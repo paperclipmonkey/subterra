@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { xsrfHeaders } from '@/utilities'
 
 const TOOL_LABELS = {
   get_user_experience: 'Looking up your experience',
@@ -194,6 +195,7 @@ export const useAssistantStore = defineStore('assistant', {
             'Content-Type': 'application/json',
             'Accept': 'text/event-stream',
             'X-Requested-With': 'XMLHttpRequest',
+            ...xsrfHeaders(),
           },
           body: JSON.stringify({ messages: history, mode: this.mode }),
           credentials: 'same-origin',
@@ -271,6 +273,7 @@ export const useAssistantStore = defineStore('assistant', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
+            ...xsrfHeaders(),
           },
           credentials: 'same-origin',
           body: JSON.stringify({ rating, comment, messages: transcript }),
@@ -294,6 +297,7 @@ export const useAssistantStore = defineStore('assistant', {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
+          ...xsrfHeaders(),
         },
         credentials: 'same-origin',
       })
@@ -318,6 +322,7 @@ export const useAssistantStore = defineStore('assistant', {
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
+          ...xsrfHeaders(),
         },
         credentials: 'same-origin',
         body: formData,

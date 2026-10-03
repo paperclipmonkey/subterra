@@ -44,7 +44,7 @@ class TwilioController extends Controller
             return $this->twiml('<Message>Missing sender.</Message>');
         }
 
-        Log::info('Twilio inbound SMS', ['from' => $from, 'body' => $body]);
+        Log::info('Twilio inbound SMS', ['from' => SmsMessage::maskNumber($from), 'command' => Str::limit($command, 20)]);
 
         $normalized = $this->normalizePhone($from);
 

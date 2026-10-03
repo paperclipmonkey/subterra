@@ -1141,12 +1141,6 @@ parameters:
 			path: app/Services/MedalProgressService.php
 
 		-
-			message: '#^Property App\\Services\\MediaSuggestionService\:\:\$imageProcessingService is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: app/Services/MediaSuggestionService.php
-
-		-
 			message: '#^Cannot call method lt\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1

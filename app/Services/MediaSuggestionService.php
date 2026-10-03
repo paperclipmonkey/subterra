@@ -14,6 +14,8 @@ class MediaSuggestionService
 {
     private const PENDING_DIR = 'pending_edits';
 
+    private const MEDIA_KEYS = ['hero_image', 'entrance_image', 'photo_data', 'photo_path'];
+
     public function __construct(
         private readonly ImageProcessingService $imageProcessingService
     ) {
@@ -22,119 +24,163 @@ class MediaSuggestionService
     /**
      * Scan suggested data for Base64 images/files and save them to a temporary pending directory.
      * Replaces the Base64 data with the temporary file path in the returned array.
+     *
+     * Suggested data is client-controlled, so any other string in a media slot (an
+     * existing path on the media disk, a URL, ...) is dropped here: the only paths a
+     * suggestion may carry are the pending_edits/ ones this method produced.
      */
     public function savePendingMedia(array $data, string $type): array
     {
         // Recursively look for hero_image, entrance_image, photo_data, or media items
         foreach ($data as $key => &$value) {
-            if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path'])) {
+            if (in_array($key, self::MEDIA_KEYS, true)) {
                 if ($value instanceof \Illuminate\Http\UploadedFile) {
                     $value = $this->storePendingFile($value, $type, $key);
                 } elseif (is_string($value)) {
-                    $base64 = $this->extractBase64($value);
-                    if ($base64) {
-                        $value = $this->storePendingBase64($base64, $type, $key);
+                    $value = $this->storePendingString($value, $type, $key);
+                    if ($value === null) {
+                        unset($data[$key]);
                     }
-                } elseif (is_array($value) && isset($value['data'])) {
+                } elseif (is_array($value) && array_key_exists('data', $value)) {
                     if ($value['data'] instanceof \Illuminate\Http\UploadedFile) {
                         $value['data'] = $this->storePendingFile($value['data'], $type, $key);
                     } elseif (is_string($value['data'])) {
-                        $base64 = $this->extractBase64($value['data']);
-                        if ($base64) {
-                            $value['data'] = $this->storePendingBase64($base64, $type, $key);
-                        }
+                        $value['data'] = $this->storePendingString($value['data'], $type, $key);
+                    } else {
+                        $value['data'] = null;
                     }
                 }
             } elseif ($key === 'media' && is_array($value)) {
-                foreach ($value as &$mediaItem) {
-                    if (isset($mediaItem['data'])) {
-                        if ($mediaItem['data'] instanceof \Illuminate\Http\UploadedFile) {
-                            $mediaItem['data'] = $this->storePendingFile($mediaItem['data'], $type, 'media');
-                        } elseif (is_string($mediaItem['data'])) {
-                            $base64 = $this->extractBase64($mediaItem['data']);
-                            if ($base64) {
-                                $mediaItem['data'] = $this->storePendingBase64($base64, $type, 'media');
-                            }
-                        }
+                foreach ($value as $index => &$mediaItem) {
+                    if (!is_array($mediaItem)) {
+                        unset($value[$index]);
+                        continue;
+                    }
+                    if (($mediaItem['data'] ?? null) instanceof \Illuminate\Http\UploadedFile) {
+                        $mediaItem['data'] = $this->storePendingFile($mediaItem['data'], $type, 'media');
+                    } elseif (is_string($mediaItem['data'] ?? null)) {
+                        $mediaItem['data'] = $this->storePendingString($mediaItem['data'], $type, 'media');
+                    } else {
+                        $mediaItem['data'] = null;
+                    }
+                    // A media item without a file we stored is meaningless; drop it.
+                    if ($mediaItem['data'] === null) {
+                        unset($value[$index]);
                     }
                 }
+                unset($mediaItem);
+                $value = array_values($value);
             } elseif (is_array($value)) {
                 $value = $this->savePendingMedia($value, $type);
             }
         }
+        unset($value);
 
         return $data;
     }
 
     /**
      * Promotes pending media to their permanent locations.
+     *
+     * Every media value in the result is either null or a path this method has
+     * just written under $targetDir: anything that is not one of our pending
+     * files (or inline base64) is discarded, so approving a suggestion can never
+     * move or republish an arbitrary file already on the media disk.
      */
     public function promotePendingMedia(array $data, string $targetDir): array
     {
         Log::info('Promoting pending media via MediaSuggestionService', ['targetDir' => $targetDir, 'keys' => array_keys($data)]);
 
         foreach ($data as $key => &$value) {
-            if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path'])) {
+            if (in_array($key, self::MEDIA_KEYS, true)) {
                 if (is_array($value)) {
-                    // Recurse into the array (e.g., hero_image.data)
-                    $value = $this->promotePendingMedia($value, $targetDir);
+                    // e.g. hero_image => ['data' => 'pending_edits/...', 'title' => ...]
+                    $value['data'] = is_string($value['data'] ?? null)
+                        ? $this->promoteString($value['data'], $targetDir, $key)
+                        : null;
+                    // The approval must not fall back to a client-supplied path.
+                    unset($value['filename']);
                 } elseif (is_string($value)) {
-                    // Check if it's already a pending file
-                    if ($this->isPendingPath($value)) {
-                        $value = $this->moveFileToPermanent($value, $targetDir);
-                    } else {
-                        // Fallback: Check if it's raw base64 (or JSON wrapped) that was missed
-                        $base64 = $this->extractBase64($value);
-                        if ($base64) {
-                            Log::info("Found raw base64 data in promotePendingMedia for key: $key");
-                            // Store directly to permanent
-                            $storedPath = $this->storePermanentBase64($base64, $targetDir, $key);
-                            if ($storedPath) {
-                                $value = $storedPath;
-                            } else {
-                                // If storage failed, unset or set to null to avoid DB error
-                                Log::warning("Failed to store fallback base64 for key: $key. Clearing value.");
-                                $value = null;
-                            }
-                        }
-                    }
-
-                    // Safety Net: Ensure we don't save massive strings to the DB
-                    if (is_string($value) && strlen($value) > 255) {
-                        Log::warning("Value for key $key is too long (>255 chars) and failed to be processed. Clearing to prevent SQL truncation error.", ['key' => $key]);
-                        $value = null;
+                    $value = $this->promoteString($value, $targetDir, $key);
+                    if ($value === null) {
+                        unset($data[$key]);
                     }
                 }
             } elseif ($key === 'media' && is_array($value)) {
-                foreach ($value as &$mediaItem) {
-                    if (isset($mediaItem['data']) && is_string($mediaItem['data'])) {
-                        if ($this->isPendingPath($mediaItem['data'])) {
-                            $mediaItem['data'] = $this->moveFileToPermanent($mediaItem['data'], $targetDir);
-                        } else {
-                            $base64 = $this->extractBase64($mediaItem['data']);
-                            if ($base64) {
-                                Log::info('Found raw base64 data in media item');
-                                $storedPath = $this->storePermanentBase64($base64, $targetDir, 'media');
-                                if ($storedPath) {
-                                    $mediaItem['data'] = $storedPath;
-                                } else {
-                                    Log::warning('Failed to store fallback base64 for media item. Clearing.');
-                                    $mediaItem['data'] = null;
-                                }
-                            }
-                        }
+                foreach ($value as $index => &$mediaItem) {
+                    $promoted = is_array($mediaItem) && is_string($mediaItem['data'] ?? null)
+                        ? $this->promoteString($mediaItem['data'], $targetDir, 'media')
+                        : null;
+                    if ($promoted === null) {
+                        Log::warning('Dropping media item without a pending file from suggestion.');
+                        unset($value[$index]);
+                        continue;
                     }
-                    if (isset($mediaItem['data']) && is_string($mediaItem['data']) && strlen($mediaItem['data']) > 255) {
-                        Log::warning('Media item data too long (>255 chars). Clearing.');
-                        $mediaItem['data'] = null;
-                    }
+                    $mediaItem['data'] = $promoted;
                 }
+                unset($mediaItem);
+                $value = array_values($value);
             } elseif (is_array($value)) {
                 $value = $this->promotePendingMedia($value, $targetDir);
             }
         }
+        unset($value);
 
         return $data;
+    }
+
+    /**
+     * Whether $path is one promotePendingMedia() produced for $targetDir: a single,
+     * plain filename directly inside it.
+     */
+    public function isPromotedPath(mixed $path, string $targetDir): bool
+    {
+        return is_string($path)
+            && !str_contains($path, '..')
+            && preg_match('#^'.preg_quote($targetDir, '#').'/[A-Za-z0-9_-]+\.[A-Za-z0-9]+$#', $path) === 1;
+    }
+
+    /**
+     * Turn a client-supplied media string into a pending path, or null when it is
+     * not inline base64 image data.
+     */
+    private function storePendingString(string $value, string $type, string $key): ?string
+    {
+        $base64 = $this->extractBase64($value);
+        if ($base64) {
+            $stored = $this->storePendingBase64($base64, $type, $key);
+
+            return $this->isPendingPath($stored) ? $stored : null;
+        }
+
+        // Even a pending_edits/ path is refused here: the only legitimate ones are
+        // those written above, and accepting a client-supplied one would let a
+        // submitter claim another suggestion's pending upload.
+        return null;
+    }
+
+    /**
+     * Move a pending file (or store inline base64) into $targetDir and return the new
+     * path, or null when the value is anything else.
+     */
+    private function promoteString(string $value, string $targetDir, string $key): ?string
+    {
+        if ($this->isPendingPath($value)) {
+            return $this->moveFileToPermanent($value, $targetDir);
+        }
+
+        // Fallback: raw base64 (or JSON wrapped) that was missed at submission
+        $base64 = $this->extractBase64($value);
+        if ($base64) {
+            Log::info("Found raw base64 data in promotePendingMedia for key: $key");
+            $storedPath = $this->storePermanentBase64($base64, $targetDir, $key);
+            if ($storedPath !== '') {
+                return $storedPath;
+            }
+            Log::warning("Failed to store fallback base64 for key: $key. Clearing value.");
+        }
+
+        return null;
     }
 
     private function extractBase64(string $value): ?string
@@ -169,7 +215,7 @@ class MediaSuggestionService
 
         try {
             try {
-                $image = Image::read($this->decodeImageBytes($fileData[1]))
+                $image = Image::read($this->imageProcessingService->decodeBase64Image($base64))
                     ->scaleDown(1500, 1500)
                     ->encode(new WebpEncoder(quality: 80));
             } catch (\Intervention\Image\Exceptions\DecoderException $e) {
@@ -197,13 +243,15 @@ class MediaSuggestionService
     public function cleanUpPendingMedia(array $data): void
     {
         foreach ($data as $key => $value) {
-            if (in_array($key, ['hero_image', 'entrance_image', 'photo_data', 'photo_path']) && $this->isPendingPath($value)) {
-                Storage::Disk('media')->delete($value);
+            if (in_array($key, self::MEDIA_KEYS, true)) {
+                $path = is_array($value) ? ($value['data'] ?? null) : $value;
+                if ($this->isPendingPath($path)) {
+                    Storage::disk('media')->delete($path);
+                }
             } elseif ($key === 'media' && is_array($value)) {
-                // ...
                 foreach ($value as $mediaItem) {
-                    if (isset($mediaItem['data']) && $this->isPendingPath($mediaItem['data'])) {
-                        Storage::Disk('media')->delete($mediaItem['data']);
+                    if (is_array($mediaItem) && $this->isPendingPath($mediaItem['data'] ?? null)) {
+                        Storage::disk('media')->delete($mediaItem['data']);
                     }
                 }
             } elseif (is_array($value)) {
@@ -219,15 +267,13 @@ class MediaSuggestionService
             return $base64;
         }
 
-        // Use ImageProcessingService logic but change directory
-        $imageData = ['data' => $base64];
         $filename = (string) Str::uuid().'_'.$key;
         $path = self::PENDING_DIR.'/'.$type.'/'.$filename.'.webp';
 
         // Use simple direct storage logic
         try {
             try {
-                $image = Image::read($this->decodeImageBytes($fileData[1]))
+                $image = Image::read($this->imageProcessingService->decodeBase64Image($base64))
                     ->scaleDown(1500, 1500)
                     ->encode(new WebpEncoder(quality: 60));
             } catch (\Intervention\Image\Exceptions\DecoderException $e) {
@@ -264,21 +310,6 @@ class MediaSuggestionService
             && preg_match('#^'.self::PENDING_DIR.'/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+$#', $value) === 1;
     }
 
-    /**
-     * Decode the payload to raw bytes before handing it to Intervention. Image::read()
-     * also accepts file paths, so a crafted "data:image,/some/server/file.jpg" would
-     * otherwise copy a server-local image into public storage.
-     */
-    private function decodeImageBytes(string $payload): string
-    {
-        $bytes = base64_decode($payload, true);
-        if ($bytes === false || $bytes === '') {
-            throw new \Intervention\Image\Exceptions\DecoderException('Invalid base64 image data.');
-        }
-
-        return $bytes;
-    }
-
     private function storePendingFile(\Illuminate\Http\UploadedFile $file, string $type, string $key): string
     {
         // Extension from the detected content type, never the client's filename, so an
@@ -297,7 +328,7 @@ class MediaSuggestionService
         return $path;
     }
 
-    private function moveFileToPermanent(string $pendingPath, string $targetDir): string
+    private function moveFileToPermanent(string $pendingPath, string $targetDir): ?string
     {
         $filename = basename($pendingPath);
         $newPath = $targetDir.'/'.$filename;
@@ -308,6 +339,6 @@ class MediaSuggestionService
             return $newPath;
         }
 
-        return $pendingPath;
+        return null;
     }
 }

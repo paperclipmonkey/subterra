@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Mail\PlaceholderUserNoticeMail;
+use App\Mail\TripStartedDONotification;
+use App\Models\Trip;
 use App\Models\User;
 use App\Support\MailMarkdown;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -39,5 +41,17 @@ class MailMarkdownInjectionTest extends TestCase
         $this->assertSame('\\[a\\](b) \\*c\\* \\`d\\` \\\\', MailMarkdown::escape('[a](b) *c* `d` \\'));
         $this->assertSame('john_smith@example.com', MailMarkdown::escape('john_smith@example.com'));
         $this->assertSame('', MailMarkdown::escape(null));
+    }
+
+    #[Test]
+    public function a_hostile_trip_name_cannot_inject_a_link_into_the_duty_officer_email(): void
+    {
+        $creator = User::factory()->create(['name' => '[Call this number](https://evil.example/n)']);
+        $trip = Trip::factory()->create(['name' => '[Stand down the callout](https://evil.example/t)']);
+
+        $html = (new TripStartedDONotification($trip, $creator))->render();
+
+        $this->assertStringNotContainsString('href="https://evil.example', $html);
+        $this->assertStringContainsString('[Stand down the callout](https://evil.example/t)', $html);
     }
 }

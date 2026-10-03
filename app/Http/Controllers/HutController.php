@@ -85,6 +85,15 @@ class HutController extends Controller
             'booking_info' => 'nullable|string',
         ]);
 
+        // A club admin manages their club's hut, but may not hand it to another
+        // club (or orphan it): reassigning ownership is a platform admin action.
+        // Re-sending the current club_id, as the edit form does, is fine.
+        if (array_key_exists('club_id', $validated)
+            && (string) ($validated['club_id'] ?? '') !== (string) ($hut->club_id ?? '')
+            && !$user->hasRole('platform_admin')) {
+            abort(403, 'Only platform admins can change which club owns a hut.');
+        }
+
         $hut->update($validated);
 
         if (isset($validated['reciprocal_clubs'])) {

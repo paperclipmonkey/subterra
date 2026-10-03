@@ -94,14 +94,30 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
     ];
 
     /**
-     * Secrets never belong in the audit trail (config/audit.php isn't strict, so
-     * $hidden alone doesn't keep them out). A six-digit code's hash is trivially
-     * brute-forced by anyone who can read audits.
+     * Secrets and sensitive personal data never belong in the audit trail
+     * (config/audit.php isn't strict, so $hidden alone doesn't keep them out).
+     *
+     * - Secrets: a six-digit code's hash is trivially brute-forced by anyone who
+     *   can read audits, and the remember token is a live session credential.
+     * - Contact/personal data (UK GDPR data minimisation): every old and new
+     *   value of these would otherwise be copied into `audits`, outside the
+     *   profile's own lifecycle. The audit trail keeps the account's name and
+     *   status changes, which is all the admin log needs.
      *
      * @var array<int, string>
      */
     protected $auditExclude = [
+        // Secrets
         'phone_verification_code',
+        // Personal data
+        'email',
+        'phone',
+        'phone_verified_at',
+        'phone_verification_sent_at',
+        'phone_verification_attempts',
+        'date_of_birth',
+        'bio',
+        'photo',
     ];
 
     /**

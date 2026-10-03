@@ -24,7 +24,8 @@ class UpdateCollectionTool implements AssistantTool
                     .'get_collection_details). This makes a LIVE change immediately. If you pass "caves", it '
                     .'REPLACES the entire cave list with the one you provide, in the order given — pass the full '
                     .'desired list, not just additions. Omit "caves" to leave the existing caves untouched. The '
-                    .'slug does not change when you rename a collection (existing links keep working).',
+                    .'slug does not change when you rename a collection (existing links keep working). Only the '
+                    .'collection\'s owner or a platform admin can edit it.',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [
@@ -69,6 +70,14 @@ class UpdateCollectionTool implements AssistantTool
         $collection = $this->resolveCollection($arguments);
         if (!$collection) {
             return ['error' => 'Collection not found. Pass either collection_id or slug from list_collections.'];
+        }
+
+        // Mirror CollectionController: only the owner or a platform admin may edit
+        // a collection. Data-steward mode is also open to data_admin, who must not
+        // be able to edit other users' collections through Pip.
+        if (!self::canModify($collection, $user)) {
+            return ['error' => 'You can only edit collections you created. This collection belongs to another user; '
+                .'only its owner or a platform admin can edit it.'];
         }
 
         $updates = [];
@@ -132,5 +141,11 @@ class UpdateCollectionTool implements AssistantTool
         }
 
         return null;
+    }
+
+    private static function canModify(Collection $collection, User $user): bool
+    {
+        return (string) $collection->user_id === (string) $user->id
+            || $user->hasRole('platform_admin');
     }
 }

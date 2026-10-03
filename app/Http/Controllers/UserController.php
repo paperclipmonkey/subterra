@@ -391,7 +391,7 @@ class UserController extends Controller
 
     public function show($id): UserDetailResource
     {
-        $user = User::withoutGlobalScopes()
+        $user = $this->profileQuery($id)
             ->with(['trips' => function ($query) {
                 // Only the columns the profile stats need; see UserDetailResource.
                 $query->visibleTo(auth()->user())
@@ -516,11 +516,28 @@ class UserController extends Controller
     }
 
     /**
+     * Profile lookups. Inactive users — unclaimed placeholders, and people who
+     * objected to being listed precisely so they stop being findable — are
+     * hidden by the IsActiveScope; only a platform admin (moderation, merges)
+     * or the user themselves may bypass it.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder<User>
+     */
+    private function profileQuery(mixed $id): \Illuminate\Database\Eloquent\Builder
+    {
+        $viewer = auth()->user();
+        $bypass = $viewer !== null
+            && ((string) $viewer->getKey() === (string) $id || $viewer->hasRole('platform_admin'));
+
+        return $bypass ? User::withoutGlobalScopes() : User::query();
+    }
+
+    /**
      * Get the 10 most recent trips for a user.
      */
     public function recentTrips($id): ResourceCollection
     {
-        $user = User::withoutGlobalScopes()->findOrFail($id);
+        $user = $this->profileQuery($id)->findOrFail($id);
 
         $trips = Trip::visibleTo(auth()->user())
             ->whereHas('participants', function ($query) use ($user) {
@@ -540,7 +557,7 @@ class UserController extends Controller
      */
     public function activityHeatmap($id): JsonResponse
     {
-        $user = User::withoutGlobalScopes()->findOrFail($id);
+        $user = $this->profileQuery($id)->findOrFail($id);
 
         $oneYearAgo = Carbon::now()->subYear();
 

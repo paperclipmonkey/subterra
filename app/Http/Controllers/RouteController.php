@@ -35,7 +35,8 @@ class RouteController extends Controller
     /**
      * These routes are public, but embed raw Cave models. Apply CaveResource's
      * gates: admin_only sites (e.g. coal mines) only for data admins, and
-     * coordinates / access info only for approved-club members.
+     * coordinates / access info / system references only for approved-club
+     * members.
      */
     private function gateCaves(Route $route, ?User $user): Route
     {
@@ -55,6 +56,13 @@ class RouteController extends Controller
             if (!$canSeeLocations) {
                 $cave->makeHidden(['location_lat', 'location_lng', 'location_alt', 'access_info']);
             }
+        }
+
+        // The embedded cave system carries survey references, which
+        // CaveSystemResource only shows to approved-club members and admins.
+        $system = $route->relationLoaded('caveSystem') ? $route->getRelation('caveSystem') : null;
+        if ($system instanceof CaveSystem && !$system->locationsVisibleTo($user)) {
+            $system->makeHidden(['references']);
         }
 
         return $route;

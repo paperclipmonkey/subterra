@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\Cave;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -60,13 +61,31 @@ class CalloutResource extends JsonResource
             'team_details' => $this->when($this->showContact, fn () => $this->team_details),
             'location_data' => $this->when($this->showContact, fn () => $this->location_data),
 
-            'cave' => $this->whenLoaded('cave'),
-            'exit_cave' => $this->whenLoaded('exitCave'),
+            // The raw Cave carries coordinates and access info: everyone else
+            // only gets enough to name and link to it.
+            'cave' => $this->whenLoaded('cave', fn () => $this->caveSummary($this->cave)),
+            'exit_cave' => $this->whenLoaded('exitCave', fn () => $this->caveSummary($this->exitCave)),
             'user' => UserSummaryResource::make($this->whenLoaded('user')),
             'incident' => $this->whenLoaded('incident'),
             'participants' => $this->whenLoaded('participants', fn () => $this->participants
                 ->map(fn ($participant) => (new CalloutParticipantResource($participant))->withContact($this->showContact))
                 ->values()),
+        ];
+    }
+
+    /**
+     * @return \App\Models\Cave|array<string, mixed>|null
+     */
+    private function caveSummary(?Cave $cave): Cave|array|null
+    {
+        if ($cave === null || $this->showContact) {
+            return $cave;
+        }
+
+        return [
+            'id' => $cave->id,
+            'name' => $cave->name,
+            'slug' => $cave->slug,
         ];
     }
 }
