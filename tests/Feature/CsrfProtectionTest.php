@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -25,12 +26,17 @@ class CsrfProtectionTest extends TestCase
     {
         parent::setUp();
 
-        $this->app->bind(ValidateCsrfToken::class, fn ($app) => new class ($app, $app['encrypter']) extends ValidateCsrfToken {
+        $enforcing = fn ($app) => new class ($app, $app['encrypter']) extends ValidateCsrfToken {
             protected function runningUnitTests()
             {
                 return false;
             }
-        });
+        };
+
+        // The web group resolves ValidateCsrfToken; Sanctum's stateful API stack
+        // resolves its parent, VerifyCsrfToken. Enforce through both.
+        $this->app->bind(ValidateCsrfToken::class, $enforcing);
+        $this->app->bind(VerifyCsrfToken::class, $enforcing);
     }
 
     #[Test]
