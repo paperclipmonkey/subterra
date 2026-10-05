@@ -33,6 +33,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/login');
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // A 413 means a request (in practice a photo upload) hit PHP's
+        // post_max_size, which is a server limit rather than user error, so
+        // send it to the error log (and Slack) instead of dropping it like
+        // other HTTP exceptions.
+        $exceptions->stopIgnoring(\Illuminate\Http\Exceptions\PostTooLargeException::class);
+        $exceptions->report(function (\Illuminate\Http\Exceptions\PostTooLargeException $e) {
+            $request = request();
+
+            \Illuminate\Support\Facades\Log::error('Request rejected: body larger than post_max_size', [
+                'method' => $request->method(),
+                'path' => $request->path(),
+                'content_length' => (int) $request->server('CONTENT_LENGTH'),
+                'post_max_size' => ini_get('post_max_size'),
+                'user_id' => rescue(fn () => $request->user()?->id, report: false),
+            ]);
+        })->stop();
+
         $exceptions->shouldRenderJsonWhen(function ($request, $e) {
             if ($request->is('api/*')) {
                 return true;
