@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import TripNew from '@/components/TripNew.vue'
 import { nextTick } from 'vue'
 import { api } from '@/plugins/api'
+import { useNotificationStore } from '@/stores/notifications'
 
 // Mock api plugin
 vi.mock('@/plugins/api', () => ({
@@ -303,5 +304,87 @@ describe('TripNew - Duration Loading', () => {
 
     // Verify participants array contains just the IDs
     expect(wrapper.vm.trip.participants).toEqual([1, 12])
+  })
+})
+describe('TripNew - save errors', () => {
+  let pinia
+
+  const mountForEdit = async () => {
+    const wrapper = mount(TripNew, {
+      global: {
+        plugins: [pinia],
+        stubs: defaultStubs
+      }
+    })
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+    return wrapper
+  }
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+
+    mockRoute.params = { id: '123' }
+    mockRoute.query = {}
+
+    api.get.mockImplementation((url) => {
+      if (url === '/api/users/me') {
+        return Promise.resolve({ data: { data: { id: 1, name: 'Test User' } } })
+      }
+      if (url === '/api/trips/123') {
+        return Promise.resolve({
+          data: {
+            data: {
+              id: 123,
+              name: 'Test Trip',
+              description: 'Test Description',
+              start_time: '2024-01-15T10:00:00Z',
+              end_time: '2024-01-15T11:30:00Z',
+              entrance: { id: 1, name: 'Test Entrance' },
+              exit: { id: 1, name: 'Test Exit' },
+              system: { id: 1, name: 'Test System' },
+              participants: [{ id: 1, name: 'Test User' }],
+              media: [],
+              visibility: 'public'
+            }
+          }
+        })
+      }
+      return Promise.resolve({ data: { data: [] } })
+    })
+  })
+
+  it('tells the user the photos are too large on a 413, not to check their connection', async () => {
+    api.post.mockRejectedValue({ response: { status: 413, statusText: 'Payload Too Large', data: { message: 'The POST data is too large.' } } })
+    const wrapper = await mountForEdit()
+
+    await wrapper.vm.submitForm()
+
+    const notifications = useNotificationStore()
+    expect(notifications.type).toBe('error')
+    expect(notifications.message).toContain('too large')
+    expect(notifications.message).not.toContain('connection')
+  })
+
+  it('shows the server message for other client errors', async () => {
+    api.post.mockRejectedValue({ response: { status: 429, statusText: 'Too Many Requests', data: { message: 'Too Many Attempts.' } } })
+    const wrapper = await mountForEdit()
+
+    await wrapper.vm.submitForm()
+
+    const notifications = useNotificationStore()
+    expect(notifications.message).toBe('Failed to save trip: Too Many Attempts.')
+  })
+
+  it('still blames the connection when there was no response at all', async () => {
+    api.post.mockRejectedValue({ request: {} })
+    const wrapper = await mountForEdit()
+
+    await wrapper.vm.submitForm()
+
+    const notifications = useNotificationStore()
+    expect(notifications.message).toBe('Failed to save trip. Please check your connection and try again.')
   })
 })

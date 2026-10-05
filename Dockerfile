@@ -55,6 +55,7 @@ COPY .fly/nginx/ /etc/nginx/
 COPY .fly/fpm/ /etc/php/${PHP_VERSION}/fpm/
 RUN rm /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
 COPY .fly/fpm/opcache.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-opcache-settings.ini
+COPY .fly/php/conf.d/99-subterra.ini /etc/php/${PHP_VERSION}/cli/conf.d/99-subterra.ini
 COPY .fly/supervisor/ /etc/supervisor/
 COPY .fly/entrypoint.sh /entrypoint
 COPY .fly/start-nginx.sh /usr/local/bin/start-nginx

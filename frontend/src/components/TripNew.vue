@@ -901,12 +901,17 @@ const handleApiError = async (error) => {
     validationErrors.value = errorData.errors
     console.error('Validation failed:', errorData.errors)
     notificationStore.showError('Please fix the validation errors and try again.')
+  } else if (response.status === 413) {
+    console.error('Request too large:', response.statusText)
+    notificationStore.showError('The photos are too large to upload in one go. Remove some and save, then add the rest by editing the trip.')
   } else if (response.status >= 500) {
     console.error('Server error:', response.statusText)
     notificationStore.showError('A server error occurred. Please try again later.')
   } else {
-    console.error('Failed operation:', response.statusText)
-    notificationStore.showError('Failed to save trip. Please check your connection and try again.')
+    // The server did answer, so this isn't a connection problem; say what it said.
+    console.error('Failed operation:', response.status, response.statusText)
+    const message = response.data?.message
+    notificationStore.showError(message ? `Failed to save trip: ${message}` : `Failed to save trip (error ${response.status}). Please try again.`)
   }
 }
 
