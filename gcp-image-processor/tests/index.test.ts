@@ -39,6 +39,7 @@ jest.mock('heic-convert', () =>
 // Mock sharp correctly since it's a default export of a function
 jest.mock('sharp', () => {
     const mSharp = jest.fn(() => ({
+        rotate: jest.fn().mockReturnThis(),
         resize: jest.fn().mockReturnThis(),
         webp: jest.fn().mockReturnThis(),
         toBuffer: jest.fn().mockResolvedValue({

