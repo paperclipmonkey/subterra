@@ -36,14 +36,14 @@ describe('MarkdownRenderer', () => {
         expect(wrapper.text()).toContain('Hello')
     })
 
-    it('passes geojson and mermaid plugins to vue-markdown', () => {
+    it('passes geojson, mermaid and empty-line plugins to vue-markdown', () => {
         const wrapper = mount(MarkdownRenderer, {
             props: { source: 'test content' }
         })
         const vueMarkdown = wrapper.findComponent({ name: 'VueMarkdown' })
         expect(vueMarkdown.exists()).toBe(true)
         const plugins = vueMarkdown.props('plugins')
-        expect(plugins).toHaveLength(2)
+        expect(plugins).toHaveLength(3)
         plugins.forEach(p => expect(typeof p).toBe('function'))
     })
 
@@ -71,6 +71,7 @@ describe('MarkdownRenderer', () => {
 
         // Create a mock markdown-it instance and run all plugins in order
         const md = {
+            core: { ruler: { push: () => {} } },
             renderer: { rules: {} },
             utils: { escapeHtml: (s) => s }
         }
@@ -129,5 +130,32 @@ describe('MarkdownRenderer', () => {
         plugins.forEach(plugin => md.use(plugin))
 
         expect(md.render('![pic](https://example.com/a.png)')).toContain('<img')
+    })
+
+    // Milkdown saves an empty paragraph as a `<br />` line; with raw HTML
+    // disabled it used to render as the literal text "<br />" in trip reports.
+    it.each(['<br />', '<br>', '<br/>', '<BR >'])('renders a Milkdown empty line (%s) as a line break, not text', async (line) => {
+        const MarkdownIt = (await import('markdown-it')).default
+        const wrapper = mount(MarkdownRenderer, { props: { source: 'x' } })
+        const plugins = wrapper.findComponent({ name: 'VueMarkdown' }).props('plugins')
+
+        const md = new MarkdownIt()
+        plugins.forEach(plugin => md.use(plugin))
+        const html = md.render(`Before\n\n${line}\n\nAfter`)
+
+        expect(html).toBe('<p>Before</p>\n<p><br>\n</p>\n<p>After</p>\n')
+        expect(html).not.toContain('&lt;')
+    })
+
+    it('still escapes other raw HTML', async () => {
+        const MarkdownIt = (await import('markdown-it')).default
+        const wrapper = mount(MarkdownRenderer, { props: { source: 'x' } })
+        const plugins = wrapper.findComponent({ name: 'VueMarkdown' }).props('plugins')
+
+        const md = new MarkdownIt()
+        plugins.forEach(plugin => md.use(plugin))
+
+        expect(md.render('<br /><img src=x onerror=alert(1)>')).not.toContain('<img')
+        expect(md.render('text <br /> inline')).toContain('&lt;br /&gt;')
     })
 })
