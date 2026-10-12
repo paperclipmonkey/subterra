@@ -89,4 +89,52 @@ class ClubMemberApprovalApiTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function other_club_admins_can_see_who_approved_a_request_and_when()
+    {
+        $club = Club::factory()->create();
+        $approver = User::factory()->create(['name' => 'Alice Approver']);
+        $otherAdmin = User::factory()->create();
+        $club->users()->attach($approver->id, ['is_admin' => true, 'status' => 'approved']);
+        $club->users()->attach($otherAdmin->id, ['is_admin' => true, 'status' => 'approved']);
+
+        $user = User::factory()->create(['name' => 'New Member']);
+        $club->users()->attach($user->id, ['status' => 'pending']);
+
+        $this->travelTo('2026-10-10 14:30:00');
+        $this->actingAs($approver, 'sanctum')
+            ->putJson("/api/admin/clubs/{$club->slug}/members/{$user->id}/approve")
+            ->assertOk();
+
+        $this->travelTo('2026-10-12 09:00:00');
+        $this->actingAs($otherAdmin, 'sanctum')
+            ->getJson("/api/admin/clubs/{$club->slug}/recently-approved-members")
+            ->assertOk()
+            ->assertExactJson([[
+                'id' => $user->id,
+                'name' => 'New Member',
+                'photo' => null,
+                'approved_by' => 'Alice Approver',
+                'approved_at' => '2026-10-10T14:30:00+00:00',
+            ]]);
+
+        $this->travelTo('2026-11-15 09:00:00');
+        $this->actingAs($otherAdmin, 'sanctum')
+            ->getJson("/api/admin/clubs/{$club->slug}/recently-approved-members")
+            ->assertOk()
+            ->assertExactJson([]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function ordinary_members_cannot_see_recently_approved_members()
+    {
+        $club = Club::factory()->create();
+        $member = User::factory()->create();
+        $club->users()->attach($member->id, ['status' => 'approved']);
+
+        $this->actingAs($member, 'sanctum')
+            ->getJson("/api/admin/clubs/{$club->slug}/recently-approved-members")
+            ->assertForbidden();
+    }
 }
