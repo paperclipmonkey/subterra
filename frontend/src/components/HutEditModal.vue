@@ -23,10 +23,11 @@
               </v-col>
               <v-col cols="12" md="6">
                 <v-autocomplete v-model="editedHut.club_id" :items="clubs" item-title="name"
-                                item-value="id" label="Club" clearable :loading="loadingClubs" />
+                                item-value="id" label="Club" clearable :loading="loadingClubs"
+                                :disabled="!userStore.isPlatformAdmin" />
               </v-col>
               <v-col cols="12">
-                <v-autocomplete v-model="editedHut.reciprocal_clubs" :items="clubs" item-title="name"
+                <v-autocomplete v-model="editedHut.reciprocal_clubs" :items="reciprocalOptions" item-title="name"
                                 item-value="id" label="Reciprocal Clubs" multiple chips closable-chips :loading="loadingClubs"
                                 autocomplete="off" />
               </v-col>
@@ -43,6 +44,15 @@
               </v-col>
               <v-col cols="12">
                 <v-textarea v-model="editedHut.booking_info" label="Booking Info" rows="3" />
+              </v-col>
+              <v-col cols="12">
+                <div class="text-subtitle-2 mb-2">Location</div>
+                <div style="height: 300px;">
+                  <AppMap v-model="mapStyle" geolocate :center="mapCenter" :zoom="mapZoom" height="300px">
+                    <mgl-marker v-model:coordinates="pin" :draggable="true" color="#cc0000" />
+                  </AppMap>
+                </div>
+                <div class="text-caption text-medium-emphasis mt-1">Drag the pin to the hut.</div>
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field v-model.number="editedHut.location_lat" label="Latitude"
@@ -89,13 +99,16 @@ export default { inheritAttrs: false }
 <script setup>
 import { mdiCamera, mdiPencil, mdiPlus } from '@mdi/js'
 
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useHutStore } from '@/stores/huts'
 import { api } from '@/plugins/api'
 import { convertFileToBase64 } from '@/utilities'
 import MilkdownEditor from '@/components/MilkdownEditor.vue'
+import AppMap from '@/components/AppMap.vue'
+import { MglMarker } from '@indoorequal/vue-maplibre-gl'
+import { LngLat } from 'maplibre-gl'
 
 const props = defineProps({
   hut: {
@@ -170,15 +183,18 @@ const canEdit = computed(() => {
   return false
 })
 
-onMounted(async () => {
-  fetchClubs()
+watch(dialog, (open) => {
+  if (open && !clubs.value.length) fetchClubs()
 })
 
+// The public list omits inactive clubs, so add back any this hut already uses.
 const fetchClubs = async () => {
   loadingClubs.value = true
   try {
-    const response = await api.get('/api/admin/clubs')
-    clubs.value = response.data.data || response.data
+    const response = await api.get('/api/clubs')
+    const list = response.data.data || response.data
+    const current = [props.hut?.club, ...(props.hut?.reciprocal_clubs || [])].filter(Boolean)
+    clubs.value = [...list, ...current.filter(c => !list.some(l => l.id === c.id))]
   } catch (e) {
     console.error('Error fetching clubs', e)
   } finally {
@@ -186,22 +202,55 @@ const fetchClubs = async () => {
   }
 }
 
+const toEditable = (hut) => {
+  const edited = JSON.parse(JSON.stringify(hut))
+  edited.amenities ??= []
+  edited.reciprocal_clubs = (hut.reciprocal_clubs || []).map(c => c.id).filter(id => id !== hut.club_id)
+  return edited
+}
+
+const reciprocalOptions = computed(() => clubs.value.filter(c => c.id !== editedHut.value.club_id))
+
+watch(() => editedHut.value.club_id, (clubId) => {
+  editedHut.value.reciprocal_clubs = editedHut.value.reciprocal_clubs.filter(id => id !== clubId)
+})
+
 watch(() => props.hut, (newVal) => {
   if (newVal) {
-    editedHut.value = JSON.parse(JSON.stringify(newVal))
-    // Ensure amenities is an array (sometimes it might be null from API)
-    if (!editedHut.value.amenities) editedHut.value.amenities = []
-    if (newVal.reciprocal_clubs) {
-      editedHut.value.reciprocal_clubs = newVal.reciprocal_clubs.map(c => c.id)
-    } else {
-      editedHut.value.reciprocal_clubs = []
-    }
+    editedHut.value = toEditable(newVal)
     initialHutState.value = JSON.stringify(editedHut.value)
   } else {
     editedHut.value = { ...defaultHut }
     initialHutState.value = JSON.stringify(editedHut.value)
   }
 }, { immediate: true })
+
+const mapStyle = ref('https://api.maptiler.com/maps/topo/style.json?key=0gGMv4po9Mjrpd64A528')
+const hasLocation = () => editedHut.value.location_lat != null && editedHut.value.location_lng != null
+const pinLngLat = () => hasLocation() ? [editedHut.value.location_lng, editedHut.value.location_lat] : [-1.5, 54]
+const mapCenter = ref(pinLngLat())
+const mapZoom = ref(hasLocation() ? 14 : 5)
+const pin = ref(LngLat.convert(pinLngLat()))
+const roundToMetre = (val) => Math.round(val * 100000) / 100000
+
+// As in CaveForm: only write the pin back once it has actually moved, so
+// opening and saving the form never truncates stored coordinates.
+watch(pin, (lngLat) => {
+  if (roundToMetre(lngLat.lng) !== roundToMetre(editedHut.value.location_lng ?? 0)) {
+    editedHut.value.location_lng = roundToMetre(lngLat.lng)
+  }
+  if (roundToMetre(lngLat.lat) !== roundToMetre(editedHut.value.location_lat ?? 0)) {
+    editedHut.value.location_lat = roundToMetre(lngLat.lat)
+  }
+})
+
+watch(() => [editedHut.value.location_lng, editedHut.value.location_lat], () => {
+  if (!hasLocation()) return
+  if (roundToMetre(pin.value.lng) !== roundToMetre(editedHut.value.location_lng) || roundToMetre(pin.value.lat) !== roundToMetre(editedHut.value.location_lat)) {
+    pin.value = LngLat.convert(pinLngLat())
+    mapCenter.value = pinLngLat()
+  }
+})
 
 const updateDescription = (event) => {
   if (event && event.markdown) {
@@ -217,13 +266,7 @@ const close = () => {
   }
   dialog.value = false
   if (props.hut) {
-    editedHut.value = JSON.parse(JSON.stringify(props.hut))
-    if (!editedHut.value.amenities) editedHut.value.amenities = []
-    if (props.hut.reciprocal_clubs) {
-      editedHut.value.reciprocal_clubs = props.hut.reciprocal_clubs.map(c => c.id)
-    } else {
-      editedHut.value.reciprocal_clubs = []
-    }
+    editedHut.value = toEditable(props.hut)
   } else {
     editedHut.value = { ...defaultHut }
   }

@@ -8,6 +8,7 @@ use App\Models\Club;
 use App\Models\Hut;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class HutFeatureTest extends TestCase
@@ -299,5 +300,25 @@ class HutFeatureTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonMissing(['image' => 'huts/test.webp']);
         $response->assertJsonFragment(['image_url' => \Illuminate\Support\Facades\Storage::disk('media')->url('huts/test.webp')]);
+    }
+
+    #[Test]
+    public function a_hut_cannot_list_its_own_club_as_reciprocal(): void
+    {
+        $user = User::factory()->admin()->create();
+        $club = Club::factory()->create();
+        $otherClub = Club::factory()->create();
+        $hut = Hut::factory()->create(['club_id' => $club->id]);
+
+        $this->actingAs($user)->putJson("/api/huts/{$hut->id}", [
+            'name' => $hut->name,
+            'reciprocal_clubs' => [$otherClub->id, $club->id],
+        ])->assertUnprocessable()->assertJsonValidationErrors('reciprocal_clubs.1');
+
+        $this->actingAs($user)->postJson('/api/huts', [
+            'name' => 'New Hut',
+            'club_id' => $club->id,
+            'reciprocal_clubs' => [$club->id],
+        ])->assertUnprocessable()->assertJsonValidationErrors('reciprocal_clubs.0');
     }
 }
