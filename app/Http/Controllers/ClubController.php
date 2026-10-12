@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -330,6 +331,31 @@ class ClubController extends Controller
         }));
     }
 
+    /**
+     * Requests confirmed in the last 30 days, so admins arriving from the
+     * request email can see that another admin already dealt with it.
+     */
+    public function getRecentlyApprovedMembers(Club $club): JsonResponse
+    {
+        $rows = DB::table('club_user')
+            ->join('users', 'users.id', '=', 'club_user.user_id')
+            ->leftJoin('users as approvers', 'approvers.id', '=', 'club_user.approved_by')
+            ->where('club_user.club_id', $club->id)
+            ->where('club_user.status', 'approved')
+            ->where('users.is_active', true)
+            ->where('club_user.approved_at', '>=', now()->subDays(30))
+            ->orderByDesc('club_user.approved_at')
+            ->get(['users.id', 'users.name', 'users.photo', 'approvers.name as approved_by', 'club_user.approved_at']);
+
+        return response()->json($rows->map(fn ($row) => [
+            'id' => $row->id,
+            'name' => $row->name,
+            'photo' => $row->photo ? (str_starts_with($row->photo, 'http') ? $row->photo : Storage::disk('media')->url($row->photo)) : null,
+            'approved_by' => $row->approved_by,
+            'approved_at' => Carbon::parse($row->approved_at)->toIso8601String(),
+        ]));
+    }
+
     public function approveMember(Request $request, Club $club, User $user): JsonResource
     {
         // Only a genuinely pending request can be approved — otherwise the
@@ -343,7 +369,11 @@ class ClubController extends Controller
             abort(422, 'User has no pending membership request for this club.');
         }
 
-        $club->users()->updateExistingPivot($user->id, ['status' => 'approved']);
+        $club->users()->updateExistingPivot($user->id, [
+            'status' => 'approved',
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+        ]);
         event(new ClubAccessResponded($club, $user, 'approved'));
 
         // Club admins are ordinary members: they must not receive the applicant's

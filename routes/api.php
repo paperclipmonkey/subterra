@@ -189,6 +189,7 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::put('/admin/clubs/{club}', [ClubController::class, 'update'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.update');
     Route::put('/admin/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.sync');
     Route::get('/admin/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.pending.index');
+    Route::get('/admin/clubs/{club}/recently-approved-members', [ClubController::class, 'getRecentlyApprovedMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.approved.recent');
     Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
     Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
 
