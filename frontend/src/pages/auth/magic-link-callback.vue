@@ -57,6 +57,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
+import { takeLoginRedirect } from '@/utilities/loginRedirect'
 
 const router = useRouter()
 const route = useRoute()
@@ -99,8 +100,7 @@ onMounted(async () => {
         navigate({ name: '/profile/[id].edit', params: { id: store.user.id } })
       }, 2000)
     } else {
-      const redirect = sessionStorage.getItem('redirectAfterLogin')
-      sessionStorage.removeItem('redirectAfterLogin')
+      const redirect = takeLoginRedirect()
       setTimeout(() => {
         navigate(redirect || '/trips')
       }, 2000)
