@@ -28,6 +28,13 @@ class BookingSubmittedMail extends Mailable implements ShouldQueue
     public function build()
     {
         $status = $this->booking->status === 'approved' ? 'auto-approved' : 'pending review';
+        $reviewUrl = url('/admin/bookings?booking='.$this->booking->short_id);
+
+        $sameDay = $this->booking->permit->bookings()
+            ->whereDate('date', $this->booking->date)
+            ->whereKeyNot($this->booking->id)
+            ->whereIn('status', ['approved', 'pending'])
+            ->get(['status']);
 
         return $this->subject("New Booking Request: {$this->booking->permit->name}")
             ->markdown('emails.booking_submitted')
@@ -35,6 +42,12 @@ class BookingSubmittedMail extends Mailable implements ShouldQueue
                 'booking' => $this->booking,
                 'officer' => $this->officer,
                 'status' => $status,
+                'reviewUrl' => $reviewUrl,
+                'approveUrl' => $reviewUrl.'&action=approve',
+                'rejectUrl' => $reviewUrl.'&action=reject',
+                'messageUrl' => $reviewUrl.'&action=message',
+                'otherApproved' => $sameDay->where('status', 'approved')->count(),
+                'otherPending' => $sameDay->where('status', 'pending')->count(),
             ]);
     }
 }

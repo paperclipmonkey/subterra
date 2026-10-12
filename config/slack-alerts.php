@@ -15,6 +15,7 @@ return [
         'callouts-closed' => env('SLACK_CALLOUTS_CLOSED_WEBHOOK'),
         'callouts-overdue' => env('SLACK_CALLOUTS_OVERDUE_WEBHOOK'),
         'approvals' => env('SLACK_CLUB_APPROVAL_WEBHOOK'),
+        'permits' => env('SLACK_PERMITS_WEBHOOK'),
     ],
 
     /*
