@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Hut;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class HutController extends Controller
 {
@@ -32,7 +33,7 @@ class HutController extends Controller
             'description' => 'nullable|string',
             'club_id' => 'nullable|exists:clubs,id',
             'reciprocal_clubs' => 'nullable|array',
-            'reciprocal_clubs.*' => 'exists:clubs,id',
+            'reciprocal_clubs.*' => ['exists:clubs,id', Rule::notIn(array_filter([$request->input('club_id')]))],
             'location_lat' => 'nullable|numeric',
             'location_lng' => 'nullable|numeric',
             'amenities' => 'nullable|array',
@@ -77,13 +78,17 @@ class HutController extends Controller
             'description' => 'nullable|string',
             'club_id' => 'nullable|exists:clubs,id',
             'reciprocal_clubs' => 'nullable|array',
-            'reciprocal_clubs.*' => 'exists:clubs,id',
+            'reciprocal_clubs.*' => ['exists:clubs,id', Rule::notIn(array_filter([$request->input('club_id', $hut->club_id)]))],
             'location_lat' => 'nullable|numeric',
             'location_lng' => 'nullable|numeric',
             'amenities' => 'nullable|array',
             'external_url' => 'nullable|url',
             'booking_info' => 'nullable|string',
         ]);
+
+        if (array_key_exists('club_id', $validated) && $validated['club_id'] != $hut->club_id && !$user->hasRole('platform_admin')) {
+            abort(403, 'Only platform admins can change which club owns a hut.');
+        }
 
         $hut->update($validated);
 
