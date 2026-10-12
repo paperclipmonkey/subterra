@@ -68,6 +68,14 @@ class CaveSystemResource extends JsonResource
                 $this->resource->relationLoaded('annotation'),
                 fn () => $canSeeLocations ? $this->annotation : null,
             ),
+            // Georeferenced survey overlays pinpoint entrances too, so they sit
+            // behind the same gate as the coordinates and annotations.
+            'map_overlays' => $this->when(
+                $this->resource->relationLoaded('mapOverlays'),
+                fn () => $canSeeLocations
+                    ? CaveSystemMapOverlayResource::collection($this->mapOverlays)
+                    : [],
+            ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
