@@ -11,6 +11,7 @@ use App\Mail\BookingSubmittedMail;
 use App\Models\Booking;
 use App\Models\Cave;
 use App\Models\Permit;
+use App\Services\BookingSlackNotifier;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -168,7 +169,7 @@ class BookingController extends Controller
     /**
      * Submit a booking application.
      */
-    public function store(Request $request, Permit $permit): JsonResponse
+    public function store(Request $request, Permit $permit, BookingSlackNotifier $slack): JsonResponse
     {
         if (!$permit->is_active) {
             return response()->json(['error' => 'This permit is not currently accepting bookings.'], 422);
@@ -192,7 +193,7 @@ class BookingController extends Controller
 
         $date = $request->input('date');
 
-        return DB::transaction(function () use ($request, $permit, $date) {
+        return DB::transaction(function () use ($request, $permit, $date, $slack) {
             // Lock the permit row to prevent concurrent bookings from overbooking
             $permit = Permit::lockForUpdate()->find($permit->id);
 
@@ -226,7 +227,9 @@ class BookingController extends Controller
                 'conditions_accepted_at' => now(),
             ]);
 
-            $booking->load(['permit', 'applicant']);
+            $booking->load(['permit.caves', 'applicant.clubs']);
+
+            $slack->submitted($booking);
 
             // Notify officers
             $officers = $permit->officers;

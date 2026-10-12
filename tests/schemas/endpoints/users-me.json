@@ -270,6 +270,23 @@
           "type": "integer",
           "minimum": 0
         },
+        "managed_permits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" },
+              "name": { "type": "string" },
+              "slug": { "type": "string" }
+            },
+            "required": ["id", "name", "slug"],
+            "additionalProperties": false
+          }
+        },
+        "pending_bookings_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "features": {
           "type": "object",
           "properties": {
@@ -302,6 +319,8 @@
         "on_call",
         "on_call_until",
         "open_callouts_count",
+        "managed_permits",
+        "pending_bookings_count",
         "features",
         "created_at",
         "updated_at"

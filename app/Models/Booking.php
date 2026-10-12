@@ -39,11 +39,17 @@ class Booking extends Model implements \OwenIt\Auditing\Contracts\Auditable
         ];
     }
 
+    /**
+     * @return BelongsTo<Permit, $this>
+     */
     public function permit(): BelongsTo
     {
         return $this->belongsTo(Permit::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function applicant(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
