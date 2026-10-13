@@ -6,6 +6,7 @@ namespace App\Services\Assistant\Tools;
 
 use App\Models\User;
 use App\Services\Assistant\AssistantTool;
+use App\Support\AddableUsers;
 use Illuminate\Support\Facades\DB;
 
 class SearchUsersTool implements AssistantTool
@@ -44,54 +45,15 @@ class SearchUsersTool implements AssistantTool
         // Limit query length to prevent abuse
         $query = mb_substr($query, 0, 100);
 
-        // Find clubs the current user belongs to (approved membership only)
-        $userClubIds = DB::table('club_user')
-            ->where('user_id', $user->id)
-            ->where('status', 'approved')
-            ->pluck('club_id')
-            ->toArray();
-
-        // Search for users whose name matches AND who are either:
-        //   a) publicly searchable (visibility_addable is public), OR
-        //   b) share an approved club membership with the current user
-        $results = DB::table('users')
-            ->where('users.is_active', true)
-            ->where('users.id', '!=', $user->id)
+        $results = AddableUsers::query($user)
             ->where(DB::raw('LOWER(users.name)'), 'like', '%'.mb_strtolower($query).'%')
-            ->where(function ($q) use ($userClubIds) {
-                // A string column ('public'/'club'), not a boolean: comparing it to
-                // `true` silently matched nobody.
-                $q->where('users.visibility_addable', 'public');
-                if (!empty($userClubIds)) {
-                    $q->orWhereExists(function ($sub) use ($userClubIds) {
-                        $sub->select(DB::raw(1))
-                            ->from('club_user')
-                            ->whereColumn('club_user.user_id', 'users.id')
-                            ->where('club_user.status', 'approved')
-                            ->whereIn('club_user.club_id', $userClubIds);
-                    });
-                }
-            })
             ->select(['users.id', 'users.name'])
             ->orderBy('users.name')
             ->limit(15)
             ->get();
 
         // Enrich with club names for disambiguation
-        $userIds = $results->pluck('id')->toArray();
-        $clubsByUser = [];
-        if (!empty($userIds)) {
-            $clubsByUser = DB::table('club_user')
-                ->join('clubs', 'clubs.id', '=', 'club_user.club_id')
-                ->whereIn('club_user.user_id', $userIds)
-                ->where('club_user.status', 'approved')
-                ->where('clubs.is_active', true)
-                ->select(['club_user.user_id', 'clubs.name as club_name'])
-                ->get()
-                ->groupBy('user_id')
-                ->map(fn ($rows) => $rows->pluck('club_name')->values()->all())
-                ->all();
-        }
+        $clubsByUser = AddableUsers::clubNames($results->pluck('id')->all());
 
         $users = $results->map(fn ($u) => [
             'id' => $u->id,
@@ -103,7 +65,7 @@ class SearchUsersTool implements AssistantTool
             'count' => count($users),
             'users' => $users,
             'note' => count($users) === 0
-                ? 'No matching users found. If the person is not on Subterra, note their name in additional_participants when creating the trip.'
+                ? 'No matching users found. If the person is not on Subterra, record them as a guest: their name is noted in the trip description.'
                 : null,
         ];
     }

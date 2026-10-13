@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\Cave;
+use App\Models\CaveSystem;
+use App\Models\TripImport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -126,30 +129,35 @@ class AssistantLogbookImportTest extends TestCase
     // =========================================================================
 
     #[Test]
-    public function valid_csv_returns_content_and_filename(): void
+    public function valid_csv_is_staged_as_an_import(): void
+    {
+        $user = User::factory()->admin()->pipAgreed()->create();
+        $this->gapingGill();
+
+        $response = $this->actingAs($user)
+            ->post(self::ENDPOINT, ['file' => $this->validCsvFile()]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['import_id', 'filename', 'rows_added', 'rows_rejected', 'parse' => ['columns', 'date_format'], 'counts'])
+            ->assertJson(['filename' => 'logbook.csv', 'rows_added' => 2]);
+
+        $import = TripImport::findOrFail($response->json('import_id'));
+        $this->assertSame($user->id, $import->user_id);
+        $this->assertSame(2, $import->rows()->count());
+        // Gaping Gill matched exactly; Lancaster Hole isn't in the database
+        $this->assertSame(1, $response->json('counts.ready'));
+        $this->assertSame(1, $response->json('counts.needs_review'));
+    }
+
+    #[Test]
+    public function the_csv_content_is_not_echoed_back_into_the_chat(): void
     {
         $user = User::factory()->admin()->pipAgreed()->create();
 
         $response = $this->actingAs($user)
             ->post(self::ENDPOINT, ['file' => $this->validCsvFile()]);
 
-        $response->assertStatus(200)
-            ->assertJsonStructure(['csv_content', 'filename', 'size_bytes']);
-    }
-
-    #[Test]
-    public function returned_csv_content_matches_uploaded_file(): void
-    {
-        $user = User::factory()->admin()->pipAgreed()->create();
-
-        $content = "date,cave\n2024-06-01,Gaping Gill\n2024-07-15,OFD";
-        $file = $this->validCsvFile($content);
-
-        $response = $this->actingAs($user)
-            ->post(self::ENDPOINT, ['file' => $file]);
-
-        $response->assertStatus(200);
-        $this->assertSame($content, $response->json('csv_content'));
+        $response->assertStatus(200)->assertJsonMissingPath('csv_content');
     }
 
     #[Test]
@@ -178,7 +186,7 @@ class AssistantLogbookImportTest extends TestCase
             ->post(self::ENDPOINT, ['file' => $file]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['csv_content', 'filename', 'size_bytes']);
+            ->assertJson(['rows_added' => 1, 'parse' => ['delimiter' => 'tab']]);
     }
 
     #[Test]
@@ -207,17 +215,89 @@ class AssistantLogbookImportTest extends TestCase
     }
 
     #[Test]
-    public function size_bytes_reflects_actual_content_length(): void
+    public function file_without_a_recognisable_header_is_rejected_with_a_helpful_message(): void
     {
-        $user = User::factory()->admin()->pipAgreed()->create();
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
 
-        $content = "date,cave\n2024-06-01,Gaping Gill";
-        $file = $this->validCsvFile($content);
+        $file = UploadedFile::fake()->createWithContent('log.csv', "foo,bar\n1,2\n3,4");
 
         $response = $this->actingAs($user)
             ->post(self::ENDPOINT, ['file' => $file]);
 
-        $response->assertStatus(200);
-        $this->assertSame(strlen($content), $response->json('size_bytes'));
+        $response->assertStatus(422)->assertJson(['code' => 'invalid_logbook']);
+        $this->assertStringContainsString('header', $response->json('error'));
+        $this->assertSame(0, TripImport::count());
+    }
+
+    #[Test]
+    public function header_only_file_is_rejected(): void
+    {
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
+
+        $file = UploadedFile::fake()->createWithContent('log.csv', "date,cave\n,\n");
+
+        $this->actingAs($user)
+            ->post(self::ENDPOINT, ['file' => $file])
+            ->assertStatus(422)
+            ->assertJson(['code' => 'invalid_logbook']);
+    }
+
+    #[Test]
+    public function a_second_upload_adds_to_the_open_import(): void
+    {
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
+
+        $first = $this->actingAs($user)->post(self::ENDPOINT, ['file' => $this->validCsvFile()]);
+        $second = $this->actingAs($user)->post(self::ENDPOINT, [
+            'file' => UploadedFile::fake()->createWithContent('more.csv', "date,cave\n2024-08-01,OFD"),
+        ]);
+
+        $this->assertSame($first->json('import_id'), $second->json('import_id'));
+        $this->assertSame(3, $second->json('counts.total'));
+        $this->assertSame([1, 2, 3], TripImport::first()->rows()->orderBy('row_number')->pluck('row_number')->all());
+    }
+
+    #[Test]
+    public function import_status_endpoint_returns_the_open_import(): void
+    {
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
+
+        $this->actingAs($user)->getJson('/api/assistant/import')
+            ->assertOk()
+            ->assertJson(['data' => null]);
+
+        $this->actingAs($user)->post(self::ENDPOINT, ['file' => $this->validCsvFile()]);
+
+        $this->actingAs($user)->getJson('/api/assistant/import')
+            ->assertOk()
+            ->assertJsonPath('data.filename', 'logbook.csv')
+            ->assertJsonPath('data.counts.total', 2);
+    }
+
+    #[Test]
+    public function import_status_only_shows_the_users_own_import(): void
+    {
+        $owner = User::factory()->pipAccess()->pipAgreed()->create();
+        $other = User::factory()->pipAccess()->pipAgreed()->create();
+
+        $this->actingAs($owner)->post(self::ENDPOINT, ['file' => $this->validCsvFile()]);
+
+        $this->actingAs($other)->getJson('/api/assistant/import')
+            ->assertOk()
+            ->assertJson(['data' => null]);
+    }
+
+    #[Test]
+    public function import_status_requires_pip_access(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->getJson('/api/assistant/import')->assertForbidden();
+    }
+
+    private function gapingGill(): void
+    {
+        $system = CaveSystem::factory()->create(['name' => 'Gaping Gill', 'slug' => 'gaping-gill']);
+        Cave::factory()->create(['name' => 'Main Shaft', 'slug' => 'main-shaft', 'cave_system_id' => $system->id]);
     }
 }

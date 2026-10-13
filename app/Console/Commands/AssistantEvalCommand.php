@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Services\AssistantService;
+use App\Services\TripImport\TripImportService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\File;
  *   php artisan assistant:eval
  *   php artisan assistant:eval --filter=accommodation
  *   php artisan assistant:eval --user=42 --dataset=tests/AssistantEval/dataset.json
+ *   php artisan assistant:eval --mode=default --dataset=tests/AssistantEval/import-dataset.json
  */
 class AssistantEvalCommand extends Command
 {
@@ -26,7 +28,8 @@ class AssistantEvalCommand extends Command
         {--filter=           : Only run prompts whose category or id matches this string.}
         {--dataset=          : Path to a JSON dataset (default: tests/AssistantEval/dataset.json).}
         {--output=           : Path to write the markdown report (default: tests/AssistantEval/results/<timestamp>.md).}
-        {--limit=            : Stop after this many prompts. Useful for smoke-testing.}';
+        {--limit=            : Stop after this many prompts. Useful for smoke-testing.}
+        {--mode=plan         : Assistant mode: plan (trip planner), default (trip importer) or data. A dataset entry\'s own "mode" wins.}';
 
     protected $description = 'Run a prompt dataset through the assistant and write a markdown report.';
 
@@ -126,7 +129,8 @@ class AssistantEvalCommand extends Command
         $userId = $this->option('user');
 
         if ($userId) {
-            $user = User::find((int) $userId);
+            // User IDs are short random strings, not integers.
+            $user = User::find((string) $userId);
             if (!$user) {
                 $this->error("User #{$userId} not found.");
 
@@ -154,9 +158,24 @@ class AssistantEvalCommand extends Command
      */
     private function runOne(AssistantService $service, User $user, array $entry): array
     {
-        $messages = [
-            ['role' => 'user', 'content' => (string) $entry['prompt']],
-        ];
+        // Multi-turn entries supply the conversation so far in "history".
+        $messages = array_merge(
+            (array) ($entry['history'] ?? []),
+            [['role' => 'user', 'content' => (string) $entry['prompt']]],
+        );
+        $mode = (string) ($entry['mode'] ?? $this->option('mode') ?: AssistantService::MODE_PLAN);
+
+        // Importer entries can stage a logbook first, so each prompt starts
+        // from a known import state rather than whatever the last one left.
+        if ($mode === AssistantService::MODE_DEFAULT) {
+            $imports = app(TripImportService::class);
+            if ($open = $imports->openImportFor($user)) {
+                $imports->discard($open);
+            }
+            if (!empty($entry['logbook'])) {
+                $imports->stageFile($user, (string) $entry['logbook'], (string) ($entry['logbook_name'] ?? 'logbook.csv'));
+            }
+        }
 
         $events = [];
         $start = microtime(true);
@@ -170,7 +189,8 @@ class AssistantEvalCommand extends Command
                 $user,
                 function (string $type, mixed $data) use (&$events): void {
                     $events[] = ['type' => $type, 'data' => $data];
-                }
+                },
+                $mode
             );
 
             return [
@@ -489,6 +509,13 @@ MD;
                 'anthropic/claude-3-5-haiku' => [0.80, 4.00],
                 'anthropic/claude-3-5-sonnet' => [3.00, 15.00],
                 'anthropic/claude-haiku-4-5' => [1.00, 5.00],
+                // OpenRouter, fetched 2026-10-03
+                'anthropic/claude-haiku-4.5' => [1.00, 5.00],
+                'google/gemini-3.5-flash-lite' => [0.30, 2.50],
+                'google/gemini-3.1-flash-lite' => [0.25, 1.50],
+                'z-ai/glm-5.3-flash' => [0.15, 0.50],
+                'deepseek/deepseek-v4-flash' => [0.09, 0.18],
+                'minimax/minimax-m3' => [0.30, 1.20],
                 'anthropic/claude-sonnet-4-6' => [3.00, 15.00],
                 'anthropic/claude-opus-4-7' => [15.00, 75.00],
                 'openai/gpt-4o-mini' => [0.15, 0.60],

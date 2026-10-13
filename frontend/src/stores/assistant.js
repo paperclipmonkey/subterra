@@ -14,7 +14,14 @@ const TOOL_LABELS = {
   get_collection_details: 'Loading collection',
   search_users: 'Searching for cavers',
   create_trip_report: 'Saving trip report',
-  parse_logbook_csv: 'Parsing logbook',
+  get_import_status: 'Checking your import',
+  add_trips: 'Adding trips',
+  find_cave: 'Looking up cave',
+  resolve_cave: 'Updating caves',
+  resolve_person: 'Updating companions',
+  update_trip_rows: 'Updating trips',
+  manage_import: 'Updating import',
+  import_ready_trips: 'Importing trips',
   scan_data_issues: 'Scanning for data issues',
   find_link_candidates: 'Finding link candidates',
   list_tags: 'Loading tag taxonomy',
@@ -67,6 +74,8 @@ function persistableShape(m) {
     proposals: m.proposals ?? [],
     collections_changed: m.collections_changed ?? [],
     medal_progress: m.medal_progress ?? null,
+    import_status: m.import_status ?? null,
+    trips_imported: m.trips_imported ?? null,
     elapsedMs: m.elapsedMs ?? null,
   }
 }
@@ -119,9 +128,15 @@ function saveHistory(history) {
 // Important for consistency too: the persisted conversation belongs to the
 // mode it was held in — restoring messages without the mode would replay a
 // data-mode conversation against the caving assistant (and its history cap).
+// 'default' is the trip importer (everyone); 'plan' the trip planner and
+// 'data' the data steward (admins only — the page drops users back to
+// 'default' if they lose the role).
+const MODES = ['default', 'plan', 'data']
+
 function loadMode() {
   try {
-    return localStorage.getItem(MODE_KEY) === 'data' ? 'data' : 'default'
+    const mode = localStorage.getItem(MODE_KEY)
+    return MODES.includes(mode) ? mode : 'default'
   } catch {
     return 'default'
   }
@@ -144,8 +159,10 @@ export const useAssistantStore = defineStore('assistant', {
     /** @type {{ id: number, title: string, createdAt: string, messages: object[] }[]} */
     savedConversations: loadHistory(),
     historyDrawerOpen: false,
-    /** @type {'default' | 'data'} 'data' is the admin data-steward mode */
+    /** @type {'default' | 'plan' | 'data'} 'default' imports trips; 'plan' and 'data' are admin-only */
     mode: loadMode(),
+    /** @type {{ import_id: number, filename: string|null, counts: object } | null} The user's import in progress */
+    openImport: null,
   }),
 
   getters: {
@@ -181,6 +198,8 @@ export const useAssistantStore = defineStore('assistant', {
         proposals: [],
         collections_changed: [],
         medal_progress: null,
+        import_status: null,
+        trips_imported: null,
       })
 
       const history = this.messages
@@ -201,9 +220,12 @@ export const useAssistantStore = defineStore('assistant', {
 
         if (!response.ok) {
           const body = await response.json().catch(() => ({}))
-          const message = response.status === 429
-            ? 'Daily request limit reached. Please try again tomorrow.'
-            : body.message || `Error ${response.status}: unable to reach assistant.`
+          // Our own limits (conversation length, daily allowance) explain
+          // themselves in body.error; the route throttler's 429 doesn't.
+          const message = body.error
+            || (response.status === 429 ? 'Daily request limit reached. Please try again tomorrow.' : null)
+            || body.message
+            || `Error ${response.status}: unable to reach assistant.`
           this._failPending(message)
           return
         }
@@ -328,11 +350,32 @@ export const useAssistantStore = defineStore('assistant', {
         throw new Error(body.error || body.message || `Upload failed (${response.status})`)
       }
 
-      const { csv_content, filename } = await response.json()
+      // The server has already parsed and matched the file; Pip works from
+      // the staged rows, so only a short note goes into the conversation.
+      const { filename, rows_added, rows_rejected, counts } = await response.json()
+      this.openImport = { filename, counts }
 
-      // Inject as a user message so Pip processes the logbook
-      const message = `I'd like to import my caving logbook from "${filename}". Here is the CSV content:\n\n\`\`\`csv\n${csv_content}\n\`\`\``
-      return this.sendMessage(message)
+      const trips = rows_added === 1 ? '1 trip' : `${rows_added} trips`
+      const rejected = rows_rejected ? ` (${rows_rejected} more didn't fit — the import is full)` : ''
+      return this.sendMessage(`I've uploaded my logbook "${filename}" with ${trips}${rejected}. Please help me import them.`)
+    },
+
+    /**
+     * Load the user's import in progress, so the welcome screen can offer to
+     * carry on with it.
+     */
+    async fetchOpenImport() {
+      try {
+        const response = await fetch('/api/assistant/import', {
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        })
+        if (!response.ok) return
+        const { data } = await response.json()
+        this.openImport = data
+      } catch {
+        // Not essential — the welcome screen just won't offer to resume
+      }
     },
 
     /**
@@ -479,6 +522,22 @@ export const useAssistantStore = defineStore('assistant', {
           break
         }
 
+        case 'import_status': {
+          // Import progress after this turn (counts by row status)
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) pending.import_status = event.data || null
+          const { filename, ...counts } = event.data || {}
+          this.openImport = { ...(this.openImport || {}), filename, counts }
+          break
+        }
+
+        case 'trips_imported': {
+          // A bulk import: one summary card rather than a card per trip
+          const pending = this.messages.findLast(m => m.pending)
+          if (pending) pending.trips_imported = event.data || null
+          break
+        }
+
         case 'collections_changed': {
           // Collections created/edited/deleted by the data-steward tools this turn
           const pending = this.messages.findLast(m => m.pending)
@@ -598,7 +657,7 @@ export const useAssistantStore = defineStore('assistant', {
      * Switch between the normal assistant and the admin data-steward mode.
      * Archives the current conversation — the two modes have different system
      * prompts and tool sets, so history must not leak across.
-     * @param {'default' | 'data'} mode
+     * @param {'default' | 'plan' | 'data'} mode
      */
     setMode(mode) {
       if (mode === this.mode || this.isLoading) return

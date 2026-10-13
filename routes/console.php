@@ -42,3 +42,6 @@ Schedule::call(function () {
 
 // Keep failed_jobs from growing forever; a month is plenty for investigating a failure.
 Schedule::command('queue:prune-failed', ['--hours' => 720])->daily()->onOneServer();
+
+// Pip trip imports hold people's names and trip notes; drop them a month after last use.
+Schedule::command('model:prune', ['--model' => [App\Models\TripImport::class]])->daily()->onOneServer();

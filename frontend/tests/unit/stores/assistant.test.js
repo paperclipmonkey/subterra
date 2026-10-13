@@ -115,6 +115,12 @@ describe('Assistant Store', () => {
       expect(store.mode).toBe('data')
     })
 
+    it('restores the planner mode', async () => {
+      localStorage.setItem(MODE_KEY, 'plan')
+      store = await freshStore()
+      expect(store.mode).toBe('plan')
+    })
+
     it('treats an unrecognised stored mode as default', async () => {
       localStorage.setItem(MODE_KEY, 'nonsense')
       store = await freshStore()
@@ -150,6 +156,19 @@ describe('Assistant Store', () => {
     })
 
     const pending = () => store.messages.find(m => m.pending) ?? store.messages.at(-1)
+
+    it('records import progress on the message and the store', () => {
+      store._handleEvent({ type: 'import_status', data: { filename: 'log.csv', total: 3, ready: 2 } })
+
+      expect(pending().import_status).toEqual({ filename: 'log.csv', total: 3, ready: 2 })
+      expect(store.openImport).toEqual({ filename: 'log.csv', counts: { total: 3, ready: 2 } })
+    })
+
+    it('records a bulk import summary', () => {
+      store._handleEvent({ type: 'trips_imported', data: { imported: 40, trips: [], trips_url: '/trips' } })
+
+      expect(pending().trips_imported.imported).toBe(40)
+    })
 
     it('appends streamed content chunks in order', () => {
       store._handleEvent({ type: 'content_chunk', data: { text: 'Swildons ' } })
@@ -389,6 +408,18 @@ describe('Assistant Store', () => {
       expect(store.isLoading).toBe(false)
     })
 
+    it('shows our own limit explanations from the server', async () => {
+      global.fetch.mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: async () => ({ error: 'This conversation has reached its length limit.', code: 'conversation_limit' }),
+      })
+
+      await store.sendMessage('Hi')
+
+      expect(store.error).toBe('This conversation has reached its length limit.')
+    })
+
     it('surfaces the server message on other HTTP errors', async () => {
       global.fetch.mockResolvedValue({ ok: false, status: 400, json: async () => ({ message: 'Bad prompt' }) })
 
@@ -544,9 +575,12 @@ describe('Assistant Store', () => {
   describe('uploadLogbookCsv', () => {
     const file = new File(['date,cave\n2024-01-01,Swildons'], 'log.csv', { type: 'text/csv' })
 
-    it('uploads the file then injects the parsed CSV as a user message', async () => {
+    it('uploads the file then sends a short note — never the CSV itself', async () => {
       global.fetch
-        .mockResolvedValueOnce({ ok: true, json: async () => ({ csv_content: 'date,cave', filename: 'log.csv' }) })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ filename: 'log.csv', rows_added: 12, rows_rejected: 0, counts: { total: 12, ready: 9 } }),
+        })
         .mockResolvedValueOnce(sseResponse([sse('content', { text: 'Imported' })]))
 
       await store.uploadLogbookCsv(file)
@@ -555,9 +589,20 @@ describe('Assistant Store', () => {
       expect(uploadUrl).toBe('/api/assistant/logbook-import')
       expect(uploadOptions.body).toBeInstanceOf(FormData)
 
-      expect(store.messages[0].content).toContain('log.csv')
-      expect(store.messages[0].content).toContain('date,cave')
+      expect(store.messages[0].content).toBe('I\'ve uploaded my logbook "log.csv" with 12 trips. Please help me import them.')
+      expect(store.messages[0].content).not.toContain('date,cave')
       expect(store.messages[1].content).toBe('Imported')
+      expect(store.openImport).toEqual({ filename: 'log.csv', counts: { total: 12, ready: 9 } })
+    })
+
+    it('mentions rows that did not fit', async () => {
+      global.fetch
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ filename: 'log.csv', rows_added: 1, rows_rejected: 3, counts: {} }) })
+        .mockResolvedValueOnce(sseResponse([sse('content', { text: 'OK' })]))
+
+      await store.uploadLogbookCsv(file)
+
+      expect(store.messages[0].content).toContain('1 trip (3 more didn\'t fit')
     })
 
     it('throws the server error message when the upload fails', async () => {
@@ -575,6 +620,25 @@ describe('Assistant Store', () => {
       })
 
       await expect(store.uploadLogbookCsv(file)).rejects.toThrow('Upload failed (500)')
+    })
+  })
+
+  describe('fetchOpenImport', () => {
+    it('stores the open import', async () => {
+      global.fetch.mockResolvedValue({ ok: true, json: async () => ({ data: { import_id: 1, filename: 'a.csv', counts: { ready: 2 } } }) })
+
+      await store.fetchOpenImport()
+
+      expect(global.fetch.mock.calls[0][0]).toBe('/api/assistant/import')
+      expect(store.openImport.filename).toBe('a.csv')
+    })
+
+    it('ignores failures', async () => {
+      global.fetch.mockRejectedValue(new Error('offline'))
+
+      await store.fetchOpenImport()
+
+      expect(store.openImport).toBeNull()
     })
   })
 

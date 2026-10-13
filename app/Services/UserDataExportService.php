@@ -15,6 +15,7 @@ use App\Models\Report;
 use App\Models\SmsMessage;
 use App\Models\SuggestedEdit;
 use App\Models\Trip;
+use App\Models\TripImport;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -89,6 +90,15 @@ class UserDataExportService
                 'comment' => $f->comment,
                 'transcript' => $f->transcript,
                 'created_at' => $f->created_at,
+            ])->values(),
+            'pip_trip_imports' => TripImport::where('user_id', $user->id)->with('rows')->get()->map(fn ($i) => [
+                'status' => $i->status,
+                'filename' => $i->filename,
+                'created_at' => $i->created_at,
+                'rows' => $i->rows->sortBy('row_number')->map(fn ($r) => $r->only([
+                    'row_number', 'status', 'cave_name_raw', 'entrance_name_raw', 'exit_name_raw', 'date', 'date_raw',
+                    'start_time', 'duration_minutes', 'name', 'description', 'participants',
+                ]))->values()->all(),
             ])->values(),
             'sms_sent_to_you' => SmsMessage::where('user_id', $user->id)->get()->map(fn ($m) => [
                 'context' => $m->context,

@@ -167,7 +167,7 @@ class AssistantTest extends TestCase
         $admin = User::factory()->admin()->pipAgreed()->create();
 
         $messages = [];
-        for ($i = 0; $i < 21; ++$i) {
+        for ($i = 0; $i < 61; ++$i) {
             $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
         }
 
