@@ -33,6 +33,17 @@
       <v-icon class="ml-2" :icon="mdiChevronRight" />
     </v-system-bar>
  
+    <v-system-bar v-else-if="showPendingBookingsBanner" color="indigo-darken-2" class="text-white cursor-pointer px-4"
+                  height="40" style="cursor: pointer; z-index: 9999;" window @click="openPendingBookings">
+      <v-icon color="white" class="mr-2" :icon="mdiClipboardCheck" />
+      <span class="font-weight-bold">
+        {{ appStore.user.pending_bookings_count }} BOOKING {{ appStore.user.pending_bookings_count === 1 ? 'REQUEST' : 'REQUESTS' }} TO REVIEW
+      </span>
+      <v-spacer />
+      <span class="d-none d-sm-flex font-weight-bold">RESPOND</span>
+      <v-icon class="ml-2" :icon="mdiChevronRight" />
+    </v-system-bar>
+
     <v-system-bar v-else-if="appStore.user.id && !appStore.canSuggest && appStore.user.onboarding_completed_at" color="warning"
                   class="text-white px-4" height="40" style="z-index: 9999;" window>
       <v-icon color="white" class="mr-2">{{ hasPendingApprovals ? mdiAccountClock : mdiAccountPlus }}</v-icon>
@@ -70,7 +81,7 @@
 </template>
 
 <script setup>
-import { mdiAccountClock, mdiAccountPlus, mdiAlert, mdiAlertCircle, mdiAlertOutline, mdiCheckCircle, mdiChevronRight, mdiClose, mdiInformation, mdiShieldCheck, mdiWifiOff } from '@mdi/js'
+import { mdiAccountClock, mdiAccountPlus, mdiAlert, mdiAlertCircle, mdiAlertOutline, mdiCheckCircle, mdiChevronRight, mdiClipboardCheck, mdiClose, mdiInformation, mdiShieldCheck, mdiWifiOff } from '@mdi/js'
 import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
@@ -124,6 +135,14 @@ watch(() => appStore.user?.on_call, (onCall) => {
 onUnmounted(() => {
   stopCalloutPolling()
 })
+
+const showPendingBookingsBanner = computed(() => {
+  return appStore.user?.pending_bookings_count > 0 && !route.path.startsWith('/admin/bookings')
+})
+
+const openPendingBookings = () => {
+  router.push({ path: '/admin/bookings', query: { status: 'pending' } })
+}
 
 const showActiveCalloutBanner = computed(() => {
   return appStore.user && appStore.user.active_callout && route.path !== '/callout/active'
