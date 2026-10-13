@@ -98,6 +98,15 @@ describe('router auth guard', () => {
 
       expect(next).toHaveBeenCalledWith({ path: '/' })
     })
+
+    it('remembers an admin target rather than bouncing the visitor to trips', async () => {
+      getUser.mockResolvedValue(ANON)
+
+      const next = await navigate('/admin/bookings', { fullPath: '/admin/bookings?booking=abc' })
+
+      expect(JSON.parse(localStorage.getItem('redirectAfterLogin')).path).toBe('/admin/bookings?booking=abc')
+      expect(next).toHaveBeenCalledWith({ path: '/' })
+    })
   })
 
   describe('session refresh', () => {
@@ -308,7 +317,16 @@ describe('router auth guard', () => {
 
       const next = await navigate('/caves', { fullPath: '/caves?tag=Sump' })
 
-      expect(sessionStorage.getItem('redirectAfterLogin')).toBe('/caves?tag=Sump')
+      expect(JSON.parse(localStorage.getItem('redirectAfterLogin')).path).toBe('/caves?tag=Sump')
+      expect(next).toHaveBeenCalledWith({ path: '/' })
+    })
+
+    it('remembers an admin target rather than bouncing the visitor to trips', async () => {
+      getUser.mockResolvedValue(ANON)
+
+      const next = await navigate('/admin/bookings', { fullPath: '/admin/bookings?booking=abc' })
+
+      expect(JSON.parse(localStorage.getItem('redirectAfterLogin')).path).toBe('/admin/bookings?booking=abc')
       expect(next).toHaveBeenCalledWith({ path: '/' })
     })
 
@@ -323,7 +341,7 @@ describe('router auth guard', () => {
       const next = await navigate(path)
 
       expect(next).toHaveBeenCalledWith()
-      expect(sessionStorage.getItem('redirectAfterLogin')).toBeNull()
+      expect(localStorage.getItem('redirectAfterLogin')).toBeNull()
     })
 
     it('sends an offline visitor anywhere else to the offline page', async () => {

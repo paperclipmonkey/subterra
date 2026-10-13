@@ -1,4 +1,5 @@
 import { useAppStore } from '@/stores/app'
+import { rememberLoginRedirect } from '@/utilities/loginRedirect'
 
 /**
  * Global navigation guard: warms the user session, then applies the
@@ -50,11 +51,12 @@ export async function authGuard(to, from, next) {
 
 
 
-  // Admin route check
+  // Admin route check. Signed-out visitors fall through to the login redirect
+  // so an emailed admin link still lands them on it after signing in.
   // Permit officers needn't hold a staff role to manage their permits' bookings.
   const managesPermits = user.managed_permits?.length > 0
 
-  if (to.path.startsWith('/admin')) {
+  if (to.path.startsWith('/admin') && user.email) {
     if (!user.is_admin && !(managesPermits && to.path.startsWith('/admin/bookings'))) {
       // Redirect non-admins away from admin pages
       return next({ path: '/trips' })
@@ -163,7 +165,7 @@ export async function authGuard(to, from, next) {
     return next({ path: '/offline' })
   }
 
-  sessionStorage.setItem('redirectAfterLogin', to.fullPath)
+  rememberLoginRedirect(to.fullPath)
   return next({ path: '/' })
 }
 
