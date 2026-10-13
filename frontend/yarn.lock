@@ -3100,6 +3100,11 @@
   dependencies:
     upath "^2.0.1"
 
+"@vuetify/v0@^1.2.1":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@vuetify/v0/-/v0-1.2.2.tgz#de3314774613c7b0920f3620d97389de957668aa"
+  integrity sha512-7AvM89l6l/pShSYKa+a5/zsht/xj/l4jFpWFOR6UqSelBrPfKxEQ8heO8iCNEGNK5yljwsdARx0JmDJjJRJdVw==
+
 abbrev@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-2.0.0.tgz#cf59829b8b4f03f89dda2771cb7f3653828c89bf"
@@ -7884,10 +7889,12 @@ vue@^3.5.20, vue@^3.5.32:
     "@vue/server-renderer" "3.5.34"
     "@vue/shared" "3.5.34"
 
-vuetify@^3.11.8:
-  version "3.12.6"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.12.6.tgz#ae972a63744cdbb8a3ebd8bcef29daf29410c91e"
-  integrity sha512-ARfflEJu+pKk+vya059qsUT/xUnYf0K6sIZdJwVh5w+kR6CJCXMQN1MONABb3Jm2kmhN/AXB4W5/MjYiKnVAFg==
+vuetify@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-4.2.1.tgz#7dbbad6ef41937251992f462b32062563abf9dc0"
+  integrity sha512-K3ZIqu7YkorQFB6//dR5KEBpbfOo+y/LkcGtknsnneE3JN1pW3R7o/JB9QDkJuP1ELhENIdBZIkiSmXu0dQ9lQ==
+  dependencies:
+    "@vuetify/v0" "^1.2.1"
 
 w3c-keyname@^2.2.0, w3c-keyname@^2.2.4:
   version "2.2.8"
