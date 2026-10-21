@@ -32,6 +32,14 @@ server {
     # Pip streams long SSE replies, so it stays on its own php-fpm pool rather
     # than holding an Octane worker (see .fly/fpm/pool.d/assistant.conf).
     location ^~ /api/assistant/ {
+        # Stopgap for PHP2Shell (CVE-2026-109618/109619): unlike Octane, where
+        # RoadRunner parses uploads in Go, php-fpm runs PHP's own multipart parser
+        # here, before auth. Refuse multipart until the patched PHP is deployed.
+        # This disables Pip's logbook import meanwhile. Remove once on > 8.4.26.
+        if ($content_type ~* "multipart") {
+            return 415;
+        }
+
         include fastcgi.conf;
         fastcgi_param SCRIPT_FILENAME $document_root/index.php;
         fastcgi_param SCRIPT_NAME /index.php;
