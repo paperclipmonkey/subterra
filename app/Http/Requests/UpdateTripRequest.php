@@ -38,7 +38,7 @@ class UpdateTripRequest extends FormRequest
             'cave_system_id' => ['sometimes', 'required', 'exists:cave_systems,id'],
             'entrance_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
             'exit_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
-            'start_time' => ['sometimes', 'required', 'date'],
+            'start_time' => ['sometimes', 'required', 'date', 'before_or_equal:now'],
             'end_time' => array_merge(
                 ['sometimes', 'required', 'date'],
                 $this->filled('start_time')

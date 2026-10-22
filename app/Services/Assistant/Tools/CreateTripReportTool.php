@@ -131,8 +131,16 @@ class CreateTripReportTool implements AssistantTool
                 $startTime = $date->copy()->startOfDay()->utc();
             }
         } else {
-            // Default to noon on the trip date if no time provided
+            // Default to noon on the trip date if no time provided (or now, for
+            // a trip earlier today)
             $startTime = $date->copy()->setTime(12, 0)->utc();
+            if ($date->isToday()) {
+                $startTime = $startTime->min(now());
+            }
+        }
+
+        if ($startTime->isFuture()) {
+            return ['error' => 'Trips cannot start in the future. Ask the user to log the trip once it has happened.'];
         }
 
         if (!empty($arguments['duration_minutes']) && $startTime) {

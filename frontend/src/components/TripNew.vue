@@ -49,12 +49,14 @@
               <v-row>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripStartDate" label="Date" type="date"
+                                :max="today" :rules="rules.startTime"
                                 :error-messages="validationErrors.start_time || validationErrors.end_time"
                                 required
                                 hint="The date the trip started." persistent-hint variant="outlined" @update:model-value="() => { delete validationErrors.start_time; delete validationErrors.end_time }" />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripStartTime" label="Entry time" type="time"
+                                :rules="rules.startTime"
                                 :error-messages="validationErrors.start_time || validationErrors.end_time"
                                 required
                                 hint="The time you entered the cave." persistent-hint variant="outlined" @update:model-value="() => { delete validationErrors.start_time; delete validationErrors.end_time }" />
@@ -262,11 +264,11 @@
                 v-if="route.params.id"
                 color="error"
                 variant="text"
-                :prepend-icon="mdiDelete"
+                :icon="mdiDelete"
+                aria-label="Delete trip"
+                title="Delete trip"
                 @click="showDeleteDialog = true"
-              >
-                Delete Trip
-              </v-btn>
+              />
               <v-spacer />
               <v-btn text="Cancel" variant="text" @click="router.back()" />
               <v-btn color="primary" size="large" elevation="2" :loading="isSaving" :disabled="isSaving"
@@ -422,6 +424,7 @@ let trip = reactive({
 
 const tripStartDate = ref(moment().format('YYYY-MM-DD'))
 const tripStartTime = ref(moment().format('HH:mm'))
+const today = moment().format('YYYY-MM-DD')
 const tripDurationHours = ref(4)
 const tripDurationMinutes = ref(0)
 
@@ -534,6 +537,12 @@ const rules = {
     value => {
       if (value) return true
       return 'Location is required.'
+    }
+  ],
+  startTime: [
+    () => {
+      if (!start_time.value.isAfter(moment())) return true
+      return 'The trip can\'t start in the future.'
     }
   ],
   durationHours: [

@@ -28,7 +28,7 @@
               <v-text-field v-model="newShift.end_at" type="datetime-local" label="End" outlined dense
                             :rules="[v => !!v || 'End time is required']" required />
 
-              <v-checkbox v-model="newShift.notify_do" label="Email me when a trip is started during this shift"
+              <v-checkbox v-model="newShift.notify_do" label="Email me when a callout is opened or a trip is started during this shift"
                           density="compact" hide-details class="mb-3" />
 
               <v-btn block color="primary" type="submit" :loading="processing"
@@ -101,7 +101,7 @@
 
             <v-text-field v-model="editingShift.end_at" type="datetime-local" label="End" outlined dense required />
 
-            <v-checkbox v-model="editingShift.notify_do" label="Email me when a trip is started during this shift"
+            <v-checkbox v-model="editingShift.notify_do" label="Email me when a callout is opened or a trip is started during this shift"
                         density="compact" hide-details />
           </v-form>
         </v-card-text>
