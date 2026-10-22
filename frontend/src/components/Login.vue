@@ -200,6 +200,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'
 import { api } from '@/plugins/api'
+import { takeLoginRedirect } from '@/utilities/loginRedirect'
 
 const router = useRouter()
 const store = useAppStore()
@@ -337,8 +338,7 @@ onMounted(async () => {
     const userResponse = await api.get('/api/users/me', { suppressErrorNotification: true })
     const userData = userResponse.data
     if (userData && userData.data && userData.data.email) {
-      const redirect = sessionStorage.getItem('redirectAfterLogin')
-      sessionStorage.removeItem('redirectAfterLogin')
+      const redirect = takeLoginRedirect()
       router.push(redirect || '/trips')
     }
   } catch (e) {
