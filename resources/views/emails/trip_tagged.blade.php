@@ -15,12 +15,12 @@ You have been tagged in a trip on [Subterra](https://subterra.world) by **{{ \Ap
 
 <x-mail::panel>
 **Trip:** {{ \App\Support\MailMarkdown::escape($trip->name) }}<br>
-**Description:** {{ \App\Support\MailMarkdown::escape(\Illuminate\Support\Str::limit($trip->description, 200)) }}<br>
+**Description:** {{ \App\Support\MailMarkdown::escape(\Illuminate\Support\Str::limit($description, 200)) }}<br>
 **Start Time:** {{ $trip->start_time }}<br>
 **End Time:** {{ $trip->end_time }}
 </x-mail::panel>
 
-<x-mail::button :url="url('/trips/' . $trip->id)" color="primary">
+<x-mail::button :url="$tripUrl" color="primary">
 View Trip details on Subterra
 </x-mail::button>
 
