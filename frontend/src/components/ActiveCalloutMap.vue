@@ -25,7 +25,7 @@ import {
   MglPopup,
   useMap
 } from '@indoorequal/vue-maplibre-gl'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 
 const props = defineProps({
   callouts: {

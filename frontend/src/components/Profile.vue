@@ -396,19 +396,19 @@ const loadProfile = async (id) => {
       const body = recentTripsResult.value.data
       recentTrips.value = body.data || body
     } else {
-      console.warn(`Failed to load recent trips for user ${id}:`, recentTripsResult.reason)
+      console.warn('Failed to load recent trips for user %s:', id, recentTripsResult.reason)
       recentTrips.value = []
     }
 
     if (heatmapResult.status === 'fulfilled') {
       heatmapData.value = heatmapResult.value.data || []
     } else {
-      console.warn(`Failed to load heatmap for user ${id}:`, heatmapResult.reason)
+      console.warn('Failed to load heatmap for user %s:', id, heatmapResult.reason)
       heatmapData.value = []
     }
 
   } catch (err) {
-    console.error(`Error fetching profile for user ${id}:`, err)
+    console.error('Error fetching profile for user %s:', id, err)
     if (err.response && err.response.status === 404) {
       error.value = "User not found. It may have been deleted or you may have the wrong link."
     } else {

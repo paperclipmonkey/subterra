@@ -31,11 +31,9 @@ vi.mock('@indoorequal/vue-maplibre-gl', () => ({
 }))
 
 vi.mock('maplibre-gl', () => ({
-    default: {
-        LngLatBounds: vi.fn(() => ({
-            extend: vi.fn()
-        }))
-    }
+    LngLatBounds: vi.fn(() => ({
+        extend: vi.fn()
+    }))
 }))
 
 const globalStubs = {

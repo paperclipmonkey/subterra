@@ -68,7 +68,7 @@ import {
   MglGeolocateControl,
 } from '@indoorequal/vue-maplibre-gl'
 
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 
 // Listing/overview map — default to terrain (topo) like the caves list. Users
 // can switch to satellite via the layer control.
