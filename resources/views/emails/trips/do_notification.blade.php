@@ -15,7 +15,7 @@ A new trip has been started while you are on call as Duty Officer.
 @endif
 </x-mail::panel>
 
-<x-mail::button :url="url('/trips/' . $trip->id)" color="primary">
+<x-mail::button :url="url('/trips/' . $trip->short_id)" color="primary">
 View Trip on Subterra
 </x-mail::button>
 

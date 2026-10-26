@@ -448,8 +448,7 @@ class AssistantServiceTest extends TestCase
             $user,
             function (string $type, mixed $data) use (&$events) {
                 $events[] = ['type' => $type, 'data' => $data];
-            },
-            AssistantService::MODE_PLAN
+            }
         );
 
         // The card event carries the full payload including medal images
@@ -513,9 +512,7 @@ class AssistantServiceTest extends TestCase
 
         $service->chat(
             [['role' => 'user', 'content' => 'Is Bull Pot safe?']],
-            $user,
-            null,
-            AssistantService::MODE_PLAN
+            $user
         );
 
         // Check all recorded requests for the injected safety alert
@@ -641,7 +638,7 @@ class AssistantServiceTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function planner_mode_sends_planning_tool_definitions_to_openrouter(): void
+    public function sends_tool_definitions_to_openrouter(): void
     {
         $user = User::factory()->create();
 
@@ -654,9 +651,7 @@ class AssistantServiceTest extends TestCase
 
         $this->service->chat(
             [['role' => 'user', 'content' => 'Hi']],
-            $user,
-            null,
-            AssistantService::MODE_PLAN
+            $user
         );
 
         Http::assertSent(function ($request) {

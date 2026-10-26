@@ -40,6 +40,9 @@ RUN apt-get update \
     && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ noble main" > /etc/apt/sources.list.d/php.list \
     && apt-get update \
     && apt-get -y --no-install-recommends install $(cat /tmp/php-packages.txt) libmagickwand-dev php-pear build-essential \
+    && echo "Security floor: require PHP >= 8.4.27 (CVE-2026-109618/109619, PHP2Shell RCE); editing this line also busts the apt layer cache so a fresh 8.4.27+ is pulled from Sury" \
+    && echo "Installed PHP version:" && php -v \
+    && php -r 'exit((int) ! version_compare(PHP_VERSION, "8.4.27", ">="));' \
     && printf "\n" | pecl install imagick \
     && echo "extension=imagick.so" > /etc/php/${PHP_VERSION}/mods-available/imagick.ini \
     && phpenmod -v ${PHP_VERSION} imagick \
@@ -55,6 +58,7 @@ COPY .fly/nginx/ /etc/nginx/
 COPY .fly/fpm/ /etc/php/${PHP_VERSION}/fpm/
 RUN rm /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
 COPY .fly/fpm/opcache.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-opcache-settings.ini
+COPY .fly/php/conf.d/99-subterra.ini /etc/php/${PHP_VERSION}/cli/conf.d/99-subterra.ini
 COPY .fly/supervisor/ /etc/supervisor/
 COPY .fly/entrypoint.sh /entrypoint
 COPY .fly/start-nginx.sh /usr/local/bin/start-nginx

@@ -20,6 +20,12 @@ class BookingResource extends JsonResource
             'id' => $this->short_id,
             'permit' => new PermitResource($this->whenLoaded('permit')),
             'applicant' => new UserResource($this->whenLoaded('applicant')),
+            // So the permit's own officers can contact the applicant off-platform.
+            'applicant_email' => $this->when(
+                $this->relationLoaded('applicant') && $user !== null && $this->relationLoaded('permit')
+                    && ($user->hasRole('platform_admin') || $this->permit->isOfficer($user)),
+                fn () => $this->applicant?->email
+            ),
             'date' => $this->date->toDateString(),
             'participants' => $this->participants,
             'status' => $this->status,

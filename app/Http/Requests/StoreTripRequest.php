@@ -29,7 +29,7 @@ class StoreTripRequest extends FormRequest
             'cave_system_id' => 'required|exists:cave_systems,id',
             'entrance_cave_id' => 'required|exists:caves,id',
             'exit_cave_id' => 'required|exists:caves,id',
-            'start_time' => 'nullable|date',
+            'start_time' => 'nullable|date|before_or_equal:now',
             'end_time' => 'nullable|date|after_or_equal:start_time',
             'visibility' => 'in:public,private,club',
             'media' => 'nullable|array',

@@ -15,6 +15,7 @@ use App\Http\Middleware\ApiIsAuthenticated;
 use App\Http\Middleware\CalloutsEnabled;
 use App\Http\Middleware\ClubAdminOrAdmin;
 use App\Http\Middleware\CurrentUserOrAdmin;
+use App\Http\Middleware\PermitOfficer;
 use App\Http\Middleware\PipAccess;
 use App\Http\Resources\UserDetailEmailResource;
 use Illuminate\Http\Request;
@@ -70,7 +71,7 @@ Route::get('/users/me', function (Request $request) {
     // Trips are only summed into the stats block, so load just the columns the
     // stats need. This runs on every page load; hydrating every full trip row (plus its
     // cave system) for a heavy caver is a lot of memory for three numbers.
-    $user->load(['clubs', 'medals', 'roles', 'currentOnCallShift', 'trips' => fn ($q) => $q->select('trips.id', 'trips.cave_system_id', 'trips.start_time', 'trips.end_time')]);
+    $user->load(['clubs', 'medals', 'roles', 'currentOnCallShift', 'managedPermits', 'trips' => fn ($q) => $q->select('trips.id', 'trips.cave_system_id', 'trips.start_time', 'trips.end_time')]);
 
     return new UserDetailEmailResource($user);
 })->middleware('auth:sanctum')->name('users.me');
@@ -188,6 +189,7 @@ Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function (
     Route::put('/admin/clubs/{club}', [ClubController::class, 'update'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.update');
     Route::put('/admin/clubs/{club}/members', [ClubController::class, 'syncApprovedMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.sync');
     Route::get('/admin/clubs/{club}/pending-members', [ClubController::class, 'getPendingMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.pending.index');
+    Route::get('/admin/clubs/{club}/recently-approved-members', [ClubController::class, 'getRecentlyApprovedMembers'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.approved.recent');
     Route::put('/admin/clubs/{club}/members/{user}/approve', [ClubController::class, 'approveMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.approve');
     Route::put('/admin/clubs/{club}/members/{user}/reject', [ClubController::class, 'rejectMember'])->middleware(ClubAdminOrAdmin::class)->name('admin.clubs.members.reject');
 
@@ -242,10 +244,6 @@ Route::post('/assistant/logbook-import', [App\Http\Controllers\AssistantControll
     ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
     ->middleware('throttle:assistant-logbook-import')
     ->name('assistant.logbook-import');
-
-Route::get('/assistant/import', [App\Http\Controllers\AssistantController::class, 'importStatus'])
-    ->middleware(['auth:sanctum', ApiIsAuthenticated::class, PipAccess::class])
-    ->name('assistant.import.status');
 
 // --- Admin Routes ---
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
@@ -309,8 +307,6 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
 
     // Access Officer — permits, bookings
     Route::middleware(ApiIsAdmin::class.':access_officer,platform_admin')->group(function () {
-        Route::get('/users/officer-list', [UserController::class, 'officerList'])->name('admin.users.officer-list');
-
         Route::get('/permits', [App\Http\Controllers\Admin\PermitController::class, 'index'])->name('admin.permits.index');
         Route::post('/permits', [App\Http\Controllers\Admin\PermitController::class, 'store'])->name('admin.permits.store');
         Route::get('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'show'])->name('admin.permits.show');
@@ -318,6 +314,11 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::post('/permits/{permit}/photo', [App\Http\Controllers\Admin\PermitController::class, 'uploadPhoto'])->name('admin.permits.photo.upload');
         Route::delete('/permits/{permit}/photo', [App\Http\Controllers\Admin\PermitController::class, 'deletePhoto'])->name('admin.permits.photo.delete');
         Route::delete('/permits/{permit}', [App\Http\Controllers\Admin\PermitController::class, 'destroy'])->name('admin.permits.destroy');
+    });
+
+    // Permit officers (with or without the access_officer role) — bookings for their permits
+    Route::middleware(PermitOfficer::class)->group(function () {
+        Route::get('/users/officer-list', [UserController::class, 'officerList'])->name('admin.users.officer-list');
 
         Route::get('/bookings', [App\Http\Controllers\Admin\BookingController::class, 'index'])->name('admin.bookings.index');
         Route::post('/bookings', [App\Http\Controllers\Admin\BookingController::class, 'adminStore'])->name('admin.bookings.store');

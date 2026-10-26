@@ -384,6 +384,24 @@ class AssistantTripCreationTest extends TestCase
     }
 
     #[Test]
+    public function create_trip_report_rejects_a_trip_in_the_future(): void
+    {
+        $this->makeSystemAndCave();
+        $user = User::factory()->create();
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Future Trip',
+            'description' => 'Not yet.',
+            'date' => now()->addDays(2)->format('Y-m-d'),
+        ], $user);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertDatabaseMissing('trips', ['name' => 'Future Trip']);
+    }
+
+    #[Test]
     public function create_trip_report_rejects_public_trip_for_closed_cave(): void
     {
         Event::fake([TripCreated::class, TripParticipantTagged::class]);

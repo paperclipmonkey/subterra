@@ -13,6 +13,7 @@ use App\Models\Permit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 use Tests\TestCase;
 
 class PermitTest extends TestCase
@@ -750,7 +751,8 @@ class PermitTest extends TestCase
         $response->assertStatus(200);
 
         Mail::assertQueued(\App\Mail\BookingMessageMail::class, function ($mail) {
-            return $mail->hasTo($this->regularUser->email);
+            return $mail->hasTo($this->regularUser->email)
+                && $mail->hasReplyTo($this->accessOfficer->email);
         });
     }
 
@@ -936,5 +938,218 @@ class PermitTest extends TestCase
             'photo_path' => null,
             'original_filename' => null,
         ]);
+    }
+
+    // --- Officer notifications ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function officer_email_links_straight_to_the_booking_with_full_details()
+    {
+        $permit = Permit::factory()->create(['name' => 'Ogof Draenen']);
+        $permit->caves()->attach(Cave::factory()->create(['name' => 'Draenen Main'])->id);
+        $notes = "We are a group of four.\nTwo are novices on their second trip.";
+        $booking = Booking::factory()->create(['permit_id' => $permit->id, 'notes' => $notes]);
+        $booking->load(['permit.caves', 'applicant.clubs']);
+
+        $html = (new BookingSubmittedMail($booking, $this->accessOfficer))->render();
+
+        $base = url('/admin/bookings?booking='.$booking->short_id);
+        $this->assertStringContainsString(e($base.'&action=approve'), $html);
+        $this->assertStringContainsString(e($base.'&action=reject'), $html);
+        $this->assertStringContainsString(e($base.'&action=message'), $html);
+        $this->assertStringContainsString('Draenen Main', $html);
+        $this->assertStringContainsString('Two are novices on their second trip.', $html);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function booking_request_is_posted_to_slack()
+    {
+        SlackAlert::fake();
+        config()->set('slack-alerts.webhook_urls.permits', 'https://hooks.slack.com/services/test/permits');
+        Mail::fake();
+
+        $permit = Permit::factory()->create(['name' => 'Ogof Draenen']);
+
+        $this->actingAs($this->regularUser, 'sanctum')
+            ->postJson("/api/permits/{$permit->slug}/bookings", [
+                'date' => now()->addDays(7)->format('Y-m-d'),
+                'participants' => 4,
+                'conditions_accepted' => true,
+            ])->assertStatus(201);
+
+        SlackAlert::expectMessagesSent(fn ($message) => str_contains($message['text'], 'NEW BOOKING REQUEST')
+            && str_contains($message['text'], 'Ogof Draenen')
+            && str_contains($message['text'], $this->regularUser->name));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function booking_approval_is_posted_to_slack()
+    {
+        SlackAlert::fake();
+        config()->set('slack-alerts.webhook_urls.permits', 'https://hooks.slack.com/services/test/permits');
+        Mail::fake();
+
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
+        $booking = Booking::factory()->create(['permit_id' => $permit->id]);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/approve")
+            ->assertStatus(200);
+
+        SlackAlert::expectMessagesSent(fn ($message) => str_contains($message['text'], 'BOOKING APPROVED')
+            && str_contains($message['text'], $this->accessOfficer->name));
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function booking_rejection_is_posted_to_slack()
+    {
+        SlackAlert::fake();
+        config()->set('slack-alerts.webhook_urls.permits', 'https://hooks.slack.com/services/test/permits');
+        Mail::fake();
+
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
+        $booking = Booking::factory()->create(['permit_id' => $permit->id]);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/reject", ['rejection_reason' => 'Date is full.'])
+            ->assertStatus(200);
+
+        SlackAlert::expectMessagesSent(fn ($message) => str_contains($message['text'], 'BOOKING REJECTED')
+            && str_contains($message['text'], 'Date is full.'));
+    }
+
+    // --- Permit officers without the access_officer role ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function permit_officer_without_role_can_review_their_permits_bookings()
+    {
+        Mail::fake();
+        $officer = User::factory()->create();
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($officer->id);
+        $booking = Booking::factory()->create(['permit_id' => $permit->id]);
+        Booking::factory()->create(); // another permit's booking
+
+        $this->actingAs($officer, 'sanctum')
+            ->getJson('/api/admin/bookings')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $booking->short_id);
+
+        $this->actingAs($officer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/approve")
+            ->assertStatus(200);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function permit_officer_without_role_cannot_approve_another_permits_booking()
+    {
+        $officer = User::factory()->create();
+        Permit::factory()->create()->officers()->attach($officer->id);
+        $booking = Booking::factory()->create();
+
+        $this->actingAs($officer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/approve")
+            ->assertStatus(403);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function non_officer_cannot_list_admin_bookings()
+    {
+        $this->actingAs($this->regularUser, 'sanctum')
+            ->getJson('/api/admin/bookings')
+            ->assertStatus(403);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function current_user_includes_managed_permits_and_pending_booking_count()
+    {
+        $officer = User::factory()->create();
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($officer->id);
+        Booking::factory()->count(2)->create(['permit_id' => $permit->id]);
+        Booking::factory()->approved()->create(['permit_id' => $permit->id]);
+        Booking::factory()->create(['permit_id' => $permit->id, 'date' => now()->subDay()->toDateString()]);
+        Booking::factory()->create(); // another permit
+
+        $this->actingAs($officer, 'sanctum')
+            ->getJson('/api/users/me')
+            ->assertOk()
+            ->assertJsonPath('data.managed_permits.0.slug', $permit->slug)
+            ->assertJsonPath('data.pending_bookings_count', 2);
+    }
+
+    // --- Daily limit is soft for officers ---
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function officer_is_warned_then_can_approve_over_the_daily_limit()
+    {
+        Mail::fake();
+        $permit = Permit::factory()->create(['has_max_groups_per_day' => true, 'max_groups_per_day' => 1]);
+        $permit->officers()->attach($this->accessOfficer->id);
+        $date = now()->addDays(5)->toDateString();
+        Booking::factory()->approved()->create(['permit_id' => $permit->id, 'date' => $date]);
+        $booking = Booking::factory()->create(['permit_id' => $permit->id, 'date' => $date]);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/approve")
+            ->assertStatus(422)
+            ->assertJsonPath('over_limit', true);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->putJson("/api/admin/bookings/{$booking->short_id}/approve", ['override_limit' => true])
+            ->assertStatus(200)
+            ->assertJsonPath('status', 'approved');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function officer_is_warned_then_can_add_a_manual_booking_over_the_daily_limit()
+    {
+        Mail::fake();
+        $permit = Permit::factory()->create(['has_max_groups_per_day' => true, 'max_groups_per_day' => 1]);
+        $permit->officers()->attach($this->accessOfficer->id);
+        $date = now()->addDays(5)->toDateString();
+        Booking::factory()->approved()->create(['permit_id' => $permit->id, 'date' => $date]);
+        $payload = ['permit_slug' => $permit->slug, 'date' => $date, 'participants' => 3];
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/bookings', $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('over_limit', true);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->postJson('/api/admin/bookings', [...$payload, 'override_limit' => true])
+            ->assertStatus(201);
+
+        $this->assertSame(2, $permit->approvedBookingsForDate($date)->count());
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function permit_officer_sees_the_applicants_email()
+    {
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
+        Booking::factory()->create(['permit_id' => $permit->id, 'user_id' => $this->regularUser->id]);
+
+        $this->actingAs($this->accessOfficer, 'sanctum')
+            ->getJson('/api/admin/bookings')
+            ->assertJsonPath('data.0.applicant_email', $this->regularUser->email);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function applicant_email_is_hidden_from_non_officers_of_the_permit()
+    {
+        $otherOfficer = User::factory()->accessOfficer()->create();
+        $permit = Permit::factory()->create();
+        $permit->officers()->attach($this->accessOfficer->id);
+        $booking = Booking::factory()->create(['permit_id' => $permit->id, 'user_id' => $this->regularUser->id]);
+        $booking->load(['permit', 'applicant']);
+
+        $request = \Illuminate\Http\Request::create('/');
+        $request->setUserResolver(fn () => $otherOfficer);
+
+        $this->assertArrayNotHasKey('applicant_email', (new \App\Http\Resources\BookingResource($booking))->resolve($request));
     }
 }

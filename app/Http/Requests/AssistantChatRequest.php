@@ -15,20 +15,19 @@ class AssistantChatRequest extends FormRequest
 
     public function rules(): array
     {
-        // Data-steward mode supports long curation sessions, so the history
-        // cap is lifted there (the service trims per config/assistant.php).
-        // Elsewhere this is only a backstop: the controller enforces the
-        // per-mode user-turn limit with a friendlier response.
+        // A backstop only: the controller enforces the per-mode user-turn limit
+        // with a friendlier response, and the service trims what reaches the model.
         $messagesRule = ['required', 'array', 'min:1'];
-        if ($this->input('mode') !== 'data') {
-            $messagesRule[] = 'max:60';
+        $maxTurns = $this->input('mode') === 'data' ? null : config('assistant.limits.max_user_turns');
+        if ($maxTurns !== null) {
+            $messagesRule[] = 'max:'.((int) $maxTurns * 2 + 2);
         }
 
         return [
             'messages' => $messagesRule,
             'messages.*.role' => ['required', 'string', 'in:user,assistant'],
             'messages.*.content' => ['required', 'string', 'max:4000'],
-            'mode' => ['sometimes', 'string', 'in:default,plan,data'],
+            'mode' => ['sometimes', 'string', 'in:default,data'],
         ];
     }
 
@@ -36,7 +35,7 @@ class AssistantChatRequest extends FormRequest
     {
         return [
             'messages.required' => 'At least one message is required.',
-            'messages.max' => 'Conversation history is limited to 60 messages.',
+            'messages.max' => 'This conversation is too long. Start a new conversation to carry on.',
             'messages.*.role.in' => 'Message role must be "user" or "assistant".',
             'messages.*.content.max' => 'Each message may not exceed 4000 characters.',
         ];

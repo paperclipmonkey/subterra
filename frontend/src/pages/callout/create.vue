@@ -729,7 +729,7 @@ export default {
 
         // Refresh app store user
         const appStore = useAppStore()
-        await appStore.getUser()
+        await appStore.getUser(true)
 
         this.notificationStore.showSuccess('Phone number saved to your profile.')
       } catch (e) {
@@ -763,7 +763,7 @@ export default {
 
         // Refresh user state to acknowledge the new open callout
         const appStore = useAppStore()
-        await appStore.getUser()
+        await appStore.getUser(true)
 
         this.notificationStore.showSuccess('Callout activated. Stay safe!')
 
@@ -782,6 +782,7 @@ export default {
       this.processing = true
       try {
         await api.post(`/api/callouts/${this.activeCallout.id}/cancel`)
+        await useAppStore().getUser(true)
         this.showSuccessDialog = true
         this.notificationStore.showSuccess('Callout cancelled.')
       } catch (e) {

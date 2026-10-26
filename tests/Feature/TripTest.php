@@ -781,6 +781,44 @@ class TripTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_a_start_time_in_the_future_on_store()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+
+        $tripData = [
+            'name' => 'Future Trip',
+            'start_time' => now()->addHours(7)->toIso8601String(),
+            'end_time' => now()->addHours(9)->toIso8601String(),
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$user->id],
+        ];
+
+        $this->actingAs($user);
+        $response = $this->postJson('/api/trips', $tripData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['start_time']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_a_start_time_in_the_future_on_update()
+    {
+        $user = User::factory()->create();
+        $trip = Trip::factory()->create();
+        $trip->participants()->attach($user);
+
+        $this->actingAs($user);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, [
+            'start_time' => now()->addDay()->toIso8601String(),
+            'end_time' => now()->addDay()->addHours(2)->toIso8601String(),
+        ]);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['start_time']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_requires_participants_when_storing_a_trip()
     {
         $user = User::factory()->create();

@@ -19,6 +19,7 @@ vi.mock('@/stores/app', () => ({
 
 import MagicLinkToken from '@/pages/magiclink/[token].vue'
 import { api } from '@/plugins/api'
+import { rememberLoginRedirect } from '@/utilities/loginRedirect'
 
 const stubs = {
   'v-container': { template: '<div><slot /></div>' },
@@ -34,7 +35,8 @@ const stubs = {
 describe('magiclink/[token].vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sessionStorage.clear()
+    localStorage.clear()
+    vi.useRealTimers()
     window.location.assign = vi.fn()
   })
 
@@ -52,7 +54,7 @@ describe('magiclink/[token].vue', () => {
   })
 
   it('honours a stored post-login redirect', async () => {
-    sessionStorage.setItem('redirectAfterLogin', '/club/mendip-caving-group?editClub=1&tab=pending')
+    rememberLoginRedirect('/club/mendip-caving-group?editClub=1&tab=pending')
     api.get.mockResolvedValue({ data: { user: { id: 'aB3dEfG' } } })
     getUser.mockResolvedValue({ id: 'aB3dEfG', name: 'Ada Caver' })
 
@@ -60,7 +62,47 @@ describe('magiclink/[token].vue', () => {
     await flushPromises()
 
     expect(replace).toHaveBeenCalledWith('/club/mendip-caving-group?editClub=1&tab=pending')
-    expect(sessionStorage.getItem('redirectAfterLogin')).toBeNull()
+    expect(localStorage.getItem('redirectAfterLogin')).toBeNull()
+  })
+
+  it('honours a redirect saved in another tab before the email link was opened', async () => {
+    // The guard runs in the tab where the visitor hit the protected page; the
+    // magic link opens in a fresh tab whose sessionStorage starts empty.
+    const { authGuard } = await import('@/router/guard')
+    getUser.mockResolvedValue({ name: '', email: '' })
+    await authGuard({ path: '/admin/bookings', params: {}, fullPath: '/admin/bookings?booking=abc&action=approve' }, { path: '/' }, vi.fn())
+    sessionStorage.clear()
+
+    api.get.mockResolvedValue({ data: { user: { id: 'aB3dEfG' } } })
+    getUser.mockResolvedValue({ id: 'aB3dEfG', name: 'Ada Caver' })
+    mount(MagicLinkToken, { global: { stubs } })
+    await flushPromises()
+
+    expect(replace).toHaveBeenCalledWith('/admin/bookings?booking=abc&action=approve')
+  })
+
+  it('ignores a stored redirect older than an hour', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    rememberLoginRedirect('/admin/bookings?booking=abc')
+    vi.setSystemTime(Date.now() + 61 * 60 * 1000)
+    api.get.mockResolvedValue({ data: { user: { id: 'aB3dEfG' } } })
+    getUser.mockResolvedValue({ id: 'aB3dEfG', name: 'Ada Caver' })
+
+    mount(MagicLinkToken, { global: { stubs } })
+    await flushPromises()
+
+    expect(replace).toHaveBeenCalledWith('/trips')
+  })
+
+  it.each(['//evil.example/phish', 'https://evil.example', '/\\evil.example'])('refuses to redirect off-site to %s', async (target) => {
+    localStorage.setItem('redirectAfterLogin', JSON.stringify({ path: target, expires: Date.now() + 60000 }))
+    api.get.mockResolvedValue({ data: { user: { id: 'aB3dEfG' } } })
+    getUser.mockResolvedValue({ id: 'aB3dEfG', name: 'Ada Caver' })
+
+    mount(MagicLinkToken, { global: { stubs } })
+    await flushPromises()
+
+    expect(replace).toHaveBeenCalledWith('/trips')
   })
 
   it('sends a nameless account to complete its profile', async () => {

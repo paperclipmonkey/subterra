@@ -133,7 +133,7 @@ const isSaved = ref(false)
 const initialCaveState = ref(null)
 
 // CaveForm reshapes the cave as it loads (tags become {category, tag, type},
-// image objects gain credit fields, coordinates are rounded to the map's
+// image objects gain credit fields, a moved pin is rounded to the map's
 // precision), so comparing raw JSON called an untouched form "changed" and let
 // empty suggestions through. Compare only what the form edits, normalised.
 const roundToMetre = (val) => (val == null || val === '' ? null : Math.round(Number(val) * 100000) / 100000)
