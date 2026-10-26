@@ -819,6 +819,60 @@ class TripTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_an_end_time_in_the_future_on_store()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+
+        $this->actingAs($user);
+        $response = $this->postJson('/api/trips', [
+            'name' => 'Still Underground',
+            'start_time' => now()->subHour()->toIso8601String(),
+            'end_time' => now()->addHours(3)->toIso8601String(),
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$user->id],
+        ]);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['end_time' => 'can\'t end in the future']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_rejects_an_end_time_in_the_future_on_update()
+    {
+        $user = User::factory()->create();
+        $trip = Trip::factory()->create(['start_time' => now()->subHours(2), 'end_time' => now()->subHour()]);
+        $trip->participants()->attach($user);
+
+        $this->actingAs($user);
+        $response = $this->putJson('/api/trips/'.$trip->short_id, [
+            'end_time' => now()->addHours(2)->toIso8601String(),
+        ]);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['end_time']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_allows_for_a_client_clock_a_few_minutes_fast()
+    {
+        $user = User::factory()->create();
+        $entrance = Cave::factory()->create();
+
+        $this->actingAs($user);
+        $response = $this->postJson('/api/trips', [
+            'name' => 'Just Out',
+            'start_time' => now()->addMinutes(2)->toIso8601String(),
+            'end_time' => now()->addMinutes(3)->toIso8601String(),
+            'cave_system_id' => $entrance->cave_system_id,
+            'entrance_cave_id' => $entrance->id,
+            'exit_cave_id' => $entrance->id,
+            'participants' => [$user->id],
+        ]);
+        $response->assertCreated();
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_requires_participants_when_storing_a_trip()
     {
         $user = User::factory()->create();
