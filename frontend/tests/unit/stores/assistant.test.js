@@ -389,6 +389,15 @@ describe('Assistant Store', () => {
       expect(store.isLoading).toBe(false)
     })
 
+    it('shows the server explanation when a Pip limit is hit', async () => {
+      const error = "You've used today's Pip allowance. It resets at midnight."
+      global.fetch.mockResolvedValue({ ok: false, status: 429, json: async () => ({ error, code: 'daily_budget_exceeded' }) })
+
+      await store.sendMessage('Hi')
+
+      expect(store.error).toBe(error)
+    })
+
     it('surfaces the server message on other HTTP errors', async () => {
       global.fetch.mockResolvedValue({ ok: false, status: 400, json: async () => ({ message: 'Bad prompt' }) })
 

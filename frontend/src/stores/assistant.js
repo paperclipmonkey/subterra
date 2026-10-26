@@ -201,9 +201,9 @@ export const useAssistantStore = defineStore('assistant', {
 
         if (!response.ok) {
           const body = await response.json().catch(() => ({}))
-          const message = response.status === 429
-            ? 'Daily request limit reached. Please try again tomorrow.'
-            : body.message || `Error ${response.status}: unable to reach assistant.`
+          const message = body.error
+            || (response.status === 429 ? 'Daily request limit reached. Please try again tomorrow.' : body.message)
+            || `Error ${response.status}: unable to reach assistant.`
           this._failPending(message)
           return
         }
