@@ -66,6 +66,7 @@ vi.mock('moment', () => {
         },
         clone: function () { return this },
         add: function () { return this },
+        subtract: function () { return this },
         local: function () { return this }
       }
     }

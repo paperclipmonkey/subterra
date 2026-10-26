@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\Cave;
+use App\Models\Trip;
 use App\Policies\CavePolicy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -25,14 +26,16 @@ class StoreTripRequest extends FormRequest
      */
     public function rules(): array
     {
+        $latest = Trip::latestAllowedTime()->toIso8601String();
+
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'cave_system_id' => 'required|exists:cave_systems,id',
             'entrance_cave_id' => ['required', 'exists:caves,id', $this->visibleCave()],
             'exit_cave_id' => ['required', 'exists:caves,id', $this->visibleCave()],
-            'start_time' => 'nullable|date|before_or_equal:now',
-            'end_time' => 'nullable|date|after_or_equal:start_time',
+            'start_time' => 'nullable|date|before_or_equal:'.$latest,
+            'end_time' => 'nullable|date|after_or_equal:start_time|before_or_equal:'.$latest,
             'visibility' => 'in:public,private,club',
             'media' => 'nullable|array',
             'media.*.data' => 'required|file|max:512000|mimes:jpeg,jpg,png,gif,webp,bmp,tiff,tif,heic,heif', // Images only, 512MB max
@@ -71,6 +74,7 @@ class StoreTripRequest extends FormRequest
             'media.*.data.max' => 'One or more of the selected photos is too large. The maximum size is 512MB.',
             'media.*.data.file' => 'One or more of the selected photos failed to upload correctly.',
             'media.*.data.required' => 'An empty file was provided.',
+            ...Trip::FUTURE_TIME_MESSAGES,
         ];
     }
 
