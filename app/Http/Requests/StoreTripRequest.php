@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Cave;
 use App\Models\Trip;
+use App\Policies\CavePolicy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -30,8 +32,8 @@ class StoreTripRequest extends FormRequest
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'cave_system_id' => 'required|exists:cave_systems,id',
-            'entrance_cave_id' => 'required|exists:caves,id',
-            'exit_cave_id' => 'required|exists:caves,id',
+            'entrance_cave_id' => ['required', 'exists:caves,id', $this->visibleCave()],
+            'exit_cave_id' => ['required', 'exists:caves,id', $this->visibleCave()],
             'start_time' => 'nullable|date|before_or_equal:'.$latest,
             'end_time' => 'nullable|date|after_or_equal:start_time|before_or_equal:'.$latest,
             'visibility' => 'in:public,private,club',
@@ -40,6 +42,25 @@ class StoreTripRequest extends FormRequest
             'participants' => 'required|array|min:1',
             'participants.*' => 'string|exists:users,id',
         ];
+    }
+
+    /**
+     * admin_only sites (e.g. coal mines) pass `exists`, but a trip would then
+     * serialise the cave back to the caller. Reject them for anyone who may not
+     * view them, with the same message as a missing id so their existence is
+     * not revealed.
+     */
+    private function visibleCave(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (!is_scalar($value)) {
+                return;
+            }
+            $cave = Cave::withTrashed()->find($value);
+            if ($cave !== null && !app(CavePolicy::class)->view($this->user(), $cave)) {
+                $fail('validation.exists')->translate();
+            }
+        };
     }
 
     /**

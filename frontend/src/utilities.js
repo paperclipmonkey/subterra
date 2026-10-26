@@ -45,4 +45,14 @@ const toFormData = (obj, formData = new FormData(), parentKey = '') => {
     return formData
 }
 
-export { convertFileToBase64, toFormData }
+/**
+ * Headers that let a raw fetch() pass Laravel's CSRF check, the same way axios
+ * does automatically: echo the XSRF-TOKEN cookie back as X-XSRF-TOKEN.
+ * @returns {Object}
+ */
+const xsrfHeaders = () => {
+    const cookie = document.cookie.split('; ').find((c) => c.startsWith('XSRF-TOKEN='))
+    return cookie ? { 'X-XSRF-TOKEN': decodeURIComponent(cookie.slice('XSRF-TOKEN='.length)) } : {}
+}
+
+export { convertFileToBase64, toFormData, xsrfHeaders }

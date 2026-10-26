@@ -103,4 +103,58 @@ class HutPermissionTest extends TestCase
 
         $response->assertStatus(204);
     }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function a_club_admin_cannot_hand_their_hut_to_another_club(): void
+    {
+        $club = Club::factory()->create();
+        $otherClub = Club::factory()->create();
+        $hut = Hut::factory()->create(['club_id' => $club->id, 'name' => 'Original']);
+        $user = User::factory()->create();
+        $club->users()->attach($user->id, ['is_admin' => true, 'status' => 'approved']);
+
+        $this->actingAs($user)->putJson("/api/huts/{$hut->id}", [
+            'name' => 'Taken Over',
+            'club_id' => $otherClub->id,
+        ])->assertStatus(403);
+
+        $this->actingAs($user)->putJson("/api/huts/{$hut->id}", [
+            'name' => 'Orphaned',
+            'club_id' => null,
+        ])->assertStatus(403);
+
+        $this->assertDatabaseHas('huts', ['id' => $hut->id, 'club_id' => $club->id, 'name' => 'Original']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function a_club_admin_can_resend_their_own_club_id(): void
+    {
+        // The edit form always sends club_id back unchanged.
+        $club = Club::factory()->create();
+        $hut = Hut::factory()->create(['club_id' => $club->id]);
+        $user = User::factory()->create();
+        $club->users()->attach($user->id, ['is_admin' => true, 'status' => 'approved']);
+
+        $this->actingAs($user)->putJson("/api/huts/{$hut->id}", [
+            'name' => 'Renamed',
+            'club_id' => (string) $club->id,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('huts', ['id' => $hut->id, 'club_id' => $club->id, 'name' => 'Renamed']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function a_platform_admin_can_move_a_hut_to_another_club(): void
+    {
+        $club = Club::factory()->create();
+        $otherClub = Club::factory()->create();
+        $hut = Hut::factory()->create(['club_id' => $club->id]);
+
+        $this->actingAs(User::factory()->admin()->create())->putJson("/api/huts/{$hut->id}", [
+            'name' => $hut->name,
+            'club_id' => $otherClub->id,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('huts', ['id' => $hut->id, 'club_id' => $otherClub->id]);
+    }
 }

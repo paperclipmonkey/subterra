@@ -140,8 +140,17 @@ class CaveResource extends JsonResource
                     return CaveSystemFileResource::collection($files->values());
                 }, []),
                 'routes' => $this->system->relationLoaded('routes') ? $this->system->routes : [],
-                'annotation' => $this->system->relationLoaded('annotation') ? $this->system->annotation : null,
-                'map_overlays' => $this->system->relationLoaded('mapOverlays') ? CaveSystemMapOverlayResource::collection($this->system->mapOverlays) : [],
+                // Parking and approach routes pinpoint the entrances: same
+                // approved-club gate as CaveSystemResource and the annotation endpoint.
+                'annotation' => $this->system->relationLoaded('annotation') && $this->system->locationsVisibleTo($user)
+                    ? $this->system->annotation
+                    : null,
+                // Georeferenced survey overlays pinpoint entrances too, so they
+                // sit behind the same gate.
+                'map_overlays' => $this->system->relationLoaded('mapOverlays') && $this->system->locationsVisibleTo($user)
+                    ? CaveSystemMapOverlayResource::collection($this->system->mapOverlays)
+                    : [],
+
             ],
             'trips' => TripSummaryResource::collection($this->whenLoaded('trips')),
             'previously_done' => optional($previoslyDoneTag)->tag === 'Previously Done',
