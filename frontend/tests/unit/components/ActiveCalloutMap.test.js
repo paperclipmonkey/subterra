@@ -5,13 +5,11 @@ import { nextTick } from 'vue'
 
 // Mock maplibre-gl
 vi.mock('maplibre-gl', () => ({
-    default: {
-        LngLatBounds: class {
-            constructor() {
-                this.extend = vi.fn()
-                this.isEmpty = vi.fn(() => false)
-            }
-        },
+    LngLatBounds: class {
+        constructor() {
+            this.extend = vi.fn()
+            this.isEmpty = vi.fn(() => false)
+        }
     },
 }))
 

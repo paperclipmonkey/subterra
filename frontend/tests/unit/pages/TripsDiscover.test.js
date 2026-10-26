@@ -4,7 +4,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 const storeState = vi.hoisted(() => ({ clubs: [], trips: [] }))
 
 vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
-vi.mock('maplibre-gl', () => ({ default: {} }))
+vi.mock('maplibre-gl', () => ({}))
 vi.mock('@/components/AppMap.vue', () => ({ default: { template: '<div class="app-map" />' } }))
 vi.mock('@/plugins/api', () => ({
   api: { get: vi.fn(() => Promise.resolve({ data: { data: storeState.trips } })) },

@@ -99,7 +99,7 @@ app.post('/', async (req: Request, res: Response) => {
         const namingBase = customMetadata['naming_base'] as string | undefined;
 
         if (!mediaModel || !mediaId || !outputPrefix) {
-             console.log(`Skipping: missing custom metadata on ${sourcePath}`, customMetadata);
+             console.log('Skipping: missing custom metadata on %s', sourcePath, customMetadata);
              return res.json({ status: 'ignored', message: 'Missing custom metadata' });
         }
 
