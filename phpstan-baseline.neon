@@ -163,7 +163,7 @@ parameters:
 			path: app/Http/Controllers/Admin/DashboardController.php
 
 		-
-			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Callout\>\:\:select\(\) invoked with 2 parameters, 0\-1 required\.$#'
+			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:select\(\) invoked with 2 parameters, 0\-1 required\.$#'
 			identifier: arguments.count
 			count: 1
 			path: app/Http/Controllers/Admin/DashboardController.php
@@ -475,15 +475,15 @@ parameters:
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:participants\(\)\.$#'
-			identifier: method.notFound
-			count: 2
+			message: '#^Anonymous function should return array\{id\: string, name\: string\|null, photo\: string\|null, clubs\: Illuminate\\Support\\Collection\<int, array\{name\: mixed, slug\: mixed\}\>\} but returns array\{id\: string, name\: string\|null, photo\: string\|null, clubs\: Illuminate\\Support\\Collection\<int, array\{name\: string\|null, slug\: mixed\}\>\}\.$#'
+			identifier: return.type
+			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:participants\(\)\.$#'
+			identifier: method.notFound
+			count: 2
 			path: app/Http/Controllers/UserController.php
 
 		-
@@ -944,18 +944,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Hut\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:sortBy\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 1
 			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
