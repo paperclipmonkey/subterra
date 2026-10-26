@@ -68,4 +68,33 @@ class CaveVisibilityTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.slug', $cave->slug);
     }
+
+    #[Test]
+    public function the_cave_page_hides_the_system_annotation_without_an_approved_club(): void
+    {
+        // Parking spots and approach paths pinpoint the entrances: same gate as
+        // CaveSystemResource and the annotations endpoint.
+        $cave = Cave::factory()->create();
+        \App\Models\CaveSystemAnnotation::factory()->create(['cave_system_id' => $cave->cave_system_id]);
+
+        $this->actingAs(User::factory()->create())
+            ->getJson("/api/caves/{$cave->id}")
+            ->assertOk()
+            ->assertJsonPath('data.system.annotation', null);
+    }
+
+    #[Test]
+    public function the_cave_page_shows_the_system_annotation_to_approved_club_members_and_data_admins(): void
+    {
+        $cave = Cave::factory()->create();
+        \App\Models\CaveSystemAnnotation::factory()->create(['cave_system_id' => $cave->cave_system_id]);
+
+        foreach ([User::factory()->withApprovedClub()->create(), User::factory()->dataAdmin()->create()] as $user) {
+            $this->actingAs($user)
+                ->getJson("/api/caves/{$cave->id}")
+                ->assertOk()
+                ->assertJsonPath('data.system.annotation.cave_system_id', $cave->cave_system_id)
+                ->assertJsonPath('data.system.annotation.geojson.type', 'FeatureCollection');
+        }
+    }
 }

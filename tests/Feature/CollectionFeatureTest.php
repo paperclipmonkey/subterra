@@ -73,6 +73,68 @@ class CollectionFeatureTest extends TestCase
         $this->assertEqualsCanonicalizing(['Public Cave', 'Old Coal Mine'], $names->all());
     }
 
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function an_ordinary_user_cannot_add_an_admin_only_cave_when_creating_a_collection(): void
+    {
+        $user = User::factory()->withApprovedClub()->create();
+        $mine = Cave::factory()->create(['name' => 'Old Coal Mine', 'visibility' => 'admin_only']);
+
+        $this->actingAs($user)->postJson('/api/collections', [
+            'name' => 'Sneaky',
+            'caves' => [['id' => $mine->id]],
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors('caves.0.id')
+            ->assertJsonMissing(['name' => 'Old Coal Mine']);
+
+        $this->assertDatabaseMissing('cave_collection', ['cave_id' => $mine->id]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function an_ordinary_user_cannot_add_an_admin_only_cave_when_updating_a_collection(): void
+    {
+        $user = User::factory()->withApprovedClub()->create();
+        $collection = Collection::factory()->create(['user_id' => $user->id]);
+        $public = Cave::factory()->create();
+        $mine = Cave::factory()->create(['visibility' => 'admin_only']);
+
+        $this->actingAs($user)->putJson("/api/collections/{$collection->slug}", [
+            'caves' => [['id' => $public->id], ['id' => $mine->id]],
+        ])->assertStatus(422)->assertJsonValidationErrors('caves.1.id');
+
+        $this->actingAs($user)->postJson("/api/collections/{$collection->slug}/caves", [
+            'cave_id' => $mine->id,
+        ])->assertStatus(422)->assertJsonValidationErrors('cave_id');
+
+        $this->assertDatabaseMissing('cave_collection', ['cave_id' => $mine->id]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function the_update_response_hides_admin_only_caves_already_in_the_collection(): void
+    {
+        // e.g. a cave made admin_only after it was added.
+        $user = User::factory()->withApprovedClub()->create();
+        $collection = Collection::factory()->create(['user_id' => $user->id]);
+        $collection->caves()->attach(Cave::factory()->create(['name' => 'Public Cave']), ['sort_order' => 0]);
+        $collection->caves()->attach(Cave::factory()->create(['name' => 'Old Coal Mine', 'visibility' => 'admin_only']), ['sort_order' => 1]);
+
+        $names = collect($this->actingAs($user)->putJson("/api/collections/{$collection->slug}", ['name' => 'Renamed'])
+            ->assertOk()->json('data.caves'))->pluck('name');
+
+        $this->assertEquals(['Public Cave'], $names->all());
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function a_data_admin_can_add_admin_only_caves_to_a_collection(): void
+    {
+        $admin = User::factory()->dataAdmin()->create();
+        $mine = Cave::factory()->create(['name' => 'Old Coal Mine', 'visibility' => 'admin_only']);
+
+        $this->actingAs($admin)->postJson('/api/collections', [
+            'name' => 'Mines',
+            'caves' => [['id' => $mine->id]],
+        ])->assertStatus(201)->assertJsonPath('data.caves.0.name', 'Old Coal Mine');
+    }
+
     public function test_collection_progress_calculation()
     {
         $user = User::factory()->create();

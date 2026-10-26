@@ -543,6 +543,49 @@ class CalloutTest extends TestCase
         $response->assertJsonMissing(['car_registration' => 'AB12 CDE']);
     }
 
+    #[Test]
+    public function an_unrelated_user_gets_only_the_cave_name_not_its_location(): void
+    {
+        $owner = User::factory()->create();
+        $cave = Cave::factory()->create([
+            'name' => 'Secret Pot',
+            'location_lat' => 54.123,
+            'location_lng' => -2.456,
+            'location_alt' => 321,
+            'access_info' => 'Key from the farm',
+        ]);
+        $callout = Callout::factory()->create([
+            'user_id' => $owner->id,
+            'cave_id' => $cave->id,
+            'exit_cave_id' => $cave->id,
+        ]);
+
+        // Even an approved-club member: holding the callout id is not an entitlement.
+        $stranger = User::factory()->withApprovedClub()->create();
+        $response = $this->actingAs($stranger)->getJson("/api/callouts/{$callout->id}")->assertOk();
+
+        foreach (['cave', 'exit_cave'] as $key) {
+            $this->assertSame(
+                ['id' => $cave->id, 'name' => 'Secret Pot', 'slug' => $cave->slug],
+                $response->json("data.{$key}"),
+            );
+        }
+        $response->assertJsonMissing(['access_info' => 'Key from the farm']);
+    }
+
+    #[Test]
+    public function the_callout_creator_still_gets_the_full_cave(): void
+    {
+        $owner = User::factory()->create();
+        $cave = Cave::factory()->create(['location_lat' => 54.123, 'access_info' => 'Key from the farm']);
+        $callout = Callout::factory()->create(['user_id' => $owner->id, 'cave_id' => $cave->id]);
+
+        $this->actingAs($owner)->getJson("/api/callouts/{$callout->id}")
+            ->assertOk()
+            ->assertJsonPath('data.cave.location_lat', 54.123)
+            ->assertJsonPath('data.cave.access_info', 'Key from the farm');
+    }
+
     public function test_user_can_mark_safe_after_rescue_initiated()
     {
         Mail::fake();

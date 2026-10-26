@@ -38,4 +38,50 @@ class UserProfileLoadingTest extends TestCase
         $responseHeatmap = $this->getJson("/api/users/{$inactiveUser->id}/activity-heatmap");
         $responseHeatmap->assertOk();
     }
+
+    public static function inactiveProfileEndpoints(): array
+    {
+        return [
+            'profile' => ['/api/users/%s'],
+            'recent trips' => ['/api/users/%s/recent-trips'],
+            'activity heatmap' => ['/api/users/%s/activity-heatmap'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('inactiveProfileEndpoints')]
+    public function other_users_cannot_read_an_inactive_users_profile(string $path): void
+    {
+        // Placeholders and people who objected to being listed are inactive
+        // precisely so they stop being findable.
+        $inactiveUser = User::factory()->create(['is_active' => false]);
+
+        foreach ([User::factory()->withApprovedClub()->create(), User::factory()->dataAdmin()->create()] as $viewer) {
+            $this->actingAs($viewer, 'sanctum')
+                ->getJson(sprintf($path, $inactiveUser->id))
+                ->assertNotFound();
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('inactiveProfileEndpoints')]
+    public function an_inactive_user_can_still_read_their_own_profile(string $path): void
+    {
+        $inactiveUser = User::factory()->create(['is_active' => false]);
+
+        $this->actingAs($inactiveUser, 'sanctum')
+            ->getJson(sprintf($path, $inactiveUser->id))
+            ->assertOk();
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('inactiveProfileEndpoints')]
+    public function active_profiles_remain_readable_by_other_users(string $path): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs(User::factory()->create(), 'sanctum')
+            ->getJson(sprintf($path, $user->id))
+            ->assertOk();
+    }
 }

@@ -36,4 +36,13 @@ class AuthTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson(['message' => 'Logged out']);
     }
+
+    public function test_raw_user_model_endpoint_is_not_exposed()
+    {
+        // /api/users/me is the supported endpoint; the old scaffold route returned
+        // the raw model, internal verification bookkeeping included.
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->getJson('/api/user')->assertNotFound();
+    }
 }
