@@ -314,7 +314,7 @@ const renderGeoJSONMaps = async () => {
     const nodes = container.value.querySelectorAll('.geojson-map:not([data-map-init])')
     if (nodes.length === 0) return
 
-    const maplibre = (await import('maplibre-gl')).default
+    const maplibre = await import('maplibre-gl')
 
     for (const node of nodes) {
         node.setAttribute('data-map-init', 'true')

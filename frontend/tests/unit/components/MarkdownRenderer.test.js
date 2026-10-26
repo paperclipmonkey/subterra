@@ -26,13 +26,11 @@ vi.mock('maplibre-gl', () => {
         extend() { return this }
     }
     return {
-        default: {
-            Map: FakeMap,
-            LngLatBounds,
-            AttributionControl: class {},
-            NavigationControl: class {},
-            Popup: class {},
-        },
+        Map: FakeMap,
+        LngLatBounds,
+        AttributionControl: class {},
+        NavigationControl: class {},
+        Popup: class {},
     }
 })
 

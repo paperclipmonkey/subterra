@@ -36,7 +36,7 @@
     "vuetify": "^3.13.7"
   },
   "devDependencies": {
-    "@indoorequal/vue-maplibre-gl": "^8.4.2",
+    "@indoorequal/vue-maplibre-gl": "^9.0.1",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vitest/coverage-v8": "4.1.12",
     "@vitest/ui": "^4.1.12",
@@ -46,7 +46,7 @@
     "fake-indexeddb": "6.2.6",
     "globals": "17.13.0",
     "jsdom": "^28.1.0",
-    "maplibre-gl": "^5.24.0",
+    "maplibre-gl": "^6.16.0",
     "pinia": "^3.0.4",
     "sass-embedded": "1.106.1",
     "unplugin-auto-import": "^21.1.0",
@@ -70,6 +70,7 @@
     "follow-redirects": "^1.16.1",
     "form-data": "^4.0.6",
     "immutable": "^5.1.9",
+    "katex": "^0.19.1",
     "lodash": "^4.18.1",
     "lodash-es": "^4.18.0",
     "markdown-it": "^14.3.3",

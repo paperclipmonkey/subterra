@@ -65,7 +65,7 @@ import {
   MglGeolocateControl,
 } from '@indoorequal/vue-maplibre-gl'
 
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import { onMounted, watch, computed } from 'vue'
 
 const props = defineProps({

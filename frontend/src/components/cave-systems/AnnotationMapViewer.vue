@@ -16,7 +16,7 @@
 <script setup>
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import AppMap from '@/components/AppMap.vue'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 
 const props = defineProps({
   annotation: {

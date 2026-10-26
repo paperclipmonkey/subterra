@@ -134,7 +134,7 @@ import {
   mdiAccountClock,
 } from '@mdi/js'
 import moment from 'moment'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import AppMap from '@/components/AppMap.vue'
 import { api } from '@/plugins/api'
 import { useAppStore } from '@/stores/app'
