@@ -220,7 +220,7 @@ const cancelCallout = async () => {
 
     // Update user state to remove open callout if logged in
     if (appStore.user.id) {
-      await appStore.getUser()
+      await appStore.getUser(true)
     }
 
     // Show convert dialog
@@ -275,7 +275,7 @@ onMounted(async () => {
     loading.value = false
   } else {
     // Try to fetch user just in case
-    await appStore.getUser()
+    await appStore.getUser(true)
     if (appStore.user.active_callout) {
       callout.value = appStore.user.active_callout
       loading.value = false

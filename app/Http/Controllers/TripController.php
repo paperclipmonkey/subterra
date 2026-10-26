@@ -42,7 +42,7 @@ class TripController extends Controller
             });
         });
 
-        $trips = $query->with(['participants.clubs', 'entrance.heroImage', 'entrance.entranceImage', 'media'])->orderBy('start_time', 'desc')->get();
+        $trips = $query->with(Trip::SUMMARY_RELATIONS)->orderBy('start_time', 'desc')->get();
 
         return TripSummaryResource::collection($trips);
     }
@@ -53,7 +53,7 @@ class TripController extends Controller
         $userId = $user->id;
         $trips = Trip::whereHas('participants', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with(['participants.clubs', 'entrance.heroImage', 'entrance.entranceImage', 'media'])->visibleTo($user)->orderBy('start_time', 'desc')->get();
+        })->with(Trip::SUMMARY_RELATIONS)->visibleTo($user)->orderBy('start_time', 'desc')->get();
 
         return TripSummaryResource::collection($trips);
     }

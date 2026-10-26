@@ -22,6 +22,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/plugins/api'
 import { useAppStore } from '@/stores/app'
+import { takeLoginRedirect } from '@/utilities/loginRedirect'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,8 +49,7 @@ const redirectAfterLogin = (user) => {
       router.replace({ name: '/profile/[id].edit', params: { id: user.id } }).catch(goHome)
       return
     }
-    const redirect = sessionStorage.getItem('redirectAfterLogin')
-    sessionStorage.removeItem('redirectAfterLogin')
+    const redirect = takeLoginRedirect()
     router.replace(redirect || '/trips').catch(goHome)
   } catch {
     goHome()

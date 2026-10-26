@@ -2,6 +2,8 @@
 
 ARG PHP_VERSION=8.4
 ARG NODE_VERSION=24
+# Keep in step with spiral/roadrunner in composer.lock
+FROM ghcr.io/roadrunner-server/roadrunner:2025.1.15 as roadrunner
 FROM ubuntu:24.04 as base
 LABEL fly_launch_runtime="laravel"
 
@@ -12,10 +14,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     COMPOSER_ALLOW_SUPERUSER=1 \
     COMPOSER_HOME=/composer \
     COMPOSER_MAX_PARALLEL_HTTP=24 \
-    PHP_PM_MAX_CHILDREN=10 \
-    PHP_PM_START_SERVERS=3 \
-    PHP_PM_MIN_SPARE_SERVERS=2 \
-    PHP_PM_MAX_SPARE_SERVERS=4 \
+    OCTANE_WORKERS=8 \
     PHP_DATE_TIMEZONE=UTC \
     PHP_DISPLAY_ERRORS=Off \
     PHP_ERROR_REPORTING=22527 \
@@ -28,6 +27,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Prepare base container: 
 # 1. Install PHP, Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
 ADD .fly/php/packages/${PHP_VERSION}.txt /tmp/php-packages.txt
 
 RUN apt-get update \
@@ -40,6 +40,9 @@ RUN apt-get update \
     && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ noble main" > /etc/apt/sources.list.d/php.list \
     && apt-get update \
     && apt-get -y --no-install-recommends install $(cat /tmp/php-packages.txt) libmagickwand-dev php-pear build-essential \
+    && echo "Security floor: require PHP >= 8.4.27 (CVE-2026-109618/109619, PHP2Shell RCE); editing this line also busts the apt layer cache so a fresh 8.4.27+ is pulled from Sury" \
+    && echo "Installed PHP version:" && php -v \
+    && php -r 'exit((int) ! version_compare(PHP_VERSION, "8.4.27", ">="));' \
     && printf "\n" | pecl install imagick \
     && echo "extension=imagick.so" > /etc/php/${PHP_VERSION}/mods-available/imagick.ini \
     && phpenmod -v ${PHP_VERSION} imagick \
@@ -53,7 +56,9 @@ RUN apt-get update \
 # 2. Copy config files to proper locations
 COPY .fly/nginx/ /etc/nginx/
 COPY .fly/fpm/ /etc/php/${PHP_VERSION}/fpm/
+RUN rm /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
 COPY .fly/fpm/opcache.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-opcache-settings.ini
+COPY .fly/php/conf.d/99-subterra.ini /etc/php/${PHP_VERSION}/cli/conf.d/99-subterra.ini
 COPY .fly/supervisor/ /etc/supervisor/
 COPY .fly/entrypoint.sh /entrypoint
 COPY .fly/start-nginx.sh /usr/local/bin/start-nginx

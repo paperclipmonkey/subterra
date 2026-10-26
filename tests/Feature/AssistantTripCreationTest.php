@@ -384,6 +384,45 @@ class AssistantTripCreationTest extends TestCase
     }
 
     #[Test]
+    public function create_trip_report_rejects_a_trip_in_the_future(): void
+    {
+        $this->makeSystemAndCave();
+        $user = User::factory()->create();
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Future Trip',
+            'description' => 'Not yet.',
+            'date' => now()->addDays(2)->format('Y-m-d'),
+        ], $user);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertDatabaseMissing('trips', ['name' => 'Future Trip']);
+    }
+
+    #[Test]
+    public function create_trip_report_rejects_a_duration_ending_in_the_future(): void
+    {
+        $this->makeSystemAndCave();
+        $user = User::factory()->create();
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2024-06-15 12:00', 'Europe/London'));
+
+        $result = (new CreateTripReportTool())->handle([
+            'cave_system_slug' => 'gaping-gill',
+            'entrance_cave_slug' => 'main-shaft',
+            'name' => 'Still Underground',
+            'description' => 'Not out yet.',
+            'date' => '2024-06-15',
+            'start_time' => '10:00',
+            'duration_minutes' => 300,
+        ], $user);
+
+        $this->assertArrayHasKey('error', $result);
+        $this->assertDatabaseMissing('trips', ['name' => 'Still Underground']);
+    }
+
+    #[Test]
     public function create_trip_report_rejects_public_trip_for_closed_cave(): void
     {
         Event::fake([TripCreated::class, TripParticipantTagged::class]);

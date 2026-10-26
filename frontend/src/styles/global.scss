@@ -14,6 +14,13 @@
   }
 }
 
+// iOS Safari 26+ can leave the viewport offset after the keyboard closes,
+// exposing the document root below the app. Paint it with the theme
+// background so that gap blends in rather than showing as white.
+html {
+  background: rgb(var(--v-theme-background));
+}
+
 // --- Surfaces & elevation ----------------------------------------------------
 
 // Replace Material's harsh single shadows with a soft layered shadow so

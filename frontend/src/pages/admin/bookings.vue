@@ -178,6 +178,15 @@
               <v-list-item-subtitle class="text-primary">{{ detailBooking.applicant?.name }}</v-list-item-subtitle>
             </v-list-item>
 
+            <v-list-item v-if="detailBooking.applicant_email" :href="`mailto:${detailBooking.applicant_email}`">
+              <template #prepend><v-icon :icon="mdiEmailOutline" class="mr-2" /></template>
+              <v-list-item-title>Email</v-list-item-title>
+              <v-list-item-subtitle class="text-primary">{{ detailBooking.applicant_email }}</v-list-item-subtitle>
+              <template #append>
+                <v-btn :icon="mdiContentCopy" size="small" variant="text" title="Copy email" @click.prevent.stop="copyEmail(detailBooking.applicant_email)" />
+              </template>
+            </v-list-item>
+
             <v-list-item v-if="detailBooking.applicant?.clubs?.length">
               <template #prepend><v-icon :icon="mdiDomain" class="mr-2" /></template>
               <v-list-item-title>Club</v-list-item-title>
@@ -202,7 +211,7 @@
             <v-list-item v-if="detailBooking.notes">
               <template #prepend><v-icon :icon="mdiNoteText" class="mr-2" /></template>
               <v-list-item-title>Notes from applicant</v-list-item-title>
-              <v-list-item-subtitle style="white-space: pre-line;">{{ detailBooking.notes }}</v-list-item-subtitle>
+              <div class="detail-long-text">{{ detailBooking.notes }}</div>
             </v-list-item>
 
             <v-list-item v-if="detailBooking.approved_at">
@@ -214,7 +223,7 @@
             <v-list-item v-if="detailBooking.rejection_reason">
               <template #prepend><v-icon :icon="mdiCloseCircle" color="error" class="mr-2" /></template>
               <v-list-item-title>Rejection reason</v-list-item-title>
-              <v-list-item-subtitle style="white-space: pre-line;">{{ detailBooking.rejection_reason }}</v-list-item-subtitle>
+              <div class="detail-long-text">{{ detailBooking.rejection_reason }}</div>
             </v-list-item>
 
             <v-list-item v-if="detailBooking.status === 'approved' && detailBooking.booking_info">
@@ -374,7 +383,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn variant="text" @click="newBookingDialog = false">Cancel</v-btn>
-          <v-btn color="primary" :loading="newBookingLoading" @click="saveNewBooking">Add Booking</v-btn>
+          <v-btn color="primary" :loading="newBookingLoading" @click="saveNewBooking()">Add Booking</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -403,6 +412,24 @@
       </v-card>
     </v-dialog>
 
+    <!-- Daily Limit Warning -->
+    <v-dialog v-model="overLimitDialog" max-width="420">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon :icon="mdiAlert" color="warning" class="mr-2" />
+          Over the daily limit
+        </v-card-title>
+        <v-card-text>
+          {{ overLimitMessage }} Go over the limit for this booking?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="overLimitDialog = false">Cancel</v-btn>
+          <v-btn color="warning" @click="proceedOverLimit">Go over limit</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Cancel Booking Confirmation -->
     <v-dialog v-model="cancelConfirmDialog" max-width="400">
       <v-card>
@@ -423,19 +450,24 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
-  mdiAccount, mdiAccountGroup, mdiArrowLeft, mdiCalendar, mdiCalendarBlank,
+  mdiAccount, mdiAccountGroup, mdiAlert, mdiArrowLeft, mdiCalendar, mdiCalendarBlank,
   mdiCheck, mdiCheckCircle, mdiChevronLeft, mdiChevronRight, mdiClipboardCheck,
-  mdiClose, mdiCloseCircle, mdiClockOutline, mdiDomain, mdiEmail, mdiInformationOutline, mdiKey,
+  mdiClose, mdiCloseCircle, mdiClockOutline, mdiContentCopy, mdiDomain, mdiEmail, mdiEmailOutline, mdiInformationOutline, mdiKey,
   mdiNoteText, mdiPlus, mdiViewList,
 } from '@mdi/js'
 import { api } from '@/plugins/api'
 import { useNotificationStore } from '@/stores/notifications'
+import { useAppStore } from '@/stores/app'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 
 defineOptions({ name: 'AdminBookings' })
 
 const notificationStore = useNotificationStore()
+const appStore = useAppStore()
+const route = useRoute()
+const router = useRouter()
 
 const loading = ref(true)
 const viewMode = ref('list')
@@ -475,7 +507,7 @@ const currentMonth = ref(new Date())
 
 const filters = ref({
   permit_id: null,
-  status: null,
+  status: ['pending', 'approved', 'rejected', 'cancelled'].includes(route.query.status) ? route.query.status : null,
   search: '',
 })
 
@@ -602,6 +634,12 @@ const fetchBookings = async () => {
 }
 
 const fetchPermits = async () => {
+  // Only platform admins see every permit's bookings; everyone else is scoped
+  // to the permits they're an officer of.
+  if (!appStore.user.roles?.some(r => r.slug === 'platform_admin')) {
+    permits.value = appStore.user.managed_permits || []
+    return
+  }
   try {
     const { data } = await api.get('/api/admin/permits')
     permits.value = (data.data || []).map(p => ({ id: p.id, name: p.name, slug: p.slug }))
@@ -631,18 +669,52 @@ watch(userSearch, (val) => {
   userSearchTimer = setTimeout(() => searchUsers(val), 300)
 })
 
-const approveBooking = async (booking) => {
+// The api interceptor leaves 422s to the caller; these actions have no form to
+// show them on, e.g. a full day or a booking another officer already handled.
+const showActionError = (e) => {
+  if (e.response?.status === 422 && e.response.data?.error) {
+    notificationStore.showError(e.response.data.error)
+  }
+}
+
+// A just-reviewed booking shouldn't vanish from a pending-only list; the
+// officer often wants to message the applicant next.
+const keepVisibleAfterReview = () => {
+  if (filters.value.status === 'pending') filters.value.status = null
+}
+
+// The daily group limit is soft for officers: warn, then let them go over it.
+const overLimitDialog = ref(false)
+const overLimitMessage = ref('')
+let overLimitProceed = null
+
+const isOverLimit = (e) => e.response?.status === 422 && e.response.data?.over_limit
+
+const confirmOverLimit = (e, proceed) => {
+  overLimitMessage.value = e.response.data.error
+  overLimitProceed = proceed
+  overLimitDialog.value = true
+}
+
+const proceedOverLimit = () => {
+  overLimitDialog.value = false
+  overLimitProceed?.()
+}
+
+const approveBooking = async (booking, overrideLimit = false) => {
   booking._approving = true
   try {
-    const { data } = await api.put(`/api/admin/bookings/${booking.id}/approve`)
+    const { data } = await api.put(`/api/admin/bookings/${booking.id}/approve`, { override_limit: overrideLimit })
     const updated = data.data || data
     const idx = bookings.value.findIndex(b => b.id === booking.id)
     if (idx >= 0) bookings.value[idx] = updated
     if (detailBooking.value?.id === booking.id) detailBooking.value = updated
     notificationStore.showSuccess('Booking approved')
-    detailDialog.value = false
+    appStore.getUser(true).catch(() => {})
+    keepVisibleAfterReview()
   } catch (e) {
-    // handled by interceptor
+    if (isOverLimit(e)) confirmOverLimit(e, () => approveBooking(booking, true))
+    else showActionError(e)
   } finally {
     booking._approving = false
   }
@@ -666,10 +738,12 @@ const rejectBooking = async () => {
     if (idx >= 0) bookings.value[idx] = updated
     if (detailBooking.value?.id === rejectingBooking.value.id) detailBooking.value = updated
     notificationStore.showSuccess('Booking rejected')
+    appStore.getUser(true).catch(() => {})
+    keepVisibleAfterReview()
     rejectDialog.value = false
     detailDialog.value = false
   } catch (e) {
-    // handled by interceptor
+    showActionError(e)
   } finally {
     rejecting.value = false
   }
@@ -682,21 +756,32 @@ const openNewBookingDialog = () => {
   newBookingDialog.value = true
 }
 
-const saveNewBooking = async () => {
+const saveNewBooking = async (overrideLimit = false) => {
   const { permit_slug, date, participants } = newBookingForm.value
   if (!permit_slug || !date || !participants) return
   newBookingLoading.value = true
   try {
-    const { data } = await api.post('/api/admin/bookings', newBookingForm.value)
+    const { data } = await api.post('/api/admin/bookings', { ...newBookingForm.value, override_limit: overrideLimit })
     bookings.value.unshift(data.data || data)
     notificationStore.showSuccess('Booking added')
     newBookingDialog.value = false
   } catch (e) {
-    if (e.response?.status === 422) {
-      notificationStore.showError('Please check the form for errors.')
+    if (isOverLimit(e)) {
+      confirmOverLimit(e, () => saveNewBooking(true))
+    } else if (e.response?.status === 422) {
+      notificationStore.showError(e.response.data?.error || 'Please check the form for errors.')
     }
   } finally {
     newBookingLoading.value = false
+  }
+}
+
+const copyEmail = async (email) => {
+  try {
+    await navigator.clipboard.writeText(email)
+    notificationStore.showSuccess('Email copied')
+  } catch {
+    notificationStore.showError('Could not copy — select the address instead.')
   }
 }
 
@@ -736,19 +821,51 @@ const cancelBooking = async () => {
     notificationStore.showSuccess('Booking cancelled')
     cancelConfirmDialog.value = false
   } catch (e) {
-    // handled by interceptor
+    showActionError(e)
   } finally {
     cancelling.value = false
   }
 }
 
-onMounted(() => {
-  fetchBookings()
+// Emails and the pending-bookings bar link to ?booking=<id>[&action=approve|reject|message].
+// Approval still takes a click in the modal: mail scanners prefetch links.
+const openBookingFromQuery = () => {
+  const { booking: bookingId, action } = route.query
+  if (!bookingId) return
+
+  const booking = bookings.value.find(b => b.id === bookingId)
+  router.replace({ query: { ...route.query, booking: undefined, action: undefined } })
+
+  if (!booking) {
+    notificationStore.showError('That booking could not be found. It may be for a permit you no longer manage.')
+    return
+  }
+  if (new Date(booking.date) < today) showPast.value = true
+
+  if (action === 'reject' && booking.status === 'pending') {
+    openRejectDialog(booking)
+  } else if (action === 'message' && booking.applicant) {
+    openMessageDialog(booking)
+  } else {
+    openDetail(booking)
+  }
+}
+
+onMounted(async () => {
   fetchPermits()
+  await fetchBookings()
+  openBookingFromQuery()
 })
 </script>
 
 <style scoped>
+.detail-long-text {
+  font-size: 0.875rem;
+  opacity: var(--v-medium-emphasis-opacity);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

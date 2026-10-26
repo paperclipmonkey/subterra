@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\Booking;
 use App\Models\Callout;
 use App\Models\OnCallShift;
+use App\Models\Permit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -84,6 +86,18 @@ class UserDetailEmailResource extends JsonResource
             'open_callouts_count' => $this->relationLoaded('currentOnCallShift') && $this->currentOnCallShift === null
                 ? 0
                 : once(fn () => Callout::whereIn('status', ['active', 'triggered'])->count()),
+            'managed_permits' => $this->managedPermits->map(fn (Permit $permit) => [
+                'id' => $permit->id,
+                'name' => $permit->name,
+                'slug' => $permit->slug,
+            ])->values(),
+            // Only shown in the pending-bookings bar.
+            'pending_bookings_count' => $this->managedPermits->isEmpty()
+                ? 0
+                : Booking::whereIn('permit_id', $this->managedPermits->modelKeys())
+                    ->where('status', 'pending')
+                    ->whereDate('date', '>=', now()->toDateString())
+                    ->count(),
             'tos_agreed_at' => $this->tos_agreed_at,
             'privacy_policy_agreed_at' => $this->privacy_policy_agreed_at,
             'pip_agreement_signed_at' => $this->pip_agreement_signed_at,

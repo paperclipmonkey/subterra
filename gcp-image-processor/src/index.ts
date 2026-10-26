@@ -3,9 +3,9 @@ import express, { Request, Response } from 'express';
 import { Storage } from '@google-cloud/storage';
 import { PubSub } from '@google-cloud/pubsub';
 import { TranscoderServiceClient } from '@google-cloud/video-transcoder';
-import sharp from 'sharp';
 import convert from 'heic-convert';
 import { getSecret } from './secrets';
+import { renderVariant } from './render-variant';
 import { setupSlackLogger } from './slack-logger';
 
 // Setup Slack logging for console.warn and console.error
@@ -237,12 +237,7 @@ export async function processImage(params: ProcessImageParams): Promise<{ varian
     for (const preset of IMAGE_SIZES) {
         const outputPath = `${outputPrefix.replace(/\/$/, '')}/${preset.name}.webp`;
 
-        // limitInputPixels makes a decompression bomb (small file, enormous
-        // dimensions) throw instead of exhausting memory.
-        const processed = await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
-            .resize(preset.width, undefined, { withoutEnlargement: true, fit: 'inside' })
-            .webp({ quality: preset.quality })
-            .toBuffer({ resolveWithObject: true });
+        const processed = await renderVariant(inputBuffer, preset.width, preset.quality, MAX_INPUT_PIXELS);
 
         await bucket.file(outputPath).save(processed.data, {
             contentType: 'image/webp',

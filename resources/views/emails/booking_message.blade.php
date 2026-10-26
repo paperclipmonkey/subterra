@@ -13,11 +13,13 @@ You have received a message regarding your booking for **{{ $booking->permit->na
 **Date:** {{ \Carbon\Carbon::parse($booking->date)->format('j F Y') }}
 **Permit:** {{ $booking->permit->name }}
 
+You can reply to this email to reach {{ $sender->name }} directly.
+
 <x-mail::button :url="config('app.url') . '/bookings'">
 View My Bookings
 </x-mail::button>
 
 Thanks,<br>
-{{ $senderName }}<br>
+{{ $sender->name }}<br>
 {{ config('app.name') }}
 </x-mail::message>

@@ -102,4 +102,34 @@ describe('CaveForm.vue', () => {
         expect(wrapper.vm.coordinates.lat).toBe(10)
         expect(wrapper.vm.coordinates.lng).toBe(20)
     })
+
+    // Loading a cave moves the pin to its saved location. That used to be
+    // written back rounded to 5 dp, so a text-only edit or suggestion also
+    // changed the cave's coordinates.
+    it('keeps full coordinate precision when a cave loads', async () => {
+        const wrapper = mount(CaveForm, { props: { modelValue: cave }, global: { stubs } })
+
+        await wrapper.setProps({ modelValue: { ...cave, name: 'Sell Gill Holes', location_lat: 54.1647511, location_lng: -2.2892576 } })
+        await flushPromises()
+
+        expect(wrapper.vm.internalCave.location_lat).toBe(54.1647511)
+        expect(wrapper.vm.internalCave.location_lng).toBe(-2.2892576)
+        for (const [emitted] of wrapper.emitted('update:modelValue') || []) {
+            expect([emitted.location_lat, emitted.location_lng]).toEqual([54.1647511, -2.2892576])
+        }
+    })
+
+    it('rounds coordinates to the map precision when the pin is moved', async () => {
+        const wrapper = mount(CaveForm, {
+            props: { modelValue: { ...cave, location_lat: 54.1647511, location_lng: -2.2892576 } },
+            global: { stubs }
+        })
+
+        wrapper.vm.coordinates = { lng: -2.3012345678, lat: 54.1712345678 }
+        await flushPromises()
+
+        expect(wrapper.vm.internalCave.location_lat).toBe(54.17123)
+        expect(wrapper.vm.internalCave.location_lng).toBe(-2.30123)
+    })
 })
+

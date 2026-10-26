@@ -16,27 +16,40 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ServerTiming
 {
+    private static float $queryMs = 0.0;
+
+    private static int $queries = 0;
+
+    // Under Octane the event dispatcher outlives the request, so listen once per
+    // dispatcher rather than adding a listener on every request.
+    private static ?object $listeningOn = null;
+
     public function handle(Request $request, Closure $next): Response
     {
         $start = microtime(true);
-        DB::connection()->getPdo();
+        $connection = DB::connection();
+        $connection->getPdo();
         $connectMs = (microtime(true) - $start) * 1000;
 
-        $queryMs = 0.0;
-        $queries = 0;
-        DB::listen(function (QueryExecuted $query) use (&$queryMs, &$queries): void {
-            $queryMs += $query->time;
-            ++$queries;
-        });
+        $dispatcher = $connection->getEventDispatcher();
+        if (self::$listeningOn !== $dispatcher) {
+            $connection->listen(static function (QueryExecuted $query): void {
+                self::$queryMs += $query->time;
+                ++self::$queries;
+            });
+            self::$listeningOn = $dispatcher;
+        }
+        self::$queryMs = 0.0;
+        self::$queries = 0;
 
         $response = $next($request);
 
-        $appMs = (microtime(true) - (\defined('LARAVEL_START') ? LARAVEL_START : $start)) * 1000;
+        $appMs = (microtime(true) - (float) $request->server('REQUEST_TIME_FLOAT', $start)) * 1000;
         $response->headers->set('Server-Timing', \sprintf(
             'connect;dur=%.1f, db;dur=%.1f;desc="%d queries", app;dur=%.1f',
             $connectMs,
-            $queryMs,
-            $queries,
+            self::$queryMs,
+            self::$queries,
             $appMs,
         ));
 

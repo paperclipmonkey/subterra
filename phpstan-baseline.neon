@@ -127,12 +127,6 @@ parameters:
 			path: app/Console/Commands/SyncPdcCaves.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Http/Controllers/Admin/BookingController.php
-
-		-
 			message: '#^Cannot call method toDateString\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -169,7 +163,7 @@ parameters:
 			path: app/Http/Controllers/Admin/DashboardController.php
 
 		-
-			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Callout\>\:\:select\(\) invoked with 2 parameters, 0\-1 required\.$#'
+			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:select\(\) invoked with 2 parameters, 0\-1 required\.$#'
 			identifier: arguments.count
 			count: 1
 			path: app/Http/Controllers/Admin/DashboardController.php
@@ -267,7 +261,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: app/Http/Controllers/BookingController.php
 
 		-
@@ -481,15 +475,15 @@ parameters:
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:participants\(\)\.$#'
-			identifier: method.notFound
-			count: 2
+			message: '#^Anonymous function should return array\{id\: string, name\: string\|null, photo\: string\|null, clubs\: Illuminate\\Support\\Collection\<int, array\{name\: mixed, slug\: mixed\}\>\} but returns array\{id\: string, name\: string\|null, photo\: string\|null, clubs\: Illuminate\\Support\\Collection\<int, array\{name\: string\|null, slug\: mixed\}\>\}\.$#'
+			identifier: return.type
+			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:participants\(\)\.$#'
+			identifier: method.notFound
+			count: 2
 			path: app/Http/Controllers/UserController.php
 
 		-
@@ -509,18 +503,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Webhook/TwilioController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$booking_info\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isOfficer\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
 
 		-
 			message: '#^Cannot call method toDateString\(\) on string\.$#'
@@ -772,12 +754,6 @@ parameters:
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Mail/BookingMessageMail.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
 			path: app/Mail/PlatformNews.php
 
 		-
@@ -925,12 +901,6 @@ parameters:
 			path: app/Observers/IncidentNoteObserver.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:officers\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: app/Policies/BookingPolicy.php
-
-		-
 			message: '#^Strict comparison using \=\=\= between string and int\<0, max\>\|null will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 2
@@ -974,18 +944,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Hut\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:sortBy\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 1
 			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php

@@ -12,6 +12,7 @@ use App\Mail\BookingRejectedMail;
 use App\Models\Booking;
 use App\Models\Permit;
 use App\Models\User;
+use App\Services\BookingSlackNotifier;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,7 +57,7 @@ class BookingController extends Controller
         return BookingResource::collection($bookings);
     }
 
-    public function approve(Request $request, Booking $booking): JsonResponse
+    public function approve(Request $request, Booking $booking, BookingSlackNotifier $slack): JsonResponse
     {
         $this->authorize('approve', $booking);
 
@@ -69,8 +70,10 @@ class BookingController extends Controller
             // concurrent approvals can't exceed the day's capacity.
             $permit = Permit::lockForUpdate()->find($booking->permit_id);
 
-            if (!$permit->isDateAvailable($booking->date->toDateString())) {
-                return response()->json(['error' => 'This date is already fully booked; approving would exceed the daily limit.'], 422);
+            $date = $booking->date->toDateString();
+
+            if (!$request->boolean('override_limit') && !$permit->isDateAvailable($date)) {
+                return $this->overLimitResponse($permit, $date);
             }
 
             $booking->update([
@@ -92,10 +95,12 @@ class BookingController extends Controller
             new BookingApprovedMail($booking)
         );
 
+        $slack->approved($booking, $request->user());
+
         return response()->json(new BookingResource($booking));
     }
 
-    public function reject(Request $request, Booking $booking): JsonResponse
+    public function reject(Request $request, Booking $booking, BookingSlackNotifier $slack): JsonResponse
     {
         $this->authorize('reject', $booking);
 
@@ -121,6 +126,8 @@ class BookingController extends Controller
         Mail::to($booking->applicant->email)->queue(
             new BookingRejectedMail($booking)
         );
+
+        $slack->rejected($booking, $request->user());
 
         return response()->json(new BookingResource($booking));
     }
@@ -154,8 +161,8 @@ class BookingController extends Controller
             // this insert can't race a concurrent booking past the daily limit.
             $permit = Permit::lockForUpdate()->find($permit->id);
 
-            if (!$permit->isDateAvailable($data['date'])) {
-                return response()->json(['error' => 'This date is fully booked.'], 422);
+            if (!$request->boolean('override_limit') && !$permit->isDateAvailable($data['date'])) {
+                return $this->overLimitResponse($permit, $data['date']);
             }
 
             if (!$permit->isInSeason($data['date'])) {
@@ -189,6 +196,21 @@ class BookingController extends Controller
         return response()->json(new BookingResource($booking), 201);
     }
 
+    /**
+     * The daily limit is soft for officers: they're told the day is full and
+     * can resend with override_limit to go over it.
+     */
+    private function overLimitResponse(Permit $permit, string $date): JsonResponse
+    {
+        $approved = $permit->approvedBookingsForDate($date)->count();
+
+        return response()->json([
+            'error' => "This date already has {$approved} approved ".($approved === 1 ? 'group' : 'groups')
+                ." (daily limit {$permit->max_groups_per_day}).",
+            'over_limit' => true,
+        ], 422);
+    }
+
     public function message(Request $request, Booking $booking): JsonResponse
     {
         $this->authorize('approve', $booking);
@@ -204,7 +226,7 @@ class BookingController extends Controller
         $booking->load(['permit', 'applicant']);
 
         Mail::to($booking->applicant->email)->queue(
-            new BookingMessageMail($booking, $validator->validated()['message'], $request->user()->name)
+            new BookingMessageMail($booking, $validator->validated()['message'], $request->user())
         );
 
         return response()->json(['message' => 'Message sent successfully.']);

@@ -394,6 +394,16 @@ class User extends Authenticatable implements \OwenIt\Auditing\Contracts\Auditab
         return $this->hasMany(Booking::class);
     }
 
+    /**
+     * Permits this user is assigned to administer as an officer.
+     *
+     * @return BelongsToMany<Permit, $this>
+     */
+    public function managedPermits(): BelongsToMany
+    {
+        return $this->belongsToMany(Permit::class, 'permit_user')->withTimestamps();
+    }
+
     public function administeredPermits(): BelongsToMany
     {
         return $this->belongsToMany(Permit::class, 'permit_user')->withTimestamps();

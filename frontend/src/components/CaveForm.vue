@@ -503,9 +503,17 @@ const roundToMetre = (val) => {
   return Math.round(val * 100000) / 100000
 }
 
+// Write the pin back only when it has actually moved. Loading a cave also
+// moves the pin (to the saved location), and writing that back rounded would
+// truncate stored coordinates, so a text-only edit or suggestion also
+// "changed" the location.
 watch(coordinates, (newCoords) => {
-  internalCave.value.location_lng = roundToMetre(newCoords.lng)
-  internalCave.value.location_lat = roundToMetre(newCoords.lat)
+  if (roundToMetre(newCoords.lng) !== roundToMetre(internalCave.value.location_lng || 0)) {
+    internalCave.value.location_lng = roundToMetre(newCoords.lng)
+  }
+  if (roundToMetre(newCoords.lat) !== roundToMetre(internalCave.value.location_lat || 0)) {
+    internalCave.value.location_lat = roundToMetre(newCoords.lat)
+  }
 })
 
 watch(() => internalCave.value.location_lat, (newLat) => {

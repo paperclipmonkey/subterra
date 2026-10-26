@@ -161,21 +161,85 @@ class AssistantTest extends TestCase
             ->assertJsonValidationErrors(['messages.0.role']);
     }
 
-    #[\PHPUnit\Framework\Attributes\Test]
-    public function too_many_messages_returns_unprocessable(): void
+    private function conversation(int $userTurns): array
     {
-        $admin = User::factory()->admin()->pipAgreed()->create();
-
         $messages = [];
-        for ($i = 0; $i < 21; ++$i) {
+        for ($i = 0; $i < $userTurns; ++$i) {
+            if ($i > 0) {
+                $messages[] = ['role' => 'assistant', 'content' => "Reply {$i}"];
+            }
             $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
         }
 
-        $response = $this->actingAs($admin)
-            ->postJson(self::ENDPOINT, ['messages' => $messages]);
+        return ['messages' => $messages];
+    }
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['messages']);
+    private function fakeOpenRouter(int $promptTokens = 10, int $completionTokens = 5): void
+    {
+        config(['assistant.openrouter.api_key' => 'test-key']);
+        Http::fake([
+            'openrouter.ai/*' => Http::response([
+                'choices' => [['message' => ['role' => 'assistant', 'content' => 'Try Swildon\'s Hole.']]],
+                'usage' => ['prompt_tokens' => $promptTokens, 'completion_tokens' => $completionTokens],
+            ]),
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function pip_user_gets_an_ai_reply_routed_to_providers_that_do_not_keep_data(): void
+    {
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
+        $this->fakeOpenRouter();
+
+        $events = $this->parseSseContent($this->captureStream(
+            $this->actingAs($user)->postJson(self::ENDPOINT, $this->validPayload())
+        ));
+
+        $this->assertSame("Try Swildon's Hole.", collect($events)->firstWhere('type', 'content')['data']['text'] ?? null);
+        Http::assertSent(fn ($request) => $request['provider']['data_collection'] === 'deny');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function long_conversation_within_the_turn_limit_is_accepted(): void
+    {
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
+        config(['assistant.openrouter.api_key' => null]);
+
+        $this->actingAs($user)
+            ->postJson(self::ENDPOINT, $this->conversation(40))
+            ->assertStatus(200);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function conversation_over_the_turn_limit_is_rejected(): void
+    {
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
+        config(['assistant.limits.max_user_turns' => 3]);
+
+        $this->actingAs($user)
+            ->postJson(self::ENDPOINT, $this->conversation(4))
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'conversation_limit');
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function user_over_the_daily_token_budget_is_refused(): void
+    {
+        $user = User::factory()->pipAccess()->pipAgreed()->create();
+        config(['assistant.budget.daily_tokens' => 1000]);
+        $this->fakeOpenRouter(600, 500);
+
+        $this->captureStream($this->actingAs($user)->postJson(self::ENDPOINT, $this->validPayload()));
+
+        $this->actingAs($user)
+            ->postJson(self::ENDPOINT, $this->validPayload())
+            ->assertStatus(429)
+            ->assertJsonPath('code', 'daily_budget_exceeded');
+
+        $this->travelTo(now('Europe/London')->addDay()->startOfDay()->addHour());
+        $this->actingAs($user)
+            ->postJson(self::ENDPOINT, $this->validPayload())
+            ->assertStatus(200);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

@@ -173,6 +173,25 @@
                     </v-list-item>
                   </v-list>
                   <p v-else-if="!loadingPending" class="text-grey mt-4">No members waiting to be confirmed.</p>
+
+                  <template v-if="!loadingPending && recentlyApproved.length > 0">
+                    <div class="text-subtitle-2 mt-6">Recently confirmed</div>
+                    <v-list lines="two" data-test="recently-approved">
+                      <v-list-item v-for="member in recentlyApproved" :key="member.id" :title="member.name">
+                        <template #prepend>
+                          <v-avatar size="small" class="mr-2">
+                            <v-img :src="member.photo || '/default-avatar.png'" :alt="member.name" />
+                          </v-avatar>
+                        </template>
+                        <template #subtitle>
+                          Confirmed{{ member.approved_by ? ` by ${member.approved_by}` : '' }} on {{ formatApprovedAt(member.approved_at) }}
+                        </template>
+                        <template #append>
+                          <v-icon color="green" :icon="mdiCheck" />
+                        </template>
+                      </v-list-item>
+                    </v-list>
+                  </template>
                 </v-col>
               </v-row>
             </v-container>
@@ -262,6 +281,8 @@ const filteredMembers = computed(() => {
   )
 })
 const pendingMembers = ref([])
+const recentlyApproved = ref([])
+const formatApprovedAt = iso => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 const availableUsers = ref([])
 const selectedUserToAdd = ref(null)
 const memberDataChanged = ref(false)
@@ -312,9 +333,12 @@ const fetchPendingMembers = async () => {
   if (!props.clubSlug) return
   loadingPending.value = true
   try {
-    const response = await api.get(`/api/admin/clubs/${props.clubSlug}/pending-members`)
-    const body = response.data
-    pendingMembers.value = (body.data || body).map(user => ({ ...user, loading: false }))
+    const [pendingResponse, recentResponse] = await Promise.all([
+      api.get(`/api/admin/clubs/${props.clubSlug}/pending-members`),
+      api.get(`/api/admin/clubs/${props.clubSlug}/recently-approved-members`),
+    ])
+    pendingMembers.value = (pendingResponse.data.data || pendingResponse.data).map(user => ({ ...user, loading: false }))
+    recentlyApproved.value = recentResponse.data.data || recentResponse.data
   } finally {
     loadingPending.value = false
   }

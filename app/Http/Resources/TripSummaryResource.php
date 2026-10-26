@@ -28,7 +28,11 @@ class TripSummaryResource extends JsonResource
             'description' => $this->description ?? '',
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
-            'participants' => UserResource::collection($this->participants),
+            // Only what list views show; the trip page's TripResource has the full user.
+            'participants' => $this->participants->map(fn ($participant) => [
+                'id' => $participant->id,
+                'name' => $participant->name,
+            ])->values(),
             'duration' => $this->duration,
             'entrance' => $this->entrance ? [
                 'id' => $this->entrance->id,
