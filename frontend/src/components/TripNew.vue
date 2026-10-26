@@ -65,14 +65,14 @@
               <v-row>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripDurationHours" label="Duration (hours)" type="number" min="0" step="1"
-                                :rules="rules.durationHours" :error-messages="validationErrors.end_time"
+                                :rules="[...rules.durationHours, ...rules.endTime]" :error-messages="validationErrors.end_time"
                                 required hint="How many hours the trip lasted."
                                 persistent-hint
                                 variant="outlined" @update:model-value="val => { tripDurationHours = Math.floor(Number(val)) || 0; delete validationErrors.end_time }" />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="tripDurationMinutes" label="Duration (minutes)" type="number" min="0" max="59" step="1"
-                                :rules="rules.durationMinutes" :error-messages="validationErrors.end_time"
+                                :rules="[...rules.durationMinutes, ...rules.endTime]" :error-messages="validationErrors.end_time"
                                 required hint="How many minutes the trip lasted."
                                 persistent-hint
                                 variant="outlined" @update:model-value="val => { tripDurationMinutes = Math.max(0, Math.min(59, Math.floor(Number(val)) || 0)); delete validationErrors.end_time }" />
@@ -422,8 +422,9 @@ let trip = reactive({
   creator_id: null,
 })
 
-const tripStartDate = ref(moment().format('YYYY-MM-DD'))
-const tripStartTime = ref(moment().format('HH:mm'))
+const defaultTripStart = moment().subtract(4, 'hours')
+const tripStartDate = ref(defaultTripStart.format('YYYY-MM-DD'))
+const tripStartTime = ref(defaultTripStart.format('HH:mm'))
 const today = moment().format('YYYY-MM-DD')
 const tripDurationHours = ref(4)
 const tripDurationMinutes = ref(0)
@@ -543,6 +544,12 @@ const rules = {
     () => {
       if (!start_time.value.isAfter(moment())) return true
       return 'The trip can\'t start in the future.'
+    }
+  ],
+  endTime: [
+    () => {
+      if (!end_time.value.isAfter(moment())) return true
+      return 'The trip can\'t end in the future. Check the entry time and duration.'
     }
   ],
   durationHours: [

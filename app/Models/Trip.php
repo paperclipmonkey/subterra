@@ -29,6 +29,11 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'media',
     ];
 
+    public const FUTURE_TIME_MESSAGES = [
+        'start_time.before_or_equal' => 'The trip can\'t start in the future. Log it once it has happened.',
+        'end_time.before_or_equal' => 'The trip can\'t end in the future. Check the entry time and duration.',
+    ];
+
     protected $fillable = [
         'name',
         'description',
@@ -44,6 +49,12 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'start_time' => 'datetime',
         'end_time' => 'datetime',
     ];
+
+    /** Trips are logged after the fact; allow a little client clock skew. */
+    public static function latestAllowedTime(): \Illuminate\Support\Carbon
+    {
+        return now()->addMinutes(5);
+    }
 
     protected static function booted(): void
     {

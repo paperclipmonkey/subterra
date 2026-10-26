@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Trip;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTripRequest extends FormRequest
@@ -32,15 +33,17 @@ class UpdateTripRequest extends FormRequest
         $startTime = $this->input('start_time')
             ?? $this->route('trip')?->start_time?->toIso8601String();
 
+        $latest = Trip::latestAllowedTime()->toIso8601String();
+
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'cave_system_id' => ['sometimes', 'required', 'exists:cave_systems,id'],
             'entrance_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
             'exit_cave_id' => ['sometimes', 'required', 'exists:caves,id'],
-            'start_time' => ['sometimes', 'required', 'date', 'before_or_equal:now'],
+            'start_time' => ['sometimes', 'required', 'date', 'before_or_equal:'.$latest],
             'end_time' => array_merge(
-                ['sometimes', 'required', 'date'],
+                ['sometimes', 'required', 'date', 'before_or_equal:'.$latest],
                 $this->filled('start_time')
                     ? ['after_or_equal:start_time']
                     : ($startTime ? ['after_or_equal:'.$startTime] : [])
@@ -56,5 +59,13 @@ class UpdateTripRequest extends FormRequest
             'existing_media.*.copyright' => ['nullable', 'string', 'max:255'],
             'existing_media.*.photographer' => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return Trip::FUTURE_TIME_MESSAGES;
     }
 }
