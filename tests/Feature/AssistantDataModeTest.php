@@ -135,22 +135,6 @@ class AssistantDataModeTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function default_mode_still_caps_history_at_20_messages(): void
-    {
-        $admin = User::factory()->admin()->pipAgreed()->create();
-
-        $messages = [];
-        for ($i = 1; $i <= 21; ++$i) {
-            $messages[] = ['role' => 'user', 'content' => "Message {$i}"];
-        }
-
-        $this->actingAs($admin)
-            ->postJson(self::ENDPOINT, ['messages' => $messages])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['messages']);
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
     public function default_mode_does_not_offer_proposal_tools(): void
     {
         $this->fakeOpenRouter();

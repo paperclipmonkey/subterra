@@ -6,9 +6,10 @@ return [
 
     'openrouter' => [
         'api_key' => env('OPENROUTER_API_KEY'),
-        'base_url' => 'https://openrouter.ai/api/v1',
-        'model' => env('ASSISTANT_MODEL', 'anthropic/claude-3-5-haiku'),
-        'max_tokens' => 2048,
+        'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+        // anthropic/claude-3-5-haiku (the old default) no longer has any OpenRouter endpoints.
+        'model' => env('ASSISTANT_MODEL', 'anthropic/claude-haiku-4.5'),
+        'max_tokens' => (int) env('ASSISTANT_MAX_TOKENS', 2048),
         'temperature' => 0.7,
     ],
 
@@ -29,6 +30,11 @@ return [
         ))),
         'allow_fallbacks' => env('ASSISTANT_PROVIDER_ALLOW_FALLBACKS', true),
         'require_parameters' => env('ASSISTANT_PROVIDER_REQUIRE_PARAMETERS', true),
+        // Users' trip logs and companions' names reach the model, so only route
+        // to providers that don't train on or store prompts.
+        'deny_data_collection' => env('ASSISTANT_PROVIDER_DENY_DATA_COLLECTION', true),
+        // Stricter still: zero-data-retention endpoints only.
+        'zdr' => env('ASSISTANT_PROVIDER_ZDR', false),
     ],
 
     // Enable SSE token streaming for the final response. Set to false in test environments.
@@ -44,6 +50,9 @@ return [
     'limits' => [
         // Maximum conversation turns sent to the model in one request
         'max_history_messages' => 20,
+        // Maximum user messages in one conversation; beyond this the user is
+        // asked to start a new one.
+        'max_user_turns' => (int) env('ASSISTANT_MAX_USER_TURNS', 40),
         // Maximum LLM→tool→LLM iterations before forcing a final text answer.
         // 6 covers richer planning flows (user_exp → search → details →
         // weather → huts → routes) plus a little slack for the model to
@@ -58,6 +67,13 @@ return [
         'max_total_tool_calls' => 10,
     ],
 
+    // Per-user spend cap, on top of the 50 requests/day rate limit: prompt +
+    // completion tokens a user may use per (UK) day across all modes. 0
+    // disables it. Platform admins are exempt.
+    'budget' => [
+        'daily_tokens' => (int) env('ASSISTANT_DAILY_TOKEN_BUDGET', 1000000),
+    ],
+
     // Limits for the admin data-steward mode. Data curation sessions are long
     // (scan → investigate → propose, across many records and many turns), so
     // this mode gets a far bigger budget than the trip-planning assistant.
@@ -65,6 +81,7 @@ return [
     // generous ones — purely as a runaway-loop guard.
     'data_limits' => [
         'max_history_messages' => null,
+        'max_user_turns' => null,
         'max_tool_iterations' => 30,
         'max_total_tool_calls' => 60,
     ],

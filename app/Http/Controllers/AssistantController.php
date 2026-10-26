@@ -47,6 +47,22 @@ class AssistantController extends Controller
             ], 403);
         }
 
+        $maxTurns = config(AssistantService::limitsKey($mode).'.max_user_turns');
+        $userTurns = count(array_filter($messages, fn ($m) => $m['role'] === 'user'));
+        if ($maxTurns !== null && $userTurns > (int) $maxTurns) {
+            return response()->json([
+                'error' => 'This conversation has reached its length limit. Start a new conversation to carry on.',
+                'code' => 'conversation_limit',
+            ], 422);
+        }
+
+        if (AssistantService::overDailyBudget($user)) {
+            return response()->json([
+                'error' => "You've used today's Pip allowance. It resets at midnight.",
+                'code' => 'daily_budget_exceeded',
+            ], 429);
+        }
+
         return response()->stream(function () use ($messages, $user, $mode) {
             // Release the session lock so other browser tabs remain responsive
             session()->save();
