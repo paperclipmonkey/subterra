@@ -86,7 +86,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { mdiCursorDefault, mdiParking, mdiHome, mdiVectorLine, mdiDelete } from '@mdi/js'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import { MapStyleControl } from '@/utilities/MapStyleControl'
 import { mdiSatelliteVariant, mdiTerrain } from '@mdi/js'
 import {

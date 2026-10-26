@@ -20,7 +20,7 @@ import { useAppStore } from '@/stores/app'
 import { useCaveStore } from '@/stores/caves'
 import { MapButtonControl } from '@/utilities/MapButtonControl'
 import { downloadCavesKml } from '@/utilities/caveKml'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 
 const appStore = useAppStore()
 const caveStore = useCaveStore()

@@ -303,7 +303,7 @@ const getDescriptionSnippet = (item) => {
   const suggested = item.suggested_data?.description
   const baseline = item.suggestable?.description || item.original_data?.description
   if (suggested && suggested !== baseline) {
-    return suggested.replace(/<[^>]*>/g, '').substring(0, 140).trim() + (suggested.length > 140 ? '…' : '')
+    return (new DOMParser().parseFromString(suggested, 'text/html').body.textContent || '').substring(0, 140).trim() + (suggested.length > 140 ? '…' : '')
   }
   return null
 }

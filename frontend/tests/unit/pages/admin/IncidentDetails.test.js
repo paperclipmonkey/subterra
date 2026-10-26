@@ -37,12 +37,10 @@ vi.mock('@indoorequal/vue-maplibre-gl', () => ({
     useMap: () => ({ map: { fitBounds: vi.fn(), resize: vi.fn(), setCenter: vi.fn(), setZoom: vi.fn() }, isLoaded: true })
 }))
 vi.mock('maplibre-gl', () => ({
-    default: {
-        Map: vi.fn(),
-        Marker: vi.fn(),
-        Popup: vi.fn(),
-        NavigationControl: vi.fn(),
-    }
+    Map: vi.fn(),
+    Marker: vi.fn(),
+    Popup: vi.fn(),
+    NavigationControl: vi.fn(),
 }))
 
 const mockNotificationStore = {

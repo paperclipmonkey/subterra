@@ -385,7 +385,7 @@ import {
   MglMarker,
   MglPopup,
 } from '@indoorequal/vue-maplibre-gl'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 
 export default {
   components: {
