@@ -7,7 +7,7 @@
       <v-card-text>
         <div>
           <div v-if="pendingClubs && pendingClubs.length">
-            <h3 class="text-h6 font-weight-bold mb-4">Awaiting confirmation</h3>
+            <h3 class="text-title-large font-weight-bold mb-4">Awaiting confirmation</h3>
             <v-list class="pa-0">
               <v-list-item v-for="club in pendingClubs" :key="club.id" class="px-3 py-3 mb-4 border rounded-lg">
                 <template #prepend>
@@ -18,7 +18,7 @@
                 <v-list-item-title class="font-weight-bold text-wrap">{{ club.name }}</v-list-item-title>
                 <div class="d-flex flex-wrap align-center mt-1" style="gap: 8px;">
                   <v-chip color="warning" size="small" variant="flat">Pending</v-chip>
-                  <span class="text-caption text-medium-emphasis">
+                  <span class="text-body-small text-medium-emphasis">
                     Submitted {{ formatRelativeTime(club.pivot?.created_at) }}
                   </span>
                 </div>
@@ -31,14 +31,14 @@
           </p>
 
           <v-alert type="info" variant="tonal" class="mb-6" border="start" :icon="mdiShieldCheck">
-            <div class="text-subtitle-1 font-weight-bold mb-2">Why confirm your club?</div>
-            <p class="text-body-2 mb-4">
+            <div class="text-body-large font-weight-bold mb-2">Why confirm your club?</div>
+            <p class="text-body-medium mb-4">
               Subterra is a community-driven platform. Many features are restricted to confirmed club members to ensure the privacy and security of sensitive cave data.
             </p>
             <v-row dense>
               <v-col cols="12" sm="6">
                 <div class="font-weight-bold mb-1 text-primary">Unlocked Now:</div>
-                <ul class="ml-4 text-body-2">
+                <ul class="ml-4 text-body-medium">
                   <li><strong>Log Trips</strong>: Records your underground adventures.</li>
                   <li><strong>Track Stats</strong>: See your caving progress and medals.</li>
                   <li><strong>Public Data</strong>: See cave names and basic info.</li>
@@ -46,7 +46,7 @@
               </v-col>
               <v-col cols="12" sm="6">
                 <div class="font-weight-bold mb-1 text-success">Once confirmed:</div>
-                <ul class="ml-4 text-body-2">
+                <ul class="ml-4 text-body-medium">
                   <li><strong>Interactive Maps</strong>: View precise cave locations.</li>
                   <li><strong>Access Info</strong>: Read detailed landowner contacts.</li>
                   <li><strong>Safety Callouts</strong>: Use our emergency notification system.</li>
@@ -69,7 +69,7 @@
             name="random_unique_club_confirm_field"
           >
             <template #item="{ props: slotProps, item }">
-              <v-list-item v-bind="slotProps" :title="item.raw.name" />
+              <v-list-item v-bind="slotProps" :title="item.name" />
             </template>
             <template #no-data>
               <v-list-item>

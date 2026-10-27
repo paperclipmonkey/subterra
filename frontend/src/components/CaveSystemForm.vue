@@ -9,7 +9,7 @@
       />
     </v-card-title>
     <v-card-text>
-      <div class="text-subtitle-2 mt-4 mb-1">System description (Optional)</div>
+      <div class="text-title-small mt-4 mb-1">System description (Optional)</div>
       <MilkdownEditor
         v-model="internalSystem.description"
         placeholder="Detailed description of the cave system..."
@@ -53,7 +53,7 @@
         clearable
         class="mt-4"
       />
-      <div class="text-subtitle-2 mt-4 mb-1">References</div>
+      <div class="text-title-small mt-4 mb-1">References</div>
       <MilkdownEditor
         v-model="internalSystem.references"
         placeholder="References, sources, etc."
@@ -63,7 +63,7 @@
 
     <!-- Files Section (Optional, only show if files exist or are being added) -->
     <v-card-text v-if="showFiles">
-      <h3 class="text-h6 mb-2">Files</h3>
+      <h3 class="text-title-large mb-2">Files</h3>
       <v-list v-if="internalSystem.files && internalSystem.files.length > 0" lines="two">
         <v-list-item
           v-for="file in internalSystem.files"
@@ -103,7 +103,7 @@
               />
             </v-col>
           </v-row>
-          <div class="text-caption text-grey mt-1">
+          <div class="text-body-small text-grey mt-1">
             {{ (file.size / 1024).toFixed(2) }} KB
           </div>
 
@@ -118,7 +118,7 @@
           </template>
         </v-list-item>
       </v-list>
-      <h3 class="text-h6 mt-4 mb-2">New Files</h3>
+      <h3 class="text-title-large mt-4 mb-2">New Files</h3>
       <v-list v-if="pendingFiles.length > 0" lines="two">
         <v-list-item v-for="(item, index) in pendingFiles" :key="item.id">
           <template #prepend>
@@ -129,8 +129,8 @@
           
           <v-row dense>
             <v-col cols="12" sm="5">
-              <div class="text-subtitle-1 text-truncate">{{ item.file.name }}</div>
-              <div class="text-caption text-grey">{{ (item.file.size / 1024).toFixed(2) }} KB</div>
+              <div class="text-body-large text-truncate">{{ item.file.name }}</div>
+              <div class="text-body-small text-grey">{{ (item.file.size / 1024).toFixed(2) }} KB</div>
             </v-col>
             <v-col cols="12" sm="7">
               <v-text-field
@@ -171,7 +171,7 @@
         type="info"
         variant="tonal"
         density="compact"
-        class="mt-4 text-caption"
+        class="mt-4 text-body-small"
       >
         By submitting this data, you confirm that you have the right to share this information and media, and that it does not infringe on any third-party rights.
       </v-alert>

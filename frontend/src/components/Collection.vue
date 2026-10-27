@@ -20,15 +20,15 @@
       </div>
 
       <v-container class="pb-6">
-        <h1 class="text-h3 text-white font-weight-bold mb-2">{{ collection.name }}</h1>
+        <h1 class="text-display-medium text-white font-weight-bold mb-2">{{ collection.name }}</h1>
       </v-container>
     </v-img>
 
     <v-container class="py-6">
       <div class="d-flex flex-column gap-2 mb-6">
         <div class="d-flex justify-space-between align-end mb-2">
-          <div class="text-h6 font-weight-bold">Progress</div>
-          <div class="text-subtitle-1 font-weight-medium text-primary">
+          <div class="text-title-large font-weight-bold">Progress</div>
+          <div class="text-body-large font-weight-medium text-primary">
             {{ tickedCount }} / {{ totalCount }} Completed ({{ progress }}%)
           </div>
         </div>
@@ -37,10 +37,10 @@
 
       <div v-if="collection.description" class="mb-6">
         <div class="d-flex justify-space-between align-center mb-2">
-          <div class="text-h6 font-weight-bold">About this Collection</div>
+          <div class="text-title-large font-weight-bold">About this Collection</div>
           <CorrectionModal entity-type="collection" :entity-id="collection.id" :entity-name="collection.name" />
         </div>
-        <div class="markdown-body text-body-1 text-grey-darken-3">
+        <div class="markdown-body text-body-large text-grey-darken-3">
           <MarkdownRenderer :source="collection.description" />
         </div>
       </div>
@@ -91,8 +91,8 @@
 
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
     <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-    <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-    <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+    <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+    <p class="text-body-large text-grey mb-6">{{ error }}</p>
     <v-btn color="primary" variant="flat" to="/collections" :prepend-icon="mdiArrowLeft">
       Back to Collections
     </v-btn>

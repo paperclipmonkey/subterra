@@ -7,17 +7,17 @@
           <!-- Logo & Brand -->
           <div class="text-center mb-6">
             <v-img src="@/assets/subterra-logo.png" height="96" contain class="mb-3" />
-            <h1 class="text-h3 font-weight-bold primary--text mb-2">Subterra</h1>
-            <p class="text-subtitle-1 grey--text text--darken-1">The Community Caving Platform</p>
+            <h1 class="text-display-medium font-weight-bold primary--text mb-2">Subterra</h1>
+            <p class="text-body-large grey--text text--darken-1">The Community Caving Platform</p>
           </div>
 
           <!-- BCA Requirement Notice -->
           <v-alert color="amber darken-4" variant="tonal" :icon="mdiShieldAccount" class="mb-6" border="start"
                    density="comfortable">
-            <div class="text-body-2 font-weight-medium">
+            <div class="text-body-medium font-weight-medium">
               Member Access Only
             </div>
-            <div class="text-caption mt-1">
+            <div class="text-body-small mt-1">
               Subterra is exclusively available to active members of the <strong>British Caving Association
                 (BCA)</strong>.
             </div>
@@ -40,7 +40,7 @@
                   class="flex-grow-0 me-1"
                   aria-label="I agree to the Terms of Service and Privacy Policy"
                 />
-                <div class="text-body-2">
+                <div class="text-body-medium">
                   <span class="agree-text" @click="agreedToToS = !agreedToToS">I agree to the</span>
                   <router-link to="/pages/terms-of-service" class="text-decoration-none font-weight-bold">
                     Terms of Service
@@ -51,7 +51,7 @@
                   </router-link>
                 </div>
               </div>
-              <div class="text-caption mt-1 ms-1" :class="agreedToToS ? 'text-success' : 'text-medium-emphasis'">
+              <div class="text-body-small mt-1 ms-1" :class="agreedToToS ? 'text-success' : 'text-medium-emphasis'">
                 <v-icon size="14" :icon="agreedToToS ? mdiCheckCircle : mdiInformationOutline" class="me-1" />
                 Required before you can sign in with Google or a magic link.
               </div>
@@ -65,7 +65,7 @@
 
             <div class="d-flex align-center mb-5">
               <v-divider />
-              <span class="mx-4 text-caption grey--text">OR</span>
+              <span class="mx-4 text-body-small grey--text">OR</span>
               <v-divider />
             </div>
 
@@ -88,18 +88,18 @@
                 </v-btn>
               </v-form>
               <div class="text-center mt-3">
-                <span v-if="!agreedToToS" class="text-caption text-medium-emphasis">
+                <span v-if="!agreedToToS" class="text-body-small text-medium-emphasis">
                   Agree to the terms above to receive your magic link.
                 </span>
-                <span v-else class="text-caption grey--text">We'll send you a tailored magic link to log in.</span>
+                <span v-else class="text-body-small grey--text">We'll send you a tailored magic link to log in.</span>
               </div>
             </div>
 
             <!-- Email Sent Success -->
             <v-card v-else class="text-center py-4 bg-green-lighten-5" variant="flat">
               <v-icon color="success" size="48" class="mb-2" :icon="mdiEmailCheck" />
-              <h3 class="text-h6 font-weight-bold success--text mb-1">Check your inbox</h3>
-              <p class="text-body-2 mb-4">
+              <h3 class="text-title-large font-weight-bold success--text mb-1">Check your inbox</h3>
+              <p class="text-body-medium mb-4">
                 We've sent a magic link to <strong>{{ email }}</strong>
               </p>
               <v-btn variant="text" color="primary" size="small" :prepend-icon="mdiArrowLeft" @click="resetForm">
@@ -124,10 +124,10 @@
 
         <!-- Hero Content -->
         <div class="hero-content z-index-2 text-white mw-600">
-          <h2 class="text-h2 font-weight-black mb-4 text-shadow">
+          <h2 class="text-display-large font-weight-black mb-4 text-shadow">
             Explore the<br>Depths Together
           </h2>
-          <p class="text-h6 font-weight-regular opacity-80 text-shadow">
+          <p class="text-title-large font-weight-regular opacity-80 text-shadow">
             The UK's shared record of caves, trips and the people who explore them —
             with the safety tools to get you back out again.
           </p>
@@ -142,8 +142,8 @@
       <v-col cols="12">
         <div class="features-inner mx-auto px-4 px-md-8 py-10 py-md-14">
           <div class="text-center mb-8 mb-md-10">
-            <h2 class="text-h4 text-md-h3 font-weight-bold mb-3">What you can do on Subterra</h2>
-            <p class="text-body-1 text-medium-emphasis mw-720 mx-auto">
+            <h2 class="text-headline-large text-md-display-medium font-weight-bold mb-3">What you can do on Subterra</h2>
+            <p class="text-body-large text-medium-emphasis mw-720 mx-auto">
               A logbook, a cave database and a safety net in one place. Some features open up
               once your caving club confirms you're one of their members.
             </p>
@@ -155,9 +155,9 @@
                 <v-avatar size="44" rounded="lg" class="feature-card__icon mb-4">
                   <v-icon :icon="feature.icon" size="24" />
                 </v-avatar>
-                <h3 class="text-subtitle-1 font-weight-bold mb-1">{{ feature.title }}</h3>
-                <p class="text-body-2 text-medium-emphasis mb-0">{{ feature.description }}</p>
-                <div v-if="feature.requiresClub" class="text-caption mt-3 feature-card__lock d-flex align-center">
+                <h3 class="text-body-large font-weight-bold mb-1">{{ feature.title }}</h3>
+                <p class="text-body-medium text-medium-emphasis mb-0">{{ feature.description }}</p>
+                <div v-if="feature.requiresClub" class="text-body-small mt-3 feature-card__lock d-flex align-center">
                   <v-icon :icon="mdiLockOutline" size="14" class="mr-1" />
                   Unlocks once your club confirms you
                 </div>
@@ -166,7 +166,7 @@
           </v-row>
 
           <div class="text-center mt-8">
-            <p class="text-body-2 text-medium-emphasis mb-2">
+            <p class="text-body-medium text-medium-emphasis mb-2">
               Subterra is free and open source, run by cavers for the caving community.
             </p>
             <v-btn variant="tonal" color="primary" class="text-none" @click="scrollToSignIn">
@@ -180,13 +180,13 @@
     <!-- Footer -->
     <footer class="login-footer text-center py-6 px-4">
       <div class="d-flex justify-center ga-2 mb-2">
-        <router-link to="/pages/terms-of-service" class="text-caption text-decoration-none grey--text">Terms</router-link>
-        <span class="text-caption grey--text">•</span>
-        <router-link to="/pages/privacy-policy" class="text-caption text-decoration-none grey--text">Privacy</router-link>
-        <span class="text-caption grey--text">•</span>
-        <a href="https://status.subterra.world/" target="_blank" rel="noopener" class="text-caption text-decoration-none grey--text">Status</a>
+        <router-link to="/pages/terms-of-service" class="text-body-small text-decoration-none grey--text">Terms</router-link>
+        <span class="text-body-small grey--text">•</span>
+        <router-link to="/pages/privacy-policy" class="text-body-small text-decoration-none grey--text">Privacy</router-link>
+        <span class="text-body-small grey--text">•</span>
+        <a href="https://status.subterra.world/" target="_blank" rel="noopener" class="text-body-small text-decoration-none grey--text">Status</a>
       </div>
-      <div class="text-caption grey--text text--lighten-1">
+      <div class="text-body-small grey--text text--lighten-1">
         Subterra is <a href="https://github.com/paperclipmonkey/subterra"
                        class="text-decoration-none primary--text">Open Source</a>. Go underground with a plan.
       </div>

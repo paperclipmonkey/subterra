@@ -1,8 +1,8 @@
 <template>
   <div v-if="huts.length === 0" class="text-center py-8">
     <v-icon size="64" color="grey lighten-10" :icon="mdiMapMarkerOff" class="mb-4" />
-    <h3 class="text-h6 font-weight-medium text-grey-darken-1">No huts found</h3>
-    <p class="text-body-2 text-grey-darken-1">Try adjusting your search.</p>
+    <h3 class="text-title-large font-weight-medium text-grey-darken-1">No huts found</h3>
+    <p class="text-body-medium text-grey-darken-1">Try adjusting your search.</p>
   </div>
 
   <v-row v-else class="px-2">
@@ -19,7 +19,7 @@
             <v-icon size="small" start :icon="mdiHomeGroup" />
             {{ hut.club?.name || 'Unknown Club' }}
           </div>
-          <div v-if="hut.location_lat && hut.location_lng" class="text-caption">
+          <div v-if="hut.location_lat && hut.location_lng" class="text-body-small">
             <v-icon size="small" start :icon="mdiMapMarker" />
             {{ hut.location_lat.toFixed(4) }}, {{ hut.location_lng.toFixed(4) }}
           </div>

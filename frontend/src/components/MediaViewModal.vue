@@ -27,7 +27,7 @@
               aria-label="Next photo"
               @click.stop="showNext"
             />
-            <div class="media-counter text-caption">{{ currentIndex + 1 }} / {{ items.length }}</div>
+            <div class="media-counter text-body-small">{{ currentIndex + 1 }} / {{ items.length }}</div>
           </template>
 
           <video
@@ -62,7 +62,7 @@
 
           <!-- Header (Desktop only close button) -->
           <div class="d-none d-md-flex justify-space-between align-center pa-4 pb-2">
-            <div class="text-overline text-medium-emphasis">Media Details</div>
+            <div class="text-label-medium text-uppercase text-medium-emphasis">Media Details</div>
             <v-btn :icon="mdiClose" variant="text" density="comfortable" @click="closeModal" />
           </div>
 
@@ -70,18 +70,18 @@
 
           <div class="pa-4">
             <!-- Title -->
-            <h2 v-if="currentMedia.title" class="text-h5 font-weight-bold mb-4">{{ currentMedia.title }}</h2>
-            <div v-else class="text-h6 font-weight-regular text-medium-emphasis font-italic mb-4">No Title</div>
+            <h2 v-if="currentMedia.title" class="text-headline-small font-weight-bold mb-4">{{ currentMedia.title }}</h2>
+            <div v-else class="text-title-large font-weight-regular text-medium-emphasis font-italic mb-4">No Title</div>
 
             <!-- Metadata Grid -->
             <div class="d-flex flex-column gap-3">
 
               <!-- Trip -->
               <div v-if="currentMedia.trip_name" class="mb-3">
-                <div class="text-caption text-medium-emphasis mb-1">Trip</div>
+                <div class="text-body-small text-medium-emphasis mb-1">Trip</div>
                 <div class="d-flex align-center">
                   <v-icon size="small" start :icon="mdiHiking" color="primary" />
-                  <router-link :to="`/trips/${currentMedia.trip_id}`" class="text-decoration-none text-body-1 font-weight-medium text-primary text-truncate" @click="closeModal">
+                  <router-link :to="`/trips/${currentMedia.trip_id}`" class="text-decoration-none text-body-large font-weight-medium text-primary text-truncate" @click="closeModal">
                     {{ currentMedia.trip_name }}
                   </router-link>
                 </div>
@@ -89,19 +89,19 @@
 
               <!-- Photographer -->
               <div v-if="currentMedia.photographer" class="mb-3">
-                <div class="text-caption text-medium-emphasis mb-1">Photographer</div>
+                <div class="text-body-small text-medium-emphasis mb-1">Photographer</div>
                 <div class="d-flex align-center">
                   <v-icon size="small" start :icon="mdiCamera" class="text-medium-emphasis" />
-                  <span class="text-body-1">{{ currentMedia.photographer }}</span>
+                  <span class="text-body-large">{{ currentMedia.photographer }}</span>
                 </div>
               </div>
 
               <!-- Copyright -->
               <div v-if="currentMedia.copyright" class="mb-3">
-                <div class="text-caption text-medium-emphasis mb-1">Copyright</div>
+                <div class="text-body-small text-medium-emphasis mb-1">Copyright</div>
                 <div class="d-flex align-center">
                   <v-icon size="small" start :icon="mdiCopyright" class="text-medium-emphasis" />
-                  <span class="text-body-2">{{ currentMedia.copyright }}</span>
+                  <span class="text-body-medium">{{ currentMedia.copyright }}</span>
                 </div>
               </div>
             </div>

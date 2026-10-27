@@ -9,21 +9,21 @@
     <v-card>
       <v-card-title class="d-flex align-center pa-4" style="gap: 10px;">
         <v-icon color="error" :icon="mdiFlagOutline" />
-        <span class="text-h6">Report this {{ targetNoun }}</span>
+        <span class="text-title-large">Report this {{ targetNoun }}</span>
       </v-card-title>
 
       <v-divider />
 
       <v-card-text v-if="sent" class="pa-6 text-center">
         <v-icon color="success" size="48" :icon="mdiCheckCircleOutline" class="mb-3" />
-        <p class="text-body-1 mb-1">Thanks — this has been sent to our moderators.</p>
-        <p class="text-body-2 text-medium-emphasis mb-0">
+        <p class="text-body-large mb-1">Thanks — this has been sent to our moderators.</p>
+        <p class="text-body-medium text-medium-emphasis mb-0">
           We look at every report. You won't normally hear back unless we need more from you.
         </p>
       </v-card-text>
 
       <v-card-text v-else class="pa-4">
-        <p class="text-body-2 text-medium-emphasis mb-4">
+        <p class="text-body-medium text-medium-emphasis mb-4">
           Tell us what's wrong and a moderator will look at it. If someone is in immediate
           danger, contact the police on 999 rather than waiting for us.
         </p>

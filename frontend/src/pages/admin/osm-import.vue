@@ -1,8 +1,8 @@
 <template>
   <v-container>
     <div class="mb-6">
-      <h2 class="text-h3 font-weight-bold mb-1">Import from OpenStreetMap</h2>
-      <p class="text-subtitle-1 text-grey-darken-1">
+      <h2 class="text-display-medium font-weight-bold mb-1">Import from OpenStreetMap</h2>
+      <p class="text-body-large text-grey-darken-1">
         Pick a region, choose the caves you recognise, and import only those.
       </p>
     </div>
@@ -48,7 +48,7 @@
           style="max-width: 320px;"
         />
         <v-spacer />
-        <span class="text-body-2 text-grey-darken-1">{{ selected.length }} selected</span>
+        <span class="text-body-medium text-grey-darken-1">{{ selected.length }} selected</span>
         <v-btn color="primary" :disabled="selected.length === 0" :loading="importing" @click="confirmOpen = true">
           Import selected
         </v-btn>
@@ -74,7 +74,7 @@
           <v-chip v-else size="small" variant="tonal" :to="`/caves/${item.cave.slug}`">Linked</v-chip>
         </template>
         <template #item.access="{ item }">
-          <span class="text-body-2">{{ item.access || '—' }}</span>
+          <span class="text-body-medium">{{ item.access || '—' }}</span>
         </template>
         <template #item.links="{ item }">
           <a :href="item.osm_url" target="_blank" rel="noopener" class="mr-3">OpenStreetMap</a>
@@ -82,7 +82,7 @@
         </template>
       </v-data-table>
 
-      <p class="text-caption text-grey-darken-1 mt-2">{{ attribution }}</p>
+      <p class="text-body-small text-grey-darken-1 mt-2">{{ attribution }}</p>
     </template>
 
     <v-card v-if="results.length" class="mt-6" variant="outlined">

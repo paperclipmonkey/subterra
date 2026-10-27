@@ -1,15 +1,15 @@
 <template>
   <v-container>
     <div class="mb-8">
-      <h2 class="text-h3 font-weight-bold mb-1">Administration</h2>
-      <p class="text-subtitle-1 text-grey-darken-1">Manage platform operations, users, and content.</p>
+      <h2 class="text-display-medium font-weight-bold mb-1">Administration</h2>
+      <p class="text-body-large text-grey-darken-1">Manage platform operations, users, and content.</p>
     </div>
 
     <!-- Operations & Safety -->
     <section v-if="isDutyOfficer" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="error" class="mr-3" size="32" :icon="mdiShieldAlert" />
-        <h3 class="text-h5 font-weight-bold">Operations & Safety</h3>
+        <h3 class="text-headline-small font-weight-bold">Operations & Safety</h3>
       </div>
       <v-row>
         <v-col v-if="isDutyOfficer" cols="12" sm="6" md="4" lg="3">
@@ -39,7 +39,7 @@
     <section v-if="isPlatformAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="primary" class="mr-3" size="32" :icon="mdiAccountCog" />
-        <h3 class="text-h5 font-weight-bold">User Management</h3>
+        <h3 class="text-headline-small font-weight-bold">User Management</h3>
       </div>
       <v-row>
         <v-col cols="12" sm="6" md="4" lg="3">
@@ -89,7 +89,7 @@
     <section v-if="isPlatformAdmin || isDataAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="success" class="mr-3" size="32" :icon="mdiDatabaseEdit" />
-        <h3 class="text-h5 font-weight-bold">Content & Data</h3>
+        <h3 class="text-headline-small font-weight-bold">Content & Data</h3>
       </div>
       <v-row>
         <v-col v-if="isPlatformAdmin || isDataAdmin" cols="12" sm="6" md="4" lg="3">
@@ -179,7 +179,7 @@
     <section v-if="isPlatformAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="grey-darken-2" class="mr-3" size="32" :icon="mdiChartBar" />
-        <h3 class="text-h5 font-weight-bold">Analytics</h3>
+        <h3 class="text-headline-small font-weight-bold">Analytics</h3>
       </div>
       <v-row>
         <v-col cols="12" sm="6" md="4" lg="3">
@@ -199,7 +199,7 @@
     <section v-if="isAccessOfficer || isPlatformAdmin" class="mb-10">
       <div class="d-flex align-center mb-4">
         <v-icon color="amber-darken-2" class="mr-3" size="32" :icon="mdiKeyVariant" />
-        <h3 class="text-h5 font-weight-bold">Access & Permits</h3>
+        <h3 class="text-headline-small font-weight-bold">Access & Permits</h3>
       </div>
       <v-row>
         <v-col cols="12" sm="6" md="4" lg="3">

@@ -21,7 +21,7 @@
         rounded
         class="flex-grow-1 mr-2"
       />
-      <span class="text-caption text-medium-emphasis">{{ offlineStore.downloadProgress }}%</span>
+      <span class="text-body-small text-medium-emphasis">{{ offlineStore.downloadProgress }}%</span>
     </div>
 
     <v-btn

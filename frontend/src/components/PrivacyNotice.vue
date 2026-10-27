@@ -1,15 +1,15 @@
 <template>
   <v-fade-transition>
     <div v-if="showBanner" class="cookie-banner-container">
-      <v-card class="cookie-banner pa-4 pa-md-6 rounded-xl elevation-10" border>
+      <v-card class="cookie-banner pa-4 pa-md-6 rounded-xl elevation-5" border>
         <div class="d-flex flex-column flex-sm-row align-center gap-4">
           <v-avatar color="primary-lighten-5" size="48" class="flex-shrink-0">
             <v-icon color="primary" :icon="mdiCookieOutline" size="28" />
           </v-avatar>
           
           <div class="flex-grow-1 text-center text-sm-left">
-            <h4 class="text-subtitle-1 font-weight-bold mb-1">Cookies & Privacy</h4>
-            <p class="text-body-2 text-medium-emphasis mb-0">
+            <h4 class="text-body-large font-weight-bold mb-1">Cookies & Privacy</h4>
+            <p class="text-body-medium text-medium-emphasis mb-0">
               We use essential cookies for authentication and safety features. 
               Find out more in our 
               <router-link to="/pages/privacy-policy" class="text-primary font-weight-bold text-decoration-none">

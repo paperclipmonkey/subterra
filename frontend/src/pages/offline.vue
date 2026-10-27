@@ -5,8 +5,8 @@
         <div class="d-flex align-center mb-6">
           <v-icon :icon="mdiCloudDownload" size="40" color="primary" class="mr-3" />
           <div>
-            <h1 class="text-h4 font-weight-bold">Offline Caves</h1>
-            <p class="text-body-2 text-medium-emphasis mb-0">
+            <h1 class="text-headline-large font-weight-bold">Offline Caves</h1>
+            <p class="text-body-medium text-medium-emphasis mb-0">
               Caves saved for use without internet connection
             </p>
           </div>
@@ -17,12 +17,12 @@
           <v-card-text>
             <div class="d-flex align-center justify-space-between">
               <div>
-                <div class="text-body-2 text-medium-emphasis">Storage Used</div>
-                <div class="text-h6 font-weight-bold">{{ storage.usedMB }} MB</div>
+                <div class="text-body-medium text-medium-emphasis">Storage Used</div>
+                <div class="text-title-large font-weight-bold">{{ storage.usedMB }} MB</div>
               </div>
               <div class="text-right">
-                <div class="text-body-2 text-medium-emphasis">Available</div>
-                <div class="text-h6 font-weight-bold">{{ storage.quotaMB }} MB</div>
+                <div class="text-body-medium text-medium-emphasis">Available</div>
+                <div class="text-title-large font-weight-bold">{{ storage.quotaMB }} MB</div>
               </div>
             </div>
             <v-progress-linear
@@ -50,8 +50,8 @@
         <!-- Empty State -->
         <v-card v-if="caves.length === 0" variant="outlined" class="text-center pa-8">
           <v-icon :icon="mdiCloudOffOutline" size="80" color="grey-lighten-1" class="mb-4" />
-          <h3 class="text-h5 font-weight-bold mb-2">No Caves Saved Offline</h3>
-          <p class="text-body-1 text-medium-emphasis mb-4">
+          <h3 class="text-headline-small font-weight-bold mb-2">No Caves Saved Offline</h3>
+          <p class="text-body-large text-medium-emphasis mb-4">
             Download caves to access their data, routes, and images without an internet connection — perfect for underground navigation.
           </p>
           <v-btn color="primary" to="/caves" :prepend-icon="mdiMagnify">
@@ -70,13 +70,13 @@
             </v-avatar>
             <div class="flex-grow-1">
               <router-link :to="`/caves/${cave.slug || cave.id}`" class="text-decoration-none">
-                <div class="text-subtitle-1 font-weight-bold text-primary">{{ cave.name }}</div>
+                <div class="text-body-large font-weight-bold text-primary">{{ cave.name }}</div>
               </router-link>
-              <div class="text-caption text-medium-emphasis">
+              <div class="text-body-small text-medium-emphasis">
                 {{ cave.system?.name || 'Unknown system' }}
                 <span v-if="cave._offlineAt"> · Saved {{ formatDate(cave._offlineAt) }}</span>
               </div>
-              <div v-if="cave._offlineMedia && cave._offlineMedia.length > 0" class="text-caption text-medium-emphasis">
+              <div v-if="cave._offlineMedia && cave._offlineMedia.length > 0" class="text-body-small text-medium-emphasis">
                 {{ cave._offlineMedia.length }} media file(s) cached
               </div>
             </div>
@@ -111,7 +111,7 @@
               <v-icon :icon="mdiInformation" class="mr-3 mt-1" />
               <div>
                 <div class="font-weight-bold mb-1">How Offline Mode Works</div>
-                <ul class="text-body-2 pl-4">
+                <ul class="text-body-medium pl-4">
                   <li>Download caves from any cave detail page using the "Save Offline" button</li>
                   <li>All cave data, routes, and images are stored on your device</li>
                   <li>Access downloaded caves without internet — ideal for underground use</li>

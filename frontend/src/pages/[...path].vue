@@ -3,8 +3,8 @@
     <v-row justify="center" align="center">
       <v-col cols="12" sm="8" md="6" class="text-center">
         <v-icon :icon="mdiMapMarkerQuestion" size="64" color="primary" class="mb-4" />
-        <h1 class="text-h4 font-weight-bold mb-2">Page not found</h1>
-        <p class="text-body-1 text-medium-emphasis mb-6">
+        <h1 class="text-headline-large font-weight-bold mb-2">Page not found</h1>
+        <p class="text-body-large text-medium-emphasis mb-6">
           We couldn't find that page. The link may be mistyped, or the page may have moved.
         </p>
         <v-btn color="primary" to="/" class="text-none">Go to home page</v-btn>

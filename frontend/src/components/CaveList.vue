@@ -4,8 +4,8 @@
     <div ref="headerRef" class="map-page__header">
       <div class="map-page__header-inner px-4 pt-3 pt-sm-4 pb-4 mx-auto">
         <div v-show="tab !== 'map'" class="mb-2">
-          <h1 class="text-h6 text-sm-h5 text-md-h4 font-weight-bold text-white">Caves</h1>
-          <div class="map-page__count text-caption text-sm-body-2">{{ headerSubtitle }}</div>
+          <h1 class="text-title-large text-sm-headline-small text-md-headline-large font-weight-bold text-white">Caves</h1>
+          <div class="map-page__count text-body-small text-sm-body-medium">{{ headerSubtitle }}</div>
         </div>
 
         <div class="d-flex align-center ga-2">
@@ -87,7 +87,7 @@
     <!-- Offline data notice -->
     <v-alert v-if="caveStore.isOfflineData" type="info" variant="tonal" density="compact" class="mx-4 mt-4 mb-0 map-page__notice">
       <div class="d-flex align-center">
-        <span class="text-body-2">Showing {{ caveStore.caves.length }} downloaded cave(s). <router-link to="/offline" class="text-decoration-none font-weight-bold">Manage offline data</router-link></span>
+        <span class="text-body-medium">Showing {{ caveStore.caves.length }} downloaded cave(s). <router-link to="/offline" class="text-decoration-none font-weight-bold">Manage offline data</router-link></span>
       </div>
     </v-alert>
 

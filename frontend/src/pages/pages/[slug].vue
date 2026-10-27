@@ -4,8 +4,8 @@
       <v-progress-circular indeterminate />
     </div>
     <div v-else-if="page">
-      <h1 class="text-h3 mb-6">{{ page.title }}</h1>
-      <div class="text-caption mb-4 text-medium-emphasis">
+      <h1 class="text-display-medium mb-6">{{ page.title }}</h1>
+      <div class="text-body-small mb-4 text-medium-emphasis">
         Last updated: {{ formatDate(page.updated_at) }}
       </div>
       <v-sheet class="pa-6" rounded border>
@@ -16,8 +16,8 @@
     </div>
     <div v-else-if="error" class="text-center mt-12">
       <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-      <h2 class="text-h4 mb-2">Page not found</h2>
-      <p class="text-body-1 text-grey mb-4">{{ error }}</p>
+      <h2 class="text-headline-large mb-2">Page not found</h2>
+      <p class="text-body-large text-grey mb-4">{{ error }}</p>
       <v-btn to="/" color="primary" variant="flat">Go Home</v-btn>
     </div>
   </v-container>

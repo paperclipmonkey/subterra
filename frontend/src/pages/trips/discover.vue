@@ -7,8 +7,8 @@
            coordinates). The trip strip below still works for everyone. -->
       <div v-if="!canSeeMap" class="map-locked d-flex align-center justify-center flex-column text-center pa-6">
         <v-icon size="64" color="grey" class="mb-4" :icon="hasPendingApprovals ? mdiAccountClock : mdiLock" />
-        <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
-        <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 320px;">
+        <h3 class="text-title-large text-grey-darken-2 mb-2">Map View Locked</h3>
+        <p class="text-body-large text-grey-darken-1 mb-4" style="max-width: 320px;">
           {{ hasPendingApprovals
             ? 'Your club is confirming your membership. The trip map will unlock once they confirm you.'
             : 'The trip map shows cave locations, so it unlocks once your club confirms your membership.' }}

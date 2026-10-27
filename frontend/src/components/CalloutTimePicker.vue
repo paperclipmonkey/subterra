@@ -1,12 +1,12 @@
 <template>
   <div class="callout-time-picker">
     <v-card variant="outlined" class="pa-4">
-      <div class="text-caption text-grey mb-2">Current Time</div>
-      <div class="text-h6 mb-4">{{ currentTimeDisplay }}</div>
+      <div class="text-body-small text-grey mb-2">Current Time</div>
+      <div class="text-title-large mb-4">{{ currentTimeDisplay }}</div>
 
       <v-divider class="my-4" />
 
-      <div class="text-subtitle-1 font-weight-bold mb-4">Callout Alarm Time</div>
+      <div class="text-body-large font-weight-bold mb-4">Callout Alarm Time</div>
 
       <!-- Clock Time Display -->
       <div class="time-display-card mb-4">
@@ -15,8 +15,8 @@
             <v-icon size="32" :icon="mdiMinusCircle" />
           </v-btn>
           <div class="mx-6 text-center">
-            <div class="text-h3 font-weight-bold">{{ calloutTimeDisplay }}</div>
-            <div class="text-caption text-grey">{{ calloutDateDisplay }}</div>
+            <div class="text-display-medium font-weight-bold">{{ calloutTimeDisplay }}</div>
+            <div class="text-body-small text-grey">{{ calloutDateDisplay }}</div>
           </div>
           <v-btn icon variant="text" size="large" @click="adjustTime(15)">
             <v-icon size="32" :icon="mdiPlusCircle" />
@@ -27,23 +27,23 @@
       <!-- Duration Display -->
       <v-alert type="info" variant="tonal" density="compact" class="mb-4">
         <div class="text-center">
-          <div class="text-body-1 font-weight-medium">{{ durationDisplay }}</div>
+          <div class="text-body-large font-weight-medium">{{ durationDisplay }}</div>
         </div>
       </v-alert>
 
       <!-- Alternative: Hours and Minutes Adjustment -->
       <v-divider class="my-4" />
-      <div class="text-caption text-grey mb-3">Or adjust by duration:</div>
+      <div class="text-body-small text-grey mb-3">Or adjust by duration:</div>
             
       <v-row dense>
         <v-col cols="6">
           <div class="duration-adjuster">
-            <div class="text-caption text-grey mb-1">Hours</div>
+            <div class="text-body-small text-grey mb-1">Hours</div>
             <div class="d-flex align-center justify-center">
               <v-btn icon size="small" variant="text" :disabled="!canDecrease" @click="adjustHours(-1)">
                 <v-icon :icon="mdiMinus" />
               </v-btn>
-              <div class="mx-3 text-h5 font-weight-medium">{{ hoursFromNow }}</div>
+              <div class="mx-3 text-headline-small font-weight-medium">{{ hoursFromNow }}</div>
               <v-btn icon size="small" variant="text" @click="adjustHours(1)">
                 <v-icon :icon="mdiPlus" />
               </v-btn>
@@ -52,12 +52,12 @@
         </v-col>
         <v-col cols="6">
           <div class="duration-adjuster">
-            <div class="text-caption text-grey mb-1">Minutes</div>
+            <div class="text-body-small text-grey mb-1">Minutes</div>
             <div class="d-flex align-center justify-center">
               <v-btn icon size="small" variant="text" :disabled="!canDecrease" @click="adjustMinutes(-15)">
                 <v-icon :icon="mdiMinus" />
               </v-btn>
-              <div class="mx-3 text-h5 font-weight-medium">{{ minutesFromNow }}</div>
+              <div class="mx-3 text-headline-small font-weight-medium">{{ minutesFromNow }}</div>
               <v-btn icon size="small" variant="text" @click="adjustMinutes(15)">
                 <v-icon :icon="mdiPlus" />
               </v-btn>
@@ -77,14 +77,14 @@
       <div class="d-flex align-start">
         <v-icon color="info" class="mr-3 mt-1" :icon="mdiInformation" />
         <div>
-          <div class="text-subtitle-2 font-weight-bold mb-2">What is Callout Time?</div>
-          <div class="text-body-2 mb-3">
+          <div class="text-title-small font-weight-bold mb-2">What is Callout Time?</div>
+          <div class="text-body-medium mb-3">
             This is when we'll call 999 if you haven't checked in. <strong>Always add extra time as a safety buffer</strong> 
             – it's better to check in early than have emergency services called unnecessarily.
           </div>
                     
-          <div class="text-subtitle-2 font-weight-bold mb-2">Consider adding time for:</div>
-          <ul class="text-body-2 mb-3">
+          <div class="text-title-small font-weight-bold mb-2">Consider adding time for:</div>
+          <ul class="text-body-medium mb-3">
             <li>Unexpected delays or route changes</li>
             <li>Getting lost or taking wrong turns</li>
             <li>Equipment issues or slower progress than planned</li>
@@ -248,11 +248,11 @@ export default {
   color: white;
 }
 
-.time-display-card .text-h3 {
+.time-display-card .text-display-medium {
   color: white;
 }
 
-.time-display-card .text-caption {
+.time-display-card .text-body-small {
   color: rgba(255, 255, 255, 0.9);
 }
 

@@ -49,7 +49,7 @@
                    :disabled="!appStore.user?.is_admin && !hasSuggestableChanges">
               {{ appStore.user?.is_admin ? 'Save' : 'Suggest Changes' }}
             </v-btn>
-            <p v-if="!appStore.user?.is_admin && !hasSuggestableChanges" class="text-caption text-medium-emphasis text-center mt-2 mb-0">
+            <p v-if="!appStore.user?.is_admin && !hasSuggestableChanges" class="text-body-small text-medium-emphasis text-center mt-2 mb-0">
               Change the name or description, or add or remove files, to suggest an edit.
             </p>
           </v-card-text>
@@ -84,7 +84,7 @@
       <!-- Delete Confirmation Dialog -->
       <v-dialog v-model="deleteDialog" max-width="500" persistent>
         <v-card>
-          <v-card-title class="text-h5">Delete Cave System</v-card-title>
+          <v-card-title class="text-headline-small">Delete Cave System</v-card-title>
           <v-card-text>
             <v-alert type="error" variant="tonal" class="mb-4">
               This action cannot be undone!
@@ -154,7 +154,7 @@
       <!-- Merge Confirmation Dialog -->
       <v-dialog v-model="mergeDialog" max-width="600" persistent>
         <v-card>
-          <v-card-title class="text-h5">Confirm Merge</v-card-title>
+          <v-card-title class="text-headline-small">Confirm Merge</v-card-title>
           <v-card-text v-if="mergePreview">
             <v-alert type="warning" variant="tonal" class="mb-4">
               This action cannot be undone!

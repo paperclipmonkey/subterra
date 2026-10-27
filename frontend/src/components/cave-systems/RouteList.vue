@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="d-flex justify-space-between align-center mb-4">
-      <h3 class="text-h6">Routes</h3>
+      <h3 class="text-title-large">Routes</h3>
       <div class="d-flex gap-2">
         <v-btn
           v-if="appStore.user && appStore.canSuggest"
@@ -67,7 +67,7 @@
           <v-col cols="12" sm="8" class="d-flex flex-column">
             <v-card-item>
               <div class="d-flex justify-space-between align-start mb-1">
-                <v-card-title class="text-h5 font-weight-bold pt-0 text-truncate">{{ route.name }}</v-card-title>
+                <v-card-title class="text-headline-small font-weight-bold pt-0 text-truncate">{{ route.name }}</v-card-title>
                 <v-chip v-if="route.grade" color="warning" variant="flat" size="small" class="font-weight-bold flex-shrink-0 ml-2">
                   Grade {{ route.grade }}
                   <v-tooltip activator="parent" location="top">
@@ -76,7 +76,7 @@
                 </v-chip>
               </div>
 
-              <div class="d-flex flex-wrap gap-4 text-body-2 text-medium-emphasis mb-3">
+              <div class="d-flex flex-wrap gap-4 text-body-medium text-medium-emphasis mb-3">
                 <div v-if="route.duration" class="d-flex align-center mr-4">
                   <v-icon start size="small" color="primary" :icon="mdiClockOutline" />
                   {{ route.duration }}
@@ -93,7 +93,7 @@
                 </template>
               </div>
 
-              <div class="text-body-1 text-truncate-3-lines mb-4">
+              <div class="text-body-large text-truncate-3-lines mb-4">
                 {{ truncateDescription(route.description) }}
               </div>
             </v-card-item>

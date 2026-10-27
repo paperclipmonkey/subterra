@@ -5,8 +5,8 @@
     <template v-if="permit">
       <div class="d-flex flex-wrap align-center justify-space-between ga-2 mb-3">
         <div>
-          <h1 class="text-h6 font-weight-bold mb-0">{{ permit.name }}</h1>
-          <div v-if="permit.caves?.length" class="text-caption text-grey-darken-1 d-flex align-center">
+          <h1 class="text-title-large font-weight-bold mb-0">{{ permit.name }}</h1>
+          <div v-if="permit.caves?.length" class="text-body-small text-grey-darken-1 d-flex align-center">
             <v-icon :icon="mdiMapMarker" size="x-small" class="mr-1" />
             {{ permit.caves.map(c => c.name).join(', ') }}
           </div>
@@ -30,7 +30,7 @@
         readonly
       />
 
-      <div class="text-caption text-grey mt-2 text-center">
+      <div class="text-body-small text-grey mt-2 text-center">
         To request a booking,
         <a :href="bookUrl" target="_blank" rel="noopener">sign in to Subterra</a>
         and use the online booking form.

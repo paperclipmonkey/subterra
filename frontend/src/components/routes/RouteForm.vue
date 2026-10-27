@@ -90,14 +90,14 @@
         autocomplete="off"
       />
 
-      <div class="text-caption mb-2 text-medium-emphasis">Description (Markdown)</div>
+      <div class="text-body-small mb-2 text-medium-emphasis">Description (Markdown)</div>
       <MilkdownEditor 
         v-model="route.description" 
         placeholder="Describe the route..."
         class="mb-4"
       />
 
-      <h3 class="text-h6 mt-4 mb-2">Tackle</h3>
+      <h3 class="text-title-large mt-4 mb-2">Tackle</h3>
       <div v-for="(tackle, index) in route.tackle" :key="index" class="d-flex align-top gap-2 mb-4 border rounded pa-2">
         <v-row dense>
           <v-col cols="12" md="3">
@@ -149,7 +149,7 @@
 
       <v-divider class="my-4" />
 
-      <h3 class="text-h6 mb-2">Media</h3>
+      <h3 class="text-title-large mb-2">Media</h3>
       <div class="mb-4">
         <v-file-input
           label="Upload Photos/PDFs"
@@ -182,7 +182,7 @@
         </v-list>
 
         <div v-if="route.media && route.media.length > 0" class="mt-4">
-          <h4 class="text-subtitle-2 mb-2">Existing Media</h4>
+          <h4 class="text-title-small mb-2">Existing Media</h4>
           <v-row dense>
             <v-col v-for="(media, index) in route.media" :key="media.id" cols="12" sm="4" md="3">
               <v-card variant="outlined">
@@ -190,7 +190,7 @@
                 <div v-else class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 100px;">
                   <v-icon size="large" :icon="mdiFilePdfBox" />
                 </div>
-                <v-card-text class="pa-2 text-caption text-truncate d-flex justify-space-between align-center">
+                <v-card-text class="pa-2 text-body-small text-truncate d-flex justify-space-between align-center">
                   <span>{{ media.caption || 'No caption' }}</span>
                   <v-btn 
                     :icon="mdiDelete" 
@@ -210,7 +210,7 @@
         type="info"
         variant="tonal"
         density="compact"
-        class="mb-4 text-caption"
+        class="mb-4 text-body-small"
       >
         By submitting this data, you confirm that you have the right to share this information and media, and that it does not infringe on any third-party rights.
       </v-alert>
@@ -220,7 +220,7 @@
       <v-btn type="submit" color="primary" block :loading="loading" :disabled="suggestionIsEmpty">
         {{ appStore.user?.is_admin ? 'Save Route' : 'Suggest Changes' }}
       </v-btn>
-      <p v-if="suggestionIsEmpty" class="text-caption text-medium-emphasis text-center mt-2 mb-0">
+      <p v-if="suggestionIsEmpty" class="text-body-small text-medium-emphasis text-center mt-2 mb-0">
         Change the name, grade, description or tackle to suggest an edit.
       </p>
     </v-form>

@@ -17,15 +17,15 @@
     @update:model-value="onSelect"
   >
     <template #item="{ props: itemProps, item }">
-      <v-list-item v-bind="itemProps" :title="item.raw.name">
+      <v-list-item v-bind="itemProps" :title="item.name">
         <template #subtitle>
-          <span class="text-caption text-medium-emphasis">
-            {{ [item.raw.location_name, item.raw.location_country].filter(Boolean).join(', ') }}
+          <span class="text-body-small text-medium-emphasis">
+            {{ [item.location_name, item.location_country].filter(Boolean).join(', ') }}
           </span>
         </template>
         <template #append>
           <v-chip
-            v-if="item.raw.is_curated"
+            v-if="item.is_curated"
             size="x-small"
             color="primary"
             variant="tonal"

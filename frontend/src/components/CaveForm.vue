@@ -10,8 +10,8 @@
         />
       </v-card-title>
       <v-card-text>
-        <div class="text-subtitle-2 mb-1">Description</div>
-        <p class="text-caption text-grey mb-2">
+        <div class="text-title-small mb-1">Description</div>
+        <p class="text-body-small text-grey mb-2">
           What the cave is like underground — its character, notable features and history.
         </p>
         <MilkdownEditor
@@ -19,8 +19,8 @@
           placeholder="Detailed description of the cave..."
           class="mb-4"
         />
-        <div class="text-subtitle-2 mt-4 mb-1">Access Info</div>
-        <p class="text-caption text-grey mb-2">
+        <div class="text-title-small mt-4 mb-1">Access Info</div>
+        <p class="text-body-small text-grey mb-2">
           How to find the entrance and get in — parking, the walk in, gate keys, permits
           and any landowner arrangements.
         </p>
@@ -94,11 +94,11 @@
           persistent-hint
         />
 
-        <div class="text-subtitle-1 mb-2">Media</div>
+        <div class="text-body-large mb-2">Media</div>
         <v-row>
           <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
-              <div class="text-subtitle-2 mb-2 d-flex align-center">
+              <div class="text-title-small mb-2 d-flex align-center">
                 <v-icon start size="small" :icon="mdiVideo" />
                 Hero Video
               </div>
@@ -114,7 +114,7 @@
                   />
                   <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
                     <v-icon size="48" :icon="mdiVideoOutline" />
-                    <span class="text-caption mt-2">No hero video set</span>
+                    <span class="text-body-small mt-2">No hero video set</span>
                   </div>
                   <v-overlay
                     :model-value="isHovering && (heroVideoPreview || props.modelValue.hero_video?.url)"
@@ -173,7 +173,7 @@
           </v-col>
           <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
-              <div class="text-subtitle-2 mb-2 d-flex align-center">
+              <div class="text-title-small mb-2 d-flex align-center">
                 <v-icon start size="small" :icon="mdiStar" />
                 Hero Image
               </div>
@@ -188,7 +188,7 @@
                   />
                   <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
                     <v-icon size="48" :icon="mdiImageOutline" />
-                    <span class="text-caption mt-2">No hero image set</span>
+                    <span class="text-body-small mt-2">No hero image set</span>
                   </div>
                   <v-overlay
                     :model-value="isHovering && (heroImagePreview || props.modelValue.hero_image?.url)"
@@ -247,7 +247,7 @@
           </v-col>
           <v-col cols="12" md="4">
             <v-card variant="outlined" class="pa-4 h-100 d-flex flex-column">
-              <div class="text-subtitle-2 mb-2 d-flex align-center">
+              <div class="text-title-small mb-2 d-flex align-center">
                 <v-icon start size="small" :icon="mdiDoorOpen" />
                 Entrance Image
               </div>
@@ -262,7 +262,7 @@
                   />
                   <div v-else class="d-flex flex-column align-center justify-center h-100 text-grey">
                     <v-icon size="48" :icon="mdiImageOutline" />
-                    <span class="text-caption mt-2">No entrance image set</span>
+                    <span class="text-body-small mt-2">No entrance image set</span>
                   </div>
                   <v-overlay
                     :model-value="isHovering && (entranceImagePreview || props.modelValue.entrance_image?.url)"
@@ -328,7 +328,7 @@
       <v-card-text>
         <template v-for="(groupItems, groupName) in tagsAvailable" :key="groupName">
           <template v-if="groupItems.some(item => item.assignable)">
-            <h2 class="text-h6 mb-2 mt-4">{{ groupName }}</h2>
+            <h2 class="text-title-large mb-2 mt-4">{{ groupName }}</h2>
             <v-chip-group v-model="selectedTags[groupName]" column multiple>
               <template v-for="tag in groupItems" :key="tag.tag">
                 <v-chip
@@ -346,7 +346,7 @@
           type="info"
           variant="tonal"
           density="compact"
-          class="mt-4 text-caption"
+          class="mt-4 text-body-small"
         >
           By submitting this data, you confirm that you have the right to share this information and media, and that it does not infringe on any third-party rights.
         </v-alert>

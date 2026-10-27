@@ -6,8 +6,8 @@
 
     <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
       <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-      <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-      <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+      <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+      <p class="text-body-large text-grey mb-6">{{ error }}</p>
       <v-btn color="primary" variant="flat" :prepend-icon="mdiRefresh" @click="loadMedals">
         Try again
       </v-btn>
@@ -22,8 +22,8 @@
             <v-icon color="amber-darken-2" :icon="mdiMedalOutline" size="32" />
           </v-avatar>
           <div class="flex-grow-1" style="min-width: 0;">
-            <h1 class="text-h5 font-weight-bold text-grey-darken-4 mb-1">Medals</h1>
-            <div class="text-body-2 text-medium-emphasis mb-2">
+            <h1 class="text-headline-small font-weight-bold text-grey-darken-4 mb-1">Medals</h1>
+            <div class="text-body-medium text-medium-emphasis mb-2">
               You've earned {{ earnedMedals.length }} of {{ medals.length }} medals
             </div>
             <v-progress-linear :model-value="medals.length ? (earnedMedals.length / medals.length) * 100 : 0"
@@ -36,10 +36,10 @@
       <template v-if="unearnedMedals.length > 0">
         <div class="d-flex align-center mb-3">
           <v-icon :icon="mdiTrophyOutline" color="grey-darken-1" class="mr-2" />
-          <h2 class="text-h6 font-weight-bold text-grey-darken-3">Still to earn</h2>
+          <h2 class="text-title-large font-weight-bold text-grey-darken-3">Still to earn</h2>
           <v-chip size="x-small" variant="tonal" color="grey-darken-1" class="ml-2">{{ unearnedMedals.length }}</v-chip>
         </div>
-        <p class="text-body-2 text-medium-emphasis mb-4">
+        <p class="text-body-medium text-medium-emphasis mb-4">
           Here's what each one takes — your next trip could tick one off.
         </p>
         <v-row class="mb-6">
@@ -51,18 +51,18 @@
                     <img v-if="medal.image_url" :src="medal.image_url" :alt="medal.name">
                     <v-icon v-else :icon="mdiMedalOutline" size="36" color="grey-lighten-1" />
                   </div>
-                  <div class="text-subtitle-1 font-weight-bold text-grey-darken-2">{{ medal.name }}</div>
+                  <div class="text-body-large font-weight-bold text-grey-darken-2">{{ medal.name }}</div>
                 </div>
-                <p class="text-body-2 text-medium-emphasis flex-grow-1 mb-3">{{ medal.description }}</p>
+                <p class="text-body-medium text-medium-emphasis flex-grow-1 mb-3">{{ medal.description }}</p>
                 <template v-if="medal.progress && medal.progress.target > 1">
-                  <div class="d-flex justify-space-between text-caption text-medium-emphasis mb-1">
+                  <div class="d-flex justify-space-between text-body-small text-medium-emphasis mb-1">
                     <span>Progress</span>
                     <span class="font-weight-bold">{{ medal.progress.current }} / {{ medal.progress.target }}</span>
                   </div>
                   <v-progress-linear :model-value="(medal.progress.current / medal.progress.target) * 100"
                                      color="amber-darken-2" bg-color="grey-lighten-3" height="6" rounded />
                 </template>
-                <div v-else class="text-caption text-medium-emphasis d-flex align-center">
+                <div v-else class="text-body-small text-medium-emphasis d-flex align-center">
                   <v-icon :icon="mdiLockOutline" size="14" class="mr-1" />
                   Not yet earned
                 </div>
@@ -76,7 +76,7 @@
       <template v-if="earnedMedals.length > 0">
         <div class="d-flex align-center mb-3">
           <v-icon :icon="mdiTrophy" color="amber-darken-2" class="mr-2" />
-          <h2 class="text-h6 font-weight-bold text-grey-darken-3">Earned</h2>
+          <h2 class="text-title-large font-weight-bold text-grey-darken-3">Earned</h2>
           <v-chip size="x-small" variant="flat" color="amber" class="ml-2">{{ earnedMedals.length }}</v-chip>
         </div>
         <v-row>
@@ -88,10 +88,10 @@
                     <img v-if="medal.image_url" :src="medal.image_url" :alt="medal.name">
                     <v-icon v-else :icon="mdiMedalOutline" size="36" color="amber-darken-2" />
                   </div>
-                  <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">{{ medal.name }}</div>
+                  <div class="text-body-large font-weight-bold text-grey-darken-4">{{ medal.name }}</div>
                 </div>
-                <p class="text-body-2 text-medium-emphasis flex-grow-1 mb-3">{{ medal.description }}</p>
-                <div v-if="medal.awarded_at" class="text-caption text-amber-darken-3 d-flex align-center">
+                <p class="text-body-medium text-medium-emphasis flex-grow-1 mb-3">{{ medal.description }}</p>
+                <div v-if="medal.awarded_at" class="text-body-small text-amber-darken-3 d-flex align-center">
                   <v-icon :icon="mdiCheckDecagram" size="14" class="mr-1" />
                   Awarded {{ formatAwardedDate(medal.awarded_at) }}
                 </div>
@@ -104,7 +104,7 @@
       <!-- Empty (no medals defined at all) -->
       <div v-if="medals.length === 0" class="text-center py-12 text-medium-emphasis">
         <v-icon :icon="mdiMedalOutline" size="64" class="mb-4 opacity-20" />
-        <div class="text-h6 font-weight-regular">No medals available yet</div>
+        <div class="text-title-large font-weight-regular">No medals available yet</div>
       </div>
     </v-container>
 
@@ -116,8 +116,8 @@
           <img v-if="selectedMedal.image_url" :src="selectedMedal.image_url" alt="Medal" class="medal-modal-img">
           <v-icon v-else :icon="mdiMedalOutline" size="96" color="grey-lighten-1" />
         </div>
-        <h3 class="text-h5 font-weight-black text-grey-darken-3 mb-2">{{ selectedMedal.name }}</h3>
-        <p class="text-body-1 text-grey-darken-1 mb-4">{{ selectedMedal.description }}</p>
+        <h3 class="text-headline-small font-weight-black text-grey-darken-3 mb-2">{{ selectedMedal.name }}</h3>
+        <p class="text-body-large text-grey-darken-1 mb-4">{{ selectedMedal.description }}</p>
         <template v-if="selectedMedal.earned">
           <v-chip v-if="selectedMedal.awarded_at" color="amber" variant="flat" class="mx-auto mb-6"
                   :prepend-icon="mdiCheckDecagram">
@@ -125,14 +125,14 @@
           </v-chip>
         </template>
         <template v-else-if="selectedMedal.progress && selectedMedal.progress.target > 1">
-          <div class="d-flex justify-space-between text-caption text-medium-emphasis mb-1">
+          <div class="d-flex justify-space-between text-body-small text-medium-emphasis mb-1">
             <span>Progress</span>
             <span class="font-weight-bold">{{ selectedMedal.progress.current }} / {{ selectedMedal.progress.target }}</span>
           </div>
           <v-progress-linear :model-value="(selectedMedal.progress.current / selectedMedal.progress.target) * 100"
                              color="amber-darken-2" bg-color="grey-lighten-3" height="8" rounded class="mb-6" />
         </template>
-        <div v-else class="text-caption text-medium-emphasis mb-6 d-flex align-center justify-center">
+        <div v-else class="text-body-small text-medium-emphasis mb-6 d-flex align-center justify-center">
           <v-icon :icon="mdiLockOutline" size="14" class="mr-1" />
           Not yet earned
         </div>

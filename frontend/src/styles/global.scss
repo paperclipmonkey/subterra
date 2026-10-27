@@ -6,10 +6,23 @@
  * component by vite-plugin-vuetify, so global rules live here instead).
  */
 
+// Vuetify 4 dropped its global `* { margin: 0; padding: 0 }` reset; the
+// layouts were built against it.
+@layer vuetify-core.reset {
+  ul, ol, figure, details, summary {
+    padding: 0;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6, p {
+    margin: 0;
+  }
+}
+
 // --- Typography ------------------------------------------------------------
 
 .v-application {
-  .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
+  .text-display-large, .text-display-medium, .text-headline-large, .text-headline-small, .text-title-large {
     letter-spacing: -0.015em !important;
   }
 }

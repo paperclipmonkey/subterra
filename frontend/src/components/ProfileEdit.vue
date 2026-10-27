@@ -14,7 +14,7 @@
         </v-avatar>
         <div class="profile-info">
           <h2>{{ profile.name || 'Please set your name' }}</h2>
-          <div class="text-caption text-grey mt-1">Tap photo to change</div>
+          <div class="text-body-small text-grey mt-1">Tap photo to change</div>
         </div>
       </v-card-title>
       <input ref="photoInput" type="file" accept="image/*" class="d-none" @change="onPhotoSelected">
@@ -87,7 +87,7 @@
            under-18 accounts get; never shown to other members. -->
       <div class="date-of-birth pa-4">
         <h3>Date of Birth:</h3>
-        <p class="text-body-2 mb-4">
+        <p class="text-body-medium mb-4">
           We use this only to apply the right privacy defaults to your account. It is never shown to other members.
         </p>
         <v-text-field
@@ -127,7 +127,7 @@
           hint="Must be exactly 11 digits (07...) or 13 characters (+44...)."
           persistent-hint
         />
-        <p class="text-caption mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency. <strong>You'll need to verify it before creating a callout.</strong></p>
+        <p class="text-body-small mt-2">Setting a phone number allows us to pre-fill it in safety callout forms, ensuring you're easily reachable in an emergency. <strong>You'll need to verify it before creating a callout.</strong></p>
         <v-btn
           v-if="profile.phone && !phoneVerified && !phoneDirty"
           class="mt-2 text-none"
@@ -138,7 +138,7 @@
         >
           Verify this number
         </v-btn>
-        <p v-else-if="phoneDirty" class="text-caption text-medium-emphasis mt-1">Save your profile, then verify the new number.</p>
+        <p v-else-if="phoneDirty" class="text-body-small text-medium-emphasis mt-1">Save your profile, then verify the new number.</p>
 
         <PhoneVerify v-model="showVerify" :phone="profile.phone" @verified="onVerified" />
       </div>
@@ -174,7 +174,7 @@
       <!-- Trip & Callout Visibility section -->
       <div class="trip-visibility pa-4">
         <h3>Addable to Trips & Callouts:</h3>
-        <p class="text-body-2 mb-4">Control who can add you to their trip reports and safety callouts. People can always add you if they know your email address.</p>
+        <p class="text-body-medium mb-4">Control who can add you to their trip reports and safety callouts. People can always add you if they know your email address.</p>
         <v-btn-toggle
           v-model="profile.visibility_addable"
           mandatory
@@ -204,7 +204,7 @@
     <v-dialog v-model="showJoinClubModal" persistent max-width="600px">
       <v-card>
         <v-card-title>
-          <span class="text-h5">Confirm Club Membership</span>
+          <span class="text-headline-small">Confirm Club Membership</span>
         </v-card-title>
         <v-card-text>
           <p class="mb-4">Pick a club you are <strong>already a member of</strong>. One of its administrators will confirm your membership, which unlocks full access.</p>
@@ -223,7 +223,7 @@
             <template #item="{ props, item }">
               <v-list-item
                 v-bind="props"
-                :title="item.raw.name"
+                :title="item.name"
               />
             </template>
             <template #no-data>
@@ -250,7 +250,7 @@
     <!-- Delete Account Confirmation Modal -->
     <v-dialog v-model="showDeleteModal" persistent max-width="500px">
       <v-card>
-        <v-card-title class="text-h5">Confirm Account Deletion</v-card-title>
+        <v-card-title class="text-headline-small">Confirm Account Deletion</v-card-title>
         <v-card-text>
           <p>Are you sure you want to delete your account? This action cannot be undone.</p>
         </v-card-text>
@@ -265,10 +265,10 @@
     <!-- Confirm Legal Name Modal -->
     <v-dialog v-model="showConfirmNameModal" persistent max-width="500px">
       <v-card>
-        <v-card-title class="text-h5">Confirm Legal Name</v-card-title>
+        <v-card-title class="text-headline-small">Confirm Legal Name</v-card-title>
         <v-card-text>
           <p>Please confirm that <strong>{{ profile.name }}</strong> is your full legal name.</p>
-          <p class="text-caption text-grey mt-2">We require full legal names to ensure accurate tagging in safety callouts and emergency situations.</p>
+          <p class="text-body-small text-grey mt-2">We require full legal names to ensure accurate tagging in safety callouts and emergency situations.</p>
         </v-card-text>
         <v-card-actions>
           <v-spacer />

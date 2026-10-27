@@ -4,18 +4,18 @@
            gradient="to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.8)">
       <div class="pa-4 text-white">
         <div class="d-flex align-center justify-space-between mb-1 opacity-80">
-          <div class="text-caption font-weight-bold">{{ formatDate(trip.start_time) }}</div>
-          <div v-if="trip.duration" class="d-flex align-center text-caption font-weight-bold">
+          <div class="text-body-small font-weight-bold">{{ formatDate(trip.start_time) }}</div>
+          <div v-if="trip.duration" class="d-flex align-center text-body-small font-weight-bold">
             <v-icon size="small" :icon="mdiClockOutline" class="mr-1" />
             {{ formatDuration(trip.duration) }}
           </div>
         </div>
-        <h3 class="text-h6 font-weight-bold lh-tight mb-1">{{ trip.name }}</h3>
-        <div class="text-body-2 opacity-90">{{ trip.entrance?.name || 'Unknown Entrance' }}</div>
+        <h3 class="text-title-large font-weight-bold lh-tight mb-1">{{ trip.name }}</h3>
+        <div class="text-body-medium opacity-90">{{ trip.entrance?.name || 'Unknown Entrance' }}</div>
       </div>
     </v-img>
 
-    <div v-if="!hasRealImage && trip.description" class="px-4 pt-4 pb-2 text-body-2 text-grey-darken-1 line-clamp-3">
+    <div v-if="!hasRealImage && trip.description" class="px-4 pt-4 pb-2 text-body-medium text-grey-darken-1 line-clamp-3">
       {{ trip.description }}
     </div>
 
@@ -25,7 +25,7 @@
     <div class="pa-3 bg-grey-lighten-5">
       <div class="d-flex align-center flex-wrap ga-1">
         <v-icon size="small" color="grey" :icon="mdiAccountGroup" class="mr-1" />
-        <span v-if="!trip.participants || trip.participants.length === 0" class="text-caption text-grey">No
+        <span v-if="!trip.participants || trip.participants.length === 0" class="text-body-small text-grey">No
           participants</span>
         <template v-else>
           <v-chip v-for="participant in trip.participants.slice(0, 3)" :key="participant.id"

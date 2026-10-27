@@ -21,11 +21,11 @@
       </div>
       <!-- Hero Content -->
       <v-container class="pb-6">
-        <div class="text-subtitle-1 text-white mb-1 d-flex align-center">
+        <div class="text-body-large text-white mb-1 d-flex align-center">
           <v-icon :icon="mdiMapMarker" size="small" class="mr-1" />
           {{ trip.system?.name || 'Unknown System' }}
         </div>
-        <h1 class="text-h3 text-white font-weight-bold mb-2">{{ trip.name }}</h1>
+        <h1 class="text-display-medium text-white font-weight-bold mb-2">{{ trip.name }}</h1>
         <div class="d-flex align-center text-white">
           <v-chip size="small" color="white" variant="outlined" class="mr-3">
             <v-icon start :icon="mdiCalendar" />
@@ -50,7 +50,7 @@
               Trip Report
             </v-card-title>
             <v-divider />
-            <v-card-text class="pa-6 text-body-1 leading-relaxed">
+            <v-card-text class="pa-6 text-body-large leading-relaxed">
               <MarkdownRenderer v-if="trip.description" :source="trip.description" />
               <div v-else class="d-flex flex-column align-center justify-center py-8 text-grey">
                 <v-icon :icon="mdiFountainPenTip" size="large" class="mb-2 opacity-50" />
@@ -64,7 +64,7 @@
             <v-card-title class="d-flex align-center py-4">
               <v-icon :icon="mdiImageMultipleOutline" class="mr-2 text-primary" />
               Gallery
-              <span class="text-caption text-grey ml-2">({{ trip.media.length }})</span>
+              <span class="text-body-small text-grey ml-2">({{ trip.media.length }})</span>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-4">
@@ -105,7 +105,7 @@
                     <v-icon color="green-darken-1" :icon="mdiLocationEnter" />
                   </v-avatar>
                 </template>
-                <v-list-item-subtitle class="text-caption mb-1">Entrance</v-list-item-subtitle>
+                <v-list-item-subtitle class="text-body-small mb-1">Entrance</v-list-item-subtitle>
                 <v-list-item-title>
                   <router-link :to="'/caves/' + trip.entrance.slug"
                                class="text-decoration-none font-weight-bold text-high-emphasis text-primary">
@@ -123,7 +123,7 @@
                     <v-icon color="red-darken-1" :icon="mdiLocationExit" />
                   </v-avatar>
                 </template>
-                <v-list-item-subtitle class="text-caption mb-1">Exit</v-list-item-subtitle>
+                <v-list-item-subtitle class="text-body-small mb-1">Exit</v-list-item-subtitle>
                 <v-list-item-title>
                   <router-link :to="'/caves/' + trip.exit.slug"
                                class="text-decoration-none font-weight-bold text-high-emphasis text-primary">
@@ -141,7 +141,7 @@
                     <v-icon color="blue-darken-1" :icon="mdiClockOutline" />
                   </v-avatar>
                 </template>
-                <v-list-item-subtitle class="text-caption mb-1">Start Time</v-list-item-subtitle>
+                <v-list-item-subtitle class="text-body-small mb-1">Start Time</v-list-item-subtitle>
                 <v-list-item-title class="font-weight-medium">{{ formatTime(trip.start_time)
                 }}</v-list-item-title>
               </v-list-item>
@@ -155,7 +155,7 @@
                     <v-icon color="orange-darken-1" :icon="mdiTimerOutline" />
                   </v-avatar>
                 </template>
-                <v-list-item-subtitle class="text-caption mb-1">Duration</v-list-item-subtitle>
+                <v-list-item-subtitle class="text-body-small mb-1">Duration</v-list-item-subtitle>
                 <v-list-item-title class="font-weight-medium">{{ formatDuration(trip.start_time, trip.end_time)
                 }}</v-list-item-title>
               </v-list-item>
@@ -179,7 +179,7 @@
                   </v-avatar>
                 </template>
                 <v-list-item-title class="font-weight-bold">{{ participant.name }}</v-list-item-title>
-                <v-list-item-subtitle class="text-caption text-truncate">
+                <v-list-item-subtitle class="text-body-small text-truncate">
                   {{ participant.clubs && participant.clubs.length ? participant.clubs.map(c =>
                     c.name).join(', ') :
                     'No club' }}
@@ -194,7 +194,7 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="showDeleteConfirmDialog" persistent max-width="400">
       <v-card class="rounded-lg">
-        <v-card-title class="text-h6 pa-4">Delete Trip?</v-card-title>
+        <v-card-title class="text-title-large pa-4">Delete Trip?</v-card-title>
         <v-card-text class="pt-0 pb-4">Are you sure you want to delete this trip report? This action cannot be
           undone.</v-card-text>
         <v-card-actions class="pa-4 pt-0">
@@ -218,8 +218,8 @@
   <!-- Error State -->
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
     <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-    <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-    <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+    <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+    <p class="text-body-large text-grey mb-6">{{ error }}</p>
     <v-btn color="primary" variant="flat" to="/trips" :prepend-icon="mdiArrowLeft">
       Back to Trips
     </v-btn>

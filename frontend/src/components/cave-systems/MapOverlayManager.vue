@@ -1,6 +1,6 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title class="text-h6">
+    <v-card-title class="text-title-large">
       <v-icon start :icon="mdiLayers" />
       Map Overlays (GeoTIFF)
     </v-card-title>
@@ -23,7 +23,7 @@
 
           <div class="d-flex align-center ga-4 mt-2 flex-wrap">
             <div class="opacity-control">
-              <span class="text-caption text-medium-emphasis">Opacity</span>
+              <span class="text-body-small text-medium-emphasis">Opacity</span>
               <v-slider
                 :model-value="ov.opacity"
                 :min="0"
@@ -59,7 +59,7 @@
           <v-divider class="mt-2" />
         </v-list-item>
       </v-list>
-      <p v-else class="text-medium-emphasis text-body-2 mb-3">No overlays yet.</p>
+      <p v-else class="text-medium-emphasis text-body-medium mb-3">No overlays yet.</p>
 
       <!-- Upload new overlay -->
       <v-row class="align-center">

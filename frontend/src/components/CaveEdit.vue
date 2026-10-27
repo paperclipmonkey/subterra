@@ -44,7 +44,7 @@
             </v-card-title>
             <v-card-subtitle>Settings only visible to data admins.</v-card-subtitle>
             <v-card-text>
-              <div class="text-subtitle-2 mb-1">Visibility</div>
+              <div class="text-title-small mb-1">Visibility</div>
               <v-select
                 v-model="cave.visibility"
                 :items="visibilityChoices"
@@ -53,12 +53,12 @@
                 hide-details
                 class="mb-1"
               />
-              <p class="text-caption text-grey mb-4">
+              <p class="text-body-small text-grey mb-4">
                 <strong>Public</strong> caves appear on Subterra as normal.
                 <strong>Admin only</strong> caves (e.g. closed mines) are hidden from everyone except data admins.
               </p>
 
-              <div class="text-subtitle-2 mb-1">Private notes</div>
+              <div class="text-title-small mb-1">Private notes</div>
               <v-textarea
                 v-model="cave.private_notes"
                 variant="outlined"
@@ -70,8 +70,8 @@
                 class="mb-4"
               />
 
-              <div class="text-subtitle-2 mb-1">Files &amp; documents</div>
-              <p class="text-caption text-grey mb-2">
+              <div class="text-title-small mb-1">Files &amp; documents</div>
+              <p class="text-body-small text-grey mb-2">
                 Surveys, historic photos and documents are stored against the whole system
                 (<strong>{{ cave.system?.name }}</strong>) so they're shared across its entrances.
               </p>
@@ -88,7 +88,7 @@
                    :disabled="!canEditDirectly && !isDirty">
               {{ canEditDirectly ? 'Save' : 'Suggest Changes' }}
             </v-btn>
-            <p v-if="!canEditDirectly && !isDirty" class="text-caption text-medium-emphasis text-center mt-2 mb-0">
+            <p v-if="!canEditDirectly && !isDirty" class="text-body-small text-medium-emphasis text-center mt-2 mb-0">
               Make a change above to suggest it.
             </p>
           </v-card-text>

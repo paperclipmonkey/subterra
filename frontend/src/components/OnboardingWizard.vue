@@ -10,10 +10,10 @@
       <!-- Progress header -->
       <div class="px-8 pt-6">
         <div class="d-flex align-center justify-space-between mb-2">
-          <span class="text-caption text-medium-emphasis font-weight-medium">
+          <span class="text-body-small text-medium-emphasis font-weight-medium">
             Step {{ step }} of {{ totalSteps }}
           </span>
-          <span class="text-caption text-medium-emphasis">{{ currentTitle }}</span>
+          <span class="text-body-small text-medium-emphasis">{{ currentTitle }}</span>
         </div>
         <v-progress-linear
           :model-value="(step / totalSteps) * 100"
@@ -30,8 +30,8 @@
             <v-avatar color="primary" size="80" class="mb-6 elevation-4">
               <v-icon size="48" color="white" :icon="mdiAccountPlus" />
             </v-avatar>
-            <h2 class="text-h4 font-weight-bold mb-2">Welcome to Subterra!</h2>
-            <p class="text-subtitle-1 text-medium-emphasis mb-8">
+            <h2 class="text-headline-large font-weight-bold mb-2">Welcome to Subterra!</h2>
+            <p class="text-body-large text-medium-emphasis mb-8">
               We're excited to have you underground. Let's get your profile started with your name.
             </p>
 
@@ -56,7 +56,7 @@
                 density="compact"
                 class="mt-2 mb-6 text-left"
               >
-                <div class="text-caption">
+                <div class="text-body-small">
                   Your name may be passed to <strong>cave rescue</strong> as an emergency point of contact. Please use your <strong>legal first and last name</strong>.
                 </div>
               </v-alert>
@@ -83,8 +83,8 @@
         <v-window-item value="profile">
           <v-card-text class="pa-8">
             <div class="text-center mb-6">
-              <h2 class="text-h5 font-weight-bold mb-2">Make it yours</h2>
-              <p class="text-body-2 text-medium-emphasis">
+              <h2 class="text-headline-small font-weight-bold mb-2">Make it yours</h2>
+              <p class="text-body-medium text-medium-emphasis">
                 A photo and a short bio help club mates recognise you and learn about your caving experience. This is optional — you can always change it later.
               </p>
             </div>
@@ -95,11 +95,11 @@
                 <v-icon v-else size="56" color="grey" :icon="mdiAccountCircleOutline" />
                 <div class="avatar-overlay d-flex flex-column align-center justify-center">
                   <v-icon color="white" :icon="mdiCamera" />
-                  <span class="text-caption text-white mt-1">{{ photoPreview || existingPhoto ? 'Change' : 'Add photo' }}</span>
+                  <span class="text-body-small text-white mt-1">{{ photoPreview || existingPhoto ? 'Change' : 'Add photo' }}</span>
                 </div>
               </v-avatar>
               <input ref="photoInput" type="file" accept="image/*" class="d-none" @change="onPhotoSelected">
-              <span class="text-caption text-medium-emphasis mt-2">Tap to upload (max 5&nbsp;MB)</span>
+              <span class="text-body-small text-medium-emphasis mt-2">Tap to upload (max 5&nbsp;MB)</span>
             </div>
 
             <v-textarea
@@ -124,8 +124,8 @@
               <v-avatar color="secondary" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiAccountGroup" />
               </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">Confirm Your Club</h2>
-              <p class="text-body-2 text-medium-emphasis">
+              <h2 class="text-headline-small font-weight-bold mb-2">Confirm Your Club</h2>
+              <p class="text-body-medium text-medium-emphasis">
                 Subterra is for BCA members. If you already belong to a caving club, find it below and confirm your membership.
               </p>
 
@@ -136,7 +136,7 @@
                 class="mt-4 text-left"
                 density="compact"
               >
-                <div class="text-caption">
+                <div class="text-body-small">
                   <strong>How it works:</strong> Find the club you're <strong>already a member of</strong> and ask them to confirm it.
                   One of your club's administrators confirms you're a member — then you'll gain full access to all protected cave data and platform features!
                 </div>
@@ -149,7 +149,7 @@
                 class="mt-3 text-left"
                 density="compact"
               >
-                <div class="text-caption">
+                <div class="text-body-small">
                   <strong>Not in a member club?</strong> If you're a member of the BCA directly, you're a
                   <strong>Direct Individual Member</strong> — you can find them in the list below.
                 </div>
@@ -197,7 +197,7 @@
               </v-list-item>
             </v-list>
 
-            <div class="text-center mt-4 text-caption text-medium-emphasis">
+            <div class="text-center mt-4 text-body-small text-medium-emphasis">
               Can't find your club, or joining later? You can confirm your membership any time from your profile.
             </div>
           </v-card-text>
@@ -210,8 +210,8 @@
               <v-avatar color="indigo" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiEmailOutline" />
               </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">Stay in the loop</h2>
-              <p class="text-body-2 text-medium-emphasis">
+              <h2 class="text-headline-small font-weight-bold mb-2">Stay in the loop</h2>
+              <p class="text-body-medium text-medium-emphasis">
                 Choose which emails you'd like to receive. We only email when it matters — you can change these any time from your profile.
               </p>
             </div>
@@ -251,7 +251,7 @@
               </v-list-item>
             </v-list>
 
-            <p class="text-caption text-medium-emphasis text-center mt-4">
+            <p class="text-body-small text-medium-emphasis text-center mt-4">
               Important safety messages (such as overdue callout alerts) are always sent regardless of these settings.
             </p>
           </v-card-text>
@@ -264,8 +264,8 @@
               <v-avatar color="teal" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiAccountSearchOutline" />
               </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">Who can find you?</h2>
-              <p class="text-body-2 text-medium-emphasis">
+              <h2 class="text-headline-small font-weight-bold mb-2">Who can find you?</h2>
+              <p class="text-body-medium text-medium-emphasis">
                 This controls whether you appear in search when other cavers build trip reports and safety callouts.
               </p>
             </div>
@@ -294,17 +294,17 @@
               density="comfortable"
               class="text-left"
             >
-              <div v-if="visibilityAddable === 'public'" class="text-body-2">
+              <div v-if="visibilityAddable === 'public'" class="text-body-medium">
                 <strong>Recommended for active cavers.</strong> Anyone can find you by name and add you to a trip or callout.
                 That means when you're underground, an organiser can quickly include you in a callout so cave rescue has accurate contacts if something goes wrong.
               </div>
-              <div v-else class="text-body-2">
+              <div v-else class="text-body-medium">
                 <strong>More private.</strong> Only members of clubs you belong to can find you by name. Cavers outside your clubs
                 won't be able to add you to a trip or callout unless they know your email — which can leave gaps in shared trip records.
               </div>
             </v-alert>
 
-            <p class="text-caption text-medium-emphasis text-center mt-4">
+            <p class="text-body-small text-medium-emphasis text-center mt-4">
               <v-icon size="14" :icon="mdiInformationOutline" /> Whatever you choose, anyone who knows your email address can always add you.
             </p>
           </v-card-text>
@@ -317,8 +317,8 @@
               <v-avatar color="deep-purple" size="64" class="mb-4 elevation-2">
                 <v-icon size="36" color="white" :icon="mdiCellphoneCheck" />
               </v-avatar>
-              <h2 class="text-h5 font-weight-bold mb-2">Verify your phone</h2>
-              <p class="text-body-2 text-medium-emphasis">
+              <h2 class="text-headline-small font-weight-bold mb-2">Verify your phone</h2>
+              <p class="text-body-medium text-medium-emphasis">
                 Callouts rely on us being able to reach you. Verify your mobile now and you'll be ready to create callouts the moment your club confirms your membership. This is optional — you can do it later from your profile.
               </p>
             </div>
@@ -331,7 +331,7 @@
                 density="comfortable"
                 class="text-left"
               >
-                <div class="text-body-2">
+                <div class="text-body-medium">
                   <strong>{{ phone }}</strong> is verified. You're all set for callouts once your club confirms your membership.
                 </div>
               </v-alert>
@@ -365,7 +365,7 @@
               >
                 Send verification code
               </v-btn>
-              <p class="text-caption text-medium-emphasis text-center mt-3">
+              <p class="text-body-small text-medium-emphasis text-center mt-3">
                 We'll text you a 6-digit code to confirm the number. Standard message rates may apply.
               </p>
             </template>

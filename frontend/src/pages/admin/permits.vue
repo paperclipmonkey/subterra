@@ -4,7 +4,7 @@
       <v-btn icon variant="text" @click="$router.back()">
         <v-icon :icon="mdiArrowLeft" />
       </v-btn>
-      <h2 class="text-h4 font-weight-bold ml-2">Permits</h2>
+      <h2 class="text-headline-large font-weight-bold ml-2">Permits</h2>
       <v-spacer />
       <v-btn color="primary" variant="text" to="/admin/bookings" class="mr-2">
         <v-icon :icon="mdiClipboardCheck" class="mr-1" />
@@ -85,7 +85,7 @@
             <v-textarea v-model="form.description" label="Description" rows="3" class="mb-2" />
 
             <div class="mb-3">
-              <div class="text-subtitle-2 mb-1">Photo</div>
+              <div class="text-title-small mb-1">Photo</div>
               <v-img
                 v-if="existingPhotoUrl"
                 :src="existingPhotoUrl"
@@ -249,7 +249,7 @@
           Embed “{{ embedPermit?.name }}” calendar
         </v-card-title>
         <v-card-text>
-          <p class="text-body-2 text-grey-darken-2 mb-3">
+          <p class="text-body-medium text-grey-darken-2 mb-3">
             Paste this HTML into any web page to embed a live, read-only availability
             calendar for this permit. Visitors can browse months and click through to
             Subterra to book — no login is required just to view it.
@@ -283,7 +283,7 @@
             </v-btn>
           </div>
 
-          <div class="text-caption text-grey-darken-1 mb-1">Preview</div>
+          <div class="text-body-small text-grey-darken-1 mb-1">Preview</div>
           <div class="embed-preview">
             <iframe
               v-if="embedDialog"

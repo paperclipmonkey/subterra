@@ -30,7 +30,7 @@
                   />
                 </v-col>
                 <v-col cols="12">
-                  <div class="text-subtitle-2 mb-1">Description (Markdown supported)</div>
+                  <div class="text-title-small mb-1">Description (Markdown supported)</div>
                   <MilkdownEditor v-model="editedClub.description" placeholder="Write about your club..." />
                 </v-col>
                 <v-col cols="12" sm="6">
@@ -61,7 +61,7 @@
                     @update:model-value="addUserToClub"
                   >
                     <template #item="{ props: slotProps, item }">
-                      <v-list-item v-bind="slotProps" :subtitle="item.raw.email" />
+                      <v-list-item v-bind="slotProps" :subtitle="item.email" />
                     </template>
                   </v-autocomplete>
                   <v-text-field
@@ -78,7 +78,7 @@
                   />
                   <div
                     v-if="filteredMembers.length > 0"
-                    class="member-list-header d-flex align-center text-caption text-medium-emphasis text-uppercase"
+                    class="member-list-header d-flex align-center text-body-small text-medium-emphasis text-uppercase"
                   >
                     <span>Member</span>
                     <v-spacer />
@@ -175,7 +175,7 @@
                   <p v-else-if="!loadingPending" class="text-grey mt-4">No members waiting to be confirmed.</p>
 
                   <template v-if="!loadingPending && recentlyApproved.length > 0">
-                    <div class="text-subtitle-2 mt-6">Recently confirmed</div>
+                    <div class="text-title-small mt-6">Recently confirmed</div>
                     <v-list lines="two" data-test="recently-approved">
                       <v-list-item v-for="member in recentlyApproved" :key="member.id" :title="member.name">
                         <template #prepend>

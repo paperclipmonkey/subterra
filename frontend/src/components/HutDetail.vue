@@ -15,8 +15,8 @@
       </div>
       <div class="d-flex fill-height align-end">
         <div class="bg-black-transparent pa-4 w-100">
-          <h1 class="text-h4 text-white font-weight-bold">{{ hut.name }}</h1>
-          <div class="text-subtitle-1 text-white">
+          <h1 class="text-headline-large text-white font-weight-bold">{{ hut.name }}</h1>
+          <div class="text-body-large text-white">
             <v-icon color="white" start :icon="mdiHomeGroup" /> 
             <router-link v-if="hut.club" :to="`/club/${hut.club.slug}`" class="text-white text-decoration-none hover-underline">
               {{ hut.club.name }}
@@ -99,8 +99,8 @@
                 <v-card-text>
                   <div class="d-flex justify-space-between align-center">
                     <div>
-                      <div class="text-caption text-grey">Coordinates</div>
-                      <div class="font-weight-medium text-body-2">{{
+                      <div class="text-body-small text-grey">Coordinates</div>
+                      <div class="font-weight-medium text-body-medium">{{
                         hut.location_lat.toFixed(5) }}, {{
                         hut.location_lng.toFixed(5) }}</div>
                     </div>
@@ -126,8 +126,8 @@
   </v-container>
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
     <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-    <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-    <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+    <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+    <p class="text-body-large text-grey mb-6">{{ error }}</p>
     <v-btn color="primary" variant="flat" to="/huts" :prepend-icon="mdiArrowLeft">
       Back to Huts
     </v-btn>

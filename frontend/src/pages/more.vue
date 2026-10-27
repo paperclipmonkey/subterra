@@ -5,11 +5,11 @@
         <v-card :to="{ path: '/pip' }" link height="150" class="d-flex align-center justify-center pip-tile">
           <div class="text-center">
             <img src="/pip.png" alt="Pip" class="pip-tile-avatar mb-2">
-            <div class="text-h5">
+            <div class="text-headline-small">
               Pip
               <v-chip color="warning" variant="tonal" size="x-small" class="ml-1">Preview</v-chip>
             </div>
-            <div class="text-body-2 text-medium-emphasis">Caving recommendations & trip planning</div>
+            <div class="text-body-medium text-medium-emphasis">Caving recommendations & trip planning</div>
           </div>
         </v-card>
       </v-col>
@@ -17,8 +17,8 @@
         <v-card :to="{ path: '/trips/discover' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="deep-orange" class="mb-2" :icon="mdiCompass" />
-            <div class="text-h5">Discover</div>
-            <div class="text-body-2 text-medium-emphasis">Explore recent trip activity</div>
+            <div class="text-headline-small">Discover</div>
+            <div class="text-body-medium text-medium-emphasis">Explore recent trip activity</div>
           </div>
         </v-card>
       </v-col>
@@ -26,8 +26,8 @@
         <v-card :to="{ path: '/huts' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="primary" class="mb-2" :icon="mdiHomeMapMarker" />
-            <div class="text-h5">Huts</div>
-            <div class="text-body-2 text-medium-emphasis">Find club huts</div>
+            <div class="text-headline-small">Huts</div>
+            <div class="text-body-medium text-medium-emphasis">Find club huts</div>
           </div>
         </v-card>
       </v-col>
@@ -35,8 +35,8 @@
         <v-card :to="{ path: '/collections' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="secondary" class="mb-2" :icon="mdiBookmarkBoxMultipleOutline" />
-            <div class="text-h5">Collections</div>
-            <div class="text-body-2 text-medium-emphasis">Curated lists of caves</div>
+            <div class="text-headline-small">Collections</div>
+            <div class="text-body-medium text-medium-emphasis">Curated lists of caves</div>
           </div>
         </v-card>
       </v-col>
@@ -44,8 +44,8 @@
         <v-card :to="{ path: '/news' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="success" class="mb-2" :icon="mdiNewspaper" />
-            <div class="text-h5">News</div>
-            <div class="text-body-2 text-medium-emphasis">Latest platform updates and announcements</div>
+            <div class="text-headline-small">News</div>
+            <div class="text-body-medium text-medium-emphasis">Latest platform updates and announcements</div>
           </div>
         </v-card>
       </v-col>
@@ -53,8 +53,8 @@
         <v-card :to="{ path: '/bookings' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="teal" class="mb-2" :icon="mdiClipboardCheck" />
-            <div class="text-h5">Permits</div>
-            <div class="text-body-2 text-medium-emphasis">Browse & apply for cave access permits</div>
+            <div class="text-headline-small">Permits</div>
+            <div class="text-body-medium text-medium-emphasis">Browse & apply for cave access permits</div>
           </div>
         </v-card>
       </v-col>
@@ -62,8 +62,8 @@
         <v-card :to="{ path: '/medals' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="amber-darken-2" class="mb-2" :icon="mdiMedalOutline" />
-            <div class="text-h5">Medals</div>
-            <div class="text-body-2 text-medium-emphasis">Your trophy case & medals still to earn</div>
+            <div class="text-headline-small">Medals</div>
+            <div class="text-body-medium text-medium-emphasis">Your trophy case & medals still to earn</div>
           </div>
         </v-card>
       </v-col>
@@ -71,8 +71,8 @@
         <v-card :to="{ path: '/offline' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="grey-darken-1" class="mb-2" :icon="mdiCloudDownload" />
-            <div class="text-h5">Offline Caves</div>
-            <div class="text-body-2 text-medium-emphasis">
+            <div class="text-headline-small">Offline Caves</div>
+            <div class="text-body-medium text-medium-emphasis">
               {{ offlineCount > 0 ? `${offlineCount} cave(s) saved` : 'Download caves for underground use' }}
             </div>
           </div>
@@ -82,8 +82,8 @@
         <v-card :to="{ path: '/admin' }" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="blue-grey" class="mb-2" :icon="mdiCogs" />
-            <div class="text-h5">Admin</div>
-            <div class="text-body-2 text-medium-emphasis">Users, Clubs & Data</div>
+            <div class="text-headline-small">Admin</div>
+            <div class="text-body-medium text-medium-emphasis">Users, Clubs & Data</div>
           </div>
         </v-card>
       </v-col>
@@ -91,8 +91,8 @@
         <v-card href="https://status.subterra.world/" target="_blank" rel="noopener" link height="150" class="d-flex align-center justify-center">
           <div class="text-center">
             <v-icon size="48" color="info" class="mb-2" :icon="mdiHeartPulse" />
-            <div class="text-h5">System Status</div>
-            <div class="text-body-2 text-medium-emphasis">Platform availability and monitoring</div>
+            <div class="text-headline-small">System Status</div>
+            <div class="text-body-medium text-medium-emphasis">Platform availability and monitoring</div>
           </div>
         </v-card>
       </v-col>

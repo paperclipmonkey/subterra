@@ -21,18 +21,18 @@
               <div class="d-flex align-center">
                 <v-avatar color="primary" size="32" class="mr-3">
                   <v-img v-if="onCallOfficer.photo" :src="onCallOfficer.photo" />
-                  <span v-else class="text-h6 white--text">{{ onCallOfficer.name.charAt(0) }}</span>
+                  <span v-else class="text-title-large white--text">{{ onCallOfficer.name.charAt(0) }}</span>
                 </v-avatar>
                 <div>
-                  <div class="text-caption font-weight-bold">On Call Duty Officer</div>
-                  <div class="text-body-2">{{ onCallOfficer.name }} is monitoring open callouts.
+                  <div class="text-body-small font-weight-bold">On Call Duty Officer</div>
+                  <div class="text-body-medium">{{ onCallOfficer.name }} is monitoring open callouts.
                   </div>
                 </div>
               </div>
             </v-alert>
 
             <v-alert v-if="officerError" type="error" border="start" variant="tonal" class="mb-4">
-              <div class="text-h6">No Duty Officer On Call</div>
+              <div class="text-title-large">No Duty Officer On Call</div>
               <div>There is currently no one monitoring callouts. Please leave your callout with a trusted friend.</div>
             </v-alert>
 
@@ -42,8 +42,8 @@
 
             <div v-else-if="!isApproved" class="mb-6 pa-4 bg-grey-lighten-4 rounded border text-center">
               <v-icon size="48" color="grey" class="mb-2" :icon="mdiShieldLock" />
-              <h3 class="text-h6 mb-2">Member Access Only</h3>
-              <p class="text-body-1 mb-4">Callouts are a safety feature available only to approved club members.</p>
+              <h3 class="text-title-large mb-2">Member Access Only</h3>
+              <p class="text-body-large mb-4">Callouts are a safety feature available only to approved club members.</p>
               <v-btn color="primary" to="/waitlist">Confirm Club Membership</v-btn>
             </div>
 
@@ -66,7 +66,7 @@
                   <!-- STEP 1: LOCATION -->
                   <v-window-item :value="1">
                     <div class="pa-4">
-                      <p class="text-body-1 mb-4">Where are you going and where are you parking?</p>
+                      <p class="text-body-large mb-4">Where are you going and where are you parking?</p>
 
                       <CaveSearchAutocomplete
                         v-model="form.cave_id"
@@ -112,7 +112,7 @@
                       </v-row>
 
                       <div class="mt-6 pa-3 grey lighten-4 rounded">
-                        <p class="text-subtitle-2 mb-2">Location & Security</p>
+                        <p class="text-title-small mb-2">Location & Security</p>
                         <div class="test-body-2 mb-2">
                           To prevent abuse and assist rescue teams, we record your IP address, browser details, and current location when submitting a callout request.
                         </div>
@@ -122,8 +122,8 @@
                             <v-btn size="small" color="primary" :loading="locationStatus === 'loading'" class="mr-3" :prepend-icon="mdiCrosshairsGps" @click="getLocation">
                               Share Location
                             </v-btn>
-                            <span v-if="locationStatus === 'error'" class="text-caption red--text font-weight-bold">Location access is required to proceed. Please enable it in your browser settings.</span>
-                            <span v-else class="text-caption">Please allow location access if prompted. Required for safety.</span>
+                            <span v-if="locationStatus === 'error'" class="text-body-small red--text font-weight-bold">Location access is required to proceed. Please enable it in your browser settings.</span>
+                            <span v-else class="text-body-small">Please allow location access if prompted. Required for safety.</span>
                           </div>
                         </v-alert>
                         <v-alert v-else type="success" density="compact" variant="outlined" class="mb-0 mt-2">
@@ -137,7 +137,7 @@
                   <!-- STEP 2: TEAM -->
                   <v-window-item :value="2">
                     <div class="pa-4">
-                      <p class="text-body-1 mb-4">Who is on the trip?</p>
+                      <p class="text-body-large mb-4">Who is on the trip?</p>
 
                       <!-- Add User Autocomplete -->
                       <v-autocomplete v-model="userSelect" v-model:search="userSearchInput"
@@ -153,19 +153,19 @@
                         <template #item="{ props, item }">
                           <v-list-item v-bind="props">
                             <template #prepend>
-                              <v-avatar v-if="item.raw.photo" :image="item.raw.photo" class="mr-3" size="40" />
+                              <v-avatar v-if="item.photo" :image="item.photo" class="mr-3" size="40" />
                               <v-avatar v-else color="primary" class="mr-3" size="40">
-                                <span class="text-white">{{ item.raw.name.charAt(0) }}</span>
+                                <span class="text-white">{{ item.name.charAt(0) }}</span>
                               </v-avatar>
                             </template>
                             <template #title>
                               <div class="d-flex align-center">
-                                <span class="text-body-1">{{ item.raw.name }}</span>
-                                <v-icon v-if="item.raw.has_phone" size="small" color="success" class="ml-2" title="Phone number saved" :icon="mdiPhone" />
+                                <span class="text-body-large">{{ item.name }}</span>
+                                <v-icon v-if="item.has_phone" size="small" color="success" class="ml-2" title="Phone number saved" :icon="mdiPhone" />
                               </div>
                             </template>
-                            <template v-if="item.raw.clubs && item.raw.clubs.length > 0" #subtitle>
-                              <span class="text-caption text-medium-emphasis">{{ item.raw.clubs.map(c => c.name).join(', ') }}</span>
+                            <template v-if="item.clubs && item.clubs.length > 0" #subtitle>
+                              <span class="text-body-small text-medium-emphasis">{{ item.clubs.map(c => c.name).join(', ') }}</span>
                             </template>
                           </v-list-item>
                         </template>
@@ -187,7 +187,7 @@
                                   <div v-if="p.user_id !== null">
                                     <div class="d-flex align-center">
                                       <v-icon size="small" color="primary" class="mr-2" :icon="mdiAccountCheck" />
-                                      <span class="text-subtitle-1 font-weight-bold">{{ p.name }}</span>
+                                      <span class="text-body-large font-weight-bold">{{ p.name }}</span>
                                     </div>
                                     <div v-if="p.clubs && p.clubs.length > 0" class="mt-1 d-flex flex-wrap">
                                       <v-chip v-for="c in p.clubs" :key="c.slug" size="small" color="blue-grey" variant="tonal" class="mr-1 mb-1">
@@ -249,7 +249,7 @@
                   <!-- STEP 3: PLAN -->
                   <v-window-item :value="3">
                     <div class="pa-4">
-                      <p class="text-body-1 mb-4">What is the plan?</p>
+                      <p class="text-body-large mb-4">What is the plan?</p>
                       <v-textarea v-model="form.trip_plan" label="Trip Plan / Route"
                                   hint="Describe your intended route (e.g. 'Through trip from Top to Bottom, exiting via Wretched Rabbit')"
                                   persistent-hint variant="outlined" rows="5"
@@ -260,14 +260,14 @@
                   <!-- STEP 4: SAFETY -->
                   <v-window-item :value="4">
                     <div class="pa-4">
-                      <p class="text-body-1 mb-4">When should we call 999?</p>
+                      <p class="text-body-large mb-4">When should we call 999?</p>
 
                       <CalloutTimePicker v-model="form.callout_time" />
 
                       <!-- Third-Party Consent Notice -->
                       <v-alert type="warning" variant="outlined" density="compact" class="mt-6"
                                :icon="mdiShieldCheck">
-                        <div class="text-caption">
+                        <div class="text-body-small">
                           <strong>Third-Party Consent:</strong> By providing emergency contact details, you confirm that you have their explicit permission to share their personal data with Subterra for rescue purposes.
                         </div>
                       </v-alert>
@@ -275,7 +275,7 @@
                       <!-- Privacy Notice -->
                       <v-alert type="info" variant="outlined" density="compact" class="mt-4"
                                :icon="mdiClockOutline">
-                        <div class="text-caption">
+                        <div class="text-body-small">
                           <strong>Privacy Notice:</strong> Your information (including team
                           details) will be securely stored and
                           <strong>automatically deleted 30 days</strong> after your trip completion
@@ -337,7 +337,7 @@
               <li v-if="step < 4">Callout Time</li>
             </ul>
           </v-alert>
-          <p class="text-body-2 text-grey-darken-1">For your safety, we recommend completing the callout before heading underground.</p>
+          <p class="text-body-medium text-grey-darken-1">For your safety, we recommend completing the callout before heading underground.</p>
         </v-card-text>
         <v-card-actions>
           <v-btn color="grey" variant="text" @click="showLeaveDialog = false">Stay & Complete</v-btn>

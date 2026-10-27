@@ -6,8 +6,8 @@
 
     <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
       <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-      <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-      <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+      <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+      <p class="text-body-large text-grey mb-6">{{ error }}</p>
       <v-btn color="primary" variant="flat" to="/" :prepend-icon="mdiArrowLeft">
         Back to Home
       </v-btn>
@@ -37,7 +37,7 @@
                 <span v-if="approvedClubs.length > 1" class="ml-1 opacity-70">+{{ approvedClubs.length - 1
                 }}</span>
               </v-chip>
-              <div v-if="profile.bio" class="text-body-2 text-medium-emphasis"
+              <div v-if="profile.bio" class="text-body-medium text-medium-emphasis"
                    style="max-width: 100%;">
                 {{ profile.bio }}
               </div>
@@ -91,9 +91,9 @@
               <v-icon color="blue" :icon="mdiFlashlight" size="32" />
             </v-avatar>
             <div>
-              <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatNumber(profile.stats.caves) }}
+              <div class="text-headline-large font-weight-bold text-grey-darken-4">{{ formatNumber(profile.stats.caves) }}
               </div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
+              <div class="text-body-small text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
                 Caves Visited</div>
             </div>
           </v-card>
@@ -104,9 +104,9 @@
               <v-icon color="orange-darken-1" :icon="mdiHiking" size="32" />
             </v-avatar>
             <div>
-              <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatNumber(profile.stats.trips) }}
+              <div class="text-headline-large font-weight-bold text-grey-darken-4">{{ formatNumber(profile.stats.trips) }}
               </div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
+              <div class="text-body-small text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
                 Total Trips</div>
             </div>
           </v-card>
@@ -117,9 +117,9 @@
               <v-icon color="purple" :icon="mdiClockTimeFourOutline" size="32" />
             </v-avatar>
             <div>
-              <div class="text-h4 font-weight-bold text-grey-darken-4">{{ formatDuration(profile.stats.duration)
+              <div class="text-headline-large font-weight-bold text-grey-darken-4">{{ formatDuration(profile.stats.duration)
               }}</div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
+              <div class="text-body-small text-uppercase font-weight-bold text-medium-emphasis letter-spacing-1">
                 Underground</div>
             </div>
           </v-card>
@@ -132,7 +132,7 @@
           <v-card class="rounded-xl h-100" elevation="0" border>
             <v-card-title class="d-flex align-center py-4 px-6">
               <v-icon :icon="mdiMedalOutline" color="amber-darken-2" class="mr-2" />
-              <span class="text-h6 font-weight-bold">Trophy Case</span>
+              <span class="text-title-large font-weight-bold">Trophy Case</span>
               <v-spacer />
               <v-chip size="x-small" color="amber" variant="flat">{{ medals.length }}</v-chip>
               <v-btn v-if="profile.id === user.id" variant="text" size="small" color="primary" class="ml-2"
@@ -149,8 +149,8 @@
               </div>
               <div v-else-if="profile.id === user.id" class="text-center py-4">
                 <v-icon :icon="mdiMedalOutline" size="48" color="grey-lighten-1" class="mb-3" />
-                <div class="text-subtitle-1 font-weight-bold mb-2">Start your collection!</div>
-                <p class="text-body-2 text-medium-emphasis mb-4">
+                <div class="text-body-large font-weight-bold mb-2">Start your collection!</div>
+                <p class="text-body-medium text-medium-emphasis mb-4">
                   You can earn medals by completing specific trips and exploring new caves.
                 </p>
                 <v-btn color="primary" variant="tonal" size="small" to="/medals" :prepend-icon="mdiMedalOutline">
@@ -167,7 +167,7 @@
           <v-card class="rounded-xl mb-6" elevation="0" border>
             <v-card-title class="py-4 px-6 d-flex align-center">
               <v-icon :icon="mdiFire" color="orange" class="mr-2" />
-              <span class="text-h6 font-weight-bold">Activity Log</span>
+              <span class="text-title-large font-weight-bold">Activity Log</span>
             </v-card-title>
             <v-divider />
             <div class="pa-4 pt-6 overflow-x-auto">
@@ -184,7 +184,7 @@
           <v-card v-if="profile.clubs && profile.clubs.length > 0" class="rounded-xl mb-6" elevation="0" border>
             <v-card-title class="py-4 px-6 d-flex align-center">
               <v-icon :icon="mdiAccountGroup" color="indigo" class="mr-2" />
-              <span class="text-h6 font-weight-bold">Clubs</span>
+              <span class="text-title-large font-weight-bold">Clubs</span>
             </v-card-title>
             <v-divider />
             <v-list lines="one" class="py-0">
@@ -197,7 +197,7 @@
                     </v-avatar>
                   </template>
 
-                  <v-list-item-title class="text-body-1 font-weight-bold">
+                  <v-list-item-title class="text-body-large font-weight-bold">
                     {{ club.name }}
                   </v-list-item-title>
 
@@ -220,7 +220,7 @@
           <v-card class="rounded-xl" elevation="0" border>
             <v-card-title class="py-4 px-6 d-flex align-center">
               <v-icon :icon="mdiHistory" color="primary" class="mr-2" />
-              <span class="text-h6 font-weight-bold">Recent Trips</span>
+              <span class="text-title-large font-weight-bold">Recent Trips</span>
               <v-spacer />
               <v-btn variant="text" size="small" color="primary" :to="`/trips?user_id=${profile.id}`" :append-icon="mdiArrowRight">View
                 All</v-btn>
@@ -234,18 +234,18 @@
                     <div
                       class="d-flex flex-column align-center justify-center bg-blue-lighten-5 rounded-lg pa-2 mr-4"
                       style="width: 50px; height: 50px;">
-                      <div class="text-caption text-blue font-weight-bold text-uppercase"
+                      <div class="text-body-small text-blue font-weight-bold text-uppercase"
                            style="line-height: 1;">{{ formatTripDateMonth(trip.start_time) }}</div>
-                      <div class="text-h6 text-blue-darken-2 font-weight-black" style="line-height: 1;">{{
+                      <div class="text-title-large text-blue-darken-2 font-weight-black" style="line-height: 1;">{{
                         formatTripDateDay(trip.start_time) }}</div>
                     </div>
                   </template>
 
-                  <v-list-item-title class="text-body-1 font-weight-bold mb-1">
+                  <v-list-item-title class="text-body-large font-weight-bold mb-1">
                     {{ trip.name || 'Untitled Trip' }}
                   </v-list-item-title>
 
-                  <v-list-item-subtitle class="d-flex align-center text-body-2">
+                  <v-list-item-subtitle class="d-flex align-center text-body-medium">
                     <v-icon size="small" :icon="mdiMapMarker" class="mr-1" />
                     {{ trip.entrance?.name || 'Unknown Entrance' }}
                   </v-list-item-subtitle>
@@ -258,7 +258,7 @@
             </v-list>
             <div v-else class="pa-12 text-center text-medium-emphasis">
               <v-icon :icon="mdiHiking" size="64" class="mb-4 opacity-20" />
-              <div class="text-h6 font-weight-regular">No recent trips</div>
+              <div class="text-title-large font-weight-regular">No recent trips</div>
             </div>
           </v-card>
         </v-col>
@@ -271,8 +271,8 @@
         <div class="medal-glow mx-auto mb-6 d-flex align-center justify-center">
           <img v-if="selectedMedal.image_url" :src="selectedMedal.image_url" alt="Medal" class="medal-modal-img">
         </div>
-        <h3 class="text-h5 font-weight-black text-grey-darken-3 mb-2">{{ selectedMedal.name }}</h3>
-        <p class="text-body-1 text-grey-darken-1 mb-6">{{ selectedMedal.description }}</p>
+        <h3 class="text-headline-small font-weight-black text-grey-darken-3 mb-2">{{ selectedMedal.name }}</h3>
+        <p class="text-body-large text-grey-darken-1 mb-6">{{ selectedMedal.description }}</p>
         <v-btn color="primary" variant="flat" block rounded="lg" size="large"
                @click="isMedalModalOpen = false">Close</v-btn>
       </v-card>
@@ -281,11 +281,11 @@
     <!-- Download Confirmation Dialog -->
     <v-dialog v-model="isDownloadDialogOpen" max-width="400">
       <v-card class="rounded-xl pa-4">
-        <v-card-title class="text-h6 font-weight-bold">
+        <v-card-title class="text-title-large font-weight-bold">
           <v-icon color="primary" class="mr-2" :icon="mdiDownload" />
           {{ downloadTitle }}
         </v-card-title>
-        <v-card-text class="text-body-1 py-4">
+        <v-card-text class="text-body-large py-4">
           {{ downloadDescription }}
         </v-card-text>
         <v-card-actions class="pt-2">

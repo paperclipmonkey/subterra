@@ -4,7 +4,7 @@
       <v-btn icon variant="text" @click="changeMonth(-1)">
         <v-icon :icon="mdiChevronLeft" />
       </v-btn>
-      <span class="text-h6">{{ calendarTitle }}</span>
+      <span class="text-title-large">{{ calendarTitle }}</span>
       <v-btn icon variant="text" @click="changeMonth(1)">
         <v-icon :icon="mdiChevronRight" />
       </v-btn>
@@ -47,17 +47,17 @@
         >
           <div class="day-number">{{ cell.day }}</div>
           <template v-if="cell.current && !cell.past">
-            <div v-if="cell.outOfSeason" class="text-caption day-label day-label--season">
+            <div v-if="cell.outOfSeason" class="text-body-small day-label day-label--season">
               Out of season
             </div>
             <template v-else>
-              <div v-if="cell.bookingCount > 0" class="text-caption text-grey-darken-1">
+              <div v-if="cell.bookingCount > 0" class="text-body-small text-grey-darken-1">
                 {{ cell.bookingCount }} booked
               </div>
-              <div v-if="cell.available && cell.pendingCount > 0" class="text-caption" :class="cell.atRisk ? 'day-label--pending' : 'text-grey'">
+              <div v-if="cell.available && cell.pendingCount > 0" class="text-body-small" :class="cell.atRisk ? 'day-label--pending' : 'text-grey'">
                 {{ cell.pendingCount }} pending
               </div>
-              <div v-if="!cell.available" class="text-caption text-error">
+              <div v-if="!cell.available" class="text-body-small text-error">
                 Full
               </div>
             </template>
@@ -65,7 +65,7 @@
         </div>
       </div>
 
-      <div class="d-flex flex-wrap ga-4 mt-4 text-caption text-grey-darken-1">
+      <div class="d-flex flex-wrap ga-4 mt-4 text-body-small text-grey-darken-1">
         <span class="d-flex align-center"><span class="legend-swatch legend-swatch--available" /> Available{{ readonly ? '' : ' — click to apply' }}</span>
         <span class="d-flex align-center"><span class="legend-swatch legend-swatch--at-risk" /> Pending — may fill once approved</span>
         <span class="d-flex align-center"><span class="legend-swatch legend-swatch--full" /> Full</span>

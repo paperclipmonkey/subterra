@@ -28,11 +28,11 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-title class="text-h5">
+      <v-card-title class="text-headline-small">
         Suggest Factual Correction
       </v-card-title>
       <v-card-text>
-        <p class="mb-4 text-body-1">
+        <p class="mb-4 text-body-large">
           Found a mistake on the <strong>{{ entityName }}</strong> page? Please let us know.
         </p>
         

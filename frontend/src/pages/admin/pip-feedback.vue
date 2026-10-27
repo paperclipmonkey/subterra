@@ -28,14 +28,14 @@
             </template>
             <v-card-title class="d-flex align-center">
               <span>{{ item.user?.name || 'Anonymous' }}</span>
-              <span v-if="item.user?.email" class="text-medium-emphasis text-body-2 ms-2">
+              <span v-if="item.user?.email" class="text-medium-emphasis text-body-medium ms-2">
                 ({{ item.user.email }})
               </span>
               <v-spacer />
               <v-chip v-if="item.reviewed" color="grey" size="x-small" variant="tonal" class="me-2">
                 Reviewed
               </v-chip>
-              <span class="text-body-2 text-medium-emphasis">{{ formatDate(item.created_at) }}</span>
+              <span class="text-body-medium text-medium-emphasis">{{ formatDate(item.created_at) }}</span>
             </v-card-title>
             <v-card-subtitle>
               {{ item.message_count }} message{{ item.message_count === 1 ? '' : 's' }}
@@ -76,7 +76,7 @@
         <v-card-text style="max-height: 60vh">
           <p v-if="active.comment" class="mb-3"><strong>Comment:</strong> {{ active.comment }}</p>
           <div v-for="(m, i) in active.transcript || []" :key="i" class="mb-3">
-            <div class="text-caption text-uppercase text-medium-emphasis">{{ m.role }}</div>
+            <div class="text-body-small text-uppercase text-medium-emphasis">{{ m.role }}</div>
             <div class="pip-msg-box">{{ m.content }}</div>
           </div>
         </v-card-text>

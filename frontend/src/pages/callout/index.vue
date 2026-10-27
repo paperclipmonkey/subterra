@@ -5,8 +5,8 @@
         <!-- Header -->
         <div class="text-center mb-6">
           <v-icon size="64" color="warning" class="mb-2" :icon="mdiAlertOctagram" />
-          <h1 class="text-h3 font-weight-bold">Safety Callout</h1>
-          <p class="text-subtitle-1 grey--text text--darken-1 mt-2">
+          <h1 class="text-display-medium font-weight-bold">Safety Callout</h1>
+          <p class="text-body-large grey--text text--darken-1 mt-2">
             Tell us where you're going. We'll watch your back.
           </p>
         </div>
@@ -25,21 +25,21 @@
             <div class="d-flex align-center">
               <v-avatar color="white" size="48" class="mr-4 elevation-1">
                 <v-img v-if="onCallOfficer && onCallOfficer.photo" :src="onCallOfficer.photo" />
-                <span v-else-if="onCallOfficer" class="text-h5 primary--text font-weight-bold">{{ onCallOfficer.name.charAt(0) }}</span>
+                <span v-else-if="onCallOfficer" class="text-headline-small primary--text font-weight-bold">{{ onCallOfficer.name.charAt(0) }}</span>
                 <v-icon v-else large color="grey" :icon="mdiAccountOff" />
               </v-avatar>
               <div>
-                <div class="text-caption font-weight-bold text-uppercase" style="letter-spacing: 1px;">Duty Officer Status</div>
-                <div v-if="onCallOfficer" class="text-h6 font-weight-bold">
+                <div class="text-body-small font-weight-bold text-uppercase" style="letter-spacing: 1px;">Duty Officer Status</div>
+                <div v-if="onCallOfficer" class="text-title-large font-weight-bold">
                   Online: {{ onCallOfficer.name }}
                 </div>
-                <div v-else class="text-h6 error--text">
+                <div v-else class="text-title-large error--text">
                   No Officer On Call
                 </div>
-                <div v-if="onCallOfficer" class="text-body-2">
+                <div v-if="onCallOfficer" class="text-body-medium">
                   Monitoring open callouts until {{ formatFullDate(onCallOfficer.next_gap_start) }}
                 </div>
-                <div v-else class="text-body-2">
+                <div v-else class="text-body-medium">
                   Callouts cannot be created at this time. Please leave details with a trusted friend.
                 </div>
               </div>
@@ -113,7 +113,7 @@
         <div class="text-center">
           <div v-if="appStore.user && appStore.user.active_callout">
             <v-alert type="error" variant="tonal" class="mb-4">
-              <div class="text-h6">You have an open callout!</div>
+              <div class="text-title-large">You have an open callout!</div>
               <div>Please manage your current trip before starting a new one.</div>
             </v-alert>
             <v-btn x-large color="error" size="x-large" block to="/callout/active" class="mb-4 font-weight-bold elevation-4">
@@ -125,7 +125,7 @@
           <div v-else>
             <v-alert v-if="needsPhoneVerify" type="warning" variant="tonal" class="mb-4 text-start">
               <div class="font-weight-bold mb-1">Verify your phone number first</div>
-              <div class="text-body-2 mb-2">A callout alerts people by text and call, so we need to confirm your number works before you can start one.</div>
+              <div class="text-body-medium mb-2">A callout alerts people by text and call, so we need to confirm your number works before you can start one.</div>
               <v-btn v-if="appStore.user.phone" size="small" color="warning" variant="flat" class="text-none" :prepend-icon="mdiCellphoneMessage" @click="showVerify = true">
                 Verify now
               </v-btn>

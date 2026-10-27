@@ -6,7 +6,7 @@
           <v-icon start :icon="mdiArrowLeft" />
           Back to Cave System
         </v-btn>
-        <h1 class="text-h4 mb-4">Add New Route</h1>
+        <h1 class="text-headline-large mb-4">Add New Route</h1>
       </v-col>
     </v-row>
 
