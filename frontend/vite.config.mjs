@@ -252,6 +252,16 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          // The server serves .mjs as application/octet-stream, which module
+          // workers reject; emit the MapLibre worker with a .js extension.
+          assetFileNames: (asset) =>
+            (asset.names ?? [asset.name]).some((n) => n?.endsWith('.mjs'))
+              ? 'assets/[name]-[hash].js'
+              : 'assets/[name]-[hash][extname]',
+        },
+      },
     }
   }
 })
