@@ -11,11 +11,11 @@
     <v-form ref="form" @submit.prevent="submit">
       <v-row>
         <v-col cols="12" md="6">
-          <h2 class="text-h5 mb-4">Cave System Details</h2>
+          <h2 class="text-headline-small mb-4">Cave System Details</h2>
           <CaveSystemForm v-model="system" />
         </v-col>
         <v-col cols="12" md="6">
-          <h2 class="text-h5 mb-4">Cave Details</h2>
+          <h2 class="text-headline-small mb-4">Cave Details</h2>
           <CaveForm v-model="cave" />
         </v-col>
       </v-row>

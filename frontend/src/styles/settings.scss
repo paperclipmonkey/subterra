@@ -13,6 +13,14 @@
   // outranks the framework's contextual ones, which square off the inner
   // edges of buttons in a v-btn-group and keep icon buttons circular.
   $button-border-radius: 8px,
+  // Keep Vuetify 3's breakpoints; v4 narrowed md/lg/xl. Must match the
+  // display thresholds in plugins/vuetify.js.
+  $grid-breakpoints: (
+    'md': 960px,
+    'lg': 1280px,
+    'xl': 1920px,
+    'xxl': 2560px,
+  ),
 );
 
 .metric-item {

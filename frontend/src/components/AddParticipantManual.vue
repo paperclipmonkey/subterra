@@ -3,7 +3,7 @@
     <template #default>
       <v-card rounded="lg">
         <v-card-title class="d-flex justify-space-between align-center">
-          <div class="text-h5 text-medium-emphasis ps-2">
+          <div class="text-headline-small text-medium-emphasis ps-2">
             Add trip participants
           </div>
 

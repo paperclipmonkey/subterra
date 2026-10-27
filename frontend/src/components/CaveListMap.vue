@@ -2,8 +2,8 @@
   <div class="map-container">
     <div v-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-4 h-100 flex-column text-center">
       <v-icon size="64" color="grey" class="mb-4" :icon="mdiLock" />
-      <h3 class="text-h6 text-grey-darken-2 mb-2">Map View Locked</h3>
-      <p class="text-body-1 text-grey-darken-1 mb-4" style="max-width: 300px;">
+      <h3 class="text-title-large text-grey-darken-2 mb-2">Map View Locked</h3>
+      <p class="text-body-large text-grey-darken-1 mb-4" style="max-width: 300px;">
         Cave locations and map features are exclusive to approved club members.
       </p>
       <v-btn color="primary" to="/waitlist">Confirm Club Membership</v-btn>

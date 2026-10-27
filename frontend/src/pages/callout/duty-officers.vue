@@ -6,8 +6,8 @@
         <!-- Header -->
         <div class="text-center mb-6">
           <v-icon size="56" color="warning" class="mb-2" :icon="mdiShieldAccount" />
-          <h1 class="text-h4 font-weight-bold">Duty Officers &amp; Rota</h1>
-          <p class="text-body-1 text-medium-emphasis mt-2">
+          <h1 class="text-headline-large font-weight-bold">Duty Officers &amp; Rota</h1>
+          <p class="text-body-large text-medium-emphasis mt-2">
             Real people, ready to respond if you don't come home.
           </p>
         </div>
@@ -15,14 +15,14 @@
         <!-- How it works explanation -->
         <v-card class="mb-6" variant="tonal" color="info">
           <v-card-text>
-            <div class="text-subtitle-1 font-weight-bold mb-2">How Duty Officers work</div>
-            <p class="text-body-2 mb-3">
+            <div class="text-body-large font-weight-bold mb-2">How Duty Officers work</div>
+            <p class="text-body-medium mb-3">
               When a callout is triggered, one Duty Officer is <strong>primary</strong> — they are the first to be
               alerted by SMS and email.
               If the primary officer does not take control of the incident within 15 minutes, all Duty Officers are
               alerted with a critical escalation notification.
             </p>
-            <p class="text-body-2 mb-0">
+            <p class="text-body-medium mb-0">
               A callout can only be created when a Duty Officer is on-call at your planned return time. This check
               happens automatically when you fill in your return time during callout creation.
             </p>
@@ -47,7 +47,7 @@
         <template v-if="!loading">
 
           <!-- Duty Officers list -->
-          <div class="text-h6 font-weight-bold mb-4">
+          <div class="text-title-large font-weight-bold mb-4">
             <v-icon :icon="mdiAccountGroup" color="warning" class="mr-2" />
             Duty Officers
           </div>
@@ -59,17 +59,17 @@
                   <v-avatar size="56" class="mr-3 elevation-1" color="primary">
                     <v-img v-if="officer.photo" :src="officer.photo" :alt="officer.name" cover>
                       <template #error>
-                        <span class="text-h5 text-white font-weight-bold">
+                        <span class="text-headline-small text-white font-weight-bold">
                           {{ officer.name.charAt(0) }}
                         </span>
                       </template>
                     </v-img>
-                    <span v-else class="text-h5 text-white font-weight-bold">
+                    <span v-else class="text-headline-small text-white font-weight-bold">
                       {{ officer.name.charAt(0) }}
                     </span>
                   </v-avatar>
                   <div>
-                    <div class="text-subtitle-1 font-weight-bold">{{ officer.name }}</div>
+                    <div class="text-body-large font-weight-bold">{{ officer.name }}</div>
                     <div v-if="officer.clubs && officer.clubs.length" class="d-flex flex-wrap ga-2 mt-1">
                       <v-chip
                         v-for="club in officer.clubs"
@@ -83,7 +83,7 @@
                     </div>
                   </div>
                 </div>
-                <v-card-text v-if="officer.bio" class="pt-1 pb-3 text-body-2 text-medium-emphasis flex-grow-1">
+                <v-card-text v-if="officer.bio" class="pt-1 pb-3 text-body-medium text-medium-emphasis flex-grow-1">
                   {{ officer.bio }}
                 </v-card-text>
               </v-card>
@@ -91,10 +91,10 @@
           </v-row>
 
           <!-- Upcoming Rota -->
-          <div class="text-h6 font-weight-bold mb-4">
+          <div class="text-title-large font-weight-bold mb-4">
             <v-icon :icon="mdiCalendarClock" color="warning" class="mr-2" />
             Upcoming Primary Rota
-            <span class="text-body-2 text-medium-emphasis font-weight-regular ml-2">(next 7 days)</span>
+            <span class="text-body-medium text-medium-emphasis font-weight-regular ml-2">(next 7 days)</span>
           </div>
 
           <v-card v-if="shifts.length === 0" variant="tonal" color="warning" class="mb-6">
@@ -110,12 +110,12 @@
                     <v-avatar size="36" color="primary" class="mr-2">
                       <v-img v-if="shift.user.photo" :src="shift.user.photo" :alt="shift.user.name" cover>
                         <template #error>
-                          <span class="text-body-2 text-white font-weight-bold">
+                          <span class="text-body-medium text-white font-weight-bold">
                             {{ shift.user.name.charAt(0) }}
                           </span>
                         </template>
                       </v-img>
-                      <span v-else class="text-body-2 text-white font-weight-bold">
+                      <span v-else class="text-body-medium text-white font-weight-bold">
                         {{ shift.user.name.charAt(0) }}
                       </span>
                     </v-avatar>

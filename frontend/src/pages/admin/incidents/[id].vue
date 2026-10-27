@@ -5,10 +5,10 @@
       <div class="d-flex align-center w-100">
         <v-icon size="32" left class="mr-4" :icon="mdiAlertDecagram" />
         <div>
-          <div class="text-h6 font-weight-bold">
+          <div class="text-title-large font-weight-bold">
             INCIDENT #{{ incident.id }} - {{ incident.status.toUpperCase() }}
           </div>
-          <div class="text-subtitle-2">
+          <div class="text-title-small">
             Controller:
             <span v-if="incident.controller" class="font-weight-bold">{{ incident.controller.name }}</span>
             <span v-else class="font-italic">UNASSIGNED</span>
@@ -30,7 +30,7 @@
     <!-- User Safe Banner -->
     <v-alert v-if="incident.callout.status === 'cancelled'" type="success" prominent class="mb-4"
              :icon="mdiCheckDecagram">
-      <div class="text-h6 font-weight-bold">USER MARKED SAFE</div>
+      <div class="text-title-large font-weight-bold">USER MARKED SAFE</div>
       <div>The user has confirmed they are safe via the app. You may now stand down emergency services and resolve
         this incident.</div>
     </v-alert>
@@ -55,7 +55,7 @@
               <!-- Step 1: Call 999 -->
               <v-timeline-item dot-color="red" size="small" :icon="mdiPhone">
                 <template #opposite>
-                  <div class="text-caption grey--text">Immediate</div>
+                  <div class="text-body-small grey--text">Immediate</div>
                 </template>
                 <div class="mb-2 font-weight-bold">Initiate Call</div>
                 <div>Dial 999 (or 112) and ask for <strong>POLICE</strong>.</div>
@@ -80,7 +80,7 @@
                   <strong>{{ rescueInfo.rescue_team }}<span v-if="rescueInfo.rescue_abbr"> ({{ rescueInfo.rescue_abbr }})</span></strong>
                 </div>
                 <div>Location: <strong>{{ incident.callout.cave ? incident.callout.cave.name : 'Unknown' }}</strong></div>
-                <v-alert v-if="rescueInfo && rescueInfo.note" type="info" variant="tonal" density="compact" class="mt-2 text-caption">
+                <v-alert v-if="rescueInfo && rescueInfo.note" type="info" variant="tonal" density="compact" class="mt-2 text-body-small">
                   {{ rescueInfo.note }}
                 </v-alert>
                 <v-checkbox v-model="script.statedNature" label="Nature of emergency confirmed" dense
@@ -90,7 +90,7 @@
               <!-- Step 3: Provide Info -->
               <v-timeline-item dot-color="blue" size="small" :icon="mdiInformation">
                 <div class="mb-2 font-weight-bold">Provide Critical Info</div>
-                <div class="text-caption mb-2">
+                <div class="text-body-small mb-2">
                   Team: {{ incident.callout.participants.length }} people<br>
                   Overdue: {{ formatTime(incident.callout.callout_time) }} ({{
                     incident.callout.callout_time ? formatRelativeTime(incident.callout.callout_time) :
@@ -138,7 +138,7 @@
                   <v-chip v-if="incident.callout.car_registration" x-small class="mr-1" label>
                     Reg: {{ incident.callout.car_registration }}
                   </v-chip>
-                  <span v-if="incident.callout.car_parking" class="text-caption grey--text text--darken-2">
+                  <span v-if="incident.callout.car_parking" class="text-body-small grey--text text--darken-2">
                     Parking: {{ incident.callout.car_parking }}
                   </span>
                 </div>
@@ -157,7 +157,7 @@
               </v-col>
               <v-col cols="12">
                 <v-divider class="my-2" />
-                <div class="text-subtitle-2 mb-2">Location Information</div>
+                <div class="text-title-small mb-2">Location Information</div>
                                 
                 <div v-if="incident.callout.cave">
                   <strong>Cave Location:</strong> 
@@ -265,7 +265,7 @@
 
         <!-- SMS Delivery -->
         <v-card class="mt-4">
-          <v-card-title class="grey lighten-4 py-2 text-subtitle-2 d-flex align-center">
+          <v-card-title class="grey lighten-4 py-2 text-title-small d-flex align-center">
             <v-icon left size="20" :icon="mdiCellphoneMessage" class="mr-2" />
             SMS Delivery
             <v-spacer />
@@ -275,11 +275,11 @@
           </v-card-title>
           <v-list v-if="smsDeliveries.length" density="compact">
             <v-list-item v-for="m in smsDeliveries" :key="m.id">
-              <v-list-item-title class="text-body-2">
+              <v-list-item-title class="text-body-medium">
                 {{ m.recipient_name || m.to_masked || 'Unknown' }}
-                <span v-if="m.to_masked && m.recipient_name" class="text-medium-emphasis text-caption">({{ m.to_masked }})</span>
+                <span v-if="m.to_masked && m.recipient_name" class="text-medium-emphasis text-body-small">({{ m.to_masked }})</span>
               </v-list-item-title>
-              <v-list-item-subtitle class="text-caption">
+              <v-list-item-subtitle class="text-body-small">
                 {{ formatDateTime(m.delivered_at || m.failed_at || m.sent_at) }}
                 <span v-if="m.error_code" class="text-error"> · err {{ m.error_code }}</span>
               </v-list-item-subtitle>
@@ -288,14 +288,14 @@
               </template>
             </v-list-item>
           </v-list>
-          <v-card-text v-else class="text-caption text-medium-emphasis">
+          <v-card-text v-else class="text-body-small text-medium-emphasis">
             No SMS messages recorded for this callout yet.
           </v-card-text>
         </v-card>
 
         <!-- Incident Map -->
         <v-card class="mt-4 overflow-hidden">
-          <v-card-title class="grey lighten-4 py-2 text-subtitle-2">
+          <v-card-title class="grey lighten-4 py-2 text-title-small">
             <v-icon left size="20" :icon="mdiMap" />
             Incident Locations
           </v-card-title>

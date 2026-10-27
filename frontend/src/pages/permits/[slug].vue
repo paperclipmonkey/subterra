@@ -6,8 +6,8 @@
 
     <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center py-12">
       <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-      <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-      <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+      <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+      <p class="text-body-large text-grey mb-6">{{ error }}</p>
       <v-btn color="primary" variant="flat" :prepend-icon="mdiArrowLeft" to="/bookings">
         Back to Permits
       </v-btn>
@@ -49,13 +49,13 @@
               Max {{ permit.max_groups_per_day }} group{{ permit.max_groups_per_day !== 1 ? 's' : '' }}/day
             </v-chip>
           </div>
-          <h1 class="text-h3 text-white font-weight-bold">{{ permit.name }}</h1>
-          <div v-if="permit.caves?.length" class="text-subtitle-1 text-white mt-1 d-flex align-center">
+          <h1 class="text-display-medium text-white font-weight-bold">{{ permit.name }}</h1>
+          <div v-if="permit.caves?.length" class="text-body-large text-white mt-1 d-flex align-center">
             <v-icon :icon="mdiMapMarker" size="small" class="mr-1" />
             {{ permit.caves.map(c => c.name).join(', ') }}
           </div>
         </v-container>
-        <div v-if="permit.photo?.photographer || permit.photo?.copyright" class="photo-credit text-caption">
+        <div v-if="permit.photo?.photographer || permit.photo?.copyright" class="photo-credit text-body-small">
           <v-icon size="x-small" :icon="mdiCamera" class="mr-1" />
           <span v-if="permit.photo.photographer">{{ permit.photo.photographer }}</span>
           <span v-if="permit.photo.photographer && permit.photo.copyright"> · </span>
@@ -118,7 +118,7 @@
                 >
                   View availability &amp; apply
                 </v-btn>
-                <p v-else class="text-caption text-grey mb-0">No cave is linked to this permit yet.</p>
+                <p v-else class="text-body-small text-grey mb-0">No cave is linked to this permit yet.</p>
               </v-card-text>
             </v-card>
           </v-col>

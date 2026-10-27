@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <div class="d-flex align-center justify-space-between mb-6">
-      <h2 class="text-h4">Suggested Edits</h2>
+      <h2 class="text-headline-large">Suggested Edits</h2>
       <v-btn icon variant="text" :loading="loading" @click="fetchItems">
         <v-icon :icon="mdiRefresh" />
       </v-btn>
@@ -50,7 +50,7 @@
         <template #prepend>
           <v-avatar size="36" image="/pip.png" alt="Pip" />
         </template>
-        <v-card-title class="text-body-1 font-weight-bold">
+        <v-card-title class="text-body-large font-weight-bold">
           Pip proposal batch — {{ batch.count }} suggested edits
         </v-card-title>
         <v-card-subtitle v-if="batch.reasoning" class="text-wrap mt-1">
@@ -107,7 +107,7 @@
 
     <div v-else-if="items.length === 0" class="text-center my-12 text-grey">
       <v-icon size="64" class="mb-4" :icon="mdiFileDocumentOutline" />
-      <div class="text-h6">No {{ activeTab }} suggestions found</div>
+      <div class="text-title-large">No {{ activeTab }} suggestions found</div>
     </div>
 
     <v-row v-else>
@@ -124,7 +124,7 @@
                 <v-icon color="primary" size="22">{{ getTypeIcon(item.suggestable_type) }}</v-icon>
               </v-avatar>
             </template>
-            <v-card-title class="text-body-1 font-weight-bold text-truncate">
+            <v-card-title class="text-body-large font-weight-bold text-truncate">
               {{ getEntityName(item) }}
             </v-card-title>
             <v-card-subtitle class="mt-1">
@@ -149,18 +149,18 @@
           <v-card-text class="flex-grow-1 pt-2">
             <!-- Name change: old → new -->
             <div v-if="getNameChange(item)" class="d-flex align-center mb-3 pa-2 rounded bg-grey-lighten-4">
-              <span class="text-body-2 text-decoration-line-through text-error text-truncate" style="max-width: 42%">{{ getNameChange(item).old }}</span>
+              <span class="text-body-medium text-decoration-line-through text-error text-truncate" style="max-width: 42%">{{ getNameChange(item).old }}</span>
               <v-icon size="16" class="mx-2 flex-shrink-0 text-grey" :icon="mdiArrowRight" />
-              <span class="text-body-2 text-success font-weight-medium text-truncate" style="max-width: 42%">{{ getNameChange(item).new }}</span>
+              <span class="text-body-medium text-success font-weight-medium text-truncate" style="max-width: 42%">{{ getNameChange(item).new }}</span>
             </div>
 
             <!-- Description snippet -->
-            <p v-if="getDescriptionSnippet(item)" class="text-body-2 text-grey-darken-2 mb-3 description-preview">
+            <p v-if="getDescriptionSnippet(item)" class="text-body-medium text-grey-darken-2 mb-3 description-preview">
               {{ getDescriptionSnippet(item) }}
             </p>
 
             <!-- AI reasoning -->
-            <p v-if="item.reasoning" class="text-body-2 text-deep-purple-darken-1 mb-3 description-preview">
+            <p v-if="item.reasoning" class="text-body-medium text-deep-purple-darken-1 mb-3 description-preview">
               <strong>Why:</strong> {{ item.reasoning }}
             </p>
 
@@ -186,9 +186,9 @@
                 <span v-if="item.user?.name" style="font-size: 10px; font-weight: bold;">{{ item.user.name.charAt(0).toUpperCase() }}</span>
                 <span v-else style="font-size: 10px;">🤖</span>
               </v-avatar>
-              <span class="text-caption text-grey-darken-1">{{ item.user?.name || '🤖 Robot' }}</span>
-              <span class="text-caption text-grey mx-1">·</span>
-              <span class="text-caption text-grey">{{ new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) }}</span>
+              <span class="text-body-small text-grey-darken-1">{{ item.user?.name || '🤖 Robot' }}</span>
+              <span class="text-body-small text-grey mx-1">·</span>
+              <span class="text-body-small text-grey">{{ new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) }}</span>
             </div>
           </v-card-text>
 
@@ -196,7 +196,7 @@
 
           <v-card-actions class="py-2">
             <v-spacer />
-            <span class="text-caption text-primary font-weight-bold mr-1">
+            <span class="text-body-small text-primary font-weight-bold mr-1">
               {{ item.status === 'pending' ? 'REVIEW' : 'VIEW DETAILS' }}
             </span>
             <v-icon color="primary" size="small" :icon="mdiArrowRight" />

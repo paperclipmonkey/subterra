@@ -10,7 +10,7 @@
         <v-row>
           <v-col cols="12" md="6">
             <v-card class="pa-4 mb-4">
-              <v-card-title class="text-h6">Loading Animation</v-card-title>
+              <v-card-title class="text-title-large">Loading Animation</v-card-title>
               <v-btn 
                 color="primary" 
                 size="large" 
@@ -29,13 +29,13 @@
                   Saving Trip...
                 </template>
               </v-btn>
-              <p class="text-caption">Click to see the fun loading animation!</p>
+              <p class="text-body-small">Click to see the fun loading animation!</p>
             </v-card>
           </v-col>
           
           <v-col cols="12" md="6">
             <v-card class="pa-4 mb-4">
-              <v-card-title class="text-h6">Toast Notifications</v-card-title>
+              <v-card-title class="text-title-large">Toast Notifications</v-card-title>
               <v-btn 
                 color="success" 
                 class="mb-2 mr-2" 
@@ -53,13 +53,13 @@
                 <v-icon left :icon="mdiAlertCircle" />
                 Error Toast
               </v-btn>
-              <p class="text-caption mt-2">Test the notification system!</p>
+              <p class="text-body-small mt-2">Test the notification system!</p>
             </v-card>
           </v-col>
         </v-row>
 
         <v-card class="pa-4">
-          <v-card-title class="text-h6">Complete Flow Demo</v-card-title>
+          <v-card-title class="text-title-large">Complete Flow Demo</v-card-title>
           <v-btn 
             color="success" 
             class="mb-2 mr-2" 
@@ -92,7 +92,7 @@
               Saving...
             </template>
           </v-btn>
-          <p class="text-caption mt-2">Experience the complete loading + notification flow!</p>
+          <p class="text-body-small mt-2">Experience the complete loading + notification flow!</p>
         </v-card>
       </v-card-text>
     </v-card>

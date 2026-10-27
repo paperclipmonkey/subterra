@@ -113,7 +113,7 @@
                     @click.stop
                   >
                     <v-icon size="x-small" class="mr-1" :icon="mdiTunnel" />
-                    <span class="text-caption font-weight-medium text-truncate">{{ cave.system?.name || 'Unknown System' }}</span>
+                    <span class="text-body-small font-weight-medium text-truncate">{{ cave.system?.name || 'Unknown System' }}</span>
                     <span class="cave-hero__system-count">{{ cave.system.caves.length }} entrances</span>
                     <v-icon size="x-small" class="ml-1" :icon="mdiChevronDown" />
                   </button>
@@ -134,11 +134,11 @@
                   </v-list-item>
                 </v-list>
               </v-menu>
-              <h1 class="text-h4 text-md-h3 font-weight-bold mb-2 cave-hero__title">{{ cave.name }}</h1>
+              <h1 class="text-headline-large text-md-display-medium font-weight-bold mb-2 cave-hero__title">{{ cave.name }}</h1>
               <div class="d-flex flex-wrap align-center ga-2">
                 <div class="cave-hero__location d-inline-flex align-center px-3 py-1">
                   <v-icon size="small" class="mr-1" :icon="mdiMapMarker" />
-                  <span class="text-body-2 font-weight-medium">{{ cave.location_name }}, {{ cave.location_country }}</span>
+                  <span class="text-body-medium font-weight-medium">{{ cave.location_name }}, {{ cave.location_country }}</span>
                 </div>
                 <v-chip
                   v-if="cave.visibility === 'admin_only'"
@@ -152,7 +152,7 @@
                 </v-chip>
               </div>
             </div>
-            <div v-if="cave.hero_video?.photographer || cave.hero_image?.photographer" class="text-caption text-right opacity-70">
+            <div v-if="cave.hero_video?.photographer || cave.hero_image?.photographer" class="text-body-small text-right opacity-70">
               <v-icon size="x-small" class="mr-1" :icon="mdiCamera" />
               {{ cave.hero_video?.photographer || cave.hero_image?.photographer }}
             </div>
@@ -167,9 +167,9 @@
         <v-card class="rounded-lg pa-4" elevation="1">
           <div class="d-flex align-center mb-2">
             <v-icon :icon="mdiCloudDownload" size="small" class="mr-2" color="primary" />
-            <span class="text-subtitle-2 font-weight-bold">Offline Access</span>
+            <span class="text-title-small font-weight-bold">Offline Access</span>
           </div>
-          <p class="text-caption text-medium-emphasis mb-3">
+          <p class="text-body-small text-medium-emphasis mb-3">
             Save this cave for use underground without internet.
           </p>
           <CaveDownloadButton :cave-id="cave.id" block />
@@ -207,7 +207,7 @@
                 <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between ga-3">
                   <div>
                     <div class="font-weight-bold">{{ cavePermit.name }}</div>
-                    <div class="text-body-2">This cave requires a permit. View availability and apply online.</div>
+                    <div class="text-body-medium">This cave requires a permit. View availability and apply online.</div>
                   </div>
                   <v-btn
                     color="primary"
@@ -220,11 +220,11 @@
                   </v-btn>
                 </div>
               </v-alert>
-              <div class="text-h6 mb-3 font-weight-bold display-1">Description</div>
-              <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-1" />
+              <div class="text-title-large mb-3 font-weight-bold display-1">Description</div>
+              <MarkdownRenderer :source="cave.description || '_No description provided._'" class="mb-6 text-body-large" />
               <!-- Structured OSM attribution: unlike the description text, it can't be
                    edited away, which ODbL requires for OSM-sourced caves. -->
-              <p v-if="cave.openstreetmap" class="text-caption text-medium-emphasis mt-n4 mb-6" data-test="osm-attribution">
+              <p v-if="cave.openstreetmap" class="text-body-small text-medium-emphasis mt-n4 mb-6" data-test="osm-attribution">
                 <template v-if="cave.openstreetmap.is_source">
                   Location and details from
                   <a :href="cave.openstreetmap.url" target="_blank" rel="noopener">OpenStreetMap</a>
@@ -237,8 +237,8 @@
               <v-alert v-if="isDescriptionStub" type="info" variant="tonal" class="mb-6">
                 <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between w-100">
                   <div>
-                    <div class="text-subtitle-1 font-weight-bold">Help improve this page</div>
-                    <div class="text-body-2">This cave's description is a stub. Could you write an improved description?</div>
+                    <div class="text-body-large font-weight-bold">Help improve this page</div>
+                    <div class="text-body-medium">This cave's description is a stub. Could you write an improved description?</div>
                   </div>
                   <div class="mt-3 mt-sm-0 ml-sm-4 shrink-0">
                     <v-btn
@@ -266,13 +266,13 @@
 
               <v-divider class="mb-6" />
 
-              <div class="text-h6 mb-3 font-weight-bold">Access Information</div>
+              <div class="text-title-large mb-3 font-weight-bold">Access Information</div>
               <div v-if="!appStore.canSuggest">
                 <v-alert :icon="mdiLock" border="start" border-color="grey" elevation="0" color="grey-lighten-3"
                          class="mb-4">
                   <v-icon color="grey-darken-2" size="40" class="mr-4" :icon="mdiLock" />
                   <div>
-                    <div class="text-body-2 text-grey-darken-2">
+                    <div class="text-body-medium text-grey-darken-2">
                       Access information is restricted to approved club members.
                       <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view details.
                     </div>
@@ -282,25 +282,25 @@
               <div v-else-if="cave.access_info">
                 <v-alert :icon="mdiLockAlert" border="start" border-color="warning" elevation="0" color="warning"
                          variant="tonal" class="mb-4">
-                  <div class="text-high-emphasis text-body-1">
+                  <div class="text-high-emphasis text-body-large">
                     <MarkdownRenderer :source="cave.access_info" />
                   </div>
                 </v-alert>
               </div>
-              <p v-else class="text-grey text-body-2">No specific access information provided.</p>
+              <p v-else class="text-grey text-body-medium">No specific access information provided.</p>
 
               <!-- Private notes — registry managers only, never shown to the public. -->
               <template v-if="cave.can_manage">
                 <v-divider class="my-6" />
                 <div class="d-flex align-center mb-3">
                   <v-icon :icon="mdiEyeOffOutline" color="deep-orange-darken-2" class="mr-2" />
-                  <span class="text-h6 font-weight-bold">Private notes</span>
+                  <span class="text-title-large font-weight-bold">Private notes</span>
                   <v-chip color="deep-orange" size="x-small" variant="flat" label class="ml-2">Admin only</v-chip>
                 </div>
                 <v-alert v-if="cave.private_notes" color="deep-orange-darken-2" variant="tonal" border="start" class="mb-4">
                   <MarkdownRenderer :source="cave.private_notes" />
                 </v-alert>
-                <p v-else class="text-grey text-body-2 mb-4">
+                <p v-else class="text-grey text-body-medium mb-4">
                   No private notes yet —
                   <router-link :to="`/caves/${route.params.id}/edit`" class="text-decoration-none font-weight-bold">add some</router-link>.
                 </p>
@@ -310,7 +310,7 @@
             <!-- Trips Tab -->
             <v-window-item value="trips">
               <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-4">
-                <h3 class="text-h6 mb-2 mb-sm-0">Recent Trips</h3>
+                <h3 class="text-title-large mb-2 mb-sm-0">Recent Trips</h3>
                 <div class="d-flex align-center flex-wrap" style="gap: 8px;">
                   <v-btn v-if="!hasDone" variant="text" color="primary" :prepend-icon="mdiCheck" @click="markAsDone">
                     Mark Visited
@@ -334,7 +334,7 @@
 
               <v-dialog v-model="showConfirmModal" max-width="400">
                 <v-card>
-                  <v-card-title class="text-h6 pa-4">Mark Cave as Done?</v-card-title>
+                  <v-card-title class="text-title-large pa-4">Mark Cave as Done?</v-card-title>
                   <v-card-text class="pt-0 pb-4">
                     Are you sure you want to mark <strong>{{ cave.name }}</strong> as visited?
                   </v-card-text>
@@ -361,18 +361,18 @@
                 <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
                   <div class="text-center pa-4">
                     <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
-                    <div class="text-h6 text-grey-darken-1">Location Locked</div>
-                    <div class="text-caption text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
+                    <div class="text-title-large text-grey-darken-1">Location Locked</div>
+                    <div class="text-body-small text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
                   </div>
                 </div>
               </div>
               <v-card-text v-if="appStore.canSuggest">
                 <div class="d-flex justify-space-between align-center">
                   <div>
-                    <div class="text-caption text-grey">Coordinates</div>
-                    <div v-if="cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                    <div class="text-body-small text-grey">Coordinates</div>
+                    <div v-if="cave.location_lat" class="font-weight-medium text-body-medium">{{ cave.location_lat.toFixed(5) }}, {{
                       cave.location_lng.toFixed(5) }}</div>
-                    <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
+                    <div v-else class="font-weight-medium text-body-medium text-grey">Hidden</div>
                   </div>
                   <div class="d-flex">
                     <v-tooltip text="Copy Coordinates" location="top">
@@ -403,7 +403,7 @@
             <v-window-item value="system">
               <template v-if="cave.system">
                 <div class="d-flex align-center justify-space-between mb-2">
-                  <h3 class="text-h6">{{ cave.system.name }}</h3>
+                  <h3 class="text-title-large">{{ cave.system.name }}</h3>
                   <div v-if="appStore.user.is_admin || (appStore.user.roles && appStore.user.roles.some(r => r.slug === 'data_admin'))">
                     <v-btn
                       size="small"
@@ -421,14 +421,14 @@
                 </div>
 
                 <div v-if="cave.system.catchment_name" class="mb-4">
-                  <div class="text-subtitle-2 text-grey mb-1">Catchment</div>
+                  <div class="text-title-small text-grey mb-1">Catchment</div>
                   <v-chip size="small" :prepend-icon="mdiWater" color="primary" variant="tonal">
                     {{ cave.system.catchment_name }}
                   </v-chip>
                 </div>
 
                 <MarkdownRenderer v-if="cave.system.description" :source="cave.system.description"
-                                  class="text-body-1 mb-4" />
+                                  class="text-body-large mb-4" />
 
                 <v-chip-group class="mb-4">
                   <v-chip v-for="tag in cave.system.tags" :key="tag.tag" size="small" variant="outlined" disabled>{{ tag.tag
@@ -439,9 +439,9 @@
 
                 <!-- References -->
                 <div v-if="appStore.canSuggest && cave.system.references" class="mb-6">
-                  <div class="text-subtitle-1 font-weight-bold mb-2">References</div>
+                  <div class="text-body-large font-weight-bold mb-2">References</div>
                   <v-card variant="tonal" class="pa-4 bg-grey-lighten-5">
-                    <MarkdownRenderer :source="cave.system.references" class="text-body-2" />
+                    <MarkdownRenderer :source="cave.system.references" class="text-body-medium" />
                   </v-card>
                 </div>
 
@@ -449,7 +449,7 @@
                      scopes which files this viewer receives: managers also get
                      private files, flagged below. -->
                 <div v-if="cave.system.files && cave.system.files.length > 0" class="mb-6">
-                  <div class="text-subtitle-1 font-weight-bold mb-2">Surveys, Documents & Photos</div>
+                  <div class="text-body-large font-weight-bold mb-2">Surveys, Documents & Photos</div>
                   <v-row dense>
                     <v-col v-for="file in cave.system.files" :key="file.id" cols="12" sm="6">
                       <v-card variant="outlined" class="h-100 hover-card" :href="file.url" target="_blank">
@@ -461,11 +461,11 @@
                             <v-icon :color="file.is_image ? 'indigo' : 'primary'" :icon="file.is_image ? mdiImage : mdiFileDocumentOutline" />
                           </v-avatar>
                           <div class="flex-grow-1 overflow-hidden">
-                            <div class="text-body-2 font-weight-bold text-truncate">{{ file.title || file.original_filename }}</div>
-                            <div class="text-caption text-medium-emphasis">
+                            <div class="text-body-medium font-weight-bold text-truncate">{{ file.title || file.original_filename }}</div>
+                            <div class="text-body-small text-medium-emphasis">
                               {{ file.kind }}<template v-if="file.details"> · {{ file.details }}</template>
                             </div>
-                            <div v-if="file.photographer || file.copyright" class="text-caption text-medium-emphasis text-truncate">
+                            <div v-if="file.photographer || file.copyright" class="text-body-small text-medium-emphasis text-truncate">
                               {{ [file.photographer, file.copyright ? `© ${file.copyright}` : null].filter(Boolean).join(' · ') }}
                             </div>
                           </div>
@@ -490,8 +490,8 @@
                 <!-- Unapproved User Placeholder (only when there's nothing to show) -->
                 <div v-if="!appStore.canSuggest && (!cave.system.files || cave.system.files.length === 0)" class="text-center pa-8 bg-grey-lighten-5 rounded-lg border border-dashed">
                   <v-icon size="48" color="grey-lighten-1" class="mb-3" :icon="mdiShieldLockOutline" />
-                  <div class="text-body-1 font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
-                  <div class="text-caption text-grey-darken-1 mb-4">
+                  <div class="text-body-large font-weight-medium text-grey-darken-2">Detailed System Data Restricted</div>
+                  <div class="text-body-small text-grey-darken-1 mb-4">
                     References, surveys, and technical documents are available to approved club members.
                     <router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view them.
                   </div>
@@ -500,18 +500,18 @@
                 <!-- Statistics (Mobile only) -->
                 <div v-if="smAndDown" class="mt-6">
                   <v-divider class="mb-6" />
-                  <h3 class="text-h6 mb-4">Statistics</h3>
+                  <h3 class="text-title-large mb-4">Statistics</h3>
                   <v-row dense>
                     <v-col cols="6">
                       <div class="d-flex flex-column">
-                        <span class="text-caption text-grey">Length</span>
-                        <span class="text-h6">{{ cave.system?.length ? Math.round(cave.system.length) + ' m' : '-' }}</span>
+                        <span class="text-body-small text-grey">Length</span>
+                        <span class="text-title-large">{{ cave.system?.length ? Math.round(cave.system.length) + ' m' : '-' }}</span>
                       </div>
                     </v-col>
                     <v-col cols="6">
                       <div class="d-flex flex-column">
-                        <span class="text-caption text-grey">Vertical</span>
-                        <span class="text-h6">{{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}</span>
+                        <span class="text-body-small text-grey">Vertical</span>
+                        <span class="text-title-large">{{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}</span>
                       </div>
                     </v-col>
                   </v-row>
@@ -533,7 +533,7 @@
 
                   <template v-if="cave.system?.caves?.length > 1">
                     <v-divider class="my-4" />
-                    <h3 class="text-h6 mb-2">System Entrances</h3>
+                    <h3 class="text-title-large mb-2">System Entrances</h3>
                     <v-list density="compact" class="bg-transparent pa-0">
                       <v-list-item v-for="ent in cave.system.caves" :key="ent.id" :to="'/caves/' + ent.slug"
                                    :active="ent.id === cave.id" class="px-0">
@@ -605,9 +605,9 @@
                           cover />
                       </v-avatar>
                       <div class="pa-4 flex-grow-1">
-                        <div class="text-subtitle-1 font-weight-bold">{{ collection.name }}</div>
-                        <div class="text-caption text-grey">{{ collection.caves_count }} Caves</div>
-                        <div v-if="collection.curr_cave_index !== undefined" class="text-caption text-primary">
+                        <div class="text-body-large font-weight-bold">{{ collection.name }}</div>
+                        <div class="text-body-small text-grey">{{ collection.caves_count }} Caves</div>
+                        <div v-if="collection.curr_cave_index !== undefined" class="text-body-small text-primary">
                           Cave #{{ collection.curr_cave_index + 1 }} in list
                         </div>
                       </div>
@@ -637,17 +637,17 @@
           <div v-else class="d-flex align-center justify-center bg-grey-lighten-3 rounded-t-lg" style="height: 300px;">
             <div class="text-center pa-4">
               <v-icon size="48" color="grey" class="mb-2" :icon="mdiLock" />
-              <div class="text-h6 text-grey-darken-1">Location Locked</div>
-              <div class="text-caption text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
+              <div class="text-title-large text-grey-darken-1">Location Locked</div>
+              <div class="text-body-small text-grey-darken-1"><router-link to="/waitlist" class="text-decoration-none font-weight-bold">Confirm your club membership</router-link> to view cave locations and maps</div>
             </div>
           </div>
           <v-card-text>
             <div class="d-flex justify-space-between align-center">
               <div>
-                <div class="text-caption text-grey">Coordinates</div>
-                <div v-if="appStore.canSuggest && cave.location_lat" class="font-weight-medium text-body-2">{{ cave.location_lat.toFixed(5) }}, {{
+                <div class="text-body-small text-grey">Coordinates</div>
+                <div v-if="appStore.canSuggest && cave.location_lat" class="font-weight-medium text-body-medium">{{ cave.location_lat.toFixed(5) }}, {{
                   cave.location_lng.toFixed(5) }}</div>
-                <div v-else class="font-weight-medium text-body-2 text-grey">Hidden</div>
+                <div v-else class="font-weight-medium text-body-medium text-grey">Hidden</div>
               </div>
               <div v-if="appStore.canSuggest" class="d-flex">
                 <v-tooltip text="Copy Coordinates" location="top">
@@ -676,25 +676,25 @@
 
         <!-- Stats Card -->
         <v-card v-if="!smAndDown" class="mb-4 rounded-lg pa-4" elevation="1">
-          <h3 class="text-h6 mb-4">Statistics</h3>
+          <h3 class="text-title-large mb-4">Statistics</h3>
           <v-row dense>
             <v-col cols="6">
               <div class="d-flex flex-column">
-                <span class="text-caption text-grey">Length</span>
-                <span class="text-h6">{{ cave.system?.length ? Math.round(cave.system.length) + ' m' : '-' }}</span>
+                <span class="text-body-small text-grey">Length</span>
+                <span class="text-title-large">{{ cave.system?.length ? Math.round(cave.system.length) + ' m' : '-' }}</span>
               </div>
             </v-col>
             <v-col cols="6">
               <div class="d-flex flex-column">
-                <span class="text-caption text-grey">Vertical</span>
-                <span class="text-h6">{{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}</span>
+                <span class="text-body-small text-grey">Vertical</span>
+                <span class="text-title-large">{{ cave.system?.vertical_range ? cave.system.vertical_range + ' m' : '-' }}</span>
               </div>
             </v-col>
           </v-row>
 
           <v-divider class="my-4" />
 
-          <div class="text-caption text-grey mb-2">Tags</div>
+          <div class="text-body-small text-grey mb-2">Tags</div>
           <v-chip-group>
             <v-chip
               v-for="tag in cave.tags"
@@ -711,7 +711,7 @@
 
         <!-- Entrances Card (if multiple) -->
         <v-card v-if="cave.system?.caves?.length > 1" class="mb-4 rounded-lg" elevation="1">
-          <v-card-title class="text-subtitle-1">System Entrances</v-card-title>
+          <v-card-title class="text-body-large">System Entrances</v-card-title>
           <v-list density="compact">
             <v-list-item v-for="ent in cave.system.caves" :key="ent.id" :to="'/caves/' + ent.slug"
                          :active="ent.id === cave.id">
@@ -727,9 +727,9 @@
         <v-card v-if="offlineStore.isPwa" class="mb-4 rounded-lg pa-4" elevation="1">
           <div class="d-flex align-center mb-2">
             <v-icon :icon="mdiCloudDownload" size="small" class="mr-2" color="primary" />
-            <span class="text-subtitle-2 font-weight-bold">Offline Access</span>
+            <span class="text-title-small font-weight-bold">Offline Access</span>
           </div>
-          <p class="text-caption text-medium-emphasis mb-3">
+          <p class="text-body-small text-medium-emphasis mb-3">
             Save this cave for use underground without internet.
           </p>
           <CaveDownloadButton :cave-id="cave.id" block />
@@ -744,8 +744,8 @@
   
   <v-container v-else-if="error" class="fill-height d-flex flex-column justify-center align-center text-center">
     <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-    <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-    <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+    <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+    <p class="text-body-large text-grey mb-6">{{ error }}</p>
     <div class="d-flex gap-3">
       <v-btn color="primary" variant="flat" :prepend-icon="mdiRefresh" @click="fetchCave">
         Try again

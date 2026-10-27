@@ -7,8 +7,8 @@
     </div>
 
     <div class="mb-10 text-center">
-      <h1 class="text-h3 font-weight-black mb-2 text-grey-darken-4">Latest News</h1>
-      <p class="text-subtitle-1 text-medium-emphasis">Updates from the Subterra team</p>
+      <h1 class="text-display-medium font-weight-black mb-2 text-grey-darken-4">Latest News</h1>
+      <p class="text-body-large text-medium-emphasis">Updates from the Subterra team</p>
     </div>
 
     <div v-if="loading" class="d-flex justify-center py-12">
@@ -23,20 +23,20 @@
             <div class="d-flex align-center mb-3">
               <v-icon :icon="mdiCalendar" size="small" color="primary" class="mr-2" />
               <span
-                class="text-caption font-weight-bold text-uppercase text-medium-emphasis letter-spacing-1">
+                class="text-body-small font-weight-bold text-uppercase text-medium-emphasis letter-spacing-1">
                 {{ moment(item.date).format('MMMM D, YYYY') }}
               </span>
             </div>
 
-            <h2 class="text-h5 font-weight-bold mb-3 text-grey-darken-4 lh-tight">
+            <h2 class="text-headline-small font-weight-bold mb-3 text-grey-darken-4 lh-tight">
               {{ item.title }}
             </h2>
 
-            <div class="text-body-1 text-grey-darken-1 mb-4 line-clamp-3">
+            <div class="text-body-large text-grey-darken-1 mb-4 line-clamp-3">
               {{ getExcerpt(item.content) }}
             </div>
 
-            <div class="d-flex align-center text-primary font-weight-bold text-body-2">
+            <div class="d-flex align-center text-primary font-weight-bold text-body-medium">
               Read Article <v-icon :icon="mdiArrowRight" class="ml-1" size="small" />
             </div>
           </div>

@@ -9,9 +9,9 @@
       window
     >
       <v-icon color="white" class="mr-2" :icon="mdiWifiOff" size="small" />
-      <span class="font-weight-bold text-body-2">YOU ARE OFFLINE</span>
+      <span class="font-weight-bold text-body-medium">YOU ARE OFFLINE</span>
       <v-spacer />
-      <span class="text-caption d-none d-sm-flex">
+      <span class="text-body-small d-none d-sm-flex">
         {{ downloadedCount > 0 ? `${downloadedCount} cave(s) available offline` : 'Only downloaded caves are available' }}
       </span>
     </v-system-bar>

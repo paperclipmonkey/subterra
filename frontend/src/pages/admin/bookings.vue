@@ -4,7 +4,7 @@
       <v-btn icon variant="text" @click="$router.back()">
         <v-icon :icon="mdiArrowLeft" />
       </v-btn>
-      <h2 class="text-h4 font-weight-bold ml-2">Bookings</h2>
+      <h2 class="text-headline-large font-weight-bold ml-2">Bookings</h2>
       <v-spacer />
       <v-btn-toggle v-model="viewMode" mandatory density="compact" class="mr-4">
         <v-btn value="list"><v-icon :icon="mdiViewList" /></v-btn>
@@ -113,7 +113,7 @@
         <v-btn icon variant="text" @click="prevMonth">
           <v-icon :icon="mdiChevronLeft" />
         </v-btn>
-        <h3 class="text-h5 mx-4">{{ calendarTitle }}</h3>
+        <h3 class="text-headline-small mx-4">{{ calendarTitle }}</h3>
         <v-btn icon variant="text" @click="nextMonth">
           <v-icon :icon="mdiChevronRight" />
         </v-btn>
@@ -143,7 +143,7 @@
               style="cursor:pointer"
               @click="openDetail(booking)"
             >
-              <span class="text-caption">{{ booking.applicant?.name }} · {{ booking.permit?.name }}</span>
+              <span class="text-body-small">{{ booking.applicant?.name }} · {{ booking.permit?.name }}</span>
             </div>
           </div>
         </div>
@@ -331,23 +331,23 @@
               <v-list-item v-bind="props" :title="undefined">
                 <template #prepend>
                   <v-avatar size="32" class="mr-2">
-                    <v-img v-if="item.raw.photo" :src="item.raw.photo" :alt="item.raw.name" />
+                    <v-img v-if="item.photo" :src="item.photo" :alt="item.name" />
                     <v-icon v-else :icon="mdiAccount" />
                   </v-avatar>
                 </template>
-                <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
-                <v-list-item-subtitle v-if="item.raw.clubs?.length">
-                  {{ item.raw.clubs.map(c => c.name).join(', ') }}
+                <v-list-item-title>{{ item.name }}</v-list-item-title>
+                <v-list-item-subtitle v-if="item.clubs?.length">
+                  {{ item.clubs.map(c => c.name).join(', ') }}
                 </v-list-item-subtitle>
               </v-list-item>
             </template>
             <template #selection="{ item }">
               <div class="d-flex align-center ga-2">
                 <v-avatar size="24">
-                  <v-img v-if="item.raw.photo" :src="item.raw.photo" :alt="item.raw.name" />
+                  <v-img v-if="item.photo" :src="item.photo" :alt="item.name" />
                   <v-icon v-else :icon="mdiAccount" size="16" />
                 </v-avatar>
-                <span>{{ item.raw.name }}</span>
+                <span>{{ item.name }}</span>
               </div>
             </template>
             <template #no-data>
@@ -393,7 +393,7 @@
       <v-card>
         <v-card-title>Message Applicant</v-card-title>
         <v-card-text>
-          <p class="mb-3 text-body-2 text-medium-emphasis">
+          <p class="mb-3 text-body-medium text-medium-emphasis">
             This will send an email to <strong>{{ messageBooking?.applicant?.name }}</strong> regarding their booking on {{ formatDate(messageBooking?.date) }}.
           </p>
           <v-textarea

@@ -4,8 +4,8 @@
     <div ref="headerRef" class="map-page__header">
       <div class="map-page__header-inner px-4 pt-3 pt-sm-4 pb-4 mx-auto">
         <div v-show="tab !== 'map'" class="mb-2">
-          <h1 class="text-h6 text-sm-h5 text-md-h4 font-weight-bold text-white">Club Huts</h1>
-          <div class="map-page__count text-caption text-sm-body-2">{{ headerSubtitle }}</div>
+          <h1 class="text-title-large text-sm-headline-small text-md-headline-large font-weight-bold text-white">Club Huts</h1>
+          <div class="map-page__count text-body-small text-sm-body-medium">{{ headerSubtitle }}</div>
         </div>
 
         <v-text-field

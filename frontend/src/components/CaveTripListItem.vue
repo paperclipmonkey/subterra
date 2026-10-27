@@ -20,16 +20,16 @@
 
       <div class="flex-grow-1 pa-4 overflow-hidden">
         <div class="d-flex justify-space-between align-start mb-1">
-          <h3 class="text-subtitle-1 font-weight-bold text-truncate pr-4">
+          <h3 class="text-body-large font-weight-bold text-truncate pr-4">
             {{ trip.name }}
-            <span v-if="isMarkedAsDoneCTA" class="text-primary text-body-2 font-weight-medium ms-2">— Complete Trip Report</span>
+            <span v-if="isMarkedAsDoneCTA" class="text-primary text-body-medium font-weight-medium ms-2">— Complete Trip Report</span>
           </h3>
           <v-chip v-if="isRecent" size="x-small" color="success" variant="flat" label class="font-weight-bold">
             NEW
           </v-chip>
         </div>
 
-        <div v-if="!isMarkedAsDoneCTA" class="d-flex align-center text-caption text-medium-emphasis mb-3 flex-wrap ga-4">
+        <div v-if="!isMarkedAsDoneCTA" class="d-flex align-center text-body-small text-medium-emphasis mb-3 flex-wrap ga-4">
           <div v-if="caveName" class="d-flex align-center font-weight-medium text-high-emphasis trip-cave">
             <v-icon size="small" start :icon="mdiMapMarker" class="mr-1" />
             {{ caveName }}
@@ -47,14 +47,14 @@
           </div>
         </div>
 
-        <div v-if="trip.description" class="text-body-2 mb-3 text-grey-darken-1 line-clamp-2">
+        <div v-if="trip.description" class="text-body-medium mb-3 text-grey-darken-1 line-clamp-2">
           {{ trip.description }}
         </div>
-        <div v-else-if="isMarkedAsDoneCTA" class="text-body-2 mb-3 text-primary font-weight-medium d-flex align-center">
+        <div v-else-if="isMarkedAsDoneCTA" class="text-body-medium mb-3 text-primary font-weight-medium d-flex align-center">
           <v-icon size="small" start :icon="mdiPlus" class="mr-1" />
           Click here to add a description and photos to your trip report
         </div>
-        <div v-else class="text-body-2 mb-3 text-grey-darken-1 line-clamp-2">
+        <div v-else class="text-body-medium mb-3 text-grey-darken-1 line-clamp-2">
           No description provided.
         </div>
 
@@ -74,7 +74,7 @@
             v-if="remainingParticipantsCount > 0"
             size="small"
             variant="text"
-            class="text-caption text-grey"
+            class="text-body-small text-grey"
           >
             +{{ remainingParticipantsCount }} more
           </v-chip>

@@ -17,7 +17,7 @@
       </v-card-title>
       
       <v-card-text>
-        <p class="mb-4 text-body-2">
+        <p class="mb-4 text-body-medium">
           Send emails to all users who have opted in to "Platform News". 
           Use the "Send Test" button to send a preview to yourself first.
         </p>
@@ -38,7 +38,7 @@
               v-model="body" 
               placeholder="Write your update here... Use markdown for formatting."
             />
-            <div v-pre class="text-caption text-grey mt-1">
+            <div v-pre class="text-body-small text-grey mt-1">
               Available variables: 
               <code class="text-primary">{{ firstname }}</code>, 
               <code class="text-primary">{{ fullname }}</code>, 
@@ -79,7 +79,7 @@
     <!-- Confirmation Dialog -->
     <v-dialog v-model="confirmDialog" max-width="500">
       <v-card>
-        <v-card-title class="text-h5">Confirm Mass Send</v-card-title>
+        <v-card-title class="text-headline-small">Confirm Mass Send</v-card-title>
         <v-card-text>
           Are you sure you want to send this email to all subscribed users? 
           This action cannot be undone.

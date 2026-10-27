@@ -2,7 +2,7 @@
   <v-container fluid class="pa-0">
     <div v-if="loading" class="d-flex flex-column align-center text-center pa-4">
       <v-progress-circular indeterminate color="primary" class="mb-3" />
-      <span class="text-caption text-medium-emphasis">
+      <span class="text-body-small text-medium-emphasis">
         Fetching weather and rainfall data&hellip; this can take a little longer than usual, as the Environment Agency's service is sometimes slow to respond.
       </span>
     </div>
@@ -15,20 +15,20 @@
       <!-- Current Weather -->
       <v-card v-if="weatherData.currently" class="mb-4 rounded-lg" elevation="0" color="blue-grey-darken-4">
         <v-card-text class="pa-6">
-          <div class="d-flex align-center text-caption text-blue-grey-lighten-2 mb-3 flex-wrap">
+          <div class="d-flex align-center text-body-small text-blue-grey-lighten-2 mb-3 flex-wrap">
             <v-icon :icon="mdiMapMarker" size="16" class="mr-1 text-blue-grey-lighten-3" />
             <span class="text-blue-grey-lighten-4 font-weight-medium mr-1">{{ caveName }}</span>
             <span v-if="location.lat">&middot; forecast for the cave entrance ({{ Number(location.lat).toFixed(4) }}, {{ Number(location.lng).toFixed(4) }})</span>
           </div>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-h4 font-weight-light text-white mb-1">
+              <div class="text-headline-large font-weight-light text-white mb-1">
                 {{ Math.round(weatherData.currently.temperature) }}°C
               </div>
-              <div class="text-subtitle-1 text-blue-grey-lighten-3 mb-0">
+              <div class="text-body-large text-blue-grey-lighten-3 mb-0">
                 {{ weatherData.currently.summary }}
               </div>
-              <div class="text-caption text-blue-grey-lighten-2">
+              <div class="text-body-small text-blue-grey-lighten-2">
                 Feels like {{ Math.round(weatherData.currently.apparentTemperature) }}°C
               </div>
             </div>
@@ -41,15 +41,15 @@
           <v-divider class="my-4 border-opacity-25" />
           <v-row dense class="text-blue-grey-lighten-3">
             <v-col cols="6">
-              <div class="text-caption">Wind</div>
-              <div class="text-body-2">{{ Math.round(weatherData.currently.windSpeed) }} km/h</div>
+              <div class="text-body-small">Wind</div>
+              <div class="text-body-medium">{{ Math.round(weatherData.currently.windSpeed) }} km/h</div>
             </v-col>
             <v-col cols="6">
-              <div class="text-caption">Humidity</div>
-              <div class="text-body-2">{{ Math.round(weatherData.currently.humidity * 100) }}%</div>
+              <div class="text-body-small">Humidity</div>
+              <div class="text-body-medium">{{ Math.round(weatherData.currently.humidity * 100) }}%</div>
             </v-col>
           </v-row>
-          <div class="text-caption text-blue-grey-lighten-2 mt-4">
+          <div class="text-body-small text-blue-grey-lighten-2 mt-4">
             Forecast and observed rainfall data from
             <a href="https://pirateweather.net/" target="_blank" rel="noopener" class="text-blue-grey-lighten-4">Pirate Weather</a>
           </div>
@@ -60,7 +60,7 @@
         <v-col cols="12">
           <!-- Combined Precipitation Timeline (observed + forecast) -->
           <v-card class="mb-4 rounded-lg" elevation="1">
-            <v-card-title class="text-subtitle-1 font-weight-bold">Precipitation at {{ caveName }}</v-card-title>
+            <v-card-title class="text-body-large font-weight-bold">Precipitation at {{ caveName }}</v-card-title>
             <v-card-subtitle>Last 7 days observed &middot; next 48 hours forecast &middot; via Pirate Weather</v-card-subtitle>
             <v-card-text>
               <v-progress-linear v-if="!historicData" indeterminate height="2" class="mb-2" />
@@ -79,10 +79,10 @@
         <v-col v-if="weatherData.river_levels && weatherData.river_levels.length > 0" cols="12">
           <!-- River Level Charts (One per gauge) -->
           <v-card v-for="(gauge, index) in weatherData.river_levels" :key="`river-${gauge.rloi_id}`" class="mb-4 rounded-lg" elevation="1">
-            <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
+            <v-card-title class="text-body-large font-weight-bold d-flex justify-space-between align-center">
               <div>
                 {{ gauge.name }}
-                <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
+                <span class="text-body-small text-medium-emphasis ml-2">Last 24h</span>
               </div>
               <v-chip size="small" :color="getStateColor(gauge.state)" label>
                 {{ gauge.state }}
@@ -91,14 +91,14 @@
                 
             <v-card-text>
               <div class="d-flex align-center mb-2">
-                <div class="text-h4 font-weight-light mr-4">
+                <div class="text-headline-large font-weight-light mr-4">
                   {{ gauge.latest_value?.toFixed(2) }}m
                 </div>
                 <div class="d-flex flex-column">
-                  <span class="text-caption text-medium-emphasis">Current Level</span>
+                  <span class="text-body-small text-medium-emphasis">Current Level</span>
                   <div class="d-flex align-center">
                     <v-icon :icon="getTrendIcon(gauge.trend)" size="small" :color="getTrendColor(gauge.trend)" class="mr-1" />
-                    <span class="text-body-2" :class="`text-${getTrendColor(gauge.trend)}`">{{ gauge.trend }}</span>
+                    <span class="text-body-medium" :class="`text-${getTrendColor(gauge.trend)}`">{{ gauge.trend }}</span>
                   </div>
                 </div>
               </div>
@@ -122,10 +122,10 @@
         <v-col v-if="weatherData.rain_gauges && weatherData.rain_gauges.length > 0" cols="12">
           <!-- Rain Gauge Charts (One per gauge) -->
           <v-card v-for="(gauge, index) in weatherData.rain_gauges" :key="`rain-${gauge.station_id}`" class="mb-4 rounded-lg" elevation="1">
-            <v-card-title class="text-subtitle-1 font-weight-bold d-flex justify-space-between align-center">
+            <v-card-title class="text-body-large font-weight-bold d-flex justify-space-between align-center">
               <div>
                 {{ gauge.name }}
-                <span class="text-caption text-medium-emphasis ml-2">Last 24h</span>
+                <span class="text-body-small text-medium-emphasis ml-2">Last 24h</span>
               </div>
             </v-card-title>
             <v-card-text>
@@ -147,7 +147,7 @@
 
         <v-col cols="12">
           <v-card class="mb-4 rounded-lg" elevation="1">
-            <v-card-title class="text-subtitle-1 font-weight-bold">External Resources</v-card-title>
+            <v-card-title class="text-body-large font-weight-bold">External Resources</v-card-title>
             <v-list density="compact">
               <!-- Built from the entrance coordinates, which only approved club members receive. -->
               <v-list-item

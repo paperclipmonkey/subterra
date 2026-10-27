@@ -9,12 +9,12 @@
               <v-img :src="cave.hero_image?.url || cave.entrance_image?.url" cover class="h-100" />
             </v-avatar>
             <div class="pa-4 flex-grow-1" style="min-width: 0;">
-              <div class="text-h6 font-weight-bold text-truncate">{{ cave.name }}</div>
-              <div class="text-caption text-grey-darken-1">
+              <div class="text-title-large font-weight-bold text-truncate">{{ cave.name }}</div>
+              <div class="text-body-small text-grey-darken-1">
                 <v-icon size="small" start :icon="mdiMapMarker" />{{ cave.location_name }}
               </div>
               <div v-if="cave.pivot && cave.pivot.description"
-                   class="text-body-2 mt-2 font-italic text-grey-darken-3 markdown-body">
+                   class="text-body-medium mt-2 font-italic text-grey-darken-3 markdown-body">
                 <MarkdownRenderer :source="cave.pivot.description" />
               </div>
             </div>
@@ -28,8 +28,8 @@
     </div>
     <div v-else class="text-center py-12">
       <v-icon size="64" color="grey-lighten-2" :icon="mdiTunnel" />
-      <div class="text-h6 text-grey mt-4">No caves in this collection yet.</div>
-      <div v-if="canEdit" class="text-caption text-grey">Edit the collection to add some caves!</div>
+      <div class="text-title-large text-grey mt-4">No caves in this collection yet.</div>
+      <div v-if="canEdit" class="text-body-small text-grey">Edit the collection to add some caves!</div>
     </div>
   </v-container>
 </template>

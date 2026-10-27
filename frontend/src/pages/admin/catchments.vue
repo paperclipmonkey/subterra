@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col cols="12" class="d-flex align-center">
-        <h1 class="text-h4">Catchments</h1>
+        <h1 class="text-headline-large">Catchments</h1>
         <v-spacer />
         <v-btn color="primary" :prepend-icon="mdiPlus" @click="openCreateDialog">
           New Catchment
@@ -42,7 +42,7 @@
     <v-dialog v-model="dialog" max-width="800px">
       <v-card>
         <v-card-title>
-          <span class="text-h5">{{ editedIndex === -1 ? 'New Catchment' : 'Edit Catchment' }}</span>
+          <span class="text-headline-small">{{ editedIndex === -1 ? 'New Catchment' : 'Edit Catchment' }}</span>
         </v-card-title>
 
         <v-card-text>
@@ -67,7 +67,7 @@
               
               <v-col cols="12">
                 <div class="d-flex align-center mb-2">
-                  <h3 class="text-subtitle-1">Gauges</h3>
+                  <h3 class="text-body-large">Gauges</h3>
                   <v-spacer />
                   <v-btn size="small" variant="text" :prepend-icon="mdiPlus" @click="addGauge">Add Gauge</v-btn>
                 </div>
@@ -109,7 +109,7 @@
                   />
                   <v-btn :icon="mdiDelete" size="small" variant="text" color="error" @click="removeGauge(index)" />
                 </div>
-                <div v-if="!editedItem.gauges || editedItem.gauges.length === 0" class="text-caption text-grey font-italic">
+                <div v-if="!editedItem.gauges || editedItem.gauges.length === 0" class="text-body-small text-grey font-italic">
                   No gauges added yet.
                 </div>
               </v-col>
@@ -128,7 +128,7 @@
     <!-- Delete Confirmation -->
     <v-dialog v-model="dialogDelete" max-width="500px">
       <v-card>
-        <v-card-title class="text-h5">Delete Catchment?</v-card-title>
+        <v-card-title class="text-headline-small">Delete Catchment?</v-card-title>
         <v-card-text>Are you sure you want to delete this catchment? This action cannot be undone.</v-card-text>
         <v-card-actions>
           <v-spacer />

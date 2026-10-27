@@ -15,7 +15,7 @@
         <div class="position-absolute top-0 left-0 pa-4 d-flex w-100" style="z-index: 1;">
           <v-btn :icon="mdiArrowLeft" variant="tonal" color="white" class="backdrop-blur" @click="$router.back()" />
         </div>
-        <div v-if="permit.photo?.photographer || permit.photo?.copyright" class="photo-credit text-caption">
+        <div v-if="permit.photo?.photographer || permit.photo?.copyright" class="photo-credit text-body-small">
           <v-icon size="x-small" :icon="mdiCamera" class="mr-1" />
           <span v-if="permit.photo.photographer">{{ permit.photo.photographer }}</span>
           <span v-if="permit.photo.photographer && permit.photo.copyright"> · </span>
@@ -36,8 +36,8 @@
               Max {{ permit.max_participants }} per group
             </v-chip>
           </div>
-          <h1 class="text-h3 text-white font-weight-bold">{{ permit.name }}</h1>
-          <div v-if="permit.caves?.length" class="text-subtitle-1 text-white mt-1 d-flex align-center">
+          <h1 class="text-display-medium text-white font-weight-bold">{{ permit.name }}</h1>
+          <div v-if="permit.caves?.length" class="text-body-large text-white mt-1 d-flex align-center">
             <v-icon :icon="mdiMapMarker" size="small" class="mr-1" />
             {{ permit.caves.map(c => c.name).join(', ') }}
           </div>
@@ -59,7 +59,7 @@
           <!-- Info (sidebar) -->
           <v-col cols="12" md="4" order="1" order-md="2">
             <v-card v-if="permit.description" class="rounded-lg mb-4" elevation="2">
-              <v-card-title class="d-flex align-center py-4 text-subtitle-1 font-weight-bold">
+              <v-card-title class="d-flex align-center py-4 text-body-large font-weight-bold">
                 <v-icon :icon="mdiInformationOutline" class="mr-2 text-primary" />
                 About this permit
               </v-card-title>
@@ -70,12 +70,12 @@
             </v-card>
 
             <v-alert v-if="permit.conditions" type="info" variant="tonal" class="rounded-lg mb-4">
-              <div class="text-subtitle-2 font-weight-bold mb-1">Conditions</div>
+              <div class="text-title-small font-weight-bold mb-1">Conditions</div>
               <MarkdownRenderer :source="permit.conditions" />
             </v-alert>
 
             <v-card v-if="permit.caves?.length" class="rounded-lg" variant="outlined">
-              <v-card-title class="d-flex align-center py-4 text-subtitle-1 font-weight-bold">
+              <v-card-title class="d-flex align-center py-4 text-body-large font-weight-bold">
                 <v-icon :icon="mdiMapMarker" class="mr-2 text-primary" />
                 Caves covered
               </v-card-title>
@@ -100,7 +100,7 @@
           <v-card-title>Apply for permit — {{ formatDate(selectedDate) }}</v-card-title>
           <v-card-text>
             <v-form ref="applyFormRef" @submit.prevent="submitApplication">
-              <p class="mb-4 text-body-2 text-grey-darken-2">
+              <p class="mb-4 text-body-medium text-grey-darken-2">
                 You are applying for <strong>{{ permit.name }}</strong> on <strong>{{ formatDate(selectedDate) }}</strong>.
               </p>
 
@@ -136,7 +136,7 @@
               />
 
               <v-alert v-if="permit.conditions" type="warning" variant="tonal" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold mb-1">You must agree to the following conditions:</div>
+                <div class="text-title-small font-weight-bold mb-1">You must agree to the following conditions:</div>
                 <MarkdownRenderer :source="permit.conditions" class="mb-3" />
                 <v-checkbox
                   v-model="application.conditions_accepted"

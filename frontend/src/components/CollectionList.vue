@@ -1,7 +1,7 @@
 <template>
   <v-container class="pb-8">
     <div class="mb-4">
-      <h1 class="text-h5 text-sm-h4 font-weight-bold mb-3">Collections</h1>
+      <h1 class="text-headline-small text-sm-headline-large font-weight-bold mb-3">Collections</h1>
       <div class="d-flex align-center flex-wrap ga-2">
         <v-text-field v-model="search" :prepend-inner-icon="mdiMagnify" label="Search collections" single-line
                       hide-details density="compact" variant="outlined" rounded="xl" bg-color="surface"
@@ -47,7 +47,7 @@
               class="align-end" gradient="to top, rgba(0,0,0,0.8), rgba(0,0,0,0) 50%" height="220px" cover>
               <div class="d-flex justify-space-between align-end pa-4 w-100">
                 <div>
-                  <v-card-title class="text-white text-h5 font-weight-bold pa-0 mb-1" style="line-height: 1.2;">
+                  <v-card-title class="text-white text-headline-small font-weight-bold pa-0 mb-1" style="line-height: 1.2;">
                     {{ collection.name }}
                   </v-card-title>
                   <v-card-subtitle class="text-white pa-0 opacity-80">
@@ -58,7 +58,7 @@
             </v-img>
 
             <v-card-text class="pt-4">
-              <div class="text-body-1 text-grey-darken-1 text-truncate-2-lines">
+              <div class="text-body-large text-grey-darken-1 text-truncate-2-lines">
                 {{ collection.description || 'No description available.' }}
               </div>
             </v-card-text>
@@ -68,7 +68,7 @@
     </v-row>
     <div v-if="!loading && filteredCollections.length === 0" class="text-center text-grey my-12">
       <v-icon size="64" color="grey-lighten-2" class="mb-4" :icon="mdiFolderSearchOutline" />
-      <div class="text-h6">No collections found</div>
+      <div class="text-title-large">No collections found</div>
       <p>Try adjusting your search terms</p>
     </div>
   </v-container>

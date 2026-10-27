@@ -10,15 +10,15 @@
       <div v-if="caveStore.caves.length === 0" class="text-center py-8">
         <v-icon size="64" color="grey lighten-10" :icon="mdiMapMarkerOff" class="mb-4" />
         <template v-if="hasFilters">
-          <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found with these filters</h3>
-          <p class="text-body-2 text-grey-darken-1 mb-4">The cave you're looking for may be in another region.</p>
+          <h3 class="text-title-large font-weight-medium text-grey-darken-1">No caves found with these filters</h3>
+          <p class="text-body-medium text-grey-darken-1 mb-4">The cave you're looking for may be in another region.</p>
           <v-btn color="primary" variant="tonal" @click="emit('clear-filters')">
             Remove All Filters
           </v-btn>
         </template>
         <template v-else>
-          <h3 class="text-h6 font-weight-medium text-grey-darken-1">No caves found</h3>
-          <p class="text-body-2 text-grey-darken-1">Try adjusting your search.</p>
+          <h3 class="text-title-large font-weight-medium text-grey-darken-1">No caves found</h3>
+          <p class="text-body-medium text-grey-darken-1">Try adjusting your search.</p>
         </template>
       </div>
 
@@ -103,7 +103,7 @@
                   >
                     {{ tag.tag }}
                   </v-chip>
-                  <span v-if="(cave.tags || []).length > 3" class="text-caption text-grey ml-1">
+                  <span v-if="(cave.tags || []).length > 3" class="text-body-small text-grey ml-1">
                     +{{ cave.tags.length - 3 }}
                   </span>
                 </div>
@@ -117,7 +117,7 @@
       <div ref="sentinel" class="py-6 d-flex flex-wrap align-center justify-center ga-1">
         <v-progress-circular v-if="hasMore" indeterminate color="grey-lighten-2" size="28" />
         <template v-else>
-          <p v-if="caveStore.caves.length > PAGE_SIZE" class="text-caption text-grey mb-0">
+          <p v-if="caveStore.caves.length > PAGE_SIZE" class="text-body-small text-grey mb-0">
             All {{ caveStore.caves.length }} caves shown
           </p>
           <v-btn
@@ -137,8 +137,8 @@
 
     <v-dialog v-model="showConfirmModal" max-width="400">
       <v-card class="rounded-lg">
-        <v-card-title class="text-h6 pa-4">Mark Cave as Done?</v-card-title>
-        <v-card-text class="pt-0 pb-4 text-body-1">
+        <v-card-title class="text-title-large pa-4">Mark Cave as Done?</v-card-title>
+        <v-card-text class="pt-0 pb-4 text-body-large">
           Are you sure you want to mark <strong>{{ caveToMark?.name }}</strong> as visited?
         </v-card-text>
         <v-card-actions class="pa-4 pt-0">

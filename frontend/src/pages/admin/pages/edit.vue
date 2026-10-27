@@ -4,7 +4,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <span class="text-h5">{{ isEditing ? 'Edit Page' : 'Create Page' }}</span>
+            <span class="text-headline-small">{{ isEditing ? 'Edit Page' : 'Create Page' }}</span>
           </v-card-title>
           <v-card-text>
             <v-form @submit.prevent="savePage">
@@ -22,7 +22,7 @@
                 persistent-hint
               />
 
-              <div class="text-subtitle-1 mt-4 mb-2">Content</div>
+              <div class="text-body-large mt-4 mb-2">Content</div>
               <MilkdownEditor 
                 v-model="page.content" 
                 placeholder="Write your page content here..."

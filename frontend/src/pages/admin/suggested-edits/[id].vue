@@ -18,10 +18,10 @@
               🤖 Pip proposal
             </v-chip>
           </div>
-          <h2 class="text-h4 font-weight-bold">
+          <h2 class="text-headline-large font-weight-bold">
             {{ suggestion.suggestable?.name || suggestion.suggested_data?.name || `Suggestion #${suggestion.id}` }}
           </h2>
-          <div class="text-subtitle-2 text-grey mt-1">
+          <div class="text-title-small text-grey mt-1">
             Suggestion #{{ suggestion.id }}
             · by <router-link v-if="suggestion.user" :to="`/profile/${suggestion.user.id}`" class="text-decoration-none font-weight-bold text-primary">{{ suggestion.user.name }}</router-link><span v-else>🤖 Robot</span>
           </div>
@@ -84,21 +84,21 @@
                   class="mr-2 mt-0"
                 />
               </template>
-              <div class="text-overline text-grey-darken-1 mb-1">{{ field.label }}</div>
+              <div class="text-label-medium text-uppercase text-grey-darken-1 mb-1">{{ field.label }}</div>
                         
               <v-row v-if="field.isImage" no-gutters>
                 <v-col cols="12" md="6" class="pa-2">
                   <v-card variant="outlined" class="pa-2">
-                    <div class="text-caption font-weight-bold mb-2">ORIGINAL</div>
+                    <div class="text-body-small font-weight-bold mb-2">ORIGINAL</div>
                     <v-img v-if="field.oldValue" :src="resolveUrl(field.oldValue)" height="200" cover class="rounded bg-grey-lighten-4" />
-                    <div v-else class="text-body-2 text-grey-darken-1 font-italic">Empty</div>
+                    <div v-else class="text-body-medium text-grey-darken-1 font-italic">Empty</div>
                   </v-card>
                 </v-col>
                 <v-col cols="12" md="6" class="pa-2">
                   <v-card variant="outlined" color="success" class="pa-2">
-                    <div class="text-caption font-weight-bold mb-2">SUGGESTED</div>
+                    <div class="text-body-small font-weight-bold mb-2">SUGGESTED</div>
                     <v-img v-if="field.newValue" :src="resolveUrl(field.newValue)" height="200" cover class="rounded bg-grey-lighten-4" />
-                    <div v-else class="text-body-2 text-grey-darken-1 font-italic">Empty</div>
+                    <div v-else class="text-body-medium text-grey-darken-1 font-italic">Empty</div>
                   </v-card>
                 </v-col>
               </v-row>
@@ -106,20 +106,20 @@
               <v-row v-else-if="field.isTags" no-gutters>
                 <v-col cols="12" md="6" class="pa-2">
                   <v-card variant="outlined" class="pa-2">
-                    <div class="text-caption font-weight-bold mb-2">ORIGINAL</div>
+                    <div class="text-body-small font-weight-bold mb-2">ORIGINAL</div>
                     <v-chip-group v-if="field.oldValue && field.oldValue.length">
                       <v-chip v-for="tag in field.oldValue" :key="tag.tag" size="small">{{ tag.tag }}</v-chip>
                     </v-chip-group>
-                    <div v-else class="text-body-2 text-grey-darken-1 font-italic">Empty</div>
+                    <div v-else class="text-body-medium text-grey-darken-1 font-italic">Empty</div>
                   </v-card>
                 </v-col>
                 <v-col cols="12" md="6" class="pa-2">
                   <v-card variant="outlined" color="success" class="pa-2">
-                    <div class="text-caption font-weight-bold mb-2">SUGGESTED</div>
+                    <div class="text-body-small font-weight-bold mb-2">SUGGESTED</div>
                     <v-chip-group v-if="field.newValue && field.newValue.length">
                       <v-chip v-for="tag in field.newValue" :key="tag.tag" size="small">{{ tag.tag }}</v-chip>
                     </v-chip-group>
-                    <div v-else class="text-body-2 text-grey-darken-1 font-italic">Empty</div>
+                    <div v-else class="text-body-medium text-grey-darken-1 font-italic">Empty</div>
                   </v-card>
                 </v-col>
               </v-row>
@@ -127,34 +127,34 @@
               <v-row v-else-if="field.isCaves" no-gutters>
                 <v-col cols="12" md="6" class="pa-2">
                   <v-card variant="outlined" class="pa-2">
-                    <div class="text-caption font-weight-bold mb-2">ORIGINAL</div>
+                    <div class="text-body-small font-weight-bold mb-2">ORIGINAL</div>
                     <v-list v-if="field.oldValue && field.oldValue.length" density="compact">
                       <v-list-item v-for="cave in field.oldValue" :key="cave.id" :title="`Cave #${cave.id}`" :subtitle="cave.description?.substring(0, 50) + (cave.description?.length > 50 ? '...' : '')" />
                     </v-list>
-                    <div v-else class="text-body-2 text-grey-darken-1 font-italic">Empty</div>
+                    <div v-else class="text-body-medium text-grey-darken-1 font-italic">Empty</div>
                   </v-card>
                 </v-col>
                 <v-col cols="12" md="6" class="pa-2">
                   <v-card variant="outlined" color="success" class="pa-2">
-                    <div class="text-caption font-weight-bold mb-2">SUGGESTED</div>
+                    <div class="text-body-small font-weight-bold mb-2">SUGGESTED</div>
                     <v-list v-if="field.newValue && field.newValue.length" density="compact">
                       <v-list-item v-for="cave in field.newValue" :key="cave.id" :title="`Cave #${cave.id}`" :subtitle="cave.description?.substring(0, 50) + (cave.description?.length > 50 ? '...' : '')" />
                     </v-list>
-                    <div v-else class="text-body-2 text-grey-darken-1 font-italic">Empty</div>
+                    <div v-else class="text-body-medium text-grey-darken-1 font-italic">Empty</div>
                   </v-card>
                 </v-col>
               </v-row>
 
               <v-row v-else-if="field.isLongText" no-gutters>
                 <v-col cols="12" class="mb-2">
-                  <v-card variant="tonal" color="error" class="pa-2 text-body-2">
-                    <div class="text-caption font-weight-bold mb-1">ORIGINAL</div>
+                  <v-card variant="tonal" color="error" class="pa-2 text-body-medium">
+                    <div class="text-body-small font-weight-bold mb-1">ORIGINAL</div>
                     {{ field.oldValue || '(Empty)' }}
                   </v-card>
                 </v-col>
                 <v-col cols="12">
-                  <v-card variant="tonal" color="success" class="pa-2 text-body-2">
-                    <div class="text-caption font-weight-bold mb-1">SUGGESTED</div>
+                  <v-card variant="tonal" color="success" class="pa-2 text-body-medium">
+                    <div class="text-body-small font-weight-bold mb-1">SUGGESTED</div>
                     {{ field.newValue || '(Empty)' }}
                   </v-card>
                 </v-col>

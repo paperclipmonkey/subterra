@@ -61,14 +61,14 @@
             <div class="fill-height gradient-overlay d-flex align-end">
               <div class="pa-4 w-100 d-flex justify-space-between align-end">
                 <div>
-                  <div v-if="routeDetail.cave_system" class="text-subtitle-1 text-white font-weight-bold opacity-80 mb-1">
+                  <div v-if="routeDetail.cave_system" class="text-body-large text-white font-weight-bold opacity-80 mb-1">
                     {{ routeDetail.cave_system.name }}
                   </div>
-                  <v-card-title class="text-white text-h4 font-weight-bold pa-0 w-100">
+                  <v-card-title class="text-white text-headline-large font-weight-bold pa-0 w-100">
                     {{ routeDetail.name }}
                   </v-card-title>
                 </div>
-                <div v-if="routeDetail.hero_image.photographer" class="text-caption text-white text-right opacity-70 flex-shrink-0 ml-2">
+                <div v-if="routeDetail.hero_image.photographer" class="text-body-small text-white text-right opacity-70 flex-shrink-0 ml-2">
                   <v-icon size="x-small" class="mr-1" :icon="mdiCamera" />
                   {{ routeDetail.hero_image.photographer }}
                 </div>
@@ -76,10 +76,10 @@
             </div>
           </v-img>
           <div v-else class="pa-4">
-            <div v-if="routeDetail.cave_system" class="text-subtitle-1 text-medium-emphasis font-weight-bold mb-1">
+            <div v-if="routeDetail.cave_system" class="text-body-large text-medium-emphasis font-weight-bold mb-1">
               {{ routeDetail.cave_system.name }}
             </div>
-            <v-card-title class="text-h4 font-weight-bold pa-0">
+            <v-card-title class="text-headline-large font-weight-bold pa-0">
               {{ routeDetail.name }}
             </v-card-title>
           </div>
@@ -99,7 +99,7 @@
           <v-card-text>
             <v-row class="mt-2">
               <v-col cols="12" md="8">
-                <h3 class="text-h6 mb-2">Details</h3>
+                <h3 class="text-title-large mb-2">Details</h3>
                 <v-table v-if="showEntrances" density="compact">
                   <tbody>
                     <tr v-if="routeDetail.entrance">
@@ -120,13 +120,13 @@
                     </tr>
                   </tbody>
                 </v-table>
-                <div v-if="routeDetail.description" class="mt-4 text-body-1">
+                <div v-if="routeDetail.description" class="mt-4 text-body-large">
                   <MarkdownRenderer :source="routeDetail.description" />
                 </div>
               </v-col>
 
               <v-col cols="12" md="4">
-                <h3 class="text-h6 mb-2">Tackle Required</h3>
+                <h3 class="text-title-large mb-2">Tackle Required</h3>
                 <v-table v-if="routeDetail.tackle && routeDetail.tackle.length > 0" class="mb-4">
                   <thead>
                     <tr>
@@ -157,7 +157,7 @@
                 </v-alert>
 
                 <div v-if="routeDetail.media && routeDetail.media.length > 0">
-                  <h3 class="text-h6 mb-2">Media</h3>
+                  <h3 class="text-title-large mb-2">Media</h3>
                   <v-row dense>
                     <v-col v-for="media in routeDetail.media" :key="media.id" cols="12" sm="6">
                       <v-card link @click="openMedia(media)">
@@ -170,8 +170,8 @@
                         <div v-else class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 150px;">
                           <v-icon size="x-large" color="error" :icon="mdiFilePdfBox" />
                         </div>
-                        <v-card-subtitle v-if="media.caption" class="py-2 text-caption">{{ media.caption }}</v-card-subtitle>
-                        <v-card-subtitle v-else class="py-2 text-caption">{{ media.type === 'pdf' ? 'View PDF' : 'View Image' }}</v-card-subtitle>
+                        <v-card-subtitle v-if="media.caption" class="py-2 text-body-small">{{ media.caption }}</v-card-subtitle>
+                        <v-card-subtitle v-else class="py-2 text-body-small">{{ media.type === 'pdf' ? 'View PDF' : 'View Image' }}</v-card-subtitle>
                       </v-card>
                     </v-col>
                   </v-row>

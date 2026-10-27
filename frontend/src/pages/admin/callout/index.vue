@@ -3,8 +3,8 @@
     <!-- Page Header -->
     <div class="d-flex flex-wrap align-center mb-4" style="gap: 12px;">
       <div class="flex-grow-1" style="min-width: 240px;">
-        <h2 class="text-h4 font-weight-bold mb-1">Callout Dashboard</h2>
-        <p class="text-subtitle-1 text-medium-emphasis mb-0">
+        <h2 class="text-headline-large font-weight-bold mb-1">Callout Dashboard</h2>
+        <p class="text-body-large text-medium-emphasis mb-0">
           Real-time monitoring of teams underground. Overdue trips trigger automatic incidents.
         </p>
       </div>
@@ -37,9 +37,9 @@
       <div class="d-flex flex-wrap align-center pa-4" style="gap: 16px;">
         <v-icon :icon="heroIcon" size="48" />
         <div class="flex-grow-1" style="min-width: 220px;">
-          <div class="text-overline" style="opacity: 0.85; line-height: 1.2;">{{ heroKicker }}</div>
-          <div class="text-h4 font-weight-bold">{{ heroTitle }}</div>
-          <div class="text-body-1" style="opacity: 0.92;">{{ heroMessage }}</div>
+          <div class="text-label-medium text-uppercase" style="opacity: 0.85; line-height: 1.2;">{{ heroKicker }}</div>
+          <div class="text-headline-large font-weight-bold">{{ heroTitle }}</div>
+          <div class="text-body-large" style="opacity: 0.92;">{{ heroMessage }}</div>
         </div>
         <v-btn
           v-if="firstActiveIncident"
@@ -62,8 +62,8 @@
           <div class="d-flex align-center pa-3" style="gap: 12px;">
             <v-icon :icon="tile.icon" size="28" />
             <div class="overflow-hidden">
-              <div class="text-h5 font-weight-bold text-truncate">{{ tile.value }}</div>
-              <div class="text-caption text-medium-emphasis text-truncate">{{ tile.label }}</div>
+              <div class="text-headline-small font-weight-bold text-truncate">{{ tile.value }}</div>
+              <div class="text-body-small text-medium-emphasis text-truncate">{{ tile.label }}</div>
             </div>
           </div>
         </v-card>
@@ -76,7 +76,7 @@
 
         <!-- OPEN INCIDENTS (highest priority) -->
         <div v-if="activeIncidents.length > 0" class="mb-6">
-          <h3 class="text-subtitle-1 font-weight-bold text-error mb-3 d-flex align-center">
+          <h3 class="text-body-large font-weight-bold text-error mb-3 d-flex align-center">
             <v-icon :icon="mdiAlertOctagram" color="error" class="mr-2" /> Open incidents
           </h3>
 
@@ -99,7 +99,7 @@
                 <div class="flex-grow-1" style="min-width: 180px;">
                   <div class="d-flex align-center flex-wrap mb-1" style="gap: 6px;">
                     <span
-                      class="text-overline font-weight-black"
+                      class="text-label-medium text-uppercase font-weight-black"
                       :class="incident.incident_controller_id ? 'text-orange-darken-3' : 'text-error'"
                     >
                       Incident #{{ incident.id }}
@@ -111,10 +111,10 @@
                       <v-icon start :icon="mdiAccountStar" /> {{ incident.controller ? incident.controller.name : 'Controller' }}
                     </v-chip>
                   </div>
-                  <div class="text-h5 font-weight-bold">
+                  <div class="text-headline-small font-weight-bold">
                     {{ incident.callout && incident.callout.cave ? incident.callout.cave.name : 'Unknown Location' }}
                   </div>
-                  <div class="text-body-2 text-medium-emphasis mt-1">
+                  <div class="text-body-medium text-medium-emphasis mt-1">
                     <v-icon :icon="mdiClockOutline" size="x-small" class="mr-1" />
                     Due {{ formatDate(incident.callout.callout_time) }}
                   </div>
@@ -122,8 +122,8 @@
 
                 <!-- Overdue ticker -->
                 <div class="text-center px-2">
-                  <div class="text-overline text-error" style="line-height: 1;">Overdue by</div>
-                  <div class="text-h4 font-weight-black text-error tnum">
+                  <div class="text-label-medium text-uppercase text-error" style="line-height: 1;">Overdue by</div>
+                  <div class="text-headline-large font-weight-black text-error tnum">
                     {{ overdueBy(incident.callout.callout_time) }}
                   </div>
                 </div>
@@ -142,7 +142,7 @@
         <!-- MONITORED CALLOUTS -->
         <div v-if="callouts.length > 0" class="mb-6">
           <div class="d-flex align-center mb-3">
-            <h3 class="text-subtitle-1 font-weight-bold text-medium-emphasis d-flex align-center">
+            <h3 class="text-body-large font-weight-bold text-medium-emphasis d-flex align-center">
               <v-icon :icon="mdiWatch" class="mr-2" /> Monitored callouts
             </h3>
             <v-spacer />
@@ -163,29 +163,29 @@
                 <v-icon :icon="callout.has_incident ? mdiAlertCircle : mdiRun" :color="callout.has_incident ? 'error' : 'success'" size="32" />
 
                 <div class="flex-grow-1" style="min-width: 200px;">
-                  <div class="font-weight-bold text-h6">
+                  <div class="font-weight-bold text-title-large">
                     {{ callout.cave_name }}
                     <span v-if="callout.exit_cave_name" class="text-medium-emphasis">
                       <v-icon :icon="mdiArrowRight" size="small" /> {{ callout.exit_cave_name }}
                     </span>
                   </div>
-                  <div class="text-body-2 text-medium-emphasis">
+                  <div class="text-body-medium text-medium-emphasis">
                     <span class="font-weight-bold text-high-emphasis">{{ callout.leader_name }}</span>
                     <span v-if="callout.additional_people > 0"> + {{ callout.additional_people }} other{{ callout.additional_people > 1 ? 's' : '' }}</span>
                     • Due {{ formatDate(callout.callout_time) }}
                   </div>
-                  <div v-if="callout.route" class="text-caption text-medium-emphasis mt-1 font-italic text-truncate" style="max-width: 500px;">
+                  <div v-if="callout.route" class="text-body-small text-medium-emphasis mt-1 font-italic text-truncate" style="max-width: 500px;">
                     {{ callout.route }}
                   </div>
                 </div>
 
                 <!-- Countdown -->
                 <div class="text-right">
-                  <div class="text-overline text-medium-emphasis" style="line-height: 1;">
+                  <div class="text-label-medium text-uppercase text-medium-emphasis" style="line-height: 1;">
                     {{ isOverdue(callout.callout_time) ? 'Overdue by' : 'Due in' }}
                   </div>
                   <div
-                    class="text-h5 font-weight-black tnum"
+                    class="text-headline-small font-weight-black tnum"
                     :class="callout.has_incident || isOverdue(callout.callout_time) ? 'text-error' : 'text-primary'"
                   >
                     {{ overdueBy(callout.callout_time) }}
@@ -219,8 +219,8 @@
           class="pa-8 text-center mb-6"
         >
           <v-icon size="72" color="success" :icon="mdiCheckCircleOutline" />
-          <h2 class="text-h4 mt-3 font-weight-light">All quiet</h2>
-          <p class="text-medium-emphasis text-h6 mb-4">No parties underground and no open incidents.</p>
+          <h2 class="text-headline-large mt-3 font-weight-light">All quiet</h2>
+          <p class="text-medium-emphasis text-title-large mb-4">No parties underground and no open incidents.</p>
           <v-chip v-if="loadingOfficer" variant="tonal">Checking cover…</v-chip>
           <v-chip v-else-if="currentOfficer" color="success" variant="tonal" :prepend-icon="mdiPoliceBadge">
             {{ currentOfficer.name }} on call
@@ -279,18 +279,18 @@
           <v-card-text>
             <div class="d-flex align-center mb-2" style="gap: 8px;">
               <v-icon :icon="mdiPoliceBadge" size="small" />
-              <span class="text-overline" style="line-height: 1;">Duty Officer</span>
+              <span class="text-label-medium text-uppercase" style="line-height: 1;">Duty Officer</span>
             </div>
             <div v-if="loadingOfficer">
               <v-progress-linear indeterminate color="white" />
             </div>
             <template v-else-if="currentOfficer">
-              <div class="text-h6 font-weight-bold">{{ currentOfficer.name }}</div>
-              <div class="text-caption">On call now</div>
+              <div class="text-title-large font-weight-bold">{{ currentOfficer.name }}</div>
+              <div class="text-body-small">On call now</div>
             </template>
             <template v-else>
-              <div class="text-h6 font-weight-bold">NO COVERAGE</div>
-              <div class="text-caption">System unmonitored</div>
+              <div class="text-title-large font-weight-bold">NO COVERAGE</div>
+              <div class="text-body-small">System unmonitored</div>
             </template>
 
             <v-divider v-if="!loadingOfficer" class="my-3" style="opacity: 0.3;" />
@@ -300,7 +300,7 @@
                 <v-icon :icon="mdiAlert" size="small" />
                 Gap starts {{ getRelativeTime(nextGapStart) }}
               </div>
-              <div v-else class="text-caption">
+              <div v-else class="text-body-small">
                 Covered until {{ formatDate(nextGapStart) }}
               </div>
             </div>
@@ -314,7 +314,7 @@
         <v-card rounded="lg" variant="outlined" class="mb-4">
           <div class="pa-3">
             <div class="d-flex justify-space-between align-center mb-2">
-              <span class="text-caption font-weight-bold text-medium-emphasis">BACKUP WATCHDOG</span>
+              <span class="text-body-small font-weight-bold text-medium-emphasis">BACKUP WATCHDOG</span>
               <v-chip v-if="watchdogCount === -2" color="grey" size="x-small" label>NOT CONFIGURED</v-chip>
               <v-chip v-else-if="watchdogCount === -1" color="error" size="x-small" label>ERROR</v-chip>
               <v-chip v-else-if="isWatchdogOutOfSync" color="warning" size="x-small" label>OUT OF SYNC</v-chip>
@@ -323,24 +323,24 @@
 
             <v-row no-gutters class="text-center">
               <v-col cols="6">
-                <div class="text-h6 font-weight-bold">{{ systemCount }}</div>
-                <div class="text-caption text-medium-emphasis">System</div>
+                <div class="text-title-large font-weight-bold">{{ systemCount }}</div>
+                <div class="text-body-small text-medium-emphasis">System</div>
               </v-col>
               <v-col cols="6">
-                <div class="text-h6 font-weight-bold" :class="watchdogCount < 0 ? 'text-error' : ''">
+                <div class="text-title-large font-weight-bold" :class="watchdogCount < 0 ? 'text-error' : ''">
                   {{ watchdogCount < 0 ? '??' : watchdogCount }}
                 </div>
-                <div class="text-caption text-medium-emphasis">Watchdog</div>
+                <div class="text-body-small text-medium-emphasis">Watchdog</div>
               </v-col>
             </v-row>
 
-            <v-alert v-if="watchdogCount === -1" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiLanDisconnect">
+            <v-alert v-if="watchdogCount === -1" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-body-small" :icon="mdiLanDisconnect">
               Communication error with watchdog service.
             </v-alert>
-            <v-alert v-else-if="watchdogCount === -2" type="info" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiCogOff">
+            <v-alert v-else-if="watchdogCount === -2" type="info" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-body-small" :icon="mdiCogOff">
               Watchdog service not configured.
             </v-alert>
-            <v-alert v-else-if="isWatchdogOutOfSync" type="warning" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiAlert">
+            <v-alert v-else-if="isWatchdogOutOfSync" type="warning" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-body-small" :icon="mdiAlert">
               Watchdog count differs from system.
             </v-alert>
 
@@ -354,7 +354,7 @@
         <v-card rounded="lg" variant="outlined" class="mb-4">
           <div class="pa-3">
             <div class="d-flex justify-space-between align-center mb-2">
-              <span class="text-caption font-weight-bold text-medium-emphasis">SMS CREDIT</span>
+              <span class="text-body-small font-weight-bold text-medium-emphasis">SMS CREDIT</span>
               <v-chip v-if="lowCredit" color="error" size="x-small" label>LOW CREDIT</v-chip>
               <v-chip v-else color="success" size="x-small" label>OK</v-chip>
             </div>
@@ -362,16 +362,16 @@
             <v-row no-gutters class="text-center">
               <v-col v-for="(bal, key) in smsBalances" :key="key" cols="6">
                 <div
-                  class="text-h6 font-weight-bold"
+                  class="text-title-large font-weight-bold"
                   :class="!bal.reachable ? 'text-medium-emphasis' : (bal.ok ? '' : 'text-error')"
                 >
                   {{ formatBalance(bal) }}
                 </div>
-                <div class="text-caption text-medium-emphasis">{{ bal.provider }}{{ key === 'primary' ? ' (primary)' : ' (backup)' }}</div>
+                <div class="text-body-small text-medium-emphasis">{{ bal.provider }}{{ key === 'primary' ? ' (primary)' : ' (backup)' }}</div>
               </v-col>
             </v-row>
 
-            <v-alert v-if="lowCredit" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-caption" :icon="mdiAlert">
+            <v-alert v-if="lowCredit" type="error" density="compact" variant="tonal" class="mt-3 py-1 px-2 text-body-small" :icon="mdiAlert">
               Credit is below the safe minimum — new callouts are blocked until it's topped up.
             </v-alert>
           </div>
@@ -379,8 +379,8 @@
 
         <!-- Legend -->
         <v-card variant="outlined" rounded="lg" class="mb-4">
-          <v-card-text class="text-caption">
-            <div class="text-overline mb-1">Legend</div>
+          <v-card-text class="text-body-small">
+            <div class="text-label-medium text-uppercase mb-1">Legend</div>
             <div class="d-flex align-center mb-1"><v-icon size="small" color="success" class="mr-2" :icon="mdiRun" /> Monitored callout</div>
             <div class="d-flex align-center mb-1"><v-icon size="small" color="error" class="mr-2" :icon="mdiAlertOctagram" /> Open incident</div>
             <div class="d-flex align-center"><v-icon size="small" color="grey" class="mr-2" :icon="mdiHistory" /> Resolved</div>
@@ -389,7 +389,7 @@
 
         <!-- Duty Officer FAQ -->
         <v-card variant="tonal" rounded="lg" class="mb-16">
-          <v-card-title class="text-subtitle-2 d-flex align-center">
+          <v-card-title class="text-title-small d-flex align-center">
             <v-icon :icon="mdiHelpCircleOutline" size="small" class="mr-2" /> Duty Officer FAQ
           </v-card-title>
           <v-card-text class="pa-0">
@@ -397,7 +397,7 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-title class="pa-2 font-weight-bold">1. How am I alerted?</v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-2 pt-0 text-caption">
+                <v-expansion-panel-text class="pa-2 pt-0 text-body-small">
                   <strong>15 minutes before</strong> a callout is due, both you and the cavers get a heads-up SMS +
                   email so the trip can be marked safe before any alarm. If the party is then <strong>overdue</strong>,
                   an <strong>Incident</strong> is created and you (the on-call DO) get an immediate <strong>SMS and
@@ -410,7 +410,7 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-title class="pa-2 font-weight-bold">2. How do I acknowledge / take control?</v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-2 pt-0 text-caption">
+                <v-expansion-panel-text class="pa-2 pt-0 text-body-small">
                   Any one of: <strong>press 1</strong> on the automated call, <strong>reply ACK</strong> to the alert
                   SMS, or click <strong>Acknowledge</strong> on the incident in this dashboard. This makes you the
                   <strong>Incident Controller</strong> and stops the escalation.
@@ -419,7 +419,7 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-title class="pa-2 font-weight-bold">3. What do I do once in control?</v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-2 pt-0 text-caption">
+                <v-expansion-panel-text class="pa-2 pt-0 text-body-small">
                   <ol class="pl-3">
                     <li><strong>Open the incident</strong> and review the trip plan, team and vehicle details.</li>
                     <li><strong>Attempt contact</strong> with the party using the numbers provided.</li>
@@ -432,7 +432,7 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-title class="pa-2 font-weight-bold">4. What if I miss the first alerts?</v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-2 pt-0 text-caption">
+                <v-expansion-panel-text class="pa-2 pt-0 text-body-small">
                   After 15 minutes with no controller, <strong>every duty officer</strong> is re-alerted (CRITICAL).
                   Independently, a backup "watchdog" hosted elsewhere also messages and calls all DOs via a
                   <strong>different phone provider</strong>, so a single outage can't silence every alert.
@@ -441,7 +441,7 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-title class="pa-2 font-weight-bold">5. How do I make sure my phone rings?</v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-2 pt-0 text-caption">
+                <v-expansion-panel-text class="pa-2 pt-0 text-body-small">
                   Use <strong>Test notifications</strong> (top of this page) to send yourself a test SMS and call. Then
                   enable an override so alerts break through silent mode — iPhone <em>Emergency Bypass</em>, or star the
                   contact on Android. Step-by-step instructions are in the
@@ -451,7 +451,7 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-title class="pa-2 font-weight-bold">6. Coordinating with the team</v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-2 pt-0 text-caption">
+                <v-expansion-panel-text class="pa-2 pt-0 text-body-small">
                   Watch Slack <code>#callouts-open</code> for live trips and <code>#callouts-overdue</code> for alarms,
                   and use the duty officers' <strong>WhatsApp group</strong> for real-time chat during an incident —
                   open it with the <strong>DO WhatsApp</strong> button at the top of this dashboard.
@@ -478,13 +478,13 @@
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
-          <p class="text-body-2 text-medium-emphasis mb-4">
+          <p class="text-body-medium text-medium-emphasis mb-4">
             Send a real test SMS <strong>and</strong> place a real phone call to confirm alerts reach
             you — even with your phone on silent or Do&nbsp;Not&nbsp;Disturb.
           </p>
 
           <v-list v-if="contactNumbers.primary || contactNumbers.backup" density="compact" class="bg-grey-lighten-4 rounded mb-4">
-            <v-list-subheader class="text-caption font-weight-bold">Save these alert numbers as contacts</v-list-subheader>
+            <v-list-subheader class="text-body-small font-weight-bold">Save these alert numbers as contacts</v-list-subheader>
             <v-list-item v-if="contactNumbers.primary" :prepend-icon="mdiCellphoneMessage" title="Primary — SMS &amp; calls (Twilio)" :subtitle="contactNumbers.primary" />
             <v-list-item v-if="contactNumbers.backup" :prepend-icon="mdiShieldCheck" title="Backup — SMS only (TextMagic)" :subtitle="contactNumbers.backup" />
           </v-list>
@@ -515,7 +515,7 @@
             </v-list-item>
           </v-list>
 
-          <v-alert type="info" variant="tonal" density="compact" class="text-caption">
+          <v-alert type="info" variant="tonal" density="compact" class="text-body-small">
             Set your phone to let callout alerts break through silent mode (iPhone <em>Emergency Bypass</em> /
             Android starred contact). Full steps are in the
             <router-link to="/pages/duty-officer-guide">Duty Officer Guide</router-link>.

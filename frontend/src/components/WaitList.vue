@@ -3,7 +3,7 @@
     <v-row justify="center">
       <v-col cols="12" md="8">
         <div class="text-center mb-6">
-          <h1 class="text-h4 font-weight-bold mb-2">Membership Status</h1>
+          <h1 class="text-headline-large font-weight-bold mb-2">Membership Status</h1>
           <p class="text-medium-emphasis">
             Track your club membership confirmations and learn about the features they unlock.
           </p>

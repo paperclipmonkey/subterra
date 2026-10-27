@@ -11,7 +11,7 @@
 
     <v-card>
       <v-card-title>
-        <span class="text-h5">{{ isNew ? 'New Hut' : 'Edit Hut' }}</span>
+        <span class="text-headline-small">{{ isNew ? 'New Hut' : 'Edit Hut' }}</span>
       </v-card-title>
 
       <v-card-text>
@@ -32,7 +32,7 @@
                                 autocomplete="off" />
               </v-col>
               <v-col cols="12">
-                <div class="text-subtitle-2 mb-2">Description</div>
+                <div class="text-title-small mb-2">Description</div>
                 <MilkdownEditor 
                   v-model="editedHut.description" 
                   placeholder="Write description here..."
@@ -46,13 +46,13 @@
                 <v-textarea v-model="editedHut.booking_info" label="Booking Info" rows="3" />
               </v-col>
               <v-col cols="12">
-                <div class="text-subtitle-2 mb-2">Location</div>
+                <div class="text-title-small mb-2">Location</div>
                 <div style="height: 300px;">
                   <AppMap v-model="mapStyle" geolocate :center="mapCenter" :zoom="mapZoom" height="300px">
                     <mgl-marker v-model:coordinates="pin" :draggable="true" color="#cc0000" />
                   </AppMap>
                 </div>
-                <div class="text-caption text-medium-emphasis mt-1">Drag the pin to the hut.</div>
+                <div class="text-body-small text-medium-emphasis mt-1">Drag the pin to the hut.</div>
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field v-model.number="editedHut.location_lat" label="Latitude"

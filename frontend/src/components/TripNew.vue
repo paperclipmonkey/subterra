@@ -3,8 +3,8 @@
     <template v-if="loading">
       <v-card class="pa-8 text-center">
         <v-progress-circular indeterminate size="64" color="primary" class="mb-4" />
-        <h3 class="text-h6 mb-2">Loading trip data...</h3>
-        <p class="text-body-2 text-medium-emphasis">Please wait while we load caves, users, and trip information.</p>
+        <h3 class="text-title-large mb-2">Loading trip data...</h3>
+        <p class="text-body-medium text-medium-emphasis">Please wait while we load caves, users, and trip information.</p>
       </v-card>
     </template>
     <v-form v-else class="pa-xl-4">
@@ -97,18 +97,18 @@
                 <template #item="{ props, item }">
                   <v-list-item v-bind="props">
                     <template #prepend>
-                      <v-avatar v-if="item.raw.photo" :image="item.raw.photo" class="mr-3" size="40" />
+                      <v-avatar v-if="item.photo" :image="item.photo" class="mr-3" size="40" />
                       <v-avatar v-else color="primary" class="mr-3" size="40">
-                        <span class="text-white">{{ item.raw.name.charAt(0) }}</span>
+                        <span class="text-white">{{ item.name.charAt(0) }}</span>
                       </v-avatar>
                     </template>
                     <template #title>
                       <div class="d-flex align-center">
-                        <span class="text-body-1">{{ item.raw.name }}</span>
+                        <span class="text-body-large">{{ item.name }}</span>
                       </div>
                     </template>
-                    <template v-if="item.raw.clubs && item.raw.clubs.length" #subtitle>
-                      <span class="text-caption text-medium-emphasis">{{ item.raw.clubs.map(c => c.name).join(', ') }}</span>
+                    <template v-if="item.clubs && item.clubs.length" #subtitle>
+                      <span class="text-body-small text-medium-emphasis">{{ item.clubs.map(c => c.name).join(', ') }}</span>
                     </template>
                   </v-list-item>
                 </template>
@@ -137,8 +137,8 @@
                         </v-avatar>
 
                         <div class="flex-grow-1">
-                          <div class="text-subtitle-1 font-weight-bold">{{ getParticipant(participantId).name }}</div>
-                          <div v-if="getParticipant(participantId).clubs && getParticipant(participantId).clubs.length" class="text-caption text-medium-emphasis">
+                          <div class="text-body-large font-weight-bold">{{ getParticipant(participantId).name }}</div>
+                          <div v-if="getParticipant(participantId).clubs && getParticipant(participantId).clubs.length" class="text-body-small text-medium-emphasis">
                             {{ getParticipant(participantId).clubs.map(c => c.name).join(', ') }}
                           </div>
                         </div>
@@ -167,7 +167,7 @@
                             hint="A short, descriptive name for your trip (e.g. 'Main Chamber Survey')" persistent-hint
                             variant="outlined" class="mb-4" />
 
-              <div class="text-caption mb-2 text-medium-emphasis">Description</div>
+              <div class="text-body-small mb-2 text-medium-emphasis">Description</div>
               <MilkdownEditor v-model="trip.description" placeholder="Describe your adventure..."
                               class="mb-4" @change="updatedDescription" />
 
@@ -196,7 +196,7 @@
                             @update:error="delete validationErrors.media" />
 
               <template v-if="pendingMedia.length > 0">
-                <div class="text-subtitle-2 mt-4 mb-2">New Uploads:</div>
+                <div class="text-title-small mt-4 mb-2">New Uploads:</div>
                 <v-card v-for="(item, i) in pendingMedia" :key="i" class="mb-3 border" flat>
                   <v-row no-gutters>
                     <v-col cols="4" sm="3">
@@ -206,7 +206,7 @@
                       <v-row dense>
                         <v-col cols="12">
                           <div class="d-flex justify-space-between align-center">
-                            <span class="text-caption text-truncate">{{ item.file.name }}</span>
+                            <span class="text-body-small text-truncate">{{ item.file.name }}</span>
                             <v-btn :icon="mdiClose" size="x-small" variant="text" color="error" @click="removePendingMedia(i)" />
                           </div>
                         </v-col>
@@ -228,7 +228,7 @@
               </template>
 
               <template v-if="trip.existing_media && trip.existing_media.length">
-                <div class="text-subtitle-2 mt-4 mb-2">Existing media:</div>
+                <div class="text-title-small mt-4 mb-2">Existing media:</div>
                 <v-card v-for="(media, i) in trip.existing_media" :key="i" class="mb-3 border" flat>
                   <v-row no-gutters>
                     <v-col cols="4" sm="3">
@@ -238,7 +238,7 @@
                       <v-row dense>
                         <v-col cols="12">
                           <div class="d-flex justify-space-between align-center">
-                            <span class="text-caption text-truncate">{{ media.filename || media.file_name }}</span>
+                            <span class="text-body-small text-truncate">{{ media.filename || media.file_name }}</span>
                             <v-btn :icon="mdiDelete" size="x-small" variant="text" color="error" @click="removeExistingMedia(media)" />
                           </div>
                         </v-col>
@@ -297,7 +297,7 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="showDeleteDialog" persistent max-width="400">
       <v-card class="rounded-lg">
-        <v-card-title class="text-h6 pa-4">Delete Trip?</v-card-title>
+        <v-card-title class="text-title-large pa-4">Delete Trip?</v-card-title>
         <v-card-text class="pt-0 pb-4">Are you sure you want to delete this trip report? This action cannot be undone.</v-card-text>
         <v-card-actions class="pa-4 pt-0">
           <v-spacer />
