@@ -26,10 +26,10 @@
         </template>
       </v-list-item>
     </v-list>
-    <p v-else class="text-caption text-grey mb-3">No files yet.</p>
+    <p v-else class="text-body-small text-grey mb-3">No files yet.</p>
 
     <v-sheet class="pa-3 border rounded" color="grey-lighten-5">
-      <div class="text-caption font-weight-medium mb-2">Add a file (survey, historic photo, document)</div>
+      <div class="text-body-small font-weight-medium mb-2">Add a file (survey, historic photo, document)</div>
       <v-file-input
         v-model="uploadFile"
         label="PDF or image"

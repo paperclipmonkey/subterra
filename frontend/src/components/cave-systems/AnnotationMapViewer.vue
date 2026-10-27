@@ -1,6 +1,6 @@
 <template>
   <v-card v-if="hasAnnotations" class="annotation-map-container mb-4">
-    <v-card-title class="text-h6">Map Annotations</v-card-title>
+    <v-card-title class="text-title-large">Map Annotations</v-card-title>
     <v-card-text class="annotation-map-holder">
       <AppMap
         ref="mapRef"

@@ -3,7 +3,7 @@
     <template #default>
       <v-card rounded="lg">
         <v-card-title class="d-flex justify-space-between align-center">
-          <div class="text-h5 text-medium-emphasis ps-2">
+          <div class="text-headline-small text-medium-emphasis ps-2">
             Filter
           </div>
           <v-btn
@@ -19,7 +19,7 @@
           <template v-for="(groupItems, groupName) in tagsAvailable" :key="groupName">
             <div :ref="el => setCategoryRef(el, groupName)" class="pa-4 pt-2">
               <div class="d-flex align-center justify-space-between mb-2">
-                <h2 class="text-h6 tagGroupTitle">{{ groupName }}</h2>
+                <h2 class="text-title-large tagGroupTitle">{{ groupName }}</h2>
                 <v-chip v-if="getSelectedCount(groupName)" size="x-small" color="primary" variant="flat">
                   {{ getSelectedCount(groupName) }} Selected
                 </v-chip>

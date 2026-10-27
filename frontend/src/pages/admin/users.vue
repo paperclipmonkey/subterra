@@ -143,7 +143,7 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="400">
       <v-card>
-        <v-card-title class="text-h5 bg-error text-white">
+        <v-card-title class="text-headline-small bg-error text-white">
           Delete User?
         </v-card-title>
         <v-card-text class="pt-4">
@@ -162,11 +162,11 @@
     <!-- Merge Duplicate Account Dialog -->
     <v-dialog v-model="mergeDialog" max-width="640" @update:model-value="onMergeDialogToggle">
       <v-card>
-        <v-card-title class="text-h5">
+        <v-card-title class="text-headline-small">
           Merge Duplicate Account
         </v-card-title>
         <v-card-text>
-          <p class="text-body-2 mb-4">
+          <p class="text-body-medium mb-4">
             Use this when the same person has two profiles — for example, they lost access to
             their old account and signed up again. All trips, club/medal/role memberships,
             bookings, callouts and other data will be moved onto the account you keep, and the
@@ -186,7 +186,7 @@
               @update:model-value="fetchMergePreview"
             >
               <template #item="{ props, item }">
-                <v-list-item v-bind="props" :subtitle="item.raw.email" />
+                <v-list-item v-bind="props" :subtitle="item.email" />
               </template>
             </v-autocomplete>
             <v-btn
@@ -213,7 +213,7 @@
             @update:model-value="fetchMergePreview"
           >
             <template #item="{ props, item }">
-              <v-list-item v-bind="props" :subtitle="item.raw.email" />
+              <v-list-item v-bind="props" :subtitle="item.email" />
             </template>
           </v-autocomplete>
 
@@ -248,7 +248,7 @@
               </tbody>
             </v-table>
 
-            <p v-if="mergePreview.result.shared_trips_count || mergePreview.result.shared_clubs_count" class="text-caption text-medium-emphasis">
+            <p v-if="mergePreview.result.shared_trips_count || mergePreview.result.shared_clubs_count" class="text-body-small text-medium-emphasis">
               Shared memberships (same trip or club on both accounts) are combined rather than duplicated.
             </p>
           </template>

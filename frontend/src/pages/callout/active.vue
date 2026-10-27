@@ -8,7 +8,7 @@
         <!-- Rescue Active Banner -->
         <v-alert v-if="callout.incident" type="error" prominent class="mb-6 elevation-5"
                  :icon="mdiAlertOctagram">
-          <div class="text-h6 font-weight-bold">RESCUE IN PROGRESS</div>
+          <div class="text-title-large font-weight-bold">RESCUE IN PROGRESS</div>
           <div>
             Incident #{{ callout.incident.id }} has been opened. Emergency services may have been contacted.
             If you are safe, please click "I AM SAFE" immediately to inform the rescue team.
@@ -18,20 +18,20 @@
         <!-- Offline Warning for Active Callout -->
         <v-alert v-if="isOffline" type="warning" prominent class="mb-6 elevation-3"
                  :icon="mdiWifiOff">
-          <div class="text-h6 font-weight-bold">YOU ARE OFFLINE</div>
+          <div class="text-title-large font-weight-bold">YOU ARE OFFLINE</div>
           <div class="mb-2">
             Your callout timer is still counting down, but you cannot cancel it until you have internet access.
           </div>
-          <div class="text-body-2">
+          <div class="text-body-medium">
             <strong>To cancel your callout:</strong> reconnect to data/WiFi, or text
             <strong>"SAFE"</strong> to your duty officer's phone number.
           </div>
         </v-alert>
 
-        <v-card class="mb-6 elevation-10" :color="cardColor" dark>
+        <v-card class="mb-6 elevation-5" :color="cardColor" dark>
           <v-card-text class="text-center pa-6">
-            <div class="text-h6 mb-2">{{ callout.incident ? 'RESCUE ACTIVATED' : 'RESCUE WILL BE ACTIVATED IN' }}</div>
-            <div class="text-h2 font-weight-black mb-2 white--text">
+            <div class="text-title-large mb-2">{{ callout.incident ? 'RESCUE ACTIVATED' : 'RESCUE WILL BE ACTIVATED IN' }}</div>
+            <div class="text-display-large font-weight-black mb-2 white--text">
               {{ callout.incident ? 'OVERDUE' : timeRemaining }}
             </div>
             <div class="subtitle-1">
@@ -57,7 +57,7 @@
               </v-list-item>
               <v-list-item v-if="callout.trip_plan">
                 <v-list-item-title>Trip Plan</v-list-item-title>
-                <div class="text-body-2 mt-1">{{ callout.trip_plan }}</div>
+                <div class="text-body-medium mt-1">{{ callout.trip_plan }}</div>
               </v-list-item>
               <v-list-item v-if="callout.car_details">
                 <v-list-item-title>Vehicle</v-list-item-title>
@@ -65,7 +65,7 @@
               </v-list-item>
               <v-list-item v-if="callout.team_details">
                 <v-list-item-title>Additional Team Details</v-list-item-title>
-                <div class="text-body-2 mt-1">{{ callout.team_details }}</div>
+                <div class="text-body-medium mt-1">{{ callout.team_details }}</div>
               </v-list-item>
               <v-list-item v-if="callout.participants && callout.participants.length > 0">
                 <v-list-item-title>The Team</v-list-item-title>
@@ -80,20 +80,20 @@
           </v-card-text>
         </v-card>
 
-        <v-btn v-if="!isOffline" block x-large color="success" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
+        <v-btn v-if="!isOffline" block x-large color="success" size="x-large" class="py-6 font-weight-black text-headline-small mb-4"
                @click="confirmSafe = true">
           <v-icon left size="large" :icon="mdiCheckCircle" />
           I AM SAFE
         </v-btn>
 
-        <v-btn v-else block x-large color="grey" size="x-large" class="py-6 font-weight-black text-h5 mb-4"
+        <v-btn v-else block x-large color="grey" size="x-large" class="py-6 font-weight-black text-headline-small mb-4"
                disabled>
           <v-icon left size="large" :icon="mdiWifiOff" />
           CONNECT TO CANCEL
         </v-btn>
 
         <v-alert v-if="isOffline" type="info" variant="tonal" density="compact" class="mb-4">
-          <div class="text-body-2">
+          <div class="text-body-medium">
             You need internet access to cancel the callout through the app. Alternatively, send a text message to your duty officer.
           </div>
         </v-alert>
@@ -121,8 +121,8 @@
         <v-card-title class="headline text-center pt-6">Glad you're safe!</v-card-title>
         <v-card-text class="text-center pb-6">
           <v-icon size="64" color="green" class="mb-4" :icon="mdiPartyPopper" />
-          <p class="text-h6 mb-2">We've logged a private trip report for you.</p>
-          <p class="text-body-2">Would you like to edit the details or publish it for others to see?</p>
+          <p class="text-title-large mb-2">We've logged a private trip report for you.</p>
+          <p class="text-body-medium">Would you like to edit the details or publish it for others to see?</p>
         </v-card-text>
         <v-card-actions class="pb-6 px-6">
           <v-btn color="grey" variant="text" @click="finish">Close</v-btn>

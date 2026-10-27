@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3 class="text-h6 mb-4">Caves</h3>
+    <h3 class="text-title-large mb-4">Caves</h3>
 
     <v-card v-if="caves && caves.length > 0" elevation="1" class="rounded-lg">
       <v-list lines="two" density="comfortable">

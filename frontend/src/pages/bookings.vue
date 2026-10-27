@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <div class="mb-4">
-      <h2 class="text-h4 font-weight-bold">Permits</h2>
+      <h2 class="text-headline-large font-weight-bold">Permits</h2>
     </div>
 
     <v-tabs v-model="tab" class="mb-4">
@@ -45,7 +45,7 @@
               >
                 Cancel
               </v-btn>
-              <span v-else class="text-medium-emphasis text-caption align-self-center">No actions</span>
+              <span v-else class="text-medium-emphasis text-body-small align-self-center">No actions</span>
             </div>
           </template>
 
@@ -109,10 +109,10 @@
                   gradient="to top, rgba(0,0,0,0.85), rgba(0,0,0,0.05) 55%"
                 >
                   <div class="pa-3">
-                    <div class="text-h6 font-weight-bold text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                    <div class="text-title-large font-weight-bold text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
                       {{ permit.name }}
                     </div>
-                    <div v-if="permit.caves?.length" class="text-caption text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+                    <div v-if="permit.caves?.length" class="text-body-small text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
                       <v-icon size="x-small" :icon="mdiMapMarker" /> {{ permit.caves.map(c => c.name).join(', ') }}
                     </div>
                   </div>
@@ -126,7 +126,7 @@
                     Max {{ permit.max_groups_per_day }} group{{ permit.max_groups_per_day !== 1 ? 's' : '' }}/day
                   </v-chip>
                 </div>
-                <div v-if="permit.description" class="text-body-2 text-grey-darken-1 permit-desc-clamp">
+                <div v-if="permit.description" class="text-body-medium text-grey-darken-1 permit-desc-clamp">
                   <MarkdownRenderer :source="permit.description" />
                 </div>
               </v-card-text>
@@ -156,7 +156,7 @@
     <!-- Cancel Confirmation Dialog -->
     <v-dialog v-model="cancelDialog" max-width="480" persistent>
       <v-card>
-        <v-card-title class="text-h6">Cancel booking?</v-card-title>
+        <v-card-title class="text-title-large">Cancel booking?</v-card-title>
         <v-card-text>
           <p class="mb-3">
             You are about to cancel your booking for

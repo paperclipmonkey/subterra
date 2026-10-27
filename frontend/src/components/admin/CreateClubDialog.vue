@@ -2,7 +2,7 @@
   <v-dialog v-model="dialog" persistent max-width="600px">
     <v-card>
       <v-card-title>
-        <span class="text-h5">Create New Club</span>
+        <span class="text-headline-small">Create New Club</span>
       </v-card-title>
       <v-card-text>
         <v-container>
@@ -14,7 +14,7 @@
               <v-text-field v-model="clubSlug" label="Club Slug*" required />
             </v-col>
             <v-col cols="12">
-              <div class="text-subtitle-2 mb-1">Description</div>
+              <div class="text-title-small mb-1">Description</div>
               <MilkdownEditor v-model="clubDescription" placeholder="Markdown supported..." />
             </v-col>
           </v-row>

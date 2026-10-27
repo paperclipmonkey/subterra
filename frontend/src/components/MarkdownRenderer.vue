@@ -5,10 +5,10 @@
     <v-dialog v-model="showDiagramModal" max-width="95vw">
       <v-card class="rounded-lg d-flex flex-column" style="height: 90vh;">
         <v-toolbar density="comfortable" color="surface" flat>
-          <v-toolbar-title class="text-subtitle-1 font-weight-bold">Diagram</v-toolbar-title>
+          <v-toolbar-title class="text-body-large font-weight-bold">Diagram</v-toolbar-title>
           <v-spacer />
           <v-btn :icon="mdiMagnifyMinusOutline" variant="text" :disabled="diagramZoom <= 0.5" @click="zoomDiagram(-0.25)" />
-          <span class="text-caption text-medium-emphasis mx-1" style="min-width: 48px; text-align: center;">
+          <span class="text-body-small text-medium-emphasis mx-1" style="min-width: 48px; text-align: center;">
             {{ Math.round(diagramZoom * 100) }}%
           </span>
           <v-btn :icon="mdiMagnifyPlusOutline" variant="text" :disabled="diagramZoom >= 4" @click="zoomDiagram(0.25)" />

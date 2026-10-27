@@ -21,7 +21,7 @@
 
     <v-card>
       <v-card-title>
-        <span class="text-h5">{{ activatorText }}</span>
+        <span class="text-headline-small">{{ activatorText }}</span>
       </v-card-title>
 
       <v-card-text>

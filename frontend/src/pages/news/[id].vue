@@ -10,13 +10,13 @@
 
     <div v-else-if="error" class="text-center py-12">
       <v-icon :icon="mdiAlertCircleOutline" size="48" color="error" class="mb-4" />
-      <div class="text-h6 text-medium-emphasis">Article not found</div>
+      <div class="text-title-large text-medium-emphasis">Article not found</div>
       <v-btn to="/news" color="primary" class="mt-4" variant="tonal">Return to Feed</v-btn>
     </div>
 
     <article v-else class="news-article">
       <header class="mb-8">
-        <div class="text-subtitle-1 text-primary font-weight-bold mb-2">
+        <div class="text-body-large text-primary font-weight-bold mb-2">
           {{ moment(article.date).format('MMMM Do, YYYY') }}
         </div>
       </header>

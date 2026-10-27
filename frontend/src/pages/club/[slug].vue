@@ -51,8 +51,8 @@
              every non-club-admin staring at the spinner forever. -->
         <v-container v-else-if="error" class="text-center mt-6">
           <v-icon :icon="mdiAlertCircleOutline" size="64" color="grey" class="mb-4" />
-          <h2 class="text-h5 text-grey-darken-1 mb-2">Oops!</h2>
-          <p class="text-body-1 text-grey mb-6">{{ error }}</p>
+          <h2 class="text-headline-small text-grey-darken-1 mb-2">Oops!</h2>
+          <p class="text-body-large text-grey mb-6">{{ error }}</p>
           <v-btn color="primary" variant="flat" to="/" :prepend-icon="mdiArrowLeft">
             Back to Home
           </v-btn>
@@ -88,11 +88,11 @@
                     <v-icon :icon="stat.icon" size="24" />
                   </v-avatar>
                   <div class="stat-card__body">
-                    <div class="stat-card__value" :class="stat.isText ? 'text-subtitle-1 font-weight-bold' : 'text-h4 font-weight-bold'">
+                    <div class="stat-card__value" :class="stat.isText ? 'text-body-large font-weight-bold' : 'text-headline-large font-weight-bold'">
                       {{ stat.value }}
                     </div>
-                    <div class="text-body-2 text-medium-emphasis text-truncate">{{ stat.label }}</div>
-                    <div v-if="stat.sub" class="text-caption font-weight-medium" :class="`text-${stat.color}`">{{ stat.sub }}</div>
+                    <div class="text-body-medium text-medium-emphasis text-truncate">{{ stat.label }}</div>
+                    <div v-if="stat.sub" class="text-body-small font-weight-medium" :class="`text-${stat.color}`">{{ stat.sub }}</div>
                   </div>
                 </v-card-text>
               </v-card>
@@ -116,7 +116,7 @@
           <v-card class="mb-4">
             <v-card-title class="d-flex align-center justify-space-between">
               <span>Recent Trips</span>
-              <span v-if="tripsSummaryLabel" class="text-caption text-medium-emphasis font-weight-regular">{{ tripsSummaryLabel }}</span>
+              <span v-if="tripsSummaryLabel" class="text-body-small text-medium-emphasis font-weight-regular">{{ tripsSummaryLabel }}</span>
             </v-card-title>
             <v-card-text v-if="recentTrips.length > 0" class="pt-0">
               <CaveTripListItem v-for="trip in recentTrips" :key="trip.id" :trip="trip" show-cave />
@@ -160,7 +160,7 @@
           <v-card class="mb-4">
             <v-card-title class="d-flex align-center justify-space-between">
               <span>Members</span>
-              <span v-if="members.length > 0" class="text-body-2 text-medium-emphasis font-weight-regular">{{ members.length }}</span>
+              <span v-if="members.length > 0" class="text-body-medium text-medium-emphasis font-weight-regular">{{ members.length }}</span>
             </v-card-title>
             <v-card-text v-if="members.length > 8" class="py-0">
               <v-text-field

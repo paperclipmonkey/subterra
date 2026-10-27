@@ -8,12 +8,12 @@
   <v-container>
     <div class="d-flex align-center mb-2" style="gap: 12px;">
       <v-icon color="error" size="32" :icon="mdiFlagOutline" />
-      <h2 class="text-h4 font-weight-bold">Reports</h2>
+      <h2 class="text-headline-large font-weight-bold">Reports</h2>
       <v-chip v-if="counts.urgent_open" color="error" variant="flat" size="small" class="font-weight-bold">
         {{ counts.urgent_open }} urgent
       </v-chip>
     </div>
-    <p class="text-subtitle-1 text-grey-darken-1 mb-6">
+    <p class="text-body-large text-grey-darken-1 mb-6">
       Complaints raised by members, and data-protection objections from people added by someone else.
     </p>
 
@@ -65,25 +65,25 @@
             {{ report.status }}
           </v-chip>
           <v-spacer />
-          <span class="text-caption text-medium-emphasis">
+          <span class="text-body-small text-medium-emphasis">
             #{{ report.id }} · {{ formatDate(report.created_at) }}
           </span>
         </div>
 
         <div class="mb-3">
-          <div class="text-caption text-medium-emphasis">Reported</div>
-          <div class="text-body-1 font-weight-medium">
+          <div class="text-body-small text-medium-emphasis">Reported</div>
+          <div class="text-body-large font-weight-medium">
             <router-link v-if="report.target.url" :to="report.target.url" class="text-decoration-none">
               {{ report.target.label }}
             </router-link>
             <span v-else>{{ report.target.label || 'Unknown' }}</span>
-            <span class="text-caption text-medium-emphasis ml-2">({{ report.target.type }})</span>
+            <span class="text-body-small text-medium-emphasis ml-2">({{ report.target.type }})</span>
           </div>
         </div>
 
         <div class="mb-3">
-          <div class="text-caption text-medium-emphasis">Raised by</div>
-          <div class="text-body-2">
+          <div class="text-body-small text-medium-emphasis">Raised by</div>
+          <div class="text-body-medium">
             <template v-if="report.reporter && report.reporter.name">
               {{ report.reporter.name }} &lt;{{ report.reporter.email }}&gt;
             </template>
@@ -98,11 +98,11 @@
         </div>
 
         <div v-if="report.status !== 'open'" class="resolution-block">
-          <div class="text-caption text-medium-emphasis">
+          <div class="text-body-small text-medium-emphasis">
             {{ report.status === 'actioned' ? 'Actioned' : 'Dismissed' }}
             by {{ report.handled_by || 'an admin' }} on {{ formatDate(report.handled_at) }}
           </div>
-          <div v-if="report.resolution_note" class="text-body-2 mt-1">{{ report.resolution_note }}</div>
+          <div v-if="report.resolution_note" class="text-body-medium mt-1">{{ report.resolution_note }}</div>
         </div>
       </v-card-text>
 

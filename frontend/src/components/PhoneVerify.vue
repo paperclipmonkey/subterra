@@ -6,7 +6,7 @@
       </v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
-        <p class="text-body-2 text-medium-emphasis mb-4">
+        <p class="text-body-medium text-medium-emphasis mb-4">
           We've sent a 6-digit code by text to <strong>{{ phone }}</strong>. Enter it below to confirm
           callout alerts can reach you.
         </p>
@@ -21,10 +21,10 @@
           @keyup.enter="verify"
         />
 
-        <v-alert v-if="error" type="error" variant="tonal" density="compact" class="mt-3 text-caption">
+        <v-alert v-if="error" type="error" variant="tonal" density="compact" class="mt-3 text-body-small">
           {{ error }}
         </v-alert>
-        <v-alert v-else-if="info" type="info" variant="tonal" density="compact" class="mt-3 text-caption">
+        <v-alert v-else-if="info" type="info" variant="tonal" density="compact" class="mt-3 text-body-small">
           {{ info }}
         </v-alert>
       </v-card-text>

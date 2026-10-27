@@ -1,6 +1,6 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title class="text-h6">Map Annotations</v-card-title>
+    <v-card-title class="text-title-large">Map Annotations</v-card-title>
     <v-card-subtitle>
       Add parking spots, walking routes, and permission-required locations.
     </v-card-subtitle>
@@ -32,7 +32,7 @@
         </v-col>
         <v-col v-if="selectedFeatureId && selectedFeatureProps" cols="12" md="4">
           <v-card variant="outlined">
-            <v-card-title class="text-subtitle-1">
+            <v-card-title class="text-body-large">
               <v-icon
                 start
                 size="small"

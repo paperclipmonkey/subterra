@@ -5,20 +5,20 @@
         <v-text-field v-model="internalCollection.name" autocomplete="off" label="Name" required :rules="[v => !!v || 'Name is required']" />
       </v-col>
       <v-col cols="12">
-        <div class="text-subtitle-2 mb-1">Description</div>
+        <div class="text-title-small mb-1">Description</div>
         <MilkdownEditor v-model="internalCollection.description" placeholder="About this collection..." />
       </v-col>
       <v-col cols="12">
         <v-file-input v-model="photoFile" label="Photo" accept="image/*" :prepend-icon="mdiCamera"
                       show-size @change="onPhotoChange" />
-        <div v-if="internalCollection.photo_path && !photoFile" class="text-caption">
+        <div v-if="internalCollection.photo_path && !photoFile" class="text-body-small">
           Current photo: {{ internalCollection.photo_path }}
         </div>
       </v-col>
     </v-row>
 
     <v-divider class="my-4" />
-    <div class="text-h6 mb-2">Manage Caves</div>
+    <div class="text-title-large mb-2">Manage Caves</div>
 
     <v-autocomplete v-model="selectedCaveToAdd" autocomplete="off" :items="allCaves" item-title="name" item-value="id"
                     label="Add a Cave" placeholder="Search for a cave..." return-object hide-details
@@ -40,7 +40,7 @@
           <v-list-item-title class="font-weight-bold">{{ cave.name }}</v-list-item-title>
           <v-list-item-subtitle>{{ cave.location_name }}</v-list-item-subtitle>
                     
-          <div class="text-subtitle-2 mt-4 mb-1">Note</div>
+          <div class="text-title-small mt-4 mb-1">Note</div>
           <MilkdownEditor v-model="cave.playlist_description" 
                           placeholder="Add a note about this cave in the collection..." />
 

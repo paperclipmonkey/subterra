@@ -1,8 +1,8 @@
 <template>
   <v-container>
     <div class="mb-8">
-      <h2 class="text-h3 font-weight-bold mb-1">Cave Registry Sync</h2>
-      <p class="text-subtitle-1 text-grey-darken-1">
+      <h2 class="text-display-medium font-weight-bold mb-1">Cave Registry Sync</h2>
+      <p class="text-body-large text-grey-darken-1">
         Trigger a sync from an external cave registry to import new caves and update descriptions.
       </p>
     </div>
@@ -23,7 +23,7 @@
             <v-card-title>{{ reg.label }}</v-card-title>
             <v-card-subtitle>{{ reg.url }}</v-card-subtitle>
           </v-card-item>
-          <v-card-text class="text-body-2 text-grey-darken-1">
+          <v-card-text class="text-body-medium text-grey-darken-1">
             {{ reg.description }}
           </v-card-text>
           <v-card-actions>

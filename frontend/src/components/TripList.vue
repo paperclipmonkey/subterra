@@ -3,7 +3,7 @@
     <!-- Sticky Header Area -->
     <div class="sticky-header bg-background pt-2 pb-2 px-2 z-index-10 flex-shrink-0">
       <div class="d-flex align-center justify-space-between mb-2">
-        <h1 class="text-h5 font-weight-bold ml-1">{{ isAllTrips ? 'All Trips' : (tripsUser ? `${tripsUser.name}'s Trips` :
+        <h1 class="text-headline-small font-weight-bold ml-1">{{ isAllTrips ? 'All Trips' : (tripsUser ? `${tripsUser.name}'s Trips` :
           (route.query.user_id ? 'User Trips' : 'My Trips')) }}</h1>
         <v-menu>
           <template #activator="{ props }">
@@ -41,8 +41,8 @@
       <template v-if="isSearching">
         <div v-if="filteredTrips.length === 0" class="text-center py-8">
           <v-icon size="64" color="grey lighten-10" :icon="mdiMagnify" class="mb-4" />
-          <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No results found</h3>
-          <p class="text-body-2 text-grey-darken-1">Try a different search term.</p>
+          <h3 class="text-title-large font-weight-medium text-grey-darken-1 mb-2">No results found</h3>
+          <p class="text-body-medium text-grey-darken-1">Try a different search term.</p>
         </div>
         <div v-else class="px-3 pb-16 pt-2">
           <v-row>
@@ -58,8 +58,8 @@
         <v-window-item value="detailed">
           <div v-if="detailedFilteredTrips.length === 0" class="text-center py-8">
             <v-icon size="64" color="grey lighten-10" :icon="mdiCompassOutline" class="mb-4" />
-            <h3 class="text-h6 font-weight-medium text-grey-darken-1 mb-2">No trips found</h3>
-            <p class="text-body-2 text-grey-darken-1 mb-6">Try adjusting your search or log a new trip.</p>
+            <h3 class="text-title-large font-weight-medium text-grey-darken-1 mb-2">No trips found</h3>
+            <p class="text-body-medium text-grey-darken-1 mb-6">Try adjusting your search or log a new trip.</p>
             <div class="d-flex justify-center ga-4">
               <v-btn color="primary" to="/caves" :prepend-icon="mdiMapSearch">Find Caves</v-btn>
               <v-btn variant="outlined" color="primary" to="/create-trip" :prepend-icon="mdiPlus">Log Trip</v-btn>
@@ -82,7 +82,7 @@
           </v-alert>
 
           <div v-if="stubbedFilteredTrips.length === 0" class="text-center py-8">
-            <p class="text-body-2 text-grey">No marked caves yet.</p>
+            <p class="text-body-medium text-grey">No marked caves yet.</p>
           </div>
           <v-list v-else bg-color="transparent" class="px-2">
             <v-list-item v-for="trip in stubbedFilteredTrips" :key="trip.id" :to="`/trips/${trip.id}`" class="mb-2 rounded-lg elevation-1 bg-surface" lines="two">
