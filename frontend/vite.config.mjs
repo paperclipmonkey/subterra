@@ -171,6 +171,7 @@ export default defineConfig(({ mode }) => {
     define: { 'process.env': {} },
     resolve: {
       alias: [
+        { find: /^maplibre-gl$/, replacement: fileURLToPath(new URL('./src/utilities/maplibre.js', import.meta.url)) },
         { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
         ...(isTest ? [{ find: /^.*\.css$/, replacement: fileURLToPath(new URL('./tests/styleMock.js', import.meta.url)) }] : []),
       ],
