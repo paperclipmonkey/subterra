@@ -5219,7 +5219,7 @@ maplibre-gl@^6.16.0:
     quickselect "^3.0.0"
     tinyqueue "^3.0.0"
 
-markdown-it@^14.2.0, markdown-it@^14.3.3:
+markdown-it@^14.3.3, markdown-it@^15.0.3:
   version "14.3.3"
   resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-14.3.3.tgz#15e6e145d20b1499a7b323bb14e21062690132d8"
   integrity sha512-L//tDAkjTjJCU6pBUSBTgs3Kg4InVaZuUZog/b6V12UKhcDQ7S78877ibbCanRExwPuYP1CZD7Gd2dxSy1GXRg==
@@ -7545,12 +7545,12 @@ vue-eslint-parser@^10.4.1:
     esquery "^1.6.0"
     semver "^7.6.3"
 
-vue-markdown-render@^2.3.1:
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/vue-markdown-render/-/vue-markdown-render-2.3.1.tgz#7bf1ce8e683c844a782cfb452ecd4febe61f92b9"
-  integrity sha512-NzQfxEYLlSx+IYlb/p7ATucPrZb8BTfQWG8fEqa2V3DjLdu/0BjYoiEL5ar9nM6FjGv30c3geYoF8pitbENMnw==
+vue-markdown-render@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/vue-markdown-render/-/vue-markdown-render-3.0.0.tgz#d03aff560e6e635062a33a3da598e8d683f41ce6"
+  integrity sha512-TCBVy9KbfK59gsWhilB50zx8CiK2pr69P0JRzef3YO2HEZnmcYLX254/3mF0yqnFlHaEQHUdZgyKuVAbuJ256w==
   dependencies:
-    markdown-it "^14.2.0"
+    markdown-it "^15.0.3"
 
 vue-router@^4.6.4:
   version "4.6.4"
