@@ -356,7 +356,9 @@
             <v-window-item v-if="smAndDown" value="map">
               <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
-                  <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" height="400px" :geolocate="true" @map:load="onMapLoad" />
+                  <div data-test="mobile-map-wrap" @touchstart.stop @touchmove.stop @touchend.stop>
+                    <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" height="400px" :geolocate="true" @map:load="onMapLoad" />
+                  </div>
                 </template>
                 <div v-else-if="!appStore.canSuggest" class="d-flex align-center justify-center bg-grey-lighten-3" style="height: 300px;">
                   <div class="text-center pa-4">

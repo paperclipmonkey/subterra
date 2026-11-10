@@ -617,4 +617,48 @@ describe('Cave Component', () => {
             expect(disabledSuggestEdits(wrapper).length).toBeGreaterThan(0)
         })
     })
+
+    describe('mobile Map tab', () => {
+        const stubs = {
+            'v-container': { template: '<div><slot /></div>' },
+            'v-row': { template: '<div><slot /></div>' },
+            'v-col': { template: '<div><slot /></div>' },
+            'v-card': { template: '<div><slot /></div>' },
+            'v-img': { template: '<div><slot /></div>' },
+            'v-tabs': { template: '<div><slot /></div>' },
+            'v-tab': { template: '<div><slot /></div>' },
+            'v-window': { template: '<div class="v-window-stub"><slot /></div>' },
+            'v-window-item': { template: '<div><slot /></div>' },
+            'v-alert': { template: '<div><slot /></div>' },
+            'v-icon': true, 'v-btn': true, 'v-spacer': true, 'v-badge': true, 'v-divider': true,
+            'v-chip-group': true, 'v-chip': true, 'v-tooltip': true, 'v-list': true, 'v-list-item': true,
+            'v-list-item-title': true, 'v-list-item-subtitle': true, 'v-progress-circular': true, 'v-avatar': true,
+            'v-dialog': true, 'v-card-title': true, 'v-card-text': true, 'v-card-actions': true, 'v-textarea': true,
+            'v-form': true, 'v-snackbar': true, 'CaveTripListItem': true, 'CorrectionModal': true,
+            'CaveWeather': true, 'MarkdownRenderer': true, 'MediaViewModal': true, 'RouteList': true,
+            'AppMap': true, 'OverlayTogglePanel': true,
+        }
+
+        afterEach(() => {
+            storeFlags.canSuggest = false
+        })
+
+        it('keeps map gestures from reaching the swipeable tab window', async () => {
+            storeFlags.canSuggest = true
+            api.get.mockResolvedValue({ data: { data: mockCave } })
+            const wrapper = mount(Cave, { global: { stubs } })
+            await new Promise(resolve => setTimeout(resolve, 0))
+            wrapper.vm.activeTab = 'map'
+            await wrapper.vm.$nextTick()
+
+            const received = []
+            const tabWindow = wrapper.find('.v-window-stub').element
+            for (const type of ['touchstart', 'touchmove', 'touchend']) {
+                tabWindow.addEventListener(type, () => received.push(type))
+                wrapper.find('[data-test="mobile-map-wrap"]').element.dispatchEvent(new Event(type, { bubbles: true }))
+            }
+
+            expect(received).toEqual([])
+        })
+    })
 })
