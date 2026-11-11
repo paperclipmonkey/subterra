@@ -145,6 +145,12 @@ class CaveResource extends JsonResource
                 'annotation' => $this->system->relationLoaded('annotation') && $this->system->locationsVisibleTo($user)
                     ? $this->system->annotation
                     : null,
+                // Georeferenced survey overlays pinpoint entrances too, so they
+                // sit behind the same gate.
+                'map_overlays' => $this->system->relationLoaded('mapOverlays') && $this->system->locationsVisibleTo($user)
+                    ? CaveSystemMapOverlayResource::collection($this->system->mapOverlays)
+                    : [],
+
             ],
             'trips' => TripSummaryResource::collection($this->whenLoaded('trips')),
             'previously_done' => optional($previoslyDoneTag)->tag === 'Previously Done',

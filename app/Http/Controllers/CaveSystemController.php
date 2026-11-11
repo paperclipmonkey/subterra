@@ -45,7 +45,7 @@ class CaveSystemController extends Controller
 
     public function show(CaveSystem $caveSystem)
     {
-        $caveSystem->load(['files', 'caves', 'tags', 'annotation']);
+        $caveSystem->load(['files', 'caves', 'tags', 'annotation', 'mapOverlays']);
 
         return new CaveSystemResource($caveSystem);
     }
