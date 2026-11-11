@@ -356,7 +356,7 @@
             <v-window-item v-if="smAndDown" value="map">
               <div class="cave-map-mobile">
                 <template v-if="appStore.canSuggest && activeTab === 'map'">
-                  <div class="cave-map-overlay-wrap">
+                  <div class="cave-map-overlay-wrap" data-test="mobile-map-wrap" @touchstart.stop @touchmove.stop @touchend.stop>
                     <AppMap ref="mapRef" v-model="style" :center="lnglat" :zoom="zoom" height="400px" :geolocate="true" @map:load="onMapLoad" />
                     <OverlayTogglePanel :overlays="overlays.overlayList.value" :visibility="overlays.visibility" :loading="overlays.loading" @toggle="overlays.toggle" />
                   </div>
