@@ -25,14 +25,7 @@ const mountJump = () => {
     global: {
       stubs: {
         'v-card': { template: '<div><slot /></div>' },
-        'v-card-text': { template: '<div><slot /></div>' },
-        'v-list': { template: '<ul><slot /></ul>' },
         'v-dialog': { template: '<div v-if="modelValue"><slot /></div>', props: ['modelValue'] },
-        'v-text-field': {
-          template: '<input data-testid="quick-jump-input" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
-          props: ['modelValue'],
-        },
-        'v-list-item': { template: '<li class="result" @click="$emit(\'click\')">{{ title }}<slot /></li>', props: ['title'] },
       },
     },
   })
@@ -118,16 +111,51 @@ describe('QuickJump', () => {
     expect(vm.results[0]).toMatchObject({ title: 'Huts', href: '/huts' })
   })
 
-  it('only offers admin and role-gated pages to users who can open them', async () => {
+  it('only offers admin pages the route guard lets the user open', async () => {
     const vm = mountJump().vm
     slash()
     await flushPromises()
     vm.query = 'admin'
-    expect(vm.results.some(r => r.href === '/admin')).toBe(false)
+    expect(vm.results.some(r => r.group === 'Admin')).toBe(false)
 
-    useAppStore().user = { id: 'x', roles: [{ slug: 'platform_admin' }], is_admin: true }
+    useAppStore().user = { id: 'x', roles: [{ slug: 'duty_officer' }], is_admin: true }
     await flushPromises()
-    expect(vm.results.some(r => r.href === '/admin')).toBe(true)
+    vm.query = ''
+    const admin = vm.results.filter(r => r.group === 'Admin').map(r => r.href)
+    expect(admin).toEqual(['/admin', '/admin/callout', '/admin/rota'])
+  })
+
+  it('deep links platform admins into admin pages', async () => {
+    useAppStore().user = { id: 'x', roles: [{ slug: 'platform_admin' }], is_admin: true }
+    const vm = mountJump().vm
+    slash()
+    await flushPromises()
+
+    vm.query = 'users'
+    expect(vm.results[0]).toMatchObject({ title: 'Users', href: '/admin/users', group: 'Admin' })
+    // Duty-officer pages stay hidden: the route guard would bounce a platform admin to /admin.
+    vm.query = 'rota'
+    expect(vm.results.some(r => r.href === '/admin/rota')).toBe(false)
+  })
+
+  it('links to the user\'s approved clubs only', async () => {
+    useAppStore().user = {
+      id: 'x',
+      roles: [],
+      clubs: [
+        { name: 'Red Rose CPC', slug: 'red-rose', status: 'approved' },
+        { name: 'Pending Club', slug: 'pending-club', status: 'pending' },
+      ],
+    }
+    const vm = mountJump().vm
+    slash()
+    await flushPromises()
+
+    const clubs = vm.results.filter(r => r.group === 'Your clubs')
+    expect(clubs.map(r => r.href)).toEqual(['/club/red-rose'])
+
+    vm.query = 'red rose'
+    expect(vm.results[0]).toMatchObject({ href: '/club/red-rose' })
   })
 
   it('navigates to the highlighted cave detail page on Enter', async () => {
