@@ -81,7 +81,7 @@ class UserController extends Controller
         $users = $query->get()
         ->filter(function ($user) use ($currentUser, $clubUserIds, $tripUserCounts, $search) {
             // Suggestions should include self, search should not necessarily unless they match
-            if (!$search && $currentUser && $user->id === $currentUser->id) {
+            if (!$search && $user->id === $currentUser->id) {
                 return true;
             }
 

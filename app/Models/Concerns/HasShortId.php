@@ -34,7 +34,7 @@ trait HasShortId
             ++$attempts;
 
             // Check if this ID already exists
-            $exists = static::where(static::make()->getShortIdColumn(), $shortId)->exists();
+            $exists = static::where((new self())->getShortIdColumn(), $shortId)->exists();
 
             if (!$exists) {
                 return $shortId;
