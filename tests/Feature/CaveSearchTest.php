@@ -208,6 +208,18 @@ class CaveSearchTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function it_includes_the_slug_used_by_cave_detail_routes()
+    {
+        $this->actingAs(User::factory()->create());
+
+        $cave = Cave::factory()->create(['slug' => 'gaping-gill']);
+
+        $item = collect($this->getJson('/api/caves/search')->json('data'))->firstWhere('id', $cave->id);
+
+        $this->assertSame('gaping-gill', $item['slug']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_returns_empty_array_when_no_caves_exist()
     {
         $this->actingAs(User::factory()->create());
