@@ -163,12 +163,6 @@ parameters:
 			path: app/Http/Controllers/Admin/DashboardController.php
 
 		-
-			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:select\(\) invoked with 2 parameters, 0\-1 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: app/Http/Controllers/Admin/DashboardController.php
-
-		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\ApiInteraction\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 2
@@ -223,26 +217,26 @@ parameters:
 			path: app/Http/Controllers/Admin/PipFeedbackController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\SuggestedEdit\:\:\$suggestable\.$#'
-			identifier: property.notFound
-			count: 9
-			path: app/Http/Controllers/Admin/SuggestedEditController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\SuggestedEdit\:\:\$user\.$#'
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/Admin/SuggestedEditController.php
 
 		-
-			message: '#^Relation ''suggestable'' is not found in App\\Models\\SuggestedEdit model\.$#'
-			identifier: larastan.relationExistence
-			count: 3
+			message: '#^Parameter \#1 \$cave of method App\\Http\\Controllers\\Admin\\SuggestedEditController\:\:handleCaveMediaApproval\(\) expects App\\Models\\Cave, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
 			path: app/Http/Controllers/Admin/SuggestedEditController.php
 
 		-
-			message: '#^Relation ''user'' is not found in App\\Models\\SuggestedEdit model\.$#'
-			identifier: larastan.relationExistence
+			message: '#^Parameter \#1 \$system of method App\\Http\\Controllers\\Admin\\SuggestedEditController\:\:handleCaveSystemFiles\(\) expects App\\Models\\CaveSystem, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Admin/SuggestedEditController.php
+
+		-
+			message: '#^Parameter \#1 \$target of method App\\Services\\CaveSystemMergeService\:\:merge\(\) expects App\\Models\\CaveSystem, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/Admin/SuggestedEditController.php
 
@@ -475,15 +469,21 @@ parameters:
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: '#^Anonymous function should return array\{id\: string, name\: string\|null, photo\: string\|null, clubs\: Illuminate\\Support\\Collection\<int, array\{name\: mixed, slug\: mixed\}\>\} but returns array\{id\: string, name\: string\|null, photo\: string\|null, clubs\: Illuminate\\Support\\Collection\<int, array\{name\: string\|null, slug\: mixed\}\>\}\.$#'
-			identifier: return.type
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:participants\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\:\:visibleTo\(\)\.$#'
+			identifier: method.notFound
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:participants\(\)\.$#'
-			identifier: method.notFound
-			count: 2
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
@@ -585,12 +585,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
 			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/IncidentResource.php
-
-		-
-			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<int, array\{id\: mixed, content\: mixed, created_at\: mixed, user\: App\\Http\\Resources\\UserSummaryResource\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{id\: mixed, content\: mixed, created_at\: mixed, user\: App\\Http\\Resources\\UserSummaryResource\|null\}\>\.$#'
-			identifier: return.type
 			count: 1
 			path: app/Http/Resources/IncidentResource.php
 
@@ -949,6 +943,18 @@ parameters:
 			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
 
 		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:sortBy\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/Assistant/Tools/FindNearbyHutsTool.php
+
+		-
 			message: '#^Using nullsafe property access "\?\-\>url" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 2
@@ -1079,6 +1085,12 @@ parameters:
 			identifier: ternary.alwaysTrue
 			count: 1
 			path: app/Services/CalloutService.php
+
+		-
+			message: '#^Parameter \#1 \$value of function collect contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/DataHealth/DataHealthService.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'

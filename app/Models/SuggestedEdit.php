@@ -6,6 +6,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class SuggestedEdit extends Model
 {
@@ -29,12 +31,14 @@ class SuggestedEdit extends Model
         'suggested_data' => 'array',
     ];
 
-    public function user()
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function suggestable()
+    /** @return MorphTo<Model, $this> */
+    public function suggestable(): MorphTo
     {
         return $this->morphTo();
     }
