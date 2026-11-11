@@ -53,66 +53,9 @@ export async function authGuard(to, from, next) {
 
   // Admin route check. Signed-out visitors fall through to the login redirect
   // so an emailed admin link still lands them on it after signing in.
-  // Permit officers needn't hold a staff role to manage their permits' bookings.
-  const managesPermits = user.managed_permits?.length > 0
-
   if (to.path.startsWith('/admin') && user.email) {
-    if (!user.is_admin && !(managesPermits && to.path.startsWith('/admin/bookings'))) {
-      // Redirect non-admins away from admin pages
-      return next({ path: '/trips' })
-    }
-
-    // Role-based guarding for specific sub-routes
-    const hasRole = (role) => user.roles && user.roles.some(r => r.slug === role)
-
-    // Platform Admin Routes (Exclusive)
-    if (
-      (to.path.startsWith('/admin/users') ||
-        to.path.startsWith('/admin/clubs') ||
-        to.path.startsWith('/admin/communications') ||
-        to.path.startsWith('/admin/dashboard')) &&
-      !hasRole('platform_admin')
-    ) {
-      return next({ path: '/admin' })
-    }
-
-    // Duty Officer Routes (Exclusive)
-    if (
-      (to.path.startsWith('/admin/callout') ||
-        to.path.startsWith('/admin/rota')) &&
-      !hasRole('duty_officer')
-    ) {
-      return next({ path: '/admin' })
-    }
-
-    // Data Admin Routes (Exclusive)
-    if (
-      (to.path.startsWith('/admin/catchments') ||
-        to.path.startsWith('/admin/cave-system-with-cave')) &&
-      !hasRole('data_admin')
-    ) {
-      return next({ path: '/admin' })
-    }
-
-    // Access Officer Routes (Exclusive)
-    if (
-      (to.path.startsWith('/admin/permits') ||
-        to.path.startsWith('/admin/bookings')) &&
-      !hasRole('access_officer') && !hasRole('platform_admin') &&
-      !(managesPermits && to.path.startsWith('/admin/bookings'))
-    ) {
-      return next({ path: '/admin' })
-    }
-
-    // Shared Routes (Platform Admin OR Data Admin)
-    if (
-      (to.path.startsWith('/admin/pages') ||
-        to.path.startsWith('/admin/suggested-edits') ||
-        to.path.startsWith('/admin/tasks')) &&
-      (!hasRole('platform_admin') && !hasRole('data_admin'))
-    ) {
-      return next({ path: '/admin' })
-    }
+    const redirect = adminRedirect(user, to.path)
+    if (redirect) return next({ path: redirect })
   }
 
   // Pip access — platform_admin OR pip_access role explicitly granted.
@@ -167,6 +110,75 @@ export async function authGuard(to, from, next) {
 
   rememberLoginRedirect(to.fullPath)
   return next({ path: '/' })
+}
+
+/**
+ * Where a signed-in user is sent instead of an admin page they may not open,
+ * or null when they may open it. Shared with the "/" quick jump so it only
+ * offers admin links that will actually load.
+ */
+export function adminRedirect(user, path) {
+  // Permit officers needn't hold a staff role to manage their permits' bookings.
+  const managesPermits = user.managed_permits?.length > 0
+
+  if (!user.is_admin && !(managesPermits && path.startsWith('/admin/bookings'))) {
+    // Redirect non-admins away from admin pages
+    return '/trips'
+  }
+
+  // Role-based guarding for specific sub-routes
+  const hasRole = (role) => user.roles && user.roles.some(r => r.slug === role)
+
+  // Platform Admin Routes (Exclusive)
+  if (
+    (path.startsWith('/admin/users') ||
+      path.startsWith('/admin/clubs') ||
+      path.startsWith('/admin/communications') ||
+      path.startsWith('/admin/dashboard')) &&
+    !hasRole('platform_admin')
+  ) {
+    return '/admin'
+  }
+
+  // Duty Officer Routes (Exclusive)
+  if (
+    (path.startsWith('/admin/callout') ||
+      path.startsWith('/admin/rota')) &&
+    !hasRole('duty_officer')
+  ) {
+    return '/admin'
+  }
+
+  // Data Admin Routes (Exclusive)
+  if (
+    (path.startsWith('/admin/catchments') ||
+      path.startsWith('/admin/cave-system-with-cave')) &&
+    !hasRole('data_admin')
+  ) {
+    return '/admin'
+  }
+
+  // Access Officer Routes (Exclusive)
+  if (
+    (path.startsWith('/admin/permits') ||
+      path.startsWith('/admin/bookings')) &&
+    !hasRole('access_officer') && !hasRole('platform_admin') &&
+    !(managesPermits && path.startsWith('/admin/bookings'))
+  ) {
+    return '/admin'
+  }
+
+  // Shared Routes (Platform Admin OR Data Admin)
+  if (
+    (path.startsWith('/admin/pages') ||
+      path.startsWith('/admin/suggested-edits') ||
+      path.startsWith('/admin/tasks')) &&
+    (!hasRole('platform_admin') && !hasRole('data_admin'))
+  ) {
+    return '/admin'
+  }
+
+  return null
 }
 
 /**
