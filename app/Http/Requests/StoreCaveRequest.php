@@ -35,6 +35,7 @@ class StoreCaveRequest extends FormRequest
             'location_country' => ['required', 'string', 'max:255'],
             'access_info' => ['nullable', 'string'],
             'private_notes' => ['nullable', 'string'],
+            'viewer_at' => ['nullable', 'string', 'max:255'],
             'hero_image' => ['nullable', 'array'],
             'hero_image.data' => ['nullable', 'file', 'max:512000', 'mimes:jpg,jpeg,png,webp,gif,heic,heif,avif'],
             'hero_image.title' => ['nullable', 'string', 'max:255'],

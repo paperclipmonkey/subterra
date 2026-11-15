@@ -21,6 +21,9 @@
     "access_info": {
       "type": "string"
     },
+    "viewer_at": {
+      "type": ["string", "null"]
+    },
     "hero_image": {
       "oneOf": [
         {

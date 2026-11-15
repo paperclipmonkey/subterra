@@ -97,6 +97,14 @@
         class="mb-4"
       />
 
+      <!-- the way the route goes, in the system's 3D survey (admins: suggested edits don't carry it) -->
+      <template v-if="viewerUrl && appStore.user?.is_admin">
+        <h3 class="text-title-large mt-4 mb-2">In 3D</h3>
+        <ViewerRoute v-model="route.viewer_route" :viewer-url="viewerUrl" editable :title="route.name || 'The route'"
+                     :at="entranceName"
+                     empty-text="Draw the route in the cave's 3D survey, so readers can follow it there step by step and see its length and climb." />
+      </template>
+
       <h3 class="text-title-large mt-4 mb-2">Tackle</h3>
       <div v-for="(tackle, index) in route.tackle" :key="index" class="d-flex align-top gap-2 mb-4 border rounded pa-2">
         <v-row dense>
@@ -236,6 +244,7 @@ import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notifications'
 import { onBeforeRouteLeave } from 'vue-router'
 import { api } from '@/plugins/api'
+import ViewerRoute from '@/components/cave3d/ViewerRoute.vue'
 
 const notifications = useNotificationStore()
 const appStore = useAppStore()
@@ -269,6 +278,9 @@ const form = ref(null)
 const loading = ref(false)
 const route = ref({ ...props.initialRoute })
 const caves = ref([])
+// the cave system's 3D survey (cave-viewer), where it has one
+const viewerUrl = ref(null)
+const entranceName = computed(() => caveOptions.value.find(c => c.id === route.value.entrance_id)?.name || '')
 const newMedia = ref([])
 const deletedMediaIds = ref([])
 const heroImageFile = ref(null)
@@ -384,6 +396,7 @@ onMounted(async () => {
   try {
     const response = await api.get(`/api/cave_systems/${props.caveSystemId}`)
     caves.value = response.data.data.caves || []
+    viewerUrl.value = response.data.data.viewer_url || null
 
     // Auto-prefill a new route's entrance/exit when the system has a single
     // cave. Never do this when editing — it would clobber the saved entrance.
@@ -485,6 +498,10 @@ const save = async () => {
         type: m.type
       }))
       payload.deleted_media = deletedMediaIds.value
+      // (JSON, in a multipart form; empty takes it off)
+      if (viewerUrl.value || route.value.viewer_route) {
+        payload.viewer_route = route.value.viewer_route ? JSON.stringify(route.value.viewer_route) : ''
+      }
 
       const isUpdate = !!route.value.id
       const url = isUpdate

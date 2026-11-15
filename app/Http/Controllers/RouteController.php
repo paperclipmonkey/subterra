@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\CaveSystem;
 use App\Models\Route;
 use App\Models\User;
+use App\Support\ViewerRoute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -70,6 +71,7 @@ class RouteController extends Controller
 
     public function store(Request $request, CaveSystem $caveSystem)
     {
+        $this->decodeViewerRoute($request);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -91,6 +93,7 @@ class RouteController extends Controller
             'media.*.data' => 'nullable|file',
             'media.*.caption' => 'nullable|string',
             'media.*.type' => 'nullable|string',
+            ...ViewerRoute::rules('viewer_route'),
         ]);
 
         $heroImagePath = null;
@@ -107,6 +110,7 @@ class RouteController extends Controller
                 'exit_id' => $validated['exit_id'] ?? null,
                 'duration' => $validated['duration'] ?? null,
                 'grade' => $validated['grade'] ?? null,
+                'viewer_route' => ViewerRoute::clean($validated['viewer_route'] ?? null),
                 'hero_image' => $heroImagePath,
                 'hero_image_photographer' => $validated['hero_image']['photographer'] ?? null,
                 'hero_image_copyright' => $validated['hero_image']['copyright'] ?? null,
@@ -140,6 +144,7 @@ class RouteController extends Controller
 
     public function update(Request $request, Route $route)
     {
+        $this->decodeViewerRoute($request);
         $validated = $request->validate([
             'name' => 'string|max:255',
             'description' => 'nullable|string',
@@ -163,10 +168,14 @@ class RouteController extends Controller
             'media.*.type' => 'nullable|string',
             'deleted_media' => 'array',
             'deleted_media.*' => 'integer',
+            ...ViewerRoute::rules('viewer_route'),
         ]);
 
         // The hero image is handled manually so we never mass-assign the array.
         unset($validated['hero_image']);
+        if (array_key_exists('viewer_route', $validated)) {
+            $validated['viewer_route'] = ViewerRoute::clean($validated['viewer_route']);
+        }
 
         if ($request->has('hero_image')) {
             if (($heroFile = $request->file('hero_image.data')) && $heroFile->isValid()) {
@@ -209,6 +218,17 @@ class RouteController extends Controller
 
             return $route->load(['entrance', 'exit', 'tackle', 'media', 'tags', 'caveSystem']);
         });
+    }
+
+    /**
+     * The way through the cave's 3D view (see ViewerRoute): JSON text in the
+     * multipart form a route with images is sent as.
+     */
+    private function decodeViewerRoute(Request $request): void
+    {
+        if ($request->has('viewer_route')) {
+            $request->merge(['viewer_route' => ViewerRoute::decode($request->input('viewer_route'))]);
+        }
     }
 
     private function handleImageUpload($file, $prefix = 'image')

@@ -35,6 +35,11 @@
     <CaveSystem />
     
     <v-container v-if="caveSystem">
+      <v-row v-if="caveSystem.viewer_url && appStore.canSuggest">
+        <v-col cols="12" md="8" lg="6">
+          <Cave3DCard :viewer-url="caveSystem.viewer_url" :name="caveSystem.name" />
+        </v-col>
+      </v-row>
       <v-row>
         <v-col cols="12">
           <AnnotationMapViewer
@@ -65,6 +70,7 @@ import { useRoute } from 'vue-router'
 import RouteList from '@/components/cave-systems/RouteList.vue'
 import SystemCaveList from '@/components/cave-systems/SystemCaveList.vue'
 import AnnotationMapViewer from '@/components/cave-systems/AnnotationMapViewer.vue'
+import Cave3DCard from '@/components/cave3d/Cave3DCard.vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
 

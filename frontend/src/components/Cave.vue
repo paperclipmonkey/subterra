@@ -176,6 +176,11 @@
         </v-card>
       </v-col>
 
+      <!-- The survey in 3D (phones: above the tabs; desktop: in the sidebar) -->
+      <v-col v-if="smAndDown && show3D" cols="12">
+        <Cave3DCard :viewer-url="cave.system.viewer_url" :name="cave.name" :at="cave.viewer_at || cave.name" />
+      </v-col>
+
       <!-- Main Column -->
       <v-col cols="12" md="8">
         <v-card class="fill-height rounded-lg" elevation="1">
@@ -631,6 +636,8 @@
 
       <!-- Sidebar Column -->
       <v-col v-if="!smAndDown" cols="12" md="4">
+        <Cave3DCard v-if="show3D" class="mb-4" :viewer-url="cave.system.viewer_url" :name="cave.name" :at="cave.viewer_at || cave.name" />
+
         <!-- Location Card -->
         <v-card class="mb-4 rounded-lg overflow-hidden" elevation="2">
           <template v-if="appStore.canSuggest">
@@ -775,6 +782,7 @@ import { useCollectionStore } from '@/stores/collections'
 import { useOfflineStore } from '@/stores/offline'
 import CaveWeather from '@/components/CaveWeather.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
+import Cave3DCard from '@/components/cave3d/Cave3DCard.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 import * as maplibregl from 'maplibre-gl'
 
@@ -810,6 +818,9 @@ usePageTitle(pageTitle)
 
 // Hide the Routes tab when the system has none. Admins keep it, like the
 // Collections tab, since its empty state is where they add the first route.
+// The cave in its system's 3D survey, where the system has one. It shows where
+// the entrances are, so like the map it's for confirmed club members.
+const show3D = computed(() => !!cave.value?.system?.viewer_url && appStore.canSuggest)
 const showRoutesTab = computed(() => appStore.user?.is_admin || cave.value?.system?.routes?.length > 0)
 
 // A ?tab=routes link to a cave with no routes would otherwise open a tab with

@@ -58,6 +58,8 @@ class Cave extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'depth',
         'latitude',
         'longitude',
+        // where the system's 3D view opens for this cave (cave-viewer's #at=), if not at its name
+        'viewer_at',
     ];
 
     /** @return HasMany<CaveMedia, $this> */
