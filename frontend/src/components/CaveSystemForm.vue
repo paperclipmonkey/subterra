@@ -60,7 +60,7 @@
         placeholder="https://cavesurveying.github.io/…/3d/"
         type="url"
         :rules="[v => !v || /^https:\/\//.test(v) || 'Use the page\'s https:// address']"
-        hint="Trips in this system can then draw and keep the route they took."
+        hint="Its caves' pages then show the survey in 3D, route guides can be drawn in it, and trips can keep the route they took."
         persistent-hint
         clearable
         class="mt-4"

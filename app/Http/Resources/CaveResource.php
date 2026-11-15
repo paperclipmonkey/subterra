@@ -103,6 +103,7 @@ class CaveResource extends JsonResource
             'location_lng' => $request->user()?->hasApprovedClub() ? $this->location_lng : null,
             'location_alt' => $request->user()?->hasApprovedClub() ? $this->location_alt : null,
             'access_info' => $request->user()?->hasApprovedClub() ? ($this->access_info ?? '') : null,
+            'viewer_at' => $this->viewer_at,
             'system' => [
                 'id' => $this->system->id,
                 'name' => $this->system->name,
@@ -111,6 +112,7 @@ class CaveResource extends JsonResource
                 'catchment_name' => $this->system->relationLoaded('catchment') ? $this->system->catchment?->name : null,
                 'length' => $this->system->length,
                 'vertical_range' => $this->system->vertical_range,
+                'viewer_url' => $this->system->viewer_url,
                 // Sibling entrances: admin_only sites (e.g. coal mines) only for data admins.
                 'caves' => $this->system->relationLoaded('caves') ? $this->system->caves->reject(
                     fn ($cave) => !$canManage && $cave->visibility === 'admin_only'

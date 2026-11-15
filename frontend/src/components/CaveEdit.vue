@@ -70,6 +70,20 @@
                 class="mb-4"
               />
 
+              <template v-if="cave.system?.viewer_url">
+                <div class="text-title-small mb-1">In the 3D survey</div>
+                <v-text-field
+                  v-model.trim="cave.viewer_at"
+                  variant="outlined"
+                  density="comfortable"
+                  :placeholder="cave.name"
+                  hint="Where the system's 3D view opens for this cave: its entrance's name there, or a survey's (as in the 3D view's #at=). Leave it empty to use the cave's name."
+                  persistent-hint
+                  clearable
+                  class="mb-4"
+                />
+              </template>
+
               <div class="text-title-small mb-1">Files &amp; documents</div>
               <p class="text-body-small text-grey mb-2">
                 Surveys, historic photos and documents are stored against the whole system
@@ -164,6 +178,7 @@ const editableSnapshot = (c) => JSON.stringify({
   hero_video: normaliseMedia(c.hero_video),
   entrance_image: normaliseMedia(c.entrance_image),
   private_notes: c.can_manage ? text(c.private_notes) : null,
+  viewer_at: c.can_manage ? text(c.viewer_at) : null,
   visibility: c.can_manage ? text(c.visibility) : null,
 })
 
@@ -243,6 +258,7 @@ const saveCave = async () => {
       if (cave.value.can_manage) {
         submitData.private_notes = cave.value.private_notes
         submitData.visibility = cave.value.visibility
+        if (cave.value.system?.viewer_url) submitData.viewer_at = cave.value.viewer_at || ''
       }
       const formData = toFormData(submitData)
       formData.append('_method', 'PUT')

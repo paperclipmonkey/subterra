@@ -123,6 +123,12 @@
                 <div v-if="routeDetail.description" class="mt-4 text-body-large">
                   <MarkdownRenderer :source="routeDetail.description" />
                 </div>
+                <!-- the way it goes in the system's 3D survey; like the map, for confirmed club members -->
+                <template v-if="routeDetail.viewer_route && routeDetail.cave_system?.viewer_url && appStore.canSuggest">
+                  <h3 class="text-title-large mt-6 mb-2">In 3D</h3>
+                  <ViewerRoute :model-value="routeDetail.viewer_route" :viewer-url="routeDetail.cave_system.viewer_url"
+                               :title="routeDetail.name" view-label="Follow it in 3D" />
+                </template>
               </v-col>
 
               <v-col cols="12" md="4">
@@ -199,6 +205,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import { useAppStore } from '@/stores/app'
 import { api } from '@/plugins/api'
+import ViewerRoute from '@/components/cave3d/ViewerRoute.vue'
 
 const appStore = useAppStore()
 const route = useRoute()

@@ -67,7 +67,7 @@
               <span class="font-weight-bold">The route</span>
             </v-card-title>
             <v-card-text class="pa-4 pt-0">
-              <CaveRoute3D :model-value="trip.route" :viewer-url="trip.system.viewer_url"
+              <ViewerRoute :model-value="trip.route" :viewer-url="trip.system.viewer_url" times :title="trip.name || 'The route'"
                            :start-time="trip.start_time" :cave-system-id="trip.system.id" />
             </v-card-text>
           </v-card>
@@ -245,7 +245,7 @@ import MediaViewModal from '@/components/MediaViewModal.vue'
 import ReportModal from '@/components/ReportModal.vue'
 import moment from 'moment'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
-import CaveRoute3D from '@/components/CaveRoute3D.vue'
+import ViewerRoute from '@/components/cave3d/ViewerRoute.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { ref, computed, onMounted, watch } from 'vue'

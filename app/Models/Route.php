@@ -44,6 +44,12 @@ class Route extends Model
         'hero_image',
         'hero_image_photographer',
         'hero_image_copyright',
+        'viewer_route',
+    ];
+
+    // the way through the cave system's 3D view (see App\Support\ViewerRoute)
+    protected $casts = [
+        'viewer_route' => 'array',
     ];
 
     // Exposed only via the nested hero_image object below.

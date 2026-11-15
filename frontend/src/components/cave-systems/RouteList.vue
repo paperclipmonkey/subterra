@@ -81,6 +81,11 @@
                   <v-icon start size="small" color="primary" :icon="mdiClockOutline" />
                   {{ route.duration }}
                 </div>
+                <div v-if="route.viewer_route?.length" class="d-flex align-center mr-4">
+                  <v-icon start size="small" color="primary" :icon="mdiMapMarkerPath" />
+                  {{ route.viewer_route.length >= 1000 ? (route.viewer_route.length / 1000).toFixed(1) + ' km' : route.viewer_route.length + ' m' }},
+                  ↓ {{ route.viewer_route.down }} m
+                </div>
                 <template v-if="showEntrances">
                   <div v-if="route.entrance" class="d-flex align-center mr-4">
                     <v-icon start size="small" color="primary" :icon="mdiDoorOpen" />

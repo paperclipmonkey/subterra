@@ -45,10 +45,11 @@
           </v-card>
 
           <!-- the route through the cave's 3D survey, where the system has one -->
-          <v-card v-if="viewerUrl" title="Your route" class="mb-4">
+          <v-card v-if="viewerUrl" title="Your route" subtitle="Optional: where you went, in the cave's 3D survey" class="mb-4">
             <v-card-text>
-              <CaveRoute3D :key="viewerUrl" v-model="trip.route" :viewer-url="viewerUrl" editable
-                           :start-time="start_time.format()" :cave-system-id="cave_system_id" />
+              <ViewerRoute v-model="trip.route" :viewer-url="viewerUrl" editable times title="Your route"
+                           :start-time="start_time.format()" :cave-system-id="cave_system_id"
+                           empty-text="Draw where you went in the cave's 3D survey: pick where you started and finished, add stops on the way, or drag the route onto the passages you took." />
             </v-card-text>
           </v-card>
 
@@ -323,7 +324,7 @@ import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'
 import CaveSearchAutocomplete from './CaveSearchAutocomplete.vue'
-import CaveRoute3D from './CaveRoute3D.vue'
+import ViewerRoute from './cave3d/ViewerRoute.vue'
 import MilkdownEditor from './MilkdownEditor.vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
