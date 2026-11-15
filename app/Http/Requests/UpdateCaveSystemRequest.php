@@ -43,6 +43,8 @@ class UpdateCaveSystemRequest extends FormRequest
             'slug' => 'nullable|string|max:255|unique:cave_systems,slug,'.$this->route('cave_system')->id,
             'references' => 'nullable|string',
             'catchment_id' => 'nullable|exists:catchments,id',
+            // the system's 3D survey (a cave-viewer page), for trips' routes
+            'viewer_url' => 'nullable|url:https|max:500',
         ];
     }
 }

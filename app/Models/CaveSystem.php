@@ -44,6 +44,7 @@ class CaveSystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'slug',
         'references',
         'catchment_id',
+        'viewer_url',
     ];
 
     /** @return BelongsTo<Catchment, $this> */

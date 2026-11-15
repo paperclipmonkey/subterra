@@ -43,11 +43,14 @@ class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'entrance_cave_id',
         'exit_cave_id',
         'visibility',
+        'route',
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        // the route through the cave's 3D survey (see ValidatesTripRoute)
+        'route' => 'array',
     ];
 
     /** Trips are logged after the fact; allow a little client clock skew. */

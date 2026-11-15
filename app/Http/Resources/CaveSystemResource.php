@@ -61,6 +61,7 @@ class CaveSystemResource extends JsonResource
             'tags' => TagResource::collection($this->tags),
             'references' => $canSeeLocations ? $this->references : null,
             'catchment_id' => $this->catchment_id,
+            'viewer_url' => $this->viewer_url,
             'files' => $files,
             // Parking, approach paths and the like pinpoint the entrances, so
             // annotations sit behind the same gate as the coordinates.
