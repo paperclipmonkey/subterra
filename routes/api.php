@@ -302,6 +302,10 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::get('/cave-systems/{cave_system}/merge-preview', [App\Http\Controllers\Admin\CaveSystemController::class, 'mergePreview']);
         Route::post('/cave-systems/{cave_system}/merge', [App\Http\Controllers\Admin\CaveSystemController::class, 'merge']);
         Route::delete('/cave-systems/{cave_system}', [App\Http\Controllers\Admin\CaveSystemController::class, 'destroy']);
+
+        // Cave merge (the same cave held twice)
+        Route::get('/caves/{cave}/merge-preview', [App\Http\Controllers\Admin\CaveMergeController::class, 'preview']);
+        Route::post('/caves/{cave}/merge', [App\Http\Controllers\Admin\CaveMergeController::class, 'merge']);
     });
 
     // Access Officer — permits, bookings

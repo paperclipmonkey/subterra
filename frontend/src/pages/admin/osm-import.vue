@@ -71,6 +71,9 @@
           <v-chip v-else-if="item.status === 'existing'" size="small" color="warning" variant="tonal" :to="`/caves/${item.cave.slug}`">
             Already in Subterra: {{ item.cave.name }}
           </v-chip>
+          <v-chip v-else-if="item.status === 'entrance'" size="small" color="info" variant="tonal" :to="`/caves/${item.cave.slug}`">
+            Another entrance of {{ item.cave.name }}
+          </v-chip>
           <v-chip v-else size="small" variant="tonal" :to="`/caves/${item.cave.slug}`">Linked</v-chip>
         </template>
         <template #item.access="{ item }">
@@ -107,6 +110,7 @@
         <v-card-text>
           {{ selectedNew }} new caves will be created with OpenStreetMap attribution.
           {{ selectedExisting }} caves you already have will only be linked to OpenStreetMap.
+          <template v-if="selectedEntrances">{{ selectedEntrances }} will be added as other entrances of caves you already have.</template>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -150,6 +154,7 @@ const headers = [
 const byId = computed(() => Object.fromEntries(candidates.value.map(c => [c.osm_id, c])))
 const selectedNew = computed(() => selected.value.filter(id => byId.value[id]?.status === 'new').length)
 const selectedExisting = computed(() => selected.value.filter(id => byId.value[id]?.status === 'existing').length)
+const selectedEntrances = computed(() => selected.value.filter(id => byId.value[id]?.status === 'entrance').length)
 const counts = computed(() => results.value.reduce((acc, r) => ({ ...acc, [r.action]: (acc[r.action] || 0) + 1 }),
   { created: 0, linked: 0, unchanged: 0, not_found: 0 }))
 

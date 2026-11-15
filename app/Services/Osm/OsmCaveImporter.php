@@ -24,7 +24,14 @@ use Illuminate\Support\Str;
  *    (registry = 'osm') carrying ODbL attribution.
  *  - A cave we already hold (from a registry or entered by hand) is only
  *    *linked* via `osm_node_id`. OSM coordinates or text are never proposed
- *    for it.
+ *    for it. It's the same cave when it has the same name nearby, or a name
+ *    spelt differently right beside it ("Thrupe Lane Swallett", "Thrupe Lane
+ *    Swallet"): see {@see CaveName::similar()}.
+ *  - A node that names one way into a cave we hold ("Yordas Pot (Top
+ *    Entrance)" beside Yordas Pot) is created as another entrance in that
+ *    cave's system, not as a system of its own.
+ *  - A node already linked, even to a cave since merged into another and
+ *    deleted, is never imported again.
  */
 class OsmCaveImporter
 {
@@ -62,6 +69,13 @@ class OsmCaveImporter
 
     /** An existing same-named cave within this distance is the same place. */
     private const SAME_PLACE_KM = 10.0;
+
+    /**
+     * An existing cave this close with a name spelt differently is the same
+     * place (or, for a node naming an entrance, the cave it's a way into).
+     * Close enough that neighbouring caves on a hillside stay apart.
+     */
+    private const SIMILAR_PLACE_KM = 0.15;
 
     /**
      * Region tag bounding boxes: [latMin, latMax, lngMin, lngMax].
@@ -138,8 +152,9 @@ class OsmCaveImporter
     public function describe(array $entries): array
     {
         return array_map(function (array $entry) {
-            $linked = Cave::query()->where('osm_node_id', $entry['osm_id'])->first();
+            $linked = $this->linkedCave($entry['osm_id']);
             $match = $linked ? null : $this->findExistingCave($entry['name'], $entry['lat'], $entry['lng']);
+            $entranceOf = $match && $this->isAnotherEntrance($entry['name'], $match) ? $match : null;
             $cave = $linked ?? $match;
 
             return [
@@ -152,8 +167,9 @@ class OsmCaveImporter
                 'access' => $entry['tags']['access'] ?? null,
                 'website' => $entry['tags']['website'] ?? null,
                 'wikipedia' => $entry['tags']['wikipedia'] ?? null,
-                // new: would be created; existing: would be linked only; linked: nothing to do.
-                'status' => $linked ? 'linked' : ($match ? 'existing' : 'new'),
+                // new: would be created; entrance: would be created as another entrance
+                // of the cave shown; existing: would be linked only; linked: nothing to do.
+                'status' => $linked ? 'linked' : ($entranceOf ? 'entrance' : ($match ? 'existing' : 'new')),
                 'cave' => $cave ? ['id' => $cave->id, 'name' => $cave->name, 'slug' => $cave->slug] : null,
             ];
         }, $entries);
@@ -170,12 +186,15 @@ class OsmCaveImporter
         return DB::transaction(function () use ($entry) {
             $osmId = $entry['osm_id'];
 
-            $alreadyLinked = Cave::query()->where('osm_node_id', $osmId)->first();
+            $alreadyLinked = $this->linkedCave($osmId);
             if ($alreadyLinked) {
                 return ['action' => 'unchanged', 'cave' => $alreadyLinked];
             }
 
             $existing = $this->findExistingCave($entry['name'], $entry['lat'], $entry['lng']);
+            if ($existing && $this->isAnotherEntrance($entry['name'], $existing)) {
+                return ['action' => 'created', 'cave' => $this->createCave($entry, $existing->cave_system_id)];
+            }
             if ($existing) {
                 // Link only. A cave already linked to another node is another
                 // entrance of the same cave: leave its link alone.
@@ -208,28 +227,72 @@ class OsmCaveImporter
     }
 
     /**
+     * The cave a node is linked to, if any: a cave merged into another (and
+     * so deleted) keeps its node, so the duplicate isn't imported again. Its
+     * live successor where there is one.
+     */
+    private function linkedCave(string $osmId): ?Cave
+    {
+        $caves = Cave::withTrashed()->where('osm_node_id', $osmId)->get();
+
+        return $caves->first(fn (Cave $cave) => !$cave->trashed()) ?? $caves->first();
+    }
+
+    /**
      * An existing cave that is the same place: same (normalised) name within
-     * SAME_PLACE_KM. Unlike the registry syncs, ownership never lets a name
-     * match win at any distance — two OSM caves can share a common name
-     * ("Bone Cave", "Hermit's Cave") and be hundreds of miles apart.
+     * SAME_PLACE_KM, or failing that, a name spelt differently
+     * ({@see CaveName::similar()}) within SIMILAR_PLACE_KM, the nearest.
+     * Unlike the registry syncs, ownership never lets a name match win at any
+     * distance — two OSM caves can share a common name ("Bone Cave",
+     * "Hermit's Cave") and be hundreds of miles apart.
      */
     private function findExistingCave(string $name, float $lat, float $lng): ?Cave
     {
-        return CaveName::match(Cave::query(), $name)
+        $sameName = CaveName::match(Cave::query(), $name)
             ->get()
             ->first(fn (Cave $cave) => $this->distanceKm($lat, $lng, $cave->location_lat, $cave->location_lng) <= self::SAME_PLACE_KM);
+        if ($sameName) {
+            return $sameName;
+        }
+
+        // nearby caves (a box a little over SIMILAR_PLACE_KM each way), nearest first
+        $dLat = self::SIMILAR_PLACE_KM / 111.0;
+        $dLng = $dLat / max(0.2, cos(deg2rad($lat)));
+
+        $nearest = Cave::query()
+            ->whereBetween('location_lat', [$lat - $dLat, $lat + $dLat])
+            ->whereBetween('location_lng', [$lng - $dLng, $lng + $dLng])
+            ->get()
+            ->map(fn (Cave $cave) => [$cave, $this->distanceKm($lat, $lng, $cave->location_lat, $cave->location_lng)])
+            ->filter(fn (array $c) => $c[1] <= self::SIMILAR_PLACE_KM && CaveName::similar($name, $c[0]->name))
+            ->sortBy(fn (array $c) => $c[1])
+            ->first();
+
+        return $nearest === null ? null : $nearest[0];
+    }
+
+    /**
+     * Whether a node is another way into a cave we hold, not the cave itself:
+     * its name says which entrance ("Yordas Pot (Middle Entrance)"), and it
+     * isn't that cave's own name (the cave itself, or "Yordas Pot (Top
+     * Entrance)", another way in).
+     */
+    private function isAnotherEntrance(string $name, Cave $cave): bool
+    {
+        return CaveName::namesAnEntrance($name) && CaveName::normalise($name) !== CaveName::normalise($cave->name);
     }
 
     /**
      * @param  array{name: string, osm_id: string, lat: float, lng: float, alt: float|null, tags: array<string, string>}  $entry
      */
-    private function createCave(array $entry): Cave
+    private function createCave(array $entry, ?int $systemId = null): Cave
     {
         $name = $entry['name'];
         $osmUrl = self::NODE_URL.$entry['osm_id'];
         $region = $this->resolveRegion($entry['lat'], $entry['lng']);
 
-        $system = CaveSystem::create([
+        // another entrance of a cave we hold: in its system
+        $system = $systemId !== null ? CaveSystem::findOrFail($systemId) : CaveSystem::create([
             'name' => $name,
             'slug' => $this->uniqueSlug(Str::slug($name), 'cave_systems'),
             'length' => 0,
