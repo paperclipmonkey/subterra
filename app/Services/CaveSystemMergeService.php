@@ -35,8 +35,9 @@ class CaveSystemMergeService
         DB::beginTransaction();
 
         try {
-            // 1. Migrate caves
-            Cave::where('cave_system_id', $source->id)
+            // 1. Migrate caves, deleted ones too (their row still points at the
+            //    source, which couldn't be deleted under them)
+            Cave::withTrashed()->where('cave_system_id', $source->id)
                 ->update(['cave_system_id' => $target->id]);
 
             // 2. Migrate routes

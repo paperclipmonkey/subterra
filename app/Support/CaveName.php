@@ -7,6 +7,7 @@ namespace App\Support;
 use App\Models\Cave;
 use App\Models\CaveSystem;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 /**
  * Name matching for cave imports.
@@ -25,13 +26,141 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class CaveName
 {
+    /** Apostrophes, straight and curly ("It’s a Cracker" is "It's a Cracker"). */
+    private const APOSTROPHES = ["'", '’', '‘'];
+
     /**
      * Normalise a name for comparison: lower-cased with apostrophes removed.
      * Mirrors exactly the transformation applied to the column in {@see match()}.
      */
     public static function normalise(?string $name): string
     {
-        return mb_strtolower(str_replace("'", '', trim((string) $name)));
+        return mb_strtolower(str_replace(self::APOSTROPHES, '', trim((string) $name)));
+    }
+
+    /**
+     * Words that say what kind of place it is, or which way in, rather than
+     * which place: "Thrupe Lane Swallett" and "Thrupe Lane Swallet", "Hagg
+     * Gill" and "Hagg Gill Pot", "Ogof Pwll-y-Rhyd" and "Pwll Y Rhyd Cave".
+     */
+    private const GENERIC = [
+        'cave', 'caves', 'cavern', 'caverns', 'hole', 'holes', 'pot', 'pots', 'pothole', 'swallet', 'swallett',
+        'ogof', 'uamh', 'poll', 'the', 'an', 'a', 'y', 'yr', 'na', 'nan', 'nam', 'of', 'and', 'rift',
+        'entrance', 'enterance', 'top', 'upper', 'lower', 'bottom', 'main', 'old', 'new', 'original',
+    ];
+
+    /** Words that make a name one particular way in ("Yordas Pot (Top Entrance)"). */
+    private const ENTRANCE_WORDS = ['entrance', 'enterance', 'top', 'upper', 'lower', 'bottom', 'middle', 'north', 'south', 'east', 'west', 'northern', 'southern', 'eastern', 'western', 'wet', 'dry', 'route'];
+
+    /**
+     * The ways a name can be compared loosely: the whole name, and the name
+     * outside and inside any brackets ("Liar's Sink (Poll Breugair)"), each
+     * reduced to its distinctive words, run together so spacing doesn't
+     * matter ("Dwy Sir", "Ddwysir"; "Eye Holes", "Eyeholes").
+     *
+     * @return list<string>
+     */
+    public static function looseKeys(?string $name): array
+    {
+        $name = trim((string) $name);
+        $parts = [$name];
+        if (preg_match('/^(.*?)\((.*?)\)(.*)$/u', $name, $m)) {
+            $parts[] = $m[1].' '.$m[3];
+            $parts[] = $m[2];
+        }
+        foreach (preg_split('#\s*/\s*#u', $name) ?: [] as $part) {   // "Calf Holes / Dry Lathe Cave"
+            $parts[] = $part;
+        }
+        // "Eglwys Faen Crawl Entrance", "Entrance to Ravenswell": the cave, without the way in
+        $unbracketed = trim((string) preg_replace('/\(.*?\)/u', ' ', $name));
+        $bare = trim((string) preg_replace('/\b(\w+\s+)?ent(e)?rance\b(\s+to\b)?/iu', ' ', $unbracketed));
+        if ($bare !== $unbracketed) {
+            $parts[] = $bare;
+        }
+
+        $keys = [];
+        foreach ($parts as $part) {
+            $plain = self::plain($part);
+            $words = array_values(array_diff(explode(' ', $plain), self::GENERIC, ['']));
+            foreach ([implode('', $words), str_replace(' ', '', $plain)] as $key) {
+                if (mb_strlen($key) >= 3) {
+                    $keys[] = $key;
+                }
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /**
+     * Whether two names plausibly name the same place, allowing for the
+     * spellings registries and OpenStreetMap differ by: "G.B. Cave" and "GB
+     * cave", "Vespers Pot" and "Vesper Pot", "Ogof Tarddiad Rhymni" and "Ogof
+     * Tarddiad Rhymney". Loose on purpose: only for places already close
+     * together, never on its own.
+     */
+    public static function similar(?string $a, ?string $b): bool
+    {
+        // numbered caves are different caves: "Cwm Dwr 2" isn't "Cwm Dwr"
+        if (self::numbers($a) !== self::numbers($b)) {
+            return false;
+        }
+        foreach (self::looseKeys($a) as $x) {
+            foreach (self::looseKeys($b) as $y) {
+                if ($x === $y) {
+                    return true;
+                }
+                $len = min(mb_strlen($x), mb_strlen($y));
+                // a letter or two apart, in a name long enough for that to be a spelling
+                if ($len >= 5 && levenshtein($x, $y) <= max(1, intdiv($len, 7))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether a name says it's one particular way into a cave: "Yordas Pot
+     * (Top Entrance)", "Sell Gill Holes (dry route)", "Meregill Hole Aven
+     * Entrance".
+     */
+    public static function namesAnEntrance(?string $name): bool
+    {
+        $plain = self::plain((string) $name);
+        if (preg_match('/\bent[e]?rance\b/u', $plain) || preg_match('/^(upper|lower|top|bottom) /u', $plain)) {
+            return true;
+        }
+        if (preg_match('/\(([^)]*)\)/u', (string) $name, $m)) {
+            $words = explode(' ', self::plain($m[1]));
+
+            return array_intersect($words, self::ENTRANCE_WORDS) !== [];
+        }
+
+        return false;
+    }
+
+    /**
+     * The numbers in a name, outside brackets.
+     *
+     * @return list<string>
+     */
+    private static function numbers(?string $name): array
+    {
+        preg_match_all('/\d+/u', (string) preg_replace('/\(.*?\)/u', '', (string) $name), $m);
+
+        return $m[0];
+    }
+
+    /** Lower case, no accents or apostrophes, and only letters, digits and single spaces. */
+    private static function plain(string $name): string
+    {
+        $s = mb_strtolower(str_replace(self::APOSTROPHES, '', $name));
+        $s = Str::ascii($s);   // "Uamh a’ Bhreugadair", accents
+        $s = str_replace('.', '', $s);   // "G.B." is "GB"
+
+        return trim(preg_replace('/[^a-z0-9]+/u', ' ', $s) ?? '');
     }
 
     /** Find an existing cave whose name matches $name (case/apostrophe-insensitive). */
@@ -185,7 +314,7 @@ class CaveName
     public static function match(Builder $query, string $name): Builder
     {
         return $query->whereRaw(
-            "LOWER(REPLACE(name, '''', '')) = ?",
+            "LOWER(REPLACE(REPLACE(REPLACE(name, '''', ''), '’', ''), '‘', '')) = ?",
             [self::normalise($name)]
         );
     }
