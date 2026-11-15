@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesTripRoute;
 use App\Models\Cave;
 use App\Models\Trip;
 use App\Policies\CavePolicy;
@@ -14,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 
 class StoreTripRequest extends FormRequest
 {
+    use ValidatesTripRoute;
+
     public function authorize(): bool
     {
         return true;
@@ -41,6 +44,7 @@ class StoreTripRequest extends FormRequest
             'media.*.data' => 'required|file|max:512000|mimes:jpeg,jpg,png,gif,webp,bmp,tiff,tif,heic,heif', // Images only, 512MB max
             'participants' => 'required|array|min:1',
             'participants.*' => 'string|exists:users,id',
+            ...$this->routeRules(),
         ];
     }
 

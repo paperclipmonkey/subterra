@@ -45,6 +45,9 @@
     },
     "routes": {
       "type": "array"
+    },
+    "viewer_url": {
+      "type": ["string", "null"]
     }
   },
   "required": [

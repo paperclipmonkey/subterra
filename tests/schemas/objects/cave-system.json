@@ -109,6 +109,9 @@
         "cave_system_id": { "type": "integer" },
         "geojson": { "type": "object" }
       }
+    },
+    "viewer_url": {
+      "type": ["string", "null"]
     }
   },
   "required": [

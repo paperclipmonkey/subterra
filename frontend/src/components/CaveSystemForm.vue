@@ -53,6 +53,18 @@
         clearable
         class="mt-4"
       />
+      <!-- the system's 3D survey, where trips draw and keep their routes -->
+      <v-text-field
+        v-model.trim="internalSystem.viewer_url"
+        label="3D survey (cave-viewer page)"
+        placeholder="https://cavesurveying.github.io/…/3d/"
+        type="url"
+        :rules="[v => !v || /^https:\/\//.test(v) || 'Use the page\'s https:// address']"
+        hint="Trips in this system can then draw and keep the route they took."
+        persistent-hint
+        clearable
+        class="mt-4"
+      />
       <div class="text-title-small mt-4 mb-1">References</div>
       <MilkdownEditor
         v-model="internalSystem.references"

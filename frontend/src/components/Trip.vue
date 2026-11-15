@@ -60,6 +60,18 @@
           </v-card>
 
           <!-- Photo Gallery -->
+          <!-- the route the party took, in the cave's 3D survey -->
+          <v-card v-if="trip.route && trip.system?.viewer_url" class="rounded-lg mb-6" elevation="2">
+            <v-card-title class="d-flex align-center py-4">
+              <v-icon :icon="mdiMapMarkerPath" class="mr-2" color="primary" />
+              <span class="font-weight-bold">The route</span>
+            </v-card-title>
+            <v-card-text class="pa-4 pt-0">
+              <CaveRoute3D :model-value="trip.route" :viewer-url="trip.system.viewer_url"
+                           :start-time="trip.start_time" :cave-system-id="trip.system.id" />
+            </v-card-text>
+          </v-card>
+
           <v-card v-if="trip.media && trip.media.length > 0" class="rounded-lg mb-6" elevation="2">
             <v-card-title class="d-flex align-center py-4">
               <v-icon :icon="mdiImageMultipleOutline" class="mr-2 text-primary" />
@@ -227,12 +239,13 @@
 </template>
 
 <script setup>
-import { mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiCalendar, mdiClockOutline, mdiDelete, mdiEarth, mdiFlagOutline, mdiFountainPenTip, mdiImageMultipleOutline, mdiLocationEnter, mdiLocationExit, mdiLock, mdiMapMarker, mdiPencil, mdiTextBoxOutline, mdiTimerOutline } from '@mdi/js'
+import { mdiAccountGroup, mdiAlertCircleOutline, mdiArrowLeft, mdiCalendar, mdiClockOutline, mdiDelete, mdiEarth, mdiFlagOutline, mdiFountainPenTip, mdiImageMultipleOutline, mdiLocationEnter, mdiLocationExit, mdiLock, mdiMapMarker, mdiMapMarkerPath, mdiPencil, mdiTextBoxOutline, mdiTimerOutline } from '@mdi/js'
 
 import MediaViewModal from '@/components/MediaViewModal.vue'
 import ReportModal from '@/components/ReportModal.vue'
 import moment from 'moment'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import CaveRoute3D from '@/components/CaveRoute3D.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { ref, computed, onMounted, watch } from 'vue'

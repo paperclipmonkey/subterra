@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesTripRoute;
 use App\Models\Cave;
 use App\Models\Trip;
 use App\Policies\CavePolicy;
@@ -11,6 +12,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTripRequest extends FormRequest
 {
+    use ValidatesTripRoute;
+
     public function authorize(): bool
     {
         // A trip participant, or a platform admin. Not is_admin: that is true for
@@ -60,6 +63,7 @@ class UpdateTripRequest extends FormRequest
             'existing_media.*.title' => ['nullable', 'string', 'max:255'],
             'existing_media.*.copyright' => ['nullable', 'string', 'max:255'],
             'existing_media.*.photographer' => ['nullable', 'string', 'max:255'],
+            ...$this->routeRules(),
         ];
     }
 

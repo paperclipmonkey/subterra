@@ -95,6 +95,18 @@
         "string",
         "null"
       ]
+    },
+    "route": {
+      "type": ["object", "null"],
+      "properties": {
+        "link": { "type": "string" },
+        "length": { "type": ["number", "null"] },
+        "up": { "type": ["number", "null"] },
+        "down": { "type": ["number", "null"] },
+        "another": { "type": ["boolean", "null"] },
+        "stops": { "type": ["array", "null"] },
+        "passages": { "type": ["array", "null"] }
+      }
     }
   },
   "required": [

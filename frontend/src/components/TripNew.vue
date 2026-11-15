@@ -44,6 +44,14 @@
             </v-card-text>
           </v-card>
 
+          <!-- the route through the cave's 3D survey, where the system has one -->
+          <v-card v-if="viewerUrl" title="Your route" class="mb-4">
+            <v-card-text>
+              <CaveRoute3D :key="viewerUrl" v-model="trip.route" :viewer-url="viewerUrl" editable
+                           :start-time="start_time.format()" :cave-system-id="cave_system_id" />
+            </v-card-text>
+          </v-card>
+
           <v-card title="When" class="mb-4">
             <v-card-text>
               <v-row>
@@ -315,6 +323,7 @@ import moment from 'moment'
 import { computed, reactive, ref, watch, onMounted } from 'vue'
 import AddParticipantManual from './AddParticipantManual.vue'
 import CaveSearchAutocomplete from './CaveSearchAutocomplete.vue'
+import CaveRoute3D from './CaveRoute3D.vue'
 import MilkdownEditor from './MilkdownEditor.vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
@@ -420,6 +429,7 @@ let trip = reactive({
   cave_system_id: null,
   visibility: 'public',
   creator_id: null,
+  route: null,
 })
 
 const defaultTripStart = moment().subtract(4, 'hours')
@@ -766,6 +776,17 @@ const cave_system_id = computed(() => {
   return found ? found.cave_system_id : null
 })
 
+// the cave system's 3D survey (cave-viewer), where it has one: for the route
+const viewerUrl = ref(null)
+watch(cave_system_id, async (id) => {
+  viewerUrl.value = null
+  if (!id) return
+  try {
+    const r = await api.get(`/api/cave_systems/${id}`)
+    viewerUrl.value = r.data.data?.viewer_url || null
+  } catch { viewerUrl.value = null }
+}, { immediate: true })
+
 const system_entrances_count = computed(() => {
   if (!cave_system_id.value) return 0
   return caves.value.filter((cave => cave.cave_system_id === cave_system_id.value)).length
@@ -847,7 +868,10 @@ const submitForm = async () => {
     const formData = new FormData()
 
     Object.keys(trip).forEach(key => {
-      if (trip[key] !== null && trip[key] !== undefined && key !== 'media' && key !== 'existing_media' && key !== 'participants') {
+      if (key === 'route') {
+        // (JSON, in a multipart form; empty takes a route off)
+        if (trip.route || route.params.id) formData.append('route', trip.route ? JSON.stringify(trip.route) : '')
+      } else if (trip[key] !== null && trip[key] !== undefined && key !== 'media' && key !== 'existing_media' && key !== 'participants') {
         formData.append(key, trip[key])
       }
     })
