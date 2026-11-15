@@ -52,6 +52,7 @@ class TripResource extends JsonResource
                 : null,
             'media' => MediaResource::collection($this->media),
             'duration' => $this->duration,
+            'route' => $this->route,
             'entrance_hero_image' => $this->entrance?->heroImage?->filename
                 ? Storage::disk('media')->url($this->entrance->heroImage->filename)
                 : null,

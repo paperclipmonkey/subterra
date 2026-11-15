@@ -93,6 +93,9 @@ Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'public
     ->middleware(\App\Http\Middleware\TrackApiInteraction::class.':'.\App\Models\Page::class);
 
 Route::get('/cave_systems/{cave_system}/routes', [App\Http\Controllers\RouteController::class, 'index']);
+// how long parties take over a route through the system's 3D survey (public trips only)
+Route::get('/cave_systems/{cave_system}/route-times', [App\Http\Controllers\TripRouteTimesController::class, 'show'])
+    ->middleware('throttle:60,1');
 Route::get('/routes/{route}', [App\Http\Controllers\RouteController::class, 'show']);
 
 Route::middleware(['auth:sanctum', ApiIsAuthenticated::class])->group(function () {

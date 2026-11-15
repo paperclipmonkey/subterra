@@ -115,6 +115,9 @@ class TripController extends Controller
     public function store(StoreTripRequest $request): TripResource
     {
         $tripData = $request->validated();
+        if (array_key_exists('route', $tripData)) {
+            $tripData['route'] = StoreTripRequest::cleanRoute($tripData['route']);
+        }
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
         if (!empty($tripData['start_time'])) {
@@ -232,6 +235,9 @@ class TripController extends Controller
         // Run ALL validation before touching anything — a validation failure
         // below must never leave media already deleted.
         $data = $request->validated();
+        if (array_key_exists('route', $data)) {
+            $data['route'] = UpdateTripRequest::cleanRoute($data['route']);
+        }
 
         // Normalise to UTC so timezone offsets (e.g. BST +01:00) are stored correctly
         if (!empty($data['start_time'])) {

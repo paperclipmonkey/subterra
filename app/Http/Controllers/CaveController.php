@@ -219,6 +219,7 @@ class CaveController extends Controller
         $caves = DB::table('caves')
             ->select([
                 'caves.id',
+                'caves.slug',
                 'caves.name',
                 'caves.location_name',
                 'caves.location_country',
@@ -240,6 +241,7 @@ class CaveController extends Controller
             ->get()
             ->map(fn ($cave) => [
                 'id' => $cave->id,
+                'slug' => $cave->slug,
                 'name' => $cave->name,
                 'location_name' => $cave->location_name,
                 'location_country' => $cave->location_country,

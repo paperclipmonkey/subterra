@@ -1625,12 +1625,10 @@ PROMPT;
                 .'more accessible. However, summer thunderstorms can cause rapid flooding with little warning; '
                 .'always check the forecast and have an escape plan.',
 
-            in_array($month, [9, 10, 11], true) => 'It is currently autumn in the UK. Conditions deteriorate as rainfall increases through '
+            default => 'It is currently autumn in the UK. Conditions deteriorate as rainfall increases through '
                 .'October and November. Early autumn is often still good caving weather, but from mid-October '
                 .'onwards streamway caves carry more water. Check antecedent rainfall carefully — heavy rain '
                 .'24-48 hours prior significantly raises flood risk in phreatic and streamway systems.',
-
-            default => '',
         };
 
         return <<<PROMPT

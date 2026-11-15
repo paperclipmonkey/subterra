@@ -391,6 +391,7 @@ const save = async () => {
     formData.append('vertical_range', cavesystem.value.vertical_range ?? '')
     formData.append('slug', cavesystem.value.slug || '')
     formData.append('references', cavesystem.value.references || '')
+    formData.append('viewer_url', cavesystem.value.viewer_url || '')
     if (cavesystem.value.catchment_id) {
       formData.append('catchment_id', cavesystem.value.catchment_id)
     }

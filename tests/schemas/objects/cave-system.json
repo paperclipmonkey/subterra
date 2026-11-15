@@ -112,6 +112,9 @@
     },
     "map_overlays": {
       "type": "array"
+    },
+    "viewer_url": {
+      "type": ["string", "null"]
     }
   },
   "required": [
