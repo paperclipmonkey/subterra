@@ -337,12 +337,6 @@ parameters:
 			path: app/Http/Controllers/ClubController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Trip\:\:\$duration\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/ClubDataController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Trip\:\:\$first_visit\.$#'
 			identifier: property.notFound
 			count: 1
@@ -595,22 +589,10 @@ parameters:
 			path: app/Http/Resources/IncidentResource.php
 
 		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\TripResource\:\:\$duration\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/TripResource.php
-
-		-
 			message: '#^Access to an undefined property OwenIt\\Auditing\\Models\\Audit\:\:\$user_id\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Resources/TripResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\TripSummaryResource\:\:\$duration\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/TripSummaryResource.php
 
 		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\UserDetailEmailResource\:\:\$active_callout\.$#'
