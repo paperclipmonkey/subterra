@@ -6,14 +6,13 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Routes through a cave's 3D survey (cave-viewer, e.g. the CaveSurveying sites):
- * a cave system can name its 3D view, and a trip can keep the route it took
- * there, as cave-viewer reports it (its link, length, stops and passages), with
- * the times the party reached each stop where they were noted.
- */
-return new class extends Migration
-{
+return new class () extends Migration {
+    /**
+     * Routes through a cave's 3D survey (cave-viewer, e.g. the CaveSurveying sites):
+     * a cave system can name its 3D view, and a trip can keep the route it took
+     * there, as cave-viewer reports it (its link, length, stops and passages), with
+     * the times the party reached each stop where they were noted.
+     */
     public function up(): void
     {
         Schema::table('cave_systems', function (Blueprint $table) {
