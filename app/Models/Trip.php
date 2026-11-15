@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @property-read int $duration whole minutes underground (0 if the trip has no end)
+ */
 class Trip extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
     use HasFactory;
