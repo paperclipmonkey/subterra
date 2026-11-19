@@ -17,7 +17,7 @@
     "@mdi/js": "^7.4.47",
     "@milkdown/crepe": "^7.22.3",
     "@milkdown/ctx": "^7.22.3",
-    "@milkdown/kit": "^7.22.3",
+    "@milkdown/kit": "^7.23.0",
     "@milkdown/plugin-listener": "^7.22.3",
     "@milkdown/vue": "^7.22.3",
     "axios": "^1.20.0",
