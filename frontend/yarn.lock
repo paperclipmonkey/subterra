@@ -1751,6 +1751,19 @@
     remark-stringify "^11.0.0"
     unified "^11.0.3"
 
+"@milkdown/core@7.23.0":
+  version "7.23.0"
+  resolved "https://registry.yarnpkg.com/@milkdown/core/-/core-7.23.0.tgz#01f3b53add98ee8b876c149ec7bb32727fdc4764"
+  integrity sha512-4BpCjPYMg0KvuflgpRgqX2Cfz3HLmG+xPCJIvl2J2qlrzSE0h6f+eIqKAsUuf6u8nkh+HHFOhjBFiuT6SDBotQ==
+  dependencies:
+    "@milkdown/ctx" "7.23.0"
+    "@milkdown/exception" "7.23.0"
+    "@milkdown/prose" "7.23.0"
+    "@milkdown/transformer" "7.23.0"
+    remark-parse "^11.0.0"
+    remark-stringify "^11.0.0"
+    unified "^11.0.3"
+
 "@milkdown/crepe@7.22.3", "@milkdown/crepe@^7.22.3":
   version "7.22.3"
   resolved "https://registry.yarnpkg.com/@milkdown/crepe/-/crepe-7.22.3.tgz#431b56f8249cc5b62fdf96c3d412b1cdc5ad3dd8"
@@ -1774,17 +1787,29 @@
     unist-util-visit "^5.0.0"
     vue "^3.5.20"
 
-"@milkdown/ctx@7.22.3", "@milkdown/ctx@^7.22.3":
+"@milkdown/ctx@7.22.3":
   version "7.22.3"
   resolved "https://registry.yarnpkg.com/@milkdown/ctx/-/ctx-7.22.3.tgz#1e75220a50c94d2d151ba423aad0bd5e64802546"
   integrity sha512-46FYHmTYCd9bSfYpcRlq8NLNp5gVekDE1I6z4M+Z4a+xY6IaTWvaSFiJpkcpuWm1hwt5WVye9sGmOP0IVKokeg==
   dependencies:
     "@milkdown/exception" "7.22.3"
 
+"@milkdown/ctx@7.23.0", "@milkdown/ctx@^7.22.3":
+  version "7.23.0"
+  resolved "https://registry.yarnpkg.com/@milkdown/ctx/-/ctx-7.23.0.tgz#3c14f0d559dfa2eefbc8948599d9095dde99d9fe"
+  integrity sha512-iyn9G4kHacCn/yRXvggUWqiXou5Aok7zBJaJ7BKKdAMjK9IQDZlsDKr+7Rh+aK1NrIfqHcVD+rg/Y0Qh/sCO1A==
+  dependencies:
+    "@milkdown/exception" "7.23.0"
+
 "@milkdown/exception@7.22.3":
   version "7.22.3"
   resolved "https://registry.yarnpkg.com/@milkdown/exception/-/exception-7.22.3.tgz#75850edbfc862a8500af4afcad94e22a17b3cfd9"
   integrity sha512-iVRobQxa/PUiCNy8WSfpw5PIxdF4oUTEEYQgJYNt/aFXGVPPf7ZqonwBrKpe+iDr/sBz2B8wNhaS5GM2sBZzvg==
+
+"@milkdown/exception@7.23.0":
+  version "7.23.0"
+  resolved "https://registry.yarnpkg.com/@milkdown/exception/-/exception-7.23.0.tgz#472dbe951fb403ad787c118babf94be5f40f6210"
+  integrity sha512-g+7qgfmD6UK8O2GGYsr8RIZDkF/7VR8rrSnDpMkanKxT9PIBizuc5Je0c+mhqZKvjsikxm+7kcqQStV+MpRpSw==
 
 "@milkdown/kit@7.22.3", "@milkdown/kit@^7.22.3":
   version "7.22.3"
@@ -1876,7 +1901,7 @@
     "@milkdown/prose" "7.22.3"
     "@milkdown/utils" "7.22.3"
 
-"@milkdown/plugin-listener@7.22.3", "@milkdown/plugin-listener@^7.22.3":
+"@milkdown/plugin-listener@7.22.3":
   version "7.22.3"
   resolved "https://registry.yarnpkg.com/@milkdown/plugin-listener/-/plugin-listener-7.22.3.tgz#c58bc7ace2c630962c0fead5860386f0909372cd"
   integrity sha512-NBsz68SAyZLylK5VeAEKjuMezUJIrCryop17Lj3JBu8OAEZv4fPGG3SX966TO4tu/ehup3uGE287oRA243/cZg==
@@ -1884,6 +1909,17 @@
     "@milkdown/core" "7.22.3"
     "@milkdown/ctx" "7.22.3"
     "@milkdown/prose" "7.22.3"
+    "@types/lodash-es" "^4.17.12"
+    lodash-es "^4.17.21"
+
+"@milkdown/plugin-listener@^7.23.0":
+  version "7.23.0"
+  resolved "https://registry.yarnpkg.com/@milkdown/plugin-listener/-/plugin-listener-7.23.0.tgz#c2e30398e2356371e6f6b355eac0e1e91289265a"
+  integrity sha512-KmY1RmtRkou8nhxN0JeWXrKLXfdn9WDlLDhN+uJ2SLr36rECh+gUZ6s3AUMYP6X7fig8jlDS4h498hEH0wQn9A==
+  dependencies:
+    "@milkdown/core" "7.23.0"
+    "@milkdown/ctx" "7.23.0"
+    "@milkdown/prose" "7.23.0"
     "@types/lodash-es" "^4.17.12"
     lodash-es "^4.17.21"
 
@@ -1992,6 +2028,26 @@
     prosemirror-transform "^1.10.5"
     prosemirror-view "^1.41.3"
 
+"@milkdown/prose@7.23.0":
+  version "7.23.0"
+  resolved "https://registry.yarnpkg.com/@milkdown/prose/-/prose-7.23.0.tgz#7490260486417f6bf9ff3dbee3285cfc667e0281"
+  integrity sha512-HHju8O/T+U2Sy5AMHM78PLd2KTha+UYrZjesZjVF9+o5T559+wQFHKq5X/Ytk2XAeuen3uLQ07avfw4FbZ6HRg==
+  dependencies:
+    "@milkdown/exception" "7.23.0"
+    prosemirror-changeset "^2.3.1"
+    prosemirror-commands "^1.7.1"
+    prosemirror-dropcursor "^1.8.2"
+    prosemirror-gapcursor "^1.4.0"
+    prosemirror-history "^1.5.0"
+    prosemirror-inputrules "^1.5.1"
+    prosemirror-keymap "^1.2.3"
+    prosemirror-model "^1.25.4"
+    prosemirror-schema-list "^1.5.1"
+    prosemirror-state "^1.4.4"
+    prosemirror-tables "^1.8.1"
+    prosemirror-transform "^1.10.5"
+    prosemirror-view "^1.41.3"
+
 "@milkdown/transformer@7.22.3":
   version "7.22.3"
   resolved "https://registry.yarnpkg.com/@milkdown/transformer/-/transformer-7.22.3.tgz#99030b095c9a9316c66398dd5bd442311df9082f"
@@ -1999,6 +2055,16 @@
   dependencies:
     "@milkdown/exception" "7.22.3"
     "@milkdown/prose" "7.22.3"
+    remark "^15.0.1"
+    unified "^11.0.3"
+
+"@milkdown/transformer@7.23.0":
+  version "7.23.0"
+  resolved "https://registry.yarnpkg.com/@milkdown/transformer/-/transformer-7.23.0.tgz#7af6f7bc65639229388ce4241739261b04cda393"
+  integrity sha512-vPljNdPrvjtnpd/CtIUwB36zgQF/oOgVdceWB3RL760mtrfQS0+IhmkcAPrz+w11ug8KIPJ/pJLxxJfD2Y4iqg==
+  dependencies:
+    "@milkdown/exception" "7.23.0"
+    "@milkdown/prose" "7.23.0"
     remark "^15.0.1"
     unified "^11.0.3"
 
