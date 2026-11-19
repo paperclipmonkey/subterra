@@ -23,7 +23,7 @@
         "owen-it/laravel-auditing": "^14.0",
         "php-coord/php-coord": "^5.11",
         "spatie/laravel-slack-alerts": "^1.5",
-        "spiral/roadrunner-cli": "^2.7",
+        "spiral/roadrunner-cli": "^3.1",
         "spiral/roadrunner-http": "^4.1"
     },
     "require-dev": {
